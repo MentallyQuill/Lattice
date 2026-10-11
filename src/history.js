@@ -17,11 +17,11 @@
 const LIMIT = 50;
 const TYPING_PAUSE = 700;
 
-/** @type {Map<string, {undo: Array, redo: Array, last: string, sig: string, revision: number}>} */
-const stacks = new Map();
-const pending = new Map();      // graph id -> timer
-const listeners = new Set();
-const presentationReceipts = new WeakMap();
+/** History belongs to an exact document object, never a reusable file graph ID. */
+const historyKey = Symbol.for('lattice.workflow-document-history');
+const shared = globalThis[historyKey] ??= { stacks: new WeakMap(), pending: new Map(), listeners: new Set(), presentationReceipts: new WeakMap() };
+const { stacks, pending, listeners, presentationReceipts } = shared;
+const generations = shared.generations ??= new WeakMap();
 
 // Keep root execution authority, recordings and per-view state outside undo data.
 // Instance parameters/model overrides and pinned bodies live inside nodes/definitions.
@@ -37,10 +37,10 @@ function signature(g) {
 }
 
 function stack(g) {
-    let s = stacks.get(g.id);
+    let s = stacks.get(g);
     if (!s) {
         s = { undo: [], redo: [], last: snapshot(g), sig: signature(g), revision: 0 };
-        stacks.set(g.id, s);
+        stacks.set(g, s);
     }
     return s;
 }
@@ -52,31 +52,41 @@ export function track(g) {
     if (g?.id) stack(g);
 }
 
+/** Release pending work when a document activation ends. */
+export function dispose(g) {
+    if (!g) return;
+    clearTimeout(pending.get(g)); pending.delete(g); stacks.delete(g); generations.set(g, {});
+}
+
+/** Every activation starts at its current content, including same-ID files. */
+export function reset(g) { dispose(g); track(g); }
+
 /** Called on every change. Decides when the change becomes an undo step. */
 export function noteChange(g) {
-    if (!g?.id || !stacks.has(g.id)) return;
+    if (!g?.id || !stacks.has(g)) return;
     const s = stack(g);
-    clearTimeout(pending.get(g.id));
+    clearTimeout(pending.get(g));
     if (signature(g) !== s.sig) {
         // Structural: commit once the current click has finished, so a
         // single action that makes several changes is still one step.
-        pending.set(g.id, setTimeout(() => commit(g), 0));
+        pending.set(g, setTimeout(() => commit(g), 0));
     } else {
-        pending.set(g.id, setTimeout(() => commit(g), TYPING_PAUSE));
+        pending.set(g, setTimeout(() => commit(g), TYPING_PAUSE));
     }
     notify(g);
 }
 
 /** Record any change still waiting (a pause in typing that has not come yet). */
 export function flush(g) {
-    if (!g?.id || !pending.has(g.id)) return;
-    clearTimeout(pending.get(g.id));
-    pending.delete(g.id);
+    if (!g?.id || !pending.has(g)) return;
+    clearTimeout(pending.get(g));
+    pending.delete(g);
     commit(g);
 }
 
 function commit(g) {
-    pending.delete(g.id);
+    pending.delete(g);
+    if (!stacks.has(g)) return;
     const s = stack(g);
     const now = snapshot(g);
     if (now === s.last) return;
@@ -113,18 +123,18 @@ export function commitGraphDocument(g, candidate) {
         if (Object.hasOwn(document, key) ? (descriptor ? !('value' in descriptor) || !descriptor.writable : !Object.isExtensible(g)) : descriptor && !descriptor.configurable) throw new TypeError('The editable graph document is read-only.');
     }
     // Plan both the pending prior step and this batch before any mutation.
-    const previous = stacks.get(g.id) ?? { undo: [], redo: [], last: current, revision: 0 };
+    const previous = stacks.get(g) ?? { undo: [], redo: [], last: current, revision: 0 };
     const undo = [...previous.undo];
     if (previous.last !== current) undo.push({ state: previous.last, label: describe(JSON.parse(previous.last), JSON.parse(current)) });
     undo.push({ state: current, label: describe(JSON.parse(current), document) });
     const next = { undo: undo.slice(-LIMIT), redo: [], last: state, sig: nextSignature, revision: previous.revision + 1 };
-    clearTimeout(pending.get(g.id));
-    pending.delete(g.id);
+    clearTimeout(pending.get(g));
+    pending.delete(g);
     for (const key of GRAPH_DOCUMENT_FIELDS) {
         if (Object.hasOwn(document, key)) g[key] = document[key];
         else delete g[key];
     }
-    stacks.set(g.id, next);
+    stacks.set(g, next);
     notify(g);
     return true;
 }
@@ -133,7 +143,7 @@ export function commitGraphDocument(g, candidate) {
 export function capturePresentationStep(g) {
     if (!g?.id) return null;
     const receipt = Object.freeze({});
-    presentationReceipts.set(receipt, { graph: g, revision: stack(g).revision, beforeState: snapshot(g) });
+    presentationReceipts.set(receipt, { graph: g, generation: generations.get(g), revision: stack(g).revision, beforeState: snapshot(g) });
     return receipt;
 }
 
@@ -142,9 +152,9 @@ export function attachPresentationEffect(g, { receipt, effect, beforeState, afte
     if (!g?.id || !effect || typeof effect !== 'object' || !Object.isFrozen(effect)
         || Reflect.ownKeys(effect).length || ![Object.prototype, null].includes(Object.getPrototypeOf(effect))) return false;
     const captured = receipt && presentationReceipts.get(receipt);
-    const s = stacks.get(g.id), step = s?.undo.at(-1);
-    if (!captured || captured.graph !== g || captured.beforeState !== beforeState || s?.revision !== captured.revision + 1) return false;
-    if (!step || step.effect || pending.has(g.id) || typeof beforeState !== 'string' || typeof afterState !== 'string'
+    const s = stacks.get(g), step = s?.undo.at(-1);
+    if (!captured || captured.graph !== g || captured.generation !== generations.get(g) || captured.beforeState !== beforeState || s?.revision !== captured.revision + 1) return false;
+    if (!step || step.effect || pending.has(g) || typeof beforeState !== 'string' || typeof afterState !== 'string'
         || beforeState === afterState || step.state !== beforeState || s.last !== afterState || snapshot(g) !== afterState) return false;
     step.effect = effect;
     presentationReceipts.delete(receipt);
@@ -181,10 +191,10 @@ export function redo(g) {
 
 /** What the next undo and redo would do, for button tooltips. */
 export function peek(g) {
-    const s = g?.id ? stacks.get(g.id) : null;
+    const s = g?.id ? stacks.get(g) : null;
     return {
         // Typing not yet recorded is what an undo would take back first.
-        undo: pending.has(g?.id) ? 'your last edit' : (s?.undo.at(-1)?.label ?? null),
+        undo: pending.has(g) ? 'your last edit' : (s?.undo.at(-1)?.label ?? null),
         redo: s?.redo.at(-1)?.label ?? null,
     };
 }

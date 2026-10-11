@@ -29,40 +29,40 @@ This manual follows the 0.26.0 interface. Screenshots use synthetic writing mate
 
 | Area | Use it for |
 | --- | --- |
-| Menu bar | File operations, editing, graph navigation, node discovery, phase assignment, and tools |
-| Workflow bar | Choose the root workflow, undo/redo, Run/Stop, Details, and Arm |
+| Menu bar | File operations, editing, graph navigation, root Run/Stop, node discovery, and tools |
+| Workflow bar | Current filename and document status, undo/redo, Details, and Arm |
 | Preview above the graph | Inspect a recorded output and its artifact tabs; pin it or follow selection |
-| Graph tabs | Switch between the root **Graph 1** and opened subgraph bodies |
+| Graph tabs | Switch between the open workflow root and its subgraph bodies |
 | Graph editor | Arrange nodes and connect typed input/output pins |
 | Floating node shelf | Open a family and choose a node directly |
 | Details on the right | Configure the selected node, its presentation, and any model binding |
 | Run meter at bottom left | Open execution details and expanded subgraph stages |
 
-The workflow bar reports phase, assignment, request bound, and autosave. Selecting a graph or editing it does not arm it or make a provider request.
+The workflow bar reports the current filename, document status, phase and request bound. LATTICE keeps one active workflow document; opening a file or example replaces it after offering to save unsaved changes. Editing makes the document Modified. Opening and editing preserve Arm and make no provider request.
 
 Use **Tools → Theme and colours** to choose Ember, Lattice, Ash, Graphite, Slate, Obsidian, Harbor or Signal, or customize the selected theme. Ember follows SillyTavern's panel, text, controls and quote accent. Harbor uses blue and amber; Signal uses high contrast grayscale. Both add pin shapes and wire patterns, with a visible type-cue legend in the picker.
 
-**Arm** enables the assigned host workflow. A unified workflow starts through ordinary SillyTavern **Send**, prepares guidance, and resumes from its owned completed reply. Supported **Run to here** paths preview dependencies without accepting effects; a full unified graph containing Generate Reply requires that owned native generation. Legacy tools retain manual **Run**: a guidance run previews its result, and a later assigned/armed Send executes that guidance again. Reviewed reply editing needs an explicit Apply action.
+**Arm** enables the open workflow for Send. A unified workflow starts through ordinary SillyTavern **Send**, prepares guidance, and resumes from its owned completed reply. Supported **Run to here** paths preview dependencies without accepting effects; a full unified graph containing Generate Reply requires that owned native generation. Legacy tools retain manual **Run**: a guidance run previews its result, and a later Send executes the same open Pre document again when Arm is enabled. Reviewed reply editing needs an explicit Apply action.
 
-**Unified** keeps Preparation and Response stages in one graph around a single **Generate Reply · SillyTavern** boundary. Choose **Workflows → Assign unified workflow**, Arm, then Send normally. Inspect **Review / Publish · Host result** in Preview and Apply to add a new swipe preserving the original and accept its staged effects. Opening a workflow does not assign or arm it.
+**Unified** keeps Preparation and Response stages in one graph around a single **Generate Reply · SillyTavern** boundary. Keep the unified document open, enable Arm, then Send normally. Inspect **Review / Publish · Host result** in Preview and Apply to add a new swipe preserving the original and accept its staged effects. Opening a workflow preserves Arm.
 
-Legacy **Before reply (Pre)** graphs prepare guidance before normal Send; legacy **After reply (Post)** graphs work manually from a completed reply. Their assignments are labeled **Assign legacy pre phase** and **Assign legacy post phase**. Running a reply repair does not itself change the reply. Text transformations can run in either stage; reply-specific sources and outputs still require their matching host context. The [unified guide](unified-workflows.md#apply-an-example-to-story-2) gives the actual Story-2/default-user setup.
+Legacy **Before reply (Pre)** graphs prepare guidance before normal Send; legacy **After reply (Post)** graphs work manually from a completed reply. Open either through File; **Graph → Run workflow** runs the active root. An open Pre document contributes guidance on Send when Arm is enabled, while Post repair remains manual. Running a reply repair does not itself change the reply. Text transformations can run in either stage; reply-specific sources and outputs still require their matching host context. The [unified guide](unified-workflows.md#apply-an-example-to-story-2) gives the actual Story-2/default-user setup.
 
 ## Start from a working example
 
 1. Open the LATTICE logo on the left of the chat bar or type `/lattice`.
-2. Choose **File → Open examples…**, immediately below **Open workflow…**. **Workflows → Workflow examples…** opens the same picker.
+2. Choose **File → Open examples…**.
 3. Choose **Build a brief from JSON** (lesson 3). The picker closes and its independent, editable copy becomes the current workflow.
-4. Click **Run**. This lesson needs no model connection or existing reply.
+4. Choose **Graph → Run workflow**. This lesson needs no model connection or existing reply.
 5. Select nodes in turn to inspect the source Text, decoded Data, selected fields, and composed Guidance.
 
 ![Open examples picker with canvas thumbnails and the first nine lessons, including Build a brief from JSON](images/examples-picker.png)
 
 *Choose a named tile to open its native workflow immediately. Build a brief from JSON is the third lesson.*
 
-The picker contains unified story workflows and legacy learning examples. Opening a tile creates a fresh copy every time. Unified examples keep their preparation and response in one workflow. Some legacy recipes include separate Pre/Post companions that validate and install together; select those from the **Workflow** selector. Existing workflows, assignments and enabled state are preserved. Opening does not run anything, assign a workflow, or arm the copies.
+The picker contains unified story workflows and legacy learning examples. Opening a tile creates a fresh copy every time. Unified examples keep their preparation and response in one workflow. Some legacy recipes include separate Pre/Post companions: the primary becomes the active document, and companions remain available through **File → Recover previous workflows**. Opening replaces the active document after the unsaved-changes prompt, preserves Arm, and does not run anything.
 
-New ordinary text-model nodes and canonical legacy starters select **Active SillyTavern model**, which follows your configured host connection and model. Inspect an ordinary model node’s grey profile bar or **Details → Connection profile**; choose a saved profile when that node needs a fixed connection. The connection’s model is the default; a node model override is optional. Imported unified recipes can have unassigned local connections, including For Each helper roles, so follow their setup instructions. Configure a unified example before assigning/arming and using Send; inspect legacy tools with manual Run before enabling their host integration. Pending Node Details text, model override mode/value, and boundary drafts survive browsing and returning to their qualified node; invalid JSON still requires correction before Save.
+New ordinary text-model nodes and canonical legacy starters select **Active SillyTavern model**, which follows your configured host connection and model. Inspect an ordinary model node’s grey profile bar or **Details → Connection profile**; choose a saved profile when that node needs a fixed connection. The connection’s model is the default; a node model override is optional. Imported unified recipes can have unassigned local connections, including For Each helper roles, so follow their setup instructions. Configure the open unified example before enabling Arm and using Send; inspect legacy tools with manual Run before enabling their host integration. Pending Node Details text, model override mode/value, and boundary drafts survive browsing and returning to their qualified node; invalid JSON remains an uncommitted editor draft and is not included in the saved document until corrected and committed.
 
 The [quick start](lattice-workspace.md) walks through changing a brief and trying Literal cleanup. Scene guidance and Reviewed AI De-slop use auxiliary model operations; their canonical starters follow **Active SillyTavern model**, and each node can instead use a saved profile selected in its bar or Details.
 
@@ -116,7 +116,7 @@ Choose **Graph → Rename workflow**, or right-click a graph or subgraph tab and
 
 Use **Details** to show or hide the right panel. Drag its left-edge handle to adjust its width. Drag the divider between Preview and the graph to resize them; both handles also respond to arrow keys. **Collapse preview** provides more graph space. Reopening Preview restores the selected output.
 
-Edits participate in undo/redo. Text fields keep normal browser editing shortcuts. JSON and line-list editors retain drafts until their **Save …** action validates them; autosave does not commit an unfinished editor draft.
+Edits participate in undo/redo. Text fields keep normal browser editing shortcuts. JSON and line-list editors retain drafts until their **Save …** action validates them; file saving and recovery drafts do not commit an unfinished editor draft.
 
 ## Configure operations in Details
 
@@ -182,11 +182,11 @@ Each ordinary text-model node has a grey connection bar below its card and small
 
 **For Each → Helper model bindings** configures the exact pinned helper’s ordinary text-model roles separately; explicit nested bindings retain precedence. **Fast Decision** instead uses its explicit typed connection in **Tools → Fast connections…** and its node connection selector, with authored thresholds and opt-in fallback. The ordinary Active/Saved profile picker does not convert a chat model into a Jev/Laya typed endpoint.
 
-After configuration, choose **Workflows → Assign unified workflow** and Arm for a unified graph, then Send normally. Legacy graphs use **Assign legacy pre phase** or **Assign legacy post phase**. Arming remains a separate action.
+After configuration, keep the unified document open, enable Arm, then Send normally. For an open legacy Pre document, Arm enables guidance on Send. Legacy Post documents run manually.
 
 ## Run and inspect results
 
-For a legacy/manual tool, click **Run** to execute the root. For a unified graph containing Generate Reply, use ordinary SillyTavern **Send** after assignment and arming; supported **Run to here** previews remain diagnostic. The toolbar becomes **Stop** while busy. The bottom-left meter records completion or failure; click it for node-level details, including expanded stages within subgraphs.
+For a legacy/manual tool, choose **Graph → Run workflow** to execute the root. For a unified document containing Generate Reply, use ordinary SillyTavern **Send** with Arm enabled; supported **Run to here** previews remain diagnostic. **Graph → Stop workflow** becomes available while the root is busy. The bottom-left meter records completion or failure; click it for node-level details, including expanded stages within subgraphs.
 
 ![Run details showing a completed five-stage deterministic workflow and zero requests](images/run-details.png)
 
@@ -240,13 +240,13 @@ Choose a saved definition from **Subgraphs → Library** to insert a copy into t
 
 *The wrapper exposes Draft → Patches. Validation, Review Gate, and Apply Reply remain visible in the parent.*
 
-Double-click the wrapper to open its body in a graph tab. **Graph 1** remains the root. Breadcrumbs show where you are; each instance keeps its own camera, selection, and presentation, even if several use the same definition.
+Double-click the wrapper to open its body in a graph tab. The workflow tab retains the open root document. Breadcrumbs show where you are; each instance keeps its own camera, selection, and presentation, even if several use the same definition.
 
 ![Literal cleanup body in a second tab, with input boundary, Text Rules, output boundary, and read-only Details](images/subgraph-tab.png)
 
 *A pinned body opens read-only. You can inspect its ports, settings, and recorded execution without modifying the shared definition.*
 
-Closing a tab hides that view. Use **Graph view actions** to reopen it. Switching tabs does not stop a root run, and the toolbar Run action still belongs to the root workflow.
+Closing a tab hides that view. Use **Graph view actions** to reopen it. Switching subgraph tabs does not stop a root run, and **Graph → Run workflow** still belongs to the open root document.
 
 ### Edit one instance
 
@@ -276,25 +276,29 @@ Use aliases to describe the role of an operation in your process, such as “Sce
 
 ## Save, import, and share
 
-Autosave persists committed workspace edits. It does not accept unsaved JSON drafts, assign a workflow phase, arm the extension, or call a model.
+The active workflow is a JSON document. Committed edits mark it Modified; use a file save to write them to disk. SillyTavern keeps a recovery draft separately so the current document and workspace views can be restored. A recovery draft does not confirm that the file was saved and does not accept unfinished node-editor drafts.
 
 | Action | Result |
 | --- | --- |
-| Workflow selector | Switch to a workflow already saved in Lattice |
-| File → New workflow | Offer Save, Discard, or Cancel for unsaved changes, then open a separate blank Untitled workflow |
-| File → Open workflow… | Choose a workflow JSON file in the system picker and open it as a separate graph |
-| File → Save workflow | Request a save in SillyTavern, retaining local connections and workspace views |
-| File → Import into graph… | Review an additive insertion into the current graph |
-| File → Export workflow JSON… | Download a portable workflow package with pinned definitions |
-| File → Close workspace | Close the editor while retaining committed workflows and workspace views |
+| File → New workflow | Offer Save, Don't Save, or Cancel for unsaved changes, then open an Untitled unified starter |
+| File → Open workflow… | Choose a workflow JSON file in the system picker and replace the active document after the same prompt |
+| File → Open Recent | Reopen a previously used native file, requesting permission again when needed |
+| File → Open examples… | Open a fresh editable example as the active document after the same prompt |
+| File → Save workflow | Write the current native file, retaining local connections and workspace views |
+| File → Save As… | Choose a destination for the document with the native file picker |
+| File → Download JSON… | Download a document copy when native file saving is unavailable |
+| File → Recover previous workflows | Open documents preserved from the old settings collection or example companions; these entries are separate from recent files |
+| File → Import into graph… | Review an additive insertion into the active graph |
+| File → Export workflow JSON… | Download a portable sharing package with pinned definitions |
+| File → Close workspace | Hide the editor while retaining the current document and recovery draft |
 | Wrapper → Export subgraph | Download an individual reusable definition |
 | Wrapper → Add to Subgraphs; shelf entry → Delete | Save reusable definitions and remove shelf entries |
 
-When the unsaved-changes prompt appears, **Save** downloads the current workflow JSON, **Discard** continues without downloading, and **Cancel** keeps the current canvas open. Save and Discard open the blank workflow while retaining the existing workflow and its edits in the workspace. Creating a workflow does not request a name; rename its tab when needed.
+In browsers with native file saving, **Save** in the unsaved-changes prompt writes the current document before switching. **Don't Save** continues without writing the file, and **Cancel** keeps the current document open. Without native saving, the prompt offers **Download JSON**. Downloading keeps the document open and Modified; choose **Don't Save** when you are ready to switch. New opens a unified starter named **Untitled workflow**; rename its graph tab when needed.
 
-An additive import requires matching phases, assigns fresh node identities, and preserves internal connections and relative layout. Review role requirements, terminal changes, and request bounds before accepting the insertion. Import itself does not run or arm the workflow.
+An additive import requires matching phases, assigns fresh node identities, and preserves internal connections and relative layout. Review role requirements, terminal changes, and request bounds before accepting the insertion. Import itself preserves Arm and does not run the workflow.
 
-Save retains connection bindings in SillyTavern settings. Export downloads a `.workflow.json` sharing copy and strips local saved-profile IDs and credentials. Open these files with **File → Open workflow…**; recipients rebind exported fixed connections before running. **Active SillyTavern model** remains portable in nodes, roles and occurrence overrides, following the recipient's configured host connection and model. The browser controls where downloads are saved. Composed workflows carry their pinned definitions. Unsupported versions, dangling connections, incompatible artifacts, or cycles produce validation issues.
+Document saving retains local connection bindings and workspace views in the JSON file. Export makes a portable sharing copy and strips local saved-profile IDs and credentials. Open either with **File → Open workflow…**; recipients rebind exported fixed connections before running. **Active SillyTavern model** remains portable in nodes, roles and occurrence overrides, following the recipient's configured host connection and model. The browser controls where downloads are saved; a download does not declare the current native file saved. Composed workflows carry their pinned definitions. Unsupported versions, dangling connections, incompatible artifacts, or cycles produce validation issues.
 
 ## Develop your own writing system
 

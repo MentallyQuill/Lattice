@@ -1,7 +1,11 @@
 // Public SillyTavern context fixture for current Lattice workflows.
 export function installMock({ prompts = [], chat = [], settings = {} } = {}) {
+    const legacy = ['graphs', 'activeGraphId', 'nativeBindings', 'workspaceViews'].some(key => Object.hasOwn(settings, key));
+    const workflowSettings = legacy
+        ? { schema: 1, enabled: false, graphs: {}, activeGraphId: null, nativeBindings: { preGraphId: null, postGraphId: null }, subgraphLibrary: { definitions: {} }, ui: {}, ...settings }
+        : { schema: 2, enabled: false, recoveryDraft: null, migrationRecovery: [], subgraphLibrary: { definitions: {} }, ui: {}, ...settings };
     const c = {
-        extensionSettings: { lattice: { schema: 1, enabled: false, graphs: {}, activeGraphId: null, nativeBindings: { preGraphId: null, postGraphId: null }, subgraphLibrary: { definitions: {} }, ui: {}, ...settings, nativeBindings: { preGraphId: null, postGraphId: null, ...settings.nativeBindings } } },
+        extensionSettings: { lattice: workflowSettings },
         chatMetadata: {},
         chatCompletionSettings: { prompts, prompt_order: [] },
         chat,

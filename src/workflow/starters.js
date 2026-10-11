@@ -61,14 +61,13 @@ function workspaceStarter(starter) {
     }
     return graph;
 }
-/** Installation only adds independent data. Phase assignment and arming are explicit. */
-export function installStarter(id, settings) {
+/** Prepare an independent starter document; activation and arming belong to callers. */
+export function installStarter(id) {
     const graph = starterGraph(id), suffix = globalThis.crypto?.randomUUID?.() ?? String(Date.now()) + '-' + Math.random().toString(36).slice(2);
     const ids = Object.fromEntries(Object.keys(graph.nodes).map(nodeId => [nodeId, nodeId + '-' + suffix]));
     graph.nodes = Object.fromEntries(Object.values(graph.nodes).map(node => { node.id = ids[node.id]; if (node.inGroup) node.inGroup += '-' + suffix; return [node.id, node]; }));
     graph.wires = Object.fromEntries(Object.values(graph.wires).map(wire => { wire.id += '-' + suffix; wire.from = ids[wire.from]; wire.to = ids[wire.to]; return [wire.id, wire]; }));
     graph.groups = Object.fromEntries(Object.values(graph.groups).map(group => { group.id += '-' + suffix; group.members = group.members.map(member => ids[member]); return [group.id, group]; }));
     graph.id += '-' + suffix; graph.createdAt = graph.updatedAt = Date.now();
-    settings.graphs ??= {}; settings.graphs[graph.id] = graph;
     return graph;
 }

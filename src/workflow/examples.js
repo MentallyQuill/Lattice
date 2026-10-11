@@ -7,7 +7,6 @@ import { validateWorkflow } from './contracts.js?v=0.26.0';
 const ALL_WORKFLOW_EXAMPLES = [...WORKFLOW_EXAMPLE_DATA,...UNIFIED_WORKFLOW_EXAMPLE_DATA];
 let sequence = 0;
 const fail = (code, message) => ({ ok: false, error: { code, message } });
-const plain = value => value !== null && typeof value === 'object' && [Object.prototype, null].includes(Object.getPrototypeOf(value));
 function admitExamplePackages(entry) {
     try {
         if (!Array.isArray(entry.packages) || !entry.packages.length) return fail('MALFORMED_EXAMPLE', 'That workflow example has no primary package.');
@@ -22,25 +21,12 @@ function admitExamplePackages(entry) {
         return { ok: true, data: graphs };
     } catch { return fail('MALFORMED_EXAMPLE', 'That workflow example contains malformed local package data.'); }
 }
-function destinationRegistry(settings) {
-    try {
-        if (!plain(settings)) return null;
-        const property = Object.getOwnPropertyDescriptor(settings, 'graphs');
-        if (!property?.writable || !Object.hasOwn(property, 'value') || !plain(property.value)) return null;
-        const descriptors = Object.getOwnPropertyDescriptors(property.value);
-        if (Reflect.ownKeys(descriptors).some(key => typeof key !== 'string' || ['__proto__', 'prototype', 'constructor'].includes(key) || !descriptors[key].enumerable || !Object.hasOwn(descriptors[key], 'value'))) return null;
-        const entries = Object.fromEntries(Object.entries(descriptors).map(([key, descriptor]) => [key, descriptor.value]));
-        if (Object.values(entries).some(graph => !plain(graph) || Object.getOwnPropertyDescriptor(graph, 'name') && !Object.hasOwn(Object.getOwnPropertyDescriptor(graph, 'name'), 'value'))) return null;
-        return entries;
-    } catch { return null; }
-}
-function independentCopy(source, registry, names) {
+function independentCopy(source) {
     const cloned = cloneWorkflowDocument(source);
     if (!cloned.ok) return cloned;
     const graph = cloned.data;
     const suffix = `${globalThis.crypto?.randomUUID?.() ?? Date.now().toString(36)}-${++sequence}`;
-    let id = `example-copy-${suffix}`;
-    while (Object.hasOwn(registry, id)) id = `example-copy-${suffix}-${++sequence}`;
+    const id = `example-copy-${suffix}`;
     const nodes = Object.fromEntries(Object.keys(graph.nodes).map(id => [id, `${id}-${suffix}`]));
     const groups = Object.fromEntries(Object.keys(graph.groups).map(id => [id, `${id}-${suffix}`]));
     const portals = Object.fromEntries(Object.keys(graph.portals).map(id => [id, `${id}-${suffix}`]));
@@ -64,9 +50,7 @@ function independentCopy(source, registry, names) {
         portal.id = portals[portal.id]; portal.source.nodeId = nodes[portal.source.nodeId];
         return [portal.id, portal];
     }));
-    let name = graph.name, ordinal = 2;
-    while (names.has(name)) name = `${graph.name} (${ordinal++})`;
-    names.add(name); graph.id = id; graph.name = name;
+    graph.id = id;
     graph.createdAt = graph.updatedAt = Date.now();
     return cloneWorkflowDocument(graph);
 }
@@ -91,26 +75,22 @@ export function listWorkflowExampleResults() {
     });
 }
 
-/** Install independent local roots. Saving, activation, assignment and running belong to the caller.
+/** Prepare detached local roots. Saving, activation and running belong to the caller.
  * @param {string} id
- * @param {{graphs: Record<string, import('./types').NativeGraph3>}} settings
  * @returns {import('./types').Result<{graph: import('./types').NativeGraph3, companions: import('./types').NativeGraph3[]}>}
  */
-export function installWorkflowExample(id, settings) {
+export function installWorkflowExample(id) {
     const entry = ALL_WORKFLOW_EXAMPLES.find(entry => entry.id === id);
     if (!entry) return fail('UNKNOWN_EXAMPLE', 'That workflow example is unavailable.');
-    const registry = destinationRegistry(settings);
-    if (!registry) return fail('INVALID_EXAMPLE_DESTINATION', 'Use a writable local workflow registry.');
     const admitted = admitExamplePackages(entry);
     if (!admitted.ok) return admitted;
-    const names = new Set(Object.values(registry).map(graph => Object.getOwnPropertyDescriptor(graph, 'name')?.value)), prepared = [];
+    const prepared = [];
     for (const graph of admitted.data) {
-        const result = independentCopy(graph, registry, names);
+        const result = independentCopy(graph);
         if (!result.ok) return result;
         const validation = validateWorkflow(result.data);
         if (!validation.ok) return validation;
-        registry[result.data.id] = result.data; prepared.push(result.data);
+        prepared.push(result.data);
     }
-    settings.graphs = registry;
     return { ok: true, data: { graph: prepared[0], companions: prepared.slice(1) } };
 }

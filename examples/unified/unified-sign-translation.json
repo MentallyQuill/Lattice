@@ -5,7 +5,7 @@
   "graph": {
     "id": "unified-example-sign-translation",
     "name": "Signs and suggested translations",
-    "description": "Extract signs and inscriptions, then show proposed translations beside the original evidence.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+    "description": "Extract signs and inscriptions, then show proposed translations beside the original evidence.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
     "schema": 3,
     "runtime": 2,
     "mode": "native-unified",

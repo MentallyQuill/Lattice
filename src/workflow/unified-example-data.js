@@ -13,7 +13,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-guidance-prose-notes",
           "name": "Guide, revise and annotate a scene",
-          "description": "Build guidance, generate a native reply, polish its prose, extract notable items, enrich them with context and append an expandable notes section.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "Build guidance, generate a native reply, polish its prose, extract notable items, enrich them with context and append an expandable notes section.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -314,7 +314,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-combat-tactics",
           "name": "Combat with a tactical recap",
-          "description": "Present readable action and a quoted recap of positions, injuries and visible hazards.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "Present readable action and a quoted recap of positions, injuries and visible hazards.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -565,7 +565,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-clue-board",
           "name": "Mystery evidence and open questions",
-          "description": "Append observed clues and character claims while keeping speculation distinct.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "Append observed clues and character claims while keeping speculation distinct.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -839,7 +839,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-travel-vignettes",
           "name": "Travel with useful landmarks",
-          "description": "Produce evocative travel prose with a compact list of public route details.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "Produce evocative travel prose with a compact list of public route details.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -1107,7 +1107,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-inventory-discoveries",
           "name": "Inventory discoveries with provenance",
-          "description": "List newly noticed objects without automatically changing inventory ownership.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "List newly noticed objects without automatically changing inventory ownership.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -1298,7 +1298,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-npc-promises",
           "name": "Promises and obligations",
-          "description": "Keep a visible list of promises and deadlines that characters actually state.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "Keep a visible list of promises and deadlines that characters actually state.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -1489,7 +1489,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-sign-translation",
           "name": "Signs and suggested translations",
-          "description": "Extract signs and inscriptions, then show proposed translations beside the original evidence.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "Extract signs and inscriptions, then show proposed translations beside the original evidence.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -1730,7 +1730,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-continuity-warnings",
           "name": "Continuity facts after a voice pass",
-          "description": "Polish narration and surface quotable continuity facts for human review.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "Polish narration and surface quotable continuity facts for human review.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -1948,7 +1948,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-emotional-subtext",
           "name": "Slow burn with observable moments",
-          "description": "Improve restrained prose and annotate visible gestures without treating inference as a relationship score.\n\nSetup: Bind the Prose role to a local auxiliary model. Assign this copy as the Unified workflow, arm Lattice, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "Improve restrained prose and annotate visible gestures without treating inference as a relationship score.\n\nSetup: Bind the Prose role to a local auxiliary model. Keep this Unified workflow open, enable Arm, then send normally in SillyTavern.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -2199,7 +2199,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "unified-example-scene-journal",
           "name": "A scene journal in an append-only document",
-          "description": "Append a quoted journal entry to an authorized story document only after the candidate is accepted.\n\nSetup: Create a public Text document with targetId scene-journal in Story Documents. Bind Prose; assign and arm this Unified workflow. Append keeps existing contents. Review receipts separately from native chat durability.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "description": "Append a quoted journal entry to an authorized story document only after the candidate is accepted.\n\nSetup: Create a public Text document with targetId scene-journal in Story Documents. Bind Prose; keep this Unified workflow open and enable Arm. Append keeps existing contents. Review receipts separately from native chat durability.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",

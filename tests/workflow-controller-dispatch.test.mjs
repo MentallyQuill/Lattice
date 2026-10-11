@@ -20,8 +20,7 @@ for (const schema of [3, 99]) {
     graph.schema = schema;
     if (schema === 99) graph.nodes.legacy = { id: 'legacy', type: 'generate', title: 'Unsupported old block', x: 0, y: 0 };
     const before = structuredClone(graph);
-    state.settings().graphs[graph.id] = graph;
-    state.settings().activeGraphId = graph.id;
+    state.activateWorkflow(graph, { clean: true });
     UI.open();
     await new Promise(resolve => setTimeout(resolve, 80));
     assert.equal(lore, 0, `schema ${schema} controller never gathers legacy lore`);
@@ -38,8 +37,8 @@ for (const schema of [3, 99]) {
     }
     assert.equal(Object.values(graph.nodes).some(node => node.type === 'output'), false);
     if (schema === 99) assert.equal(document.querySelectorAll('.pc-node').length, 0, 'Rejected documents never reach Canvas');
-    assert.equal(state.getGraph(graph.id), graph, 'UI retains the actual saved root identity');
-    assert.deepEqual(state.getGraph(graph.id), before, 'native preview/context navigation cannot repair or mutate the saved root');
+    assert.equal(state.activeWorkflow(), graph, 'UI retains the actual document root identity');
+    assert.deepEqual(state.activeWorkflow(), before, 'native preview/context navigation cannot repair or mutate the document root');
     UI.close();
 }
 console.log('workflow-controller-dispatch: ok');

@@ -71,99 +71,38 @@ for (const lesson of authoring.entries) for (const detail of lesson.nodeDetails)
 }
 console.log('workflow-examples packages: ok');
 
-// Reusing canonical IDs or nested settings must not let edits cross copy boundaries.
-assert.equal(typeof api.installWorkflowExample, 'function', 'the local installer is available');
-const originalGraph = { id: 'original', name: 'Existing root', description: 'Keep this live object', nodes: {} };
-const settings = { graphs: { original: originalGraph }, activeGraphId: 'original', enabled: true,
-    nativeBindings: { preGraphId: 'original', postGraphId: null }, ui: { palette: 'olive' } };
+// Copies own their primary and companion roots without a settings collection.
 const canonical = JSON.stringify(listWorkflowExamples());
-const first = api.installWorkflowExample('continuity-and-voice', settings);
-assert.equal(first.ok, true, JSON.stringify(first.error));
-assert.equal(first.data.companions.length, 1);
-const second = api.installWorkflowExample('continuity-and-voice', settings);
-assert.equal(second.ok, true, JSON.stringify(second.error));
-assert.notEqual(first.data.graph.id, second.data.graph.id);
-assert.notEqual(first.data.graph.name, second.data.graph.name);
+const first = api.installWorkflowExample('continuity-and-voice'), second = api.installWorkflowExample('continuity-and-voice');
+assert.equal(first.ok, true, JSON.stringify(first.error)); assert.equal(second.ok, true, JSON.stringify(second.error));
+assert.equal(first.data.companions.length, 1); assert.notEqual(first.data.graph.id, second.data.graph.id);
+assert.equal(first.data.graph.name, second.data.graph.name);
 assert.notDeepEqual(Object.keys(first.data.graph.nodes), Object.keys(second.data.graph.nodes));
-const firstSource = Object.values(first.data.graph.nodes).find(node => node.operation === 'scene-context');
-const secondSource = Object.values(second.data.graph.nodes).find(node => node.operation === 'scene-context');
-firstSource.recentMessages = 3;
-assert.equal(secondSource.recentMessages, 12);
+Object.values(first.data.graph.nodes).find(node => node.operation === 'scene-context').recentMessages = 3;
+assert.equal(Object.values(second.data.graph.nodes).find(node => node.operation === 'scene-context').recentMessages, 12);
 const firstDefinition = Object.values(first.data.graph.definitions).find(definition => definition.id === 'lattice.examples.continuity-character');
 const secondDefinition = Object.values(second.data.graph.definitions).find(definition => definition.id === 'lattice.examples.continuity-character');
 firstDefinition.body.nodes.reflect.instructions = 'Changed locally';
 assert.notEqual(secondDefinition.body.nodes.reflect.instructions, 'Changed locally');
 first.data.companions[0].nodes[Object.keys(first.data.companions[0].nodes)[0]].alias = 'Edited companion';
 assert.notEqual(second.data.companions[0].nodes[Object.keys(second.data.companions[0].nodes)[0]].alias, 'Edited companion');
-assert.equal(JSON.stringify(listWorkflowExamples()), canonical, 'copy edits leave canonical roots and definition settings unchanged');
+assert.equal(JSON.stringify(listWorkflowExamples()), canonical);
+assert.equal(api.installWorkflowExample('missing-example').error.code, 'UNKNOWN_EXAMPLE');
 
-// An unknown tile identifier is a pure recoverable failure, never a thrown exception.
-const beforeUnknown = JSON.stringify(settings), registryBeforeUnknown = settings.graphs;
-let unknown;
-assert.doesNotThrow(() => { unknown = api.installWorkflowExample('missing-example', settings); });
-assert.equal(unknown.ok, false);
-assert.equal(unknown.error.code, 'UNKNOWN_EXAMPLE');
-assert.equal(settings.graphs, registryBeforeUnknown);
-assert.equal(JSON.stringify(settings), beforeUnknown);
-
-// A syntactically portable companion with a missing required boundary input must
-// fail full admission before the already-valid primary can be installed.
 const { WORKFLOW_EXAMPLE_DATA } = await import('../src/workflow/example-data.js?v=0.26.0');
-async function installerWithRecipe(recipe) {
-    return installerWithCatalog([recipe]);
-}
+async function installerWithRecipe(recipe) { return installerWithCatalog([recipe]); }
 async function installerWithCatalog(catalog) {
     const fixtureURL = 'data:text/javascript,' + encodeURIComponent(`export const WORKFLOW_EXAMPLE_DATA = ${JSON.stringify(catalog)};`);
     const moduleURL = new URL('../src/workflow/examples.js', import.meta.url);
     const source = readFileSync(moduleURL, 'utf8').replace(/from '(\.\/[^']+)'/g, (_, path) => `from ${JSON.stringify(path.startsWith('./example-data.js') ? fixtureURL : new URL(path, moduleURL).href)}`);
     return import('data:text/javascript,' + encodeURIComponent(source));
 }
+// Full admission rejects a broken companion before it can expose a partial bundle.
 const incompleteRecipe = structuredClone(WORKFLOW_EXAMPLE_DATA.find(entry => entry.id === 'continuity-and-voice'));
-const incompleteCompanion = incompleteRecipe.packages[1];
-delete incompleteCompanion.graph.wires['wire-1'];
-assert.equal(parseWorkflow(JSON.stringify(incompleteCompanion)).ok, true, 'this fixture specifically crosses full admission after structure parsing');
+delete incompleteRecipe.packages[1].graph.wires['wire-1'];
+assert.equal(parseWorkflow(JSON.stringify(incompleteRecipe.packages[1])).ok, true);
 const incompleteAPI = await installerWithRecipe(incompleteRecipe);
-const atomicSettings = { graphs: { original: originalGraph }, activeGraphId: 'original', enabled: true, nativeBindings: { preGraphId: 'original', postGraphId: null } };
-const atomicBefore = JSON.stringify(atomicSettings), atomicRegistry = atomicSettings.graphs;
-const incomplete = incompleteAPI.installWorkflowExample('continuity-and-voice', atomicSettings);
-assert.equal(incomplete.ok, false, 'a missing required companion input blocks the complete recipe');
-assert.equal(atomicSettings.graphs, atomicRegistry);
-assert.equal(JSON.stringify(atomicSettings), atomicBefore, 'failed admission installs neither primary nor companion and preserves active root');
-
-// Reject inaccessible destinations as Results; preflight must never trigger an
-// accessor or replace a frozen registry property after preparing copies.
-for (const invalidSettings of [null, {}, { graphs: [] }, Object.freeze({ graphs: {} })]) {
-    let result;
-    assert.doesNotThrow(() => { result = api.installWorkflowExample('scene-brief-basics', invalidSettings); });
-    assert.equal(result.ok, false);
-    assert.equal(result.error.code, 'INVALID_EXAMPLE_DESTINATION');
-}
-let accessorReads = 0;
-const accessorDestination = Object.defineProperty({}, 'graphs', { enumerable: true, get() { accessorReads++; return {}; } });
-assert.equal(api.installWorkflowExample('scene-brief-basics', accessorDestination).ok, false);
-assert.equal(accessorReads, 0, 'admission inspects data descriptors without evaluating accessors');
-
-// Existing names reserve both bundle members; unrelated state remains the exact
-// same data while every returned copy is the graph installed in the registry.
-const occupied = { graphs: { a: { id: 'a', name: 'Combine memory with a voice pass' }, b: { id: 'b', name: 'Combine memory with a voice pass (2)' },
-    c: { id: 'c', name: 'Combine memory with a voice pass · Post' } }, activeGraphId: 'a', enabled: false,
-    nativeBindings: { preGraphId: 'a', postGraphId: 'c' }, ui: { remember: ['scroll', 'draft'] }, subgraphLibrary: { definitions: {} } };
-const occupiedGraphs = { ...occupied.graphs }, preservedBindings = occupied.nativeBindings, preservedUI = occupied.ui, preservedLibrary = occupied.subgraphLibrary;
-const named = api.installWorkflowExample('continuity-and-voice', occupied);
-assert.equal(named.ok, true, JSON.stringify(named.error));
-assert.equal(named.data.graph.name, 'Combine memory with a voice pass (3)');
-assert.equal(named.data.companions[0].name, 'Combine memory with a voice pass · Post (2)');
-assert.equal(occupied.activeGraphId, 'a');
-assert.equal(occupied.enabled, false);
-assert.equal(occupied.nativeBindings, preservedBindings);
-assert.equal(occupied.ui, preservedUI);
-assert.equal(occupied.subgraphLibrary, preservedLibrary);
-for (const [id, graph] of Object.entries(occupiedGraphs)) assert.equal(occupied.graphs[id], graph);
-for (const graph of [named.data.graph, ...named.data.companions]) {
-    assert.equal(occupied.graphs[graph.id], graph);
-    assert.equal(validateWorkflow(graph).ok, true);
-    for (const [key, definition] of Object.entries(graph.definitions)) assert.equal(key, definitionRefKey(definition), 'root renaming retains native semantic pinned identities');
-}
+assert.equal(incompleteAPI.installWorkflowExample('continuity-and-voice').ok, false);
 const twinRoots = {
     'persistent-conditions': { post: 1, pre: 1 }, 'promise-callback': { pre: 0, post: 1 },
     'anger-and-trust': { post: 1, pre: 1 }, 'earned-trust': { post: 1, pre: 1 },
@@ -171,39 +110,25 @@ const twinRoots = {
     'continuity-and-voice': { pre: 2, post: 1 },
 };
 for (const entry of entries) {
-    const destination = { graphs: {}, activeGraphId: null, enabled: false, nativeBindings: { preGraphId: null, postGraphId: null } };
-    const installed = api.installWorkflowExample(entry.id, destination);
+    const installed = api.installWorkflowExample(entry.id);
     assert.equal(installed.ok, true, `${entry.id}: ${JSON.stringify(installed.error)}`);
     assert.equal(installed.data.graph.mode, entry.graph.mode);
     assert.equal(installed.data.companions.length, Object.hasOwn(twinRoots, entry.id) ? 1 : 0);
-    assert.equal(Object.keys(destination.graphs).length, installed.data.companions.length + 1);
-    assert.equal(destination.activeGraphId, null);
-    assert.deepEqual(destination.nativeBindings, { preGraphId: null, postGraphId: null });
-    assert.equal(destination.enabled, false);
     for (const graph of [installed.data.graph, ...installed.data.companions]) {
-        const checked = validateWorkflow(graph);
-        assert.equal(checked.ok, true, JSON.stringify(checked.error));
+        const checked = validateWorkflow(graph); assert.equal(checked.ok, true, JSON.stringify(checked.error));
         if (twinRoots[entry.id]) assert.equal(checked.data.callBound, twinRoots[entry.id][graph.mode.slice(7)]);
         assert.ok(checked.data.requiredRoles.every(role => ['Analysis', 'Prose'].includes(role)));
+        for (const [key, definition] of Object.entries(graph.definitions)) assert.equal(key, definitionRefKey(definition));
     }
 }
 const malformedRecipe = structuredClone(WORKFLOW_EXAMPLE_DATA.find(entry => entry.id === 'continuity-and-voice'));
 malformedRecipe.packages[1].graph.wires['wire-1'].to = 'missing-voice-node';
 const malformedAPI = await installerWithRecipe(malformedRecipe);
-const malformed = malformedAPI.installWorkflowExample('continuity-and-voice', atomicSettings);
-assert.equal(malformed.ok, false);
-assert.equal(malformed.error.code, 'DANGLING_WIRE');
-assert.equal(atomicSettings.graphs, atomicRegistry);
-assert.equal(JSON.stringify(atomicSettings), atomicBefore);
-
-const emptyRecipe = structuredClone(WORKFLOW_EXAMPLE_DATA[0]);
-emptyRecipe.packages = [];
+assert.equal(malformedAPI.installWorkflowExample('continuity-and-voice').error.code, 'DANGLING_WIRE');
+const emptyRecipe = structuredClone(WORKFLOW_EXAMPLE_DATA[0]); emptyRecipe.packages = [];
 const emptyAPI = await installerWithRecipe(emptyRecipe);
-const empty = emptyAPI.installWorkflowExample(emptyRecipe.id, atomicSettings);
-assert.equal(empty.ok, false, 'an empty local recipe cannot report a successful root installation');
-assert.equal(atomicSettings.graphs, atomicRegistry);
-assert.equal(JSON.stringify(atomicSettings), atomicBefore);
-console.log('workflow-examples atomic installation: ok');
+assert.equal(emptyAPI.installWorkflowExample(emptyRecipe.id).ok, false);
+console.log('workflow-examples detached admission: ok');
 
 // The picker must receive a failure for one malformed lesson rather than lose
 // the entire catalog. Its other 29 identities and independently admitted roots
@@ -222,7 +147,7 @@ assert.equal(available[4].result.error.code, 'UNKNOWN_OPERATION');
 assert.equal(available.filter(entry => entry.result.ok).length, 29);
 for (const entry of available.filter(entry => entry.result.ok)) {
     assert.equal(validateWorkflow(entry.result.data).ok, true);
-    const installed = damagedAPI.installWorkflowExample(entry.id, { graphs: {} });
+    const installed = damagedAPI.installWorkflowExample(entry.id);
     assert.equal(installed.ok, true, `${entry.id}: ${JSON.stringify(installed.error)}`);
 }
 const validSource = available[0].result.data.nodes.brief;

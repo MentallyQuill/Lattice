@@ -317,7 +317,7 @@ test('completed root movement commits authored geometry once while cancellation,
     session.updateView({ nodePresentation:{'compose-json':{alias:'Retained alias',x:1,y:2}} });
     const before=structuredClone(root), signature=workflowSignature(root), stored={workspaceViews:{}}, queued=new Map(); let commits=0, storedRoot=root, ticket=0;
     const env = { current:root, graphViews:session, editorDraw:api.projectEditorDraw(session.readEditor()), positionEdit:null, editorCaptures:new WeakMap(), workspaceRevision:0,
-        activeEditRoot:()=>storedRoot, isOpen:()=>true, readGraphEditContext:()=>session.readEditContext(), captureGraphEditContext, prepareQualifiedScopeEdit, toast(){}, viewSaveTimer:null, settings:()=>stored, save(){}, setTimeout(callback){queued.set(++ticket,callback);return ticket;}, clearTimeout(id){queued.delete(id);},
+        activeEditRoot:()=>storedRoot, isOpen:()=>true, readGraphEditContext:()=>session.readEditContext(), captureGraphEditContext, prepareQualifiedScopeEdit, toast(){}, viewSaveTimer:null, activeWorkflow:()=>storedRoot, setActiveWorkspaceViews:data=>{stored.workspaceViews[root.id]=data;}, settings:()=>stored, save(){}, setTimeout(callback){queued.set(++ticket,callback);return ticket;}, clearTimeout(id){queued.delete(id);},
         activateEditorDraw(){env.editorDraw=api.projectEditorDraw(session.readEditor());}, graphDocumentHooks:{},
         commitGraphEdit(graph,command){const result=commitPreparedGraph(graph,command);if(result.ok){commits++;const latest=api.prepareWorkspaceViews(root);session.replacePreparedViews({navigation:[...latest.data.navigation,...library.data.navigation],preparedViews:[...latest.data.preparedViews,...library.data.preparedViews]});}return result;} };
     for(const name of ['captureEditor','editorCurrent','scopeCommand','commitCaptured','prepareScopeMutation'])env[name]=controllerFunction(name,env);
@@ -393,7 +393,7 @@ test('unified workspace keeps effective node stages and shows typed decisions se
     assert.equal(prepared.ok,true,JSON.stringify(prepared.error));assert.equal(textResolutions,0);assert.equal(fastResolutions,1);
     const session=createGraphViewSession({root,activationId:'unified-panels',...prepared.data}).data;
     session.updateView({selection:{primary:{kind:'node',id:'fast'},multi:[]}});
-    const workflow=projectPreparedWorkflow(prepared.data.workflow,{selectedId:'fast'});assert.equal(workflow.assigned,true);
+    const workflow=projectPreparedWorkflow(prepared.data.workflow,{selectedId:'fast'});assert.equal(workflow.graphId,root.id);
     assert.ok(workflow.nodes.some(node=>node.id==='reply-snapshot'&&node.phase==='post'));assert.ok(workflow.nodes.some(node=>node.id==='context'&&node.phase==='pre'));
     assert.ok(workflow.families.flatMap(family=>family.operations).find(operation=>operation.id==='repair').compatible);
     const details=api.projectWorkspacePanels(session.readEditor(),workflow,{},'unified',null,null).nodeDetails;

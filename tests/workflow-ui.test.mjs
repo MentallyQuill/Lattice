@@ -7,11 +7,11 @@ const { starterGraph, installStarter } = await import('../src/workflow/starters.
 const { prepareWorkflowProjection, projectPreparedWorkflow, parseWorkflowRules } = await import('../src/ui/workflow-surface.js?v=0.26.0');
 const { prepareWorkspaceViews } = await import('../src/ui/workspace-preparation.js?v=0.26.0');
 const project = (root, options) => projectPreparedWorkflow(prepareWorkflowProjection(root, options));
-test('installing any actual example leaves generation unarmed and phases unassigned', () => {
-    const before = structuredClone(S.settings().nativeBindings);
+test('preparing any starter leaves generation unarmed and the active document unchanged', () => {
+    const before = S.activeWorkflow();
     for (const id of ['native-guidance','reviewed-de-slop','literal-cleanup','structured-guidance']) {
-        const graph = installStarter(id, S.settings()); assert.equal(graph.schema,3); assert.equal(graph.runtime,2);
-        assert.equal(S.settings().enabled,false); assert.deepEqual(S.settings().nativeBindings,before);
+        const graph = installStarter(id); assert.equal(graph.schema,3); assert.equal(graph.runtime,2);
+        assert.equal(S.settings().enabled,false); assert.equal(S.activeWorkflow(),before);
     }
 });
 test('actual zero-call examples and operation controls project without connection or model effects', () => {

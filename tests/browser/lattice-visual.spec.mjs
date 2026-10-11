@@ -1,3 +1,4 @@
+import { rootCommand, expectRootBusy } from './workflow-commands.mjs';
 import { test, expect } from '@playwright/test';
 
 async function openNativeWorkspace(page, starter = 'structured-guidance') {
@@ -8,11 +9,10 @@ async function openNativeWorkspace(page, starter = 'structured-guidance') {
         const version = (await (await fetch('/manifest.json')).json()).version;
         const { starterGraph } = await import('/src/workflow/starters.js?v=' + version);
         const graph = starterGraph(starter);
-        h.S.settings().graphs[graph.id] = graph;
-        h.S.save(); h.UI.refreshIfOpen();
+        await h.activate(graph);
         return graph.id;
     }, starter);
-    await page.getByRole('combobox', { name: 'Workflow', exact: true }).selectOption(graphId);
+
     await page.evaluate(() => window.canvasHarness.settle());
 }
 
@@ -134,7 +134,7 @@ test('a selected failed native node keeps its red ring and dimmed interior', asy
     await page.evaluate(() => window.canvasHarness.settle());
     const failed = page.locator('.pc-node-native[data-id="json-decode"]');
     const before = await failed.boundingBox();
-    await page.locator('.pc-root-run').click();
+    await rootCommand(page);
     await expect(failed).toHaveClass(/pc-trace-failed/);
     await expect(page.locator('.pc-node-native.pc-trace-blocked').first()).toBeVisible();
     await failed.locator('.pc-native-heading').click();

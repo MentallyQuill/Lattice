@@ -80,7 +80,9 @@ try {
     page.on('request', request => requests.push(request.url()));
     await page.goto(`http://127.0.0.1:${server.address().port}/tests/browser/harness.html`); await page.waitForFunction(() => !!window.canvasHarness);
     const result = await page.evaluate(async () => {
-        const h = window.canvasHarness, { UI, S, canvas, settle } = h, graph = h.graph, root = document.querySelector('.pc-root');
+        const h = window.canvasHarness, { UI, S, canvas, settle } = h, graph = S.activeWorkflow(), root = document.querySelector('.pc-root');
+        const { validateWorkflow } = await import('/src/workflow/contracts.js?v=' + h.version);
+        const checked = validateWorkflow(graph), settings = S.settings();
         const helpers = await import('/script.js'), context = globalThis.SillyTavern.getContext();
         const index = context.chat.length;
         const message = { mes: 'Synthetic original', swipe_id: 0, swipes: ['Synthetic original', 'Synthetic revision'], swipe_info: [{ send_date: 1, extra: {} }, { send_date: 2, extra: { revised: true } }], extra: { preserved: true } };
@@ -89,9 +91,9 @@ try {
         context.chat.pop();
         const node = Object.values(graph.nodes).find(node => node.operation === 'generate-reply'); canvas.select({ kind: 'node', id: node.id });
         UI.close(); window.lattice.open(); await settle();
-        return { publicHelpers, mounted: root === document.querySelector('.pc-root'), sharedGraph: graph === window.canvasHarness.graph,
+        return { publicHelpers, mounted: root === document.querySelector('.pc-root'), sharedGraph: graph === S.activeWorkflow() && graph === window.canvasHarness.graph,
             launchers: document.getElementById('pc-sendbar')?.parentElement?.id === 'leftSendForm' && !!document.getElementById('pc-sendbar')?.querySelector('img[src$="/assets/lattice-logo.svg"]') && !!document.getElementById('pc-menu-launch'), workbench: root.dataset.pcWorkbench,
-            fresh: h.freshSettingsAbsent && graph.template.id === 'unified-basic' && graph.mode === 'native-unified' && graph.schema === 3 && graph.runtime === 2 && !S.settings().enabled && S.settings().nativeBindings.workflowGraphId === null && S.settings().nativeBindings.preGraphId === null && S.settings().nativeBindings.postGraphId === null,
+            fresh: h.freshSettingsAbsent && graph.name === 'Unified story workflow' && graph.template?.id === 'unified-basic' && graph.mode === 'native-unified' && graph.schema === 3 && graph.runtime === 2 && checked.ok && checked.data.callBound === 0 && !settings.enabled && !root.querySelector('.pc-arm-input').checked && ['graphs', 'activeGraphId', 'nativeBindings'].every(key => !Object.hasOwn(settings, key)),
             providerCalls: h.providerCalls(), retiredPins: !!root.querySelector('.pc-node-output,.pc-port-key,.pc-port-stage,.pc-tok'), node: !!root.querySelector(`[data-id="${node.id}"]`) };
     });
     if (errors.length || missing.length || !result.publicHelpers || !result.mounted || !result.sharedGraph || !result.launchers || !result.fresh || result.providerCalls || result.retiredPins || !result.node || result.workbench !== 'svelte') throw Error(JSON.stringify({ result, errors, missing }));

@@ -100,7 +100,7 @@
           "settings": {
             "budgetTokens": 192
           },
-          "inspect": "Inspect the full root preview. Publication uses the ordinary assigned, armed native-send path; previewing writes no event."
+          "inspect": "Inspect the full root preview. Publication uses the ordinary native-send path with this workflow open and Arm enabled; previewing writes no event."
         }
       ],
       "annotations": [
@@ -122,7 +122,7 @@
         "buildsOn": null
       },
       "commentGroups": [],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -301,7 +301,7 @@
         "buildsOn": "scene-brief-basics"
       },
       "commentGroups": [],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -581,7 +581,7 @@
         "buildsOn": "configured-phrase-repair"
       },
       "commentGroups": [],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -832,7 +832,7 @@
         "buildsOn": "structured-brief-basics"
       },
       "commentGroups": [],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -1076,7 +1076,7 @@
           "settings": {
             "budgetTokens": 320
           },
-          "inspect": "Inspect the labeled Guidance Host result. A manual Run previews it; an assigned enabled Pre workflow installs it on Send. Budget overflow fails instead of silently enlarging the brief."
+          "inspect": "Inspect the labeled Guidance Host result. A manual Run previews it; the open Pre workflow installs it on Send when Arm is enabled. Budget overflow fails instead of silently enlarging the brief."
         }
       ],
       "annotations": [
@@ -1101,7 +1101,7 @@
         "buildsOn": "canonical-terminology"
       },
       "commentGroups": [],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -1297,7 +1297,7 @@
       "annotations": [
         {
           "title": "Source → selected cause",
-          "text": "The two left nodes prepare evidence, not a turn counter. This recipe runs when assigned; it contains no automatic stall detector or trigger router."
+          "text": "The two left nodes prepare evidence, not a turn counter. This recipe runs on Send while open with Arm enabled; it contains no automatic stall detector or trigger router."
         },
         {
           "title": "Interpretation → delivery",
@@ -1315,7 +1315,7 @@
         "buildsOn": "player-agency"
       },
       "commentGroups": [],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -1532,7 +1532,7 @@
         "buildsOn": "next-meaningful-beat"
       },
       "commentGroups": [],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -1746,7 +1746,7 @@
         "buildsOn": "legible-action"
       },
       "commentGroups": [],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -1995,7 +1995,7 @@
         "buildsOn": "ensemble-focus"
       },
       "commentGroups": [],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -2291,7 +2291,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -2597,7 +2597,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -2903,7 +2903,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -3210,7 +3210,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -3518,7 +3518,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -3816,7 +3816,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -4184,7 +4184,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -4523,7 +4523,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -4770,7 +4770,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -5031,7 +5031,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -5423,7 +5423,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -5924,7 +5924,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -6306,7 +6306,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -6747,7 +6747,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -7292,7 +7292,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -7852,7 +7852,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Post",
@@ -8351,7 +8351,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -8831,7 +8831,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -9379,7 +9379,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -9913,7 +9913,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "authoringGraphs": [
         {
           "phase": "Pre",
@@ -10831,7 +10831,7 @@
           "fitToContents": true
         }
       ],
-      "authoringStatus": "Validated native packages generated in examples/roleplay/; primary and companions open atomically as independent unassigned copies",
+      "authoringStatus": "Validated native packages generated in examples/roleplay/; the primary opens as the active workflow document; companions remain available in Recover previous workflows",
       "subgraphs": [
         {
           "id": "lattice.examples.continuity-character",

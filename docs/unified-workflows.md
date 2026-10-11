@@ -2,23 +2,25 @@
 
 [Documentation](README.md) · [Quick start](lattice-workspace.md) · [Node reference](node-reference.md) · [Model connections](native-workflows.md)
 
-A unified workflow prepares guidance, waits for SillyTavern to generate its ordinary reply, and then processes that reply in the same graph. You assign one workflow. Preparation and response remain useful stages inside it; they no longer require switching between two graphs.
+A unified workflow prepares guidance, waits for SillyTavern to generate its ordinary reply, and then processes that reply in the same graph. The one open workflow document supplies both stages when Arm is enabled. Preparation and response remain useful stages inside it.
 
 The normal SillyTavern connection writes the main reply. Other model nodes have their own connections and can plan, judge, revise, extract or enrich material. Their outputs become graph artifacts that you can inspect before applying the final result.
 
 ## Apply an example to Story-2
 
 1. In SillyTavern, select **default-user**, open **Story-2**, and select the character who will produce the native reply. User, chat and character selection determine the workflow's live sources and private stores.
-2. Open LATTICE beside the chat's Send button, or enter `/lattice`. A fresh workspace starts with **Unified story workflow**, disabled and unassigned. Existing installations retain their saved selection.
-3. Choose **File → Open examples…** or **Workflows → Workflow examples…**. Open a unified example whose goal fits your story. Each opening creates an independent editable copy; it does not send a request, assign the workflow or enable LATTICE. The example's description contains its setup and inspection instructions.
+2. Open LATTICE beside the chat's Send button, or enter `/lattice`. A fresh workspace opens **Unified story workflow** with **Arm** off. Existing installations restore their current document from a recovery draft; earlier collections remain available through **File → Recover previous workflows**.
+3. Choose **File → Open examples…**. Open a unified example whose goal fits your story. Each opening makes a new editable copy the active document after offering to save unsaved changes. Opening preserves Arm and makes no request. The example's description contains its setup and inspection instructions.
 4. Adapt its literal instructions, actor/item identities, schemas and document targets. Example names and actors are authored demonstration material. A loaded character's canonical ID is normally `character:<avatar filename>`; a display name alone is not a live actor identity.
 5. Choose every ordinary text-model node’s connection in its grey profile bar or **Details → Connection profile**. Use **Active SillyTavern model** to follow the current host connection/model, or choose a saved Connection Manager profile for a fixed connection. Leave **Model mode → Use profile model** unless that particular node needs an explicit model identifier. Configure any **For Each → Helper model bindings** as well; assigning the extraction node's profile does not assign its confirmation helper.
 6. If the example reads or writes documents, authorize its named targets in **Tools → Story documents…** first. If it uses Fast Decision, configure **Tools → Fast connections…** and select that connection in the node. Resolve the graph's validation and binding issues before sending.
-7. Choose **Workflows → Assign unified workflow**, then enable **Arm**. Assignment chooses the host workflow; Arm enables integration. Merely selecting a graph in the editor does not assign it.
-8. Return to SillyTavern and **Send** your next player message normally. The workflow runs the necessary preparation, resumes from the completed native Draft, and records its response-stage results. A generated swipe can run the same assigned workflow when its configured sources and target policies permit it.
+7. Keep this unified workflow open and enable **Arm**. Send uses the active document; switching to another file or example changes the workflow used by subsequent sends while preserving Arm.
+8. Return to SillyTavern and **Send** your next player message normally. The workflow runs the necessary preparation, resumes from the completed native Draft, and records its response-stage results. A generated swipe can run the same open workflow when its configured sources and target policies permit it.
 9. Open Preview and select the desired **Review / Publish · Host result**. Compare the original, proposed body, appended sections, model trace and staged consequences. Choose **Apply reviewed candidate** or **Reject candidate**.
 
 Apply creates a new assistant swipe and preserves the native original. It then settles the effects associated with that exact reviewed root result. Reject leaves the original and does not accept its pending file, clock, random-outcome or accepted-policy Recall effects. A completed candidate is still a proposal until you apply it.
+
+Save your configured workflow with **File → Save workflow**, or use **Save As…** for a new JSON file. Native saving retains local bindings and workspace views; **Open Recent** reopens previously used files. If the browser lacks native file saving, **Download JSON…** offers a copy without confirming that the current file was saved. LATTICE's recovery draft in SillyTavern is separate from these files.
 
 Use **Run to here** to inspect supported preparation or source operations without accepting changes. A full unified workflow containing Generate Reply needs an owned SillyTavern generation; a manual Run does not secretly start another main reply. Legacy pre/post tools still support their existing explicit Run behavior.
 
@@ -210,7 +212,7 @@ A **Recall** node reads checked stored records through an authorized Read File o
 
 For a file memory set, create an actor-private JSON target, Read File it in the correct actor scope, and route the record list to Recall's `records` pin. Set the same actor and `memorySetId` on Recall and **Hotkey Arm**. Wire Recall's Guidance causally into Generate Reply for a pre-generation reminder. Verify the actor's live presence independently. For keyword activation, connect the current Player Event Source to Recall's source pin; for event activation, supply genuine confirmed occurrences. A reply-stage trigger can affect response processing or a later generation, not the native prompt that already ran.
 
-Open **Tools → Recall arms…** after assigning the unified workflow and enabling LATTICE. It shows the live user/chat/actor, each configured memory set, its shortcut, remaining reply/swipe eligibility and pending generations. Use **Arm** and **Disarm** here, or the configured shortcut. An armed badge opens the same panel. Running Hotkey Arm in Preview does not arm it.
+Open **Tools → Recall arms…** with the unified workflow open and LATTICE enabled. It shows the live user/chat/actor, each configured memory set, its shortcut, remaining reply/swipe eligibility and pending generations. Use **Arm** and **Disarm** here, or the configured shortcut. An armed badge opens the same panel. Running Hotkey Arm in Preview does not arm it.
 
 Hotkeys use physical key codes, such as Control+Shift+R. They require Control, Alt or Meta for letter/digit keys, or a function key. They do not fire while typing in inputs, textareas, selects or editable text, during composition or key repeat. Duplicate active shortcuts require different combinations.
 
@@ -229,7 +231,7 @@ Native Recall currently serves the selected native actor. Multiple present actor
 
 ## Move an existing pre/post setup
 
-Saved **native-pre** and **native-post** workflows remain available. **Workflows → New legacy pre workflow / New legacy post workflow** creates explicit tools, and the assigned legacy phase keeps its existing behavior. Selecting a legacy assignment replaces the unified host assignment; separate assignments are not a way to stack a second host generation pipeline on top of the unified workflow.
+Saved **native-pre** and **native-post** workflows remain openable with **File → Open workflow…** or **File → Recover previous workflows** for the former settings collection. Legacy tools run manually through **Graph → Run workflow**. With Arm enabled, an open Pre document also adds guidance before Send; an open Post document remains manual. Opening a legacy document replaces the active unified document, so only the open document participates in Send.
 
 There is no automatic legacy converter. Create a new unified workflow or open an updated example, then reuse suitable operations or pinned subgraphs explicitly:
 
@@ -238,7 +240,7 @@ There is no automatic legacy converter. Create a new unified workflow or open an
 3. Replace a latest-reply Snapshot dependency with the owned Generate Reply Draft where the response process needs this generation's reply.
 4. Keep compatible patch validation where useful, or use Revise Draft for direct source-bound Draft revisions. End the final Draft in Review / Publish.
 5. Keep native sources, Memory, file references, Recall, clocks and publication at the root when their contracts require it. Reusable pure processing belongs in subgraphs.
-6. Rebind local model and helper connections, authorize documents, inspect the graph, then assign and Arm it.
+6. Rebind local model and helper connections, authorize documents, inspect the graph, save the document, then keep it open and enable Arm.
 
 Imports and exports preserve pinned definition identities and supported saved controls. Adding a fragment is a reviewed edit with phase/type checks, not an implicit conversion between workflow modes. Preserve the original legacy graph while adapting a copy.
 
@@ -246,7 +248,7 @@ Imports and exports preserve pinned definition identities and supported saved co
 
 | Symptom | Check |
 | --- | --- |
-| A unified Run cannot generate | Start with ordinary SillyTavern Send after assignment and Arm; manual Run to here only tests supported dependencies. |
+| A unified Run cannot generate | Start with ordinary SillyTavern Send while the unified document is open and Arm is enabled; manual Run to here only tests supported dependencies. |
 | A model branch has no usable connection | Configure that node and each selected For Each helper role; inspect the effective profile/model and explicit nested overrides. |
 | Fast Decision cannot connect | Verify the typed connection/model, full endpoint and session credential; a text profile is not a SystemOne capability. |
 | A condition is unresolved | Inspect the missing path, null Decision answer or confidence middle range; wire an explicit unresolved policy. |

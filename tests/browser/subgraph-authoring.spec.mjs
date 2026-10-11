@@ -24,14 +24,14 @@ async function create(page) {
     await page.getByRole('menuitem', { name: 'Create subgraph', exact: true }).click();
     await expect(page.locator('.pc-graph-tabs [role="tab"][aria-selected="true"]')).toContainText('Subgraph');
     return page.evaluate(() => {
-        const root = structuredClone(window.canvasHarness.S.getGraph('subgraph-authoring'));
+        const root = structuredClone(window.canvasHarness.S.activeWorkflow());
         delete root.updatedAt;
         return Object.values(root.nodes).find(node => node.type === 'subgraph').id;
     });
 }
 async function snapshot(page) {
     return page.evaluate(() => {
-        const root = structuredClone(window.canvasHarness.S.getGraph('subgraph-authoring'));
+        const root = structuredClone(window.canvasHarness.S.activeWorkflow());
         delete root.updatedAt;
         const wrapper = Object.values(root.nodes).find(node => node.type === 'subgraph');
         const definition = wrapper && root.definitions[JSON.stringify([wrapper.definition.id, wrapper.definition.version, wrapper.definition.semanticHash])];
@@ -104,7 +104,7 @@ test('boundary blocks rename real parent pins and add a typed input that can be 
 test('empty subgraph bodies add input and output nodes from the shelf', async ({ page }) => {
     await setup(page);
     await page.evaluate(() => {
-        const root = window.canvasHarness.S.getGraph('subgraph-authoring');
+        const root = window.canvasHarness.S.activeWorkflow();
         root.nodes.note = { id: 'note', type: 'note', x: 400, y: 300, content: 'Reusable notes' };
         window.canvasHarness.UI.refreshIfOpen();
     });
@@ -202,13 +202,13 @@ test('extracting an existing subgraph preserves descendant tabs, presentation an
     await page.getByRole('menuitem', { name: 'Open subgraph', exact: true }).click();
     await page.evaluate(() => window.canvasHarness.view({ x: 177, y: 81, zoom: 0.8 }));
     await page.locator('.pc-graph-tabs [role="tab"]').first().click();
-    const savedViews = async () => (await page.evaluate(() => window.canvasHarness.S.settings().workspaceViews['relocated-subgraph-views'].views)).map(view => ({ ...view, portalPresentation: view.portalPresentation ?? {}, groupPresentation: view.groupPresentation ?? {} }));
+    const savedViews = async () => (await page.evaluate(() => window.canvasHarness.S.activeWorkspaceViews().views)).map(view => ({ ...view, portalPresentation: view.portalPresentation ?? {}, groupPresentation: view.groupPresentation ?? {} }));
     const before = await savedViews();
     const descendants = before.filter(view => view.identity.kind === 'instance');
     expect(descendants).toHaveLength(2);
     await page.locator('.pc-node[data-id="first/path"] .pc-native-heading').click({ button: 'right' });
     await page.getByRole('menuitem', { name: 'Create subgraph', exact: true }).click();
-    const wrapperId = await page.evaluate(() => Object.values(window.canvasHarness.S.getGraph('relocated-subgraph-views').nodes).find(node => node.type === 'subgraph' && node.id !== 'second').id);
+    const wrapperId = await page.evaluate(() => Object.values(window.canvasHarness.S.activeWorkflow().nodes).find(node => node.type === 'subgraph' && node.id !== 'second').id);
     const relocated = descendants.map(view => ({ ...view, identity: { ...view.identity, instancePath: [wrapperId, ...view.identity.instancePath] } }));
     for (const expected of relocated) expect((await savedViews()).find(view => JSON.stringify(view.identity) === JSON.stringify(expected.identity))).toEqual(expected);
     await expect(page.locator('.pc-graph-tabs [role="tab"]')).toHaveCount(4);
@@ -251,7 +251,7 @@ test('nested tabs first opened after extraction retain their presentation throug
     await page.getByRole('menuitem', { name: 'Open subgraph', exact: true }).click();
     await page.evaluate(() => window.canvasHarness.view({ x: 700, y: 300, zoom: 0.8 }));
     await page.locator('.pc-graph-tabs [role="tab"]').first().click();
-    const savedViews = async () => (await page.evaluate(() => window.canvasHarness.S.settings().workspaceViews['new-subgraph-views'].views)).map(view => ({ ...view, portalPresentation: view.portalPresentation ?? {}, groupPresentation: view.groupPresentation ?? {} }));
+    const savedViews = async () => (await page.evaluate(() => window.canvasHarness.S.activeWorkspaceViews().views)).map(view => ({ ...view, portalPresentation: view.portalPresentation ?? {}, groupPresentation: view.groupPresentation ?? {} }));
     const outgoing = (await savedViews()).filter(view => view.identity.kind === 'instance' && view.identity.instancePath.length > 1);
     expect(outgoing).toHaveLength(2);
     const incoming = outgoing.map(view => ({ ...view, identity: { ...view.identity, instancePath: view.identity.instancePath.slice(1) } }));
@@ -271,7 +271,7 @@ test('effective wrapper contents survive editable body changes and explicit shel
         root.nodes.one.nodeBindingOverrides = { '[[],"compact"]': { model: null } };
         await h.activate(root); await h.view({ x: 160, y: 50, zoom: 0.85 });
     });
-    const rootSnapshot = () => page.evaluate(() => { const root = structuredClone(window.canvasHarness.S.getGraph('effective-instance-root')); delete root.updatedAt; return root; });
+    const rootSnapshot = () => page.evaluate(() => { const root = structuredClone(window.canvasHarness.S.activeWorkflow()); delete root.updatedAt; return root; });
     const before = await rootSnapshot(), wrapper = page.locator('.pc-node[data-id="one"] .pc-native-heading');
     await wrapper.click({ button: 'right' });
     await page.getByRole('menuitem', { name: 'Add to Subgraphs', exact: true }).click();
@@ -286,7 +286,7 @@ test('effective wrapper contents survive editable body changes and explicit shel
     await page.getByLabel('Model mode', { exact: true }).selectOption('inherit');
     await expect.poll(() => page.evaluate(async () => {
         const h = window.canvasHarness, { inspectExpandedGraph } = await import('/src/workflow/graph-validation.js?v=' + h.version);
-        return inspectExpandedGraph(h.S.getGraph('effective-instance-root')).data.primitives.find(unit => unit.address.instancePath[0] === 'one' && unit.address.nodeId === 'compact').node.model;
+        return inspectExpandedGraph(h.S.activeWorkflow()).data.primitives.find(unit => unit.address.instancePath[0] === 'one' && unit.address.nodeId === 'compact').node.model;
     })).toBe('parent-model');
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
     await expect(page.getByLabel('Model mode', { exact: true })).toHaveValue('block');
@@ -295,7 +295,7 @@ test('effective wrapper contents survive editable body changes and explicit shel
     await page.getByLabel('Target tokens', { exact: true }).press('Tab');
     const effectiveTokens = () => page.evaluate(async () => {
         const h = window.canvasHarness, { inspectExpandedGraph } = await import('/src/workflow/graph-validation.js?v=' + h.version);
-        return inspectExpandedGraph(h.S.getGraph('effective-instance-root')).data.primitives.find(unit => unit.address.instancePath[0] === 'one' && unit.address.nodeId === 'compact').node.targetTokens;
+        return inspectExpandedGraph(h.S.activeWorkflow()).data.primitives.find(unit => unit.address.instancePath[0] === 'one' && unit.address.nodeId === 'compact').node.targetTokens;
     });
     await expect.poll(effectiveTokens).toBe(2500);
     await page.getByRole('button', { name: 'Undo', exact: true }).click(); await expect.poll(effectiveTokens).toBe(720);

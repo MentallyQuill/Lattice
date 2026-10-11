@@ -58,7 +58,7 @@ test('keyboard users can focus an overview card to reveal its details', async ({
     });
     await page.keyboard.press('Tab'); await expect(node).toBeFocused();
     await expect(label).toHaveCSS('visibility', 'visible');
-    await page.locator('select[aria-label="Workflow"]').focus();
+    await page.getByRole('button', { name: 'File', exact: true }).focus();
     await expect(label).toHaveCSS('visibility', 'hidden');
 });
 

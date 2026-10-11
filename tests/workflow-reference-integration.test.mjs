@@ -182,11 +182,8 @@ test('reference library workflows are explicit independent installations with ve
         assert.equal(resolved.ok, true, JSON.stringify(resolved));
         assert.equal(resolved.data.callBound, bound, id);
         assert.equal(parseWorkflow(JSON.stringify(exportWorkflow(g))).ok, true);
-        const settings = { graphs: {}, enabled: false, nativeBindings: { preGraphId: null, postGraphId: null } };
-        const first = installStarter(id, settings), second = installStarter(id, settings);
+        const first = installStarter(id), second = installStarter(id);
         assert.notEqual(first.id, second.id);
-        assert.equal(settings.enabled, false);
-        assert.deepEqual(settings.nativeBindings, { preGraphId: null, postGraphId: null });
         assert.equal(resolveWorkflow(first).ok, true);
         assert.equal(resolveWorkflow(second).ok, true);
     }

@@ -18,6 +18,9 @@ const nodeNotes = detail => [
 
 function materializeNode(node, detail) {
     const base = node.type === 'workflow' ? operationDefaults(node.operation, { mode: detail?.settings?.mode ?? node.mode }) : {};
+    // Preserve portable authored controls when new-node defaults evolve.
+    if (Object.hasOwn(base, 'profileId')) base.profileId = null;
+    if (node.operation === 'scene-context') delete base.visibilityMode;
     return { ...base, ...clone(node), ...clone(detail?.settings ?? {}), ...(detail?.alias ? { alias: detail.alias } : {}), enabled: true, w: 260 };
 }
 
@@ -74,7 +77,7 @@ function materializeGraph(entry, authored, primary, snapshots) {
         template: { id: entry.id, version: 1 }, roles: {}, nodes: {}, wires: {}, groups: {}, portals: {}, definitions: {}, view: { x: 0, y: 0, zoom: 1 } };
     const details = entry.nodeDetails.filter(detail => detail.phase === authored.phase);
     graph.description = [entry.goal, `Lesson: ${entry.lesson}`, `Limitations: ${entry.limitation}`,
-        'Opening installs an unassigned copy. Bind local model roles and provide the documented evidence before running.',
+        'Opening creates an editable copy as the active workflow document and preserves Arm. Bind local model roles and provide the documented evidence before running.',
         ...entry.variants.filter(variant => variant.phase === authored.phase).map(variant => `${variant.phase}: at most ${variant.maxCalls} auxiliary calls. ${variant.effect === 'actor-memory' ? 'Writes actor memory on full Run. Inspect local update and save acknowledgment separately; unconfirmed saving is not durable saving.' : 'Preview before publishing or applying.'}`),
         `Try changing:\n${entry.tryChanging.join('\n')}`,
         'Documentation specimen (does not seed chat or actor memory):', `${entry.preview.beforeLabel}: ${entry.preview.before}`, `${entry.preview.afterLabel}: ${entry.preview.after}`,

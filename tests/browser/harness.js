@@ -40,11 +40,9 @@ await import(`/index.js?v=${version}`);
 window.lattice.open();
 const settle = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 await settle();
-async function activate(graph) {
+async function activate(graph, options = {}) {
     const checked = validateGraphStructure(graph); if (!checked.ok) throw Error(JSON.stringify(checked.error));
-    S.settings().graphs[graph.id] = graph; S.settings().activeGraphId = graph.id; S.save(); UI.refreshIfOpen(); await settle();
-    const picker = document.querySelector('select[aria-label="Workflow"]');
-    if (picker) { picker.value = graph.id; picker.dispatchEvent(new Event('change', { bubbles: true })); }
+    S.activateWorkflow(graph, { clean: true, ...options }); S.save(); UI.refreshIfOpen(); await settle();
     await settle(); return Object.keys(graph.nodes);
 }
 window.canvasHarness = {
@@ -52,7 +50,7 @@ window.canvasHarness = {
     get canvas() { return canvas; },
     // Native drawing tables are detached; fixture edits must reach the saved
     // root. Standalone Canvas-only fixtures retain their direct graph fallback.
-    get graph() { return S.getGraph(canvas.graph?.id) ?? canvas.graph; },
+    get graph() { return S.activeWorkflow() ?? canvas.graph; },
     get selection() { return [...canvas.multi]; },
     async reset(count = 3, columns = 3) {
         const g = canvasWorkflow(operationDefaults, count, columns);

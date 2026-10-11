@@ -1,3 +1,4 @@
+import { rootCommand, expectRootBusy } from './workflow-commands.mjs';
 import { test, expect } from '@playwright/test';
 
 async function openRecordedFields(page) {
@@ -8,14 +9,15 @@ async function openRecordedFields(page) {
         const version = (await (await fetch('/manifest.json')).json()).version;
         const { starterGraph } = await import('/src/workflow/starters.js?v=' + version);
         const graph = starterGraph('structured-guidance');
-        h.S.settings().graphs[graph.id] = graph;
-        h.S.save(); h.UI.refreshIfOpen();
+        await h.activate(graph);
         return graph.id;
     });
-    await page.getByRole('combobox', { name: 'Workflow', exact: true }).selectOption(graphId);
+
     await page.evaluate(() => window.canvasHarness.settle());
-    await page.locator('.pc-root-run').click();
+    await rootCommand(page);
     await expect(page.locator('.pc-run-meter-label')).toHaveText('Completed');
+    await page.getByRole('button', { name: 'Graph', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Fit to view', exact: true }).click();
     await page.locator('.pc-node-native[data-id="select-fields"] .pc-native-heading').click();
     await expect(page.locator('.pc-output-preview [role="tabpanel"] pre')).toContainText('A quiet conversation.');
     return graphId;
@@ -61,11 +63,11 @@ for (const width of [1024, 320]) test(`recorded preview keeps a useful artifact 
     const before = await page.evaluate(async graphId => {
         const h = window.canvasHarness, version = (await (await fetch('/manifest.json')).json()).version;
         const result = (await import('/src/run.js?v=' + version)).getNativeWorkflowController().lastResult();
-        return { graph: JSON.stringify(h.S.getGraph(graphId)), camera: { ...h.canvas.view }, calls: result.actualCalls, runId: result.runId };
+        return { graph: JSON.stringify(h.S.activeWorkflow()), camera: { ...h.canvas.view }, calls: result.actualCalls, runId: result.runId };
     }, graphId);
     expect(before.calls).toBe(0);
     const nativeClipboard = await page.evaluate(async graphId => {
-        const h = window.canvasHarness, graph = h.S.getGraph(graphId), { makeClip } = await import('/src/workflow/clipboard.js?v=' + h.version);
+        const h = window.canvasHarness, graph = h.S.activeWorkflow(), { makeClip } = await import('/src/workflow/clipboard.js?v=' + h.version);
         const clip = makeClip(graph, { nodeIds: ['compose-json'] });
         if (!clip.ok) throw Error(clip.error.message);
         return JSON.stringify(clip.data);
@@ -91,7 +93,7 @@ for (const width of [1024, 320]) test(`recorded preview keeps a useful artifact 
     const after = await page.evaluate(async graphId => {
         const h = window.canvasHarness, version = (await (await fetch('/manifest.json')).json()).version;
         const result = (await import('/src/run.js?v=' + version)).getNativeWorkflowController().lastResult();
-        return { graph: JSON.stringify(h.S.getGraph(graphId)), camera: { ...h.canvas.view }, calls: result.actualCalls, runId: result.runId };
+        return { graph: JSON.stringify(h.S.activeWorkflow()), camera: { ...h.canvas.view }, calls: result.actualCalls, runId: result.runId };
     }, graphId);
     expect(after).toEqual(before);
     await expect(leaf.locator('[role="tabpanel"] pre')).toContainText('Let the user choose their next action.');
@@ -105,7 +107,7 @@ for (const width of [1024, 320]) test(`recorded preview keeps a useful artifact 
         return event.defaultPrevented;
     }, nativeClipboard);
     expect(canvasPasteCanceled).toBe(true);
-    const pasted = await page.evaluate(graphId => Object.values(window.canvasHarness.S.getGraph(graphId).nodes), graphId);
+    const pasted = await page.evaluate(graphId => Object.values(window.canvasHarness.S.activeWorkflow().nodes), graphId);
     expect(pasted).toHaveLength(Object.keys(JSON.parse(before.graph).nodes).length + 1);
     const copiedText = JSON.parse(before.graph).nodes['compose-json'].sections[0].text;
     expect(pasted.filter(node => node.operation === 'compose' && node.sections?.some(section => section.name === 'Scene' && section.text === copiedText))).toHaveLength(2);

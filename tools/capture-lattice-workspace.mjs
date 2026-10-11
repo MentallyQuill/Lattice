@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 // Run only after the reviewed production bundle is ready and capture execution is authorized.
 // This uses the development host's real Workbench/Canvas/controller and production UI bundle.
-// Fixture admission changes saved graph/host data only; all navigation and runs use actual UI.
+// Fixture admission changes the open document/host data only; all navigation and runs use actual UI.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const base = 'http://127.0.0.1:4179';
 const args = process.argv.slice(2);
@@ -112,13 +112,10 @@ async function activate(env, fixture = 'structured') {
         }
         const checked = validateGraphStructure(graph);
         if (!checked.ok) throw new Error('Actual native root fixture rejected: ' + JSON.stringify(checked.error));
-        h.S.settings().graphs[graph.id] = graph;
-        h.S.save(); h.UI.refreshIfOpen();
-        if (fixtureName === 'cleanup') await (await import('/src/run.js?v=' + version)).initializeNativeWorkflowController();
+        await h.activate(graph);
         return { id: graph.id, mode: graph.mode, nodeIds: Object.keys(graph.nodes), definitionRefs: Object.keys(graph.definitions),
             wrapperId: fixtureName === 'cleanup' ? 'text-rules' : null };
     }, fixture);
-    await page.getByRole('combobox', { name: 'Workflow', exact: true }).selectOption(fixtureInfo.id);
     await page.evaluate(async () => { await window.canvasHarness.settle(); window.canvasHarness.canvas.fit(); await window.canvasHarness.settle(); await document.fonts.ready; });
     await page.locator('.pc-root.pc-native-workspace[data-pc-workbench="svelte"]').waitFor({ state: 'visible' });
     assert(env.localResponses.has('/dist/lattice-ui.js'), 'Actual production UI bundle was not loaded.');
@@ -129,10 +126,10 @@ async function activate(env, fixture = 'structured') {
 
 async function captureFresh(env) {
     env.fixture = await env.page.evaluate(async () => {
-        const h = window.canvasHarness, settings = h.S.settings(), graph = h.graph;
+        const h = window.canvasHarness, settings = h.S.settings(), graph = h.S.activeWorkflow();
         const { validateWorkflow } = await import('/src/workflow/contracts.js?v=' + h.version);
         const checked = validateWorkflow(graph);
-        if (!h.freshSettingsAbsent || graph.name !== 'Structured guidance' || graph.schema !== 3 || graph.runtime !== 2 || !checked.ok || checked.data.callBound !== 0 || settings.enabled || settings.nativeBindings.preGraphId !== null || settings.nativeBindings.postGraphId !== null || Object.hasOwn(settings, 'workflowMode') || h.providerCalls() !== 0) throw Error('Actual fresh launch did not use the disabled unassigned zero-request current default.');
+        if (!h.freshSettingsAbsent || graph.name !== 'Unified story workflow' || graph.template?.id !== 'unified-basic' || graph.mode !== 'native-unified' || graph.schema !== 3 || graph.runtime !== 2 || !checked.ok || checked.data.callBound !== 0 || settings.enabled || !document.querySelector('.pc-arm-input') || document.querySelector('.pc-arm-input').checked || ['graphs', 'activeGraphId', 'nativeBindings', 'workflowMode'].some(key => Object.hasOwn(settings, key)) || h.providerCalls() !== 0) throw Error('Actual fresh launch did not use the disabled zero-request Unified story workflow document.');
         if (document.querySelector('.pc-node-output,.pc-port-key,.pc-port-stage,.pc-tok') || ['sillyCanvas','promptCanvas','comfyTavernGenerationInterceptor'].some(key => Object.hasOwn(window,key))) throw Error('A retired surface or global survived fresh startup.');
         await h.settle(); await document.fonts.ready;
         return { id: graph.id, mode: graph.mode, nodeIds: Object.keys(graph.nodes), definitionRefs: Object.keys(graph.definitions), fresh: true, hostCss: h.hostCss, providerCalls: h.providerCalls() };
@@ -150,8 +147,22 @@ async function inspectCompact(env) {
     assert(await details.getByRole('checkbox', { name: 'Compact card', exact: true }).isChecked(), 'Inspector did not reflect the actual compact node.');
 }
 
+async function rootCommand(env, command = 'Run workflow') {
+    await env.page.getByRole('button', { name: 'Graph', exact: true }).click();
+    await env.page.getByRole('menuitem', { name: command, exact: true }).click();
+}
+
 async function metrics(env) {
-    const value = await env.page.evaluate(rootId => {
+    await env.page.getByRole('button', { name: 'Graph', exact: true }).click();
+    const rootRun = await env.page.getByRole('menu', { name: 'Graph', exact: true }).evaluate(menu => {
+        const command = name => menu.querySelector('[aria-label="' + name + '"]');
+        const run = command('Run workflow'), stop = command('Stop workflow');
+        return { text: run.textContent.trim(), disabled: run.disabled, stopText: stop.textContent.trim(), stopDisabled: stop.disabled, busy: !stop.disabled, source: 'Graph menu' };
+    });
+    await env.page.keyboard.press('Escape');
+    const value = await env.page.evaluate(({ rootId, rootRun }) => {
+        const root = window.canvasHarness.S.activeWorkflow();
+        if (root.id !== rootId) throw new Error('Capture fixture is not the open workflow document.');
         const read = (selector, optional = false) => {
             const element = document.querySelector(selector);
             if (!element) { if (optional) return null; throw new Error('Required production selector missing: ' + selector); }
@@ -160,11 +171,11 @@ async function metrics(env) {
                 radius: css.borderTopRightRadius, border: css.borderTopColor, shadow: css.boxShadow,
                 fontFamily: css.fontFamily, fontSize: css.fontSize, fontWeight: css.fontWeight, letterSpacing: css.letterSpacing };
         };
-        return { mode: window.canvasHarness.S.settings().graphs[rootId].mode, viewport: { width: innerWidth, height: innerHeight, dpr: devicePixelRatio },
+        return { mode: root.mode, viewport: { width: innerWidth, height: innerHeight, dpr: devicePixelRatio },
             brand: { text: document.querySelector('.pc-brand').textContent.trim(), ...read('.pc-brand'), wordmark: read('.pc-brand span'), fontReady: document.fonts.check('600 20px "Bricolage Grotesque"'), logo: read('.pc-brand img') },
             header: read('.pc-header'), graph: read('.pc-canvas-area'), preview: read('.pc-preview-pane'), inspector: read('.pc-inspector'), shelf: read('.pc-node-shelf'),
             activeTab: read('.pc-graph-tab[aria-selected="true"]'), breadcrumbs: read('.pc-graph-location', true),
-            rootRun: { text: document.querySelector('.pc-root-run').textContent.trim(), disabled: document.querySelector('.pc-root-run').disabled, ...read('.pc-root-run') },
+            rootRun: { ...rootRun, ...read('[data-menu="Graph"]') },
             workflowStatus: document.querySelector('.pc-root-workflow-status').textContent.trim(),
             nodes: [...document.querySelectorAll('.pc-node-native')].map(node => ({ id: node.dataset.id, classes: [...node.classList], ...read('.pc-node-native[data-id="' + CSS.escape(node.dataset.id) + '"]'),
                 opacity: getComputedStyle(node).opacity, headingOpacity: getComputedStyle(node.querySelector('.pc-native-heading')).opacity,
@@ -181,11 +192,10 @@ async function metrics(env) {
                 pixels: [...document.querySelectorAll('[data-run-pixel]')].map(pixel => ({ status: pixel.dataset.status, title: pixel.title })) },
             shelfSnapshots: { count: Object.keys(window.canvasHarness.S.settings().subgraphLibrary?.definitions ?? {}).length,
                 refs: Object.keys(window.canvasHarness.S.settings().subgraphLibrary?.definitions ?? {}) },
-            rootSnapshots: { count: Object.keys(window.canvasHarness.S.settings().graphs[rootId].definitions ?? {}).length,
-                refs: Object.keys(window.canvasHarness.S.settings().graphs[rootId].definitions ?? {}) },
+            rootSnapshots: { count: Object.keys(root.definitions ?? {}).length, refs: Object.keys(root.definitions ?? {}) },
             overflow: document.documentElement.scrollWidth > innerWidth,
             nativeWorkbench: !!document.querySelector('.pc-root.pc-native-workspace[data-pc-workbench="svelte"]') };
-    }, env.fixture.id);
+    }, { rootId: env.fixture.id, rootRun });
     assert(value.viewport.width === env.width && value.viewport.dpr === env.dpr, 'Viewport/DPR differs from the required capture case.');
     assert(value.nativeWorkbench && value.brand.text === 'LATTICE' && value.brand.fontReady, 'Production native workspace brand/font is unavailable.');
     assert(!value.overflow && value.graph.width > 100 && value.graph.height > 140, 'Native workspace overflowed or graph collapsed.');
@@ -277,12 +287,13 @@ try {
     });
     await caseRun('genuine-running', { workerDelay: true }, async (env, record) => {
         await activate(env, 'cleanup');
-        await env.page.locator('.pc-root-run').click();
+        await rootCommand(env);
         for (let attempt = 0; attempt < 40 && !env.workerRequests.length; attempt++) await pause(10);
         assert(env.workerRequests.length > 0, 'The genuine running case did not request its actual Worker module.');
         await env.page.locator('.pc-node-native.pc-trace-running').first().waitFor({ state: 'visible' });
-        await env.page.waitForFunction(() => document.querySelector('.pc-root-run')?.textContent.includes('Stop') && !!document.querySelector('[data-run-pixel][data-status="running"]'));
+        await env.page.waitForFunction(() => !!document.querySelector('[data-run-pixel][data-status="running"]'));
         record.runningMetrics = await metrics(env);
+        assert(record.runningMetrics.rootRun.busy && record.runningMetrics.rootRun.disabled && !record.runningMetrics.rootRun.stopDisabled, 'Actual Graph menu did not expose Stop for the running workflow.');
         const runningNodes = record.runningMetrics.nodes.filter(node => node.classes.includes('pc-trace-running'));
         const runningAccent = record.runningMetrics.graph.border;
         const hasRunningRing = node => node.shadow.split(/,(?![^(]*\))/).some(part => {
@@ -291,7 +302,6 @@ try {
         });
         assert(runningNodes.length > 0 && runningNodes.every(node => node.border === runningAccent && hasRunningRing(node)), 'Actual running cards must retain the graph-accent border and visible outer ring.');
         record.images.push(await image(env, record.name));
-        await env.page.waitForFunction(() => !document.querySelector('.pc-root-run')?.textContent.includes('Stop'));
         await env.page.waitForFunction(() => document.querySelector('.pc-run-meter-label')?.textContent.trim().toLowerCase() === 'completed');
         record.details = await runDetails(env, 'completed');
         record.settlement = 'completed';
@@ -299,7 +309,7 @@ try {
     });
     await caseRun('genuine-json-failure', {}, async (env, record) => {
         await activate(env, 'failure');
-        await env.page.locator('.pc-root-run').click();
+        await rootCommand(env);
         await env.page.locator('.pc-node-native.pc-trace-failed[data-id="json-decode"]').waitFor({ state: 'visible' });
         await env.page.locator('.pc-node-native.pc-trace-blocked').first().waitFor({ state: 'visible' });
         await env.page.waitForFunction(() => document.querySelector('.pc-run-meter-label')?.textContent.trim().toLowerCase() === 'failed');

@@ -83,17 +83,21 @@ Select processing nodes, right-click, and choose **Create Subgraph**. The editor
 
 1. In SillyTavern, open **Extensions → Install extension**.
 2. Enter `https://github.com/MentallyQuill/Lattice`, leaving the branch field blank to install `main`.
-3. Install, then reload SillyTavern. Open LATTICE from its logo on the left of the chat bar or with `/lattice`. Fresh launch selects **Unified story workflow**, with workflows disabled and unassigned. Existing saved selections remain.
-4. Choose **Workflows → Assign unified workflow**, enable **Arm**, and Send a player message in SillyTavern. The starter makes no auxiliary calls and exposes its completed native Draft for review.
+3. Install, then reload SillyTavern. Open LATTICE from its logo on the left of the chat bar or with `/lattice`. A fresh launch opens an untitled **Unified story workflow** with **Arm** off. Previous work is preserved in recovery.
+4. Enable **Arm** and Send a player message in SillyTavern. Send follows the open workflow document. The starter makes no auxiliary calls and exposes its completed native Draft for review.
 5. Select **Review / Publish · Host result** in Preview, inspect it, and Apply or Reject. For a richer pipeline, open a unified example and configure its model nodes, For Each helper roles and required Story Documents before the next Send.
 
 For updates, use **Manage Extensions**, then reload. Installation, import, and editing do not make model calls.
 
 The [unified workflow guide](docs/unified-workflows.md) walks through applying an example to **Story-2 on default-user**, chaining different models, using Fast Decision, recording private moments, arming Recall and managing accepted effects. A full unified native generation starts with ordinary Send; supported **Run to here** paths inspect without acceptance.
 
-Unified examples open as independent editable workflows. They do not run, assign or arm themselves. Set each auxiliary model’s local Connection profile in Details; configure For Each’s **Helper model bindings** separately. **Tools → Story documents…** authorizes logical JSON/text targets, and **Tools → Fast connections…** configures typed Jev/Laya endpoints. Local connection IDs and credentials are excluded from portable exports.
+Work on one JSON workflow document at a time through **File → New workflow**, **Open workflow…**, **Open Recent** and **Open examples…**. The toolbar shows its filename and modified/save status separately from execution. When native file access is available, **Save workflow** writes the current file and **Save As…** chooses a destination; a first Save chooses a destination too. Open Recent rereads actual files and **Clear Recent** clears the list while keeping files on disk. Failed or cancelled writes preserve your edits and current source.
 
-Legacy **Before reply (Pre)** workflows still prepare bounded guidance, while **After reply (Post)** workflows remain manual tools for a completed reply. The Workflows menu labels these as legacy. Existing saved graphs are retained; migration is explicit reuse in a new unified copy, with no automatic converter.
+Browsers without native file access offer **Open workflow…** and **Download JSON…**. A download makes an editable copy whose destination is handled by the browser; it cannot confirm a disk save or reopen a file by path. Document replacement offers **Save / Don't Save / Cancel**, or **Download JSON / Don't Save / Cancel** in these browsers. Downloading from the prompt retains the current draft; repeat the replacement action and choose Don't Save when ready to switch. Closing the workspace retains the current session. SillyTavern keeps a recovery draft, while **File → Recover previous workflows** exposes documents migrated from older settings separately from recent disk files.
+
+Unified examples open as untitled editable documents. They do not run or arm themselves. Set each auxiliary model’s local Connection profile in Details; configure For Each’s **Helper model bindings** separately. **Tools → Story documents…** authorizes logical JSON/text targets, and **Tools → Fast connections…** configures typed Jev/Laya endpoints. Editable file saves preserve local connections; **Export workflow JSON…** creates a portable sharing copy without local connection IDs or credentials. **Import into graph…** remains a reviewed fragment insertion.
+
+Legacy **Before reply (Pre)** documents still prepare bounded guidance, while **After reply (Post)** documents remain manual tools for a completed reply. Open a legacy JSON file or recover previous work, then use **Graph → Run workflow / Stop workflow**. Reuse legacy content in a new unified copy explicitly; there is no automatic converter.
 
 Open the following technical examples as JSON with **File → Open workflow…**:
 

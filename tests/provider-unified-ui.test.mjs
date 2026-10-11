@@ -8,19 +8,6 @@ const graph = (controls = {}) => ({id:'provider-ui',name:'Provider UI',schema:3,
 const project = (root, options = {}) => projectPreparedWorkflow(prepareWorkflowProjection(root, options));
 const failure = code => ({ok:false,error:{code,message:'Primary unavailable'}});
 
-test('unified assignment and creation use dedicated workflow storage while legacy phases stay explicit', () => {
- assert.equal(typeof api.workflowBindingKey,'function');
- assert.equal(api.workflowBindingKey('native-unified'),'workflowGraphId');
- assert.equal(api.workflowBindingKey('native-pre'),'preGraphId');
- assert.equal(api.workflowBindingKey('native-post'),'postGraphId');
- assert.equal(api.workflowBindingKey('garbage'),null);
- assert.equal(api.workflowBindingKey('constructor'),null);
- assert.equal(api.workflowBindingKey('toString'),null);
- assert.equal(api.workflowCreationPhase(),'unified');
- assert.equal(api.workflowCreationPhase('post'),'post');
- assert.equal(api.workflowCreationPhase('garbage'),null);
-});
-
 test('typed primary preparation never resolves an ordinary text profile', () => {
  let text=0,typed=0;
  const view=project(graph(),{resolveFastBinding(node){typed++;assert.equal(node.fastConnectionId,'jev');return{ok:true,data:{capability:'typed-decision',connectionId:'jev',provider:'jev',model:'typed-model',revision:'1'}};},resolveBinding(){text++;return failure('BINDING_MISSING');}});
@@ -85,10 +72,11 @@ test('unified Details show editable stages for both-phase tools and fixed lifecy
 });
 
 
-test('unified assignment takes precedence over a remembered legacy phase binding',()=>{
+test('workflow projection describes the open document without legacy assignment authority',()=>{
  const root=graph();const view=project(root,{settings:{nativeBindings:{workflowGraphId:'unified',preGraphId:root.id}}});
- assert.equal(view.assigned,false);
- assert.equal(project(root,{settings:{nativeBindings:{workflowGraphId:null,preGraphId:root.id}}}).assigned,true);
+ assert.equal(view.graphId,root.id);assert.equal(view.phase,'pre');assert.equal(Object.hasOwn(view,'assigned'),false);
+ const unassigned=project(root,{settings:{nativeBindings:{workflowGraphId:null,preGraphId:root.id}}});
+ assert.equal(Object.hasOwn(unassigned,'assigned'),false);assert.deepEqual(unassigned.issues,view.issues);
 });
 
 

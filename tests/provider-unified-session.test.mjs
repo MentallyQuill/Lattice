@@ -33,7 +33,7 @@ test('unified automatic adoption preserves exact root, signature, origin, run an
 
 test('manual unified root Run gives Send guidance without calling legacy phases or discarding current review',async()=>{
  const f=fixture();try{const automatic=await f.send();f.session.receiveAutomatic(automatic);const before=f.session.result();
- const response=await f.session.run();assert.equal(response?.ok,false);assert.equal(response.error.code,'NATIVE_SEND_REQUIRED');assert.equal(f.phaseCalls(),0);assert.equal(f.session.result(),before);assert.equal(f.state().availability,'current');assert.equal(f.state().busy,false);assert.match(f.state().status,/Assign.*enable.*Send.*SillyTavern/i);assert.equal(f.state().recording,automatic.result.recording);
+ const response=await f.session.run();assert.equal(response?.ok,false);assert.equal(response.error.code,'NATIVE_SEND_REQUIRED');assert.equal(f.phaseCalls(),0);assert.equal(f.session.result(),before);assert.equal(f.state().availability,'current');assert.equal(f.state().busy,false);assert.match(f.state().status,/Enable.*open workflow.*Send.*SillyTavern/i);assert.equal(f.state().recording,automatic.result.recording);
  }finally{f.close();}
 });
 

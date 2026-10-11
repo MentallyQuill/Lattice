@@ -8,7 +8,7 @@ import { addressKey, nodeAddress, targetAddress, own, plain, safeBinding, safeEr
 import { workflowSignature } from '../workflow/runtime.js?v=0.26.0';
 import { FAMILIES, OPERATIONS, operationFor, phaseForNode } from '../workflow/catalog.js?v=0.26.0';
 import { safeWorkflowData } from '../workflow/contracts.js?v=0.26.0';
-import { fastConnectionChoices, fastFallbackAllowed, fastFallbackNode, workflowBindingKey } from './provider-settings.js?v=0.26.0';
+import { fastConnectionChoices, fastFallbackAllowed, fastFallbackNode } from './provider-settings.js?v=0.26.0';
 import { readNodePresentation } from './node-palette.js?v=0.26.0';
 import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.26.0';
 const descriptions = { Input: 'Bring material into a workflow.', Shaping: 'Change the plan or amount of material.', Surface: 'Refine expression.', Transpose: 'Apply a reference’s qualities.', Derive: 'Extract findings from a source.', Introspection: 'Reflect on experience, context and actor state.', Output: 'Inspect or commit an artifact.' };
@@ -65,7 +65,7 @@ function safeSettlement(raw) {
     return freeze({status:own(raw,'status'),published:true,receipts});
 }
 const summaryView = result => result.ok ? { callBound: result.data.callBound, issues: [], requiredBindingAddresses: result.data.requiredBindingAddresses } : { callBound: 0, issues: [result.error.message], requiredBindingAddresses: [] };
-const emptyView = message => ({ graphId: '', name: '', phase: '', assigned: false, profiles: [], families: [], nodes: [], groups: [], selectedId: null, callBound: 0, issues: [message], busy: false, status: '', result: null, quoteHelp: QUOTE_SCOPE_HELP, rows: [], targets: [] });
+const emptyView = message => ({ graphId: '', name: '', phase: '', profiles: [], families: [], nodes: [], groups: [], selectedId: null, callBound: 0, issues: [message], busy: false, status: '', result: null, quoteHelp: QUOTE_SCOPE_HELP, rows: [], targets: [] });
 // Keep a fixed digest, never the semantic signature's saved controls/body text.
 function rememberRecordingRevision(recording, revision) {
     if (recording && typeof recording === 'object' && typeof revision === 'string' && !historicalPreviews.has(recording)) historicalPreviews.set(recording, { revision: sha256Text(revision), aliases: null });
@@ -110,7 +110,6 @@ function safeHandle(raw) {
 function baseWorkflowView(graph, profiles, settings, fastConnections = [], activeModel = null) {
     const phase = typeof graph.mode === 'string' ? graph.mode.slice(7) : '';
     return { graphId: graph.id || '', name: graph.name || '', phase,
-        assigned: graph.id === settings.nativeBindings?.[workflowBindingKey(graph.mode)] && (graph.mode === 'native-unified' || !settings.nativeBindings?.workflowGraphId),
         fastConnections: fastConnectionChoices({ ok: true, data: { connections: fastConnections } }),
         profiles: prepareNodeProfileOptions(profiles, activeModel).map(({ value, label, ...metadata }) => ({ id: value, name: label, ...metadata })),
         families: FAMILIES.map(name => ({ name, description: descriptions[name], operations: Object.values(OPERATIONS).filter(op => op.family === name || name === 'Surface' && ['pattern-scan', 'validate-patches'].includes(op.id)).map(op => ({ id: op.id, title: op.title, phase: op.phase === 'both' ? phase : op.phase || phase, compatible: (phase === 'unified' || !op.phase || op.phase === 'both' || op.phase === phase) && (!op.minimumSchema || graph.schema >= op.minimumSchema) })) })),
@@ -319,7 +318,7 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
         },
         async run(options = {}) {
             if (options.target === undefined && rootCurrent()?.mode === 'native-unified') {
-                preparationError = { code: 'NATIVE_SEND_REQUIRED', message: 'Assign and enable this unified workflow, then Send in SillyTavern. Generate Reply continues that native generation. Use Run to here to test supported nodes.' };
+                preparationError = { code: 'NATIVE_SEND_REQUIRED', message: 'Enable this open workflow, then Send in SillyTavern. Generate Reply continues that native generation. Use Run to here to test supported nodes.' };
                 status = preparationError.message; publish();
                 return { schema: 3, runtime: 2, mode: 'root', ok: false, actualCalls: 0, error: preparationError };
             }

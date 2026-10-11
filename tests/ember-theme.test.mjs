@@ -20,7 +20,7 @@ const hostSnapshot = () => Object.fromEntries(Object.keys(hostTokens).map(key =>
 test('fresh Ember uses the approved fixed card fill and canvas with inherited host roles', () => {
     assert.equal(T.DEFAULT_PRESET, 'ember');
     assert.equal(T.currentTheme().preset, 'ember');
-    const before = hostSnapshot(), graph = S.getGraph(S.settings().activeGraphId), saved = structuredClone(graph);
+    const before = hostSnapshot(), graph = S.activeWorkflow(), saved = structuredClone(graph);
     T.applyTheme();
     assert.equal(root.dataset.pcPreset, 'ember');
     assert.equal(value('canvas'), approved.settings.canvasOverride);

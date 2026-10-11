@@ -116,12 +116,9 @@ try {
             }
             const checked = validateGraphStructure(graph);
             if (!checked.ok) throw new Error(JSON.stringify(checked.error));
-            h.S.settings().graphs[graph.id] = graph;
-            h.S.save(); h.UI.refreshIfOpen();
-            if (!['native-guidance', 'branching'].includes(kind)) await (await import('/src/run.js?v=' + v)).initializeNativeWorkflowController();
+            await h.activate(graph);
             return graph.id;
         }, kind);
-        await page.getByRole('combobox', { name: 'Workflow', exact: true }).selectOption(id);
         await page.evaluate(async () => { await window.canvasHarness.settle(); window.canvasHarness.canvas.fit(); await window.canvasHarness.settle(); await document.fonts.ready; });
         if (await page.getByRole('button', { name: 'Toggle inspector' }).getAttribute('aria-pressed') !== 'true') await page.getByRole('button', { name: 'Toggle inspector' }).click();
         await page.evaluate(() => window.canvasHarness.settle());
@@ -209,7 +206,8 @@ try {
         if (!await group.evaluate(element => element.open)) await group.locator(':scope > summary').click();
     }
     async function run() {
-        await page.locator('.pc-root-run').click();
+        await page.getByRole('button', { name: 'Graph', exact: true }).click();
+        await page.getByRole('menuitem', { name: 'Run workflow', exact: true }).click();
         await page.locator('.pc-run-meter-label').filter({ hasText: 'Completed' }).waitFor();
         const result = await page.evaluate(async () => {
             const h = window.canvasHarness, value = (await import('/src/run.js?v=' + h.version)).getNativeWorkflowController().lastResult();
@@ -241,9 +239,12 @@ try {
     await page.getByRole('menuitem', { name: 'Add node…', exact: true }).click();
     await shot('node-search');
     await page.keyboard.press('Escape');
-    await page.getByRole('button', { name: 'Workflows', exact: true }).click();
-    await page.getByRole('menuitem', { name: 'Assign pre phase', exact: true }).click();
-    if (await page.evaluate(() => window.canvasHarness.S.settings().nativeBindings.preGraphId) !== 'structured-guidance') throw new Error('The Workflows menu did not assign the selected pre workflow.');
+    await page.getByRole('checkbox', { name: 'Arm', exact: true }).check();
+    const armed = await page.evaluate(async () => {
+        const h = window.canvasHarness, send = (await import('/src/run.js?v=' + h.version)).sendWorkflowState();
+        return h.S.settings().enabled && h.S.activeWorkflow().id === 'structured-guidance' && send.automatic && !Object.hasOwn(h.S.settings(), 'nativeBindings');
+    });
+    if (!armed) throw new Error('Arm did not enable the open workflow for Send.');
     await activate('literal-cleanup');
     await run();
     await select('text-rules');

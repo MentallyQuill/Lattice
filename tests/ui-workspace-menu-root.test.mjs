@@ -46,9 +46,9 @@ const state = (workflow, rootWorkflow) => ({ workflow, ...(rootWorkflow === unde
 async function fixture(initial, command = () => {}) {
     const host = document.createElement('div'); document.body.append(host);
     const mounted = mount(harness.component, { target: host, props: { initial, actions: { command } } }); await settle();
-    const menu = () => host.querySelector('[role="menu"][aria-label="Workflows"]');
+    const menu = () => host.querySelector('[role="menu"][aria-label="Graph"]');
     const item = label => [...menu().querySelectorAll('[role="menuitem"]')].find(element => element.textContent.trim() === label);
-    return { host, item, async open() { if (!menu()) await click(host.querySelector('[data-menu="Workflows"]')); }, async update(next) { mounted.update(next); await settle(); }, async close() { await unmount(mounted); host.remove(); } };
+    return { host, item, async open() { if (!menu()) await click(host.querySelector('[data-menu="Graph"]')); }, async update(next) { mounted.update(next); await settle(); }, async close() { await unmount(mounted); host.remove(); } };
 }
 test('a deleted genuine pinned output cannot disable the valid current root Run menu', async () => {
     const root = guidance(); root.nodes.scratch = { id: 'scratch', type: 'workflow', operation: 'compose', outputKind: 'text', sections: [{ name: 'note', text: 'Temporary preview' }] };
@@ -96,15 +96,17 @@ test('a missing current workflow keeps root Run disabled', async () => {
     try { await f.open(); assert.equal(f.item('Run workflow').disabled, true); assert.equal(f.item('Stop workflow').disabled, true); } finally { await f.close(); }
 });
 
-test('legacy phase assignment remains available in Workflows without a setup panel', async () => {
+test('legacy documents retain Run in Graph without collection or assignment commands', async () => {
     const root = guidance(), prepared = prepare(root), calls = [];
     const f = await fixture(state(projectPreparedWorkflow(prepared.token)), command => calls.push(command));
     try {
         await f.open();
-        await click(f.item('Assign legacy pre phase'));
-        assert.deepEqual(calls, ['assign-workflow-phase']);
-        await f.update(state({ ...projectPreparedWorkflow(prepared.token), phase: 'post', assigned: true }));
+        assert.equal(f.host.querySelector('[data-menu="Workflows"]'), null);
+        assert.equal(f.item('Duplicate workflow'), undefined); assert.equal(f.item('Delete workflow'), undefined);
+        await click(f.item('Run workflow')); assert.deepEqual(calls, ['run-workflow']);
+        await f.update(state({ ...projectPreparedWorkflow(prepared.token), phase: 'post' }));
         await f.open();
-        assert.equal(f.item('Assigned to legacy post phase').disabled, true);
+        assert.equal(f.item('Run workflow').disabled, false);
+        assert.doesNotMatch(f.host.textContent, /Assign|Unassigned/);
     } finally { await f.close(); }
 });

@@ -86,9 +86,9 @@ test('deep pinned profile edits isolate siblings and library inspection disables
     await page.locator('.pc-node-native[data-id="work"] .pc-native-heading').dblclick();
     await page.evaluate(async () => { const h = window.canvasHarness; const node = h.canvas.graph.nodes.work; await h.view({ x: 420 - node.x * .9, y: 170 - node.y * .9, zoom: .9 }); h.canvas.select(null); });
     await choose(page, 'work', 'fast');
-    const after = await page.evaluate(() => structuredClone(window.canvasHarness.graph));
-    // Nested drawing tables lack the root ID: fetch saved root explicitly.
-    const saved = await page.evaluate(() => structuredClone(window.canvasHarness.S.getGraph('prepared-root')));
+    const effectiveProfile = await page.evaluate(() => window.canvasHarness.canvas.graph.nodes.work.profileId);
+    // The current document owns nested overrides; drawing holds their effective values.
+    const saved = await page.evaluate(() => structuredClone(window.canvasHarness.S.activeWorkflow()));
     expect(saved.nodes['first/path'].nodeBindingOverrides).toEqual({ '[["work"],"work"]': { profileId: 'cheap' } });
     expect(saved.nodes.second).toEqual(before.nodes.second); expect(saved.definitions).toEqual(before.definitions);
     await page.getByRole('button', { name: 'Undo', exact: true }).click(); await expect(bar(page, 'work')).toContainText('Definition connection');
@@ -100,7 +100,7 @@ test('deep pinned profile edits isolate siblings and library inspection disables
     await page.locator('.pc-node-native[data-id="second"] .pc-native-heading').click({ button: 'right' });
     await page.getByText('Open saved definition', { exact: true }).click();
     await expect(bar(page, 'work')).toBeDisabled();
-    expect(after.nodes.work.profileId).toBe('cheap');
+    expect(effectiveProfile).toBe('cheap');
 });
 test('new model nodes select the active host option and operation mode changes remove controls', async ({ page }) => {
     await fixture(page);
@@ -141,10 +141,10 @@ test('changing documents closes the popup and rejects its captured node action',
     await fixture(page); await bar(page).click();
     const response = await page.evaluate(async () => {
         const h = window.canvasHarness, selection = structuredClone(h.canvas.nodeProfiles.find(row => row.id === 'plan').selection);
-        const other = structuredClone(h.graph); other.id = 'other-profile-root'; other.name = 'Other node profiles';
+        const original = h.graph, other = structuredClone(h.graph); other.id = 'other-profile-root'; other.name = 'Other node profiles';
         await h.activate(other);
         const result = h.canvas.hooks.editProfile(selection, 'cheap');
-        return { result, oldValue: h.S.getGraph('profile-root').nodes.plan.profileId, newValue: h.S.getGraph('other-profile-root').nodes.plan.profileId };
+        return { result, oldValue: original.nodes.plan.profileId, newValue: h.S.activeWorkflow().nodes.plan.profileId };
     });
     expect(response.result.ok).toBe(false); expect(response.result.error.code).toBe('STALE_CONTEXT');
     expect(response.oldValue).toBe('saved'); expect(response.newValue).toBe('saved');

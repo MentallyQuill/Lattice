@@ -62,7 +62,7 @@ for (const phase of ['pre', 'post']) test(`${phase} production picker and Detail
     }, { reflection, context, memory });
     await connect(page, memory, 'out', reflection, 'context');
     expect(await page.evaluate(() => Object.keys(window.canvasHarness.graph.wires).length)).toBe(0);
-    await page.keyboard.press('Escape');
+    await expect(page.locator('.pc-root.pc-open')).toBeVisible();
     await connect(page, memory, 'out', reflection, 'state');
     await expect.poll(() => page.evaluate(() => Object.keys(window.canvasHarness.graph.wires).length)).toBe(1);
     await connect(page, context, 'out', reflection, 'context');

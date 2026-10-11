@@ -1,3 +1,4 @@
+import { rootCommand, expectRootBusy } from './workflow-commands.mjs';
 import { test, expect } from '@playwright/test';
 import { openEmber, measureEmber, assertEmber, colorChannels } from './ember-fixture.mjs';
 
@@ -168,7 +169,7 @@ test('Signal keeps pin actions neutral and distinguishes a failed selected card 
         const h = window.canvasHarness;
         h.graph.nodes[id].sections[0].text = '{broken'; h.S.save(); h.UI.refreshIfOpen();
     }, ids.firstCompose);
-    await page.locator('.pc-root-run').click();
+    await rootCommand(page);
     await expect(page.locator('.pc-run-meter-label')).toHaveText('Failed');
     const failed = page.locator('.pc-node-native[data-id="' + ids.jsonDecode + '"]');
     await failed.locator('.pc-native-heading').click();

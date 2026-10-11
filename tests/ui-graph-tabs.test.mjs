@@ -45,25 +45,6 @@ async function controllerFunction(name, env) {
     return Function('env', 'with(env){' + source.slice(start, end) + ';return ' + name + ';}')(env);
 }
 
-test('saving a clicked graph view flushes the workflow and retained presentation without navigation', async () => {
-    const session = actualSession(); accepted(session.openInstance(['parent'])); accepted(session.openInstance(['sibling']));
-    const activeKey = session.readEditor().view.key, clicked = session.project().graphViews.tabs.find(view => view.label === 'Parent');
-    const stored = {}; let saves = 0;
-    const env = { graphViews: session, current: session.readRoot(), viewSaveTimer: null, settings: () => stored, save: () => saves++, clearTimeout() {}, setTimeout() { assert.fail('An explicit save must flush immediately'); }, canvas: { cancelGesture() { accepted(session.updateView({ camera: { x: 70, y: 90, zoom: 1.5 } })); } } };
-    env.persistGraphViews = await controllerFunction('persistGraphViews', env);
-    env.savedWorkflowDocuments = new WeakMap(); env.workflowSaveRequests = new WeakMap();
-    env.workflowDocumentSnapshot = await controllerFunction('workflowDocumentSnapshot', env);
-    env.ctx = () => ({ saveSettingsDebounced: env.save }); env.toast = () => {};
-    env.onSaveGraph = await controllerFunction('onSaveGraph', env);
-    const saveView = await controllerFunction('onSaveGraphView', env);
-    saveView(clicked.key);
-    assert.equal(saves, 1); assert.equal(session.readEditor().view.key, activeKey);
-    const persisted = stored.workspaceViews['actual/root'];
-    assert.equal(persisted.activeKey, activeKey);
-    assert.deepEqual(persisted.views.find(view => view.identity.instancePath?.[0] === 'sibling').camera, { x: 70, y: 90, zoom: 1.5 });
-    saveView('removed-tab'); assert.equal(saves, 1, 'a removed tab cannot act on another workflow');
-});
-
 test('tab exports download the clicked root or exact pinned subgraph revision without changing active view', async () => {
     const graph = accepted(createLibraryWorkflow('scene-compass')).graph;
     graph.id = 'tab-export-root'; graph.name = 'Export workflow';
@@ -82,11 +63,9 @@ test('tab exports download the clicked root or exact pinned subgraph revision wi
     accepted(session.openLibrary(libraryRef)); const libraryKey = session.readEditor().view.key;
     const rootKey = session.project().graphViews.tabs[0].key; accepted(session.focusView(rootKey));
     const blobs = new Map(), downloads = [], revoked = [], later = [];
-    const env = { current: graph, graphViews: session, workspacePrepared, viewIdentityKey, definitionRefKey, exportSubgraph, Blob, URL: { createObjectURL(blob) { const url = 'blob:tab-export-' + blobs.size; blobs.set(url, blob); return url; }, revokeObjectURL(url) { revoked.push(url); } }, setTimeout(callback) { later.push(callback); }, exportGraph(id) { assert.equal(id, 'tab-export-root'); return JSON.stringify(exportWorkflow(graph)); }, toast(message) { assert.fail(message); }, document: { createElement(name) { const element = document.createElement(name); element.addEventListener('click', event => { event.preventDefault(); downloads.push({ file: element.download, blob: blobs.get(element.href) }); }); return element; } } };
+    const env = { current: graph, graphViews: session, workspacePrepared, viewIdentityKey, definitionRefKey, exportSubgraph, Blob, URL: { createObjectURL(blob) { const url = 'blob:tab-export-' + blobs.size; blobs.set(url, blob); return url; }, revokeObjectURL(url) { revoked.push(url); } }, setTimeout(callback) { later.push(callback); }, exportGraph(value) { assert.equal(value, graph); return JSON.stringify(exportWorkflow(graph)); }, toast(message) { assert.fail(message); }, document: { createElement(name) { const element = document.createElement(name); element.addEventListener('click', event => { event.preventDefault(); downloads.push({ file: element.download, blob: blobs.get(element.href) }); }); return element; } } };
     const exportView = await controllerFunction('onExportGraphView', env);
     env.downloadGraphViewJSON = await controllerFunction('downloadGraphViewJSON', env);
-    env.savedWorkflowDocuments = new WeakMap(); env.workflowSaveRequests = new WeakMap();
-    env.workflowDocumentSnapshot = await controllerFunction('workflowDocumentSnapshot', env);
     env.onExportGraph = await controllerFunction('onExportGraph', env);
     exportView(instanceKey); exportView(libraryKey); exportView(rootKey);
     assert.equal(downloads.length, 3);
@@ -133,7 +112,7 @@ test('right-click closes the clicked inactive tab without activating it', async 
     }
 });
 
-test('tab context commands keep their clicked target for saving exporting renaming and closing others', async () => {
+test('tab context commands keep their clicked target for exporting renaming and closing others', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'lattice-graph-tab-context-actions-'));
     const host = document.createElement('div'); document.body.append(host);
     let mounted;
@@ -141,7 +120,7 @@ test('tab context commands keep their clicked target for saving exporting renami
         const GraphTabs = await component('GraphTabs', directory);
         const first = child('first', 'First child'), second = child('second', 'Second child'), closed = child('closed', 'Closed child');
         const calls = [];
-        mounted = mount(GraphTabs, { target: host, props: { views: { workflowId: 'root', viewEpoch: 1, active: first, tabs: [root, first, second], closedViews: [closed] }, actions: { focusView: key => calls.push(['focus', key]), saveView: key => calls.push(['save', key]), exportView: key => calls.push(['export', key]), renameView: (key, name) => calls.push(['rename', key, name]), closeView: key => calls.push(['close', key]), closeOtherViews: key => calls.push(['others', key]), reopenView: key => calls.push(['reopen', key]) } } }); flushSync();
+        mounted = mount(GraphTabs, { target: host, props: { views: { workflowId: 'root', viewEpoch: 1, active: first, tabs: [root, first, second], closedViews: [closed] }, actions: { focusView: key => calls.push(['focus', key]), exportView: key => calls.push(['export', key]), renameView: (key, name) => calls.push(['rename', key, name]), closeView: key => calls.push(['close', key]), closeOtherViews: key => calls.push(['others', key]), reopenView: key => calls.push(['reopen', key]) } } }); flushSync();
         const tabs = [...host.querySelectorAll('[role="tab"]')];
         const command = async (tab, label) => {
             tab.dispatchEvent(new dom.window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 50, clientY: 20 })); flushSync(); await tick();
@@ -149,7 +128,8 @@ test('tab context commands keep their clicked target for saving exporting renami
             assert.ok(button, `${label} is offered`); assert.equal(button.disabled, false);
             button.click(); flushSync(); await tick();
         };
-        await command(tabs[2], 'Save workflow'); assert.deepEqual(calls.at(-1), ['save', 'second']);
+        tabs[2].dispatchEvent(new dom.window.MouseEvent('contextmenu', { bubbles: true, cancelable: true })); flushSync(); await tick();
+        assert.equal([...host.querySelectorAll('[role="menuitem"]')].some(element => element.textContent === 'Save workflow'), false, 'File owns saving the document');
         await command(tabs[2], 'Export subgraph JSON'); assert.deepEqual(calls.at(-1), ['export', 'second']);
         await command(tabs[2], 'Rename subgraph');
         const input = host.querySelector('input[aria-label="Subgraph name"]');
@@ -249,14 +229,14 @@ test('keyboard tab menus restore their trigger and dismiss when the target or wo
         await component('GraphTabs', directory);
         const first = child('first', 'First child'), second = child('second', 'Second child');
         const initial = { workflowId: 'root', viewEpoch: 1, active: first, tabs: [root, first, second], closedViews: [] };
-        const source = `<script>import GraphTabs from ${JSON.stringify(pathToFileURL(join(directory, 'GraphTabs.mjs')).href)}; let { initial } = $props(); let views = $state(initial); export function update(next) { views = next; }</script><GraphTabs {views} actions={{ saveView() {}, exportView() {}, renameView() {}, closeView() {}, closeOtherViews() {} }} />`;
+        const source = `<script>import GraphTabs from ${JSON.stringify(pathToFileURL(join(directory, 'GraphTabs.mjs')).href)}; let { initial } = $props(); let views = $state(initial); export function update(next) { views = next; }</script><GraphTabs {views} actions={{ exportView() {}, renameView() {}, closeView() {}, closeOtherViews() {} }} />`;
         const Harness = await component('GraphTabKeyboardHarness', directory, source);
         mounted = mount(Harness, { target: host, props: { initial } }); flushSync();
         const tabs = [...host.querySelectorAll('[role="tab"]')];
         const menu = () => host.querySelector('[role="menu"]');
         tabs[2].focus(); keydown(tabs[2], 'F10', { shiftKey: true }); await tick();
         assert.ok(menu(), 'Shift+F10 opens the focused tab menu');
-        assert.equal(document.activeElement.textContent, 'Save workflow');
+        assert.equal(document.activeElement.textContent, 'Export subgraph JSON');
         keydown(document.activeElement, 'End'); assert.equal(document.activeElement.textContent, 'Close other tabs');
         keydown(document.activeElement, 'Escape'); assert.equal(menu(), null); assert.equal(document.activeElement, tabs[2]);
         keydown(tabs[2], 'ContextMenu'); await tick(); assert.ok(menu());

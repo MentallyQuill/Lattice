@@ -260,7 +260,7 @@ test('long subgraph menus fit a small viewport and keyboard navigation skips rea
         const h = window.canvasHarness, node = h.canvas.graph.nodes.work;
         await h.view({ x: 180 - node.x * .7, y: 20 - node.y * .7, zoom: .7 });
     });
-    const before = await page.evaluate(() => JSON.stringify(window.canvasHarness.S.getGraph('prepared-root')));
+    const before = await page.evaluate(() => JSON.stringify(window.canvasHarness.S.activeWorkflow()));
     await heading(page, 'work').click({ button: 'right' });
     for (const name of ['Cut', 'Delete', 'Duplicate', 'Make editable copy', 'Unpack subgraph', 'Create subgraph']) {
         await expect(action(page, name)).toBeDisabled();
@@ -278,5 +278,5 @@ test('long subgraph menus fit a small viewport and keyboard navigation skips rea
     await page.keyboard.press('End'); await expect(menu(page).locator('button:focus')).toHaveAttribute('aria-label', enabled.at(-1));
     await action(page, 'Open subgraph').focus(); await page.keyboard.press('Enter');
     await expect(page.locator('.pc-graph-tabs [role="tab"][aria-selected="true"]')).toContainText('Plan');
-    expect(await page.evaluate(() => JSON.stringify(window.canvasHarness.S.getGraph('prepared-root')))).toBe(before);
+    expect(await page.evaluate(() => JSON.stringify(window.canvasHarness.S.activeWorkflow()))).toBe(before);
 });

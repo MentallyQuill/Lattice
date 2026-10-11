@@ -3,9 +3,9 @@
     import type { WorkbenchView, WorkbenchActions } from './types';
     let { state, actions, local }: { state: WorkbenchView; actions: WorkbenchActions; local: (command: string) => void } = $props();
     const workflow = $derived(state.rootWorkflow ?? state.workflow);
-    let header: HTMLElement, graphSelect: HTMLSelectElement, arm: HTMLInputElement, inspBtn: HTMLButtonElement;
-    export function getParts() { return { header, graphSelect, arm, inspBtn }; }
-    export function focusGraphSelect() { graphSelect.focus(); }
+    const documentState = $derived(state.document?.dirty ? 'Modified' : state.document?.busy ? '' : state.document?.status ? '' : state.document ? 'Saved' : 'Unsaved');
+    let header: HTMLElement, arm: HTMLInputElement, inspBtn: HTMLButtonElement;
+    export function getParts() { return { header, arm, inspBtn }; }
 </script>
 <header class="pc-header" data-pc-ui="svelte" bind:this={header}>
     <div class="pc-menubar">
@@ -14,14 +14,13 @@
         <button type="button" class="pc-btn menu_button pc-close" title="Close" aria-label="Close canvas" onclick={() => actions.command('close')}>×</button>
     </div>
     <div class="pc-workflow-bar">
-        <select class="pc-select pc-graph-select text_pole" aria-label="Workflow" value={state.graphId} bind:this={graphSelect} onchange={(event) => actions.pickGraph(event.currentTarget.value)}>{#each state.graphs as graph (graph.id)}<option value={graph.id}>{graph.name}</option>{/each}</select>
+        <div class="pc-document-heading"><strong class="pc-document-name" title={state.document?.name ?? 'Untitled'}>{state.document?.name ?? 'Untitled'}</strong><span class="pc-document-status" role="status" aria-label="Document status">{documentState}{#if state.document?.busy}{documentState ? ' · ' : ''}Working…{/if}{#if state.document?.status && state.document.status !== documentState}{documentState || state.document.busy ? ' · ' : ''}{state.document.status}{/if}</span></div>
         <div class="pc-header-actions pc-history">
             <button type="button" class={`pc-btn menu_button pc-undo${state.history.undo ? '' : ' pc-disabled'}`} disabled={!state.history.undo} title={state.history.undoTitle} aria-label="Undo" onclick={() => actions.command('undo')}>↶</button>
             <button type="button" class={`pc-btn menu_button pc-redo${state.history.redo ? '' : ' pc-disabled'}`} disabled={!state.history.redo} title={state.history.redoTitle} aria-label="Redo" onclick={() => actions.command('redo')}>↷</button>
             <span class={`pc-history-note${state.history.showNote ? ' pc-show' : ''}`}>{state.history.note}</span>
         </div>
-        <button type="button" class="pc-btn menu_button pc-root-run" disabled={!workflow || (!workflow.busy && !!workflow.issues.length)} title={workflow?.issues.join('\n') || 'Run the root workflow'} onclick={() => actions.command(workflow?.busy ? 'stop-workflow' : 'run-workflow')}>{workflow?.busy ? '■ Stop' : '▶ Run'}</button>
-        <span class="pc-root-workflow-status" role="status">{workflow ? `${workflow.phase} · ${workflow.assigned ? 'Assigned' : 'Unassigned'} · ≤ ${workflow.callBound} requests` : 'Workflow unavailable'} · Autosave in SillyTavern</span>
+        <span class="pc-root-workflow-status" role="status" aria-label="Workflow status">{workflow ? `${workflow.phase} · ≤ ${workflow.callBound} requests${workflow.status ? ' · ' + workflow.status : ''}` : 'Workflow unavailable'}</span>
         <div class="pc-header-actions pc-surface-actions">
             <button type="button" class={`pc-btn menu_button pc-pane-toggle${state.inspectorOpen ? ' pc-on' : ''}`} title="Show or hide the inspector" aria-label="Toggle inspector" aria-pressed={state.inspectorOpen} bind:this={inspBtn} onclick={() => actions.command('inspector')}>Details</button>
         </div>

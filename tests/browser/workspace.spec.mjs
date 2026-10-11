@@ -1,3 +1,4 @@
+import { rootCommand, expectRootBusy } from './workflow-commands.mjs';
 import { test, expect } from '@playwright/test';
 
 async function previewMenu(page, command) {
@@ -138,7 +139,7 @@ for (const panel of ['Examples', 'Help']) test(`${panel} dialog suppresses backg
 test('flat workspace menus support keyboard navigation, Escape and outside dismissal', async ({ page }) => {
     await page.goto('/tests/browser/harness.html'); await page.waitForFunction(() => !!window.canvasHarness);
     const labels = await page.locator('.pc-flat-menu').allTextContents();
-    expect(labels).toEqual(['File', 'Edit', 'Graph', 'Node', 'Preview', 'Workflows', 'Tools', 'Help']);
+    expect(labels).toEqual(['File', 'Edit', 'Graph', 'Node', 'Preview', 'Tools', 'Help']);
     const file = page.getByRole('button', { name: 'File', exact: true });
     await file.focus(); await page.keyboard.press('ArrowDown');
     await expect(page.getByRole('menuitem', { name: 'New workflow', exact: true })).toBeFocused();
@@ -207,18 +208,18 @@ test('root Run and Stop remain active while the preview divider resizes', async 
     });
     await page.evaluate(async () => {
         const h = window.canvasHarness, { installStarter } = await import('/src/workflow/starters.js?v=' + h.version);
-        await h.activate(installStarter('native-guidance', h.S.settings()));
+        await h.activate(installStarter('native-guidance'));
     });
     for (const operation of ['smart-compactor', 'response-plan']) {
         const id = await page.evaluate(operation => Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === operation).id, operation);
         await page.locator(`.pc-node-native[data-id="${id}"] .pc-native-heading`).click();
         await page.getByRole('region', { name: 'Node details', exact: true }).getByLabel('Connection profile', { exact: true }).selectOption('analysis');
     }
-    await page.locator('.pc-root-run').click();
-    await expect(page.locator('.pc-root-run')).toHaveText('■ Stop');
+    await rootCommand(page);
+    await expectRootBusy(page, true);
     await expect.poll(() => page.evaluate(() => window.shellRequests)).toBe(1);
     await page.getByRole('separator', { name: 'Resize preview' }).focus(); await page.keyboard.press('ArrowDown');
-    await expect(page.locator('.pc-root-run')).toHaveText('■ Stop');
+    await expectRootBusy(page, true);
     expect(await page.evaluate(() => window.shellRequests)).toBe(1);
     for (const selected of [true, false]) for (const interruption of ['Escape', 'pointercancel', 'lost capture', 'blur', 'unmount']) {
         const selection = await page.evaluate(selected => {
@@ -235,15 +236,15 @@ test('root Run and Stop remain active while the preview divider resizes', async 
         await interruptDivider(page, interruption);
         expect((await pane.boundingBox()).height).toBe(original);
         await expect(page.locator('.pc-root')).toHaveClass(/pc-open/);
-        await expect(page.locator('.pc-root-run')).toHaveText('■ Stop');
+        await expectRootBusy(page, true);
         expect(await page.evaluate(() => window.shellRequests)).toBe(1);
         expect(await page.evaluate(() => window.canvasHarness.canvas.selection)).toEqual(selection);
         expect(await page.evaluate(() => ({ ...window.canvasHarness.canvas.view }))).toEqual(camera);
         expect(await page.evaluate(() => window.dividerHandle.hasPointerCapture(window.dividerPointer))).toBe(false);
     }
     expect(await page.evaluate(() => window.canvasHarness.S.settings().enabled)).toBe(false);
-    await page.locator('.pc-root-run').click();
-    await expect(page.locator('.pc-root-run')).toHaveText('▶ Run');
+    await rootCommand(page, 'Stop workflow');
+    await expectRootBusy(page, false);
     await page.evaluate(() => window.finishShellRequest({ choices: [{ message: { content: 'Late synthetic guidance.' }, finish_reason: 'stop' }] }));
     await page.evaluate(() => window.canvasHarness.settle());
     await expect(page.getByText('Late synthetic guidance.', { exact: true })).toHaveCount(0);

@@ -5,6 +5,22 @@ import * as state from '../src/state.js?v=0.26.0';
 import { starterGraph } from '../src/workflow/starters.js?v=0.26.0';
 import { validateWorkflow } from '../src/workflow/contracts.js?v=0.26.0';
 import { sendWorkflowState } from '../src/run.js?v=0.26.0';
-test('new unified starter has explicit native boundary and a checked review terminal',()=>{const graph=starterGraph('unified-basic');assert.equal(graph.mode,'native-unified');assert.deepEqual(Object.values(graph.nodes).map(node=>node.operation),['on-send','generate-reply','review-publish']);const checked=validateWorkflow(graph);assert.equal(checked.ok,true,JSON.stringify(checked.error));assert.equal(checked.data.callBound,0);});
-test('unified creation, assignment and deletion preserve legacy bindings without automatic assignment',()=>{installMock();const value=state.settings(),legacy=state.createGraph('Legacy','pre');value.nativeBindings.preGraphId=legacy.id;const graph=state.createGraph('Story','unified');assert.equal(graph.mode,'native-unified');assert.equal(value.nativeBindings.workflowGraphId??null,null);value.nativeBindings.workflowGraphId=graph.id;assert.equal(sendWorkflowState().automatic,true);assert.match(sendWorkflowState().armedText,/one workflow|unified/i);state.deleteGraph(graph.id);assert.equal(value.nativeBindings.workflowGraphId,null);assert.equal(value.nativeBindings.preGraphId,legacy.id);});
-test('saved unified binding is admitted and invalid unified mode is rejected without downgrading to legacy',()=>{const graph=starterGraph('unified-basic');installMock({settings:{graphs:{[graph.id]:graph},nativeBindings:{workflowGraphId:graph.id}}});assert.equal(state.settings().nativeBindings.workflowGraphId,graph.id);const invalid=starterGraph('structured-guidance');installMock({settings:{graphs:{[invalid.id]:invalid},nativeBindings:{workflowGraphId:invalid.id}}});assert.throws(()=>state.settings(),/unified binding/i);});
+
+test('new unified starter has explicit native boundary and a checked review terminal', () => {
+    const graph = starterGraph('unified-basic'); assert.equal(graph.mode, 'native-unified');
+    assert.deepEqual(Object.values(graph.nodes).map(node => node.operation), ['on-send', 'generate-reply', 'review-publish']);
+    const checked = validateWorkflow(graph); assert.equal(checked.ok, true, JSON.stringify(checked.error)); assert.equal(checked.data.callBound, 0);
+});
+test('detached unified creation requires activation and keeps the Arm preference separate', () => {
+    installMock(); const value = state.settings(), current = state.activeWorkflow(), graph = state.createGraph('Story');
+    assert.equal(graph.mode, 'native-unified'); assert.equal(state.activeWorkflow(), current);
+    state.activateWorkflow(graph); assert.equal(sendWorkflowState().automatic, true); assert.match(sendWorkflowState().armedText, /unified/i);
+    assert.equal(value.enabled, false); assert.equal(Object.hasOwn(value, 'nativeBindings'), false);
+});
+test('legacy assignments cannot redirect Send away from the migrated current document', () => {
+    const current = starterGraph('structured-guidance'), assigned = starterGraph('unified-basic');
+    installMock({ settings: { graphs: { [current.id]: current, [assigned.id]: assigned }, activeGraphId: current.id, nativeBindings: { workflowGraphId: assigned.id } } });
+    assert.equal(state.activeWorkflow().id, current.id);
+    assert.equal(sendWorkflowState().automatic, true); assert.match(sendWorkflowState().armedText, /adds guidance before Send/);
+    assert.equal(state.recoveredWorkflows().length, 2);
+});

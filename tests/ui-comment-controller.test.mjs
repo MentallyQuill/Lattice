@@ -47,10 +47,10 @@ function fixture(root = { id:'comment-controller-' + ++sequence,schema:3,runtime
     const session = createGraphViewSession({root,activationId:'comment-'+sequence,navigation:[...prepared.data.navigation,...library.data.navigation],preparedViews:[...prepared.data.preparedViews,...library.data.preparedViews]}).data;
     const stored = {workspaceViews:{}}, failures = []; let commits = 0;
     const canvas = {multi:new Set(),selection:null,pointer:{x:12,y:18},host:{getBoundingClientRect:()=>({left:0,top:0,width:800,height:600})},widthOf:n=>n.w ?? 160,heightOf:n=>n.h ?? 48,toGraph:(x,y)=>({x,y}),setMulti(ids){this.multi=new Set(ids);},select(item){this.selection=item;},cancelGesture(){}};
-    const env = { current:root,graphViews:session,canvas,editorDraw:projectEditorDraw(session.readEditor()),editorCaptures:new WeakMap(),commentCaptures:new WeakMap(),commentPresentationEffects:new WeakMap(),pendingCommentPresentation:new WeakMap(),pendingSubgraphPresentation:new WeakMap(),workspaceRevision:0,workspaceIssue:'',selected:null,selectedKind:null,pendingNewWorkflow:null,
+    const env = { current:root,graphViews:session,canvas,editorDraw:projectEditorDraw(session.readEditor()),editorCaptures:new WeakMap(),commentCaptures:new WeakMap(),commentPresentationEffects:new WeakMap(),pendingCommentPresentation:new WeakMap(),pendingSubgraphPresentation:new WeakMap(),workspaceRevision:0,workspaceIssue:'',selected:null,selectedKind:null,pendingDocumentPrompt:null,
         isOpen:()=>true,activeEditRoot:()=>env.current,readGraphEditContext:()=>env.graphViews.readEditContext(),captureGraphEditContext,prepareCommentEdit,createCommentFrame,fitCommentFrame,containedCommentNodes,isCommentFrame,captureCommentPresentation,applyCommentPresentation,applyCommentGroupPresentation,viewIdentityKey,projectEditorDraw,definitionRefKey,H,groupMembers:(graph,id)=>Object.values(graph.nodes).filter(node=>node.inGroup===id),
         prepareSubgraphNodeDeletion,prepareQualifiedScopeEdit,reconcileOwners,ownershipEntries,prunePrivateSnapshots,makeClip,makeDefinitionClip,readClip,prepareClipPaste,okToDelete:()=>true,detachedClip:null,flashHistoryNote(){},navigator:{clipboard:{async writeText(value){env.copied=value;}}},
-        settings:()=>stored,save(){},toast(message){failures.push(message);},persistGraphViews(){const saved=env.graphViews?.serialize();if(saved?.ok)stored.workspaceViews[root.id]=saved.data;},workbench:{focusCommentTitle(id,check){if(check())env.focused=id;}},graphDocumentHooks:{},
+        activeWorkflow:()=>root,activeWorkspaceViews:()=>stored.workspaceViews[root.id],setActiveWorkspaceViews:data=>{stored.workspaceViews[root.id]=data;},settings:()=>stored,save(){},toast(message){failures.push(message);},persistGraphViews(){const saved=env.graphViews?.serialize();if(saved?.ok)stored.workspaceViews[root.id]=saved.data;},workbench:{focusCommentTitle(id,check){if(check())env.focused=id;}},graphDocumentHooks:{},
         commitGraphEdit(graph,command){const result=commitPreparedGraph(graph,command);if(result.ok && result.data.changed){commits++;refresh();}return result;},
     };
     function refresh(){const content=prepareWorkspaceViews(root);assert.equal(content.ok,true,JSON.stringify(content));const shelf=prepareLibraryViews(root.id,root.definitions);const result=session.replacePreparedViews({navigation:[...content.data.navigation,...shelf.data.navigation],preparedViews:[...content.data.preparedViews,...shelf.data.preparedViews]});assert.equal(result.ok,true);env.editorDraw=projectEditorDraw(session.readEditor());}
@@ -283,16 +283,16 @@ for (const key of ['Delete', 'Backspace']) test(`actual ${key} shortcut deletes 
     } finally { f.unlisten(); await real.canvas.destroy(); }
 });
 
-test('pending new-workflow prompt blocks node deletion shortcuts and Escape preserves the selection', async () => {
+test('pending document prompt blocks node deletion shortcuts and Escape preserves the selection', async () => {
     const f = fixture(), real = (await import('./canvas-fixture.mjs')).fixture({ onNativeDelete: selection => f.env.deleteNativeSelection(selection) });
     const promptRoot = document.createElement('div'), prompt = document.createElement('div');
-    prompt.className = 'pc-new-workflow-prompt'; prompt.tabIndex = -1; promptRoot.append(prompt); document.body.append(promptRoot);
+    prompt.className = 'pc-document-prompt'; prompt.tabIndex = -1; promptRoot.append(prompt); document.body.append(promptRoot);
     try {
         f.env.canvas = real.canvas; real.canvas.setGraph(f.env.editorDraw); real.canvas.select({ kind: 'node', id: 'source' });
         const before = structuredClone(f.root), selection = structuredClone(real.canvas.selection), choices = [];
-        f.env.root = promptRoot; f.env.pendingNewWorkflow = { previousWorkflowId: f.root.id };
+        f.env.root = promptRoot; f.env.pendingDocumentPrompt = { previousWorkflowId: f.root.id };
         f.env.typing = controllerFunction('typing', f.env);
-        f.env.chooseNewWorkflow = choice => { choices.push(choice); f.env.pendingNewWorkflow = null; };
+        f.env.chooseDocumentPrompt = choice => { choices.push(choice); f.env.pendingDocumentPrompt = null; };
         const handler = controllerKeydown(f.env);
         for (const key of ['Delete', 'Backspace']) {
             real.host.focus(); const event = new window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }); handler(event);

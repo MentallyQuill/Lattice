@@ -58,12 +58,10 @@ test('native Introspection examples round-trip with valid named pins and private
     }
 });
 
-test('installing native Introspection examples creates independent graphs without assigning or arming', () => {
+test('preparing native Introspection examples creates independent detached graphs', () => {
     for (const example of examples) {
-        const settings = { graphs: {}, enabled: false, nativeBindings: { preGraphId: null, postGraphId: null } };
-        const first = installStarter(example.id, settings), second = installStarter(example.id, settings);
+        const first = installStarter(example.id), second = installStarter(example.id);
         assert.notEqual(first.id, second.id);
-        assert.deepEqual([settings.enabled, settings.nativeBindings], [false, { preGraphId: null, postGraphId: null }]);
         assert.equal(resolveWorkflow(first).ok, true); assert.equal(resolveWorkflow(second).ok, true);
         first.nodes[Object.keys(first.nodes)[0]].alias = 'Local edit';
         assert.equal(Object.values(second.nodes).some(node => node.alias === 'Local edit'), false);

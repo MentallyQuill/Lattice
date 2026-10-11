@@ -1,3 +1,4 @@
+import { rootCommand, expectRootBusy } from './workflow-commands.mjs';
 import { test, expect } from '@playwright/test';
 import { chooseControl, controlValue } from './details-helpers.mjs';
 
@@ -117,7 +118,7 @@ test('pre Text Terminology Map feeds downstream Text Rules and produces guidance
     });
     await expect(page.locator('.pc-port[data-node="map"][data-dir="out"][data-port="out"]')).toHaveAttribute('data-kind', 'text');
     await expect(page.locator('.pc-port[data-node="rules"][data-dir="in"][data-port="in"]')).toHaveAttribute('data-kind', 'text');
-    await page.locator('.pc-root-run').click();
+    await rootCommand(page);
     await expect(page.locator('.pc-run-meter-label')).toHaveText('Completed');
     const result = await runResult(page);
     expect(result).toMatchObject({ ok: true, actualCalls: 0, callBound: 0 });
@@ -160,7 +161,7 @@ test('saved post Terminology Map without inputKind retains Draft patches and rev
     });
     await expect(page.locator('.pc-port[data-node="map"][data-dir="in"][data-port="in"]')).toHaveAttribute('data-kind', 'draft');
     await expect(page.locator('.pc-port[data-node="map"][data-dir="out"][data-port="out"]')).toHaveAttribute('data-kind', 'patches');
-    await page.locator('.pc-root-run').click();
+    await rootCommand(page);
     await expect(page.locator('.pc-run-meter-label')).toHaveText('Completed');
     const result = await runResult(page);
     expect(result).toMatchObject({ ok: true, actualCalls: 0, callBound: 0 });

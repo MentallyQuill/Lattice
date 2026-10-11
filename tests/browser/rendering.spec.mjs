@@ -17,10 +17,10 @@ async function activateNative(page, variant = 'standard') {
             Object.assign(graph.nodes['response-plan'], { x: 30, y: belowShelf + 100, presentation: { compact: true, alias: 'Plan' } });
             Object.assign(graph.nodes.guidance, { x: 195, y: belowShelf + 100 });
         }
-        h.S.settings().graphs[graph.id] = graph; h.UI.refreshIfOpen(); return graph.id;
+        await h.activate(graph); return graph.id;
     }, variant);
-    await page.getByRole('combobox', { name: 'Workflow', exact: true }).selectOption(id);
-    expect(await page.evaluate(id => { const h = window.canvasHarness; return h.graph === h.S.getGraph(id) && h.canvas.graph !== h.graph && h.canvas.graph.id === id && !!h.canvas.graph.nativeCards; }, id)).toBe(true);
+
+    expect(await page.evaluate(id => { const h = window.canvasHarness; return h.graph === h.S.activeWorkflow() && h.canvas.graph !== h.graph && h.canvas.graph.id === id && !!h.canvas.graph.nativeCards; }, id)).toBe(true);
     for (const name of ['Toggle inspector']) {
         const toggle = page.getByRole('button', { name, exact: true }); if (await toggle.getAttribute('aria-pressed') === 'true') await toggle.click();
     }

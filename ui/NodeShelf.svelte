@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { tick } from 'svelte';
+    import { onDestroy, tick } from 'svelte';
     import { FAMILY_PALETTE, PALETTE_GROUPS, paletteForOperation } from '../src/ui/node-palette.js';
     import type { WorkflowView } from './types';
     type ShelfChoice = { id: string; label: string; family: string; phase: string; shortcode?: string; purpose?: string; searchAliases?: readonly string[]; disabledReason?: string; definitionRef?: { id: string; version: number; semanticHash: string } };
@@ -91,7 +91,19 @@
     }
     function closeSubgraph(restore = false) { subgraphMenu = null; if (restore) subgraphAnchor?.focus({ preventScroll: true }); }
     function close(restore = false) { endGesture(); opening++; family = ''; search = false; closeSubgraph(); if (restore) anchor?.focus({ preventScroll: true }); }
-    $effect(() => { const scope = view?.graphId, catalog = choices, locked = readOnly; void scope; void catalog; void locked; return () => close(); });
+    let previousContext: { scope: string | undefined; catalog: string; locked: boolean } | undefined;
+    $effect(() => {
+        const scope = view?.graphId, locked = readOnly;
+        const catalog = JSON.stringify(names.flatMap(name => entries(name).map(entry => [
+            entry.id, entry.title, entry.compatible, entry.phase, entry.family, entry.shortcode,
+            entry.icon, entry.group, entry.purpose, entry.searchAliases, entry.disabledReason,
+            entry.catalog, entry.definitionRef?.id, entry.definitionRef?.version, entry.definitionRef?.semanticHash,
+        ])));
+        // Document and camera refreshes can replace equal props without changing the insertion context.
+        if (previousContext && (scope !== previousContext.scope || catalog !== previousContext.catalog || locked !== previousContext.locked)) close();
+        previousContext = { scope, catalog, locked };
+    });
+    onDestroy(() => close());
     function bounds() {
         const area = shelf.closest('.pc-canvas-area') as HTMLElement, rect = area.getBoundingClientRect();
         return { left: rect.left + area.clientLeft, top: rect.top + area.clientTop, right: rect.right - area.clientLeft, width: area.clientWidth, height: area.clientHeight };

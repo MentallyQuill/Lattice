@@ -84,7 +84,7 @@ test('Workbench clamps Details to leave a useful canvas and cancels a draft when
     }
     try {
         const file = await component('Workbench');
-        instance = mount((await import(pathToFileURL(file).href)).default, { target: host, props: { actions: { pickGraph() {}, arm() {}, command() {}, mode() {}, zoom() {}, fitSelection() {}, resizeDetails: width => committed.push(width) } } }); flushSync(); await tick();
+        instance = mount((await import(pathToFileURL(file).href)).default, { target: host, props: { actions: { arm() {}, command() {}, mode() {}, zoom() {}, fitSelection() {}, resizeDetails: width => committed.push(width) } } }); flushSync(); await tick();
         const body = host.querySelector('.pc-body'), root = instance.getParts().root;
         Object.defineProperty(body, 'clientWidth', { configurable: true, value: 690 });
         instance.update({ graphId: 'first', detailsWidth: 480 }); window.dispatchEvent(new dom.window.Event('resize')); flushSync(); await tick();

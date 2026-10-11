@@ -123,7 +123,6 @@
                 {#if contextTarget}
                     {@const target = contextTarget}
                     {@const renameBlocked = actions.canRenameView?.(target.key) === false}
-                    <button type="button" role="menuitem" disabled={!actions.saveView} onclick={() => contextAction(view => actions.saveView?.(view.key))}>Save workflow</button>
                     <button type="button" role="menuitem" disabled={!actions.exportView} onclick={() => contextAction(view => actions.exportView?.(view.key))}>{target.identity.kind === 'root' ? 'Export workflow JSON' : 'Export subgraph JSON'}</button>
                     <button type="button" role="menuitem" disabled={target.identity.kind === 'library' || renameBlocked || !actions.renameView} title={target.identity.kind === 'library' ? 'Library inspection is read only.' : renameBlocked ? 'Make a local copy of the containing graph to rename this subgraph.' : undefined} onclick={() => contextAction(view => startRename(view.key))}>{target.identity.kind === 'root' ? 'Rename graph' : 'Rename subgraph'}</button>
                     <button type="button" role="menuitem" disabled={target.identity.kind === 'root' || !actions.closeView} onclick={() => contextAction(view => closeTab(view))}>Close tab</button>

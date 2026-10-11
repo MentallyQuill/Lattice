@@ -1,5 +1,5 @@
 /** Lattice launcher and host integration. The workflow never replaces SillyTavern's prompt. */
-import { MODULE, settings, save, ctx, safe } from './src/state.js?v=0.26.0';
+import { MODULE, settings, save, ctx, safe, activeWorkflow, documentSession, onWorkflowActivated } from './src/state.js?v=0.26.0';
 import { getNativeWorkflowController, initializeNativeWorkflowController, workflowSignature, sendWorkflowState } from './src/run.js?v=0.26.0';
 import * as UI from './src/ui.js?v=0.26.0';
 import { applyTheme } from './src/theme.js?v=0.26.0';
@@ -28,7 +28,7 @@ function addLauncher() {
     const host = document.getElementById('extensions_settings2') ?? document.getElementById('extensions_settings');
     if (!host || document.getElementById('pc-settings')) return;
     const block = document.createElement('div'); block.id = 'pc-settings'; block.className = 'pc-settings-block';
-    block.innerHTML = '<div class="inline-drawer"><div class="inline-drawer-toggle inline-drawer-header"><b>Lattice</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div><div class="inline-drawer-content"><label class="checkbox_label" for="pc-enabled"><input id="pc-enabled" type="checkbox"><span id="pc-arm-label"></span></label><div class="pc-settings-hint">Assign optional pre-generation guidance in Setup. Reply repairs run manually and require review. SillyTavern builds its normal prompt.</div><label class="checkbox_label" for="pc-sendbar-opt"><input id="pc-sendbar-opt" type="checkbox"><span>Show Lattice in the chat bar</span></label><div id="pc-theme-editor"></div><button id="pc-open-btn" class="menu_button">Open Lattice</button></div></div>';
+    block.innerHTML = '<div class="inline-drawer"><div class="inline-drawer-toggle inline-drawer-header"><b>Lattice</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div><div class="inline-drawer-content"><label class="checkbox_label" for="pc-enabled"><input id="pc-enabled" type="checkbox"><span id="pc-arm-label"></span></label><div class="pc-settings-hint">When enabled, Send follows the open workflow. Legacy post workflows run manually and require review. SillyTavern builds its normal prompt.</div><label class="checkbox_label" for="pc-sendbar-opt"><input id="pc-sendbar-opt" type="checkbox"><span>Show Lattice in the chat bar</span></label><div id="pc-theme-editor"></div><button id="pc-open-btn" class="menu_button">Open Lattice</button></div></div>';
     host.append(block);
     const enabled = block.querySelector('#pc-enabled'); enabled.checked = armed();
     enabled.addEventListener('change', () => { settings().enabled = enabled.checked; updateState(); });
@@ -92,14 +92,17 @@ function boot() {
         const context = ctx(); settings(); void initializeNativeWorkflowController();
         globalThis.addEventListener?.('unload', () => getNativeWorkflowController().dispose(), { once: true });
         const snapshot = () => {
-            const value = settings(), ids = [value.activeGraphId, value.nativeBindings.preGraphId, value.nativeBindings.postGraphId], graphs = ids.map(id => value.graphs[id]);
-            return { graphs, signature: JSON.stringify([value.enabled, ids, graphs.map(graph => graph ? workflowSignature(graph) : null)]) };
+            const graph = activeWorkflow();
+            return { token: documentSession.capture(), signature: JSON.stringify([settings().enabled, workflowSignature(graph)]) };
         };
         let previous = snapshot();
         document.addEventListener('pc-state', () => {
             const next = snapshot();
-            if (next.signature !== previous.signature || next.graphs.some((graph, index) => graph !== previous.graphs[index])) getNativeWorkflowController().cancel('Workflow settings changed');
+            if (next.signature !== previous.signature || !documentSession.stillCurrent(previous.token)) getNativeWorkflowController().cancel('Workflow settings changed');
             previous = next; paintSendbar();
+        });
+        onWorkflowActivated(() => {
+            previous = snapshot(); UI.refreshIfOpen(); paintSendbar();
         });
         applyTheme();
         for (const name of ['CHAT_CHANGED', 'MESSAGE_RECEIVED', 'MESSAGE_SENT', 'MESSAGE_DELETED', 'MESSAGE_SWIPED', 'MESSAGE_EDITED']) {

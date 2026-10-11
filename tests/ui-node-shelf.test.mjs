@@ -45,7 +45,10 @@ async function fixture(props, check) {
         assert.deepEqual(output.warnings.filter(warning => warning.code.startsWith('a11y')), []);
         const code = output.js.code.replace(/(['"])(svelte(?:\/[^'"]*)?)\1/g, (_, quote, specifier) => JSON.stringify(specifier === 'svelte' ? client : import.meta.resolve(specifier))).replace(/(['"])(\.\.\/src\/[^'"]+)\1/g, (_, quote, specifier) => JSON.stringify(new URL(specifier, new URL('../ui/NodeShelf.svelte', import.meta.url)).href));
         const file = join(directory, 'shelf.mjs'); await writeFile(file, code);
-        instance = mount((await import(pathToFileURL(file).href)).default, { target: host, props }); flushSync(); await tick(); await check(host, instance);
+        const wrapper = compile(`<script>import Shelf from ${JSON.stringify(pathToFileURL(file).href)}; let { initial } = $props(); let props = $state.raw(initial); let shelf; export function update(next) { props = {...props, ...next}; } export function openSearch() { return shelf.openSearch(); }</script><Shelf {...props} bind:this={shelf} />`, { filename: 'ShelfHarness.svelte', generate: 'client' });
+        const wrapperCode = wrapper.js.code.replace(/(['"])(svelte(?:\/[^'"]*)?)\1/g, (_, quote, specifier) => JSON.stringify(specifier === 'svelte' ? client : import.meta.resolve(specifier)));
+        const wrapperFile = join(directory, 'ShelfHarness.mjs'); await writeFile(wrapperFile, wrapperCode);
+        instance = mount((await import(pathToFileURL(wrapperFile).href)).default, { target: host, props: { initial: props } }); flushSync(); await tick(); await check(host, instance);
     } finally {
         if (instance) await unmount(instance); host.remove();
         const scope = relative(resolve(tmpdir()), resolve(directory)); assert.ok(scope && scope.startsWith('lattice-node-shelf-') && !scope.startsWith('..') && !isAbsolute(scope)); await rm(directory, { recursive: true, force: true });
@@ -62,6 +65,22 @@ test('families directly expose canonical nodes with individual icons and shortco
         assert.equal(host.querySelector('[data-subfamily], .pc-sub-chevron'), null);
         const node = host.querySelector('[data-shelf-choice="smart-compactor"]'); assert.ok(node.querySelector('svg')); assert.equal(node.querySelector('small').textContent, 'cp');
         await click(node); assert.deepEqual(calls, [['smart-compactor']]); assert.equal(host.querySelector('.pc-family-menu'), null);
+    });
+});
+
+test('shelf menus survive equal-scope status updates and close when insertion context changes', async () => {
+    const choices = [{ id: 'operation:compose', label: 'Compose', family: 'Shaping', phase: 'pre' }], view = { ...initial, graphId: 'current' };
+    await fixture({ view, choices, choose() {}, add() {}, readOnly: false }, async (host, instance) => {
+        await click(host.querySelector('[data-family="Shaping"]'));
+        const menu = host.querySelector('.pc-family-menu'), focus = document.activeElement;
+        instance.update({ view: { ...view, status: 'Saved recovery draft' }, choices: choices.map(choice => ({ ...choice })), readOnly: false }); flushSync(); await tick(); flushSync();
+        assert.equal(host.querySelector('.pc-family-menu'), menu, 'camera/document status refresh keeps the browsing menu');
+        assert.equal(menu.isConnected, true); assert.equal(document.activeElement, focus);
+        for (const changed of [{ view: { ...view, graphId: 'other-document' } }, { choices: choices.map(choice => ({ ...choice, label: 'Compose renamed' })) }, { choices: [...choices, { id: 'operation:text', label: 'Text', family: 'Shaping', phase: 'pre' }] }, { readOnly: true }]) {
+            instance.update({ view, choices, readOnly: false }); flushSync(); await tick(); flushSync();
+            await click(host.querySelector('[data-family="Shaping"]')); assert.ok(host.querySelector('.pc-family-menu'));
+            instance.update(changed); flushSync(); await tick(); flushSync(); assert.equal(host.querySelector('.pc-family-menu'), null, 'an actual insertion context change cancels its menu');
+        }
     });
 });
 test('dragging a shelf choice dispatches its canvas drop point once and clears the dragging cursor', async () => {
@@ -143,7 +162,7 @@ test('saved subgraphs and interface nodes use separate shelf groups without a ma
 
 test('saved shelf entries have explicit Delete and Open menus even inside a read-only body', async () => {
     const calls = [], choice = { id: 'definition:cleanup', label: 'Cleanup', family: 'Subgraphs', phase: 'pre', definitionRef: { id: 'cleanup', version: 1, semanticHash: 'abc' } };
-    await fixture({ view: initial, choices: [choice], readOnly: true, choose: () => assert.fail('Right-click cannot insert a subgraph'), add() {}, shelfSubgraph: (...args) => calls.push(args) }, async host => {
+    await fixture({ view: initial, choices: [choice], readOnly: true, choose: () => assert.fail('Right-click cannot insert a subgraph'), add() {}, shelfSubgraph: (...args) => calls.push(args) }, async (host, instance) => {
         await click(host.querySelector('[data-family="Subgraphs"]'));
         const row = host.querySelector('[data-shelf-choice="definition:cleanup"]');
         assert.equal(row.disabled, false); assert.equal(row.getAttribute('aria-disabled'), 'false', 'available context actions must remain accessible in a read-only graph');
@@ -151,6 +170,9 @@ test('saved shelf entries have explicit Delete and Open menus even inside a read
         await click(row); assert.deepEqual(calls, [], 'a shelf action row cannot insert into a read-only graph');
         row.dispatchEvent(new dom.window.MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 300, clientY: 120 })); flushSync(); await tick(); flushSync();
         const menu = () => host.querySelector('[role="menu"][aria-label="Cleanup actions"]'); assert.ok(menu());
+        const openMenu = menu(), focus = document.activeElement;
+        instance.update({ view: { ...initial, status: 'Saved recovery draft' }, choices: [{ ...choice, definitionRef: { ...choice.definitionRef } }] }); flushSync(); await tick(); flushSync();
+        assert.equal(menu(), openMenu, 'status refresh preserves the saved-subgraph action menu'); assert.equal(document.activeElement, focus);
         const remove = menu().querySelector('[data-shelf-subgraph-action="delete"]'); assert.equal(remove.disabled, false); await click(remove);
         assert.deepEqual(calls, [['definition:cleanup', 'delete']]); assert.equal(menu(), null);
         await click(host.querySelector('[data-family="Subgraphs"]'));

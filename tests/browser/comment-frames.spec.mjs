@@ -7,6 +7,7 @@ const frame = (page, id) => page.locator(`.pc-comment-frame[data-id="${id}"]`);
 const details = page => page.locator('.pc-comment-details');
 
 async function load(page) {
+    await page.addInitScript(() => { window.showOpenFilePicker = undefined; window.showSaveFilePicker = undefined; });
     await page.goto('/tests/browser/harness.html');
     await page.waitForFunction(() => !!window.canvasHarness);
 }
@@ -34,15 +35,15 @@ async function setup(page, variant = 'ordinary') {
             graph.nodes.annotation = { id: 'annotation', type: 'note', commentFrame: true, moveContents: false,
                 title: 'Selected comment', content: '', color: '#637d89', x: 360, y: 20, w: 300, h: 220 };
         }
+        let workspaceViews = null;
         if (variant === 'overlay') {
             const { createViewState } = await import('/src/ui/view-state.js?v=' + h.version);
             const view = createViewState({ workflowId: graph.id, initialCamera: { x: 180, y: 160, zoom: .8 } });
             const updated = view?.updateView({ nodePresentation: { n0: { x: 70, y: 100, alias: 'Local source' } } });
             if (!updated?.ok) throw Error('The persisted view fixture could not be prepared.');
-            h.S.settings().workspaceViews ??= {};
-            h.S.settings().workspaceViews[graph.id] = structuredClone(view.serialize().data);
+            workspaceViews = structuredClone(view.serialize().data);
         }
-        await h.activate(graph); await h.view({ x: 180, y: 160, zoom: .8 });
+        await h.activate(graph, { workspaceViews }); await h.view({ x: 180, y: 160, zoom: .8 });
         return graph.id;
     }, variant);
 }
@@ -211,7 +212,7 @@ test('header drag undo restores persisted local node coordinates while preservin
     const ids = [id, 'n0', 'n1'], savedBefore = await positions(page, ids), drawnBefore = await positions(page, ids, true);
     const presentation = () => page.evaluate(() => {
         const h = window.canvasHarness;
-        return h.S.settings().workspaceViews[h.graph.id].views.find(view => view.identity.kind === 'root').nodePresentation.n0;
+        return h.S.activeWorkspaceViews().views.find(view => view.identity.kind === 'root').nodePresentation.n0;
     });
     await drag(page, frame(page, id).locator('.pc-comment-select'), 48, 32);
     const savedAfter = await positions(page, ids);
@@ -318,7 +319,9 @@ test('clipboard and downloaded workflow roundtrip preserve authored comment fiel
     const chooser = page.waitForEvent('filechooser');
     await page.getByRole('menuitem', { name: 'Open workflow…', exact: true }).click();
     await (await chooser).setFiles({ name: 'comment.workflow.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
-    await expect.poll(() => page.evaluate(() => window.canvasHarness.graph.id)).not.toBe('comment-acceptance');
+    const guard = page.getByRole('dialog', { name: 'Save workflow changes?', exact: true });
+    await expect(guard).toBeVisible(); await guard.getByRole('button', { name: "Don't Save", exact: true }).click();
+    await expect(page.locator('.pc-document-name')).toHaveText('comment.workflow.json');
     expect(await page.evaluate(id => window.canvasHarness.graph.nodes[id], id)).toMatchObject(authored);
     await expect(frame(page, id).locator('.pc-comment-title-input')).toHaveValue('Portable comment');
 });
@@ -341,7 +344,7 @@ async function sharedFrameFixture(page) {
 
 test('downloaded subgraphs retain comment fields when imported back into the library', async ({ page }) => {
     const source = await sharedFrameFixture(page);
-    const before = await page.evaluate(id => JSON.stringify(window.canvasHarness.S.getGraph(id)), source.id);
+    const before = await page.evaluate(id => JSON.stringify(window.canvasHarness.S.activeWorkflow()), source.id);
     const exported = await exportedJSON(page, () => subgraphCommand(page, 'first/path', 'Export subgraph'));
     const authored = { type: 'note', commentFrame: true, moveContents: false, title: 'Pinned comment',
         content: 'Read-only\nPreserved notes', color: '#718c69', x: 16, y: 20, w: 930, h: 330 };
@@ -363,7 +366,7 @@ test('downloaded subgraphs retain comment fields when imported back into the lib
         h.UI.refreshIfOpen(); await h.settle();
     }, exported);
     expect(await page.evaluate(key => window.canvasHarness.S.settings().subgraphLibrary.definitions[key].body.nodes.annotation, source.key)).toMatchObject(authored);
-    expect(await page.evaluate(id => JSON.stringify(window.canvasHarness.S.getGraph(id)), source.id)).toBe(before);
+    expect(await page.evaluate(id => JSON.stringify(window.canvasHarness.S.activeWorkflow()), source.id)).toBe(before);
     await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
     await shelfCommand(page, source.key, 'Open saved definition');
     await expect(frame(page, 'annotation').locator('.pc-comment-title')).toHaveText('Pinned comment');
@@ -372,7 +375,7 @@ test('downloaded subgraphs retain comment fields when imported back into the lib
 for (const kind of ['shared', 'library']) {
     test(`${kind} definition comments expose disabled controls and reject drag, C and Delete`, async ({ page }) => {
         const source = await sharedFrameFixture(page);
-        const before = await page.evaluate(id => JSON.stringify(window.canvasHarness.S.getGraph(id)), source.id);
+        const before = await page.evaluate(id => JSON.stringify(window.canvasHarness.S.activeWorkflow()), source.id);
         if (kind === 'shared') await card(page, 'first/path').dblclick();
         else await shelfCommand(page, source.key, 'Open saved definition');
         await page.evaluate(() => window.canvasHarness.view({ x: 180, y: 160, zoom: .8 }));
@@ -388,7 +391,7 @@ for (const kind of ['shared', 'library']) {
         expect(await positions(page, ['annotation'], true)).toEqual(drawnBefore);
         await host(page).focus(); await page.keyboard.press('c'); await page.keyboard.press('Delete');
         await expect(page.locator('.pc-comment-frame')).toHaveCount(1);
-        expect(await page.evaluate(id => JSON.stringify(window.canvasHarness.S.getGraph(id)), source.id)).toBe(before);
+        expect(await page.evaluate(id => JSON.stringify(window.canvasHarness.S.activeWorkflow()), source.id)).toBe(before);
         await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
     });
 }

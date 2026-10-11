@@ -88,9 +88,9 @@ async function activateNestedWorkspace(page, arrange = false) {
             for (const [node, x, y] of [['source', 30, 30], ['first/path', 420, 30], ['second', 420, 270], ['one', 810, 30], ['two', 810, 270]]) Object.assign(root.nodes[node], { x, y });
             root.view = { x: 25, y: 25, zoom: .8 };
         }
-        h.S.settings().graphs[root.id] = root; h.UI.refreshIfOpen(); return root.id;
+        await h.activate(root); return root.id;
     }, arrange);
-    await page.getByRole('combobox', { name: 'Workflow', exact: true }).selectOption(id);
+
     await page.evaluate(() => window.canvasHarness.settle());
     return id;
 }
@@ -116,7 +116,7 @@ async function wirePoint(page, id) {
 for (const [part, target] of [['heading', '.pc-native-heading'], ['body', '.pc-native-pin-label']]) {
     test(`actual activated wrapper ${part} double click reaches the child tab through real event targets`, async ({ page }) => {
         const id = await activateNestedWorkspace(page);
-        const before = await page.evaluate(id => JSON.stringify(window.canvasHarness.S.getGraph(id)), id);
+        const before = await page.evaluate(id => JSON.stringify(window.canvasHarness.S.activeWorkflow()), id);
         await observePointerTargets(page);
         await page.locator(`.pc-node-native[data-id="first/path"] ${target}`).first().dblclick();
         const events = await page.evaluate(() => window.canvasPointerEvents);
@@ -124,7 +124,7 @@ for (const [part, target] of [['heading', '.pc-native-heading'], ['body', '.pc-n
         expect(events.filter(event => event.type === 'gotpointercapture')).toEqual([]);
         await expect(page.locator('[role="tab"][aria-selected="true"]')).toContainText('Outer');
         await expect(page.locator('.pc-graph-location')).toContainText('Outer');
-        expect(await page.evaluate(id => JSON.stringify(window.canvasHarness.S.getGraph(id)), id)).toBe(before);
+        expect(await page.evaluate(id => JSON.stringify(window.canvasHarness.S.activeWorkflow()), id)).toBe(before);
     });
 }
 
@@ -136,9 +136,9 @@ test('actual activated wire click selects the visible cable and Delete removes t
     const events = await page.evaluate(() => window.canvasPointerEvents);
     expect(events.find(event => event.type === 'click'), JSON.stringify(events)).toMatchObject({ wireId: 'a', targetIsHost: false });
     await page.keyboard.press('Delete');
-    await expect.poll(() => page.evaluate(id => Object.keys(window.canvasHarness.S.getGraph(id).wires).sort(), id)).toEqual(['b', 'c', 'd']);
+    await expect.poll(() => page.evaluate(id => Object.keys(window.canvasHarness.S.activeWorkflow().wires).sort(), id)).toEqual(['b', 'c', 'd']);
     await expect(page.locator('.pc-canvas .pc-wire-hit[data-id="a"]')).toHaveCount(0);
-    expect(await page.evaluate(id => Object.values(window.canvasHarness.S.getGraph(id).nodes).filter(node => node.operation === 'reroute').length, id)).toBe(0);
+    expect(await page.evaluate(id => Object.values(window.canvasHarness.S.activeWorkflow().nodes).filter(node => node.operation === 'reroute').length, id)).toBe(0);
 });
 
 test('actual activated direct wire double click inserts a typed Reroute through the production controller', async ({ page }) => {
@@ -147,9 +147,9 @@ test('actual activated direct wire double click inserts a typed Reroute through 
     await page.mouse.dblclick(point.x, point.y);
     const events = await page.evaluate(() => window.canvasPointerEvents);
     expect(events.find(event => event.type === 'dblclick'), JSON.stringify(events)).toMatchObject({ wireId: 'a', targetIsHost: false });
-    await expect.poll(() => page.evaluate(id => Object.values(window.canvasHarness.S.getGraph(id).nodes).filter(node => node.operation === 'reroute').length, id)).toBe(1);
+    await expect.poll(() => page.evaluate(id => Object.values(window.canvasHarness.S.activeWorkflow().nodes).filter(node => node.operation === 'reroute').length, id)).toBe(1);
     const result = await page.evaluate(id => {
-        const root = window.canvasHarness.S.getGraph(id), node = Object.values(root.nodes).find(node => node.operation === 'reroute');
+        const root = window.canvasHarness.S.activeWorkflow(), node = Object.values(root.nodes).find(node => node.operation === 'reroute');
         return { node, first: root.wires.a, second: Object.values(root.wires).find(wire => wire.from === node.id), count: Object.keys(root.wires).length };
     }, id);
     expect(result).toMatchObject({ node: { artifactKind: 'context', phase: 'pre', compact: true }, first: { from: 'source', fromPort: 'out', to: result.node.id, toPort: 'in' },
@@ -161,9 +161,9 @@ test('actual activated direct wire double click inserts a typed Reroute through 
 test('actual activated wire Alt click breaks only its saved connection', async ({ page }) => {
     const id = await activateNestedWorkspace(page, true), point = await wirePoint(page, 'a');
     await page.keyboard.down('Alt'); await page.mouse.click(point.x, point.y); await page.keyboard.up('Alt');
-    await expect.poll(() => page.evaluate(id => Object.keys(window.canvasHarness.S.getGraph(id).wires).sort(), id)).toEqual(['b', 'c', 'd']);
+    await expect.poll(() => page.evaluate(id => Object.keys(window.canvasHarness.S.activeWorkflow().wires).sort(), id)).toEqual(['b', 'c', 'd']);
     await expect(page.locator('.pc-canvas .pc-wire-hit[data-id="a"]')).toHaveCount(0);
-    expect(await page.evaluate(id => Object.values(window.canvasHarness.S.getGraph(id).nodes).filter(node => node.operation === 'reroute').length, id)).toBe(0);
+    expect(await page.evaluate(id => Object.values(window.canvasHarness.S.activeWorkflow().nodes).filter(node => node.operation === 'reroute').length, id)).toBe(0);
     expect(await page.evaluate(() => window.canvasHarness.canvas.hasContentGesture())).toBe(false);
 });
 

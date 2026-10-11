@@ -40,7 +40,7 @@ async function sharedModelFixture(page) {
 
 async function savedBindings(page) {
     return page.evaluate(() => {
-        const root = window.canvasHarness.S.getGraph('prepared-root');
+        const root = window.canvasHarness.S.activeWorkflow();
         return { overrides: root.nodes['first/path'].nodeBindingOverrides, sibling: root.nodes.second, definitions: root.definitions };
     });
 }

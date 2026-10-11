@@ -33,15 +33,15 @@ test('real Fast setup exposes explicit Laya endpoint and clears password when ch
  }finally{await f.close();}
 });
 
-test('unsaved workflow prompt defaults to unified and can explicitly choose a legacy phase',async()=>{
- let chosen;const f=await fixture('NewWorkflowPrompt',{view:{name:'Story',phase:'unified'},actions:{choose(choice,phase){chosen={choice,phase};}}});
- try{const select=f.host.querySelector('[aria-label="New workflow type"]');assert.ok(select);assert.equal(select.value,'unified');input(f.host,'New workflow type','post','change');button(f.host,'Discard').click();flushSync();assert.deepEqual(chosen,{choice:'discard',phase:'post'});}finally{await f.close();}
+test('unsaved workflow prompt applies the shared replacement choice',async()=>{
+ let chosen;const f=await fixture('DocumentPrompt',{view:{name:'Story'},actions:{choose(...args){chosen=args;}}});
+ try{assert.equal(f.host.querySelector('select'),null);button(f.host,"Don't Save").click();flushSync();assert.deepEqual(chosen,['discard']);}finally{await f.close();}
 });
 
-test('actual Workflows menu offers unified assignment and Tools opens Fast connections',async()=>{
- const commands=[],local=[];const state={graphs:[],graphId:'unified',armed:false,inspectorOpen:true,history:{undo:false,redo:false},selectionCount:0,rootWorkflow:{phase:'unified',assigned:false,busy:false,issues:[]}};
+test('actual Graph menu runs the open unified workflow and Tools opens Fast connections',async()=>{
+ const commands=[],local=[];const state={graphId:'unified',armed:false,inspectorOpen:true,history:{undo:false,redo:false},selectionCount:0,rootWorkflow:{phase:'unified',busy:false,issues:[]}};
  const f=await fixture('WorkspaceMenus',{state,actions:{command:name=>commands.push(name)},local:name=>local.push(name)});
- try{button(f.host,'Workflows').click();await tick();flushSync();const assign=button(f.host,'Assign unified workflow');assert.ok(assign);assign.click();flushSync();assert.deepEqual(commands,['assign-workflow-phase']);button(f.host,'Tools').click();await tick();flushSync();const setup=button(f.host,'Fast connections…');assert.ok(setup);setup.click();flushSync();assert.deepEqual(local,['fast-connections']);}finally{await f.close();}
+ try{assert.equal(button(f.host,'Workflows'),undefined);button(f.host,'Graph').click();await tick();flushSync();const run=button(f.host,'Run workflow');assert.ok(run);run.click();flushSync();assert.deepEqual(commands,['run-workflow']);button(f.host,'Tools').click();await tick();flushSync();const setup=button(f.host,'Fast connections…');assert.ok(setup);setup.click();flushSync();assert.deepEqual(local,['fast-connections']);}finally{await f.close();}
 });
 
 

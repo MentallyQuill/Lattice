@@ -53,7 +53,7 @@ test('state accepted document commit and semantic undo/redo persist, cancel and 
         assert.equal(S.stepGraphHistory(root, 'redo', hooks).data.changed, false);
         assert.equal(saves(), 3); assert.equal(calls.length, 6);
         assert.deepEqual(root.recording, { id: 'diagnostic' });
-        assert.deepEqual(host.extensionSettings.lattice.nativeBindings, { preGraphId: null, postGraphId: null });
+        assert.equal(Object.hasOwn(S.settings(), 'nativeBindings'), false);
         assert.equal(host.extensionSettings.lattice.enabled, false);
         assert.equal(Object.hasOwn(host.extensionSettings.lattice, 'workflowMode'), false);
     } finally { unsubscribe(); }

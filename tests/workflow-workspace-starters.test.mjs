@@ -44,10 +44,8 @@ test('all examples are current, independent, portable and unarmed', async () => 
         assert.equal(parseWorkflow(JSON.stringify(portable)).ok, true);
         assert.equal(graph.schema, 3); assert.equal(graph.runtime, 2);
         assert.equal(resolveWorkflow(graph).ok, true);
-        const settings = { graphs: {}, enabled: false, nativeBindings: { preGraphId: null, postGraphId: null } };
-        const first = installStarter(id, settings), second = installStarter(id, settings);
+        const first = installStarter(id), second = installStarter(id);
         assert.notEqual(first.id, second.id);
-        assert.deepEqual([settings.enabled, settings.nativeBindings], [false, { preGraphId: null, postGraphId: null }]);
         assert.equal(STARTERS.find(item => item.id === id).callBound, id === 'native-guidance' ? 2 : id === 'reviewed-de-slop' ? 1 : 0);
         if (graph.schema === 3) {
             assert.equal(resolveWorkflow(first).ok, true);
