@@ -1,8 +1,31 @@
 <script lang="ts">
+    import { untrack } from 'svelte';
+    import ReadableContent from './ReadableContent.svelte';
+    import { readPreviewMode, writePreviewMode } from '../src/ui/preview-preferences.js';
+    import type { PreviewMode, PreviewMessage } from '../src/ui/recorded-preview';
     import DiagnosticMessage from './DiagnosticMessage.svelte';
     import { presentDiagnostics } from '../src/ui/diagnostics.js';
     import type { DetailTarget, DetailReviewSelector, OutputPreviewActions, OutputPreviewView } from './detail-types';
-    let { view, actions = {}, collapse }: { view: OutputPreviewView | null; actions?: OutputPreviewActions; collapse?: () => void } = $props();
+    function defaultStorage(): Storage | undefined { try { return window.localStorage; } catch { return undefined; } }
+    let { view, actions = {}, collapse, copyText, storage = defaultStorage() }: {
+        view: OutputPreviewView | null;
+        actions?: OutputPreviewActions;
+        collapse?: () => void;
+        copyText?: (text: string) => void | Promise<void>;
+        storage?: Pick<Storage, 'getItem' | 'setItem'>;
+    } = $props();
+    let mode = $state<PreviewMode>(untrack(() => readPreviewMode(storage)));
+    let copyFeedback = $state('');
+    function changeMode(next: PreviewMode) { mode = next; writePreviewMode(storage, next); copyFeedback = ''; }
+    async function copy(value: string) {
+        copyFeedback = '';
+        try {
+            if (copyText) await copyText(value);
+            else await navigator.clipboard.writeText(value);
+            copyFeedback = 'Copied to clipboard.';
+        } catch { copyFeedback = 'Could not copy to clipboard. Select the content and copy it manually.'; }
+    }
+    const copyMessage = (message: PreviewMessage) => copy(message.text);
     const previewId = $props.id();
     let diagnostics = $derived.by(() => {
         const items = view?.diagnostics ?? presentDiagnostics([view?.runHere?.issue, ...(view?.issues ?? []), view?.review?.issue].filter((issue): issue is string => !!issue), { nodeTitle: view?.title });
@@ -46,13 +69,17 @@
     }
 </script>
 
-<section class="pc-output-preview" aria-label="Output preview">
+<section class="pc-output-preview" aria-label="Output preview" onkeydowncapture={event => { if (!(event.target as Element).closest('[role="tab"]')) event.stopPropagation(); }} onpastecapture={event => event.stopPropagation()}>
 {#if view}
     <header>
         <h3>{selected?.label ?? view.title}</h3>
         <div class="pc-preview-tools"><button type="button" aria-label="Pin preview" title={view.pinned ? 'Unpin and follow selection' : 'Keep this output visible'} aria-pressed={view.pinned} disabled={view.pinned ? !actions.follow : !selected || !actions.pin} onclick={() => { if (view?.pinned) actions.follow?.(); else if (view && selected) actions.pin?.(view.sourceKey, copyTarget(selected.target)); }}>{view.pinned ? 'Pinned output' : 'Pin output'}</button>{#if collapse}<button type="button" aria-label="Collapse preview" title="Collapse preview" onclick={collapse}>▴</button>{/if}</div>
     </header>
-    {#if view.sections.length}
+    <div class="pc-preview-modes" role="group" aria-label="Preview presentation">
+        <button type="button" aria-label="Readable preview" aria-pressed={mode === 'readable'} onclick={() => changeMode('readable')}>Readable</button>
+        <button type="button" aria-label="Source preview" aria-pressed={mode === 'source'} onclick={() => changeMode('source')}>Source</button>
+    </div>
+    {#if mode === 'readable' && view.sections.length}
         <div class="pc-preview-tabs" role="tablist" aria-label="Recorded artifacts">
             {#each view.sections as section, index (section.id)}
                 <button type="button" role="tab" id={tabId(section.id)} aria-selected={activeSection?.id === section.id} aria-controls={previewId + '-panel'} tabindex={activeSection?.id === section.id ? 0 : -1} onclick={() => { sectionChoice = { scope: sectionScope, id: section.id }; }} onkeydowncapture={event => tabKey(event, index)}>{section.label}</button>
@@ -60,13 +87,27 @@
         </div>
     {/if}
     <div class="pc-preview-sections">
-        {#if activeSection}
+        {#if mode === 'source'}
+            <div role="tabpanel" tabindex="0" aria-label="Recorded source" id={previewId + '-panel'}>
+                <p class="pc-preview-note pc-source-policy">Recorded diagnostic payload; private host fields are excluded.</p>
+                {#if view.source.format === 'omitted'}<DiagnosticMessage issue={view.source.text} />
+                {:else}
+                    {#if view.source.truncated || view.source.format === 'json-prefix-text'}<p class="pc-preview-note">Partial recorded source</p>{/if}
+                    <button type="button" data-preview-copy-source onclick={() => copy(view!.source.text)}>Copy {view.source.truncated || view.source.format === 'json-prefix-text' ? 'partial source' : 'source'}</button>
+                    <pre class="pc-preview-source" data-preview-source>{view.source.text}</pre>
+                {/if}
+            </div>
+        {:else if activeSection}
             {@const section = activeSection}
             <div role="tabpanel" tabindex="0" onkeydowncapture={event => event.stopPropagation()} onpastecapture={event => event.stopPropagation()} id={previewId + '-panel'} aria-labelledby={tabId(section.id)}>
                 <article data-artifact-kind={section.kind}>
                     <div class="pc-preview-section-heading"><span>{section.label}</span><small>{section.kind}</small></div>
                     {#if section.format === 'omitted'}<DiagnosticMessage issue={section.text} />
-                    {:else}<pre>{section.text}</pre>{/if}
+                    {:else if section.collapsed}
+                        {#key sectionScope + ':' + section.id}
+                            <details data-preview-context><summary>{section.label}</summary><ReadableContent content={section.readable} onCopyText={copy} onCopyMessage={copyMessage} /></details>
+                        {/key}
+                    {:else}<ReadableContent content={section.readable} onCopyText={copy} onCopyMessage={copyMessage} />{/if}
                     {#if section.truncated}<small class="pc-preview-note">Only part of the recorded output is displayed here. This display limit does not mean the model stopped early.{section.format === 'json-prefix-text' ? ' The JSON prefix is shown as text.' : ''}</small>{/if}
                 </article>
             </div>
@@ -84,12 +125,13 @@
         {/if}
         {#if view.statusDetail}<p class="pc-preview-note">{view.statusDetail}</p>{/if}
         {#if view.historyNotice}<p class="pc-preview-note">{view.historyNotice}</p>{/if}
-        {#each view.sections.filter(section => section.id !== activeSection?.id && (section.format === 'omitted' || section.truncated)) as section (section.id)}
+        {#each view.sections.filter(section => mode === 'readable' && section.id !== activeSection?.id && (section.format === 'omitted' || section.truncated)) as section (section.id)}
             {#if section.format === 'omitted'}<div class="pc-preview-note"><span>{section.label}</span><DiagnosticMessage issue={section.text} /></div>{:else}<p class="pc-preview-note">{section.label}: Only part of the recorded output is displayed here; this is a display limit.{section.format === 'json-prefix-text' ? ' The JSON prefix is shown as text.' : ''}</p>{/if}
         {/each}
         {#each diagnostics as diagnostic, index (diagnostic.id)}<div id={previewId + '-diagnostic-' + index}><DiagnosticMessage {diagnostic} reveal={actions.reveal} /></div>{/each}
         {#if view.review}<small class="pc-preview-note">{view.review.persistOnly ? 'Retry keeps the accepted reply and retries only authorized targets whose saves failed. It makes no model request. Unknown or unverified saves cannot be retried here.' : 'Apply checks that the source, connection and reviewed reply are still current. The displayed preview may show only part of the recorded output.'}</small>{/if}
     </div>
+    {#if copyFeedback}<p class="pc-copy-feedback" role="status">{copyFeedback}</p>{/if}
     <footer>
         <span class="pc-preview-status" data-status={view.status}>{statusLabel(view.status)}</span>
         <span>{view.targeted ? 'Targeted node' : view.pinned ? 'Pinned preview' : view.followSelection ? 'Following selection' : 'Selection not followed'}</span>
@@ -118,7 +160,13 @@
     .pc-preview-sections { flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 10px 14px; scrollbar-width: thin; }
     article { min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
     .pc-preview-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; color: var(--pc-muted, #a1a59b); }
-    pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-family: inherit; font-size: 12px; line-height: 1.55; }
+    .pc-preview-source { margin: 8px 0 0; max-width: 100%; overflow-x: auto; white-space: pre; font: 13px/1.55 monospace; }
+    .pc-preview-modes { display: flex; flex: 0 0 auto; gap: 2px; padding: 3px 7px; border-bottom: 1px solid var(--pc-border, #3a3c35); }
+    .pc-preview-modes button[aria-pressed='true'] { box-shadow: inset 0 -2px var(--pc-accent, #e18a24); }
+    summary { cursor: pointer; margin-bottom: 8px; }
+    summary:focus-visible { outline: 2px solid var(--pc-accent, #e18a24); }
+    .pc-copy-feedback { flex: 0 0 auto; margin: 0; padding: 4px 10px; font-size: 12px; color: var(--pc-muted, #a1a59b); }
+    .pc-source-policy { margin: 0 0 8px; }
     .pc-preview-note, .pc-preview-empty { margin: 0; color: var(--pc-muted, #a1a59b); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
     .pc-preview-note { display: block; margin-top: 7px; }
     footer { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; padding: 4px 10px; color: var(--pc-muted, #a1a59b); background: var(--pc-raised, #353632); }

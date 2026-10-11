@@ -13,7 +13,7 @@ for (const key of ['Node', 'Element', 'Text', 'Comment', 'Document', 'HTMLElemen
 const clientURL = new URL('../node_modules/svelte/src/index-client.js', import.meta.url).href;
 const { mount, unmount, flushSync } = await import(clientURL);
 
-async function fixture(initial, actions = {}, collapse) {
+async function fixture(initial, actions = {}, collapse, extras = {}) {
     const directory = await mkdtemp(join(tmpdir(), 'lattice-preview-tabs-'));
     const host = document.createElement('div'); host.style.fontFamily = 'system-ui'; document.body.append(host);
     let mounted;
@@ -29,8 +29,8 @@ async function fixture(initial, actions = {}, collapse) {
     }
     try {
         const leaf = await compiled('OutputPreview', await readFile(new URL('../ui/OutputPreview.svelte', import.meta.url), 'utf8'));
-        const harness = await compiled('PreviewHarness', `<script>import Leaf from ${JSON.stringify(pathToFileURL(leaf.path).href)}; let { initial, actions, collapse } = $props(); let view = $state.raw(initial); export function update(next) { view = next; }</script><Leaf {view} {actions} {collapse} />`);
-        mounted = mount(harness.component, { target: host, props: { initial, actions, collapse } }); flushSync();
+        const harness = await compiled('PreviewHarness', `<script>import Leaf from ${JSON.stringify(pathToFileURL(leaf.path).href)}; let { initial, actions, collapse, extras } = $props(); let view = $state.raw(initial); export function update(next) { view = next; }</script><Leaf {view} {actions} {collapse} {...extras} />`);
+        mounted = mount(harness.component, { target: host, props: { initial, actions, collapse, extras } }); flushSync();
         return { host, update(next) { mounted.update(next); flushSync(); }, close };
     } catch (error) { await close(); throw error; }
 }
@@ -125,7 +125,7 @@ test('preview chrome names the canvas output without a dropdown and keeps bounde
         assert.equal(dom.window.getComputedStyle(body).overflowY, 'auto');
         assert.equal(Number.parseFloat(dom.window.getComputedStyle(body).minHeight), 0);
         assert.equal(dom.window.getComputedStyle(panel(f.host).querySelector('article')).borderTopWidth, '0px');
-        assert.equal(dom.window.getComputedStyle(panel(f.host).querySelector('pre')).fontFamily, 'system-ui');
+        assert.equal(dom.window.getComputedStyle(panel(f.host).querySelector('pre')).fontFamily, 'monospace', 'readable Data keeps JSON monospace');
         const collapseButton = header.querySelector('[aria-label="Collapse preview"]');
         assert.ok(collapseButton); collapseButton.click(); assert.equal(collapsed, 1);
     } finally { await f.close(); }
@@ -171,4 +171,63 @@ test('focused artifact panel isolates the separate paste event without suppressi
         assert.deepEqual(received, [canvasTarget], 'paste outside the artifact panel still reaches the document listener');
         assert.equal(canvasPaste.defaultPrevented, false);
     } finally { document.removeEventListener('paste', ancestorPaste); canvasTarget.remove(); await f.close(); }
+});
+
+const modeButton = (host, mode) => host.querySelector(`[aria-label="${mode} preview"]`);
+const memoryStorage = () => { const data = new Map([['lattice.workspace.preview', 'geometry']]); return { data, getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value) }; };
+
+test('mode choice persists independently through capture, target, pin, follow and collapse while Source is artifact-wide', async () => {
+    const storage = memoryStorage(); let collapsed = 0; const calls = [];
+    const f = await fixture(preview(), { pin: (...args) => calls.push(['pin', ...args]), follow: () => calls.push(['follow']) }, () => collapsed++, { storage });
+    try {
+        assert.equal(modeButton(f.host, 'Readable').getAttribute('aria-pressed'), 'true');
+        tabs(f.host)[1].click(); flushSync();
+        modeButton(f.host, 'Source').click(); flushSync();
+        assert.equal(tabs(f.host).length, 0);
+        assert.equal(f.host.querySelector('[data-preview-source]').textContent, preview().source.text);
+        assert.match(f.host.textContent, /Recorded diagnostic payload; private host fields are excluded/);
+        modeButton(f.host, 'Readable').click(); flushSync();
+        assert.equal(tabs(f.host)[1].getAttribute('aria-selected'), 'true');
+        modeButton(f.host, 'Source').click(); flushSync();
+        f.update(preview({ sourceKey: 'new-capture', selectedKey: 'new-output', targeted: true, pinned: true, followSelection: false }));
+        assert.equal(modeButton(f.host, 'Source').getAttribute('aria-pressed'), 'true');
+        f.host.querySelector('[aria-label="Pin preview"]').click(); flushSync();
+        f.host.querySelector('[aria-label="Collapse preview"]').click(); flushSync();
+        assert.deepEqual(calls, [['follow']]); assert.equal(collapsed, 1);
+        assert.deepEqual([...storage.data], [['lattice.workspace.preview', 'geometry'], ['lattice.workspace.preview.mode', 'source']]);
+    } finally { await f.close(); }
+    const reopened = await fixture(preview(), {}, undefined, { storage });
+    try { assert.equal(modeButton(reopened.host, 'Source').getAttribute('aria-pressed'), 'true'); } finally { await reopened.close(); }
+});
+
+test('Readable context starts collapsed and copies original retained Markdown; Source labels exact partial copies', async () => {
+    const text = '  **Original**\n\n雪  \n'; const copied = [];
+    const content = { kind: 'messages', messages: [{ id: 'm1', role: 'user', text, truncated: true }], omittedMessages: 0, truncated: true };
+    const f = await fixture(preview({ sections: [section('draft', 'Draft', text, { readable: { kind: 'text', text, truncated: true } }), section('context', 'Captured context · 1 messages', '', { kind: 'context', collapsed: true, readable: content })], source: { ...preview().source, text: '{"partial":', format: 'json-prefix-text', truncated: true } }), {}, undefined, { storage: memoryStorage(), copyText: value => copied.push(value) });
+    try {
+        const clickCopy = async label => { [...f.host.querySelectorAll('button')].find(button => button.textContent === label).click(); await Promise.resolve(); flushSync(); };
+        await clickCopy('Copy partial text'); assert.deepEqual(copied, [text]);
+        tabs(f.host)[1].click(); flushSync();
+        const details = f.host.querySelector('[data-preview-context]'); assert.ok(details); assert.equal(details.open, false);
+        details.open = true; flushSync();
+        await clickCopy('Copy partial message'); assert.deepEqual(copied, [text, text]);
+        modeButton(f.host, 'Source').click(); flushSync();
+        assert.match(f.host.textContent, /Partial recorded source/);
+        await clickCopy('Copy partial source'); assert.deepEqual(copied, [text, text, '{"partial":']);
+        assert.match(f.host.querySelector('[role="status"]').textContent, /Copied/);
+    } finally { await f.close(); }
+});
+
+test('clipboard rejection stays local and mode/copy controls isolate canvas keyboard and paste events', async () => {
+    const f = await fixture(preview(), {}, undefined, { storage: { getItem() { throw Error('disabled'); }, setItem() { throw Error('disabled'); } }, copyText: async () => { throw Error('Denied'); } });
+    const leaked = []; f.host.addEventListener('keydown', () => leaked.push('key')); f.host.addEventListener('paste', () => leaked.push('paste'));
+    try {
+        const mode = modeButton(f.host, 'Source'); assert.ok(mode); mode.focus();
+        const key = new dom.window.KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }); mode.dispatchEvent(key);
+        const paste = new dom.window.Event('paste', { bubbles: true, cancelable: true }); mode.dispatchEvent(paste);
+        mode.click(); flushSync();
+        f.host.querySelector('[data-preview-copy-source]').click(); await new Promise(resolve => setTimeout(resolve, 0)); flushSync();
+        assert.match(f.host.querySelector('[role="status"]').textContent, /Could not copy/);
+        assert.deepEqual(leaked, []); assert.equal(key.defaultPrevented, false); assert.equal(paste.defaultPrevented, false);
+    } finally { await f.close(); }
 });

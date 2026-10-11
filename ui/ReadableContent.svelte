@@ -51,7 +51,7 @@
     .pc-readable-prose :global(:is(h1, h2, h3, h4, h5, h6)) { line-height: 1.25; margin: .8em 0 .4em; }
     .pc-readable-prose :global(blockquote) { margin-left: 0; padding-left: 1em; border-left: 2px solid var(--pc-border, #3a3c35); }
     .pc-readable-prose :global(a) { color: var(--pc-accent, #e18a24); }
-    .pc-readable-prose :global(pre), pre { max-width: 100%; overflow-x: auto; white-space: pre; font: 13px/1.55 monospace; }
+    .pc-readable-prose :global(pre), pre { margin: 0; max-width: 100%; overflow-x: auto; white-space: pre; font: 13px/1.55 monospace; }
     .pc-readable-prose :global(code), code { font-family: monospace; }
     .pc-readable-prose :global(table), table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
     .pc-readable-prose :global(:is(th, td)), th, td { padding: .3em .6em; border: 1px solid var(--pc-border, #3a3c35); text-align: left; }
