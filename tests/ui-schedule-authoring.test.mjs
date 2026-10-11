@@ -95,3 +95,39 @@ test('retained nested metadata drafts can be repaired after a schedule remount w
         input(f.host,'Schedule 1 metadata unfinished JSON','"Mira"');assert.deepEqual(JSON.parse(JSON.stringify(f.read().value[0].scope)),{visibility:'private',actorId:'Mira'});
     });
 });
+
+
+test('inactive-interval-draft retains exact rejected quantity and unit through kind round trip and remount',async()=>{
+    for(const unit of ['hours','days'])await fixture([{scheduleId:'one',kind:'interval',anchorMinute:0,intervalMinutes:480,scope:{visibility:'private',actorId:'Rowan'}}],async f=>{
+        input(f.host,'Schedule 1 interval quantity','8');input(f.host,'Schedule 1 interval unit','hours','change');
+        const rejected=unit==='hours'?'1e':'1';input(f.host,'Schedule 1 interval quantity',rejected);if(unit==='days')input(f.host,'Schedule 1 interval unit','days','change');
+        const before=JSON.parse(JSON.stringify(f.read().value));assert.equal(f.read().draft.invalid,true);
+        input(f.host,'Schedule 1 kind','delay','change');f.remount();input(f.host,'Schedule 1 kind','interval','change');f.remount();
+        assert.equal(f.host.querySelector('[aria-label="Schedule 1 interval quantity"]').value,rejected);assert.equal(f.host.querySelector('[aria-label="Schedule 1 interval unit"]').value,unit);assert.deepEqual(JSON.parse(JSON.stringify(f.read().value)),before);assert.equal(f.read().draft.invalid,true);
+        input(f.host,'Schedule 1 interval quantity','9');input(f.host,'Schedule 1 interval unit','hours','change');assert.equal(f.read().draft.invalid,false);assert.equal(f.read().value[0].intervalMinutes,540);assert.equal(f.read().value[0].scheduleId,'one');assert.deepEqual(JSON.parse(JSON.stringify(f.read().value[0].scope)),{visibility:'private',actorId:'Rowan'});
+    });
+});
+test('prototype-like-id supports own-safe constructor and __proto__ duration state including identity renames',async()=>{
+    for(const id of ['constructor','__proto__'])await fixture([{scheduleId:id,kind:'interval',anchorMinute:0,intervalMinutes:480}],async f=>{
+        assert.equal(api.compileScheduleRows([{scheduleId:id,kind:'interval',anchorMinute:0,intervalMinutes:480}]).ok,true);
+        assert.equal(f.host.querySelector('[aria-label="Schedule 1 interval quantity"]').value,'480');assert.equal(f.host.querySelector('[aria-label="Schedule 1 interval unit"]').value,'minutes');
+        input(f.host,'Schedule 1 interval quantity','8');input(f.host,'Schedule 1 interval unit','hours','change');assert.equal(f.read().value[0].intervalMinutes,480);assert.equal(f.read().draft.invalid,false);assert.equal(Object.hasOwn(f.read().draft.quantities,id),true);assert.equal(Object.hasOwn(f.read().draft.units,id),true);
+        input(f.host,'Schedule 1 identity',id);assert.equal(f.host.querySelector('[aria-label="Schedule 1 interval quantity"]').value,'8');assert.equal(f.host.querySelector('[aria-label="Schedule 1 interval unit"]').value,'hours');
+        const renamed=id==='constructor'?'__proto__':'constructor';input(f.host,'Schedule 1 identity',renamed);f.remount();assert.equal(f.read().value[0].scheduleId,renamed);assert.equal(f.host.querySelector('[aria-label="Schedule 1 interval quantity"]').value,'8');assert.equal(f.host.querySelector('[aria-label="Schedule 1 interval unit"]').value,'hours');assert.equal(Object.hasOwn(f.read().draft.quantities,id),false);assert.equal(Object.hasOwn(f.read().draft.units,id),false);assert.equal(Object.hasOwn(f.read().draft.quantities,renamed),true);assert.equal(Object.hasOwn(f.read().draft.units,renamed),true);
+        input(f.host,'Schedule 1 interval quantity','1e');f.remount();assert.equal(f.host.querySelector('[aria-label="Schedule 1 interval quantity"]').value,'1e');input(f.host,'Schedule 1 interval quantity','9');assert.equal(f.read().value[0].intervalMinutes,540);assert.equal(f.read().draft.invalid,false);
+    });
+});
+test('raw-replacement-page keeps smaller complete replacement visible through a retained remount',async()=>{
+    const rows=Array.from({length:33},(_,index)=>({scheduleId:'row-'+index,kind:'delay',dueMinute:index}));
+    await fixture(rows,async f=>{
+        click(f.host,'Next schedules');assert.equal(f.read().draft.page,1);assert.equal(f.host.querySelectorAll('fieldset').length,1);
+        click(f.host,'Advanced schedules JSON');input(f.host,'Schedules JSON',JSON.stringify([{scheduleId:'kept',kind:'delay',dueMinute:20,scope:{visibility:'private',actorId:'Rowan'}}]));f.remount();click(f.host,'Use schedule rows');
+        assert.equal(f.read().draft.page,0);assert.equal(f.host.querySelectorAll('fieldset').length,1);assert.equal(f.host.querySelector('[aria-label="Schedule 1 identity"]').value,'kept');assert.equal(f.host.querySelector('[aria-label="Schedule 1 due minute"]').value,'20');assert.equal(f.host.querySelector('[aria-label="Previous schedules"]'),null);
+        click(f.host,'Advanced schedules JSON');input(f.host,'Schedules JSON','[]');f.remount();click(f.host,'Use schedule rows');assert.equal(f.read().draft.page,0);assert.equal(f.host.querySelectorAll('fieldset').length,0);click(f.host,'Add schedule');assert.equal(f.host.querySelectorAll('fieldset').length,1);
+    });
+});
+
+test('raw-replacement-page clamps a stale retained snapshot before displaying its complete rows',async()=>{
+    const rows=[{scheduleId:'kept',kind:'delay',dueMinute:20}];
+    await fixture(rows,async f=>{assert.equal(f.read().draft.page,0);assert.equal(f.host.querySelectorAll('fieldset').length,1);assert.equal(f.host.querySelector('[aria-label="Schedule 1 identity"]').value,'kept');f.remount();assert.equal(f.host.querySelectorAll('fieldset').length,1);},{draftState:{rows,raw:false,rawText:JSON.stringify(rows),feedback:'',invalid:false,invalidText:'',drafts:{},draftPaths:{},units:{},quantities:{},page:1}});
+});
