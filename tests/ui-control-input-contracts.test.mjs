@@ -1,0 +1,173 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import * as contracts from '../src/ui/control-input-contracts.js';
+const termSpec = { id: 'smart-compactor.pins', version: 1, editor: 'list', formats: ['auto', 'plain', 'csv', 'json', 'rows'], storage: 'json-value', limits: { maxItems: 128, maxStringLength: 4096, maxBytes: 262144 } };
+test('though becomes one string term', () => {
+    assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'auto', text: 'though' }).data.value, ['though']);
+});
+test('comma-separated numbers remain string terms with leading zeroes', () => {
+    assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'auto', text: '1, 2, 3' }).data.value, ['1', '2', '3']);
+    assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'auto', text: '001, 2' }).data.value, ['001', '2']);
+});
+test('quoted comma, newline and doubled quote content survives list parsing', () => {
+    assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'auto', text: ' "red, blue", " line\none ", "say ""hello"""\r\ngreen' }).data.value, ['red, blue', ' line\none ', 'say "hello"', 'green']);
+});
+test('ignored blank cells produce a visible ignored-entry warning', () => {
+    const result = contracts.parseControlInput(termSpec, { format: 'auto', text: 'one,,\r\n ,two' });
+    assert.deepEqual(result.data.value, ['one', 'two']);
+    assert.match(result.data.warnings[0], /3.*blank/i);
+});
+test('unterminated quotes and trailing quoted-cell junk return located errors', () => {
+    for (const text of ['one,"unfinished', '"one"junk,two']) {
+        const result = contracts.parseControlInput(termSpec, { format: 'csv', text });
+        assert.equal(result.ok, false);
+        assert.equal(typeof result.error.code, 'string');
+        assert.equal(typeof result.error.row, 'number');
+        assert.equal(typeof result.error.cell, 'number');
+        assert.equal(Object.hasOwn(result, 'data'), false);
+    }
+});
+test('apparent JSON is not silently reinterpreted', () => {
+    assert.equal(contracts.parseControlInput(termSpec, { format: 'auto', text: '["one",' }).ok, false);
+    assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'plain', text: '["one",' }).data.value, ['["one",']);
+    assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'auto', text: '["1", "2", "3"]' }).data.value, ['1', '2', '3']);
+    for (const text of ['true', 'null', '123']) assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'auto', text }).data.value, [text]);
+    assert.equal(contracts.parseControlInput(termSpec, { format: 'auto', text: '{"one":2}' }).ok, false);
+});
+test('numeric thresholds compile finite numbers to JSON text', () => {
+    const spec = contracts.resolveControlInputSpec({ operation: 'collection', controls: { mode: 'threshold' }, key: 'thresholds', descriptor: { type: 'string', default: '[]', editor: 'json', maxLength: 4096 } });
+    assert.equal(contracts.parseControlInput(spec, { format: 'auto', text: '-3, 1, 2.5' }).data.value, '[-3,1,2.5]');
+    for (const text of ['1, Infinity', '1, NaN', '1, 1e999']) assert.equal(contracts.parseControlInput(spec, { format: 'auto', text }).ok, false);
+});
+test('invalid input and generic JSON byte, depth and value limits fail without values', () => {
+    const valueSpec = { ...termSpec, id: 'condition.value', editor: 'value', formats: ['json', 'rows'] };
+    let deep = null; for (let i = 0; i < 34; i++) deep = [deep];
+    let accessed = false;
+    const accessor = Object.defineProperty({}, 'secret', { enumerable: true, get() { accessed = true; return 1; } });
+    for (const input of [{ format: 'rows', value: deep }, { format: 'rows', value: Array(10001).fill(null) }, { format: 'json', text: JSON.stringify('x'.repeat(262145)) }, { format: 'rows', value: accessor }, { format: 'rows', value: NaN }, { format: 'rows', value: undefined }, { format: 'auto', text: 1 }]) {
+        const result = contracts.parseControlInput(valueSpec, input);
+        assert.equal(result.ok, false);
+        assert.equal(Object.hasOwn(result, 'data'), false);
+    }
+    assert.equal(accessed, false);
+    assert.deepEqual(contracts.parseControlInput(valueSpec, { format: 'rows', value: JSON.parse('{"__proto__":{"safe":true}}') }).data.value, JSON.parse('{"__proto__":{"safe":true}}'));
+});
+test('every exposed structured inventory entry resolves to a declared grammar', async () => {
+    const { OPERATIONS, operationFor } = await import('../src/workflow/catalog.js');
+    for (const [operation, entry] of Object.entries(OPERATIONS)) {
+        for (const mode of entry.modes ?? [entry.defaults.mode]) {
+            const controls = { ...entry.defaults, ...(mode ? { mode } : {}) };
+            const effective = operationFor({ type: 'workflow', operation, ...controls }, { phase: entry.phase === 'post' ? 'post' : 'pre' }) ?? entry;
+            for (const [key, descriptor] of Object.entries(effective.controlDescriptors)) {
+                if (!['array', 'object', 'json-value'].includes(descriptor.type) && descriptor.editor !== 'json') continue;
+                const spec = contracts.resolveControlInputSpec({ operation, controls, key, descriptor });
+                assert.equal(spec.version, 1, operation + '.' + key);
+                assert.notEqual(spec.editor, 'text', operation + '.' + key);
+                assert.equal(spec.storage, descriptor.type === 'string' ? 'json-text' : 'json-value', operation + '.' + key);
+                if (descriptor.max !== undefined) assert.equal(spec.limits.maxItems, descriptor.max, operation + '.' + key);
+            }
+        }
+    }
+    assert.equal(contracts.resolveControlInputSpec({ operation: 'state', controls: { mode: 'duration' }, key: 'durations', descriptor: { type: 'object', max: 5, default: {} } }).editor, 'rows');
+    assert.equal(contracts.resolveControlInputSpec({ operation: 'condition', controls: {}, key: 'value', descriptor: { type: 'json-value', default: null } }).editor, 'value');
+    assert.throws(() => contracts.resolveControlInputSpec({ operation: 'new-operation', controls: {}, key: 'newArray', descriptor: { type: 'array', items: 'string', default: [] } }), /declare/i);
+});
+test('regex expressions retain comma quantifiers and compile stable Pattern IDs', () => {
+    const spec = contracts.resolveControlInputSpec({ operation: 'pattern', controls: { mode: 'regex' }, key: 'rules', descriptor: { type: 'array', items: 'record', max: 128, default: [] } });
+    const currentValue = [{ id: 'pattern-1', pattern: 'a{1,3}', label: 'Keep label' }];
+    assert.deepEqual(contracts.parseControlInput(spec, { format: 'auto', text: 'a{1,3}\nb+', currentValue }).data.value, [{ id: 'pattern-1', pattern: 'a{1,3}', label: 'Keep label' }, { id: 'pattern-2', pattern: 'b+' }]);
+});
+test('Pattern and Extract entries compile current records and validate explicit IDs', () => {
+    const pattern = contracts.resolveControlInputSpec({ operation: 'pattern', controls: { mode: 'literal' }, key: 'rules', descriptor: { type: 'array', max: 128, items: 'record', default: [] } });
+    const extract = contracts.resolveControlInputSpec({ operation: 'extract', controls: { mode: 'literal' }, key: 'patterns', descriptor: { type: 'array', max: 64, items: 'record', default: [] } });
+    assert.deepEqual(contracts.parseControlInput(pattern, { format: 'json', text: '["though","though"]' }).data.value, [{ id: 'pattern-1', pattern: 'though' }, { id: 'pattern-2', pattern: 'though' }]);
+    assert.deepEqual(contracts.parseControlInput(extract, { format: 'auto', text: 'red, blue' }).data.value, [{ id: 'pattern-1', literal: 'red', label: '' }, { id: 'pattern-2', literal: 'blue', label: '' }]);
+    const records = [{ id: 'authored', pattern: 'though', label: 'Keep me' }];
+    assert.deepEqual(contracts.parseControlInput(pattern, { format: 'json', text: JSON.stringify(records) }).data.value, records);
+    for (const value of [[{ id: 'same', pattern: 'a' }, { id: 'same', pattern: 'b' }], [{ pattern: 'missing id' }], [{ id: 'x', literal: 'old schema' }], Array(129).fill('a')]) {
+        const result = contracts.parseControlInput(pattern, { format: 'rows', value });
+        assert.equal(result.ok, false); assert.equal(Object.hasOwn(result, 'data'), false);
+    }
+});
+test('JSON-text schemas retain exact source and format without double encoding', () => {
+    const spec = contracts.resolveControlInputSpec({ operation: 'json-decode', controls: {}, key: 'schema', descriptor: { type: 'string', editor: 'json', default: '' } });
+    const text = ' { "type": "object", "properties": {"x": {"type": "number"}} }\n';
+    const result = contracts.parseControlInput(spec, { format: 'json', text });
+    assert.equal(result.data.value, text); assert.equal(result.data.sourceText, text);
+    assert.equal(contracts.formatControlInput(spec, result.data.value, 'json').data, text);
+    assert.equal(contracts.parseControlInput(spec, { format: 'rows', value: { type: 'string' } }).data.value, '{"type":"string"}');
+    assert.equal(contracts.parseControlInput(spec, { format: 'json', text: '{"unsupported":true}' }).ok, false);
+});
+test('exports round-trip string identity and reject lossy record or plain exports', () => {
+    const value = ['001', ' red, blue ', 'line\none', 'say "hello"'];
+    const exported = contracts.formatControlInput(termSpec, value, 'csv');
+    assert.equal(exported.ok, true);
+    assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'csv', text: exported.data }).data.value, value);
+    assert.equal(contracts.formatControlInput(termSpec, ['["one",'], 'plain').data, '["one",');
+    assert.equal(contracts.formatControlInput(termSpec, ['one', 'two'], 'plain').ok, false);
+    const spec = contracts.resolveControlInputSpec({ operation: 'pattern', controls: { mode: 'literal' }, key: 'rules', descriptor: { type: 'array', max: 128, items: 'record', default: [] } });
+    assert.equal(contracts.formatControlInput(spec, [{ id: 'custom', pattern: 'one', label: 'Keep me' }], 'csv').ok, false);
+    const rows = [{ id: 'pattern-1', pattern: 'red, blue' }, { id: 'pattern-2', pattern: 'green' }];
+    const text = contracts.formatControlInput(spec, rows, 'csv'); assert.equal(text.ok, true);
+    assert.deepEqual(contracts.parseControlInput(spec, { format: 'csv', text: text.data }).data.value, rows);
+});
+test('explicit TSV retains table rows while automatic terms preserve literal tabs', async () => {
+    const { parseDelimitedInput } = await import('../src/ui/delimited-input.js');
+    assert.deepEqual(parseDelimitedInput('"one\ttwo"\tthree\r\nfour\tfive', '\t').data.rows, [['one\ttwo', 'three'], ['four', 'five']]);
+    assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'auto', text: 'one\ttwo' }).data.value, ['one\ttwo']);
+    for (const [text, delimiter] of [['one', ';'], [1, ','], ['x'.repeat(262145), ','], [Array(10001).fill('a').join(','), ',']]) {
+        const result = parseDelimitedInput(text, delimiter); assert.equal(result.ok, false); assert.equal(Object.hasOwn(result, 'data'), false);
+    }
+});
+test('paths, prose and typed values use their own grammar instead of CSV inference', () => {
+    const path = contracts.resolveControlInputSpec({ operation: 'condition', controls: {}, key: 'path', descriptor: { type: 'array', items: 'string', default: [] } });
+    assert.deepEqual(contracts.parseControlInput(path, { format: 'auto', text: 'a.b,c' }).data.value, ['a.b,c']);
+    assert.deepEqual(contracts.parseControlInput(path, { format: 'csv', text: '001, item' }).data.value, ['001', 'item']);
+    assert.equal(contracts.parseControlInput(path, { format: 'rows', value: ['items', 0] }).ok, false);
+    const prose = contracts.resolveControlInputSpec({ operation: 'compose', controls: {}, key: 'template', descriptor: { type: 'string', default: '' } });
+    assert.equal(contracts.parseControlInput(prose, { format: 'auto', text: '[draft], prose\nline' }).data.value, '[draft], prose\nline');
+    assert.equal(contracts.formatControlInput(prose, '[draft], prose', 'plain').data, '[draft], prose');
+    const value = contracts.resolveControlInputSpec({ operation: 'condition', controls: {}, key: 'value', descriptor: { type: 'json-value', default: null } });
+    assert.equal(contracts.parseControlInput(value, { format: 'auto', text: 'null' }).data.value, null);
+    assert.deepEqual(contracts.parseControlInput(value, { format: 'rows', value: { 'a.b,c': false } }).data.value, { 'a.b,c': false });
+});
+
+test('descriptor limits and existing engine constraints reject invalid field values', () => {
+    const thresholds = contracts.resolveControlInputSpec({ operation: 'collection', controls: { mode: 'threshold' }, key: 'thresholds', descriptor: { type: 'string', editor: 'json', maxLength: 4096, default: '[]' } });
+    for (const text of ['3,2', '2,2', '9007199254740992', '[true]']) assert.equal(contracts.parseControlInput(thresholds, { format: 'auto', text }).ok, false);
+    const terms = { ...termSpec, limits: { maxItems: 2, maxStringLength: 3, maxBytes: 100 } };
+    for (const text of ['one,two,tri', 'long']) assert.equal(contracts.parseControlInput(terms, { format: 'auto', text }).ok, false);
+    const slots = contracts.resolveControlInputSpec({ operation: 'join', controls: {}, key: 'inputs', descriptor: { type: 'array', items: 'record', min: 1, max: 16, default: [] } });
+    assert.equal(contracts.parseControlInput(slots, { format: 'rows', value: [{ id: 'only', label: 'Only', required: false }] }).ok, true);
+    assert.equal(contracts.parseControlInput(slots, { format: 'rows', value: [] }).ok, false);
+    assert.equal(contracts.parseControlInput(slots, { format: 'auto', text: 'some words' }).ok, false);
+    const schema = contracts.resolveControlInputSpec({ operation: 'json-decode', controls: {}, key: 'schema', descriptor: { type: 'string', editor: 'json', default: '' } });
+    assert.equal(contracts.parseControlInput(schema, { format: 'json', text: '' }).data.value, '');
+});
+test('copied specs retain field validation and JSON budgets apply to the value', () => {
+    const slots = structuredClone(contracts.resolveControlInputSpec({ operation: 'join', controls: {}, key: 'inputs', descriptor: { type: 'array', items: 'record', max: 16, default: [] } }));
+    assert.equal(contracts.parseControlInput(slots, { format: 'rows', value: [] }).ok, false);
+    const value = { ...termSpec, id: 'condition.value', editor: 'value', limits: { maxBytes: 262144 } };
+    const text = JSON.stringify('\\'.repeat(100000));
+    assert.equal(contracts.parseControlInput(value, { format: 'json', text }).ok, true);
+    let accessed = false;
+    const input = Object.defineProperty({ format: 'auto' }, 'text', { enumerable: true, get() { accessed = true; return 'secret'; } });
+    assert.equal(contracts.parseControlInput(termSpec, input).ok, false); assert.equal(accessed, false);
+});
+
+test('declared types and row byte budgets constrain accepted canonical values', () => {
+    const bounded = { ...termSpec, limits: { maxBytes: 8 } };
+    assert.equal(contracts.parseControlInput(bounded, { format: 'rows', value: ['too long'] }).ok, false);
+    const prose = contracts.resolveControlInputSpec({ operation: 'compose', controls: {}, key: 'template', descriptor: { type: 'string', default: '' } });
+    assert.equal(contracts.parseControlInput(prose, { format: 'json', text: '42' }).ok, false);
+    assert.equal(contracts.formatControlInput(prose, 42, 'plain').ok, false);
+    const path = contracts.resolveControlInputSpec({ operation: 'select-fields', controls: {}, key: 'path', descriptor: { type: 'array', items: 'json', max: 32, default: [] } });
+    assert.deepEqual(contracts.parseControlInput(path, { format: 'rows', value: ['items', 0, 'a.b,c'] }).data.value, ['items', 0, 'a.b,c']);
+    assert.equal(contracts.parseControlInput(path, { format: 'rows', value: ['items', -1] }).ok, false);
+});
+test('explicit regex CSV import preserves quoted expressions independently of Auto rows', () => {
+    const spec = contracts.resolveControlInputSpec({ operation: 'pattern', controls: { mode: 'regex' }, key: 'rules', descriptor: { type: 'array', items: 'record', max: 128, default: [] } });
+    const rows = [{ id: 'pattern-1', pattern: 'a{1,3}' }, { id: 'pattern-2', pattern: 'b+' }];
+    assert.deepEqual(contracts.parseControlInput(spec, { format: 'csv', text: '"a{1,3}","b+"' }).data.value, rows);
+    assert.equal(contracts.formatControlInput(spec, rows, 'csv').ok, true);
+});
