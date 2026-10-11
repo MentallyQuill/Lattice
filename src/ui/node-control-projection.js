@@ -12,7 +12,7 @@ export function projectNodeControls(operation, controls = {}, { phase, readOnly 
   const value = Object.hasOwn(controls, key) ? controls[key] : metadata.defaults[key] ?? descriptor.default;
   const labeled = ['recall','hotkey-arm'].includes(operation) && descriptor.values ? {...descriptor, valueLabels:Object.fromEntries(descriptor.values.map(value=>[value,recallControlLabel(key,value)??value]))} : descriptor;
   const inputSpec=resolveControlInputSpec({operation, controls:node, key, descriptor});
-  return {...detailControl(key, descriptor.label || friendlyControlLabel(key), labeled, value), ...detailPresentation(operation,key), ...(['path','rows'].includes(inputSpec.editor)?{editor:'json',representation:'json-value'}:{}), inputSpec, readOnly};
+  return {...detailControl(key, descriptor.label || friendlyControlLabel(key), labeled, value), ...detailPresentation(operation,key), ...(['path','rows','questions','schedules'].includes(inputSpec.editor)?{editor:'json',representation:'json-value'}:{}), inputSpec, readOnly};
  });
 }
 export function detailControl(key,label,descriptor,value) {

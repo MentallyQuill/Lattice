@@ -1,3 +1,5 @@
+/** Local form state is never a workflow setting. */
+export type StructuredDraftState = import('../src/ui/decision-authoring').DecisionDraftState | import('../src/ui/schedule-authoring').ScheduleDraftState;
 import type {RecallNodeStatus} from './recall-types';
 import type { ManagerInterfaceEdit } from './manager-types';
 import type { NodeCardData } from './types';

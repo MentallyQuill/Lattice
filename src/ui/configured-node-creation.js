@@ -1,3 +1,4 @@
+import {parseControlInput} from './control-input-contracts.js?v=0.27.0';
 import {prepareIterationBindings} from './iteration-bindings.js?v=0.27.0';
 import {projectNodeControls} from './node-control-projection.js?v=0.27.0';
 import {OPERATIONS,operationDefaults,describeOperation} from '../workflow/catalog.js?v=0.27.0';
@@ -9,6 +10,8 @@ const fail=(code,message)=>({ok:false,error:{code,message}});
 const pin=(id,kind,direction,required=false,label=id)=>({id,label,kind,direction,required,cardinality:'one'});
 const input=(id,kind='data',required=true,label=id)=>pin(id,kind,'input',required,label),output=(id,kind='data',label=id)=>pin(id,kind,'output',false,label);
 const factories={
+ 'decision':controls=>[input('in',controls.inputKind,true,'State'),output('out','data','Decision')],
+ 'advance-time':()=>[input('clock','data',true,'Previous Story Clock'),input('proposal','data',true,'Explicit time proposal'),input('schedules','data',false,'Authored schedules (optional)'),input('consumed','data',false,'Settled occurrence IDs (optional)'),output('clock','data','Projected Story Clock'),output('occurrences','data','Ordered due events'),output('remainder','data','Remaining duration'),output('report','data','Time projection report')],
  'read-file':()=>[output('text','text','Contents'),output('document','data','Parsed document'),output('reference','data','Live file reference')],
  'story-clock':()=>[output('out','data','Accepted Story Clock')],
  'time-trigger':()=>[input('previous','data',true,'Previous Story Clock'),input('destination','data',true,'Projected Story Clock'),input('consumed','data',false,'Settled occurrence IDs (optional)'),output('occurrences','data','Ordered due events'),output('report','data','Time trigger report')],
@@ -27,7 +30,7 @@ const factories={
 /** Discovery only: accurate declared pins, with no manufactured executable settings or identities. */
 export function deferredNodeDescription(operation,controls={}){const factory=factories[operation],base=OPERATIONS[operation];return factory&&base?{descriptor:base,ports:factory({...base.defaults,...controls})}:null;}
 export function nodeNeedsConfiguration(operation,controls={}){
- if(['json-decode','extract','model-call','format','read-file','write-file','project-document'].includes(operation))return true;
+ if(['decision','advance-time','json-decode','extract','model-call','format','read-file','write-file','project-document'].includes(operation))return true;
  if(!Object.hasOwn(factories,operation))return false;
  const preset=workflowDataPresetFor(operation),checked=cloneDefinitionData(controls,{operation}),base=OPERATIONS[operation];
  if(!preset||!checked.ok||!controls||Array.isArray(controls)||typeof controls!=='object'||Object.keys(controls).some(key=>!base.controls.includes(key)))return true;
@@ -44,7 +47,9 @@ export function iterationHelperChoices(root,profiles=[]){
 }
 export function validateConfiguredNodeControls(operation,text,options){
  try{if(typeof text!=='string'||text.length>200000)return fail('INVALID_CONFIGURATION','Controls must be a bounded JSON object.');const raw=JSON.parse(text),checked=cloneDefinitionData(raw,{operation}),base=OPERATIONS[operation];if(!checked.ok||!base||!raw||Array.isArray(raw)||typeof raw!=='object'||Object.keys(raw).some(key=>!base.controls.includes(key)))return fail('INVALID_CONFIGURATION','Use only declared node controls in the JSON object.');
-  const controls=checked.data,node={type:'workflow',...operationDefaults(operation),...controls,phase:options.phase},described=describeOperation({schema:3,runtime:2,mode:'native-unified'},node);if(!described.ok)return fail('INVALID_CONFIGURATION','Complete the required identities and settings using the declared node controls.');
+  const controls={...checked.data};
+  for(const field of projectNodeControls(operation,controls,{phase:options.phase}).filter(field=>['decision.questions','advance-time.schedules','time-trigger.metadata'].includes(field.inputSpec?.id))){const admitted=parseControlInput(field.inputSpec,{format:'rows',value:field.value});if(!admitted.ok)return fail('INVALID_CONFIGURATION',admitted.error.message);controls[field.key]=admitted.data.value;}
+  const node={type:'workflow',...operationDefaults(operation),...controls,phase:options.phase},described=describeOperation({schema:3,runtime:2,mode:'native-unified'},node);if(!described.ok)return fail('INVALID_CONFIGURATION','Complete the required identities and settings using the declared node controls.');
   const preset=workflowDataPresetFor(operation),automatic=preset&&node[preset.controlKey]===preset.targetId;
   if(!automatic&&(operation==='read-file'&&!options.targets.some(target=>target.targetId===node.targetId)||['story-clock','commit-outcomes'].includes(operation)&&!options.targets.some(target=>target.targetId===(operation==='story-clock'?node.clockId:node.targetId)&&target.format==='json')))return fail('DOCUMENT_NOT_AUTHORIZED','Select an actual authorized workflow data target.');
   if(operation==='for-each'&&(!options.helpers.some(helper=>definitionRefKey(helper.ref)===definitionRefKey(node.helper)&&(node.mode!=='projected-state'||helper.stateful))))return fail('INVALID_ITERATION_HELPER','Choose an exact bundled Data helper compatible with the iteration mode.');

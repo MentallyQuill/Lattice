@@ -4,7 +4,7 @@ export type ControlInputFormat = 'auto' | 'plain' | 'csv' | 'json' | 'rows';
 export interface ControlInputSpec {
     id: string;
     version: 1;
-    editor: 'text' | 'list' | 'rows' | 'schema' | 'value' | 'path' | 'hotkey' | 'helper';
+    editor: 'text' | 'list' | 'rows' | 'questions' | 'schedules' | 'schema' | 'value' | 'path' | 'hotkey' | 'helper';
     formats: readonly ControlInputFormat[];
     storage: 'text' | 'json-value' | 'json-text';
     limits: { maxItems?: number; maxStringLength?: number; maxBytes?: number };

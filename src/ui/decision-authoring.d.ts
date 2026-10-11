@@ -5,5 +5,6 @@ export function compileQuestionRows(rows: JsonValue[], currentValue?: JsonValue)
 export interface DecisionDraftState {
     rows: JsonValue[]; raw: boolean; rawText: string; feedback: string;
     invalidText: string; invalid: boolean; drafts: Record<string,string>;
+    inactiveCriteria?: Record<string,JsonValue>;
     draftPaths: Record<string,JsonPath>;
 }

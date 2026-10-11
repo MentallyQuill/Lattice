@@ -1,5 +1,6 @@
 <script lang="ts">
     import {controlInputPresentation} from '../src/ui/node-control-projection.js';
+    import {readControlRows} from '../src/ui/control-input-adapters.js';
     import {parseControlInput} from '../src/ui/control-input-contracts.js';
     import type {ControlInputFormat} from '../src/ui/control-input-contracts';
     import {cloneJsonValue} from '../src/workflow/operations/json-data.js';
@@ -12,13 +13,15 @@
     import RecallDetails from './RecallDetails.svelte';
     import ModifierStack from './ModifierStack.svelte';
     import WorkflowData from './WorkflowData.svelte';
-    import type { DetailBindingMode, DetailControl, DetailEditResponse, DetailModifier, DetailSelection, NodeDetailsActions, NodeDetailsView } from './detail-types';
+    import type { StructuredDraftState, DetailBindingMode, DetailControl, DetailEditResponse, DetailModifier, DetailSelection, NodeDetailsActions, NodeDetailsView } from './detail-types';
     let { view, actions = {}, idPrefix = 'pc-node-details', openGuide }: { view: NodeDetailsView | null; actions?: NodeDetailsActions; idPrefix?: string; openGuide?: () => void } = $props();
     type LocalDraft = { text: string; format?:ControlInputFormat; typedValue?: unknown; error: string; pending: boolean; editor?: DetailControl['editor']; representation?: 'json-text' | 'json-value'; artifactKind?: string; required?: boolean; boundaryId?: string; boundaryDirection?: 'input' | 'output'; modifierType?: string; helperKey?:string };
     let drafts = $state<Record<string, LocalDraft>>({});
     let errors = $state<Record<string, string>>({});
     // View/navigation state never owns the canonical text of an untouched control.
     let schemaStates = $state.raw<Record<string, SchemaDraftState>>({});
+    let structuredStates=$state.raw<Record<string,StructuredDraftState>>({});
+    let structuredEpoch=$state<Record<string,number>>({});
     let identity = '', revision = '', support = '';
     let sequence = 0, boundaryDraftSequence = 0, draftVisit = 0;
     const requests = new Map<string, number>();
@@ -27,7 +30,7 @@
     const modifierGenerations = new Map<string, number>();
     const draftGenerations = new Map<string, number>();
     // The mounted workspace inspector owns drafts; qualified nodes never share them.
-    const draftCache = new Map<string, { contract: string; drafts: typeof drafts; schemas: typeof schemaStates }>();
+    const draftCache = new Map<string, { contract: string; drafts: typeof drafts; schemas: typeof schemaStates; structures: typeof structuredStates }>();
     const settledDrafts = (values: typeof drafts) => Object.fromEntries(Object.entries(values).map(([key, value]) => [key, { ...value, pending: false }]));
     function supportedDrafts(values: typeof drafts, node: NodeDetailsView | null) {
         if (!node) return {};
@@ -62,14 +65,15 @@
             if (changedSelection || nextSupport !== support) { boundaryDraftSequence++; modifierEpoch++; }
             if (changedSelection) {
                 draftVisit++;
-                if (identity) draftCache.set(identity, { contract: support, drafts: untrack(() => settledDrafts(drafts)), schemas: untrack(() => ({...schemaStates})) });
+                if (identity) draftCache.set(identity, { contract: support, drafts: untrack(() => settledDrafts(drafts)), schemas: untrack(() => ({...schemaStates})), structures: untrack(()=>({...structuredStates})) });
             }
             const incompatible = !changedSelection && nextSupport !== support;
             const retained = draftCache.get(next), changedContract = incompatible || !!retained && retained.contract !== nextSupport;
             let restored = changedSelection ? retained?.drafts ?? {} : untrack(() => drafts);
             let restoredSchemas = changedSelection ? retained?.schemas ?? {} : untrack(() => schemaStates);
+            let restoredStructures=changedSelection?retained?.structures??{}:untrack(()=>structuredStates);
             if (changedContract) {
-                draftCache.delete(next); restoredSchemas = {};
+                draftCache.delete(next); restoredSchemas = {}; restoredStructures={};
                 // Boundary label/required fields keep the same contract when the allowed
                 // artifact kinds change. Revalidate only that field; other incompatible
                 // editor drafts must remain discarded when an old contract returns.
@@ -79,6 +83,7 @@
             identity = next; revision = nextRevision; support = nextSupport; requests.clear(); sequence++; errors = {}; modifierBusy = false; modifierBusySequence++;
             // A revision expires writes, while unsaved text still belongs to this node.
             drafts = supportedDrafts(restored, view);
+            structuredStates=Object.fromEntries(Object.entries(restoredStructures).filter(([key])=>view?.controls.some(control=>control.key===key && ['questions','schedules'].includes(control.inputSpec?.editor??''))));
             schemaStates = Object.fromEntries(Object.entries(restoredSchemas).filter(([key])=>view?.controls.some(control=>control.key===key && control.inputSpec?.editor==='schema')));
         }
     });
@@ -104,6 +109,7 @@
     function settleSubmittedDraft(key: string) {
         // Submitted text expires; inactive/view schema state remains in its cache.
         const next = { ...drafts }; delete next[key]; drafts = next;
+        if(structuredStates[key] && !('inactiveCriteria' in structuredStates[key] && Object.keys(structuredStates[key].inactiveCriteria??{}).length)){const states={...structuredStates};delete states[key];structuredStates=states;structuredEpoch={...structuredEpoch,[key]:(structuredEpoch[key]??0)+1};}
     }
     async function perform(key: string, presentation: boolean, operation: (captured: DetailSelection) => DetailEditResponse) {
         const node = view;
@@ -170,9 +176,22 @@
             drafts={...drafts,[control.key]:{...current,text,error:text!==''?state.feedback:'',pending:false,editor:control.editor,representation:control.representation}};
         }
     }
+    function structuredStateFor(control:DetailControl){
+        const state=structuredStates[control.key];if(!state||drafts[control.key]||!control.inputSpec)return state;
+        const current=readControlRows(control.inputSpec,control.value as JsonValue);
+        return current.ok?{...state,rows:current.data.rows,invalid:false,invalidText:'',feedback:'',rawText:JSON.stringify(control.value,null,2)}:undefined;
+    }
+    function structuredDraft(control:DetailControl,state:StructuredDraftState){
+        if(!view||view.readOnly||!actions.editControl||drafts[control.key]?.pending)return;
+        if(!state.invalid && !drafts[control.key])return;
+        if(JSON.stringify(structuredStates[control.key])===JSON.stringify(state))return;
+        structuredStates={...structuredStates,[control.key]:state};
+        if(state.invalid){nextDraftGeneration(control.key);requests.delete(control.key);const current=drafts[control.key];drafts={...drafts,[control.key]:{...current,text:current?.text??textFor(control),error:state.feedback,pending:false,editor:control.editor,representation:control.representation}};}
+    }
     function save(control: DetailControl) {
         if (!view || view.readOnly || !actions.editControl) return;
         const text = drafts[control.key]?.text ?? textFor(control);
+        if(structuredStates[control.key]?.invalid)return;
         if(text!=='' && schemaStates[control.key]?.invalid)return;
         const authored = drafts[control.key]?.typedValue;
         const cloned = authored === undefined ? undefined : cloneJsonValue(authored);
@@ -189,7 +208,7 @@
             try {if (!(control.representation === 'json-text' && control.allowEmpty && text.trim() === '')) {const parsed=JSON.parse(text);if(control.representation !== 'json-text')value=parsed;}}
             catch {drafts={...drafts,[control.key]:{text,error:'Enter valid JSON before saving.',pending:false,editor:control.editor,representation:control.representation}};return;}
         } else if (control.editor === 'lines') value=text.split('\n').filter(line=>line.trim());
-        if(control.inputSpec?.editor==='schema' && !drafts[control.key])drafts={...drafts,[control.key]:{text,error:'',pending:false,editor:control.editor,representation:control.representation}};
+        if(['schema','questions','schedules','value'].includes(control.inputSpec?.editor??'') && !drafts[control.key])drafts={...drafts,[control.key]:{text,error:'',pending:false,editor:control.editor,representation:control.representation}};
         void perform(control.key, false, captured => actions.editControl!(captured, control.key, value));
     }
     function editControl(control: DetailControl, value: unknown) {
@@ -480,7 +499,7 @@
 </section>
 
 {#snippet controlEditor(control: DetailControl)}
-    <DetailControlEditor {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key) : ''} schemaDraft={schemaStates[control.key]} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
+    <DetailControlEditor {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} structuredIdentity={view ? selectionIdentity(view)+':'+view.revision+':'+draftContract(view,control.key)+':'+(structuredEpoch[control.key]??0) : ''} structuredDraft={structuredStateFor(control)} onStructuredDraft={state=>structuredDraft(control,state)} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key) : ''} schemaDraft={schemaStates[control.key]} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
 {/snippet}
 
 <style>

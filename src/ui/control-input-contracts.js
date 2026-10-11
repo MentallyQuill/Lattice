@@ -1,3 +1,5 @@
+import { validateDecisionQuestions } from '../workflow/decision.js?v=0.27.0';
+import { compileScheduleRows, validateScheduleMetadata } from './schedule-authoring.js?v=0.27.0';
 import { validIterationRoleOverrides } from '../workflow/operations/control-nodes.js?v=0.27.0';
 import { validateCleanupSettings } from '../workflow/operations/prose-cleanup.js?v=0.27.0';
 import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.27.0';
@@ -13,7 +15,10 @@ const declarations = new Map();
 const declare = (grammar, keys) => keys.split(' ').forEach(key => declarations.set(key, grammar));
 declare('list', 'smart-compactor.pins pattern.exemptions pattern.protectedLiterals repair.categories repair.protectedLiterals text-rules.protectedLiterals style-transfer.protectedLiterals format-transfer.protectedLiterals terminology-map.protectedLiterals revise-draft.protectedLiterals format.columns read-file.columns write-file.fields write-file.columns project-document.fields project-document.columns item-mention-trigger.aliases recall.keywords recall.eventTypes recall.partnerIds recall.tags recall.recordIds context.pins memory.pins time-trigger.consumedIds advance-time.consumedIds filter-text.protectedLiterals');
 declare('path', 'condition.path confidence-gate.metricPath collection.collectionPath collection.fieldPath collection.identityPath select-fields.path format.path');
-declare('rows', 'compose.sections text-rules.rules select-fields.fields format.fields context-join.inputs join.inputs collect.inputs state.updates state.durations decision.questions time-trigger.metadata advance-time.schedules');
+declare('rows', 'compose.sections text-rules.rules select-fields.fields format.fields context-join.inputs join.inputs collect.inputs state.updates state.durations');
+declare('questions', 'decision.questions');
+declare('schedules', 'advance-time.schedules');
+declare('value', 'time-trigger.metadata');
 declare('schema', 'json-decode.schema extract.schema model-call.schema format.schema read-file.schema write-file.schema project-document.schema');
 declare('value', 'condition.value select-fields.default format.default');
 declare('helper', 'for-each.helper for-each.roleOverrides');
@@ -94,10 +99,9 @@ function independentFieldCheck(base, value) {
         return good({ value });
     }
     if (base === 'for-each.roleOverrides') return validIterationRoleOverrides(value) ? good({ value }) : invalid('Use supported sparse role bindings.');
-    if (base === 'time-trigger.metadata') {
-        const reserved = ['scheduleId', 'revision', 'kind', 'clockId', 'calendarId', 'minuteOfDay', 'anchorMinute', 'intervalMinutes', 'dueMinute', 'order'];
-        return Object.keys(value).some(key => reserved.includes(key)) ? invalid('Timing and schedule identity belong to their dedicated controls.') : good({ value });
-    }
+    if (base === 'time-trigger.metadata') return validateScheduleMetadata(value);
+    if (base === 'decision.questions') return validateDecisionQuestions(value);
+    if (base === 'advance-time.schedules') return compileScheduleRows(value);
     if (base === 'hotkey-arm.hotkey') {
         // Match the intrinsic physical-key rules in validateRecallQueueProposal.
         const keys = ['code', 'ctrl', 'alt', 'shift', 'meta'];
@@ -147,6 +151,7 @@ function finish(spec, value, warnings = [], sourceText, currentValue) {
         if (descriptor.type === 'array' && (!Array.isArray(checked.data.value) || checked.data.value.length < (descriptor.min ?? 0)) || descriptor.type === 'object' && (!checked.data.value || typeof checked.data.value !== 'object' || Array.isArray(checked.data.value))) return fail('INVALID_CONTROL_SHAPE', 'Use the declared control shape.');
         const node = { type: 'workflow', operation, ...controls, [key]: value };
         const independent = independentFieldCheck(base, value); if (independent && !independent.ok) return independent;
+        if (base === 'advance-time.schedules') value = independent.data.value;
         if (!independent && ['rows', 'helper', 'hotkey', 'path', 'list'].includes(spec.editor) && !operationFor(node, { phase: operation === 'context-join' ? 'pre' : undefined })) return fail('INVALID_CONTROL_VALUE', 'The value does not satisfy this operation’s control contract.');
     }
     const stored = cloneJsonValue(value); if (!stored.ok) return stored;

@@ -1,3 +1,4 @@
+import { compileQuestionRows } from './decision-authoring.js?v=0.27.0';
 import { parseControlInput } from './control-input-contracts.js?v=0.27.0';
 const fail = () => ({ok:false,error:{code:'NONREPRESENTABLE_CONTROL_ROWS',message:'This shape needs Advanced JSON; authored values are retained.'}});
 const phases = ['onset','peak','plateau','decline','aftermath'];
@@ -39,6 +40,14 @@ export function readControlRows(spec, value) {
     try {
         value = cloneRowsData(value, spec.limits.maxBytes ?? 262144);
         const base = spec.id.split(':')[0];
+        if (base === 'decision.questions') {
+            if (!record(value) || Object.keys(value).length > 32 || !Object.values(value).every(row => keys(row,['type','instructions','criteria']) && ['noul','choice','score'].includes(row.type) && Object.hasOwn(row,'instructions'))) return fail();
+            return {ok:true,data:{rows:Object.entries(value).map(([id,row])=>({...row,id}))}};
+        }
+        if (base === 'advance-time.schedules') {
+            if (!Array.isArray(value) || value.length > 1000 || !value.every(row=>record(row) && typeof row.scheduleId==='string' && row.scheduleId.trim() && row.scheduleId.length<=256 && ['daily','interval','delay'].includes(row.kind)) || new Set(value.map(row=>row.scheduleId)).size!==value.length) return fail();
+            return {ok:true,data:{rows:value}};
+        }
         if (base === 'state.updates' || base === 'state.durations') {
             if (!record(value) || Object.keys(value).length > (spec.limits.maxItems ?? (base === 'state.durations' ? 5 : 32))) return fail();
             if (!Object.entries(value).every(([name, number]) => typeof number === 'number' && Number.isFinite(number) && (base !== 'state.durations' || phases.includes(name) && Number.isSafeInteger(number) && number >= 1 && number <= 64))) return fail();
@@ -63,7 +72,9 @@ export function writeControlRows(spec, rows, currentValue) {
     try {
         rows = cloneRowsData(rows, spec.limits.maxBytes ?? 262144);
         if (!Array.isArray(rows)) return fail();
-        const base = spec.id.split(':')[0], mapped = ['state.updates','state.durations'].includes(base);
+        const base = spec.id.split(':')[0];
+        if (base === 'decision.questions') return compileQuestionRows(rows,currentValue);
+        const mapped = ['state.updates','state.durations'].includes(base);
         if (mapped && (rows.some(row=>!keys(row,['name','number']) || typeof row.name !== 'string' || typeof row.number !== 'number') || new Set(rows.map(row=>row.name)).size !== rows.length)) return fail();
         const value = mapped ? Object.fromEntries(rows.map(row=>[row.name,row.number])) : rows;
         const parsed = parseControlInput(spec,{format:'rows',value,...(currentValue === undefined ? {} : {currentValue})});
