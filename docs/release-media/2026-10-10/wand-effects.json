@@ -1,0 +1,16 @@
+{
+  "libraryId": "wand-effects",
+  "revision": "release-r1",
+  "itemId": "broken-wand",
+  "effects": [
+    {"id":"normal","kind":"fixed","weight":50,"description":"The intended spell works normally.","spellOutcome":"success"},
+    {"id":"copper-coins","kind":"fixed","weight":6.25,"description":"The second closest individual to the caster throws up a mouthful of copper coins.","spellOutcome":"replaced"},
+    {"id":"teeth","kind":"fixed","weight":6.25,"description":"The caster's teeth fall out, then grow back over the next minute.","spellOutcome":"replaced"},
+    {"id":"cold-flames","kind":"fixed","weight":6.25,"description":"Every flame in the scene turns cold for ten minutes.","spellOutcome":"replaced"},
+    {"id":"goose","kind":"fixed","weight":6.25,"description":"A furious goose appears inside the caster's clothing.","spellOutcome":"replaced"},
+    {"id":"magnetic","kind":"fixed","weight":6.25,"description":"The spell's target becomes strongly magnetic for one minute.","spellOutcome":"replaced"},
+    {"id":"last-meal","kind":"fixed","weight":6.25,"description":"The caster's last meal reappears intact on a plate at their feet.","spellOutcome":"replaced"},
+    {"id":"truth-bell","kind":"fixed","weight":6.25,"description":"A bell rings above the caster's head whenever they lie for the next hour.","spellOutcome":"replaced"},
+    {"id":"eel","kind":"fixed","weight":6.25,"description":"The wand turns into a live eel for ten minutes.","spellOutcome":"replaced"}
+  ]
+}

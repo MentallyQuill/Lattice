@@ -1,0 +1,1606 @@
+{
+  "kind": "lattice-workflow",
+  "schema": 2,
+  "minRuntime": 2,
+  "graph": {
+    "id": "remastered-lesson-27",
+    "name": "Broken wand · 50% chaos",
+    "description": "A broken wand has a 50% chance of replacing the intended spell with one of eight fixed chaos effects.\n\nSetup:\n1. Open in a practice chat. Replace the Rowan/Iris avatar IDs with your loaded actors.\n2. Authorize Public JSON documents wand-holders, wand-effects, and wand-outcomes in Workflow Data. Use the included holder and effects files; outcomes starts as [].\n3. Set the needed event extraction, confirmation, and narration model connections. The native reply uses SillyTavern.\n4. Enable Lattice and send one actual wand use.\n5. Inspect Random Pick, review the reply, and Apply or Reject.\n\nNormal magic has weight 50. Eight fixed chaos entries have weight 6.25 each. Chaos replaces the intended spell. The supplied fixed-only table never selects the model-authored wild branch retained from lesson 27. Fixed selection itself needs no model call; the surrounding recognition and narration still use models. A cast keeps its pending or accepted draw; a new cast has a new event identity.\n\nBased on shipped lesson 27. Read its node guides for the full setup and call bounds.",
+    "schema": 3,
+    "runtime": 2,
+    "mode": "native-unified",
+    "nodes": {
+      "send": {
+        "id": "send",
+        "type": "workflow",
+        "operation": "on-send",
+        "operationVersion": 1,
+        "title": "On Send",
+        "enabled": true,
+        "x": 3700,
+        "y": 1117,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "On Send"
+      },
+      "generate": {
+        "id": "generate",
+        "type": "workflow",
+        "operation": "generate-reply",
+        "operationVersion": 1,
+        "title": "Generate Reply · SillyTavern",
+        "enabled": true,
+        "x": 4100,
+        "y": 1141,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Generate Reply · SillyTavern",
+        "budgetTokens": 768
+      },
+      "review": {
+        "id": "review",
+        "type": "workflow",
+        "operation": "review-publish",
+        "operationVersion": 1,
+        "title": "Review / Publish",
+        "enabled": true,
+        "x": 5300,
+        "y": 1141,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Review / Publish"
+      },
+      "player": {
+        "id": "player",
+        "type": "workflow",
+        "operation": "player-event-source",
+        "operationVersion": 1,
+        "title": "Player Event Source",
+        "enabled": true,
+        "x": 500,
+        "y": 1820,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Player Event Source"
+      },
+      "entities-text": {
+        "id": "entities-text",
+        "type": "workflow",
+        "operation": "text",
+        "operationVersion": 1,
+        "title": "Text",
+        "enabled": true,
+        "x": 100,
+        "y": 1580,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "phase": "pre",
+        "alias": "Text · authored input",
+        "text": "{\"actorIds\":[\"character:rowan.png\",\"character:iris.png\"],\"itemIds\":[\"broken-wand\"]}"
+      },
+      "entities": {
+        "id": "entities",
+        "type": "workflow",
+        "operation": "json-decode",
+        "operationVersion": 1,
+        "title": "JSON Decode",
+        "enabled": true,
+        "x": 500,
+        "y": 1604,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "phase": "pre",
+        "alias": "JSON Decode",
+        "mode": "parse",
+        "schema": ""
+      },
+      "events": {
+        "id": "events",
+        "type": "workflow",
+        "operation": "item-use-trigger",
+        "operationVersion": 1,
+        "title": "Item Use Trigger",
+        "enabled": true,
+        "x": 900,
+        "y": 1676,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "phase": "pre",
+        "alias": "Item Use Trigger",
+        "itemId": "broken-wand",
+        "mode": "extract",
+        "watch": "player-message",
+        "instructions": "At most one actual use and two intervening transfers, in order.",
+        "maxTokens": 2048
+      },
+      "confirm-each": {
+        "id": "confirm-each",
+        "type": "workflow",
+        "operation": "for-each",
+        "operationVersion": 1,
+        "title": "For Each",
+        "enabled": true,
+        "x": 1300,
+        "y": 1460,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "phase": "pre",
+        "alias": "For Each",
+        "helper": {
+          "id": "remastered-lesson-27-confirmation",
+          "version": 1,
+          "semanticHash": "sha256:2d1e276acf38bfe69341e879b4db199560a6ffc417b7641442dbf7d1f569d74e"
+        },
+        "limit": 3,
+        "requestBoundPerIteration": 1,
+        "mode": "map",
+        "roleOverrides": {
+          "decision": {
+            "profileId": "lattice:active-sillytavern"
+          }
+        }
+      },
+      "confirmed": {
+        "id": "confirmed",
+        "type": "workflow",
+        "operation": "collection",
+        "operationVersion": 1,
+        "title": "Collection",
+        "enabled": true,
+        "x": 1700,
+        "y": 1436,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "phase": "pre",
+        "alias": "Collection",
+        "mode": "flatten",
+        "collectionPath": [],
+        "fieldPath": [],
+        "value": "",
+        "operator": "equals",
+        "missingPolicy": "hold",
+        "thresholds": "[]",
+        "mergePolicy": "keep-all",
+        "identityPath": [
+          "id"
+        ]
+      },
+      "holders-file": {
+        "id": "holders-file",
+        "type": "workflow",
+        "operation": "read-file",
+        "operationVersion": 1,
+        "title": "Read File",
+        "enabled": true,
+        "x": 1300,
+        "y": 1664,
+        "w": 300,
+        "h": 168,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Read File · authorized live target",
+        "targetId": "wand-holders",
+        "schema": "",
+        "columns": [],
+        "actorScope": "selected",
+        "actorId": ""
+      },
+      "holders": {
+        "id": "holders",
+        "type": "workflow",
+        "operation": "json-decode",
+        "operationVersion": 1,
+        "title": "JSON Decode",
+        "enabled": true,
+        "x": 1700,
+        "y": 1652,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "phase": "pre",
+        "alias": "JSON Decode",
+        "mode": "parse",
+        "schema": ""
+      },
+      "holder": {
+        "id": "holder",
+        "type": "workflow",
+        "operation": "current-holder",
+        "operationVersion": 1,
+        "title": "Current Holder",
+        "enabled": true,
+        "x": 2100,
+        "y": 1508,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Current Holder"
+      },
+      "actual-uses": {
+        "id": "actual-uses",
+        "type": "workflow",
+        "operation": "collection",
+        "operationVersion": 1,
+        "title": "Collection",
+        "enabled": true,
+        "x": 2500,
+        "y": 1508,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Collection",
+        "mode": "filter",
+        "collectionPath": [],
+        "fieldPath": [
+          "eventType"
+        ],
+        "value": "item-used",
+        "operator": "equals",
+        "missingPolicy": "hold",
+        "thresholds": "[]",
+        "mergePolicy": "keep-all",
+        "identityPath": [
+          "id"
+        ]
+      },
+      "library-file": {
+        "id": "library-file",
+        "type": "workflow",
+        "operation": "read-file",
+        "operationVersion": 1,
+        "title": "Read File",
+        "enabled": true,
+        "x": 2100,
+        "y": 2060,
+        "w": 300,
+        "h": 168,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Read File",
+        "targetId": "wand-effects",
+        "schema": "",
+        "columns": [],
+        "actorScope": "selected",
+        "actorId": ""
+      },
+      "library": {
+        "id": "library",
+        "type": "workflow",
+        "operation": "parse-effect-library",
+        "operationVersion": 1,
+        "title": "Effect Library",
+        "enabled": true,
+        "x": 2500,
+        "y": 2060,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Effect Library",
+        "format": "json",
+        "libraryId": "wand-effects",
+        "revision": "release-r1",
+        "itemId": "broken-wand",
+        "mechanicalPolicy": "narrative-only"
+      },
+      "saved-file": {
+        "id": "saved-file",
+        "type": "workflow",
+        "operation": "read-file",
+        "operationVersion": 1,
+        "title": "Read File",
+        "enabled": true,
+        "x": 2100,
+        "y": 1820,
+        "w": 300,
+        "h": 168,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Read File · authorized live target",
+        "targetId": "wand-outcomes",
+        "schema": "",
+        "columns": [],
+        "actorScope": "selected",
+        "actorId": ""
+      },
+      "saved": {
+        "id": "saved",
+        "type": "workflow",
+        "operation": "json-decode",
+        "operationVersion": 1,
+        "title": "JSON Decode",
+        "enabled": true,
+        "x": 2500,
+        "y": 1844,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "phase": "pre",
+        "alias": "JSON Decode",
+        "mode": "parse",
+        "schema": ""
+      },
+      "pick": {
+        "id": "pick",
+        "type": "workflow",
+        "operation": "random-pick",
+        "operationVersion": 1,
+        "title": "Random Pick",
+        "enabled": true,
+        "x": 2900,
+        "y": 1484,
+        "w": 300,
+        "h": 168,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Random Pick",
+        "rerollPolicy": "reuse",
+        "rerollId": "",
+        "ledgerId": "wand-outcomes"
+      },
+      "resolve-effects": {
+        "id": "resolve-effects",
+        "type": "workflow",
+        "operation": "for-each",
+        "operationVersion": 1,
+        "title": "For Each",
+        "enabled": true,
+        "x": 3300,
+        "y": 1940,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "For Each",
+        "helper": {
+          "id": "remastered-wand-resolver",
+          "version": 1,
+          "semanticHash": "sha256:ea246677485ced269bb7989ac0ea08483234aa6f5689c3fe254204508ab8ea6f"
+        },
+        "limit": 1,
+        "requestBoundPerIteration": 2,
+        "mode": "map",
+        "roleOverrides": {
+          "effectAuthor": {
+            "profileId": "lattice:active-sillytavern"
+          },
+          "decision": {
+            "profileId": "lattice:active-sillytavern"
+          }
+        }
+      },
+      "guidance": {
+        "id": "guidance",
+        "type": "workflow",
+        "operation": "compose",
+        "operationVersion": 1,
+        "title": "Compose",
+        "enabled": true,
+        "x": 3700,
+        "y": 1640,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Compose",
+        "mode": "template",
+        "outputKind": "guidance",
+        "template": "Narrate only this actual wand use using its frozen fixed or resolved wild effect and confirmed holder. Do not reroll or invent another use.\n{{data:}}",
+        "sections": [],
+        "separator": "\n\n",
+        "budgetTokens": 0
+      },
+      "first-use": {
+        "id": "first-use",
+        "type": "workflow",
+        "operation": "collection",
+        "operationVersion": 1,
+        "title": "Collection",
+        "enabled": true,
+        "x": 2900,
+        "y": 1892,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Collection",
+        "mode": "lookup",
+        "collectionPath": [],
+        "fieldPath": [
+          "itemId"
+        ],
+        "value": "broken-wand",
+        "operator": "equals",
+        "missingPolicy": "hold",
+        "thresholds": "[]",
+        "mergePolicy": "keep-all",
+        "identityPath": [
+          "id"
+        ]
+      },
+      "use": {
+        "id": "use",
+        "type": "workflow",
+        "operation": "select-fields",
+        "operationVersion": 1,
+        "title": "Select Fields",
+        "enabled": true,
+        "x": 3300,
+        "y": 2156,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "phase": "pre",
+        "alias": "Select Fields",
+        "fields": [
+          {
+            "name": "schemaVersion",
+            "path": [
+              "value",
+              "schemaVersion"
+            ],
+            "required": true
+          },
+          {
+            "name": "recordType",
+            "path": [
+              "value",
+              "recordType"
+            ],
+            "required": true
+          },
+          {
+            "name": "eventId",
+            "path": [
+              "value",
+              "eventId"
+            ],
+            "required": true
+          },
+          {
+            "name": "eventType",
+            "path": [
+              "value",
+              "eventType"
+            ],
+            "required": true
+          },
+          {
+            "name": "sceneId",
+            "path": [
+              "value",
+              "sceneId"
+            ],
+            "required": true
+          },
+          {
+            "name": "source",
+            "path": [
+              "value",
+              "source"
+            ],
+            "required": true
+          },
+          {
+            "name": "actorId",
+            "path": [
+              "value",
+              "actorId"
+            ],
+            "required": true
+          },
+          {
+            "name": "objectId",
+            "path": [
+              "value",
+              "objectId"
+            ],
+            "required": false
+          },
+          {
+            "name": "itemId",
+            "path": [
+              "value",
+              "itemId"
+            ],
+            "required": false
+          },
+          {
+            "name": "position",
+            "path": [
+              "value",
+              "position"
+            ],
+            "required": true
+          },
+          {
+            "name": "evidence",
+            "path": [
+              "value",
+              "evidence"
+            ],
+            "required": true
+          },
+          {
+            "name": "semantics",
+            "path": [
+              "value",
+              "semantics"
+            ],
+            "required": true
+          },
+          {
+            "name": "status",
+            "path": [
+              "value",
+              "status"
+            ],
+            "required": true
+          },
+          {
+            "name": "acceptance",
+            "path": [
+              "value",
+              "acceptance"
+            ],
+            "required": true
+          },
+          {
+            "name": "confirmation",
+            "path": [
+              "value",
+              "confirmation"
+            ],
+            "required": false
+          },
+          {
+            "name": "holderId",
+            "path": [
+              "value",
+              "holderId"
+            ],
+            "required": false
+          }
+        ]
+      },
+      "saved-outcome": {
+        "id": "saved-outcome",
+        "type": "workflow",
+        "operation": "saved-outcome",
+        "operationVersion": 1,
+        "title": "Saved Outcome",
+        "enabled": true,
+        "x": 3700,
+        "y": 1436,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Saved Outcome"
+      },
+      "outcome-commit": {
+        "id": "outcome-commit",
+        "type": "workflow",
+        "operation": "commit-outcomes",
+        "operationVersion": 1,
+        "title": "Outcome Commit",
+        "enabled": true,
+        "x": 3700,
+        "y": 1916,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-player",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Outcome Commit",
+        "targetId": "wand-outcomes"
+      },
+      "polish": {
+        "id": "polish",
+        "type": "workflow",
+        "operation": "revise-draft",
+        "operationVersion": 1,
+        "title": "Revise Draft",
+        "enabled": true,
+        "x": 4500,
+        "y": 2763,
+        "w": 300,
+        "h": 168,
+        "inGroup": "processing-polish",
+        "profileId": "lattice:active-sillytavern",
+        "model": null,
+        "modelRole": "Prose",
+        "alias": "Revise Draft",
+        "instructions": "Clarify the observed wand effect without changing the confirmed use, holder, frozen effect or player choice.",
+        "scope": "narration",
+        "protectedLiterals": [],
+        "maxTokens": 2048
+      },
+      "outcome-notes": {
+        "id": "outcome-notes",
+        "type": "workflow",
+        "operation": "collect",
+        "operationVersion": 1,
+        "title": "Collect",
+        "enabled": true,
+        "x": 4100,
+        "y": 2499,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-polish",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "artifactKind": "data",
+        "phase": "post",
+        "alias": "Collect",
+        "inputs": [
+          {
+            "id": "resolved",
+            "label": "resolved",
+            "required": true
+          },
+          {
+            "id": "prior",
+            "label": "prior",
+            "required": true
+          }
+        ]
+      },
+      "notes": {
+        "id": "notes",
+        "type": "workflow",
+        "operation": "compose",
+        "operationVersion": 1,
+        "title": "Compose",
+        "enabled": true,
+        "x": 4500,
+        "y": 2499,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-polish",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "phase": "post",
+        "alias": "Compose",
+        "mode": "template",
+        "outputKind": "text",
+        "template": "<details><summary>Event-keyed Random Pick, Saved Outcome, Effect Author and Outcome Commit</summary>\n{{data:}}\n</details>",
+        "sections": [],
+        "separator": "\n\n",
+        "budgetTokens": 0
+      },
+      "append": {
+        "id": "append",
+        "type": "workflow",
+        "operation": "append",
+        "operationVersion": 1,
+        "title": "Append",
+        "enabled": true,
+        "x": 4900,
+        "y": 2499,
+        "w": 300,
+        "h": 140,
+        "inGroup": "processing-polish",
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "alias": "Append",
+        "sectionId": "lesson-27",
+        "separator": "\n\n"
+      },
+      "lesson-note": {
+        "id": "lesson-note",
+        "type": "note",
+        "title": "Lesson instructions",
+        "enabled": true,
+        "x": 100,
+        "y": 0,
+        "w": 900,
+        "h": 989,
+        "content": "A broken wand has a 50% chance of replacing the intended spell with one of eight fixed chaos effects.\n\nSetup:\n1. Open in a practice chat. Replace the Rowan/Iris avatar IDs with your loaded actors.\n2. Authorize Public JSON documents wand-holders, wand-effects, and wand-outcomes in Workflow Data. Use the included holder and effects files; outcomes starts as [].\n3. Set the needed event extraction, confirmation, and narration model connections. The native reply uses SillyTavern.\n4. Enable Lattice and send one actual wand use.\n5. Inspect Random Pick, review the reply, and Apply or Reject.\n\nNormal magic has weight 50. Eight fixed chaos entries have weight 6.25 each. Chaos replaces the intended spell. The supplied fixed-only table never selects the model-authored wild branch retained from lesson 27. Fixed selection itself needs no model call; the surrounding recognition and narration still use models. A cast keeps its pending or accepted draw; a new cast has a new event identity.\n\nBased on shipped lesson 27. Read its node guides for the full setup and call bounds.",
+        "commentFrame": true,
+        "moveContents": false
+      }
+    },
+    "wires": {
+      "edge-1": {
+        "id": "edge-1",
+        "route": "wire",
+        "from": "send",
+        "fromPort": "activation",
+        "to": "generate",
+        "toPort": "activation"
+      },
+      "edge-2": {
+        "id": "edge-2",
+        "route": "wire",
+        "from": "entities-text",
+        "fromPort": "out",
+        "to": "entities",
+        "toPort": "in"
+      },
+      "edge-3": {
+        "id": "edge-3",
+        "route": "wire",
+        "from": "player",
+        "fromPort": "out",
+        "to": "events",
+        "toPort": "source"
+      },
+      "edge-4": {
+        "id": "edge-4",
+        "route": "wire",
+        "from": "entities",
+        "fromPort": "out",
+        "to": "events",
+        "toPort": "entities"
+      },
+      "edge-5": {
+        "id": "edge-5",
+        "route": "wire",
+        "from": "events",
+        "fromPort": "out",
+        "to": "confirm-each",
+        "toPort": "in"
+      },
+      "edge-6": {
+        "id": "edge-6",
+        "route": "wire",
+        "from": "confirm-each",
+        "fromPort": "out",
+        "to": "confirmed",
+        "toPort": "in"
+      },
+      "edge-7": {
+        "id": "edge-7",
+        "route": "wire",
+        "from": "holders-file",
+        "fromPort": "text",
+        "to": "holders",
+        "toPort": "in"
+      },
+      "edge-8": {
+        "id": "edge-8",
+        "route": "wire",
+        "from": "confirmed",
+        "fromPort": "out",
+        "to": "holder",
+        "toPort": "events"
+      },
+      "edge-9": {
+        "id": "edge-9",
+        "route": "wire",
+        "from": "holders",
+        "fromPort": "out",
+        "to": "holder",
+        "toPort": "holders"
+      },
+      "edge-10": {
+        "id": "edge-10",
+        "route": "wire",
+        "from": "holder",
+        "fromPort": "events",
+        "to": "actual-uses",
+        "toPort": "in"
+      },
+      "edge-11": {
+        "id": "edge-11",
+        "route": "wire",
+        "from": "library-file",
+        "fromPort": "text",
+        "to": "library",
+        "toPort": "in"
+      },
+      "edge-12": {
+        "id": "edge-12",
+        "route": "wire",
+        "from": "saved-file",
+        "fromPort": "text",
+        "to": "saved",
+        "toPort": "in"
+      },
+      "edge-13": {
+        "id": "edge-13",
+        "route": "wire",
+        "from": "actual-uses",
+        "fromPort": "out",
+        "to": "pick",
+        "toPort": "events"
+      },
+      "edge-14": {
+        "id": "edge-14",
+        "route": "wire",
+        "from": "library",
+        "fromPort": "out",
+        "to": "pick",
+        "toPort": "library"
+      },
+      "edge-15": {
+        "id": "edge-15",
+        "route": "wire",
+        "from": "saved",
+        "fromPort": "out",
+        "to": "pick",
+        "toPort": "saved"
+      },
+      "edge-16": {
+        "id": "edge-16",
+        "route": "wire",
+        "from": "pick",
+        "fromPort": "out",
+        "to": "resolve-effects",
+        "toPort": "in"
+      },
+      "edge-17": {
+        "id": "edge-17",
+        "route": "wire",
+        "from": "resolve-effects",
+        "fromPort": "out",
+        "to": "guidance",
+        "toPort": "data"
+      },
+      "edge-18": {
+        "id": "edge-18",
+        "route": "wire",
+        "from": "guidance",
+        "fromPort": "out",
+        "to": "generate",
+        "toPort": "guidance"
+      },
+      "edge-19": {
+        "id": "edge-19",
+        "route": "wire",
+        "from": "actual-uses",
+        "fromPort": "out",
+        "to": "first-use",
+        "toPort": "in"
+      },
+      "edge-20": {
+        "id": "edge-20",
+        "route": "wire",
+        "from": "first-use",
+        "fromPort": "out",
+        "to": "use",
+        "toPort": "in"
+      },
+      "edge-21": {
+        "id": "edge-21",
+        "route": "wire",
+        "from": "use",
+        "fromPort": "out",
+        "to": "saved-outcome",
+        "toPort": "event"
+      },
+      "edge-22": {
+        "id": "edge-22",
+        "route": "wire",
+        "from": "saved",
+        "fromPort": "out",
+        "to": "saved-outcome",
+        "toPort": "saved"
+      },
+      "edge-23": {
+        "id": "edge-23",
+        "route": "wire",
+        "from": "resolve-effects",
+        "fromPort": "out",
+        "to": "outcome-commit",
+        "toPort": "outcomes"
+      },
+      "edge-24": {
+        "id": "edge-24",
+        "route": "wire",
+        "from": "generate",
+        "fromPort": "draft",
+        "to": "polish",
+        "toPort": "draft"
+      },
+      "edge-25": {
+        "id": "edge-25",
+        "route": "wire",
+        "from": "resolve-effects",
+        "fromPort": "out",
+        "to": "outcome-notes",
+        "toPort": "resolved"
+      },
+      "edge-26": {
+        "id": "edge-26",
+        "route": "wire",
+        "from": "saved-outcome",
+        "fromPort": "out",
+        "to": "outcome-notes",
+        "toPort": "prior"
+      },
+      "edge-27": {
+        "id": "edge-27",
+        "route": "wire",
+        "from": "outcome-notes",
+        "fromPort": "out",
+        "to": "notes",
+        "toPort": "data"
+      },
+      "edge-28": {
+        "id": "edge-28",
+        "route": "wire",
+        "from": "polish",
+        "fromPort": "out",
+        "to": "append",
+        "toPort": "draft"
+      },
+      "edge-29": {
+        "id": "edge-29",
+        "route": "wire",
+        "from": "notes",
+        "fromPort": "out",
+        "to": "append",
+        "toPort": "section"
+      },
+      "edge-30": {
+        "id": "edge-30",
+        "route": "wire",
+        "from": "append",
+        "fromPort": "out",
+        "to": "review",
+        "toPort": "draft"
+      }
+    },
+    "groups": {
+      "processing-player": {
+        "id": "processing-player",
+        "title": "Update saved story data",
+        "description": "These connected boxes work together. Follow their wires to see how each result is used.",
+        "x": 75,
+        "y": 1386,
+        "w": 3950,
+        "h": 935,
+        "color": "#284e67",
+        "collapsed": false,
+        "members": [
+          "player",
+          "events",
+          "entities",
+          "confirm-each",
+          "entities-text",
+          "confirmed",
+          "holder",
+          "holders",
+          "actual-uses",
+          "holders-file",
+          "pick",
+          "first-use",
+          "library",
+          "saved",
+          "resolve-effects",
+          "use",
+          "library-file",
+          "saved-file",
+          "saved-outcome",
+          "guidance",
+          "outcome-commit"
+        ]
+      },
+      "processing-polish": {
+        "id": "processing-polish",
+        "title": "Polish and annotate the reply",
+        "description": "These connected boxes work together. Follow their wires to see how each result is used.",
+        "x": 4075,
+        "y": 2449,
+        "w": 1150,
+        "h": 507,
+        "color": "#57416e",
+        "collapsed": false,
+        "members": [
+          "polish",
+          "append",
+          "notes",
+          "outcome-notes"
+        ]
+      }
+    },
+    "roles": {
+      "Prose": {
+        "model": null,
+        "profileId": "lattice:active-sillytavern"
+      }
+    },
+    "portals": {},
+    "definitions": {
+      "[\"remastered-lesson-27-confirmation\",1,\"sha256:2d1e276acf38bfe69341e879b4db199560a6ffc417b7641442dbf7d1f569d74e\"]": {
+        "id": "remastered-lesson-27-confirmation",
+        "version": 1,
+        "semanticHash": "sha256:2d1e276acf38bfe69341e879b4db199560a6ffc417b7641442dbf7d1f569d74e",
+        "name": "Confirm one exact occurrence",
+        "description": "Pure processor: no host sources, publication, private grants or settlement. Inspect the typed interface and exposed controls.",
+        "interface": [
+          {
+            "id": "item",
+            "label": "Item",
+            "direction": "input",
+            "kind": "data",
+            "required": true,
+            "cardinality": "one",
+            "boundaryNodeId": "item"
+          },
+          {
+            "id": "result",
+            "label": "Result",
+            "direction": "output",
+            "kind": "data",
+            "required": false,
+            "cardinality": "one",
+            "boundaryNodeId": "result"
+          }
+        ],
+        "parameters": [],
+        "body": {
+          "id": "lesson-27-confirmation-body",
+          "schema": 3,
+          "runtime": 2,
+          "mode": "native-unified",
+          "nodes": {
+            "item": {
+              "id": "item",
+              "type": "subgraph-input",
+              "enabled": true,
+              "x": 100,
+              "y": 360,
+              "w": 300,
+              "h": 140,
+              "interfacePortId": "item"
+            },
+            "result": {
+              "id": "result",
+              "type": "subgraph-output",
+              "enabled": true,
+              "x": 1700,
+              "y": 288,
+              "w": 300,
+              "h": 140,
+              "interfacePortId": "result"
+            },
+            "decision": {
+              "id": "decision",
+              "type": "workflow",
+              "operation": "decision",
+              "operationVersion": 1,
+              "title": "Decision",
+              "enabled": true,
+              "x": 500,
+              "y": 264,
+              "w": 300,
+              "h": 140,
+              "profileId": "lattice:active-sillytavern",
+              "model": null,
+              "modelRole": "decision",
+              "alias": "Decision",
+              "inputKind": "data",
+              "questions": {
+                "actual": {
+                  "type": "noul",
+                  "instructions": "Does this exact candidate evidence establish an actual completed action now? Reject plans, negation, threats, recollection and ambiguous grammar."
+                }
+              },
+              "maxTokens": 2048
+            },
+            "acceptance": {
+              "id": "acceptance",
+              "type": "workflow",
+              "operation": "select-fields",
+              "operationVersion": 1,
+              "title": "Select Fields",
+              "enabled": true,
+              "x": 900,
+              "y": 240,
+              "w": 300,
+              "h": 140,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "alias": "Select Fields",
+              "fields": [
+                {
+                  "name": "accepted",
+                  "path": [
+                    "answers",
+                    "actual",
+                    "accepted"
+                  ]
+                }
+              ]
+            },
+            "single-record": {
+              "id": "single-record",
+              "type": "workflow",
+              "operation": "format",
+              "operationVersion": 1,
+              "title": "Format",
+              "enabled": true,
+              "x": 900,
+              "y": 456,
+              "w": 300,
+              "h": 168,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "alias": "Format",
+              "inputMode": "records",
+              "format": "json",
+              "mapping": "preserve",
+              "fields": [],
+              "schema": "",
+              "columns": [],
+              "separator": "\n",
+              "trailingSeparator": false
+            },
+            "confirm": {
+              "id": "confirm",
+              "type": "workflow",
+              "operation": "confirm-events",
+              "operationVersion": 1,
+              "title": "Confirm Events",
+              "enabled": true,
+              "x": 1300,
+              "y": 312,
+              "w": 300,
+              "h": 140,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "alias": "Confirm Events",
+              "mode": "single-gate"
+            }
+          },
+          "wires": {
+            "edge-1": {
+              "id": "edge-1",
+              "route": "wire",
+              "from": "item",
+              "fromPort": "out",
+              "to": "decision",
+              "toPort": "in"
+            },
+            "edge-2": {
+              "id": "edge-2",
+              "route": "wire",
+              "from": "decision",
+              "fromPort": "out",
+              "to": "acceptance",
+              "toPort": "in"
+            },
+            "edge-3": {
+              "id": "edge-3",
+              "route": "wire",
+              "from": "item",
+              "fromPort": "out",
+              "to": "single-record",
+              "toPort": "in"
+            },
+            "edge-4": {
+              "id": "edge-4",
+              "route": "wire",
+              "from": "single-record",
+              "fromPort": "records",
+              "to": "confirm",
+              "toPort": "events"
+            },
+            "edge-5": {
+              "id": "edge-5",
+              "route": "wire",
+              "from": "acceptance",
+              "fromPort": "out",
+              "to": "confirm",
+              "toPort": "decisions"
+            },
+            "edge-6": {
+              "id": "edge-6",
+              "route": "wire",
+              "from": "confirm",
+              "fromPort": "out",
+              "to": "result",
+              "toPort": "in"
+            }
+          },
+          "groups": {},
+          "roles": {
+            "decision": {
+              "model": null,
+              "profileId": "lattice:active-sillytavern"
+            }
+          },
+          "portals": {},
+          "definitions": {}
+        }
+      },
+      "[\"remastered-wand-resolver\",1,\"sha256:ea246677485ced269bb7989ac0ea08483234aa6f5689c3fe254204508ab8ea6f\"]": {
+        "id": "remastered-wand-resolver",
+        "version": 1,
+        "semanticHash": "sha256:ea246677485ced269bb7989ac0ea08483234aa6f5689c3fe254204508ab8ea6f",
+        "name": "Resolve one frozen draw",
+        "description": "Pure processor: no host sources, publication, private grants or settlement. Inspect the typed interface and exposed controls.",
+        "interface": [
+          {
+            "id": "item",
+            "label": "Item",
+            "direction": "input",
+            "kind": "data",
+            "required": true,
+            "cardinality": "one",
+            "boundaryNodeId": "item"
+          },
+          {
+            "id": "result",
+            "label": "Result",
+            "direction": "output",
+            "kind": "data",
+            "required": false,
+            "cardinality": "one",
+            "boundaryNodeId": "result"
+          }
+        ],
+        "parameters": [],
+        "body": {
+          "id": "wand-resolver-body",
+          "schema": 3,
+          "runtime": 2,
+          "mode": "native-unified",
+          "nodes": {
+            "item": {
+              "id": "item",
+              "type": "subgraph-input",
+              "enabled": true,
+              "x": 100,
+              "y": 336,
+              "w": 300,
+              "h": 140,
+              "interfacePortId": "item"
+            },
+            "result": {
+              "id": "result",
+              "type": "subgraph-output",
+              "enabled": true,
+              "x": 3300,
+              "y": 240,
+              "w": 300,
+              "h": 140,
+              "interfacePortId": "result"
+            },
+            "wild": {
+              "id": "wild",
+              "type": "workflow",
+              "operation": "condition",
+              "operationVersion": 1,
+              "title": "Condition",
+              "enabled": true,
+              "x": 500,
+              "y": 384,
+              "w": 300,
+              "h": 140,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "alias": "Condition",
+              "path": [
+                "selection",
+                "kind"
+              ],
+              "operator": "equals",
+              "value": "generate"
+            },
+            "route": {
+              "id": "route",
+              "type": "workflow",
+              "operation": "branch",
+              "operationVersion": 1,
+              "title": "Branch",
+              "enabled": true,
+              "x": 900,
+              "y": 264,
+              "w": 300,
+              "h": 168,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "artifactKind": "data",
+              "alias": "Branch"
+            },
+            "author": {
+              "id": "author",
+              "type": "workflow",
+              "operation": "effect-author",
+              "operationVersion": 1,
+              "title": "Effect Author",
+              "enabled": true,
+              "x": 1300,
+              "y": 360,
+              "w": 300,
+              "h": 140,
+              "profileId": "lattice:active-sillytavern",
+              "model": null,
+              "modelRole": "effectAuthor",
+              "alias": "Effect Author",
+              "instructions": "Invent one distinct bounded effect absent from the frozen library. Return explicit spellOutcome, duration and consequence. No permanent death, new ownership or loss of player agency.",
+              "maxTokens": 2048
+            },
+            "novelty": {
+              "id": "novelty",
+              "type": "workflow",
+              "operation": "decision",
+              "operationVersion": 1,
+              "title": "Decision",
+              "enabled": true,
+              "x": 1700,
+              "y": 432,
+              "w": 300,
+              "h": 140,
+              "profileId": "lattice:active-sillytavern",
+              "model": null,
+              "modelRole": "decision",
+              "alias": "Decision",
+              "inputKind": "data",
+              "questions": {
+                "novel": {
+                  "type": "noul",
+                  "instructions": "Is this proposed effect substantively absent from all library effects and within the explicit mechanical policy? Null holds; exact IDs alone do not establish novelty."
+                }
+              },
+              "maxTokens": 2048
+            },
+            "acceptance": {
+              "id": "acceptance",
+              "type": "workflow",
+              "operation": "select-fields",
+              "operationVersion": 1,
+              "title": "Select Fields",
+              "enabled": true,
+              "x": 2100,
+              "y": 408,
+              "w": 300,
+              "h": 140,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "alias": "Select Fields",
+              "fields": [
+                {
+                  "name": "accepted",
+                  "path": [
+                    "answers",
+                    "novel",
+                    "accepted"
+                  ]
+                }
+              ]
+            },
+            "stage": {
+              "id": "stage",
+              "type": "workflow",
+              "operation": "stage-outcome",
+              "operationVersion": 1,
+              "title": "Stage Outcome",
+              "enabled": true,
+              "x": 2500,
+              "y": 336,
+              "w": 300,
+              "h": 140,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "alias": "Stage Outcome"
+            },
+            "join": {
+              "id": "join",
+              "type": "workflow",
+              "operation": "join",
+              "operationVersion": 1,
+              "title": "Join",
+              "enabled": true,
+              "x": 2900,
+              "y": 264,
+              "w": 300,
+              "h": 140,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "artifactKind": "data",
+              "alias": "Join",
+              "inputs": [
+                {
+                  "id": "fixed",
+                  "label": "Frozen fixed effect",
+                  "required": false
+                },
+                {
+                  "id": "wild",
+                  "label": "Accepted novel effect",
+                  "required": false
+                }
+              ],
+              "selection": "last"
+            }
+          },
+          "wires": {
+            "edge-1": {
+              "id": "edge-1",
+              "route": "wire",
+              "from": "item",
+              "fromPort": "out",
+              "to": "wild",
+              "toPort": "in"
+            },
+            "edge-2": {
+              "id": "edge-2",
+              "route": "wire",
+              "from": "item",
+              "fromPort": "out",
+              "to": "route",
+              "toPort": "in"
+            },
+            "edge-3": {
+              "id": "edge-3",
+              "route": "wire",
+              "from": "wild",
+              "fromPort": "out",
+              "to": "route",
+              "toPort": "condition"
+            },
+            "edge-4": {
+              "id": "edge-4",
+              "route": "wire",
+              "from": "route",
+              "fromPort": "yes",
+              "to": "author",
+              "toPort": "in"
+            },
+            "edge-5": {
+              "id": "edge-5",
+              "route": "wire",
+              "from": "author",
+              "fromPort": "out",
+              "to": "novelty",
+              "toPort": "in"
+            },
+            "edge-6": {
+              "id": "edge-6",
+              "route": "wire",
+              "from": "novelty",
+              "fromPort": "out",
+              "to": "acceptance",
+              "toPort": "in"
+            },
+            "edge-7": {
+              "id": "edge-7",
+              "route": "wire",
+              "from": "author",
+              "fromPort": "out",
+              "to": "stage",
+              "toPort": "in"
+            },
+            "edge-8": {
+              "id": "edge-8",
+              "route": "wire",
+              "from": "acceptance",
+              "fromPort": "out",
+              "to": "stage",
+              "toPort": "novelty"
+            },
+            "edge-9": {
+              "id": "edge-9",
+              "route": "wire",
+              "from": "route",
+              "fromPort": "no",
+              "to": "join",
+              "toPort": "fixed"
+            },
+            "edge-10": {
+              "id": "edge-10",
+              "route": "wire",
+              "from": "stage",
+              "fromPort": "out",
+              "to": "join",
+              "toPort": "wild"
+            },
+            "edge-11": {
+              "id": "edge-11",
+              "route": "wire",
+              "from": "join",
+              "fromPort": "out",
+              "to": "result",
+              "toPort": "in"
+            }
+          },
+          "groups": {},
+          "roles": {
+            "effectAuthor": {
+              "model": null,
+              "profileId": "lattice:active-sillytavern"
+            },
+            "decision": {
+              "model": null,
+              "profileId": "lattice:active-sillytavern"
+            }
+          },
+          "portals": {},
+          "definitions": {}
+        }
+      }
+    },
+    "template": {
+      "id": "lesson-27",
+      "version": 1
+    },
+    "view": {
+      "x": 0,
+      "y": 0,
+      "zoom": 0.65
+    }
+  }
+}
