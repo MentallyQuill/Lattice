@@ -95,7 +95,7 @@ export function renderReadableMarkdown(content, window, options) {
     const plain = text => {
         let end = 0;
         for (const character of text) {
-            const escaped = ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character;
+            const escaped = ({ '\u00a0': '&nbsp;', '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character;
             const bytes = size(escaped);
             if (bytes > maxHtmlBytes - htmlBytes) { truncated = true; exhausted = true; break; }
             htmlBytes += bytes; end += character.length;

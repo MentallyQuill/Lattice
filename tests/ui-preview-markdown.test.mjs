@@ -206,3 +206,29 @@ test('report diagnostics also consume the shared escaped display budget', async 
         assert.equal(/\p{Surrogate}/u.test(f.host.textContent), false);
     } finally { await f.close(); }
 });
+
+const nbspText = '&'.repeat(45000) + '\u00a0'.repeat(10000);
+const filterBase = { recordType: 'text-filter', schemaVersion: 1, status: 'blocked', action: 'remove', unit: 'line', retainedUnitCount: 1, originalBodyLength: nbspText.length, resultBodyLength: nbspText.length, units: [], diagnostics: [] };
+const patternBase = { recordType: 'pattern-matches', schemaVersion: 1, status: 'complete', matched: true, totalOccurrences: 1, matchedRuleCount: 1, rules: [], occurrences: [], diagnostics: [] };
+const nbspFixtures = [
+    ['projected JSON', async () => { const { projectRecordedPreview } = await import('../src/ui/recorded-preview.js'); return projectRecordedPreview({ kind: 'data', format: 'structured', value: { kind: 'data', value: nbspText } }).sections[0].readable; }],
+    ['unavailable text', () => ({ kind: 'unavailable', reason: nbspText })],
+    ['Filter unit', () => ({ kind: 'text-filter', report: { ...filterBase, units: [{ start: 0, end: nbspText.length, text: nbspText, blocked: false }] } })],
+    ['Filter diagnostic', () => ({ kind: 'text-filter', report: { ...filterBase, diagnostics: [{ code: 'blocked', message: nbspText }] } })],
+    ['Pattern rule', () => ({ kind: 'pattern-matches', report: { ...patternBase, rules: [{ id: 'rule', label: nbspText, pattern: '', count: 1 }] } })],
+    ['Pattern occurrence', () => ({ kind: 'pattern-matches', report: { ...patternBase, occurrences: [{ ruleId: 'rule', ruleIndex: 0, start: 0, end: nbspText.length, text: nbspText, protected: false, editable: true }] } })],
+    ['Pattern diagnostic', () => ({ kind: 'pattern-matches', report: { ...patternBase, diagnostics: [{ code: 'matched', message: nbspText }] } })],
+];
+for (const [name, create] of nbspFixtures) test(`bounds serialized NBSP expansion in mounted ${name}`, async () => {
+    const content = await create(), original = structuredClone(content);
+    const f = await fixture(content);
+    try {
+        assert.ok(bytes(f.host.innerHTML) <= 262144, `${name} mounted bytes: ${bytes(f.host.innerHTML)}`);
+        assert.match(f.host.textContent, /display limit/i);
+        const rendered = renderReadableMarkdown(content, window);
+        assert.equal(rendered.truncated, true);
+        assert.equal(rendered.omittedFormatting, false, 'plain display shortening is not a sanitizer omission');
+        assert.ok(rendered.htmlBytes <= 262144);
+        assert.deepEqual(content, original, 'retained source/copy DTO values remain exact');
+    } finally { await f.close(); }
+});
