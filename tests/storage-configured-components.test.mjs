@@ -101,3 +101,55 @@ test('saving an existing multi-segment path retains its typed segments', async (
  const f=await fixture('NodeDetails',{view:{selectionKey:'path',revision:'1',address:{workflowId:'paths',instancePath:[],nodeId:'collection'},title:'Collection',canonicalTitle:'Collection',iconPath:'',family:'Data',phase:'post',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:[control],model:null,ports:[]},actions:{editControl(_selection,_key,value){saved=value;return {ok:true};}}});
  try{button(f.host,'Save Identity path').click();await tick();flushSync();assert.deepEqual(saved,['actor','items']);}finally{await f.close();}
 });
+
+test('both shared forms preserve literal commas quotes newlines and brackets on unchanged and neighboring-entry Saves', async () => {
+ const {projectNodeControls}=await import('../src/ui/node-control-projection.js');
+ const {createConfiguredNodeSession}=await import('../src/ui/configured-node-creation.js');
+ const literals=['red, blue','say "hello"','line\nbreak','[chapter]'];
+ for(const creation of [false,true])for(const editNeighbor of [false,true]){
+  let saved,session,opened;
+  const control=projectNodeControls('pattern',{protectedLiterals:literals},{phase:'post'}).find(control=>control.key==='protectedLiterals');
+  let props,name;
+  if(creation){session=createConfiguredNodeSession({isCurrent:()=>true,prepare:(_capture,command)=>{saved=command.controls.protectedLiterals;return {ok:true,data:command};}});opened=session.open({}, {operation:'pattern',controls:{protectedLiterals:literals}},{phase:'post',targets:[],helpers:[]});props={view:opened.view,actions:{apply:(...args)=>session.apply(...args),cancel:key=>session.cancel(key)}};name='ConfigureNode';}
+  else {props={view:{selectionKey:'literals',revision:'1',address:{workflowId:'literal-list',instancePath:[],nodeId:'pattern'},title:'Pattern',canonicalTitle:'Pattern',iconPath:'',family:'Surface',phase:'post',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:[control],model:null,ports:[]},actions:{editControl(_selection,_key,value){saved=value;return {ok:true};}}};name='NodeDetails';}
+  const f=await fixture(name,props);
+  try{
+   if(!creation){f.host.querySelector('[data-control-group="Protections"] summary').click();await tick();flushSync();}
+   const text=f.host.querySelector('[aria-label="Protected literals"]').value;
+   if(editNeighbor)input(f.host,'Protected literals',text+',neighbor');
+   button(f.host,creation?'Create node':'Save Protected literals').click();await tick();flushSync();
+   assert.deepEqual(saved,editNeighbor?[...literals,'neighbor']:literals,(creation?'creation':'editing')+' round trip');
+  }finally{if(session){session.cancel(opened.view.key);await opened.result;}await f.close();}
+ }
+});
+
+test('target and exact helper pickers merge current Advanced JSON without replacing other edits', async () => {
+ for(const operation of ['read-file','for-each']){
+  const first={id:'first',version:1,semanticHash:'a'.repeat(64)},second={id:'second',version:2,semanticHash:'b'.repeat(64)};
+  const initial=operation==='read-file'?{targetId:'first.json',format:'json',schema:''}:{mode:'map',helper:first,roleOverrides:{},requestBoundPerIteration:1};
+  let submitted;
+  const f=await fixture('ConfigureNode',{view:{key:'advanced-'+operation,title:operation,operation,controls:JSON.stringify(initial),phase:'pre',phaseLocked:false,targets:[{targetId:'first.json',name:'First',format:'json'},{targetId:'second.json',name:'Second',format:'json'}],helpers:[{key:'first',label:'First',ref:first,stateful:false},{key:'second',label:'Second',ref:second,stateful:false}]},actions:{apply(_key,text){submitted=JSON.parse(text);return {ok:true};},cancel(){}}});
+  try{
+   button(f.host,'Advanced JSON').click();flushSync();
+   const edited=operation==='read-file'?{...initial,schema:'{"type":"object"}'}:{...initial,roleOverrides:{reader:{profileId:'custom'}},requestBoundPerIteration:3};
+   input(f.host,'Node controls JSON',JSON.stringify(edited));input(f.host,operation==='read-file'?'Workflow data document':'Pinned Data helper',operation==='read-file'?'second.json':'second','change');
+   button(f.host,'Create node').click();await tick();flushSync();
+   assert.deepEqual(submitted,operation==='read-file'?{...edited,targetId:'second.json'}:{...edited,helper:second});
+  }finally{await f.close();}
+ }
+});
+
+test('target and helper selection leave invalid Advanced JSON and current selections intact', async () => {
+ for(const operation of ['read-file','for-each']){
+  const first={id:'first',version:1,semanticHash:'a'.repeat(64)},second={id:'second',version:2,semanticHash:'b'.repeat(64)};
+  const controls=operation==='read-file'?{targetId:'first.json',format:'json',schema:''}:{mode:'map',helper:first,roleOverrides:{},requestBoundPerIteration:1};
+  let applies=0;
+  const f=await fixture('ConfigureNode',{view:{key:'invalid-'+operation,title:operation,operation,controls:JSON.stringify(controls),phase:'pre',phaseLocked:false,targets:[{targetId:'first.json',name:'First',format:'json'},{targetId:'second.json',name:'Second',format:'json'}],helpers:[{key:'first',label:'First',ref:first,stateful:false},{key:'second',label:'Second',ref:second,stateful:false}]},actions:{apply(){applies++;return {ok:true};},cancel(){}}});
+  try{
+   button(f.host,'Advanced JSON').click();flushSync();const invalid='{"unfinished":';input(f.host,'Node controls JSON',invalid);
+   const picker=operation==='read-file'?'Workflow data document':'Pinned Data helper';input(f.host,picker,operation==='read-file'?'second.json':'second','change');
+   assert.equal(f.host.querySelector('[aria-label="Node controls JSON"]').value,invalid);assert.equal(f.host.querySelector('[aria-label="'+picker+'"]').value,operation==='read-file'?'first.json':'first');assert.match(f.host.textContent,/JSON object/);assert.equal(applies,0);
+   button(f.host,'Use form').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Node controls JSON"]').value,invalid);
+  }finally{await f.close();}
+ }
+});

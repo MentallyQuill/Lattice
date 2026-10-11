@@ -21,7 +21,7 @@
         <select aria-label={control.label+' input format'} value={format} {disabled} onchange={event=>onformat?.(event.currentTarget.value as ControlInputFormat)}><option value="auto">Terms / CSV</option><option value="plain">Plain text</option><option value="json">Advanced JSON</option></select>
         <textarea id={idPrefix + '-editor'} aria-label={control.label} value={text} {disabled} aria-invalid={!!error} oninput={event=>{if(!disabled)ontext(event.currentTarget.value);}}></textarea>
         <small>Separate terms with commas or newlines. Quote phrases containing commas.</small>
-        {#if parsed?.ok}<small data-control-items>{parsed.data.displayItems?.length??0} entries{#if parsed.data.displayItems?.length}: {parsed.data.displayItems.join(' · ')}{/if}</small>{#each parsed.data.warnings as warning}<small>{warning}</small>{/each}{/if}
+        {#if parsed?.ok}<small data-control-items>{parsed.data.displayItems?.length??0} entries{#if parsed.data.displayItems?.length}: {parsed.data.displayItems.join(' Â· ')}{/if}</small>{#each parsed.data.warnings as warning}<small>{warning}</small>{/each}{/if}
     {:else if control.structured && control.editor === 'json'}
         <span class="pc-control-label">{control.label}</span>
         <StructuredControl {control} {text} {disabled} {ontext} {onDraft} {draftValue} {idPrefix} {error} />

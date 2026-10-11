@@ -425,7 +425,7 @@ export function prepareLibraryViews(workflowId, snapshots) {
     return {ok:true,data:{navigation,preparedViews,definitionInfo}};
 }
 
-const displayEffective = value => {const text = typeof value === 'string' ? value : JSON.stringify(value);return text?.length > 256 ? text.slice(0,256) + '…' : text;};
+const displayEffective = value => {const text = typeof value === 'string' ? value : JSON.stringify(value);return text?.length > 256 ? text.slice(0,256) + 'â€¦' : text;};
 function modifierView(node, metadata, editable) {
  const outputs = metadata.ports.filter(port => port.dir === 'out');
  if (node.type !== 'workflow' || metadata.hostResult || outputs.length !== 1 || outputs[0].kind !== 'text') return null;

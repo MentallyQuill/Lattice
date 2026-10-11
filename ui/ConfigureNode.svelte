@@ -1,7 +1,7 @@
 <script lang="ts">
  import DiagnosticMessage from './DiagnosticMessage.svelte';
  import DetailControlEditor from './DetailControl.svelte';
- import {projectNodeControls} from '../src/ui/node-control-projection.js';
+ import {projectNodeControls,controlInputPresentation} from '../src/ui/node-control-projection.js';
  import {parseControlInput} from '../src/ui/control-input-contracts.js';
  import {onMount,tick} from 'svelte';
  import type {ConfigureNodeView,ConfigureNodeActions} from './storage-setup-types';
@@ -14,15 +14,20 @@
  const fields=$derived(projectNodeControls(view.operation,data,{phase}));
  const usesDocument=$derived(view.operation==='read-file'||view.operation==='story-clock'||view.operation==='commit-outcomes');
  const contract=(control:DetailControl)=>JSON.stringify([control.inputSpec?.id,control.inputSpec?.version,control.editor,control.representation]);
- const textFor=(control:DetailControl)=>drafts[control.key]?.text ?? (control.editor==='json' ? control.representation==='json-text'?String(control.value??''):JSON.stringify(control.value,null,2) : control.editor==='lines'&&Array.isArray(control.value)?control.value.join('\n'):String(control.value??''));
+ const textFor=(control:DetailControl)=>drafts[control.key]?.text ?? controlInputPresentation(control,drafts[control.key]?.format).text;
+ const formatFor=(control:DetailControl)=>drafts[control.key]?.format??controlInputPresentation(control).format;
  $effect(()=>{if(view.key===capture)return;capture=view.key;generation++;controls=view.controls;advanced=false;drafts={};phase=view.phase;pending=false;failure='';try{data=JSON.parse(controls);target=String(data.targetId??data.clockId??'');helper=view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(data.helper))?.key??'';}catch{data={};target='';helper='';}const key=capture;void tick().then(()=>{if(view.key===key)dialog?.querySelector<HTMLElement>('select,textarea,input')?.focus({preventScroll:true});});});
  onMount(()=>{const anchor=document.activeElement as HTMLElement;return ()=>anchor?.focus({preventScroll:true});});
- function setControl(key:string,value:unknown){data={...data,[key]:value};failure='';const next=projectNodeControls(view.operation,data,{phase});drafts=Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>next.some(control=>control.key===key&&contract(control)===draft.contract)));if(advanced)controls=JSON.stringify($state.snapshot(data),null,2);}
+ function setControl(key:string,value:unknown){
+  let source=$state.snapshot(data);
+  if(advanced){try{const parsed=JSON.parse(controls);if(!parsed||Array.isArray(parsed)||typeof parsed!=='object')throw Error();source=parsed;}catch{failure='Use a JSON object before selecting a configured value.';target=String(data.targetId??data.clockId??'');helper=view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(data.helper))?.key??'';return;}}
+  data={...source,[key]:value};failure='';const next=projectNodeControls(view.operation,data,{phase});drafts=Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>next.some(control=>control.key===key&&contract(control)===draft.contract)));if(advanced)controls=JSON.stringify($state.snapshot(data),null,2);
+ }
  function draft(control:DetailControl,next:Partial<Draft>){drafts={...drafts,[control.key]:{...drafts[control.key],...next,contract:contract(control),error:''}};failure='';}
  function candidate():Record<string,unknown>|null {
   const result:Record<string,unknown>={...$state.snapshot(data)};
   for(const control of fields){const value=drafts[control.key];if(!value)continue;
-   const input=value.value!==undefined?{format:'rows' as const,value:$state.snapshot(value.value) as JsonValue}:{format:value.format??(control.structured?'json':'auto') as ControlInputFormat,text:value.text??textFor(control)};
+   const input=value.value!==undefined?{format:'rows' as const,value:$state.snapshot(value.value) as JsonValue}:{format:value.format??(control.structured?'json':formatFor(control)) as ControlInputFormat,text:value.text??textFor(control)};
    const parsed=parseControlInput(control.inputSpec!,{...input,currentValue:control.value as JsonValue});
    if(!parsed.ok){drafts={...drafts,[control.key]:{...value,error:parsed.error.message}};failure='Check the highlighted settings before creating the node.';return null;}
    result[control.key]=parsed.data.value;
@@ -43,7 +48,7 @@
   {#if advanced}<label>Declared node controls<textarea aria-label="Node controls JSON" rows="14" maxlength="200000" bind:value={controls} disabled={pending || !actions}></textarea></label>
   {:else}
    {#each fields.filter(control=>!(usesDocument && ['targetId','clockId'].includes(control.key)) && !(view.operation==='for-each' && control.key==='helper')) as control (control.key)}
-    <DetailControlEditor {control} text={textFor(control)} format={drafts[control.key]?.format??'auto'} error={drafts[control.key]?.error??''} disabled={pending || !actions} idPrefix={'pc-configure-'+control.key} saveButton={false} draftValue={drafts[control.key]?.value} onDraft={value=>draft(control,{value,text:undefined})} ontext={text=>draft(control,{text,value:undefined})} onformat={format=>draft(control,{format})} onvalue={value=>setControl(control.key,value)} onnumber={input=>{if(input.validity.valid&&Number.isFinite(input.valueAsNumber))setControl(control.key,input.valueAsNumber);}} onsave={()=>{}} />
+    <DetailControlEditor {control} text={textFor(control)} format={formatFor(control)} error={drafts[control.key]?.error??''} disabled={pending || !actions} idPrefix={'pc-configure-'+control.key} saveButton={false} draftValue={drafts[control.key]?.value} onDraft={value=>draft(control,{value,text:undefined})} ontext={text=>draft(control,{text,value:undefined})} onformat={format=>{const present=controlInputPresentation(control,format);draft(control,drafts[control.key]?.text===undefined?{format:present.format,text:present.text}:{format});}} onvalue={value=>setControl(control.key,value)} onnumber={input=>{if(input.validity.valid&&Number.isFinite(input.valueAsNumber))setControl(control.key,input.valueAsNumber);}} onsave={()=>{}} />
    {/each}
   {/if}
   {#if failure}<div><DiagnosticMessage issue={failure} /></div>{/if}

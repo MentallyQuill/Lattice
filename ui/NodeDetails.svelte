@@ -1,4 +1,5 @@
 <script lang="ts">
+    import {controlInputPresentation} from '../src/ui/node-control-projection.js';
     import {parseControlInput} from '../src/ui/control-input-contracts.js';
     import type {ControlInputFormat} from '../src/ui/control-input-contracts';
     import type {JsonValue} from '../src/workflow/operations/json-data';
@@ -77,10 +78,8 @@
     });
     const selection = (node: NodeDetailsView): DetailSelection => ({ ...(node.documentNamespace ? { documentNamespace: node.documentNamespace } : {}), selectionKey: node.selectionKey, revision: node.revision, address: 'kind' in node.address ? { ...node.address, definitionRef: { ...node.address.definitionRef } } : { ...node.address, instancePath: [...node.address.instancePath] } });
     const current = (captured: DetailSelection) => alive && !!view && view.selectionKey === captured.selectionKey && view.revision === captured.revision && selectionIdentity(view) === selectionIdentity(captured);
-    function textFor(control: DetailControl) {
-        if (control.editor === 'json') return control.representation === 'json-text' ? String(control.value ?? '') : JSON.stringify(control.value, null, 2);
-        return control.editor === 'lines' && Array.isArray(control.value) ? control.value.join('\n') : String(control.value ?? '');
-    }
+    const formatFor=(control:DetailControl)=>drafts[control.key]?.format??controlInputPresentation(control).format;
+    const textFor=(control:DetailControl)=>controlInputPresentation(control,drafts[control.key]?.format).text;
     function draftContract(node: NodeDetailsView, key: string) {
         if (node.editorContractKey) return node.editorContractKey + ':' + key;
         if(key.startsWith('["helper-binding",')){const tuple=JSON.parse(key);return node.helperBindings?.editable && node.helperBindings.roles.some(row=>row.role===tuple[1]) ? JSON.stringify(['helper-binding',node.helperBindings.helperKey,tuple[1],tuple[2]]) : null;}
@@ -145,7 +144,7 @@
         const typed = drafts[control.key]?.typedValue;
         let value: unknown = text;
         if (control.inputSpec) {
-            const input = typed === undefined ? {format:drafts[control.key]?.format ?? (control.structured ? 'json' : 'auto') as ControlInputFormat,text} : {format:'rows' as const,value:$state.snapshot(typed) as JsonValue};
+            const input = typed === undefined ? {format:drafts[control.key]?.format ?? (control.structured ? 'json' : formatFor(control)) as ControlInputFormat,text} : {format:'rows' as const,value:$state.snapshot(typed) as JsonValue};
             const parsed = parseControlInput(control.inputSpec,{...input,currentValue:control.value as JsonValue});
             if(!parsed.ok){drafts={...drafts,[control.key]:{...drafts[control.key],text,error:parsed.error.message,pending:false,editor:control.editor,representation:control.representation}};return;}
             value=parsed.data.value;
@@ -444,7 +443,7 @@
 </section>
 
 {#snippet controlEditor(control: DetailControl)}
-    <DetailControlEditor {control} format={drafts[control.key]?.format??'auto'} onformat={format=>{draft(control,drafts[control.key]?.text??textFor(control));drafts={...drafts,[control.key]:{...drafts[control.key],format}};}} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
+    <DetailControlEditor {control} format={formatFor(control)} onformat={format=>{const present=controlInputPresentation(control,format);const typed=drafts[control.key]?.text;draft(control,typed??present.text);drafts={...drafts,[control.key]:{...drafts[control.key],format:typed===undefined?present.format:format}};}} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
 {/snippet}
 
 <style>

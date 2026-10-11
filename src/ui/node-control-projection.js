@@ -1,7 +1,7 @@
 import { OPERATIONS, operationFor } from '../workflow/catalog.js?v=0.27.0';
 import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.27.0';
 import { recallControlLabel } from '../workflow/recall-labels.js?v=0.27.0';
-import { resolveControlInputSpec } from './control-input-contracts.js?v=0.27.0';
+import { resolveControlInputSpec, formatControlInput } from './control-input-contracts.js?v=0.27.0';
 /** Shared detached authoring fields; no graph, host, or execution authority. */
 export function projectNodeControls(operation, controls = {}, { phase, readOnly = false }) {
  const base = OPERATIONS[operation]; if (!base) return [];
@@ -41,4 +41,15 @@ function detailPresentation(operation, key) {
   : key === 'durations' ? 'Phases'
   : ['separator','maxTokens'].includes(key) ? 'Output' : 'Main';
  return {group, ...(group !== 'Main' ? {advanced:true} : {}), ...(structured ? {structured} : {}), ...(['actorId','curveId','trackId','idempotencyKey','promptId'].includes(key) ? {singleLine:true} : {})};
+}
+
+/** Present saved list values in a grammar that round trips their literal contents. */
+export function controlInputPresentation(control, format = 'auto') {
+ if (control.inputSpec?.editor === 'list' && (control.inputSpec.storage !== 'json-text' || format !== 'auto')) {
+  const result = formatControlInput(control.inputSpec, control.value, format);
+  if (result.ok) return {text:result.data,format};
+  const json = formatControlInput(control.inputSpec,control.value,'json');
+  if (json.ok) return {text:json.data,format:'json'};
+ }
+ return {format, text:control.editor === 'json' ? control.representation === 'json-text' ? String(control.value ?? '') : JSON.stringify(control.value,null,2) : control.editor === 'lines' && Array.isArray(control.value) ? control.value.join('\n') : String(control.value ?? '')};
 }
