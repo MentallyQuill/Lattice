@@ -4,13 +4,17 @@ import {readFile} from 'node:fs/promises';
 import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.27.0';
 import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v=0.27.0';
 import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.27.0';
+import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.27.0';
+import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.27.0';
+import {safe} from '../src/state.js?v=0.27.0';
 const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');
 function actual(name,env){const start=source.indexOf('function '+name+'('),end=source.indexOf('\n}',start)+2;assert.ok(start>=0);return Function('env','with(env){'+source.slice(start,end)+';return '+name+';}')(env);}
 function fixture(){
  const graph={id:'setup-controller',schema:3,runtime:2,mode:'native-unified',definitions:{},portals:{},nodes:{compose:{id:'compose',type:'workflow',operation:'compose',phase:'post',sections:[{name:'body',text:''}]}},wires:{}};
  const context={chatId:'story',chatMetadata:{},chat:[]};let user='default-user',camera=10,commits=0;const catalog=createChatDocumentCatalog({getContext:()=>context,getUserId:()=>user,saveMetadata:()=>true});catalog.define({targetId:'souls.json',name:'Souls',format:'json',content:'[]',visibility:{kind:'public'}});
- const capture={},env={current:graph,selected:{id:'compose'},graphViews:{readEditor:()=>({view:{identity:{kind:'root'}},prepared:{savedGraph:graph}})},editorDraw:{nativeCards:{compose:{phase:'post',ports:[{port:'section.body',dir:'in',kind:'text'}]}}},editorCurrent:token=>token===capture,workflowRuntime:{getStoryDocumentCatalog:()=>catalog},nodeDocumentCaptures:new Map(),nodeCreationScopes:new WeakMap(),pendingConfiguredNode:null,workbench:{update(value){if('configureNode'in value)env.view=value.configureNode;}},canvas:{toGraph:(x,y)=>({x:x+camera,y:y+camera})},createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices,
+ const capture={},env={current:graph,selected:{id:'compose'},graphViews:{readEditor:()=>({view:{identity:{kind:'root'}},prepared:{savedGraph:graph}})},editorDraw:{nativeCards:{compose:{phase:'post',ports:[{port:'section.body',dir:'in',kind:'text'}]}}},editorCurrent:token=>token===capture,workflowRuntime:{getStoryDocumentCatalog:()=>catalog},nodeDocumentCaptures:new Map(),nodeCreationScopes:new WeakMap(),pendingConfiguredNode:null,ctx:()=>context,safe,prepareNodeProfileOptions,readNodeProfileMetadata,activeModelMetadata,workbench:{update(value){if('configureNode'in value)env.view=value.configureNode;}},canvas:{toGraph:(x,y)=>({x:x+camera,y:y+camera})},createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices,
  prepareNativeCreation:(token,command)=>prepareNativeConnectionEdit(graph,command),prepareShelfNodeCreation:(token,command,at)=>prepareNativeConnectionEdit(graph,{...command,graphPoint:at??{x:0,y:0}}),commitCaptured(){commits++;return {ok:true,data:{changed:true}};}};
+ env.profiles=actual('profiles',env);
  const start=source.indexOf('const configuredNodeSession ='),end=source.indexOf('\n});',start)+4;assert.ok(start>=0);env.configuredNodeSession=Function('env','with(env){'+source.slice(start,end)+';return configuredNodeSession;}')(env);
  for(const name of ['requestNodeCreation','cancelConfiguredNode','commitNodeCreation'])env[name]=actual(name,env);
  return {graph,catalog,capture,env,user:value=>user=value,camera:value=>camera=value,commits:()=>commits};

@@ -219,9 +219,18 @@ test('nested definition bindings remain inherited until root-owned overrides are
     assert.deepEqual(root.definitions, savedDefinitions, 'root override resets preserve every pinned definition');
 });
 
-test('Pattern rules retain their distinct raw schema', () => {
+test('Pattern rules project their distinct friendly adapter and preserve canonical records', async () => {
     const root={id:'scan',schema:3,runtime:2,mode:'native-post',roles:{},nodes:{scan:{id:'scan',type:'workflow',operation:'pattern',rules:[{id:'phrase',pattern:'synthetic phrase',label:'Synthetic'}]}},wires:{},definitions:{}};
-    assert.equal(details(root,'scan').controls.find(control=>control.key==='rules').structured,undefined);
+    const control=details(root,'scan').controls.find(control=>control.key==='rules');
+    assert.equal(control.structured,'patterns');
+    assert.equal(control.editor,'json');
+    assert.equal(control.representation,'json-value');
+    assert.equal(control.inputSpec.id,'pattern.rules:whole-word');
+    assert.deepEqual(control.value,root.nodes.scan.rules);
+    const {readControlRows}=await import('../src/ui/control-input-adapters.js');
+    const rows=readControlRows(control.inputSpec,control.value);
+    assert.equal(rows.ok,true);
+    assert.deepEqual(rows.data.rows,[{id:'phrase',pattern:'synthetic phrase',label:'Synthetic'}]);
 });
 
 test('generated labels use readable sentence case while custom labels remain intact', () => {
