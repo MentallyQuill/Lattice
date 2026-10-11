@@ -28,7 +28,7 @@ const snapshot = JSON.stringify(library);
 const defaultSelection = selectSlopPolicies(library);
 assert.equal(defaultSelection.ok, true);
 assert.deepEqual(defaultSelection.data.value, { ...library, mode: 'inspect', scope: 'narration' });
-assert.equal(defaultSelection.data.value.entries.length, 271); // All policies, beyond Pattern Scan's 128 limit.
+assert.equal(defaultSelection.data.value.entries.length, 271); // The full registered policy library is retained.
 defaultSelection.data.value.entries[0].text = 'edited';
 defaultSelection.data.value.categories[0].label = 'edited';
 defaultSelection.data.value.source.title = 'edited';

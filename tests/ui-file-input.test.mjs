@@ -167,15 +167,15 @@ test('prepared File Input Details exposes the saved snapshot name and suppresses
     assert.equal(Object.hasOwn(panels.fileInput, 'content'), false);
 });
 
-test('prepared source controls honor hidden metadata and the selected prompt source condition', () => {
-    const descriptors = { source: { type: 'enum', values: ['pending-user', 'prompt-entry'], default: 'pending-user' }, promptId: { type: 'string', default: '', visibleWhen: { key: 'source', value: 'prompt-entry' }, help: 'Use a prompt identifier.' }, internal: { type: 'string', default: '', hidden: true } };
-    const pending = preparedPanels({ id: 'file', operation: 'prompt-source', source: 'pending-user', promptId: 'saved-prompt' }, descriptors);
-    assert.deepEqual(pending.controls.map(control => control.key), ['source']);
+test('prepared source controls use canonical defaults and the selected prompt source condition', () => {
+    const descriptors = { source: { type: 'enum', values: ['system', 'prompt-entry'], default: 'system' }, promptId: { type: 'string', default: '', visibleWhen: { key: 'source', value: 'prompt-entry' }, help: 'Use a prompt identifier.' }, internal: { type: 'string', default: '', hidden: true } };
+    const pending = preparedPanels({ id: 'file', operation: 'prompt-source', source: 'system', promptId: 'saved-prompt' }, descriptors);
+    assert.deepEqual(pending.controls.map(control => control.key), ['source', 'form']);
     const entry = preparedPanels({ id: 'file', operation: 'prompt-source', source: 'prompt-entry', promptId: 'saved-prompt' }, descriptors);
-    assert.deepEqual(entry.controls.map(control => control.key), ['source', 'promptId']);
+    assert.deepEqual(entry.controls.map(control => control.key), ['source', 'promptId', 'form']);
     assert.equal(entry.controls[1].value, 'saved-prompt');
-    assert.equal(entry.controls[1].help, 'Use a prompt identifier.');
+    assert.match(entry.controls.find(control => control.key === 'form').help, /Raw keeps the template/); assert.equal(entry.controls.find(control => control.key === 'form').value, 'raw');
     assert.equal(entry.fileInput, undefined);
     const fallback = preparedPanels({ id: 'file', operation: 'prompt-source' }, descriptors, { source: 'prompt-entry' });
-    assert.deepEqual(fallback.controls.map(control => control.key), ['source', 'promptId']);
+    assert.deepEqual(fallback.controls.map(control => control.key), ['source', 'form']); assert.equal(fallback.controls[0].value, 'system', 'injected draw defaults cannot change the canonical source');
 });

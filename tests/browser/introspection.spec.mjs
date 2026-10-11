@@ -9,8 +9,18 @@ async function launch(page, phase = 'pre') {
     }, phase);
 }
 async function choose(page, operation) {
+    const before = await page.evaluate(() => structuredClone(window.canvasHarness.graph.nodes));
     await page.locator('[data-family="Introspection"]').click();
     await page.locator(`[data-shelf-choice="operation:${operation}"]`).click();
+    if (['context', 'state'].includes(operation)) {
+        const dialog = page.getByRole('dialog', { name: 'Configure node', exact: true });
+        await expect(dialog).toBeVisible();
+        expect(await page.evaluate(() => window.canvasHarness.graph.nodes)).toEqual(before);
+        await dialog.getByLabel('Node stage', { exact: true }).selectOption(await page.evaluate(() => window.introspectionStage));
+        await dialog.getByRole('button', { name: 'Create node', exact: true }).click();
+        await expect(dialog).toBeHidden();
+    }
+    await expect.poll(() => page.evaluate(operation => Object.values(window.canvasHarness.graph.nodes).filter(node => node.operation === operation).length, operation)).toBe(1);
     const id = await page.evaluate(operation => Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === operation).id, operation);
     await select(page, id);
     await page.getByLabel('Workflow stage',{exact:true}).selectOption(await page.evaluate(()=>window.introspectionStage));

@@ -269,7 +269,7 @@ test('preview divider redistributes panes without changing the graph camera, sel
     }, ids[0]);
     await page.locator('.pc-output-preview [data-run-here]').click();
     await expect(page.locator('.pc-run-meter-label')).toHaveText('Completed');
-    await expect(page.locator('.pc-output-preview [role="tabpanel"] pre')).toContainText('Synthetic rendering fixture.');
+    await expect(page.locator('.pc-output-preview [role="tabpanel"] .pc-readable-prose')).toContainText('Synthetic rendering fixture.');
     await page.evaluate(id => {
         const { canvas } = window.canvasHarness;
         window.workspaceProbe = { card: document.querySelector(`.pc-node[data-id="${id}"]`), camera: { ...canvas.view }, selection: canvas.selection.id, preview: document.querySelector('.pc-output-preview'), previewText: document.querySelector('.pc-output-preview').textContent };

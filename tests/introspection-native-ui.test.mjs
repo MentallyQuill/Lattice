@@ -97,7 +97,7 @@ test('actual State Details edit fractional numbers and JSON maps with complete-c
         input(decay, '0.35', 'change'); await settle(); assert.equal(root.nodes.work.decay, 0.35);
         const durations = rawEditor(f, 'Phase durations'); assert.equal(durations.tagName, 'TEXTAREA'); assert.deepEqual(JSON.parse(durations.value), { onset: 1, peak: 1, plateau: 1, decline: 1, aftermath: 1 });
         input(durations, '{broken'); f.host.querySelector('[data-save-control="durations"]').click(); flushSync(); assert.match(f.host.textContent, /valid JSON/); assert.equal(edits.length, 1);
-        input(durations, '{"onset":0}'); f.host.querySelector('[data-save-control="durations"]').click(); await settle(); assert.match(f.host.textContent, /INVALID_SETTINGS/); assert.equal(durations.value, '{"onset":0}'); assert.equal(root.nodes.work.durations, undefined);
+        input(durations, '{"onset":0}'); f.host.querySelector('[data-save-control="durations"]').click(); await settle(); const rejected = prepareNodeControlChange(root, { nodeId: 'work', controls: { durations: JSON.parse(durations.value) } }); assert.equal(rejected.ok, false); assert.equal(rejected.error.code, 'INVALID_SETTINGS'); assert.equal(edits.length, 1, 'invalid durations stop before another edit callback'); assert.match(f.host.querySelector('[data-diagnostic]').textContent, /Action could not be completed/); assert.equal(durations.value, '{"onset":0}'); assert.equal(root.nodes.work.durations, undefined);
         input(durations, '{"onset":2,"peak":3}'); f.host.querySelector('[data-save-control="durations"]').click(); await settle(); assert.deepEqual(root.nodes.work.durations, { onset: 2, peak: 3 });
         chooseMode(f, 'value'); await settle();
         assert.equal(root.nodes.work.mode, 'value'); assert.equal(rawEditor(f, 'Phase durations'), null);
@@ -151,8 +151,13 @@ test('actual recorded Introspection output displays the record payload in the se
     const panel = projectWorkspacePanels(session.readEditor(), workflow, { busy: false, availability: 'current' }, 'preview1', target, null).outputPreview;
     const f = await fixture(panel, {}, 'OutputPreview');
     try {
-        const record = JSON.parse(f.host.querySelector('[data-artifact-kind="data"] pre').textContent);
+        const readable = JSON.parse(f.host.querySelector('[data-artifact-kind="data"] pre').textContent);
+        assert.equal(readable.recordType, 'state-proposal'); assert.deepEqual(readable.payload.values, { confidence: 0.6 });
+        f.host.querySelector('[aria-label="Source preview"]').click(); flushSync();
+        assert.equal(f.host.querySelector('[data-preview-source]').textContent, panel.source.text);
+        const record = JSON.parse(f.host.querySelector('[data-preview-source]').textContent);
         assert.equal(record.kind, 'data'); assert.equal(record.value.recordType, 'state-proposal'); assert.deepEqual(record.value.payload.values, { confidence: 0.6 });
+        assert.equal(reads, 1); assert.equal(requests, 0, 'presentation does not read memory or request a provider');
     } finally { await f.close(); }
 });
 

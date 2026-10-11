@@ -35,7 +35,7 @@ test('missing binding and previews perform no requests; retired documents cannot
 });
 test('reviewed repair records a candidate while preserving the immutable input snapshot', async () => {
     const graph = starterGraph('reviewed-de-slop'), source = { originalText: 'We delve.', token: 'immutable-token' }, before = structuredClone(source);
-    const result = await runWorkflow(graph, { ...ports, snapshot: () => ({ kind: 'draft', text: source.originalText, source }), request: async () => ({ ok: true, data: { text: '{"patches":[{"index":0,"replacement":"explore"}]}', finish: 'stop' } }) });
+    const result = await runWorkflow(graph, { ...ports, snapshot: () => ({ kind: 'draft', text: source.originalText, source }), request: async () => ({ ok: true, data: { text: 'We explore.', finish: 'stop' } }) });
     assert.equal(result.ok, true); assert.equal(terminal(result).text, 'We explore.'); assert.equal(terminal(result).kind, 'candidate');
     assert.equal(result.actualCalls, 1); assert.deepEqual(source, before);
 });

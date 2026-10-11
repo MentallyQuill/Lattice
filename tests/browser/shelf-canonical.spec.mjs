@@ -10,8 +10,18 @@ async function launch(page, phase) {
 }
 
 async function choose(page, family, operation, phase) {
+    const before = await page.evaluate(() => structuredClone(window.canvasHarness.graph.nodes));
     await page.locator(`[data-family="${family}"]`).click();
     await page.locator(`[data-shelf-choice="operation:${operation}"]`).click();
+    if (operation === 'json-decode') {
+        const dialog = page.getByRole('dialog', { name: 'Configure node', exact: true });
+        await expect(dialog).toBeVisible();
+        expect(await page.evaluate(() => window.canvasHarness.graph.nodes)).toEqual(before);
+        await dialog.getByLabel('Node stage', { exact: true }).selectOption(phase);
+        await dialog.getByRole('button', { name: 'Create node', exact: true }).click();
+        await expect(dialog).toBeHidden();
+    }
+    await expect.poll(() => page.evaluate(operation => Object.values(window.canvasHarness.graph.nodes).filter(node => node.operation === operation).length, operation)).toBe(1);
     const id = await page.evaluate(operation => Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === operation).id, operation);
     await page.evaluate(async id => {
         const h = window.canvasHarness, node = h.graph.nodes[id];

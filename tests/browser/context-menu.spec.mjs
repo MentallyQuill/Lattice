@@ -160,7 +160,7 @@ test('Pin preview follows the clicked Compose output and Run to here executes on
             { workflowId: 'browser-fixture', instancePath: [], nodeId: 'n0' },
             { workflowId: 'browser-fixture', instancePath: [], nodeId: 'n1' },
         ], providerCalls: 0 });
-    await expect(page.locator('.pc-output-preview [role="tabpanel"] pre')).toContainText('Synthetic rendering fixture.');
+    await expect(page.locator('.pc-output-preview [role="tabpanel"] .pc-readable-prose')).toContainText('Synthetic rendering fixture.');
     expect(await snapshot(page)).toEqual(before);
 });
 
@@ -192,8 +192,8 @@ test('multi-output Run to here directly runs the pinned output and advertises R'
     expect(result.target).toEqual(wanted);
     expect(result.resolvedTarget).toEqual({ workflowId: 'two-output-root', instancePath: ['wrapper'], nodeId: 'beta', portId: 'out' });
     expect(result.included).toEqual([{ workflowId: 'two-output-root', instancePath: ['wrapper'], nodeId: 'beta' }]);
-    await expect(page.locator('.pc-output-preview [role="tabpanel"] pre')).toContainText('Beta');
-    await expect(page.locator('.pc-output-preview [role="tabpanel"] pre')).not.toContainText('Alpha');
+    await expect(page.locator('.pc-output-preview [role="tabpanel"] .pc-readable-prose')).toContainText('Beta');
+    await expect(page.locator('.pc-output-preview [role="tabpanel"] .pc-readable-prose')).not.toContainText('Alpha');
     expect(await snapshot(page)).toEqual(before);
     expect(await page.evaluate(() => window.canvasHarness.H.peek(window.canvasHarness.graph))).toEqual(history);
 });
@@ -236,8 +236,8 @@ test('multi-output Run to here directly uses the primary output when no output i
     expect(result.target).toEqual({ workflowId: 'two-output-root', instancePath: [], nodeId: 'wrapper', portId: 'first' });
     expect(result.resolvedTarget).toEqual({ workflowId: 'two-output-root', instancePath: ['wrapper'], nodeId: 'alpha', portId: 'out' });
     expect(result.included).toEqual([{ workflowId: 'two-output-root', instancePath: ['wrapper'], nodeId: 'alpha' }]);
-    await expect(page.locator('.pc-output-preview [role="tabpanel"] pre')).toContainText('Alpha');
-    await expect(page.locator('.pc-output-preview [role="tabpanel"] pre')).not.toContainText('Beta');
+    await expect(page.locator('.pc-output-preview [role="tabpanel"] .pc-readable-prose')).toContainText('Alpha');
+    await expect(page.locator('.pc-output-preview [role="tabpanel"] .pc-readable-prose')).not.toContainText('Beta');
 });
 
 test('host keyboard styling cannot add shortcut badges or expand the context-menu rows', async ({ page }) => {
