@@ -85,3 +85,13 @@ test('over-budget input leaves the last bounded draft and never confirms the sta
         assert.equal(f.button('Confirm import').disabled,true);await f.click('Confirm import');assert.equal(f.values.length,0);
     } finally {await f.close();}
 });
+
+
+test('invalid base blocks import admission but only parent disabled state blocks Cancel',async()=>{
+ let cancelled=0;const f=await fixture({disabled:true,admissionDisabled:true,onCancel:()=>cancelled++});try{
+  assert.equal(f.button('Cancel import').disabled,true);await f.click('Cancel import');assert.equal(cancelled,0);
+  await f.update({disabled:false});assert.equal(f.byLabel('Table data').disabled,true);assert.equal(f.button('Review import').disabled,true);assert.equal(f.button('Confirm import').disabled,true);
+  assert.equal(f.button('Cancel import').disabled,false);await f.click('Cancel import');assert.equal(cancelled,1);assert.equal(f.values.length,0);
+  await f.update({disabled:true,admissionDisabled:false});assert.equal(f.button('Cancel import').disabled,true);await f.click('Cancel import');assert.equal(cancelled,1);
+ }finally{await f.close();}
+});

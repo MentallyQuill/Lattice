@@ -83,7 +83,7 @@
 <div class:pc-control-number={control.editor === 'number'} class="pc-detail-control">
     {#if tableSupported && !tableState.open}<button type="button" aria-label={'Import '+control.label+' table'} disabled={disabled||pending||!tableValue?.ok} onclick={()=>{if(tableValue?.ok)tableStateChange({...tableState,open:true});}}>Import {control.label} table</button>{/if}
     {#if tableSupported && tableState.open && control.inputSpec}
-        {#key importIdentity}<ControlImport spec={control.inputSpec} value={tableValue?.ok?tableValue.data.value:[]} draft={tableState.draft} onDraft={tableDraft} onConfirm={confirmTable} onCancel={()=>tableStateChange({...tableState,open:false})} disabled={disabled||pending||!tableValue?.ok}/>{/key}
+        {#key importIdentity}<ControlImport spec={control.inputSpec} value={tableValue?.ok?tableValue.data.value:[]} draft={tableState.draft} onDraft={tableDraft} onConfirm={confirmTable} onCancel={()=>tableStateChange({...tableState,open:false})} disabled={disabled||pending} admissionDisabled={!tableValue?.ok}/>{/key}
         {#if !tableValue?.ok}<small role="alert">Repair the current {control.label} entry before importing.</small>{/if}
     {:else if entry || recordEntry && termMode}
         {#if recordEntry}<button type="button" aria-label={'Use '+control.label+' rows'} {disabled} onclick={switchRows}>Use rows</button>{/if}
