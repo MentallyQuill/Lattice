@@ -1,4 +1,4 @@
-import { applyTextModifiers } from './modifiers.js?v=0.27.0';
+import { recognizeRecordedText } from './retained-text.js?v=0.27.0';
 import { createRunState, reduceRunState } from './run-state.js?v=0.27.0';
 import { addressKey, nodeAddress, own, plain, dense, parseRunPlan, freeze, encode, bytes, textBytes, boundedText, safeSource, safeBinding, safeError, safePortState, safeUsage, errorResult, successResult, TOTAL_RECORD_BYTES, ARTIFACT_RECORD_BYTES, RENDERED_TEXT_BYTES } from './record-data.js?v=0.27.0';
 
@@ -281,22 +281,11 @@ export function formatRecordedArtifact(raw) {
  */
 export function formatRecordedTextModifiers(raw) {
     try {
-        if(own(raw,'format')!=='structured' || own(raw,'kind')!=='text')return freeze([]);
-        const value=own(raw,'value'),text=own(value,'text');
-        if(own(value,'kind')!=='text' || typeof text!=='string' || text.length>100000)return freeze([]);
-        const metadata=own(value,'modifiers'),rawText=metadata===undefined?text:own(metadata,'rawText');
-        const supplied=metadata===undefined?[]:own(metadata,'trace');
-        if(!dense(supplied,16))return freeze([]);
-        const entries=Array.from({length:supplied.length},(_,index)=>{
-            const entry=own(supplied,String(index));
-            return {id:own(entry,'id'),type:own(entry,'type'),version:own(entry,'version'),enabled:true,settings:own(entry,'settings')};
-        });
-        const checked=applyTextModifiers(rawText,entries);
-        if(!checked.ok || checked.data.text!==text)return freeze([]);
-        const trace=checked.data.trace;
+        const retained = recognizeRecordedText(raw); if (!retained) return freeze([]);
+        const { text, rawText, trace, hasModifiers } = retained;
         const section=(label,kind,content)=>{const bounded=boundedText(content,RENDERED_TEXT_BYTES-2);return {label,kind,format:'structured-text',text:bounded,truncated:bounded!==content};};
         const sections=[{...section('Output','text',text),recordedRawText:rawText,recordedModifierTrace:trace}];
-        if(metadata!==undefined)sections.push(section('Raw output','text',rawText),section('Modifier trace','diagnostic',encode(trace)));
+        if(hasModifiers)sections.push(section('Raw output','text',rawText),section('Modifier trace','diagnostic',encode(trace)));
         return freeze(sections);
     } catch {return freeze([]);}
 }

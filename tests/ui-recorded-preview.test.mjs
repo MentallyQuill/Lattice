@@ -4,12 +4,40 @@ import { projectRecordedPreview } from '../src/ui/recorded-preview.js';
 import { applyTextModifiers } from '../src/workflow/modifiers.js';
 import { freeze } from '../src/workflow/record-data.js';
 import { createRunRecorder } from '../src/workflow/recording.js';
+import { snapshotContext } from '../src/workflow/host.js';
 
 const recorded = (value, kind = value.kind) => ({ id: 0, origin: { address: 0, direction: 'output', port: 0 }, kind, format: 'structured', value });
 
 test('retained draft preserves exact prose rather than its diagnostic envelope', () => {
     const result = projectRecordedPreview(recorded({ kind: 'draft', text: '**Reply**\n\n  exact whitespace\n' }));
     assert.deepEqual(result.sections[0].readable, { kind: 'text', text: '**Reply**\n\n  exact whitespace\n', truncated: false });
+});
+
+test('nonempty Candidate projects its own exact prose rather than draft or review prose', () => {
+    const result = projectRecordedPreview(recorded({ kind: 'candidate', text: '# Candidate\n\n  Own exact reply\n', draft: { kind: 'draft', text: 'Earlier draft prose' }, review: { text: 'Review summary prose' }, changes: [{ replacement: 'Proposed replacement prose' }] }));
+    assert.deepEqual(result.sections[0].readable, { kind: 'text', text: '# Candidate\n\n  Own exact reply\n', truncated: false });
+    const source = JSON.parse(result.source.text);
+    assert.equal(source.draft.text, 'Earlier draft prose');
+    assert.equal(source.review.text, 'Review summary prose');
+    assert.equal(source.changes[0].replacement, 'Proposed replacement prose');
+});
+
+test('complete native recording retains snapshot notices for recent limit plus 1000 individual omissions', () => {
+    const chat = Array.from({ length: 1001 }, () => ({ mes: 'Unsupported synthetic message', is_tool: true }));
+    const context = snapshotContext({ chat, chatId: 'synthetic' }, { node: { recentMessages: 1000, includeCharacter: false } });
+    assert.equal(context.report.omissions.length, 1001);
+    const address = { workflowId: 'synthetic-omissions', instancePath: [], nodeId: 'context' };
+    const recorder = createRunRecorder({ runId: 'synthetic-omissions' });
+    const plan = { workflowId: address.workflowId, phase: 'post', mode: 'root', units: [{ address, operation: 'context', included: true, dependencies: [], requestBound: 0, inputPorts: [], outputPorts: ['out'] }], hierarchy: [], terminals: [], callBound: 0 };
+    assert.equal(recorder.accept({ runId: 'synthetic-omissions', seq: 1, type: 'plan', at: 1, elapsedMs: 1, plan }).ok, true);
+    assert.equal(recorder.capture({ address, direction: 'output', portId: 'out', artifact: context }).ok, true);
+    const artifact = recorder.finish().artifacts[0];
+    assert.equal(artifact.format, 'structured');
+    assert.equal(artifact.value.report.omissions.length, 1001);
+    const projected = projectRecordedPreview(artifact).sections[0];
+    assert.equal(projected.readable.snapshotOmittedMessages, 1001);
+    assert.equal(projected.readable.omittedMessages, 0);
+    assert.deepEqual(projected.notices, ['Snapshot omitted 1001 messages.']);
 });
 
 test('default content labels debit the same aggregate budget as large JSON', () => {

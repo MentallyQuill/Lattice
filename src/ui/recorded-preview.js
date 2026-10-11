@@ -1,5 +1,5 @@
 import { own, dense, plain, freeze } from '../workflow/record-data.js?v=0.27.0';
-import { applyTextModifiers } from '../workflow/modifiers.js?v=0.27.0';
+import { recognizeRecordedText } from '../workflow/retained-text.js?v=0.27.0';
 
 const TEXT_BUDGET = 65536;
 const projections = new WeakMap();
@@ -99,7 +99,8 @@ function contextSection(context, collapsed = false) {
     }
     let snapshotOmittedMessages = 0;
     const omissions = own(own(context, 'report'), 'omissions');
-    if (dense(omissions, 1000)) for (let i = 0; i < omissions.length; i++) {
+    // Omission entries share the recorder's 20,000-entry bound, not the retained message limit.
+    if (dense(omissions, 20000)) for (let i = 0; i < omissions.length; i++) {
         const count = own(own(omissions, String(i)), 'omittedMessages');
         if (Number.isSafeInteger(count) && count > 0) snapshotOmittedMessages = Math.min(Number.MAX_SAFE_INTEGER, snapshotOmittedMessages + count);
         else if (typeof own(own(omissions, String(i)), 'id') === 'string') snapshotOmittedMessages++;
@@ -109,21 +110,13 @@ function contextSection(context, collapsed = false) {
         readable: { kind: 'messages', messages, omittedMessages: 0, snapshotOmittedMessages, truncated: false } };
 }
 
-function modifierSections(value) {
-    const text = own(value, 'text'), metadata = own(value, 'modifiers');
-    const rawText = metadata === undefined ? text : own(metadata, 'rawText');
-    const supplied = metadata === undefined ? [] : own(metadata, 'trace');
-    if (typeof text !== 'string' || text.length > 100000 || !dense(supplied, 16)) return null;
-    const entries = Array.from({ length: supplied.length }, (_, i) => {
-        const entry = own(supplied, String(i));
-        return { id: own(entry, 'id'), type: own(entry, 'type'), version: own(entry, 'version'), enabled: true, settings: own(entry, 'settings') };
-    });
-    const checked = applyTextModifiers(rawText, entries);
-    if (!checked.ok || checked.data.text !== text) return null;
-    const sections = [{ kind: 'text', label: 'Output', readable: { kind: 'text', text, truncated: false }, recordedRawText: rawText, recordedModifierTrace: checked.data.trace }];
-    if (metadata !== undefined) sections.push(
+function modifierSections(artifact) {
+    const retained = recognizeRecordedText(artifact); if (!retained) return null;
+    const { text, rawText, trace, hasModifiers } = retained;
+    const sections = [{ kind: 'text', label: 'Output', readable: { kind: 'text', text, truncated: false }, recordedRawText: rawText, recordedModifierTrace: trace }];
+    if (hasModifiers) sections.push(
         { kind: 'text', label: 'Raw output', readable: { kind: 'text', text: rawText, truncated: false } },
-        { kind: 'diagnostic', label: 'Modifier trace', readable: { kind: 'json', ...diagnosticJSON(checked.data.trace) } });
+        { kind: 'diagnostic', label: 'Modifier trace', readable: { kind: 'json', ...diagnosticJSON(trace) } });
     return sections;
 }
 
@@ -147,7 +140,7 @@ function project(artifact) {
         : { kind: 'json', ...(kind === 'data' && own(value, 'kind') === kind ? diagnosticJSON(own(value, 'value')) : sourceText) };
     const sections = [{ kind, readable }];
     if (kind === 'text' && readable.kind === 'text') {
-        const modified = modifierSections(value); if (modified) sections.splice(0, 1, ...modified);
+        const modified = modifierSections(artifact); if (modified) sections.splice(0, 1, ...modified);
     }
     const draft = own(value, 'draft'), patches = own(value, 'patches');
     const wrapper = kind === 'patches' && plain(value) && own(value, 'kind') === kind && plain(draft) && own(draft, 'kind') === 'draft' && typeof own(draft, 'text') === 'string' && dense(patches, 256)
