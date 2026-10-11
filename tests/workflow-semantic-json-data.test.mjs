@@ -6,7 +6,7 @@ import {cloneDefinitionData,computeDefinitionIdentity,definitionRefKey} from '..
 import {captureGraphEditContext,commitPreparedGraph} from '../src/workflow/transactions.js';
 import * as H from '../src/history.js?v=0.27.0';
 import {prepareNodeControlChange} from '../src/workflow/ports.js';
-import {prepareNativeNodeEdit,prepareQualifiedScopeEdit,makeLocalCopy} from '../src/workflow/definition-library.js';
+import {prepareNativeNodeEdit,prepareQualifiedScopeEdit,prepareLocalDefinitionEdit,makeLocalCopy} from '../src/workflow/definition-library.js';
 import {prepareImportedDefinitionPins} from '../src/workflow/definition-insertion.js';
 import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js';
 import {exportSubgraph,parseSubgraph} from '../src/workflow/packages.js';
@@ -74,4 +74,43 @@ test('I1 own-key native Save remains a single captured reversible transaction',(
  const capture=captureGraphEditContext(graph,()=>({sessionId:'semantic-save',viewPath:[],readOnly:false}));assert.equal(capture.ok,true,JSON.stringify(capture));
  const prepared=prepareNativeNodeEdit(graph,{kind:'controls',viewPath:[],nodeId:'check',controls:{value:value()}});assert.equal(prepared.ok,true,JSON.stringify(prepared));assert.deepEqual(graph,before);
  const committed=commitPreparedGraph(graph,{...prepared.data,context:capture.data});assert.equal(committed.ok,true,JSON.stringify(committed));assert.deepEqual(graph.nodes.check.value,value());assert.ok(H.undo(graph));assert.deepEqual(graph,before);assert.equal(H.undo(graph),null);assert.ok(H.redo(graph));assert.deepEqual(graph.nodes.check.value,value());assert.equal(H.redo(graph),null);
+});
+
+
+test('qualified graph admission preserves root recording while detaching literal typed values',()=>{
+ const graph={...root(),nodes:{check:{id:'check',type:'workflow',operation:'condition',value:null}},recording:{id:'current-recording'},authority:{activeRun:'current'}},before=structuredClone(graph);
+ const command={kind:'controls',viewPath:[],nodeId:'check',controls:{value:value()}};
+ const native=prepareNativeNodeEdit(graph,command);
+ assert.equal(native.ok,true,JSON.stringify(native));
+ const qualified=prepareQualifiedScopeEdit(graph,command,(context,checked)=>{context.scope.nodes.check.value=structuredClone(checked.controls.value);return {ok:true};});
+ assert.equal(qualified.ok,true,JSON.stringify(qualified));
+ for(const prepared of [native,qualified]){
+  assert.deepEqual(prepared.data.candidate.recording,graph.recording);assert.deepEqual(prepared.data.candidate.authority,graph.authority);
+  assert.deepEqual(prepared.data.candidate.nodes.check.value,value());assert.notEqual(prepared.data.candidate.recording,graph.recording);
+  assert.notEqual(prepared.data.candidate.nodes.check.value,command.controls.value);assert.equal(Object.hasOwn(prepared.data.candidate,'localDefinitionOwners'),false);
+ }
+ assert.deepEqual(graph,before);
+ const instance=withInstance(conditionDefinition());instance.recording=graph.recording;instance.authority=graph.authority;
+ const copied=makeLocalCopy(instance,{instancePath:['instance'],id:'recording-owned-semantic'});assert.equal(copied.ok,true,JSON.stringify(copied));
+ const owned=copied.data.candidate,expectedRef=owned.nodes.instance.definition,draft=structuredClone(owned.definitions[definitionRefKey(expectedRef)]);
+ draft.body.nodes.check.value=JSON.parse('{"constructor":{"prototype":false},"a.b":[null,false,0]}');
+ const revised=prepareLocalDefinitionEdit(owned,{instancePath:['instance'],expectedRef,draft});assert.equal(revised.ok,true,JSON.stringify(revised));
+ assert.deepEqual(revised.data.candidate.recording,graph.recording);assert.deepEqual(revised.data.candidate.authority,graph.authority);
+ assert.deepEqual(revised.data.candidate.definitions[definitionRefKey(revised.data.candidate.nodes.instance.definition)].body.nodes.check.value,draft.body.nodes.check.value);
+ assert.deepEqual(instance.definitions[definitionRefKey(instance.nodes.instance.definition)].body.nodes.check.value,value());
+});
+
+test('root recording admission does not admit recording metadata in captured or pinned definitions',()=>{
+ const definition=conditionDefinition();
+ for(const location of ['metadata','body','payload']){
+  const draft=structuredClone(definition);
+  if(location==='metadata')draft.recording={id:'private'};
+  else if(location==='body')draft.body.recording={id:'private'};
+  else draft.body.nodes.check.value.recording={id:'private'};
+  assert.equal(cloneDefinitionData(draft).ok,false);
+  assert.equal(computeDefinitionIdentity(draft).ok,false);
+  assert.equal(validateGraphStructure(withInstance(draft)).ok,false);
+ }
+ const graph={...root(),recording:{id:'allowed-root'},nodes:{check:{id:'check',type:'workflow',operation:'condition',value:null}}};
+ assert.equal(prepareNativeNodeEdit(graph,{kind:'controls',viewPath:[],nodeId:'check',controls:{recording:{id:'forbidden-command'}}}).ok,false);
 });

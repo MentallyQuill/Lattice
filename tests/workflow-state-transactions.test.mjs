@@ -109,8 +109,12 @@ test('ownership-only root documents round-trip field presence without invalidati
     assert.equal(S.stepGraphHistory(root, 'redo', hooks).data.changed, false); assert.equal(saves, 3); assert.equal(cancelled, 0);
     assert.equal(root.authority, authority); assert.equal(root.recording, recording);
     const ref = root.nodes[converted.instanceId].definition, draft = structuredClone(root.definitions[definitionRefKey(ref)]); draft.body.nodes['smart-compactor'].targetTokens = 432;
-    const revision = { ...prepareLocalDefinitionEdit(root, { instanceId: converted.instanceId, expectedRef: ref, draft }).data, context: captureGraphEditContext(root, context).data };
-    assert.equal(S.commitGraphEdit(root, revision, hooks).data.semanticChanged, true); assert.equal(cancelled, 1); assert.equal(saves, 4);
+    const preparedRevision = prepareLocalDefinitionEdit(root, { instanceId: converted.instanceId, expectedRef: ref, draft });
+    assert.equal(preparedRevision.ok, true, JSON.stringify(preparedRevision));
+    const revision = { ...preparedRevision.data, context: captureGraphEditContext(root, context).data };
+    const revised = S.commitGraphEdit(root, revision, hooks);
+    assert.equal(revised.ok, true, JSON.stringify(revised));
+    assert.equal(revised.data.semanticChanged, true); assert.equal(cancelled, 1); assert.equal(saves, 4);
     assert.equal(S.stepGraphHistory(root, 'undo', hooks).data.semanticChanged, true); assert.equal(cancelled, 2);
     assert.deepEqual(root.nodes[converted.instanceId].definition, ref); assert.deepEqual(root.localDefinitionOwners, next.localDefinitionOwners);
     assert.equal(root.authority, authority); assert.equal(root.recording, recording);

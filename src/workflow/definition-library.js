@@ -1,7 +1,7 @@
 import {semanticJsonCommandOptions} from './semantic-json-data.js?v=0.27.0';
 import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, describeExposedParameter, nodeBindingOverrideKey, validateDefinition } from './definitions.js?v=0.27.0';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.0';
-import { prepareGraphArtifacts } from './graph-artifacts.js?v=0.27.0';
+import { inspectGraphArtifacts, prepareGraphArtifacts } from './graph-artifacts.js?v=0.27.0';
 import { cloneWorkflowDocument } from './document.js?v=0.27.0';
 import { ARTIFACT_KINDS, describeOperation, operationFor } from './catalog.js?v=0.27.0';
 import { applyDeclaredNodeControlChange, graphDocumentSignature } from './ports.js?v=0.27.0';
@@ -16,9 +16,16 @@ const reference = definition => ({ id: definition.id, version: definition.versio
 const only = (value, fields) => record(value) && Object.keys(value).every(key => fields.includes(key));
 const exactRef = (value, actual) => only(value, ['id', 'version', 'semanticHash']) && definitionRefKey(value) === definitionRefKey(actual);
 
+// Root bookkeeping belongs to graph admission; detached definitions remain stricter.
+// Use the checked snapshot so optional field presence and own JSON payloads survive.
+function cloneQualifiedRoot(root) {
+    const checked = prepareGraphArtifacts(root); if (!checked.ok) return checked;
+    return { ok: true, data: structuredClone(inspectGraphArtifacts(checked.data).snapshot) };
+}
+
 /** Internal trusted synchronous domain seam, never a callback received from DTO/plugin input. */
 export function prepareQualifiedScopeEdit(root, input, mutateSavedScope) {
-    const copied = cloneDefinitionData(root); if (!copied.ok) return copied;
+    const copied = cloneQualifiedRoot(root); if (!copied.ok) return copied;
     const admitted = cloneDefinitionData(input, semanticJsonCommandOptions(copied.data,input)); if (!admitted.ok) return admitted;
     const command = admitted.data;
     if (!record(command) || !Array.isArray(command.viewPath) || command.viewPath.length > 8 || !command.viewPath.every(safeId)) return fail('INVALID_INSTANCE', 'Expected an explicit bounded containing graph path.');
@@ -57,7 +64,7 @@ const nodeFields = {
 };
 /** Prepare saved primitive fields or wrapper overrides in one actual qualified root candidate. */
 export function prepareNativeNodeEdit(root, input) {
-    const copied = cloneDefinitionData(root); if (!copied.ok) return copied;
+    const copied = cloneQualifiedRoot(root); if (!copied.ok) return copied;
     const admitted = cloneDefinitionData(input, semanticJsonCommandOptions(copied.data,input)); if (!admitted.ok) return admitted;
     const command = admitted.data;
     if (!record(command) || typeof command.kind !== 'string' || !Object.hasOwn(nodeFields, command.kind) || !only(command, ['kind', 'viewPath', 'expectedRef', 'nodeId', ...nodeFields[command.kind]]) || !safeId(command.nodeId)) return fail('INVALID_COMMAND', 'Expected a known qualified node command.');
@@ -502,7 +509,7 @@ export function prepareLocalDefinitionEdit(graph, command) {
 }
 
 function qualifiedInstance(graph, command, options = {}) {
-    const copied=cloneDefinitionData(graph);if(!copied.ok)return copied;
+    const copied=cloneQualifiedRoot(graph);if(!copied.ok)return copied;
     if (!safeWorkflowData(command,{...options,snapshots:copied.data.definitions}) || !record(command)) return fail('INVALID_INSTANCE', 'Expected a plain instance command.');
     const validation = validateGraphStructure(graph); if (!validation.ok) return validation;
     const path = command.instancePath ?? [command.instanceId], chain = definitionChain(graph, path);
