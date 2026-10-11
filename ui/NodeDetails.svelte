@@ -138,6 +138,17 @@
         drafts = { ...drafts, [control.key]: { text: '', typedValue: value, error: '', pending: false, editor: control.editor, representation: control.representation } };
         errors = { ...errors, [control.key]: '' };
     }
+    function formatDraft(control:DetailControl,format:ControlInputFormat) {
+        const current=drafts[control.key];
+        if(current?.typedValue!==undefined){
+            draftValue(control,current.typedValue);
+            drafts={...drafts,[control.key]:{...drafts[control.key],format}};
+            return;
+        }
+        const present=controlInputPresentation(control,format),text=current?.text;
+        draft(control,text??present.text);
+        drafts={...drafts,[control.key]:{...drafts[control.key],format:text===undefined?present.format:format}};
+    }
     function save(control: DetailControl) {
         if (!view || view.readOnly || !actions.editControl) return;
         const text = drafts[control.key]?.text ?? textFor(control);
@@ -443,7 +454,7 @@
 </section>
 
 {#snippet controlEditor(control: DetailControl)}
-    <DetailControlEditor {control} format={formatFor(control)} onformat={format=>{const present=controlInputPresentation(control,format);const typed=drafts[control.key]?.text;draft(control,typed??present.text);drafts={...drafts,[control.key]:{...drafts[control.key],format:typed===undefined?present.format:format}};}} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
+    <DetailControlEditor {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
 {/snippet}
 
 <style>

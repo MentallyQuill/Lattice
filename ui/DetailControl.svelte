@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {parseControlInput} from '../src/ui/control-input-contracts.js';
+    import {parseControlInput,formatControlInput} from '../src/ui/control-input-contracts.js';
     import type {ControlInputFormat} from '../src/ui/control-input-contracts';
     import type {JsonValue} from '../src/workflow/operations/json-data';
     import DiagnosticMessage from './DiagnosticMessage.svelte';
@@ -16,7 +16,15 @@
     const recordEntry = $derived(['patterns','extract'].includes(control.structured ?? ''));
     function switchRows() {
         if(disabled || !control.inputSpec) return;
-        if(termMode) { const result = parseControlInput(control.inputSpec,draftValue===undefined?{format,text,currentValue:control.value as JsonValue}:{format:'rows',value:draftValue as JsonValue,currentValue:control.value as JsonValue}); if(!result.ok) {switchError=result.error.message;return;} if(onDraft)onDraft(result.data.value);else ontext(JSON.stringify(result.data.value,null,2)); }
+        const result = parseControlInput(control.inputSpec,draftValue===undefined?{format:termMode?format:'json',text,currentValue:control.value as JsonValue}:{format:'rows',value:draftValue as JsonValue,currentValue:control.value as JsonValue});
+        if(termMode && !result.ok) {switchError=result.error.message;return;}
+        if(!termMode && result.ok){
+            const exported=formatControlInput(control.inputSpec,result.data.value,'auto');
+            if(exported.ok){onformat?.('auto');ontext(exported.data);}
+            else {if(onDraft)onDraft(result.data.value);else ontext(JSON.stringify(result.data.value,null,2));onformat?.('json');}
+        } else if(result.ok){if(onDraft)onDraft(result.data.value);else ontext(JSON.stringify(result.data.value,null,2));}
+        else onformat?.('json');
+        // Use expression/term text only when export proves it preserves records; otherwise keep explicit JSON.
         termMode=!termMode;switchError='';
     }
     const entry = $derived(control.inputSpec?.editor === 'list');

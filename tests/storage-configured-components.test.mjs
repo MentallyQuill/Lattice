@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {join,resolve,relative,isAbsolute} from 'node:path';
 import {JSDOM} from 'jsdom';
 import {compiled} from './helpers/svelte-compile.mjs';
+import {projectNodeControls} from '../src/ui/node-control-projection.js';
 const dom=new JSDOM('<!doctype html><body></body>',{pretendToBeVisual:true});globalThis.window=dom.window;globalThis.document=dom.window.document;
 for(const key of ['Node','Element','Text','Comment','Document','HTMLElement','HTMLMediaElement','HTMLButtonElement','HTMLInputElement','HTMLSelectElement','MutationObserver'])Object.defineProperty(globalThis,key,{configurable:true,value:dom.window[key]});
 const {mount,unmount,flushSync,tick}=await import(new URL('../node_modules/svelte/src/index-client.js',import.meta.url).href);
@@ -185,6 +186,51 @@ test('Pattern terms mode compiles friendly drafts through the shared creation an
   const props=creation?{view:{key:'terms-pattern',operation:'pattern',title:'Pattern',controls:'{}',phase:'post',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){submitted=JSON.parse(text).rules;return {ok:true};},cancel(){}}}:{view:{selectionKey:'pattern',revision:'1',address:{workflowId:'root',instancePath:[],nodeId:'pattern'},title:'Pattern',canonicalTitle:'Pattern',iconPath:'',family:'Data',phase:'post',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:[control],model:null,ports:[]},actions:{editControl(_selection,_key,value){submitted=value;return {ok:true};}}};
   const f=await fixture(creation?'ConfigureNode':'NodeDetails',props);
   try{const label=control.label,terms=button(f.host,'Use '+label+' terms');assert.ok(terms,f.host.textContent);terms.click();flushSync();input(f.host,label,'though,"red, blue"');button(f.host,creation?'Create node':'Save '+label).click();await tick();flushSync();assert.deepEqual(submitted,[{id:'pattern-1',pattern:'though'},{id:'pattern-2',pattern:'red, blue'}]);}
+  finally{await f.close();}
+ }
+});
+
+
+function patternTransitionProps(creation,mode,rows,save,response={ok:true}){
+ const control=projectNodeControls('pattern',{mode,rules:rows},{phase:'post'}).find(row=>row.key==='rules');
+ return creation?{view:{key:'pattern-transition',operation:'pattern',title:'Pattern',controls:JSON.stringify({mode,rules:rows}),phase:'post',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){save(JSON.parse(text).rules);return response;},cancel(){}}}:{view:{selectionKey:'pattern-transition',revision:'1',address:{workflowId:'root',instancePath:[],nodeId:'pattern'},title:'Pattern',canonicalTitle:'Pattern',iconPath:'',family:'Data',phase:'post',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:[control],model:null,ports:[]},actions:{editControl(_selection,_key,value){save(value);return response;}}};
+}
+test('regex row terms row view switches retain exact expressions IDs and callback candidates',async()=>{
+ for(const creation of [false,true])for(const rows of [[{id:'custom',pattern:'a{1,3}',label:'Keep'},{id:'pattern-2',pattern:'[a,b]\\s+'}],[{id:'pattern-1',pattern:'a{1,3}'}]]){
+  const saves=[];
+  const f=await fixture(creation?'ConfigureNode':'NodeDetails',patternTransitionProps(creation,'regex',rows,value=>saves.push(value)));
+  try{button(f.host,'Use Rules terms').click();flushSync();assert.ok(f.host.querySelector('[data-control-items]').textContent.startsWith(rows.length+' entries'));button(f.host,'Use Rules rows').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Pattern 1 expression"]').value,'a{1,3}');button(f.host,creation?'Create node':'Save Rules').click();await tick();flushSync();assert.deepEqual(saves,[rows]);}
+  finally{await f.close();}
+ }
+});
+test('typed row metadata survives terms format dropdowns and rejected malformed text in both parents',async()=>{
+ for(const creation of [false,true])for(const requested of ['csv','json','auto']){
+  const rows=[{id:'pattern-1',pattern:'old',label:'original'}],saves=[];
+  const f=await fixture(creation?'ConfigureNode':'NodeDetails',patternTransitionProps(creation,'literal',rows,value=>saves.push(value)));
+  try{
+   input(f.host,'Pattern 1 label','edited label');button(f.host,'Use Rules terms').click();flushSync();input(f.host,'Rules input format',requested,'change');
+   assert.notEqual(f.host.querySelector('[aria-label="Rules"]').value,'');button(f.host,creation?'Create node':'Save Rules').click();await tick();flushSync();assert.deepEqual(saves,[[{...rows[0],label:'edited label'}]]);
+   input(f.host,'Rules input format','json','change');input(f.host,'Rules','[{"id":');button(f.host,'Use Rules rows').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Rules"]').value,'[{"id":');button(f.host,creation?'Create node':'Save Rules').click();await tick();flushSync();assert.equal(saves.length,1);
+   input(f.host,'Rules input format','csv','change');assert.equal(f.host.querySelector('[aria-label="Rules"]').value,'[{"id":');input(f.host,'Rules input format','json','change');button(f.host,creation?'Create node':'Save Rules').click();await tick();flushSync();assert.equal(saves.length,1);
+  }finally{await f.close();}
+ }
+});
+test('helper selectors merge the current field override draft and retain invalid draft text on rejection',async()=>{
+ const ref={id:'helper',version:1,semanticHash:'sha256:'+'a'.repeat(64)},modes=[{value:'inherit',label:'Use helper model'},{value:'override',label:'Override'},{value:'block',label:'Use profile model'}],role={role:'decision',label:'Decision',profile:{mode:'inherit',value:null,allowedModes:modes.slice(0,2),options:[{value:'chosen',label:'Chosen connection'}]},model:{mode:'inherit',value:null,allowedModes:modes},effective:'Inherited',source:'Helper'},saves=[];
+ const f=await fixture('ConfigureNode',{view:{key:'binding-drafts',operation:'for-each',title:'For Each',controls:JSON.stringify({helper:ref,mode:'map',roleOverrides:{saved:{model:'old'}}}),phase:'pre',phaseLocked:false,targets:[],helpers:[{key:'exact',label:'Pinned',ref,stateful:false,bindings:{helperKey:'exact',roles:[role]}}]},actions:{apply(_key,text){saves.push(JSON.parse(text));return {ok:true};},cancel(){}}});
+ try{
+  input(f.host,'Role overrides','{"other":{"model":"draft"}}');input(f.host,'decision connection profile','chosen','change');button(f.host,'Create node').click();await tick();flushSync();assert.deepEqual(saves[0].roleOverrides,{other:{model:'draft'},decision:{profileId:'chosen',model:null}});
+  const invalid=' {"unfinished":';input(f.host,'Role overrides',invalid);input(f.host,'decision connection profile','','change');assert.equal(f.host.querySelector('[aria-label="Role overrides"]').value,invalid);assert.equal(f.host.querySelector('[aria-label="decision connection profile"]').value,'chosen');assert.match(f.host.textContent,/Repair|valid|Check/);button(f.host,'Create node').click();await tick();flushSync();assert.equal(saves.length,1);
+  input(f.host,'Role overrides','{"other":{"model":"repaired"}}');input(f.host,'decision connection profile','chosen','change');button(f.host,'Create node').click();await tick();flushSync();assert.deepEqual(saves[1].roleOverrides,{other:{model:'repaired'},decision:{profileId:'chosen',model:null}});
+ }finally{await f.close();}
+});
+
+
+test('a rejected valid Save retains the typed candidate through further terms format changes',async()=>{
+ for(const creation of [false,true]){
+  const rows=[{id:'authored',pattern:'old',label:'original'}],expected=[{...rows[0],label:'edited'}],saves=[];
+  const f=await fixture(creation?'ConfigureNode':'NodeDetails',patternTransitionProps(creation,'literal',rows,value=>saves.push(value),{ok:false,error:{code:'CONTROL_REJECTED',message:'Review this candidate.'}}));
+  try{input(f.host,'Pattern 1 label','edited');button(f.host,'Use Rules terms').click();flushSync();button(f.host,creation?'Create node':'Save Rules').click();await tick();flushSync();assert.deepEqual(saves,[expected]);assert.match(f.host.textContent,/CONTROL_REJECTED/);input(f.host,'Rules input format','csv','change');assert.notEqual(f.host.querySelector('[aria-label="Rules"]').value,'');button(f.host,creation?'Create node':'Save Rules').click();await tick();flushSync();assert.deepEqual(saves,[expected,expected]);}
   finally{await f.close();}
  }
 });

@@ -27,21 +27,29 @@
  function bindingValue(role:string,field:'profileId'|'model'){const value=data.roleOverrides as Record<string,Record<string,string|null>>|undefined;return value?.[role]?.[field];}
  function bindingMode(role:string,field:'profileId'|'model'){const value=bindingValue(role,field);return value===undefined?'inherit':value===null?'block':'override';}
  function setBinding(role:string,field:'profileId'|'model',mode:string,value:string|null){
-  if(pending||!actions)return;
-  let source=$state.snapshot(data);
-  if(advanced){try{source=JSON.parse(controls);if(!source||typeof source!=='object'||Array.isArray(source))throw Error();}catch{failure='Use a JSON object before selecting a configured value.';return;}}
+  if(pending||!actions)return false;
+  let source:Record<string,unknown>=$state.snapshot(data) as Record<string,unknown>;
+  if(advanced){try{source=JSON.parse(controls);if(!source||typeof source!=='object'||Array.isArray(source))throw Error();}catch{failure='Use a JSON object before selecting a configured value.';return false;}}
   const choice=view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(source.helper)),row=choice?.bindings?.roles.find(row=>row.role===role);
-  if(!row||row[field==='profileId'?'profile':'model'].editable===false)return;
-  const spec=fields.find(control=>control.key==='roleOverrides')?.inputSpec;
-  if(!spec)return;
+  if(!row||row[field==='profileId'?'profile':'model'].editable===false)return false;
+  const roleControl=fields.find(control=>control.key==='roleOverrides'),spec=roleControl?.inputSpec;
+  if(!spec||!roleControl)return false;
+  const fieldDraft=advanced?undefined:drafts.roleOverrides;
+  if(fieldDraft){
+   const input=fieldDraft.value!==undefined?{format:'rows' as const,value:$state.snapshot(fieldDraft.value) as JsonValue}:{format:fieldDraft.format??'json' as ControlInputFormat,text:fieldDraft.text??textFor(roleControl)};
+   const parsed=parseControlInput(spec,{...input,currentValue:(source.roleOverrides??{}) as JsonValue});
+   if(!parsed.ok){drafts={...drafts,roleOverrides:{...fieldDraft,error:parsed.error.message}};failure='Repair the Role overrides draft before using selectors.';return false;}
+   source={...source,roleOverrides:parsed.data.value};
+  }
   const checked=parseControlInput(spec,{format:'rows',value:(source.roleOverrides??{}) as JsonValue});
   const own=source.roleOverrides??{};
-  if(!checked.ok && (advanced || !own || typeof own!=='object' || Array.isArray(own) || Object.values(own).some(binding=>!binding || typeof binding!=='object' || Array.isArray(binding)))){failure='Repair the Advanced JSON role bindings before using selectors.';return;}
+  if(!checked.ok && (advanced || !own || typeof own!=='object' || Array.isArray(own) || Object.values(own).some(binding=>!binding || typeof binding!=='object' || Array.isArray(binding)))){failure='Repair the Advanced JSON role bindings before using selectors.';return false;}
   const overrides={...(checked.ok?checked.data.value:own) as Record<string,Record<string,string|null>>},binding={...(overrides[role]??{})};
   if(mode==='inherit'){delete binding[field];if(field==='profileId'&&binding.model===null)delete binding.model;}
   else {binding[field]=mode==='block'?null:value;if(field==='profileId'&&!Object.hasOwn(binding,'model'))binding.model=null;}
   if(Object.keys(binding).length)overrides[role]=binding;else delete overrides[role];
   setControl('roleOverrides',overrides);
+  const next={...drafts};delete next.roleOverrides;drafts=next;return true;
  }
  function draft(control:DetailControl,next:Partial<Draft>){drafts={...drafts,[control.key]:{...drafts[control.key],...next,contract:contract(control),error:''}};failure='';}
  function candidate():Record<string,unknown>|null {
@@ -66,8 +74,8 @@
   {#if view.operation==='for-each'}<label>Pinned Data helper<select aria-label="Pinned Data helper" bind:value={helper} onchange={()=>{const choice=view.helpers.find(choice=>choice.key===helper);if(choice)setControl('helper',choice.ref);}} disabled={pending || !actions}><option value="">Choose an existing item/result helper</option>{#each view.helpers.filter(choice=>data.mode!=='projected-state'||choice.stateful) as choice (choice.key)}<option value={choice.key}>{choice.label}{choice.stateful?' (projected state)':''}</option>{/each}</select></label><p>Helpers use exact pinned versions with Data item and result ports. Set iteration mode and requestBoundPerIteration in the controls below.</p>{/if}
   {#if view.operation==='for-each' && selectedHelper?.bindings}
    <details open><summary>Helper model bindings</summary>{#each selectedHelper.bindings.roles as row (row.role)}<fieldset><legend>{row.label}</legend>
-    <label>Connection profile<select aria-label={row.role+' connection profile'} value={bindingValue(row.role,'profileId')??''} disabled={pending||!actions||row.profile.editable===false} onchange={event=>setBinding(row.role,'profileId',event.currentTarget.value?'override':'inherit',event.currentTarget.value||null)}><option value="">Use helper connection</option>{#each row.profile.options??[] as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
-    <label>Model mode<select aria-label={row.role+' model mode'} value={bindingMode(row.role,'model')} disabled={pending||!actions||row.model.editable===false} onchange={event=>setBinding(row.role,'model',event.currentTarget.value,event.currentTarget.value==='override'?bindingValue(row.role,'model')??'':null)}>{#each row.model.allowedModes as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
+    <label>Connection profile<select aria-label={row.role+' connection profile'} value={bindingValue(row.role,'profileId')??''} disabled={pending||!actions||row.profile.editable===false} onchange={event=>{if(!setBinding(row.role,'profileId',event.currentTarget.value?'override':'inherit',event.currentTarget.value||null))event.currentTarget.value=bindingValue(row.role,'profileId')??'';}}><option value="">Use helper connection</option>{#each row.profile.options??[] as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
+    <label>Model mode<select aria-label={row.role+' model mode'} value={bindingMode(row.role,'model')} disabled={pending||!actions||row.model.editable===false} onchange={event=>{if(!setBinding(row.role,'model',event.currentTarget.value,event.currentTarget.value==='override'?bindingValue(row.role,'model')??'':null))event.currentTarget.value=bindingMode(row.role,'model');}}>{#each row.model.allowedModes as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
     {#if bindingMode(row.role,'model')==='override'}<label>Model identifier<input aria-label={row.role+' model identifier'} value={bindingValue(row.role,'model')??''} disabled={pending||!actions||row.model.editable===false} oninput={event=>setBinding(row.role,'model','override',event.currentTarget.value)} /></label>{/if}
     <small>{row.effective}</small>{#if row.caveat}<small>{row.caveat}</small>{/if}
    </fieldset>{/each}{#if selectedHelper.bindings.issue}<p>{selectedHelper.bindings.issue}</p>{:else if !selectedHelper.bindings.roles.length}<p>This helper has no text model calls to configure.</p>{/if}</details>
@@ -76,7 +84,7 @@
   {#if advanced}<label>Declared node controls<textarea aria-label="Node controls JSON" rows="14" maxlength="200000" bind:value={controls} disabled={pending || !actions}></textarea></label>
   {:else}
    {#each fields.filter(control=>!(usesDocument && ['targetId','clockId'].includes(control.key)) && !(view.operation==='for-each' && control.key==='helper')) as control (control.key)}
-    <DetailControlEditor {control} text={textFor(control)} format={formatFor(control)} error={drafts[control.key]?.error??''} disabled={pending || !actions} idPrefix={'pc-configure-'+control.key} saveButton={false} draftValue={drafts[control.key]?.value} onDraft={value=>draft(control,{value,text:undefined})} ontext={text=>draft(control,{text,value:undefined})} onformat={format=>{const present=controlInputPresentation(control,format);draft(control,drafts[control.key]?.text===undefined?{format:present.format,text:present.text}:{format});}} onvalue={value=>setControl(control.key,value)} onnumber={input=>{if(input.validity.valid&&Number.isFinite(input.valueAsNumber))setControl(control.key,input.valueAsNumber);}} onsave={()=>{}} />
+    <DetailControlEditor {control} text={textFor(control)} format={formatFor(control)} error={drafts[control.key]?.error??''} disabled={pending || !actions} idPrefix={'pc-configure-'+control.key} saveButton={false} draftValue={drafts[control.key]?.value} onDraft={value=>draft(control,{value,text:undefined})} ontext={text=>draft(control,{text,value:undefined})} onformat={format=>{if(drafts[control.key]?.value!==undefined){draft(control,{format});return;}const present=controlInputPresentation(control,format);draft(control,drafts[control.key]?.text===undefined?{format:present.format,text:present.text}:{format});}} onvalue={value=>setControl(control.key,value)} onnumber={input=>{if(input.validity.valid&&Number.isFinite(input.valueAsNumber))setControl(control.key,input.valueAsNumber);}} onsave={()=>{}} />
    {/each}
   {/if}
   {#if failure}<div><DiagnosticMessage issue={failure} /></div>{/if}

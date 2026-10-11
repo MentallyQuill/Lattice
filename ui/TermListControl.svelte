@@ -7,15 +7,20 @@
  let feedback=$state('');
  const parsed=$derived(control.inputSpec?parseControlInput(control.inputSpec,draftValue === undefined?{format,text,currentValue:control.value as JsonValue}:{format:'rows',value:draftValue as JsonValue,currentValue:control.value as JsonValue}):null);
  const shown=$derived(draftValue === undefined?text:JSON.stringify(draftValue,null,2));
+ function chooseFormat(next:ControlInputFormat,input:HTMLSelectElement){
+  if(disabled)return;
+  if(parsed?.ok){if(!exportText(next))input.value=format;}
+  else {feedback='';onformat?.(next);}
+ }
  function exportText(next:ControlInputFormat){
-  if(disabled||!parsed?.ok||!control.inputSpec)return;
+  if(disabled||!parsed?.ok||!control.inputSpec)return false;
   const result=formatControlInput(control.inputSpec,parsed.data.value,next);
-  if(!result.ok){feedback=result.error.message;return;}
-  feedback='';onformat?.(next);ontext(result.data);
+  if(!result.ok){feedback=result.error.message;return false;}
+  feedback='';onformat?.(next);ontext(result.data);return true;
  }
 </script>
 <label for={idPrefix+'-editor'}>{control.label}</label>
-<select aria-label={control.label+' input format'} value={format} {disabled} onchange={event=>{if(!disabled){feedback='';onformat?.(event.currentTarget.value as ControlInputFormat);}}}><option value="auto">{control.inputSpec?.id==='collection.thresholds'?'Numbers / CSV':control.inputSpec?.id==='pattern.rules:regex'?'Expressions (one per line)':'Terms / CSV'}</option><option value="plain">Plain text</option><option value="csv">CSV</option><option value="json">Advanced JSON</option></select>
+<select aria-label={control.label+' input format'} value={format} {disabled} onchange={event=>chooseFormat(event.currentTarget.value as ControlInputFormat,event.currentTarget)}><option value="auto">{control.inputSpec?.id==='collection.thresholds'?'Numbers / CSV':control.inputSpec?.id==='pattern.rules:regex'?'Expressions (one per line)':'Terms / CSV'}</option><option value="plain">Plain text</option><option value="csv">CSV</option><option value="json">Advanced JSON</option></select>
 <textarea id={idPrefix+'-editor'} aria-label={control.label} value={shown} {disabled} aria-invalid={!!error||parsed?.ok===false} aria-describedby={error?idPrefix+'-error':undefined} oninput={event=>{if(!disabled){feedback='';onformat?.(format);ontext(event.currentTarget.value);}}}></textarea>
 <small>{control.inputSpec?.id==='pattern.rules:regex'?'One expression per line. Commas, brackets and backslashes stay in the expression.':'Separate terms with commas or newlines. Quote phrases containing commas.'}</small>
 {#if parsed?.ok}<div data-control-items>{parsed.data.displayItems?.length??0} entries{#each parsed.data.displayItems??[] as item,index}<span data-control-item={index}>{item}</span>{/each}</div>{#each parsed.data.warnings as warning}<small>{warning}</small>{/each}{:else if parsed}<small role="status">{parsed.error.message}</small>{/if}
