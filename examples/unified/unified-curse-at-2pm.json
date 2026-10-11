@@ -153,7 +153,8 @@
         "outputKind": "guidance",
         "template": "Use only these due scheduled occurrences in this scene: {{data:}}. Respect the interruption point and preserve player choices.",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "commit-time": {
         "id": "commit-time",

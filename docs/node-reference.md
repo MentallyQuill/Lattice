@@ -47,7 +47,8 @@ Model calls below are maximum auxiliary calls **per execution of that operation*
 | Introspection | [Context](#context) | Both | Context inputs → Context | 0–1 |
 | Introspection | [Memory](#memory) | Both; Commit Post | Scoped source → Data; Proposal Data → Host result | 0 |
 | Introspection | [State](#state) | Both | State + optional Events Data → Snapshot/proposal Data | 0 |
-| Derive | [Pattern Scan](#pattern-scan) | Post | Draft → Draft with findings/spans | 0 |
+| Derive | [Pattern](#pattern) | Post | Draft → unchanged Draft, Matched Boolean, Matches report | 0 |
+| Derive | [Filter Text](#filter-text) | Post | Draft + live Matches → Draft, deletion report | 0 |
 | Derive | [JSON Decode](#json-decode) | Both | Text → Data, or Data → Data | 0 |
 | Derive | [Select Fields](#select-fields) | Both | Data → Data | 0 |
 | Derive | [Validate Patches](#validate-patches) | Post | Patches → Candidate | 0 |
@@ -137,7 +138,7 @@ Freeze the latest completed text-only assistant reply and its chat/message/swipe
 
 **Controls:** no operation settings; the source is selected by the supported host reply contract.
 
-**Connect:** Reply Snapshot → Text Rules for deterministic cleanup, or Reply Snapshot → Pattern Scan → Repair for model-assisted repair. An older, unfinished, tool/intermediate, or media reply is not a supported repair target.
+**Connect:** Reply Snapshot → Text Rules for deterministic cleanup, or Generate Reply → Pattern → Branch → Filter Text → Join → Review / Publish for keyword filtering. An older, unfinished, tool/intermediate, or media reply is not a supported repair target.
 
 ## Shaping
 
@@ -255,7 +256,7 @@ Use a model to propose JSON patches for the selected spans in a scanned Draft. *
 
 **Controls:** `mode`, `strength` (default `light`), `instructions`, `maxTokens` (default 2,048), `protectedLiterals`, and model bindings. Strength is an instruction, not a measured preservation guarantee.
 
-**Connect:** Pattern Scan → Repair → Validate Patches. The requested result is a raw patches JSON object. Malformed or unacceptable output fails without a whole-reply fallback or implicit retry.
+**Connect:** An already authorized Draft with editable spans → Repair → Validate Patches. Pattern detects occurrences and does not construct those permissions. The requested result is a raw patches JSON object. Malformed or unacceptable output fails without a whole-reply fallback or implicit retry.
 
 **Cleanup modes:** Choose Inspect, Contextual Cleanup or Strict Avoidance in Details. Inspect returns unchanged Patches plus literal findings without a model. Contextual Cleanup and Strict Avoidance use at most one raw-prose Prose request with the complete selected policy. Categories, scope and protected wording are independent controls; choose the intended scope separately. Optional Context supports contextual policies. Exact source permissions are checked before proposal; semantic preservation still requires review. See [the reference library guide](lattice-reference-library.md).
 
@@ -353,13 +354,29 @@ Deterministically read or propose state with zero model calls. **Value** returns
 
 ## Derive
 
-### Pattern Scan
+### Pattern
 
-Locate configured literal patterns, honor exemptions and protected wording, and attach findings/spans to the frozen Draft. Rules are personal editorial preferences.
+Detect configured patterns without changing the Draft or its permissions. Both detection and routing make zero model requests. Rules are canonical records, for example `[{"id":"arrival","pattern":"Elara","label":"Arrival"}]`; IDs must be unique. Terms/CSV entry compiles these records when saving. Regex expression rows retain their expression syntax.
 
-**Controls:** `mode` (`literal`), `scope` (`whole`, `narration`, `dialogue`), `caseSensitive`, `rules`, `exemptions`, `protectedLiterals`.
+**Controls:** Mode (literal, whole-word, regex), Scope (authorized, whole, narration, dialogue), Case sensitive, Rules, Exemptions, Protected literals, Match policy (any/all), Minimum occurrences, Regex flags (m/s), Timeout (100–2,000 ms). Defaults are whole-word, whole, case-insensitive, any and one occurrence. Empty rules always return false. Whole-word matches Unicode word boundaries; `though` does not match `thought`. Regex expressions omit slash delimiters; Unicode and global matching are implicit.
 
-**Connect:** Reply Snapshot → Pattern Scan → Repair. Dialogue means paired straight or curly double quotes. Single quotes and apostrophes are ordinary text; unmatched double quotes block narration/dialogue scanning with an issue.
+**Pins:** Required `in` Draft; `out` is the exact input Draft; `matched` is primitive Boolean Data; `matches` is the typed pattern-matches report with counts, ordered occurrences, source revision and diagnostics. Protected/noneditable occurrences may match but grant no deletion permission. Ordinary no-hit output is complete with false and zero counts. Ambiguous narration/dialogue quotes produce an unresolved Matched result and null report counts; errors and limit failures never become false.
+
+**Connect:** Pattern `out` → Branch `in` with artifact kind Draft; Pattern `matched` → Branch `condition`. Branch selects one path per reply, even when fourteen occurrences match. Send Branch `yes` and Pattern `matches` to Filter Text; send Branch `no` and Filter Text `out` to optional Draft inputs on Join, then Join `out` → Review / Publish `draft`.
+
+### Filter Text
+
+Remove matching lines/paragraphs, or keep matching units by deleting the others. Each unit is atomic: several hits in one paragraph select that paragraph once. Detection scope finds hits; Filter scope independently limits edits. Existing Draft permissions, Pattern/Draft/Filter protections and exemptions can only narrow permission.
+
+**Controls:** Action (remove/keep), Unit (line/paragraph), Scope (authorized/whole/narration/dialogue; explicit new-node default whole), Protected literals.
+
+**Pins:** Required `in` Draft and `matches` live report from Pattern for that exact Draft; `out` Draft and `report` text-filter Data. Copies from recording, JSON, Collect, Select Fields or For Each cannot authorize filtering; rerun Pattern after a source/revision/permission change.
+
+A line owns its actual LF, CRLF or CR separator; visual wrapping creates no line. A paragraph is a maximal run of nonblank lines and owns following blank separators; leading separators belong to the first paragraph. Retained text and delimiters stay exact. Appended presentation sections are excluded and retained intact.
+
+If any selected unit crosses a protected, exempt or unauthorized region, `out` is unresolved with FILTER_PERMISSION_BLOCKED and the report is blocked; no partial edit is emitted. An empty or whitespace-only remaining body produces unresolved EMPTY_FILTER_RESULT with an empty report. Proposed removals in blocked/empty reports are previews, not completed changes. Remove with no hits forwards the exact Draft with a complete no-op report. Review / Publish holds unresolved outputs.
+
+Try the [synthetic detection/filter lesson](../examples/pattern-filter-reply.lattice.json) and its [source fixture](../examples/remastered/fixtures/pattern-filter-reply.txt). Twelve 1 hits, zero 2 hits and two 3 hits route once and remove the middle paragraph once. Inspect Matched, Matches, Filter report and the final Draft before acceptance. Copy source uses the retained privacy-projected diagnostic payload and preserves omission/truncation notices; copying never starts execution or grants report authority.
 
 ### JSON Decode
 

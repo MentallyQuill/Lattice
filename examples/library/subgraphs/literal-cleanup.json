@@ -5,7 +5,7 @@
   "definition": {
     "id": "lattice.library.literal-cleanup",
     "version": 1,
-    "semanticHash": "sha256:3b20d09b4bf8ae7d5eca6a47de761dccd4acdcbfd2668c91f0f07f13c1920011",
+    "semanticHash": "sha256:a810cd90fb36e5beed8afb832737b7c54d9bddf7a351a95809874e9b6dc5a586",
     "name": "Literal Cleanup",
     "interface": [
       {
@@ -18,10 +18,10 @@
         "boundaryNodeId": "entry"
       },
       {
-        "id": "candidate",
+        "id": "filtered-draft",
         "label": "Literal Cleanup result",
         "direction": "output",
-        "kind": "candidate",
+        "kind": "draft",
         "required": false,
         "cardinality": "one",
         "boundaryNodeId": "exit"
@@ -30,7 +30,7 @@
     "parameters": [
       {
         "id": "scope",
-        "label": "Literal scope",
+        "label": "Detection scope",
         "target": {
           "instancePath": [],
           "nodeId": "scan",
@@ -48,7 +48,7 @@
       },
       {
         "id": "rules",
-        "label": "Literal preferences",
+        "label": "Canonical pattern rules",
         "target": {
           "instancePath": [],
           "nodeId": "scan",
@@ -74,39 +74,30 @@
         }
       },
       {
-        "id": "mode",
-        "label": "Repair or inspect",
+        "id": "action",
+        "label": "Remove or keep matching units",
         "target": {
           "instancePath": [],
-          "nodeId": "repair",
-          "controlId": "mode"
+          "nodeId": "filter",
+          "controlId": "action"
         }
       },
       {
-        "id": "strength",
-        "label": "Repair strength",
+        "id": "unit",
+        "label": "Line or paragraph",
         "target": {
           "instancePath": [],
-          "nodeId": "repair",
-          "controlId": "strength"
+          "nodeId": "filter",
+          "controlId": "unit"
         }
       },
       {
-        "id": "instructions",
-        "label": "Repair instructions",
+        "id": "filterScope",
+        "label": "Deletion scope",
         "target": {
           "instancePath": [],
-          "nodeId": "repair",
-          "controlId": "instructions"
-        }
-      },
-      {
-        "id": "maxTokens",
-        "label": "Repair completion limit",
-        "target": {
-          "instancePath": [],
-          "nodeId": "repair",
-          "controlId": "maxTokens"
+          "nodeId": "filter",
+          "controlId": "scope"
         }
       }
     ],
@@ -123,44 +114,77 @@
         "scan": {
           "id": "scan",
           "type": "workflow",
-          "operation": "pattern-scan",
+          "operation": "pattern",
           "operationVersion": 1,
           "modelRole": null,
-          "mode": "literal",
+          "mode": "whole-word",
           "scope": "narration",
           "caseSensitive": false,
           "rules": [
-            "the words hung in the air",
-            "the tension was palpable",
-            "something unreadable"
+            {
+              "id": "prose-0",
+              "pattern": "the words hung in the air"
+            },
+            {
+              "id": "prose-1",
+              "pattern": "the tension was palpable"
+            },
+            {
+              "id": "prose-2",
+              "pattern": "something unreadable"
+            }
           ],
           "exemptions": [],
-          "protectedLiterals": []
+          "protectedLiterals": [],
+          "matchPolicy": "any",
+          "minOccurrences": 1,
+          "regexFlags": "",
+          "timeoutMs": 1000
         },
-        "repair": {
-          "id": "repair",
+        "branch": {
+          "id": "branch",
           "type": "workflow",
-          "operation": "repair",
-          "operationVersion": 1,
-          "modelRole": "Prose",
-          "mode": "repair",
-          "strength": "light",
-          "instructions": "",
-          "maxTokens": 2048,
-          "protectedLiterals": []
-        },
-        "validate": {
-          "id": "validate",
-          "type": "workflow",
-          "operation": "validate-patches",
+          "operation": "branch",
           "operationVersion": 1,
           "modelRole": null,
+          "artifactKind": "draft"
+        },
+        "filter": {
+          "id": "filter",
+          "type": "workflow",
+          "operation": "filter-text",
+          "operationVersion": 1,
+          "modelRole": null,
+          "action": "remove",
+          "unit": "paragraph",
+          "scope": "narration",
           "protectedLiterals": []
+        },
+        "join": {
+          "id": "join",
+          "type": "workflow",
+          "operation": "join",
+          "operationVersion": 1,
+          "modelRole": null,
+          "artifactKind": "draft",
+          "inputs": [
+            {
+              "id": "filtered",
+              "label": "Filtered",
+              "required": false
+            },
+            {
+              "id": "bypass",
+              "label": "No match",
+              "required": false
+            }
+          ],
+          "selection": "last"
         },
         "exit": {
           "id": "exit",
           "type": "subgraph-output",
-          "interfacePortId": "candidate"
+          "interfacePortId": "filtered-draft"
         }
       },
       "wires": {
@@ -172,37 +196,65 @@
           "to": "scan",
           "toPort": "in"
         },
-        "repair": {
-          "id": "repair",
+        "payload": {
+          "id": "payload",
           "route": "wire",
           "from": "scan",
           "fromPort": "out",
-          "to": "repair",
+          "to": "branch",
           "toPort": "in"
         },
-        "validate": {
-          "id": "validate",
+        "condition": {
+          "id": "condition",
           "route": "wire",
-          "from": "repair",
-          "fromPort": "out",
-          "to": "validate",
+          "from": "scan",
+          "fromPort": "matched",
+          "to": "branch",
+          "toPort": "condition"
+        },
+        "selected": {
+          "id": "selected",
+          "route": "wire",
+          "from": "branch",
+          "fromPort": "yes",
+          "to": "filter",
           "toPort": "in"
+        },
+        "report": {
+          "id": "report",
+          "route": "wire",
+          "from": "scan",
+          "fromPort": "matches",
+          "to": "filter",
+          "toPort": "matches"
+        },
+        "filtered": {
+          "id": "filtered",
+          "route": "wire",
+          "from": "filter",
+          "fromPort": "out",
+          "to": "join",
+          "toPort": "filtered"
+        },
+        "bypass": {
+          "id": "bypass",
+          "route": "wire",
+          "from": "branch",
+          "fromPort": "no",
+          "to": "join",
+          "toPort": "bypass"
         },
         "result": {
           "id": "result",
           "route": "wire",
-          "from": "validate",
+          "from": "join",
           "fromPort": "out",
           "to": "exit",
           "toPort": "in"
         }
       },
       "groups": {},
-      "roles": {
-        "Prose": {
-          "model": null
-        }
-      },
+      "roles": {},
       "portals": {}
     }
   },

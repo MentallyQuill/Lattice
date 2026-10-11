@@ -661,7 +661,8 @@
         "outputKind": "text",
         "template": "Proposed soul count and level crossing (settle with Apply): {{data:}}",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "append": {
         "id": "append",

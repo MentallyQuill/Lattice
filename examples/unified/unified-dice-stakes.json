@@ -606,7 +606,8 @@
         "outputKind": "guidance",
         "template": "Narrate only this attempted check using the frozen stakes, saved die and deterministic result: {{data:}}. Preserve player agency and do not change the difficulty after seeing the roll.",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "save-roll": {
         "id": "save-roll",
@@ -642,7 +643,8 @@
         "outputKind": "text",
         "template": "Roll receipt (proposed until Apply): {{data:}}",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "flow-append": {
         "id": "flow-append",

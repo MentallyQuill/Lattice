@@ -42,7 +42,7 @@ On an enabled Send, owned guidance is installed before native budgeting and clea
 
 A unified workflow resumes after its owned completed text-only native reply. Auxiliary response operations can revise its Draft, but publication requires the final **Review / Publish · Host result** and explicit Apply.
 
-Pattern Scan, Repair, Text Rules and Transpose retain source-bound diagnostic processing. Repair requests patches within identified spans; validation rejects malformed patches, unknown indices, blank replacements, edits outside selected spans and removed protected wording. Unselected text is restored exactly. These intermediate outputs and Apply Reply diagnostics do not authorize publication.
+Pattern detects occurrences and passes its Draft unchanged; it does not construct editable spans. Filter Text uses the live report to delete authorized lines or paragraphs atomically before Review / Publish. Repair, Text Rules and Transpose retain source-bound diagnostic processing. Repair requests patches within identified spans; validation rejects malformed patches, unknown indices, blank replacements, edits outside selected spans and removed protected wording. Unselected text is restored exactly. These intermediate outputs and Apply Reply diagnostics do not authorize publication.
 
 After Send completes, select **Review / Publish · Host result** in Preview and compare the original, proposed text, notes, changes and model trace. **Apply reviewed candidate** rechecks the owned source and creates a new swipe preserving the original. **Reject candidate** leaves it alone. A chat/actor/source swipe change, foreign edit, changed workflow or new generation can invalidate a result; generate a fresh result against current sources.
 

@@ -1,3 +1,5 @@
+import { patternFilterLesson, PATTERN_FILTER_SOURCE } from './remastered/pattern-filter.mjs';
+import { createLibrarySubgraph } from '../src/workflow/library/subgraphs.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { FIXTURES, TEXT_FIXTURES } from './remastered/fixtures.mjs';
 import { foundations } from './remastered/foundations.mjs';
@@ -17,3 +19,9 @@ for (const [name, value] of Object.entries(FIXTURES))
     await writeFile(new URL('../examples/remastered/fixtures/' + name, import.meta.url), JSON.stringify(value, null, 2) + '\n');
 for (const [name, value] of Object.entries(TEXT_FIXTURES))
     await writeFile(new URL('../examples/remastered/fixtures/' + name, import.meta.url), value);
+
+await writeFile(new URL('../examples/pattern-filter-reply.lattice.json', import.meta.url), JSON.stringify(patternFilterLesson(), null, 2) + '\n');
+await writeFile(new URL('../examples/remastered/fixtures/pattern-filter-reply.txt', import.meta.url), PATTERN_FILTER_SOURCE);
+const literalCleanup = createLibrarySubgraph('literal-cleanup');
+if (!literalCleanup.ok) throw Error(JSON.stringify(literalCleanup.error));
+await writeFile(new URL('../examples/library/subgraphs/literal-cleanup.json', import.meta.url), literalCleanup.data.json);

@@ -1,3 +1,4 @@
+import { projectRecordedPreview } from '../src/ui/recorded-preview.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile, mkdtemp, writeFile, rm } from 'node:fs/promises';
@@ -332,7 +333,16 @@ test('obsolete validation responses cannot leak into a new draft or qualified se
 
 const terminal = nodeId => ({ kind: 'terminal', address: { workflowId: 'root', instancePath: [], nodeId } });
 const selector = nodeId => ({ handleId: 'opaque-' + nodeId, runId: 'run-one', terminal: terminal(nodeId) });
-const preview = extra => ({ sourceKey: 'source-one', title: 'Apply Reply', status: 'current', choices: [{ key: 'applyA', label: 'First host result', kind: 'candidate', target: terminal('applyA') }, { key: 'applyB', label: 'Second host result', kind: 'candidate', target: terminal('applyB') }], selectedKey: null, pinned: false, followSelection: true, sections: [{ id: 'candidate', label: 'Recorded candidate', kind: 'candidate', text: 'Bounded recorded preview', format: 'structured-text', truncated: true }], issues: [], busy: false, runHere: { enabled: true, callBound: 2 }, review: { selector: selector('applyA'), canApply: true, fresh: true, selectedRootTerminal: true, mode: 'root' }, ...extra });
+const previewBase = extra => ({ sourceKey: 'source-one', title: 'Apply Reply', status: 'current', choices: [{ key: 'applyA', label: 'First host result', kind: 'candidate', target: terminal('applyA') }, { key: 'applyB', label: 'Second host result', kind: 'candidate', target: terminal('applyB') }], selectedKey: null, pinned: false, followSelection: true, sections: [{ id: 'candidate', label: 'Recorded candidate', kind: 'candidate', text: 'Bounded recorded preview', format: 'structured-text', truncated: true }], issues: [], busy: false, runHere: { enabled: true, callBound: 2 }, review: { selector: selector('applyA'), canApply: true, fresh: true, selectedRootTerminal: true, mode: 'root' }, ...extra });
+const preview = extra => {
+    const base=previewBase(extra);
+    const projections=base.sections.map(section=>({ section, projected:projectRecordedPreview(section.format==='structured-text'
+        ? {kind:section.kind,format:'structured',value:{kind:section.kind,text:section.text}}
+        : {kind:section.kind,format:section.format,text:section.text,reason:'recording-byte-limit'}) }));
+    return {...base, source:projections[0]?.projected.source ?? projectRecordedPreview(undefined).source,
+        sections:projections.flatMap(({section,projected})=>projected.sections.map((item,index)=>({...item,id:section.id+(index?'-'+index:''),label:index?item.label:section.label,truncated:section.truncated||item.truncated}))) };
+};
+
 
 test('preview requires an explicit matching root terminal and never turns recorded text or target runs into Apply authority', async () => {
     const applied = [], runs = [];
@@ -373,8 +383,8 @@ test('hierarchical run details retain stable rows, supplied primitive counters a
 test('catalog-described primitive controls stay ordinary explicit editors with no model or run effects', async () => {
     const f = await fixture('NodeDetails', null, {});
     try {
-        for (const [operation, settings] of [['compose', { sections: [{ name: 'intro', text: 'Hello' }] }], ['text-rules', { rules: [{ kind: 'literal', pattern: 'very', replacement: '' }] }], ['json-decode', { schema: '' }], ['select-fields', { fields: [{ name: 'name', path: ['name'] }] }], ['context-join', { inputs: [{ id: 'one', label: 'One' }, { id: 'two', label: 'Two' }] }], ['smart-compactor', { method: 'select' }], ['pattern-scan', {}]]) {
-            const phase = operation === 'pattern-scan' ? 'post' : 'pre';
+        for (const [operation, settings] of [['compose', { sections: [{ name: 'intro', text: 'Hello' }] }], ['text-rules', { rules: [{ kind: 'literal', pattern: 'very', replacement: '' }] }], ['json-decode', { schema: '' }], ['select-fields', { fields: [{ name: 'name', path: ['name'] }] }], ['context-join', { inputs: [{ id: 'one', label: 'One' }, { id: 'two', label: 'Two' }] }], ['smart-compactor', { method: 'select' }], ['pattern', {}]]) {
+            const phase = operation === 'pattern' ? 'post' : 'pre';
             const work = { id: 'work', type: 'workflow', operation, operationVersion: 1, ...settings };
             const g = { id: 'root', schema: 3, runtime: 2, mode: 'native-' + phase, nodes: { work }, wires: {}, definitions: {}, portals: {} };
             const result = describeOperation(g, work); assert.equal(result.ok, true, JSON.stringify(result));
@@ -401,7 +411,9 @@ test('recording preview preserves actual output addresses, artifact kinds and re
     const f = await fixture('OutputPreview', preview({ choices, selectedKey: 'data', review: null, sections: [{ id: 'data', label: 'Output', kind: 'data', format: 'json-prefix-text', text: '{"value":"partial', truncated: true }, { id: 'missing', label: 'Input', kind: 'text', format: 'omitted', text: 'Artifact omitted: recording-byte-limit', truncated: false }] }), { pin: (...args) => calls.push(['pin', ...args]), follow: () => calls.push(['follow']), runHere: (...args) => calls.push(['run', ...args]), select: (...args) => calls.push(['select', ...args]) });
     try {
         assert.equal(calls.length, 0); assert.equal(f.host.querySelector('[data-preview-apply]'), null);
-        assert.equal(f.host.querySelector('[data-artifact-kind="data"] pre').textContent, '{"value":"partial'); assert.match(f.host.textContent, /JSON prefix is shown as text/); assert.ok(f.host.querySelector('[data-diagnostic]'));
+        assert.match(f.host.textContent, /JSON prefix is shown as text/); assert.ok(f.host.querySelector('[data-diagnostic]'));
+        f.host.querySelector('[aria-label="Source preview"]').click();flushSync();
+        assert.equal(f.host.querySelector('[data-preview-source]').textContent, '{"value":"partial'); assert.match(f.host.textContent,/Partial recorded source/);
         f.host.querySelector('button[aria-pressed="false"]').click(); assert.deepEqual(calls[0], ['pin', 'source-one', output]);
         f.update(preview({ choices, selectedKey: 'data', review: null, pinned: true, followSelection: false, status: 'removed', statusDetail: 'Pinned source was removed. Recording preserved.' }));
         assert.match(f.host.textContent, /Source removed/); assert.match(f.host.textContent, /Recording preserved/); assert.equal(f.host.querySelector('[data-run-here]').disabled, true);

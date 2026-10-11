@@ -314,7 +314,8 @@
         "outputKind": "guidance",
         "template": "Offer a relevant callback from these existing public threads. Preserve the existing status; do not declare completion: {{data:}}",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "source-scope-text": {
         "id": "source-scope-text",

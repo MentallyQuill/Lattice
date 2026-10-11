@@ -366,7 +366,8 @@
         "outputKind": "guidance",
         "template": "Resolve only the actual confirmed wand uses using these saved fixed or wild outcomes: {{data:}}. Preserve the ordered actors and transfers; invent no additional use. Let the player choose subsequent actions.",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       }
     },
     "wires": {

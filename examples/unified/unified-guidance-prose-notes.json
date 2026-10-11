@@ -79,7 +79,8 @@
             "text": "Continue the current scene. Preserve established facts and leave the player free to choose."
           }
         ],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "polish": {
         "id": "polish",

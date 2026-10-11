@@ -64,6 +64,14 @@ Wires determine dependencies. A preparation label on an independent node does no
 
 Nodes usable in either stage expose **Stage → Preparation / Response** in Details. Those settings place an operation around the generation boundary within the same workflow document. Conditions and branch outcomes distinguish **completed**, **skipped** and **unresolved**. A skipped optional contribution can be omitted by Join; an unresolved required contribution holds its dependents rather than treating uncertainty as false.
 
+## Detect and filter a reply
+
+Open [Detect, route and filter a reply](../examples/pattern-filter-reply.lattice.json) in a practice chat and use its [synthetic source](../examples/remastered/fixtures/pattern-filter-reply.txt). Pattern uses canonical keyword records and whole-word matching, passes the Draft unchanged, and emits Matched plus a counted Matches report. Wire `out` to Branch `in` (Draft), `matched` to `condition`, Branch `yes` to Filter Text `in`, and `matches` to Filter Text `matches`. Join receives Filter `out` and Branch `no` on optional Draft inputs; Join `out` reaches Review / Publish `draft`.
+
+Fourteen occurrences select one branch per reply and remove the matching paragraph once. Filter can remove matching units or keep them by deleting nonmatching units. Lines use actual separators; paragraphs retain their original blank-line delimiters. A selected unit must fit entirely within authorized windows and avoid protections/exemptions. Blocked units hold output without a partial edit; empty results also hold review. Incomplete detection is unresolved, while an ordinary no-hit result is completed false and bypasses filtering unchanged. Both operations use zero model requests.
+
+Inspect the retained reports and final Draft before accepting. Copy source copies the privacy-projected retained payload, subject to recording/display bounds and omission notices; it neither runs the workflow nor makes a copied Matches report usable for deletion.
+
 ## Combine editable systems in one Main
 
 Keep one **On Send → Generate Reply → Review / Publish** path in the workflow. Any part of that path, including On Send and Review / Publish, can sit inside a static subgraph. Crossing connections become typed inputs and outputs; the enclosing workflow still owns one activation and native generation. Package the item's effect, weather rules and relationship state as separate static bodies. **Workflow → Add system…** chooses a saved body, binds its typed inputs and destinations, previews the connections and adds an editable instance. It targets Main even when a body tab is focused. For a preparation Guidance output, choose an existing Compose Guidance merge or create one when the generator's guidance input is empty. Occupied destination pins require an explicit choice and are not replaced automatically. A state-only system can stage effects without contributing prompt text.

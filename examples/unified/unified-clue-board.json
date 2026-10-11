@@ -79,7 +79,8 @@
             "text": "Give clues through actions and observable details; preserve uncertainty around the solution."
           }
         ],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "records": {
         "id": "records",

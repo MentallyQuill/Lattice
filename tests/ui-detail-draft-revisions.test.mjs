@@ -33,10 +33,10 @@ async function fixture(view, actions) {
     } catch (error) { await cleanup(); throw error; }
 }
 const address = { workflowId: 'root', instancePath: [], nodeId: 'scan' };
-const savedRules = [{ phrase: 'delve', note: 'Keep this preference', details: { category: 'wording' } }, 'weave'];
-const initialGraph = () => ({ id: 'root', schema: 3, runtime: 2, mode: 'native-post', roles: {}, definitions: {}, portals: {}, wires: {}, groups: {}, nodes: { scan: { id: 'scan', type: 'workflow', operation: 'pattern-scan', operationVersion: 1, enabled: true, rules: structuredClone(savedRules), caseSensitive: true, exemptions: ['delve safely'], protectedLiterals: ['weave'], model: 'portable-model', presentation: { alias: 'Saved wording' } } } });
-const node = (graph = initialGraph(), extra = {}) => ({ selectionKey: 'selected-scan', revision: 'revision1', address, title: 'Pattern Scan', canonicalTitle: 'Pattern Scan', iconPath: 'M3 5h18', family: 'Surface', phase: 'post', alias: 'Saved wording', compact: false, enabled: true, readOnly: false, canPresent: true, model: null, ports: [], controls: [
-    { key: 'rules', label: 'rules', editor: 'json', representation: 'json-value', value: graph.nodes.scan.rules, effective: JSON.stringify(graph.nodes.scan.rules), source: 'Saved setting', help: 'String and structured rules retain their metadata.' },
+const savedRules = [{ id: 'delve', pattern: 'delve', label: 'Keep this preference' }, { id: 'weave', pattern: 'weave' }];
+const initialGraph = () => ({ id: 'root', schema: 3, runtime: 2, mode: 'native-post', roles: {}, definitions: {}, portals: {}, wires: {}, groups: {}, nodes: { scan: { id: 'scan', type: 'workflow', operation: 'pattern', operationVersion: 1, enabled: true, rules: structuredClone(savedRules), caseSensitive: true, exemptions: ['delve safely'], protectedLiterals: ['weave'], model: 'portable-model', presentation: { alias: 'Saved wording' } } } });
+const node = (graph = initialGraph(), extra = {}) => ({ selectionKey: 'selected-scan', revision: 'revision1', address, title: 'Pattern', canonicalTitle: 'Pattern', iconPath: 'M3 5h18', family: 'Surface', phase: 'post', alias: 'Saved wording', compact: false, enabled: true, readOnly: false, canPresent: true, model: null, ports: [], controls: [
+    { key: 'rules', label: 'rules', editor: 'json', representation: 'json-value', value: graph.nodes.scan.rules, effective: JSON.stringify(graph.nodes.scan.rules), source: 'Saved setting', help: 'Canonical rules retain their IDs and labels.' },
     { key: 'caseSensitive', label: 'case Sensitive', editor: 'boolean', value: graph.nodes.scan.caseSensitive },
     { key: 'exemptions', label: 'exemptions', editor: 'lines', value: graph.nodes.scan.exemptions },
 ], ...extra });
@@ -84,9 +84,9 @@ test('invalid JSON drafts survive changing roots and returning without saving ei
     const f = await savedFixture();
     try {
         input(editor(f), '{"phrase":'); save(f).click(); flushSync();
-        const other = initialGraph(); other.id = 'other-root'; other.nodes.scan.rules = ['Other committed rules'];
+        const other = initialGraph(); other.id = 'other-root'; other.nodes.scan.rules = [{ id: 'other', pattern: 'Other committed rules' }];
         f.update(node(other, { address: { ...address, workflowId: 'other-root' } }));
-        assert.equal(editor(f).value, '[\n  "Other committed rules"\n]');
+        assert.equal(editor(f).value, JSON.stringify(other.nodes.scan.rules, null, 2));
         input(editor(f), '["other draft"]');
         f.update(node(f.graph(), { revision: 'revision2' }));
         assert.equal(editor(f).value, '{"phrase":');
@@ -95,7 +95,7 @@ test('invalid JSON drafts survive changing roots and returning without saving ei
         save(f).click(); await settle();
         assert.deepEqual(f.edits, [], 'returning to invalid text never publishes a control edit');
         assert.deepEqual(f.graph().nodes.scan.rules, savedRules);
-        assert.deepEqual(other.nodes.scan.rules, ['Other committed rules']);
+        assert.deepEqual(other.nodes.scan.rules, [{ id: 'other', pattern: 'Other committed rules' }]);
         f.update(node(other, { address: { ...address, workflowId: 'other-root' } }));
         assert.equal(editor(f).value, '["other draft"]', 'each root retains its own pending text');
     } finally { await f.close(); }
@@ -163,7 +163,7 @@ for (const nextAddress of [
 test('valid JSON and line drafts survive other saves and require their own explicit Save', async () => {
     const f = await savedFixture();
     try {
-        const nextRules = [{ phrase: 'Delve', note: 'Keep this preference', details: { category: 'wording' } }, 'tapestry'];
+        const nextRules = [{ id: 'delve', pattern: 'Delve', label: 'Keep this preference' }, { id: 'tapestry', pattern: 'tapestry' }];
         const raw = JSON.stringify(nextRules, null, 4);
         input(editor(f), raw); input(f.host.querySelector('[aria-label="exemptions"]'), 'new exemption\nsecond exemption');
         assert.deepEqual(f.edits, [], 'typing does not autosave');
@@ -176,7 +176,7 @@ test('valid JSON and line drafts survive other saves and require their own expli
         f.host.querySelector('[data-save-control="exemptions"]').click(); await settle();
         assert.deepEqual(f.graph().nodes.scan.exemptions, ['new exemption', 'second exemption']);
         assert.deepEqual(f.edits.map(edit => edit.key), ['caseSensitive', 'rules', 'exemptions']);
-        assert.doesNotMatch(f.host.textContent, /Saved setting/); assert.match(f.host.textContent, /String and structured rules retain their metadata/);
+        assert.doesNotMatch(f.host.textContent, /Saved setting/); assert.match(f.host.textContent, /Canonical rules retain their IDs and labels/);
         assert.deepEqual(f.graph().nodes.scan.protectedLiterals, ['weave']);
     } finally { await f.close(); }
 });
@@ -206,11 +206,11 @@ for (const change of [{ selectionKey: 'another-selection' }, { address: { ...add
         const f = await fixture(node(), { editControl() { return new Promise(resolve => pending.push(resolve)); } });
         try {
             input(editor(f), '["private draft"]'); save(f).click(); flushSync();
-            const graph = initialGraph(); graph.nodes.scan.rules = ['other saved value'];
+            const graph = initialGraph(); graph.nodes.scan.rules = [{ id: 'other', pattern: 'other saved value' }];
             f.update(node(graph, change));
-            assert.equal(editor(f).value, '[\n  "other saved value"\n]'); assert.equal(save(f).disabled, false);
+            assert.equal(editor(f).value, JSON.stringify(graph.nodes.scan.rules, null, 2)); assert.equal(save(f).disabled, false);
             pending[0]({ ok: false, error: { code: 'OTHER_NODE', message: 'Wrong node validation' } }); await settle();
-            assert.equal(editor(f).value, '[\n  "other saved value"\n]'); assert.doesNotMatch(f.host.textContent, /Wrong node validation/);
+            assert.equal(editor(f).value, JSON.stringify(graph.nodes.scan.rules, null, 2)); assert.doesNotMatch(f.host.textContent, /Wrong node validation/);
         } finally { await f.close(); }
     });
 }

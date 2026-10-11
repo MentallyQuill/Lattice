@@ -10,8 +10,8 @@ const graph = (mode = 'native-unified', nodes = {}, wires = {}) => ({ id: 'unifi
 const mixed = () => graph('native-unified', {
     context: node('context', 'scene-context'), compact: node('compact', 'smart-compactor'),
     plan: node('plan', 'response-plan'), guidance: node('guidance', 'guidance'),
-    reply: node('reply', 'reply-snapshot'), scan: node('scan', 'pattern-scan'),
-    repair: node('repair', 'repair', { mode: 'scan' }), validated: node('validated', 'validate-patches'),
+    reply: node('reply', 'reply-snapshot'), scan: node('scan', 'pattern'),
+    repair: node('repair', 'repair', { mode: 'inspect', scope: 'whole' }), validated: node('validated', 'validate-patches'),
     review: node('review', 'review-gate'), apply: node('apply', 'apply-reply'),
 }, {
     a: wire('a', 'context', 'compact'), b: wire('b', 'compact', 'plan'), c: wire('c', 'plan', 'guidance'),
@@ -57,7 +57,7 @@ const instance = (id, snapshot) => ({ id, type: 'subgraph', definition: { id: sn
 
 test('unified roots compose compatible pinned pre and post definitions', () => {
     const pre = definition('pre-helper', 'pre', 'smart-compactor', 'context');
-    const post = definition('post-helper', 'post', 'pattern-scan', 'draft');
+    const post = definition('post-helper', 'post', 'pattern', 'draft');
     const g = mixed();
     g.definitions = { [definitionRefKey(pre)]: pre, [definitionRefKey(post)]: post };
     g.nodes.compact = instance('compact', pre); g.wires.a.toPort = 'input'; g.wires.b.fromPort = 'output';

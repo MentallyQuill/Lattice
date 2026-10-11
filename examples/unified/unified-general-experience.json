@@ -466,7 +466,8 @@
         "outputKind": "text",
         "template": "Proposed experience milestones (settle with Apply): {{data:}}",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "progress-append": {
         "id": "progress-append",

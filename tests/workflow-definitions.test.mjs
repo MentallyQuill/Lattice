@@ -99,11 +99,14 @@ for (const mutate of [
     assert.notEqual(definitions.computeDefinitionIdentity(candidate).data.canonicalContent, identity.data.canonicalContent);
 }
 const ruleDefinition = fixture();
-ruleDefinition.body.nodes.compact = { id: 'compact', type: 'workflow', operation: 'pattern-scan', rules: [{ name: 'semantic', label: 'keep', profileId: 'data' }] };
+ruleDefinition.body.mode = 'native-post';
+ruleDefinition.interface.forEach(port => port.kind = 'draft');
+ruleDefinition.parameters = [];
+ruleDefinition.body.nodes.compact = { id: 'compact', type: 'workflow', operation: 'pattern', rules: [{ id: 'semantic', pattern: 'data', label: 'keep' }] };
 const ruleIdentity = definitions.computeDefinitionIdentity(ruleDefinition).data;
 ruleDefinition.body.nodes.compact.rules[0].label = 'changed';
 assert.notEqual(definitions.computeDefinitionIdentity(ruleDefinition).data.semanticHash, ruleIdentity.semanticHash);
-assert.match(ruleIdentity.canonicalContent, /"profileId":"data"/);
+assert.match(ruleIdentity.canonicalContent, /"pattern":"data"/);
 
 assert.equal(typeof definitions.inspectPinnedDefinitionIdentity, 'function');
 const snapshot = { ...structuredClone(identity.data.materializedDefinition), semanticHash: identity.data.semanticHash };

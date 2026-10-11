@@ -4,8 +4,9 @@ import { Worker } from 'node:worker_threads';
 import { parseSubgraph, exportSubgraph, parseWorkflow, exportWorkflow } from '../src/workflow/packages.js';
 import { computeDefinitionIdentity, definitionRefKey, validateDefinition } from '../src/workflow/definitions.js';
 import { resolveWorkflow } from '../src/workflow/resolve.js';
-import { runWorkflow } from '../src/workflow/runtime.js';
+import { runWorkflowForHost, runWorkflow } from '../src/workflow/runtime.js';
 import { fixtureLibraryWorkflow } from './helpers/workflow-fixtures.mjs';
+import { hostHarness, retained, unit } from './helpers/pattern-routing-fixtures.mjs';
 import { operationFor } from '../src/workflow/catalog.js';
 // Git core.autocrlf changes storage newlines, not package JSON content.
 const canonicalFile = url => readFileSync(url, 'utf8').replace(/\r\n/g, '\n');
@@ -62,13 +63,16 @@ for (const id of cleanupIds) {
     assert.equal(recipe.ok, true, `${id} now has permission-preserving registered operations`);
     const root = fixtureLibraryWorkflow(id);
     assert.equal(root.ok, true, JSON.stringify(root.error));
-    assert.deepEqual(Object.values(root.data.graph.nodes).map(node => node.operation ?? node.type), ['reply-snapshot', 'subgraph', 'review-gate', 'apply-reply']);
-    assert.equal(resolveWorkflow(root.data.graph).data.callBound, id === 'formatting-cleanup' ? 0 : 1);
+    assert.deepEqual(Object.values(root.data.graph.nodes).map(node => node.operation ?? node.type), id === 'literal-cleanup' ? ['subgraph', 'on-send', 'generate-reply', 'review-publish'] : ['reply-snapshot', 'subgraph', 'review-gate', 'apply-reply']);
+    assert.equal(resolveWorkflow(root.data.graph).data.callBound, id === 'prose-cleanup' ? 1 : 0);
 }
 const literalDefinition = createLibrarySubgraph('literal-cleanup').data.definition;
 assert.equal(literalDefinition.body.nodes.scan.scope, 'narration');
-assert.deepEqual(literalDefinition.body.nodes.scan.rules, ['the words hung in the air', 'the tension was palpable', 'something unreadable']);
-assert.equal(literalDefinition.body.nodes.repair.mode, 'repair');
+assert.deepEqual(literalDefinition.body.nodes.scan.rules, ['the words hung in the air', 'the tension was palpable', 'something unreadable'].map((pattern,index)=>({id:'prose-'+index,pattern})));
+assert.equal(literalDefinition.body.nodes.filter.unit, 'paragraph');
+assert.equal(literalDefinition.body.nodes.filter.scope, 'narration');
+assert.equal(literalDefinition.interface[1].id, 'filtered-draft');
+assert.equal(literalDefinition.interface[1].kind, 'draft');
 const formattingDefinition = createLibrarySubgraph('formatting-cleanup').data.definition;
 assert.equal(formattingDefinition.body.nodes.rules.scope, 'whole');
 assert.deepEqual(formattingDefinition.body.nodes.rules.rules, [{ kind: 'literal', pattern: '\r\n', replacement: '\n', flags: '' }]);
@@ -113,7 +117,8 @@ for (const id of ['context-lens', 'scene-compass', ...cleanupIds]) {
     const semanticChange = structuredClone(definition);
     if (id === 'context-lens') semanticChange.body.nodes.compact.targetTokens++;
     if (id === 'scene-compass') semanticChange.body.nodes.plan.instructions += ' Changed.';
-    if (id === 'literal-cleanup' || id === 'prose-cleanup') semanticChange.body.nodes.repair.instructions += ' Changed.';
+    if (id === 'literal-cleanup') semanticChange.body.nodes.filter.unit = 'line';
+    if (id === 'prose-cleanup') semanticChange.body.nodes.repair.instructions += ' Changed.';
     if (id === 'formatting-cleanup') semanticChange.body.nodes.rules.rules[0].replacement += ' Changed.';
     assert.notEqual(computeDefinitionIdentity(semanticChange).data.semanticHash, definition.semanticHash);
     const example = new URL(`../examples/library/subgraphs/${id}.json`, import.meta.url);
@@ -176,51 +181,32 @@ const testBinding = node => { assert.equal(node.modelRole, 'Prose'); return { ok
 const testCount = async text => ({ tokens: Math.ceil(text.length / 4), method: 'fixed-test' });
 const literalPhrase = 'something unreadable', protectedPhrase = 'the tension was palpable';
 
-// Literal default narration never authorizes the quoted occurrence and issues at most one request.
-{
-    const graph = fixtureLibraryWorkflow('literal-cleanup').data.graph;
-    const input = sourceDraft(`${literalPhrase} "${literalPhrase}"`);
-    const original = structuredClone(input);
-    let requests = 0, terminal;
-    const result = await inspectLibrary(graph, {
-        snapshot: () => input, resolveBinding: testBinding, countTokens: testCount,
-        request: async request => {
-            requests++;
-            const data = JSON.parse(request.messages[1].content);
-            assert.deepEqual(data.spans, [{ index: 0, start: 0, end: literalPhrase.length, text: literalPhrase }]);
-            return { ok: true, data: { text: '{"patches":[{"index":0,"replacement":"plain"}]}', finish: 'stop' } };
-        },
-    }, { inspect({candidate}) { terminal = candidate; return { ok: true }; } });
-    assert.equal(result.ok, true, JSON.stringify(result.error));
-    assert.equal(requests, 1);
-    assert.equal(result.actualCalls, 1);
-    assert.equal(terminal.text, `plain "${literalPhrase}"`);
-    assert.equal(terminal.original, input.text);
-    assert.deepEqual(structuredClone(terminal.source),{chatId:input.source.chatId,messageIndex:input.source.messageIndex,swipeId:input.source.swipeId});
-    assert.equal(terminal.reviewRequired, true);
-    assert.deepEqual(input, original);
-}
-for (const input of [
-    { ...sourceDraft(literalPhrase), spans: [] },
-    { ...sourceDraft(literalPhrase), protectedLiterals: [literalPhrase] },
-    { ...sourceDraft(`${literalPhrase} "${literalPhrase}"`), scope: 'dialogue', spans: [{ index: 0, start: literalPhrase.length + 2, end: literalPhrase.length * 2 + 2, text: literalPhrase }] },
-    { ...sourceDraft(`${literalPhrase} ${protectedPhrase}`), spans: [{ index: 0, start: literalPhrase.length + 1, end: literalPhrase.length + 1 + protectedPhrase.length, text: protectedPhrase }], exemptions: [literalPhrase], protectedLiterals: [protectedPhrase] },
+// The current static library routes once, deletes units atomically and retains review authority at the root.
+for (const [text, extra, expected, reason, filters] of [
+    ['First.\n\nsomething unreadable something unreadable\n\nLast.', {}, 'First.\n\nLast.', null, 1],
+    ['First.\n\nLast.', {}, 'First.\n\nLast.', null, 0],
+    ['First.\n\nsomething unreadable\n\nLast.', { spans: [] }, null, 'FILTER_PERMISSION_BLOCKED', 1],
+    ['First.\n\nsomething unreadable\n\nLast.', { protectedLiterals: [literalPhrase] }, null, 'FILTER_PERMISSION_BLOCKED', 1],
+    ['First.\n\nsomething unreadable "quoted"\n\nLast.', {}, null, 'FILTER_PERMISSION_BLOCKED', 1],
+    ['First.\n\nsomething unreadable\n\nLast.', { exemptions: [literalPhrase] }, 'First.\n\nsomething unreadable\n\nLast.', null, 0],
+    ['something unreadable', {}, null, 'EMPTY_FILTER_RESULT', 1],
 ]) {
-    let requests = 0, terminal;
-    const before = structuredClone(input);
-    const result = await inspectLibrary(fixtureLibraryWorkflow('literal-cleanup').data.graph, {
-        snapshot: () => input, resolveBinding: testBinding,
-        request() { requests++; throw Error('No editable literal permission'); },
-        countTokens() { throw Error('No editable literal permission'); },
-    }, { inspect({candidate}) { terminal = candidate; return { ok: true }; } });
-    assert.equal(result.ok, true, JSON.stringify(result.error));
-    assert.equal(requests, 0);
-    assert.equal(result.actualCalls, 0);
-    assert.equal(terminal.text, input.text);
-    assert.deepEqual(terminal.changes, []);
-    assert.deepEqual(input, before);
+    const graph=fixtureLibraryWorkflow('literal-cleanup').data.graph, h=hostHarness(text,extra), before=structuredClone(graph);
+    const result=await runWorkflowForHost(graph,h.ports,h.hooks);
+    assert.equal(result.ok,!reason,JSON.stringify(result.error)); assert.equal(result.actualCalls,0); assert.equal(h.effects.requests,0); assert.equal(h.effects.filters,filters);
+    assert.deepEqual(graph,before);
+    const report=retained(h.outputs,'scan','matches',['library']);
+    assert.ok(report); assert.equal(report.value.totalOccurrences,text.includes(literalPhrase+' '+literalPhrase)?2:extra.exemptions||!text.includes(literalPhrase)?0:1);
+    if(reason){
+        assert.equal(h.effects.commits,0);assert.equal(h.settlements.length,0);
+        const row=unit(result,'filter',['library']), pin=row.ports.find(pin=>pin.direction==='output'&&result.recording.identities.strings[pin.port]==='out');
+        assert.equal(pin.state.reason.code,reason);
+    } else {
+        assert.equal(h.settlements[0].terminals[0].artifact.text,expected);assert.equal(h.effects.commits,1);
+        if(!filters)assert.equal(retained(h.outputs,'join','out',['library']),retained(h.outputs,'generate-reply','draft'));
+    }
 }
-console.log('workflow-library-subgraphs: literal permissions and one-call bound passed');
+console.log('workflow-library-subgraphs: atomic literal filtering, no-hit bypass, permission/empty holds and zero-call bound passed');
 
 function ruleWorkerHarness() {
     const resources = [];

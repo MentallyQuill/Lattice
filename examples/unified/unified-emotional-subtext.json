@@ -79,7 +79,8 @@
             "text": "Keep attraction and trust gradual. Respect boundaries and player choice; small gestures may matter without escalating the scene."
           }
         ],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "polish": {
         "id": "polish",

@@ -42,7 +42,7 @@ The prose writer receives selected typed policies and optional Context. Preservi
 | --- | --- | --- |
 | Context Lens | Context -> Context | 0; compression adds 1 Analysis |
 | Scene Compass | Context -> Guidance | 1 Analysis; compression adds 1 |
-| Literal Cleanup | Draft -> Candidate | At most 1 Prose; no matches means 0 |
+| Literal Cleanup | Draft -> Draft (`filtered-draft`) | 0; one branch decision per reply |
 | Formatting Cleanup | Draft -> Candidate | 0 |
 | Prose Cleanup | Draft and optional Context -> Candidate | 1 Prose; Inspect/empty permissions means 0 |
 
@@ -50,9 +50,9 @@ Packages in [examples/library/subgraphs](../examples/library/subgraphs/) illustr
 
 The five canonical definitions remain available for reuse and inspection. Their pinned bodies retain pre/post stage contracts; standalone library root wrappers have been retired. Choose a current unified recipe, place compatible processing in its intended stage, and retain Review / Publish as the root publication authority.
 
-Literal Cleanup defaults to `the words hung in the air`, `the tension was palpable`, and `something unreadable`, in narration. Formatting Cleanup defaults to CRLF -> LF with explicit whole scope; supplied permissions and protected wording still narrow it. Prose Cleanup defaults to contextual/narration. Inspect changes before accepting them.
+Literal Cleanup detects canonical rules for `the words hung in the air`, `the tension was palpable`, and `something unreadable`, in narration. Pattern → Branch selects once; Filter Text removes matching paragraphs with explicit narration scope and Join bypasses no-hit replies. Its output is `filtered-draft` (Draft), with zero model requests; send it to Review / Publish. A unit crossing dialogue, permissions, protections or exemptions blocks atomically. Formatting Cleanup defaults to CRLF -> LF with explicit whole scope; supplied permissions and protected wording still narrow it. Prose Cleanup defaults to contextual/narration. Inspect changes before accepting them.
 
-Pattern Scan now narrows supplied permissions and retains upstream protections/exemptions. Draft Text Rules requires existing permissions or explicit scope construction and reconstructs original parent patches. Whole scope cannot expand permissions already present, including an empty span list.
+Pattern passes the Draft and its permissions unchanged while reporting occurrences. It does not prepare editable spans for Repair. Filter Text independently enforces whole-unit deletion permission and retained scan protections/exemptions. Draft Text Rules requires existing permissions or explicit scope construction and reconstructs original parent patches. Whole scope cannot expand permissions already present, including an empty span list.
 
 ## Categories and maintenance
 

@@ -364,7 +364,8 @@
         "outputKind": "guidance",
         "template": "Show only the supplied public proposed developments at arrival. They occur during the agreed downtime and preserve player agency: {{data:}}",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "developments-file": {
         "id": "developments-file",
@@ -488,7 +489,8 @@
         "outputKind": "text",
         "template": "Public downtime developments (proposed until Apply): {{data:}}",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "flow-append": {
         "id": "flow-append",

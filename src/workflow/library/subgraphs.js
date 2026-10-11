@@ -46,16 +46,20 @@ function sceneCompass(lens) {
     ], unresolved('Analysis'));
 }
 function literalCleanup() {
-    return definition('literal-cleanup', 'Literal Cleanup', 'post', 'draft', 'draft', 'candidate', 'candidate', {
-        scan: primitive('scan', 'pattern', { scope: 'narration', rules: ['the words hung in the air', 'the tension was palpable', 'something unreadable'].map((pattern, index) => ({ id: `prose-${index}`, pattern })) }),
-        repair: primitive('repair', 'repair', { mode: 'repair', strength: 'light' }),
-        validate: primitive('validate', 'validate-patches'),
-    }, { scan: wire('scan', 'entry', 'scan'), repair: wire('repair', 'scan', 'repair'), validate: wire('validate', 'repair', 'validate'), result: wire('result', 'validate', 'exit') }, [
-        parameter('scope', 'Literal scope', 'scan'), parameter('caseSensitive', 'Case-sensitive matching', 'scan'),
-        parameter('rules', 'Literal preferences', 'scan'), parameter('exemptions', 'Exemptions', 'scan'), parameter('protectedLiterals', 'Protected wording', 'scan'),
-        parameter('mode', 'Repair or inspect', 'repair'), parameter('strength', 'Repair strength', 'repair'),
-        parameter('instructions', 'Repair instructions', 'repair'), parameter('maxTokens', 'Repair completion limit', 'repair'),
-    ], unresolved('Prose'));
+    return definition('literal-cleanup', 'Literal Cleanup', 'post', 'draft', 'draft', 'filtered-draft', 'draft', {
+        scan: primitive('scan', 'pattern', { mode: 'whole-word', scope: 'narration', rules: ['the words hung in the air', 'the tension was palpable', 'something unreadable'].map((pattern, index) => ({ id: `prose-${index}`, pattern })) }),
+        branch: primitive('branch', 'branch', { artifactKind: 'draft' }),
+        filter: primitive('filter', 'filter-text', { action: 'remove', unit: 'paragraph', scope: 'narration', protectedLiterals: [] }),
+        join: primitive('join', 'join', { artifactKind: 'draft', inputs: [{ id: 'filtered', label: 'Filtered', required: false }, { id: 'bypass', label: 'No match', required: false }] }),
+    }, {
+        scan: wire('scan', 'entry', 'scan'), payload: wire('payload', 'scan', 'branch'), condition: wire('condition', 'scan', 'branch', 'matched', 'condition'),
+        selected: wire('selected', 'branch', 'filter', 'yes'), report: wire('report', 'scan', 'filter', 'matches', 'matches'),
+        filtered: wire('filtered', 'filter', 'join', 'out', 'filtered'), bypass: wire('bypass', 'branch', 'join', 'no', 'bypass'), result: wire('result', 'join', 'exit'),
+    }, [
+        parameter('scope', 'Detection scope', 'scan'), parameter('caseSensitive', 'Case-sensitive matching', 'scan'),
+        parameter('rules', 'Canonical pattern rules', 'scan'), parameter('exemptions', 'Exemptions', 'scan'), parameter('protectedLiterals', 'Protected wording', 'scan'),
+        parameter('action', 'Remove or keep matching units', 'filter'), parameter('unit', 'Line or paragraph', 'filter'), parameter('filterScope', 'Deletion scope', 'filter', 'scope'),
+    ]);
 }
 function formattingCleanup() {
     return definition('formatting-cleanup', 'Formatting Cleanup', 'post', 'draft', 'draft', 'candidate', 'candidate', {

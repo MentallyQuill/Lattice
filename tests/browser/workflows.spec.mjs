@@ -50,7 +50,7 @@ async function openFormation(page) {
     const group = page.getByRole('group', { name: 'Group: AI De-slop', exact: true });
     const open = group.getByRole('button', { name: 'Open group', exact: true });
     if (await open.count()) await open.click();
-    const scan = await operationId(page, 'pattern-scan'), repair = await operationId(page, 'repair');
+    const scan = await operationId(page, 'pattern'), repair = await operationId(page, 'repair');
     await expect(page.locator(`.pc-node-native[data-id="${scan}"]`)).toBeVisible();
     await expect(page.locator(`.pc-node-native[data-id="${repair}"]`)).toBeVisible();
 }
@@ -94,12 +94,13 @@ async function runRoot(page) {
 }
 async function artifact(page, label) {
     const leaf = preview(page);
+    await leaf.getByRole('button', { name: 'Readable preview', exact: true }).click();
     await leaf.getByRole('tab', { name: label, exact: true }).click();
     const panel = leaf.getByRole('tabpanel'); await expect(panel).toBeVisible(); return panel;
 }
 async function candidateText(page, text) {
     const panel = await artifact(page, 'candidate');
-    await expect(panel.locator('pre')).toContainText(text);
+    await expect(panel).toContainText(text);
 }
 async function expectRequests(page, actual, bound) {
     const meter = page.getByRole('button', { name: /^Open run details\./ });
@@ -109,7 +110,12 @@ async function expectRequests(page, actual, bound) {
     await expect(dialog.locator('.pc-run-summary').getByText(actual + ' of ' + bound + ' requests', { exact: true })).toBeVisible();
     await dialog.getByRole('button', { name: 'Close panel', exact: true }).click();
 }
+async function openRulesJson(page) {
+    const button = details(page).getByRole('button', { name: 'Edit Rules as JSON', exact: true });
+    if (await button.count()) await button.click();
+}
 async function saveRules(page, rules) {
+    await openRulesJson(page);
     const region = details(page);
     await region.getByLabel('Rules', { exact: true }).fill(JSON.stringify(rules, null, 2));
     await region.getByRole('button', { name: 'Save Rules', exact: true }).click();
@@ -131,56 +137,62 @@ async function canvasHistory(page, key) {
     await page.keyboard.press(key);
 }
 
-test('editing imported structured scan rules preserves findings and metadata and rejects invalid drafts', async ({ page }) => {
+test('editing canonical Pattern rules preserves counts and labels and rejects invalid drafts', async ({ page }) => {
     await page.goto('/tests/browser/harness.html'); await page.waitForFunction(() => !!window.canvasHarness);
     await installWorkflow(page, 'Reviewed AI De-slop');
     await page.evaluate(() => {
-        const node = Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === 'pattern-scan');
-        node.rules = [{ phrase: 'delve', note: 'Keep this preference', details: { category: 'wording' } }, 'weave'];
+        const node = Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === 'pattern');
+        node.rules = [{ id: 'delve', pattern: 'delve', label: 'Keep this preference' }, { id: 'weave', pattern: 'weave' }];
         node.caseSensitive = true; node.exemptions = ['delve safely']; node.protectedLiterals = ['weave'];
         window.canvasHarness.S.touchGraph(window.canvasHarness.graph); window.canvasHarness.UI.refreshIfOpen();
     });
-    await inspectOperation(page, 'pattern-scan');
+    await inspectOperation(page, 'pattern');
+    await openRulesJson(page);
     const editor = page.getByLabel('Rules', { exact: true });
     const initial = await editor.inputValue();
     await editor.focus(); await page.evaluate(() => { window.ruleEditorElement = document.activeElement; });
-    await editor.fill(JSON.stringify([...JSON.parse(initial), 'tapestry'], null, 2));
+    await editor.fill(JSON.stringify([...JSON.parse(initial), { id: 'tapestry', pattern: 'tapestry' }], null, 2));
     expect(await page.evaluate(() => document.activeElement === window.ruleEditorElement && document.contains(window.ruleEditorElement))).toBe(true);
     await details(page).getByRole('button', { name: 'Save Rules', exact: true }).click();
     const read = () => page.evaluate(async () => {
-        const node = Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === 'pattern-scan');
-        const { scanDraft } = await import('/src/workflow/repair.js?v=' + window.canvasHarness.version);
+        const node = Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === 'pattern');
+        const { scanPatternDraft } = await import('/src/workflow/operations/pattern-engine.js?v=' + window.canvasHarness.version);
+        const { patternSettingsForNode } = await import('/src/workflow/operations/pattern-nodes.js?v=' + window.canvasHarness.version);
         const text = 'Delve, delve, delve safely, weave, tapestry.';
-        return { node, scan: scanDraft({ kind: 'draft', text, source: { originalText: text } }, node) };
+        const input = { kind: 'draft', text, source: { originalText: text } }, scan = await scanPatternDraft(input, patternSettingsForNode(node).data);
+        if (!scan.ok) throw Error(JSON.stringify(scan.error));
+        return { node, matches: scan.outputs.matches.value, passthrough: scan.outputs.out === input };
     });
     let state = await read();
-    expect(state.node.rules).toEqual([{ phrase: 'delve', note: 'Keep this preference', details: { category: 'wording' } }, 'weave', 'tapestry']);
-    expect(state.scan.artifact.findings.map(f => [f.text, f.protected])).toEqual([['delve', false], ['weave', true], ['tapestry', false]]);
-    expect(state.scan.artifact.caseSensitive).toBe(true);
-    expect(state.scan.artifact.exemptions).toEqual(['delve safely']);
-    const revisedRules = JSON.parse(await editor.inputValue()); revisedRules[0].phrase = 'Delve';
+    expect(state.node.rules).toEqual([{ id: 'delve', pattern: 'delve', label: 'Keep this preference' }, { id: 'weave', pattern: 'weave' }, { id: 'tapestry', pattern: 'tapestry' }]);
+    expect(state.matches.occurrences.map(f => [f.text, f.protected])).toEqual([['delve', false], ['weave', true], ['tapestry', false]]);
+    expect(state.matches.settings.caseSensitive).toBe(true);
+    expect(state.passthrough).toBe(true);
+    expect(state.node.exemptions).toEqual(['delve safely']);
+    const revisedRules = JSON.parse(await editor.inputValue()); revisedRules[0].pattern = 'Delve';
     await saveRules(page, revisedRules);
     state = await read();
-    expect(state.node.rules[0]).toEqual({ phrase: 'Delve', note: 'Keep this preference', details: { category: 'wording' } });
-    expect(state.scan.artifact.findings.map(f => f.text)).toEqual(['Delve', 'weave', 'tapestry']);
+    expect(state.node.rules[0]).toEqual({ id: 'delve', pattern: 'Delve', label: 'Keep this preference' });
+    expect(state.matches.occurrences.map(f => f.text)).toEqual(['Delve', 'weave', 'tapestry']);
     const saved = state.node.rules;
     await editor.fill('{"phrase":');
     await details(page).getByRole('button', { name: 'Save Rules', exact: true }).click();
     await expect(editor).toHaveAttribute('aria-invalid', 'true');
-    await expect(details(page).locator('.pc-diagnostic[data-severity="error"]')).toContainText('Enter valid JSON before saving.');
+    await expect(details(page).locator('.pc-diagnostic[data-severity="error"]')).toBeVisible();
     expect((await read()).node.rules).toEqual(saved);
+    const errorText = await details(page).locator('.pc-diagnostic[data-severity="error"]').textContent();
     await page.getByLabel('Case sensitive', { exact: true }).uncheck();
     await expect(editor).toHaveValue('{"phrase":');
     await expect(editor).toHaveAttribute('aria-invalid', 'true');
-    await expect(details(page).locator('.pc-diagnostic[data-severity="error"]')).toContainText('Enter valid JSON before saving.');
+    await expect(details(page).locator('.pc-diagnostic[data-severity="error"]')).toHaveText(errorText);
     expect((await read()).node.rules).toEqual(saved);
-    await saveRules(page, ['ordinary phrase', { phrase: 'delve', note: 'retained' }]);
+    await saveRules(page, [{ id: 'ordinary', pattern: 'ordinary phrase' }, { id: 'delve', pattern: 'delve', label: 'retained' }]);
     await expect(editor).toHaveAttribute('aria-invalid', 'false');
-    expect((await read()).node.rules).toEqual(['ordinary phrase', { phrase: 'delve', note: 'retained' }]);
+    expect((await read()).node.rules).toEqual([{ id: 'ordinary', pattern: 'ordinary phrase' }, { id: 'delve', pattern: 'delve', label: 'retained' }]);
     expect(await page.evaluate(() => document.contains(window.ruleEditorElement))).toBe(true);
 });
 
-test('formation request summary follows scan mode and additional reachable repair members', async ({ page }) => {
+test('formation request summary follows inspect mode and additional reachable repair members', async ({ page }) => {
     await page.goto('/tests/browser/harness.html'); await page.waitForFunction(() => !!window.canvasHarness);
     await page.evaluate(() => {
         const c = window.canvasHarness.context;
@@ -191,9 +203,9 @@ test('formation request summary follows scan mode and additional reachable repai
     await installWorkflow(page, 'Reviewed AI De-slop');
     await fixtureRole(page, 'Prose', 'prose');
     await inspectOperation(page, 'repair');
-    await chooseControl(page, 'Mode', 'scan');
+    await chooseControl(page, 'Mode', 'inspect');
     await expectBound(page, 0);
-    await chooseControl(page, 'Mode', 'repair');
+    await chooseControl(page, 'Mode', 'contextual');
     await page.evaluate(() => {
         const { graph, S, UI } = window.canvasHarness;
         const group = Object.values(graph.groups)[0];
@@ -279,10 +291,11 @@ test('unified workflow keeps its AI De-slop primitives and preserves a focused e
     await expectBound(page, 1);
     await openFormation(page);
     expect(await page.evaluate(() => Object.keys(window.canvasHarness.graph.nodes))).toEqual(ids);
-    await inspectOperation(page, 'pattern-scan');
+    await inspectOperation(page, 'pattern');
+    await openRulesJson(page);
     const rules = page.getByLabel('Rules', { exact: true });
     await rules.focus(); await page.evaluate(() => { window.workflowEditorProbe = document.activeElement; });
-    await rules.fill(JSON.stringify(['tapestry', 'delve'], null, 2));
+    await rules.fill(JSON.stringify([{ id: 'tapestry', pattern: 'tapestry' }, { id: 'delve', pattern: 'delve' }], null, 2));
     expect(await page.evaluate(() => document.activeElement === window.workflowEditorProbe && document.contains(window.workflowEditorProbe))).toBe(true);
     await details(page).getByRole('button', { name: 'Save Rules', exact: true }).click();
     await inspectOperation(page, 'repair');
@@ -486,7 +499,8 @@ test('review controls and comparison stay usable in a narrow viewport', async ({
     await reviewFixture(page);
     await page.setViewportSize({ width: 760, height: 900 });
     await runRoot(page);
-    await expect((await artifact(page, 'candidate')).locator('pre')).toContainText('We delve.');
+    await preview(page).getByRole('button', { name: 'Source preview', exact: true }).click();
+    await expect(preview(page).locator('[data-preview-source]')).toContainText('We delve.');
     await candidateText(page, 'We explore.');
     await expect(page.getByRole('button', { name: 'Apply reviewed reply', exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -658,7 +672,8 @@ test('narrow workflow inspection and review remain opaque during selection feedb
     await page.setViewportSize({ width: 760, height: 1000 });
     for (const theme of ['obsidian', 'ash']) {
         await page.evaluate(async theme => (await import('/src/theme.js?v=' + window.canvasHarness.version)).setPreset(theme), theme);
-        await inspectOperation(page, 'pattern-scan');
+        await inspectOperation(page, 'pattern');
+    await openRulesJson(page);
         const opacity = await page.locator('.pc-inspector').evaluate(inspector => {
             const animations = inspector.getAnimations();
             const canvas = document.createElement('canvas'), context = canvas.getContext('2d');
@@ -674,11 +689,11 @@ test('narrow workflow inspection and review remain opaque during selection feedb
         expect(opacity, theme + ' must hide graph content throughout inspection feedback').toEqual([255, 255, 255]);
         const editor = page.getByLabel('Rules', { exact: true });
         await editor.focus(); await page.evaluate(() => { window.narrowWorkflowEditor = document.activeElement; });
-        await editor.fill(JSON.stringify(['delve'], null, 2));
+        await editor.fill(JSON.stringify([{ id: 'delve', pattern: 'delve' }], null, 2));
         expect(await page.evaluate(() => document.activeElement === window.narrowWorkflowEditor && document.contains(window.narrowWorkflowEditor))).toBe(true);
     }
     await details(page).getByRole('button', { name: 'Save Rules', exact: true }).click();
-    expect(await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === 'pattern-scan').rules)).toEqual(['delve']);
+    expect(await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === 'pattern').rules)).toEqual([{ id: 'delve', pattern: 'delve' }]);
     await runRoot(page);
     await expect(page.getByRole('button', { name: 'Apply reviewed reply', exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

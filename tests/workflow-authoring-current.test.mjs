@@ -32,7 +32,7 @@ test('all starters preserve collapsed visual formation without retired group or 
         }
     }
     const graph = fixtureGraph('reviewed-de-slop'); assert.equal(graph.groups['ai-de-slop'].collapsed, true);
-    assert.deepEqual(graph.groups['ai-de-slop'].members, ['pattern-scan', 'repair', 'validate-patches']);
+    assert.deepEqual(graph.groups['ai-de-slop'].members, ['pattern', 'repair', 'validate-patches']);
 });
 
 test('unpack retains inner visual membership and assigns only ungrouped children to the outer visual group', () => {

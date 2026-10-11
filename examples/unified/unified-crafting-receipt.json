@@ -291,7 +291,8 @@
         "outputKind": "guidance",
         "template": "The attempted potion recipe requires two herbs and one vial. Check BOTH accepted values in {{data:}}. If either is false, do not complete crafting or consume anything. If both are true, narrate only the attempted craft and preserve player choices.",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "source-scope-text": {
         "id": "source-scope-text",

@@ -14,7 +14,7 @@ const registry = await import('../src/workflow/node-guide-examples.js').catch(()
 test('every operation and structural guide has a detached, complete admitted example', () => {
     assert.equal(typeof registry.getNodeGuideExample, 'function');
     const keys = [...Object.keys(OPERATIONS), 'note', 'comment', 'subgraph', 'subgraph-input', 'subgraph-output'];
-    assert.equal(keys.length, 79);
+    assert.equal(keys.length, 80);
     for (const key of keys) {
         const example = registry.getNodeGuideExample(key);
         assert.ok(example, key);
@@ -87,7 +87,7 @@ test('Combine assembles a stable notes section before modern review', async () =
     assert.equal(run.settlement.terminals[0].artifact.text, 'The very very bright lantern lights North Harbor.\n\nObserved: one lantern by the harbor.');
 });
 
-for (const [key, id, kind] of [['pattern-scan', 'scan', 'draft'], ['repair', 'repair', 'patches'], ['validate-patches', 'validate', 'candidate'], ['review-gate', 'gate', 'candidate']]) test(`${key} provides an executable connected inspection target`, async () => {
+for (const [key, id, kind] of [['pattern', 'scan', 'draft'], ['repair', 'repair', 'patches'], ['validate-patches', 'validate', 'candidate'], ['review-gate', 'gate', 'candidate']]) test(`${key} provides an executable connected inspection target`, async () => {
     const example = registry.getNodeGuideExample(key), target = { workflowId: example.graph.id, instancePath: [], nodeId: id, portId: 'out' };
     const run = await syntheticRun(example.graph, undefined, target);
     assert.equal(run.requests, 0);
@@ -138,3 +138,12 @@ for (const [key, id] of [['repair', 'repair'], ['validate-patches', 'validate'],
         } finally { host.controller.dispose(); }
     });
 }
+
+test('Pattern and Filter Text guide routes repeated hits once and retains an exact final Draft', async () => {
+ const { hostHarness, retained } = await import('./helpers/pattern-routing-fixtures.mjs');
+ const graph=registry.getNodeGuideExample('filter-text').graph;
+ const h=hostHarness('First.\n\nvery very very very\n\nLast.');
+ const result=await runWorkflowForHost(graph,h.ports,h.hooks);
+ assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(h.effects.filters,1);assert.equal(h.effects.requests,0);
+ assert.equal(retained(h.outputs,'scan','matches').value.totalOccurrences,3);assert.equal(retained(h.outputs,'filter').text,'First.\n\nLast.');
+});

@@ -79,7 +79,8 @@
             "text": "Track physical positions and costs. Resolve only actions the player actually attempts; do not choose their next action."
           }
         ],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "polish": {
         "id": "polish",

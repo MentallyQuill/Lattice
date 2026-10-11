@@ -111,7 +111,8 @@
         "outputKind": "guidance",
         "template": "Explore from the current location using this known public map. Preserve established connections; reveal only what the player can encounter: {{data:}}",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "discoveries": {
         "id": "discoveries",

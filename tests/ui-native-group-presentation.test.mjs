@@ -56,7 +56,7 @@ function groupedDefinition() {
     return { ...checked.data.materializedDefinition, semanticHash: checked.data.semanticHash };
 }
 function prepared(schema = 3,native=false) {
-    const source = starterGraph('reviewed-de-slop'); source.nodes.repair.mode = 'scan';if(native){for(const [id,value]of Object.entries(source.nodes))if(value.operation==='apply-reply'){delete source.nodes[id];for(const [edge,wire]of Object.entries(source.wires))if(wire.to===id||wire.from===id)delete source.wires[edge];}withNativeBoundary(source);}const root = schema === 3 ? cloneWorkflowDocument(source).data : source;
+    const source = starterGraph('reviewed-de-slop'); source.nodes.repair.mode = 'inspect';if(native){for(const [id,value]of Object.entries(source.nodes))if(value.operation==='apply-reply'){delete source.nodes[id];for(const [edge,wire]of Object.entries(source.wires))if(wire.to===id||wire.from===id)delete source.wires[edge];}withNativeBoundary(source);}const root = schema === 3 ? cloneWorkflowDocument(source).data : source;
     const definition = groupedDefinition(), ref = { id: definition.id, version: definition.version, semanticHash: definition.semanticHash };
     if (schema === 3) { root.definitions[definitionRefKey(definition)] = definition; root.nodes.inspection = { id: 'inspection', type: 'subgraph', definition: ref, parameterOverrides: {}, roleOverrides: {}, nodeBindingOverrides: {} }; }
     let bindings = 0;
@@ -99,14 +99,14 @@ test('native ordinary Group Open DOM action and doubleclick reach presentation c
 test('actual current group Open exposes saved members and real pins and persists only local folding across reload', async () => {
     const f = await controllerFixture(), before = structuredClone(f.root), signature = workflowSignature(f.root); H.track(f.root); const history = structuredClone(H.peek(f.root)), epoch = f.views.readEditContext().sessionId;
     try {
-        assert.equal(f.root.schema, 3); assert.equal(f.root.runtime, 2); assert.equal(f.root.groups[groupId].collapsed, true); assert.equal(f.real.host.querySelector('[data-id="pattern-scan"]'), null);
+        assert.equal(f.root.schema, 3); assert.equal(f.root.runtime, 2); assert.equal(f.root.groups[groupId].collapsed, true); assert.equal(f.real.host.querySelector('[data-id="pattern"]'), null);
         const button = open(f.real.host); assert.ok(button); mouse(button, 'mousedown', 450, 150); mouse(button, 'mouseup', 450, 150);
         assert.equal(f.env.editorDraw.groups[groupId].collapsed, false); assert.ok(fold(f.real.host));
-        const member = f.real.host.querySelector('.pc-node[data-id="pattern-scan"]'); assert.ok(member, 'ordinary DOM Open makes the real member reachable'); assert.ok(member.querySelector('.pc-port[data-dir="in"][data-port="in"]')); assert.ok(member.querySelector('.pc-port[data-dir="out"][data-port="out"]'));
+        const member = f.real.host.querySelector('.pc-node[data-id="pattern"]'); assert.ok(member, 'ordinary DOM Open makes the real member reachable'); assert.ok(member.querySelector('.pc-port[data-dir="in"][data-port="in"]')); assert.ok(member.querySelector('.pc-port[data-dir="out"][data-port="out"]'));
         assert.deepEqual(f.views.readEditor().view.groupPresentation, { [groupId]: { collapsed: false } }); assert.equal(f.views.readEditContext().sessionId, epoch, 'folding cannot change the editor authority epoch');
         const saved = f.views.serialize(); assert.equal(saved.ok, true); assert.equal(saved.data.version, 1);
         const restored = createGraphViewSession({ root: f.root, activationId: 'reopened-root', ...f.preparation, persisted: saved.data }); assert.equal(restored.ok, true); assert.equal(projectEditorDraw(restored.data.readEditor()).groups[groupId].collapsed, false);
-        mouse(f.real.host.querySelector(`[data-group="${groupId}"] .pc-group-frame-head`), 'dblclick', 450, 150); assert.equal(f.env.editorDraw.groups[groupId].collapsed, true); assert.equal(f.real.host.querySelector('[data-id="pattern-scan"]'), null);
+        mouse(f.real.host.querySelector(`[data-group="${groupId}"] .pc-group-frame-head`), 'dblclick', 450, 150); assert.equal(f.env.editorDraw.groups[groupId].collapsed, true); assert.equal(f.real.host.querySelector('[data-id="pattern"]'), null);
         open(f.real.host).click(); assert.equal(f.env.editorDraw.groups[groupId].collapsed, false);
         assert.deepEqual(f.root, before); assert.equal(workflowSignature(f.root), signature); assert.deepEqual(H.peek(f.root), history); assert.equal(f.env.rootRunEpoch, 7); assert.equal(f.bindings(), 0); assert.equal(f.counters.changes, 0); assert.equal(f.counters.persist, 3);
     } finally { await f.close(); }

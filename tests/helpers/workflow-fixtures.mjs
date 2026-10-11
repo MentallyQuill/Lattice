@@ -24,6 +24,7 @@ export function fixtureLibraryWorkflow(id) {
     graph.nodes.library={id:'library',type:'subgraph',definition:{id:definition.id,version:definition.version,semanticHash:definition.semanticHash},parameterOverrides:{},roleOverrides:{},nodeBindingOverrides:{},x:410,y:140,w:260};
     wire(graph,'source','source','library','out',definition.interface[0].id);
     if(pre){add(graph,'output','guidance','pre');wire(graph,'output','library','output',definition.interface[1].id);withNativeBoundary(graph,'output');}
+    else if(id==='literal-cleanup'){delete graph.nodes.source;withNativeBoundary(graph);delete graph.wires.source;graph.wires.draft.from='library';graph.wires.draft.fromPort='filtered-draft';wire(graph,'library-source','generate-reply','library','draft','draft');}
     else{add(graph,'review','review-gate','post');add(graph,'apply','apply-reply','post');wire(graph,'review','library','review',definition.interface[1].id);wire(graph,'apply','review','apply');}
     return {ok:true,data:{graph}};
 }
@@ -35,7 +36,7 @@ export function fixtureGraph(id) {
         'native-guidance':['scene-context','smart-compactor','response-plan','guidance'],
         'structured-guidance':['compose','json-decode','select-fields','compose','guidance'],
         'literal-cleanup':['reply-snapshot','text-rules','validate-patches','review-gate','apply-reply'],
-        'reviewed-de-slop':['reply-snapshot','pattern-scan','repair','validate-patches','review-gate','apply-reply'],
+        'reviewed-de-slop':['reply-snapshot','pattern','repair','validate-patches','review-gate','apply-reply'],
     };
     if(Object.hasOwn(layouts,id)){
         const operations=layouts[id],pre=['native-guidance','structured-guidance'].includes(id),ids=id==='structured-guidance'?['compose-json','json-decode','select-fields','compose-guidance','guidance']:operations;
@@ -43,7 +44,7 @@ export function fixtureGraph(id) {
         if(id==='native-guidance'){graph.roles.Analysis={profileId:null,model:null};graph.nodes['smart-compactor'].method='compress';graph.nodes['response-plan'].instructions='Suggest scene direction and actor intentions. Preserve user agency; proposals are not established events.';}
         if(id==='structured-guidance'){graph.nodes['compose-json'].sections=[{name:'Scene',text:JSON.stringify({direction:'A quiet conversation.',constraint:'Let the user choose their next action.'},null,2)}];graph.nodes['select-fields'].fields=[{name:'direction',path:['direction']},{name:'constraint',path:['constraint']}];Object.assign(graph.nodes['compose-guidance'],{mode:'template',outputKind:'guidance',template:'Direction: {{data:/direction}}\nConstraint: {{data:/constraint}}'});}
         if(id==='literal-cleanup')Object.assign(graph.nodes['text-rules'],{inputKind:'draft',scope:'whole',rules:[{kind:'literal',pattern:'very very',replacement:'very',flags:''}]});
-        if(id==='reviewed-de-slop'){graph.roles.Prose={profileId:null,model:null};graph.nodes['pattern-scan'].rules=['a testament to','delve','tapestry'];const members=['pattern-scan','repair','validate-patches'];graph.groups['ai-de-slop']={id:'ai-de-slop',title:'AI De-slop',collapsed:true,x:410,y:140,w:260,members};for(const member of members)graph.nodes[member].inGroup='ai-de-slop';}
+        if(id==='reviewed-de-slop'){graph.roles.Prose={profileId:null,model:null};graph.nodes['pattern'].rules=['a testament to','delve','tapestry'].map((pattern,index)=>({id:'term-'+index,pattern}));Object.assign(graph.nodes.repair,{mode:'contextual',scope:'whole'});const members=['pattern','repair','validate-patches'];graph.groups['ai-de-slop']={id:'ai-de-slop',title:'AI De-slop',collapsed:true,x:410,y:140,w:260,members};for(const member of members)graph.nodes[member].inGroup='ai-de-slop';}
         return pre?withNativeBoundary(graph,'guidance'):graph;
     }
     if(id==='reflect-and-express'){

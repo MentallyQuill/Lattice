@@ -87,7 +87,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
                   "text": "Continue the current scene. Preserve established facts and leave the player free to choose."
                 }
               ],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "polish": {
               "id": "polish",
@@ -388,7 +389,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
                   "text": "Track physical positions and costs. Resolve only actions the player actually attempts; do not choose their next action."
                 }
               ],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "polish": {
               "id": "polish",
@@ -639,7 +641,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
                   "text": "Give clues through actions and observable details; preserve uncertainty around the solution."
                 }
               ],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "records": {
               "id": "records",
@@ -2022,7 +2025,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
                   "text": "Keep attraction and trust gradual. Respect boundaries and player choice; small gestures may matter without escalating the scene."
                 }
               ],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "polish": {
               "id": "polish",
@@ -2815,7 +2819,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "guidance",
               "template": "Resolve only the actual confirmed wand uses using these saved fixed or wild outcomes: {{data:}}. Preserve the ordered actors and transfers; invent no additional use. Let the player choose subsequent actions.",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             }
           },
           "wires": {
@@ -3622,7 +3627,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "guidance",
               "template": "Use only these due scheduled occurrences in this scene: {{data:}}. Respect the interruption point and preserve player choices.",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "commit-time": {
               "id": "commit-time",
@@ -3892,7 +3898,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "guidance",
               "template": "Use only these due scheduled occurrences in this scene: {{data:}}. Respect the interruption point and preserve player choices.",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "commit-time": {
               "id": "commit-time",
@@ -4163,7 +4170,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "guidance",
               "template": "Use only these due scheduled occurrences in this scene: {{data:}}. Respect the interruption point and preserve player choices.",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "commit-time": {
               "id": "commit-time",
@@ -4746,7 +4754,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "text",
               "template": "Proposed experience milestones (settle with Apply): {{data:}}",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "progress-append": {
               "id": "progress-append",
@@ -5962,7 +5971,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "text",
               "template": "Proposed soul count and level crossing (settle with Apply): {{data:}}",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "append": {
               "id": "append",
@@ -8013,7 +8023,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "guidance",
               "template": "Narrate only this attempted check using the frozen stakes, saved die and deterministic result: {{data:}}. Preserve player agency and do not change the difficulty after seeing the roll.",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "save-roll": {
               "id": "save-roll",
@@ -8049,7 +8060,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "text",
               "template": "Roll receipt (proposed until Apply): {{data:}}",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "flow-append": {
               "id": "flow-append",
@@ -8683,7 +8695,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
                   "text": ""
                 }
               ],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "spare-check": {
               "id": "spare-check",
@@ -8808,7 +8821,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
                   "text": ""
                 }
               ],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "lyrical-check": {
               "id": "lyrical-check",
@@ -9585,7 +9599,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
                   "text": ""
                 }
               ],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             }
           },
           "wires": {
@@ -10142,7 +10157,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "guidance",
               "template": "Offer a relevant callback from these existing public threads. Preserve the existing status; do not declare completion: {{data:}}",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "source-scope-text": {
               "id": "source-scope-text",
@@ -11308,7 +11324,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "text",
               "template": "Proposed observable perspectives (proposed until Apply): {{data:}}",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "flow-append": {
               "id": "flow-append",
@@ -12447,7 +12464,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "guidance",
               "template": "Show only the supplied public proposed developments at arrival. They occur during the agreed downtime and preserve player agency: {{data:}}",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "developments-file": {
               "id": "developments-file",
@@ -12571,7 +12589,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "text",
               "template": "Public downtime developments (proposed until Apply): {{data:}}",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "flow-append": {
               "id": "flow-append",
@@ -12966,7 +12985,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "guidance",
               "template": "Explore from the current location using this known public map. Preserve established connections; reveal only what the player can encounter: {{data:}}",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "discoveries": {
               "id": "discoveries",
@@ -13639,7 +13659,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "guidance",
               "template": "The attempted potion recipe requires two herbs and one vial. Check BOTH accepted values in {{data:}}. If either is false, do not complete crafting or consume anything. If both are true, narrate only the attempted craft and preserve player choices.",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "source-scope-text": {
               "id": "source-scope-text",
@@ -14971,7 +14992,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "outputKind": "text",
               "template": "In-world document packet (proposed until Apply): {{data:}}",
               "sections": [],
-              "separator": "\n\n"
+              "separator": "\n\n",
+              "budgetTokens": 0
             },
             "flow-append": {
               "id": "flow-append",
@@ -19391,6 +19413,264 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
           "definitions": {},
           "template": {
             "id": "unified-recall-memories",
+            "version": 1
+          },
+          "view": {
+            "x": 0,
+            "y": 0,
+            "zoom": 0.7
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "unified-pattern-filter-reply",
+    "number": 32,
+    "title": "Detect, route and filter a reply",
+    "goal": "Pattern counts keyword occurrences; Branch chooses once per reply; Filter Text deletes an authorized matching paragraph atomically.",
+    "packages": [
+      {
+        "kind": "lattice-workflow",
+        "schema": 2,
+        "minRuntime": 2,
+        "graph": {
+          "id": "unified-example-pattern-filter-reply",
+          "name": "Detect, route and filter a reply",
+          "description": "Pattern counts keyword occurrences; Branch chooses once per reply; Filter Text deletes an authorized matching paragraph atomically.\n\nSetup: Use the synthetic fixture examples/remastered/fixtures/pattern-filter-reply.txt as the native reply in a practice chat. No private file or auxiliary profile is required. Inspect Matched, Matches and Filter report; incomplete, blocked or empty results hold review. Copy source is the retained privacy-projected diagnostic payload, and copied reports cannot authorize deletion.\n\nInspect: On Send owns this generation. Generate Reply uses the ordinary SillyTavern connection. Auxiliary roles remain unassigned in this portable example. Review the final narrative and proposed consequences; Apply publishes a new swipe and settles staged writes. Preview and bounded runs never settle.\n\nGenerated suggestions are proposals. Quoted observations preserve source identity; notes never establish canonical events. Private records cannot be appended to public notes.",
+          "schema": 3,
+          "runtime": 2,
+          "mode": "native-unified",
+          "nodes": {
+            "send": {
+              "id": "send",
+              "type": "workflow",
+              "operation": "on-send",
+              "operationVersion": 1,
+              "title": "On Send",
+              "enabled": true,
+              "x": 80,
+              "y": 120,
+              "w": 270,
+              "h": 160,
+              "profileId": null,
+              "model": null,
+              "modelRole": null
+            },
+            "generate": {
+              "id": "generate",
+              "type": "workflow",
+              "operation": "generate-reply",
+              "operationVersion": 1,
+              "title": "Generate Reply · SillyTavern",
+              "enabled": true,
+              "x": 820,
+              "y": 120,
+              "w": 270,
+              "h": 160,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "budgetTokens": 768
+            },
+            "review": {
+              "id": "review",
+              "type": "workflow",
+              "operation": "review-publish",
+              "operationVersion": 1,
+              "title": "Review / Publish",
+              "enabled": true,
+              "x": 2670,
+              "y": 120,
+              "w": 270,
+              "h": 160,
+              "profileId": null,
+              "model": null,
+              "modelRole": null
+            },
+            "pattern": {
+              "id": "pattern",
+              "type": "workflow",
+              "operation": "pattern",
+              "operationVersion": 1,
+              "title": "Pattern",
+              "enabled": true,
+              "x": 1190,
+              "y": 120,
+              "w": 270,
+              "h": 160,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "mode": "whole-word",
+              "scope": "whole",
+              "caseSensitive": false,
+              "rules": [
+                {
+                  "id": "term-0",
+                  "pattern": "1"
+                },
+                {
+                  "id": "term-1",
+                  "pattern": "2"
+                },
+                {
+                  "id": "term-2",
+                  "pattern": "3"
+                }
+              ],
+              "exemptions": [],
+              "protectedLiterals": [],
+              "matchPolicy": "any",
+              "minOccurrences": 1,
+              "regexFlags": "",
+              "timeoutMs": 1000
+            },
+            "branch": {
+              "id": "branch",
+              "type": "workflow",
+              "operation": "branch",
+              "operationVersion": 1,
+              "title": "Branch",
+              "enabled": true,
+              "x": 1560,
+              "y": 120,
+              "w": 270,
+              "h": 160,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "artifactKind": "draft"
+            },
+            "filter": {
+              "id": "filter",
+              "type": "workflow",
+              "operation": "filter-text",
+              "operationVersion": 1,
+              "title": "Filter Text",
+              "enabled": true,
+              "x": 1930,
+              "y": 120,
+              "w": 270,
+              "h": 160,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "action": "remove",
+              "unit": "paragraph",
+              "scope": "whole",
+              "protectedLiterals": []
+            },
+            "join": {
+              "id": "join",
+              "type": "workflow",
+              "operation": "join",
+              "operationVersion": 1,
+              "title": "Join",
+              "enabled": true,
+              "x": 2300,
+              "y": 120,
+              "w": 270,
+              "h": 160,
+              "profileId": null,
+              "model": null,
+              "modelRole": null,
+              "artifactKind": "draft",
+              "inputs": [
+                {
+                  "id": "filtered",
+                  "label": "Filtered",
+                  "required": false
+                },
+                {
+                  "id": "bypass",
+                  "label": "No match",
+                  "required": false
+                }
+              ],
+              "selection": "last"
+            }
+          },
+          "wires": {
+            "wire-1": {
+              "id": "wire-1",
+              "route": "wire",
+              "from": "send",
+              "fromPort": "activation",
+              "to": "generate",
+              "toPort": "activation"
+            },
+            "wire-2": {
+              "id": "wire-2",
+              "route": "wire",
+              "from": "generate",
+              "fromPort": "draft",
+              "to": "pattern",
+              "toPort": "in"
+            },
+            "wire-3": {
+              "id": "wire-3",
+              "route": "wire",
+              "from": "pattern",
+              "fromPort": "out",
+              "to": "branch",
+              "toPort": "in"
+            },
+            "wire-4": {
+              "id": "wire-4",
+              "route": "wire",
+              "from": "pattern",
+              "fromPort": "matched",
+              "to": "branch",
+              "toPort": "condition"
+            },
+            "wire-5": {
+              "id": "wire-5",
+              "route": "wire",
+              "from": "branch",
+              "fromPort": "yes",
+              "to": "filter",
+              "toPort": "in"
+            },
+            "wire-6": {
+              "id": "wire-6",
+              "route": "wire",
+              "from": "pattern",
+              "fromPort": "matches",
+              "to": "filter",
+              "toPort": "matches"
+            },
+            "wire-7": {
+              "id": "wire-7",
+              "route": "wire",
+              "from": "filter",
+              "fromPort": "out",
+              "to": "join",
+              "toPort": "filtered"
+            },
+            "wire-8": {
+              "id": "wire-8",
+              "route": "wire",
+              "from": "branch",
+              "fromPort": "no",
+              "to": "join",
+              "toPort": "bypass"
+            },
+            "wire-9": {
+              "id": "wire-9",
+              "route": "wire",
+              "from": "join",
+              "fromPort": "out",
+              "to": "review",
+              "toPort": "draft"
+            }
+          },
+          "groups": {},
+          "roles": {},
+          "portals": {},
+          "definitions": {},
+          "template": {
+            "id": "unified-pattern-filter-reply",
             "version": 1
           },
           "view": {

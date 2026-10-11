@@ -366,7 +366,8 @@
         "outputKind": "text",
         "template": "In-world document packet (proposed until Apply): {{data:}}",
         "sections": [],
-        "separator": "\n\n"
+        "separator": "\n\n",
+        "budgetTokens": 0
       },
       "flow-append": {
         "id": "flow-append",

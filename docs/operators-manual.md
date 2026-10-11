@@ -199,7 +199,7 @@ Recall and Recall Shortcut nodes have contextual **Queue recall** and **Cancel r
 
 Operation controls follow the node's current mode. A disabled primitive retains its existing validation behavior. A subgraph wrapper instead offers **Run this system**: turning it off skips the whole system and its outputs. Optional consumers can omit those outputs; required inputs must retain legal connections. Duplicate and Delete remain in the secondary commands and right-click menu.
 
-Text Rules, selected fields, Compose sections, Context Join slots, State values and phase durations use row editors. **Edit JSON** exposes the same draft for precise or unsupported shapes. Pattern Scan retains its distinct phrase-rule JSON editor. **Save …** validates the complete candidate; unfinished JSON remains a draft across node and graph switching. Inherited values are explained when they differ from the saved setting.
+Text Rules, selected fields, Compose sections, Context Join slots, State values and phase durations use row editors. **Edit JSON** exposes the same draft for precise or unsupported shapes. Pattern terms/CSV save canonical {id,pattern,label?} rule records; regex expression rows preserve their syntax. **Save …** validates the complete candidate; unfinished JSON remains a draft across node and graph switching. Inherited values are explained when they differ from the saved setting.
 
 Nodes with one Text output have a bottom modifier tray. **Trim** and **Wrap** toggle quickly; the add menu also offers **Whitespace**, literal **Replace**, and **Unwrap fence**. Modifiers apply in order after the node produces its Text, before every downstream consumer. Each can be disabled, removed or reordered; disabling retains its settings. Settings save explicitly and all edits support graph undo. Active counts remain visible on full and compact cards. Typed Draft, Context, Data and host outputs keep their dedicated nodes.
 
@@ -479,7 +479,7 @@ Start from the material and result you need, then choose the operations between 
 | Protected context preparation | Scene Context → Smart Compactor → Response Plan → Guidance | Preservation report, pins, planned direction, call caps |
 | Combined context branches | Context sources → optional selection → Context Join → Response Plan | Duplicate/conflicting identities and reintroduction reports |
 | Deterministic editorial cleanup | Reply Snapshot → Text Rules → Validate Patches → Review Gate → Apply Reply diagnostics | Exact replacements and source freshness |
-| Model-assisted editorial repair | Reply Snapshot → Pattern Scan → Repair → Validate Patches → Review Gate → Apply Reply diagnostics | Selected spans, protected wording, candidate and model trace |
+| Detect and filter keywords | Generate Reply → Pattern → Branch → Filter Text → Join → Review / Publish | Matched Boolean, occurrence counts, atomic deletion report and final Draft |
 | Shared editorial tool | Draft → cleanup subgraph → Patches, with review in the parent | Interface, editable body settings, pinned contents, parent review path |
 
 These are processing patterns to author within a unified root. Preparation guidance reaches Generate Reply through a wire; candidate patch pipelines remain diagnostics. Publishing a result requires an owned final Draft and Review / Publish.
