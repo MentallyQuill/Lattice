@@ -444,3 +444,15 @@ test('evidence field types are validated before selecting an unresolved route', 
     assert.equal(unresolved.ok, false);
     assert.equal(unresolved.error.code, 'UNRESOLVED_TIME');
 });
+
+test('shared schedule admission normalizes revision without inventing clock scope or calendar bounds',()=>{
+    assert.equal(typeof engine.validateStorySchedules,'function');
+    const input=[{...daily,clockId:'another-clock',calendarId:'custom-calendar',minuteOfDay:2000,extra:{visibility:'private',value:null}}];
+    assert.deepEqual(data(engine.validateStorySchedules(input)),[{...input[0],revision:1}]);
+    assert.equal(Object.hasOwn(input[0],'revision'),false);
+    assert.equal(engine.validateStorySchedules(input,clock()).ok,false);
+    assert.equal(engine.validateStorySchedules([{...daily,minuteOfDay:1440}],clock()).ok,false);
+    assert.equal(engine.validateStorySchedules([{...daily,minuteOfDay:1439}],clock()).ok,true);
+    assert.equal(engine.enumerateScheduledOccurrences(clock(),2000,[{...daily,minuteOfDay:1440}]).ok,false);
+    assert.equal(engine.enumerateScheduledOccurrences(clock(),2000,[{...daily,clockId:'another-clock'}]).ok,false);
+});

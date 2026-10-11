@@ -12,7 +12,7 @@ export function enumerateScheduledOccurrences(rawClock, destination, rawSchedule
     if (!admitted.ok) return admitted;
     const clock = admitted.data;
     if (!integer(destination) || destination < clock.absoluteMinute) return fail('INVALID_DESTINATION', 'Destination must be a forward safe-integer minute.');
-    const admittedSchedules = readSchedules(rawSchedules, clock);
+    const admittedSchedules = validateStorySchedules(rawSchedules, clock);
     if (!admittedSchedules.ok) return admittedSchedules;
     const admittedOptions = readOptions(rawOptions);
     if (!admittedOptions.ok) return admittedOptions;
@@ -126,7 +126,14 @@ function readOptions(raw) {
     return { ok: true, data: options };
 }
 
-function readSchedules(raw, clock) {
+/** Intrinsic schedule admission, with exact scope/day checks only for an explicitly supplied clock. */
+export function validateStorySchedules(raw, rawClock) {
+    let clock;
+    if (rawClock !== undefined) {
+        const admittedClock = validateStoryClock(rawClock);
+        if (!admittedClock.ok) return admittedClock;
+        clock = admittedClock.data;
+    }
     const checked = cloneJsonValue(raw);
     if (!checked.ok || !Array.isArray(checked.data.value) || checked.data.value.length > 1000) return fail('INVALID_SCHEDULE', 'Schedules must be a bounded dense plain-data array.');
     const schedules = checked.data.value;
@@ -135,12 +142,12 @@ function readSchedules(raw, clock) {
         if (!record(schedule) || !identity(own(schedule, 'scheduleId'))) return fail('INVALID_SCHEDULE', 'Each schedule requires an own schedule identity.');
         if (seen.has(schedule.scheduleId)) return fail('DUPLICATE_SCHEDULE', 'Only one active definition is allowed for each schedule identity.');
         seen.add(schedule.scheduleId);
-        for (const key of ['clockId', 'calendarId']) if (Object.hasOwn(schedule, key) && schedule[key] !== clock[key]) return fail('SCHEDULE_SCOPE', 'Schedule clock and calendar must match the input clock.');
+        for (const key of ['clockId', 'calendarId']) if (Object.hasOwn(schedule, key) && (clock ? schedule[key] !== clock[key] : !identity(schedule[key]))) return fail('SCHEDULE_SCOPE', 'Schedule clock and calendar must match the input clock.');
         const revision = Object.hasOwn(schedule, 'revision') ? schedule.revision : 1;
         if (!integer(revision) || revision < 1 || (Object.hasOwn(schedule, 'order') && !Number.isSafeInteger(schedule.order))) return fail('INVALID_SCHEDULE', 'Schedule revision and order must be safe integers.');
         const kind = own(schedule, 'kind');
         if (kind === 'daily') {
-            if (!integer(own(schedule, 'minuteOfDay')) || schedule.minuteOfDay >= clock.dayLengthMinutes) return fail('INVALID_SCHEDULE', 'Daily time must be inside the authored day.');
+            if (!integer(own(schedule, 'minuteOfDay')) || clock && schedule.minuteOfDay >= clock.dayLengthMinutes) return fail('INVALID_SCHEDULE', 'Daily time must be inside the authored day.');
         } else if (kind === 'interval') {
             if (!integer(own(schedule, 'anchorMinute')) || !integer(own(schedule, 'intervalMinutes')) || schedule.intervalMinutes < 1) return fail('INVALID_SCHEDULE', 'Interval needs a nonnegative anchor and positive cadence.');
         } else if (kind === 'delay') {
@@ -159,7 +166,7 @@ export function resolveTimeAdvance(clock, proposal, rawSchedules, rawOptions = {
     const advanced = advanceStoryClock(clock, proposal);
     if (!advanced.ok) return advanced;
     const report = advanced.data;
-    const admittedSchedules = readSchedules(rawSchedules, report.previousClock);
+    const admittedSchedules = validateStorySchedules(rawSchedules, report.previousClock);
     if (!admittedSchedules.ok) return admittedSchedules;
     const schedules = admittedSchedules.data;
     let destination = report.requestedAbsoluteMinute;

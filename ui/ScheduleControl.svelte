@@ -1,0 +1,74 @@
+<script lang="ts">
+    import { updateJsonValueAtPath } from '../src/ui/json-value-authoring.js';
+    import { compileScheduleRows, durationToMinutes } from '../src/ui/schedule-authoring.js';
+    import type { ScheduleDraftState } from '../src/ui/schedule-authoring';
+    import { allocateControlRowId } from '../src/ui/control-input-adapters.js';
+    import { cloneJsonValue, stringifyJsonValue } from '../src/workflow/operations/json-data.js';
+    import type { JsonValue, JsonPath } from '../src/workflow/operations/json-data';
+    import JsonValueControl from './JsonValueControl.svelte';
+    type Row=Record<string,JsonValue>;type Unit='minutes'|'hours'|'days';
+    let {value,onchange,oninvalid,draftState,onDraftState,idPrefix,label='Schedules',dayLengthMinutes,disabled=false,error=''}:{value:JsonValue;onchange:(value:JsonValue)=>void;oninvalid?:(text:string)=>void;draftState?:ScheduleDraftState;onDraftState?:(state:ScheduleDraftState)=>void;idPrefix:string;label?:string;dayLengthMinutes?:number;disabled?:boolean;error?:string}=$props();
+    function initial(){return draftState;}
+    function initialValue(){return value;}
+    function readRows(input:JsonValue):Row[]|null{const checked=cloneJsonValue(input);return checked.ok && Array.isArray(checked.data.value) && checked.data.value.length<=1000 && checked.data.value.every(row=>row && typeof row==='object' && !Array.isArray(row) && typeof row.scheduleId==='string' && ['daily','interval','delay'].includes(String(row.kind)))?checked.data.value as Row[]:null;}
+    function encoded(input:JsonValue){const result=stringifyJsonValue(input);return result.ok?result.data.text:'';}
+    let rows=$state.raw<Row[]>((initial()?.rows as Row[])??readRows(initialValue())??[]),raw=$state(initial()?.raw??readRows(initialValue())===null),rawText=$state(initial()?.rawText??encoded(initialValue())),feedback=$state(initial()?.feedback??''),invalid=$state(initial()?.invalid??false),invalidText=$state(initial()?.invalidText??'');
+    let drafts=$state<Record<string,string>>({...initial()?.drafts}),units=$state<Record<string,Unit>>({...initial()?.units}),quantities=$state<Record<string,string>>({...initial()?.quantities}),page=$state(initial()?.page??0);
+    let draftPaths=$state.raw<Record<string,JsonPath>>({...initial()?.draftPaths});
+    const pageSize=32;
+    const fields=['scheduleId','revision','kind','clockId','calendarId','order','minuteOfDay','anchorMinute','intervalMinutes','dueMinute'];
+    const visible=$derived(rows.slice(page*pageSize,(page+1)*pageSize));
+    $effect(()=>onDraftState?.({rows,raw,rawText,feedback,invalid,invalidText,drafts:{...drafts},units:{...units},quantities:{...quantities},page,draftPaths:{...draftPaths}}));
+    function token(row:Row,key:string){return JSON.stringify(String(row.scheduleId))+':'+key;}
+    function reject(text:string,message:string){invalid=true;invalidText=text;feedback=message;oninvalid?.(text);}
+    function publish(){const result=compileScheduleRows(rows);if(!result.ok){reject(encoded(rows),result.error.message);return;}if(Object.keys(drafts).length){reject(encoded(rows),'Finish the retained schedule value drafts.');return;}invalid=false;feedback='';onchange(result.data.value);}
+    function edit(index:number,key:string,next:JsonValue){if(disabled)return;rows=rows.map((row,i)=>i===index?{...row,[key]:next}:row);publish();}
+    function number(index:number,key:string,text:string){if(disabled)return;const draftKey=token(rows[index],key);if(!/^-?(0|[1-9]\d*)$/.test(text) || !Number.isSafeInteger(Number(text))){drafts[draftKey]=text;reject(text,'Finish a safe integer minute, revision or order.');return;}delete drafts[draftKey];edit(index,key,Number(text));}
+    function numeric(row:Row,key:string){return Object.hasOwn(drafts,token(row,key))?drafts[token(row,key)]:String(row[key]??'');}
+    function duration(index:number,text:string,unit:Unit){if(disabled)return;const row=rows[index],id=String(row.scheduleId);quantities[id]=text;units[id]=unit;const key=token(row,'intervalMinutes');if(!/^(0|[1-9]\d*)(\.\d+)?$/.test(text)){drafts[key]=text;reject(text,'Finish a nonnegative duration quantity.');return;}const result=durationToMinutes(Number(text),unit,dayLengthMinutes);if(!result.ok || result.data.minutes<1){drafts[key]=text;reject(text,result.ok?'Intervals must be positive.':result.error.message);return;}delete drafts[key];edit(index,'intervalMinutes',result.data.minutes);}
+    function quantity(row:Row){const id=String(row.scheduleId),unit=units[id]??'minutes';return quantities[id]??String(Number(row.intervalMinutes)/(unit==='hours'?60:unit==='days'?(dayLengthMinutes??1):1));}
+    function optional(index:number,key:string,enabled:boolean){if(disabled)return;const row=rows[index];if(enabled){edit(index,key,key==='revision'?1:key==='order'?0:'');return;}const next={...row};delete next[key];delete drafts[token(row,key)];rows=rows.map((item,i)=>i===index?next:item);publish();}
+    function identityInput(index:number,text:string){
+        if(disabled)return;const row=rows[index],oldId=String(row.scheduleId),key=token(row,'scheduleId');
+        if(!text.trim() || text.length>256 || rows.some((item,i)=>i!==index && item.scheduleId===text)){drafts[key]=text;reject(text,'Use a unique nonempty schedule identity, at most 256 characters.');return;}
+        if(Object.keys(drafts).some(item=>item!==key && item.startsWith(JSON.stringify(oldId)+':'))){drafts[key]=text;reject(text,'Finish this schedule draft before changing identity.');return;}
+        delete drafts[key];if(Object.hasOwn(units,oldId)){units[text]=units[oldId];delete units[oldId];}if(Object.hasOwn(quantities,oldId)){quantities[text]=quantities[oldId];delete quantities[oldId];}edit(index,'scheduleId',text);
+    }
+    function kind(index:number,next:string){if(disabled)return;const row:Row={...rows[index],kind:next};
+        const required=next==='daily'?{minuteOfDay:0}:next==='interval'?{anchorMinute:0,intervalMinutes:1}:{dueMinute:0};
+        for(const [key,value] of Object.entries(required))if(!Object.hasOwn(row,key))Object.defineProperty(row,key,{value,enumerable:true,configurable:true,writable:true});
+        delete quantities[String(row.scheduleId)];delete units[String(row.scheduleId)];rows=rows.map((item,i)=>i===index?row:item);publish();}
+    function extras(row:Row){return Object.fromEntries(Object.entries(row).filter(([key])=>!fields.includes(key)));}
+    function extraEdit(index:number,next:JsonValue){if(disabled)return;if(!next || typeof next!=='object' || Array.isArray(next) || Object.keys(next).some(key=>fields.includes(key))){reject(encoded(next),'Extra metadata must be an object without dedicated timing or identity keys.');return;}delete drafts[token(rows[index],'extra')];delete draftPaths[token(rows[index],'extra')];const core=Object.fromEntries(Object.entries(rows[index]).filter(([key])=>fields.includes(key)));rows=rows.map((row,i)=>i===index?{...core,...next}:row);publish();}
+    function remove(index:number){if(disabled)return;const row=rows[index],id=String(row.scheduleId);for(const key of Object.keys(drafts))if(key.startsWith(JSON.stringify(id)+':')){delete drafts[key];delete draftPaths[key];}delete units[id];delete quantities[id];rows=rows.filter((_,i)=>i!==index);page=Math.min(page,Math.max(0,Math.ceil(rows.length/pageSize)-1));publish();}
+    function move(index:number,offset:number){if(disabled || index+offset<0 || index+offset>=rows.length)return;const next=[...rows];[next[index],next[index+offset]]=[next[index+offset],next[index]];rows=next;publish();}
+    function add(){if(disabled || rows.length>=1000)return;rows=[...rows,{scheduleId:allocateControlRowId('schedule',rows.map(row=>String(row.scheduleId))),kind:'daily',revision:1,minuteOfDay:0}];page=Math.floor((rows.length-1)/pageSize);publish();}
+    function mode(){if(disabled)return;if(raw){raw=false;return;}if(!invalid || !rawText)rawText=encoded(rows);raw=true;}
+    function rawInput(text:string){if(disabled)return;rawText=text;try{const parsed=JSON.parse(text),result=compileScheduleRows(parsed);if(!result.ok)throw Error(result.error.message);rows=result.data.value as Row[];drafts={};draftPaths={};quantities={};units={};invalid=false;feedback='';onchange(result.data.value);}catch(failure){reject(text,failure instanceof Error?failure.message:'Finish schedules JSON.');}}
+    function repairExtra(index:number,text:string){if(disabled)return;const key=token(rows[index],'extra');drafts[key]=text;try{const result=updateJsonValueAtPath(extras(rows[index]),draftPaths[key]??[],{action:'set',value:JSON.parse(text)});if(!result.ok)throw Error(result.error.message);extraEdit(index,result.data.value);}catch(failure){reject(text,failure instanceof Error?failure.message:'Finish the retained JSON value.');}}
+
+</script>
+<div class="schedules">
+    <button type="button" aria-label={raw?'Use schedule rows':'Advanced schedules JSON'} {disabled} onclick={mode}>{raw?'Use schedule rows':'Advanced JSON'}</button>
+    {#if raw}<label for={idPrefix+'-json'}>{label} JSON</label><textarea id={idPrefix+'-json'} aria-label="Schedules JSON" value={rawText} {disabled} oninput={event=>rawInput(event.currentTarget.value)}></textarea>
+    {:else}
+        <small>{rows.length} of 1,000 schedules. Clock and calendar identities are explicitly authored; daily bounds are checked against the workflow clock.</small>
+        {#each visible as row,local (row.scheduleId)}{@const index=page*pageSize+local}{@const title='Schedule '+(index+1)}
+            <fieldset {disabled}><legend>{title}</legend><label for={idPrefix+'-id-'+index}>Schedule identity</label><input id={idPrefix+'-id-'+index} aria-label={title+' identity'} value={numeric(row,'scheduleId')} oninput={event=>identityInput(index,event.currentTarget.value)}/>
+                <label for={idPrefix+'-kind-'+index}>Timing</label><select id={idPrefix+'-kind-'+index} aria-label={title+' kind'} value={row.kind} onchange={event=>kind(index,event.currentTarget.value)}><option value="daily">Daily</option><option value="interval">Repeating interval</option><option value="delay">One-time delay</option></select>
+                {#each (row.kind==='daily'?['minuteOfDay']:row.kind==='interval'?['anchorMinute']:['dueMinute']) as key}{@const name=key==='minuteOfDay'?'daily minute':key==='anchorMinute'?'anchor minute':'due minute'}<label for={idPrefix+'-'+key+'-'+index}>{name}</label><input id={idPrefix+'-'+key+'-'+index} aria-label={title+' '+name} inputmode="numeric" value={numeric(row,key)} oninput={event=>number(index,key,event.currentTarget.value)}/>{/each}
+                {#if row.kind==='interval'}<label for={idPrefix+'-quantity-'+index}>Interval quantity</label><input id={idPrefix+'-quantity-'+index} aria-label={title+' interval quantity'} inputmode="decimal" value={quantity(row)} oninput={event=>duration(index,event.currentTarget.value,units[String(row.scheduleId)]??'minutes')}/><label for={idPrefix+'-unit-'+index}>Interval unit</label><select id={idPrefix+'-unit-'+index} aria-label={title+' interval unit'} value={units[String(row.scheduleId)]??'minutes'} onchange={event=>duration(index,quantity(row),event.currentTarget.value as Unit)}><option value="minutes">Minutes</option><option value="hours">Hours</option><option value="days">Days (authored calendar)</option></select>{/if}
+                {#each ['revision','order','clockId','calendarId'] as key}<label class="check"><input type="checkbox" aria-label={title+' '+key+' enabled'} checked={Object.hasOwn(row,key)} onchange={event=>optional(index,key,event.currentTarget.checked)}/> {key==='clockId'?'Expected clock':key==='calendarId'?'Expected calendar':key}</label>{#if Object.hasOwn(row,key)}<label for={idPrefix+'-'+key+'-'+index}>{key}</label><input id={idPrefix+'-'+key+'-'+index} aria-label={title+' '+key} value={key==='revision'||key==='order'?numeric(row,key):String(row[key])} oninput={event=>key==='revision'||key==='order'?number(index,key,event.currentTarget.value):edit(index,key,event.currentTarget.value)}/>{/if}{/each}
+                <JsonValueControl value={extras(row)} onchange={next=>extraEdit(index,next)} oninvalid={(text,path)=>{if(disabled)return;drafts[token(row,'extra')]=text;draftPaths={...draftPaths,[token(row,'extra')]:[...path]};reject(text,'Finish typed schedule metadata.');}} label={title+' extra metadata'} idPrefix={idPrefix+'-extra-'+index} {disabled}/>
+                {#if Object.hasOwn(drafts,token(row,'extra'))}<label for={idPrefix+'-unfinished-'+index}>Unfinished metadata JSON</label><textarea id={idPrefix+'-unfinished-'+index} aria-label={title+' metadata unfinished JSON'} value={drafts[token(row,'extra')]} oninput={event=>repairExtra(index,event.currentTarget.value)}></textarea><button type="button" aria-label={title+' discard metadata draft'} onclick={()=>{if(disabled)return;delete drafts[token(row,'extra')];delete draftPaths[token(row,'extra')];publish();}}>Discard unfinished metadata</button>{/if}
+                <div class="actions"><button type="button" aria-label={'Move schedule '+(index+1)+' up'} disabled={disabled || index===0} onclick={()=>move(index,-1)}>Up</button><button type="button" aria-label={'Move schedule '+(index+1)+' down'} disabled={disabled || index===rows.length-1} onclick={()=>move(index,1)}>Down</button><button type="button" aria-label={'Remove schedule '+(index+1)} onclick={()=>remove(index)}>Remove</button></div>
+            </fieldset>
+        {/each}
+        {#if rows.length>pageSize}<div class="actions"><button type="button" aria-label="Previous schedules" disabled={disabled || page===0} onclick={()=>{if(!disabled)page--;}}>Previous</button><small>Page {page+1} of {Math.ceil(rows.length/pageSize)}</small><button type="button" aria-label="Next schedules" disabled={disabled || (page+1)*pageSize>=rows.length} onclick={()=>{if(!disabled)page++;}}>Next</button></div>{/if}
+        <button type="button" aria-label="Add schedule" disabled={disabled || rows.length>=1000} onclick={add}>Add schedule</button>
+    {/if}
+    {#if feedback || error}<small role="status">{feedback || error}</small>{/if}
+</div>
+<style>
+    .schedules{min-width:0}label,small{display:block;margin:5px 0;font-size:12px}small{color:var(--pc-muted);white-space:pre-wrap;overflow-wrap:anywhere}fieldset{min-width:0;border:1px solid var(--pc-border);margin:8px 0;padding:8px}input:not([type='checkbox']),select,textarea{box-sizing:border-box;width:100%;min-width:0;padding:5px;background:var(--pc-field);color:var(--pc-text);border:1px solid var(--pc-border);font:inherit}textarea{min-height:70px;resize:vertical}button{padding:4px 6px;background:var(--pc-control);color:var(--pc-text);border:1px solid var(--pc-border);font:inherit}.actions,.check{display:flex;flex-wrap:wrap;gap:4px;align-items:center}:disabled{opacity:.55}:is(input,select,textarea,button):focus-visible{outline:2px solid var(--pc-accent);outline-offset:1px}
+</style>

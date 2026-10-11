@@ -125,3 +125,6 @@ export function resolveTimeAdvance(clock: unknown, proposal: unknown, schedules:
 
 /** Validate and detach an explicitly supplied bounded story clock without advancing it. */
 export function validateStoryClock(raw:unknown):Result<StoryClock>;
+
+/** Normalize intrinsic timing/revision; optional explicit clock adds exact scope and daily day bounds. */
+export function validateStorySchedules(raw: unknown, clock?: unknown): Result<StorySchedule[]>;
