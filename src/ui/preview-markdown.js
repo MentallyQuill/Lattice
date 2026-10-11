@@ -27,6 +27,7 @@ function stateFor(window) {
     const purifier = createDOMPurify(window);
     state = { purifier, omitted: false, textCache: new Map(), contentCache: new WeakMap() };
     purifier.addHook('uponSanitizeElement', (node, data) => {
+        if (node.nodeType === 1 && data.tagName !== 'body' && !tags.includes(data.tagName)) state.omitted = true;
         if (resourceTags.has(data.tagName)) {
             state.omitted = true;
             // DOMPurify owns this inert tree. Source URLs never become active nodes.
@@ -55,9 +56,9 @@ function sanitize(text, state) {
         ALLOWED_TAGS: tags, ALLOWED_ATTR: ['href', 'title', 'start', 'open'],
         ALLOW_DATA_ATTR: false, ALLOW_ARIA_ATTR: false,
         FORBID_TAGS: ['script', 'style', 'form', 'input', 'button', 'textarea', 'select', 'option'],
-        RETURN_TRUSTED_TYPE: false,
+        RETURN_TRUSTED_TYPE: false, FORCE_BODY: true,
     });
-    return { html, omittedFormatting: state.omitted || state.purifier.removed.length > 0 };
+    return { html, omittedFormatting: state.omitted };
 }
 /** Render complete sanitizer-owned HTML; shorten input and rerender, never slice HTML. */
 export function renderPreviewMarkdown(text, window, options) {
@@ -86,6 +87,45 @@ export function renderReadableMarkdown(content, window, options) {
     if (policies?.has(maxHtmlBytes)) return policies.get(maxHtmlBytes);
     let htmlBytes = Math.min(512, maxHtmlBytes), truncated = false, omittedFormatting = false;
     const parts = [];
+    let displayContent = content, exhausted = false;
+    const reserve = bytes => {
+        if (bytes > maxHtmlBytes - htmlBytes) { truncated = true; exhausted = true; return false; }
+        htmlBytes += bytes; return true;
+    };
+    const plain = text => {
+        let end = 0;
+        for (const character of text) {
+            const escaped = ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character] ?? character;
+            const bytes = size(escaped);
+            if (bytes > maxHtmlBytes - htmlBytes) { truncated = true; exhausted = true; break; }
+            htmlBytes += bytes; end += character.length;
+        }
+        return text.slice(0, end);
+    };
+    const rows = (items, transform) => {
+        const displayed = [];
+        for (const item of items) {
+            if (exhausted || !reserve(256)) { truncated = true; break; }
+            displayed.push(transform(item));
+        }
+        return displayed;
+    };
+    if (content.kind === 'json') displayContent = { ...content, text: plain(content.text) };
+    else if (content.kind === 'unavailable') displayContent = { ...content, reason: plain(content.reason) };
+    else if (content.kind === 'pattern-matches') {
+        reserve(1024);
+        displayContent = { ...content, report: { ...content.report,
+            rules: rows(content.report.rules, rule => ({ ...rule, id: plain(rule.id), pattern: plain(rule.pattern), ...(rule.label !== undefined ? { label: plain(rule.label) } : {}) })),
+            occurrences: rows(content.report.occurrences, occurrence => ({ ...occurrence, ruleId: plain(occurrence.ruleId), text: plain(occurrence.text) })),
+            diagnostics: rows(content.report.diagnostics, diagnostic => ({ ...diagnostic, message: plain(diagnostic.message) })),
+        } };
+    } else if (content.kind === 'text-filter') {
+        reserve(1024);
+        displayContent = { ...content, report: { ...content.report,
+            units: rows(content.report.units, unit => ({ ...unit, text: plain(unit.text) })),
+            diagnostics: rows(content.report.diagnostics, diagnostic => ({ ...diagnostic, message: plain(diagnostic.message) })),
+        } };
+    }
     const messages = content.kind === 'messages' ? content.messages : null;
     const texts = messages ? messages.map(message => message.text) : content.kind === 'text' ? [content.text] : [];
     for (let index = 0; index < texts.length; index++) {
@@ -99,7 +139,7 @@ export function renderReadableMarkdown(content, window, options) {
         omittedFormatting ||= part.omittedFormatting;
         if (part.truncated) { truncated = true; break; }
     }
-    const result = Object.freeze({ parts: Object.freeze(parts), htmlBytes, truncated, omittedFormatting, omittedMessages: messages ? messages.length - parts.length : 0 });
+    const result = Object.freeze({ parts: Object.freeze(parts), displayContent, htmlBytes, truncated, omittedFormatting, omittedMessages: messages ? messages.length - parts.length : 0 });
     if (immutable) {
         policies ??= new Map(); policies.set(maxHtmlBytes, result); state.contentCache.set(content, policies);
     }

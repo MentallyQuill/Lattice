@@ -141,3 +141,68 @@ test('bounds actual message DOM including metadata wrappers and reports hidden m
         assert.match(f.host.textContent, /messages omitted from this display/);
     } finally { await f.close(); }
 });
+
+test('safe and empty prose never claims a formatting omission from synthetic parser containers', async () => {
+    for (const text of ['', 'Plain prose', '# Safe heading', '3. ordered', '<details open><summary>More</summary><p>Safe</p></details>', '[Link](https://example.test)']) assert.equal(renderPreviewMarkdown(text, window).omittedFormatting, false, text);
+    for (const text of ['<p id="removed">Safe</p>', '<b>unsupported</b>', '<script>evil()</script>', '<img alt="Picture" src="https://example.test">']) assert.equal(renderPreviewMarkdown(text, window).omittedFormatting, true, text);
+    const f = await fixture({ kind: 'messages', messages: [{ id: 'empty', role: 'user', text: '', truncated: false }], omittedMessages: 0, truncated: false });
+    try { assert.doesNotMatch(f.host.textContent, /formatting or embedded resources were omitted/); } finally { await f.close(); }
+});
+
+test('bounds escaped JSON from a real retained Data projection while preserving exact DTO text', async () => {
+    const { projectRecordedPreview } = await import('../src/ui/recorded-preview.js');
+    const content = projectRecordedPreview({ kind: 'data', format: 'structured', value: { kind: 'data', value: '&'.repeat(65500) } }).sections[0].readable;
+    const originalText = content.text;
+    const f = await fixture(content);
+    try {
+        assert.ok(bytes(f.host.innerHTML) <= 262144, `actual escaped JSON bytes: ${bytes(f.host.innerHTML)}`);
+        assert.ok(f.host.querySelector('pre').textContent.length < originalText.length);
+        assert.match(f.host.textContent, /display limit/i);
+        assert.equal(content.text, originalText, 'copy/source DTO remains exact');
+        assert.equal(renderReadableMarkdown(content, window).truncated, true);
+    } finally { await f.close(); }
+});
+
+test('bounds escaped report rows and unavailable text against one aggregate representation budget', async () => {
+    const large = '&😀界'.repeat(30000);
+    const fixtures = [
+        { kind: 'unavailable', reason: large },
+        { kind: 'pattern-matches', report: { recordType: 'pattern-matches', schemaVersion: 1, status: 'complete', matched: true, totalOccurrences: 300, matchedRuleCount: 300, rules: Array.from({ length: 300 }, (_, i) => ({ id: String(i), pattern: '&'.repeat(500), count: 1 })), occurrences: Array.from({ length: 300 }, (_, i) => ({ ruleId: String(i), ruleIndex: i, start: i, end: i + 1, text: '&'.repeat(500), protected: false, editable: true })), diagnostics: [{ code: 'diagnostic', message: large }] } },
+        { kind: 'text-filter', report: { recordType: 'text-filter', schemaVersion: 1, status: 'blocked', action: 'remove', unit: 'line', retainedUnitCount: 300, originalBodyLength: large.length, resultBodyLength: large.length, units: Array.from({ length: 300 }, (_, i) => ({ start: i, end: i + 1, text: '&'.repeat(500), blocked: false })), diagnostics: [{ code: 'diagnostic', message: large }] } },
+    ];
+    for (const content of fixtures) {
+        const original = structuredClone(content), f = await fixture(content);
+        try {
+            assert.ok(bytes(f.host.innerHTML) <= 262144, `${content.kind} actual escaped bytes: ${bytes(f.host.innerHTML)}`);
+            assert.match(f.host.textContent, /display limit/i);
+            assert.equal(f.host.textContent.includes('\ufffd'), false);
+            assert.equal(/\p{Surrogate}/u.test(f.host.textContent), false);
+            assert.deepEqual(content, original);
+            assert.ok(renderReadableMarkdown(content, window).htmlBytes <= 262144);
+        } finally { await f.close(); }
+    }
+});
+
+test('rendered prose truncation still copies the exact bounded retained Markdown', async () => {
+    const text = '[&](http://a) '.repeat(4000), content = Object.freeze({ kind: 'text', text, truncated: false });
+    assert.ok(bytes(text) <= 65536);
+    const copied = [], f = await fixture(content, { onCopyText: value => copied.push(value) });
+    try {
+        assert.match(f.host.textContent, /display limit/i);
+        assert.ok(bytes(f.host.innerHTML) <= 262144);
+        f.host.querySelector('button').click();
+        assert.deepEqual(copied, [text]);
+        assert.equal(content.text, text);
+    } finally { await f.close(); }
+});
+
+test('report diagnostics also consume the shared escaped display budget', async () => {
+    const content = { kind: 'text-filter', report: { recordType: 'text-filter', schemaVersion: 1, status: 'blocked', action: 'remove', unit: 'line', retainedUnitCount: 0, originalBodyLength: 0, resultBodyLength: 0, units: [], diagnostics: [{ code: 'unresolved', message: '&😀界'.repeat(30000) }] } };
+    const f = await fixture(content);
+    try {
+        assert.ok(bytes(f.host.innerHTML) <= 262144);
+        assert.match(f.host.textContent, /display limit/i);
+        assert.ok(renderReadableMarkdown(content, window).displayContent.report.diagnostics[0].message.length < content.report.diagnostics[0].message.length);
+        assert.equal(/\p{Surrogate}/u.test(f.host.textContent), false);
+    } finally { await f.close(); }
+});

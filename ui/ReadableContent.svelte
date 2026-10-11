@@ -7,16 +7,17 @@
         onCopyMessage?: (message: PreviewMessage) => void | Promise<void>;
     } = $props();
     let rendered = $derived(renderReadableMarkdown(content, window));
+    let displayed = $derived(rendered.displayContent);
 </script>
 
 <div class="pc-readable-content">
-    {#if content.kind === 'text'}
-        {#if onCopyText}<button type="button" onclick={() => onCopyText?.(content.kind === 'text' ? content.text : '')}>Copy {content.truncated ? 'partial text' : 'text'}</button>{/if}
+    {#if displayed.kind === 'text'}
+        {#if onCopyText}<button type="button" onclick={() => onCopyText?.(content.kind === 'text' ? content.text : '')}>Copy {displayed.truncated ? 'partial text' : 'text'}</button>{/if}
         <div class="pc-readable-prose">{@html rendered.parts[0]?.html ?? ''}</div>
-        {#if content.truncated}<p class="pc-readable-note">Only part of the retained text is displayed.</p>{/if}
-    {:else if content.kind === 'messages'}
-        {#if !content.messages.length}<p class="pc-readable-note">No captured messages</p>{/if}
-        {#each content.messages.slice(0, rendered.parts.length) as message, index (message.id)}
+        {#if displayed.truncated}<p class="pc-readable-note">Only part of the retained text is displayed.</p>{/if}
+    {:else if displayed.kind === 'messages'}
+        {#if !displayed.messages.length}<p class="pc-readable-note">No captured messages</p>{/if}
+        {#each displayed.messages.slice(0, rendered.parts.length) as message, index (message.id)}
             <article class="pc-readable-message" data-preview-message>
                 <header><strong>{message.speaker ?? message.role}</strong><span>{message.id}</span>{#if message.timestamp}<span>{message.timestamp}</span>{/if}
                 {#if onCopyMessage}<button type="button" onclick={() => onCopyMessage?.(message)}>Copy {message.truncated ? 'partial message' : 'message'}</button>{/if}</header>
@@ -24,21 +25,21 @@
                 {#if message.truncated || rendered.parts[index].truncated}<p class="pc-readable-note">Only part of this message is displayed.</p>{/if}
             </article>
         {/each}
-        {#if content.omittedMessages + rendered.omittedMessages}<p class="pc-readable-note">{content.omittedMessages + rendered.omittedMessages} messages omitted from this display.</p>{/if}
-        {#if content.snapshotOmittedMessages}<p class="pc-readable-note">{content.snapshotOmittedMessages} messages omitted from the recording.</p>{/if}
-    {:else if content.kind === 'json'}
-        <pre class="pc-readable-json">{content.text}</pre>
-        {#if content.truncated}<p class="pc-readable-note">Only part of the retained JSON is displayed.</p>{/if}
-    {:else if content.kind === 'pattern-matches'}
-        <p>{content.report.totalOccurrences ?? 'Unknown'} occurrences · {content.report.matchedRuleCount ?? 'Unknown'} matched rules</p>
-        <table><thead><tr><th>Rule</th><th>Pattern</th><th>Count</th></tr></thead><tbody>{#each content.report.rules as rule}<tr><td>{rule.label ?? rule.id}</td><td><code>{rule.pattern}</code></td><td>{rule.count ?? 'Unknown'}</td></tr>{/each}</tbody></table>
-        <details><summary>Occurrences</summary>{#each content.report.occurrences as occurrence}<p>{occurrence.ruleId} · {occurrence.start}–{occurrence.end}</p><pre>{occurrence.text}</pre>{/each}</details>
-        {#each content.report.diagnostics as diagnostic}<p class="pc-readable-note">{diagnostic.message}</p>{/each}
-    {:else if content.kind === 'text-filter'}
-        <p>{content.report.status === 'complete' ? 'Selected removals' : 'Proposed removals'} · {content.report.retainedUnitCount} retained units</p>
-        {#each content.report.units as unit}<pre>{unit.text}</pre>{/each}
-        {#each content.report.diagnostics as diagnostic}<p class="pc-readable-note">{diagnostic.message}</p>{/each}
-    {:else}<p class="pc-readable-note">{content.reason}</p>{/if}
+        {#if displayed.omittedMessages + rendered.omittedMessages}<p class="pc-readable-note">{displayed.omittedMessages + rendered.omittedMessages} messages omitted from this display.</p>{/if}
+        {#if displayed.snapshotOmittedMessages}<p class="pc-readable-note">{displayed.snapshotOmittedMessages} messages omitted from the recording.</p>{/if}
+    {:else if displayed.kind === 'json'}
+        <pre class="pc-readable-json">{displayed.text}</pre>
+        {#if displayed.truncated}<p class="pc-readable-note">Only part of the retained JSON is displayed.</p>{/if}
+    {:else if displayed.kind === 'pattern-matches'}
+        <p>{displayed.report.totalOccurrences ?? 'Unknown'} occurrences · {displayed.report.matchedRuleCount ?? 'Unknown'} matched rules</p>
+        <table><thead><tr><th>Rule</th><th>Pattern</th><th>Count</th></tr></thead><tbody>{#each displayed.report.rules as rule}<tr><td>{rule.label ?? rule.id}</td><td><code>{rule.pattern}</code></td><td>{rule.count ?? 'Unknown'}</td></tr>{/each}</tbody></table>
+        <details><summary>Occurrences</summary>{#each displayed.report.occurrences as occurrence}<p>{occurrence.ruleId} · {occurrence.start}–{occurrence.end}</p><pre>{occurrence.text}</pre>{/each}</details>
+        {#each displayed.report.diagnostics as diagnostic}<p class="pc-readable-note">{diagnostic.message}</p>{/each}
+    {:else if displayed.kind === 'text-filter'}
+        <p>{displayed.report.status === 'complete' ? 'Selected removals' : 'Proposed removals'} · {displayed.report.retainedUnitCount} retained units</p>
+        {#each displayed.report.units as unit}<pre>{unit.text}</pre>{/each}
+        {#each displayed.report.diagnostics as diagnostic}<p class="pc-readable-note">{diagnostic.message}</p>{/each}
+    {:else}<p class="pc-readable-note">{displayed.reason}</p>{/if}
     {#if rendered.omittedFormatting}<p class="pc-readable-note">Some formatting or embedded resources were omitted for safe display.</p>{/if}
     {#if rendered.truncated}<p class="pc-readable-note">Formatting display limit reached; only part is shown. Copy uses the underlying retained text.</p>{/if}
 </div>

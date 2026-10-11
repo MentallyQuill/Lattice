@@ -3,7 +3,9 @@ export interface PreviewMarkdownOptions { maxHtmlBytes?: number; }
 export interface RenderedPreviewMarkdown { readonly html: string; readonly truncated: boolean; readonly omittedFormatting: boolean; }
 export interface RenderedReadableMarkdown {
     readonly parts: readonly RenderedPreviewMarkdown[];
-    /** Sanitized prose bytes plus conservative reserved UI chrome bytes. */
+    /** Display-only escaped strings/rows; source DTO and copy values remain unchanged. */
+    readonly displayContent: ReadableContent;
+    /** Sanitized prose/escaped text bytes plus conservative reserved UI chrome and row bytes. */
     readonly htmlBytes: number;
     readonly truncated: boolean;
     readonly omittedFormatting: boolean;
