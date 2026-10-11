@@ -37,6 +37,8 @@ Find a tool by name or browse the shelf, then drag it onto the canvas. Nodes hav
 
 *Search, grab, place. Configure the tool in Details.*
 
+Enter a keyword such as `Elara` in Pattern, or a list such as `1, 2, 3`. The editor shows the parsed entries before Save. Pattern and Filter Text can detect repeated terms and remove matching paragraphs without an auxiliary model request. Inspect results in **Readable**, or choose **Source** for the retained diagnostic payload. [Configure and inspect nodes](docs/operators-manual.md#familiar-node-settings).
+
 Connect output pins to compatible input pins to decide what feeds what. Follow the colored connections to understand the process, and inspect recorded results at each step instead of guessing what went into the prompt.
 
 ![Cursor connects a scene source to JSON Decode, then connects its Data output to Select Fields](docs/images/connect-nodes.gif)

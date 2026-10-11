@@ -6,6 +6,14 @@ This reference covers the registered reusable operations, their implemented mode
 
 For an in-app explanation, select a node and click **?** beside its name in Details. The guide shows the current node, practical steps, and explanations of its visible settings. Expand **Example** to explore a complete graph rendered with the current canvas theme. **Add example to current tab** inserts a compatible example as one undoable edit. Each example lists the chat, model connection, or Workflow Data setup it needs. Examples that need sample files include copyable **Setup data**. Adding an example does not run it.
 
+## Enter node settings
+
+Creation and Details use the same control grammar. Use term lists, named rows, schema fields, typed values and path segments for the supported settings; **Advanced JSON** edits their precise canonical shape. Parsed entries and errors appear before Save. Saving validates one graph edit, retains stable row IDs and checks any changed pins. Cancel leaves the saved configuration unchanged. Saving settings makes no model request and starts no workflow.
+
+For terms, separate entries with commas or newlines and quote phrases containing commas. `Elara` is one string term; `1, 2, 3` and `["1", "2", "3"]` are equivalent three-term lists. `001`, `true` and `null` remain string terms. `"red, blue", green` means two terms. Blank cells are reported as ignored, and duplicate authored terms remain separate rules. Malformed JSON-looking lists retain an error; choose **Plain text** explicitly to keep brackets or commas inside one literal phrase.
+
+CSV applies to declared list or table controls. Prose, templates, file paths and regex expressions keep their syntax. Expression rows never split a quantifier such as `a{1,3}`. Numeric lists, including Collection thresholds, validate numbers; path rows preserve literal keys and use array indices only where the consuming node supports them. Typed values distinguish null, false, zero, empty strings, arrays and objects; optional defaults can remain absent. A form that cannot represent an advanced shape keeps it in Advanced JSON instead of dropping fields. Table import uses explicit column mappings and **Add rows** or **Replace rows**, previews the result, then uses the ordinary Save action.
+
 ## Read the graph's types
 
 | Artifact | Carries |
@@ -356,7 +364,7 @@ Deterministically read or propose state with zero model calls. **Value** returns
 
 ### Pattern
 
-Detect configured patterns without changing the Draft or its permissions. Both detection and routing make zero model requests. Rules are canonical records, for example `[{"id":"arrival","pattern":"Elara","label":"Arrival"}]`; IDs must be unique. Terms/CSV entry compiles these records when saving. Regex expression rows retain their expression syntax.
+Detect configured patterns without changing the Draft or its permissions. Both detection and routing make zero model requests. Enter `Elara` through **Terms / CSV** to see one parsed rule; use comma/newline lists or JSON arrays for several terms. Save compiles canonical records with stable IDs. Advanced JSON can supply explicit records such as `[{"id":"arrival","pattern":"Elara","label":"Arrival"}]`; IDs must be unique. Regex expression rows retain their expression syntax.
 
 **Controls:** Mode (literal, whole-word, regex), Scope (authorized, whole, narration, dialogue), Case sensitive, Rules, Exemptions, Protected literals, Match policy (any/all), Minimum occurrences, Regex flags (m/s), Timeout (100–2,000 ms). Defaults are whole-word, whole, case-insensitive, any and one occurrence. Empty rules always return false. Whole-word matches Unicode word boundaries; `though` does not match `thought`. Regex expressions omit slash delimiters; Unicode and global matching are implicit.
 
@@ -380,7 +388,7 @@ Try the [synthetic detection/filter lesson](../examples/pattern-filter-reply.lat
 
 ### JSON Decode
 
-Add **JSON Decode** from Derive, then choose **Mode → Parse** or **Check** in Details. **parse** converts raw JSON Text to Data. **check** receives Data and validates it. An optional Schema is entered as raw JSON text; blank means no schema. Markdown fences are not part of a raw JSON payload.
+Add **JSON Decode** from Derive, then choose **Mode → Parse** or **Check** in Details. **parse** converts raw JSON Text to Data. **check** receives Data and validates it. An optional Schema uses supported schema fields or Advanced JSON; blank means no schema. The node retains validated schema JSON text when saved. Markdown fences are not part of a raw JSON payload.
 
 **Controls:** Mode (`parse`/`check`), Schema, **Save Schema**.
 
@@ -394,7 +402,7 @@ The supported schema subset includes `type`, `enum`, `const`, `properties`, `req
 
 Read paths from Data and emit a new Data object with chosen names. Use arrays of string keys and numeric array indices to address nested values.
 
-**Controls:** Fields JSON, **Save Fields**. Up to 128 unique named mappings.
+**Controls:** Field-mapping rows, key/index path segments, an optional typed default and **Save Fields**. Advanced JSON retains the same mapping contract. Up to 128 unique named mappings.
 
 ```json
 [

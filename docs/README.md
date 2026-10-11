@@ -19,6 +19,8 @@ Lattice beta helps you shape scenes, give characters their own direction, and bu
 
 The [repository README](../README.md) introduces capabilities and starter workflows. Screenshots illustrate unified publication and synthetic diagnostic authoring fixtures. Development research and execution records in the research/superpowers directories are historical working material, not the operator reference.
 
+For ordinary node settings, start with [familiar entry](operators-manual.md#familiar-node-settings): plain terms, quoted CSV, rows and typed fields, with Advanced JSON available. [Readable and Source](operators-manual.md#read-preview) show the retained content and its diagnostic envelope. The [Pattern lesson](unified-workflows.md#detect-and-filter-a-reply) combines counted detection, one branch choice and paragraph filtering with zero auxiliary calls.
+
 ## Workflow design records
 
 These detailed design documents consolidate the unified-workflow discussion, including its original proposals and open choices. The [unified operator guide](unified-workflows.md) describes the implemented authoring path and current limits; do not treat every optional design alternative as an available control.

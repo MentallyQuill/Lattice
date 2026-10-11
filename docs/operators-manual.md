@@ -207,6 +207,14 @@ After a run, Preview retains the modified output, raw source and modifier trace 
 
 Mode, input/output type and other controls may change a node's pins. An edit that would make an existing wire incompatible is rejected without changing the node or its connections. Disconnect or replace the affected wire, then change the setting.
 
+### Familiar node settings
+
+Use the same friendly settings during configured creation and in Details. Pattern's **Rules → Terms / CSV** accepts `Elara` directly and shows one parsed entry. Enter `1, 2, 3`, one term per line, or `["1", "2", "3"]` for three string terms. Quote a phrase containing commas: `"red, blue", green` produces two entries. Choose **Plain text** when a single term should include commas or JSON-looking characters. A malformed list keeps the draft and shows an error until corrected.
+
+Rows retain their generated IDs when you edit text or reorder them. Use **Advanced JSON** for explicit IDs or supported advanced fields. Regex expression rows preserve commas, braces and backslashes. CSV import is available only for declared lists/tables; it does not reinterpret prose, templates or paths. Table import requires column mappings and an explicit Add/Replace choice, shows the parsed rows, and saves through the ordinary graph transaction.
+
+Schema controls expose their supported fields; typed values expose string, number, boolean, null, object and array. Paths use separate key/index segments, so a key containing a dot or comma remains one key. Optional defaults distinguish absence from an explicit null, false, zero or empty string. Invalid drafts survive format switches and rejected saves. **Save …** validates the candidate and changed pins, while Cancel leaves the saved node unchanged. Configuration saves make no model requests or workflow runs.
+
 ### Open a node guide
 
 Select a node, then click **?** beside its name in Details. The guide explains what it does, how to wire it, and what each setting means. Expand **Example** to inspect a small graph in the current theme. **Add example to current tab** inserts a compatible example with one Undo step; check its bindings and any required setup before running it.
@@ -308,6 +316,12 @@ Use ordinary SillyTavern **Send** with the configured unified document open and 
 An active node receives a bright ring. Failed nodes have a red ring and dimmed contents; blocked descendants and other nodes have distinct statuses. Stop cancels the active run; a late response cannot revive it.
 
 ### Read Preview
+
+**Readable** is the default presentation. Text, Guidance, Draft and Candidate show their exact retained wording with supported formatting. Context shows ordered messages with visible boundaries and retained role/identity labels. When a Draft actually retains context, its separate **Captured context** section starts collapsed. Empty captured messages and unavailable context remain distinct; automatic reply artifacts do not recover prior private host context. Generic Data displays its JSON value. Pattern shows per-rule counts, total occurrences and expandable occurrence rows; Filter shows selected units and any blocked/empty diagnostics.
+
+Choose **Source** to inspect the selected artifact's entire retained diagnostic envelope, including retained metadata and wrapper fields. It is privacy-projected and does not reveal private host tokens or reacquire current host data. Omitted records, JSON prefixes and display-truncated payloads retain explicit notices; **Copy partial source** does not promise valid complete JSON. **Copy text**, **Copy message** and **Copy source** copy the exact respective retained content. Preview Readable/Source is independent of settings' Advanced JSON.
+
+Changing modes, expanding retained content, copying and pinning only change inspection. They make no model request, scan Worker, source capture, new workflow run or host commit. **Run to here** and **Apply reviewed reply** remain separate explicit actions.
 
 Select a node to inspect its recorded output. A single-output node shows its target directly in the Preview title; a selector appears only when there are multiple choices. Review / Publish exposes the root Host result. The artifact tabs show the sections recorded for that target, including input/output data where available. **Following selection** updates Preview as you explore. Click **Pin output** to hold the current output while inspecting another node; click **Pinned output** again to resume following.
 
