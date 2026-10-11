@@ -4,6 +4,8 @@
     import {parseControlInput} from '../src/ui/control-input-contracts.js';
     import type {ControlInputFormat} from '../src/ui/control-input-contracts';
     import {cloneJsonValue} from '../src/workflow/operations/json-data.js';
+    import {controlTableImportFields} from '../src/ui/control-table-import.js';
+    import type {ControlImportState} from '../src/ui/control-table-import';
     import type {SchemaDraftState} from '../src/ui/schema-authoring';
     import type {JsonValue} from '../src/workflow/operations/json-data';
     import DiagnosticMessage from './DiagnosticMessage.svelte';
@@ -14,12 +16,15 @@
     import ModifierStack from './ModifierStack.svelte';
     import WorkflowData from './WorkflowData.svelte';
     import type { StructuredDraftState, DetailBindingMode, DetailControl, DetailEditResponse, DetailModifier, DetailSelection, NodeDetailsActions, NodeDetailsView } from './detail-types';
+    const inputError=(error:{code:string;message:string})=>error.code==='INVALID_CONTROL_JSON'?error.code+': '+error.message:error.message;
     let { view, actions = {}, idPrefix = 'pc-node-details', openGuide }: { view: NodeDetailsView | null; actions?: NodeDetailsActions; idPrefix?: string; openGuide?: () => void } = $props();
     type LocalDraft = { text: string; format?:ControlInputFormat; typedValue?: unknown; error: string; pending: boolean; editor?: DetailControl['editor']; representation?: 'json-text' | 'json-value'; artifactKind?: string; required?: boolean; boundaryId?: string; boundaryDirection?: 'input' | 'output'; modifierType?: string; helperKey?:string };
     let drafts = $state<Record<string, LocalDraft>>({});
     let errors = $state<Record<string, string>>({});
     // View/navigation state never owns the canonical text of an untouched control.
     let schemaStates = $state.raw<Record<string, SchemaDraftState>>({});
+    let importStates=$state.raw<Record<string,ControlImportState>>({});
+    function importState(control:DetailControl,state:ControlImportState){if(!view||view.readOnly||!actions.editControl||drafts[control.key]?.pending)return;const checked=cloneJsonValue(state);if(!checked.ok)return;importStates={...importStates,[control.key]:checked.data.value as unknown as ControlImportState};}
     let structuredStates=$state.raw<Record<string,StructuredDraftState>>({});
     let structuredEpoch=$state<Record<string,number>>({});
     let identity = '', revision = '', support = '';
@@ -30,7 +35,7 @@
     const modifierGenerations = new Map<string, number>();
     const draftGenerations = new Map<string, number>();
     // The mounted workspace inspector owns drafts; qualified nodes never share them.
-    const draftCache = new Map<string, { contract: string; drafts: typeof drafts; schemas: typeof schemaStates; structures: typeof structuredStates }>();
+    const draftCache = new Map<string, { contract: string; drafts: typeof drafts; schemas: typeof schemaStates; structures: typeof structuredStates; imports: typeof importStates }>();
     const settledDrafts = (values: typeof drafts) => Object.fromEntries(Object.entries(values).map(([key, value]) => [key, { ...value, pending: false }]));
     function supportedDrafts(values: typeof drafts, node: NodeDetailsView | null) {
         if (!node) return {};
@@ -65,15 +70,16 @@
             if (changedSelection || nextSupport !== support) { boundaryDraftSequence++; modifierEpoch++; }
             if (changedSelection) {
                 draftVisit++;
-                if (identity) draftCache.set(identity, { contract: support, drafts: untrack(() => settledDrafts(drafts)), schemas: untrack(() => ({...schemaStates})), structures: untrack(()=>({...structuredStates})) });
+                if (identity) draftCache.set(identity, { contract: support, drafts: untrack(() => settledDrafts(drafts)), schemas: untrack(() => ({...schemaStates})), structures: untrack(()=>({...structuredStates})), imports:untrack(()=>({...importStates})) });
             }
             const incompatible = !changedSelection && nextSupport !== support;
             const retained = draftCache.get(next), changedContract = incompatible || !!retained && retained.contract !== nextSupport;
             let restored = changedSelection ? retained?.drafts ?? {} : untrack(() => drafts);
             let restoredSchemas = changedSelection ? retained?.schemas ?? {} : untrack(() => schemaStates);
+            let restoredImports=changedSelection?retained?.imports??{}:untrack(()=>importStates);
             let restoredStructures=changedSelection?retained?.structures??{}:untrack(()=>structuredStates);
             if (changedContract) {
-                draftCache.delete(next); restoredSchemas = {}; restoredStructures={};
+                draftCache.delete(next); restoredSchemas = {}; restoredStructures={}; restoredImports={};
                 // Boundary label/required fields keep the same contract when the allowed
                 // artifact kinds change. Revalidate only that field; other incompatible
                 // editor drafts must remain discarded when an old contract returns.
@@ -83,6 +89,7 @@
             identity = next; revision = nextRevision; support = nextSupport; requests.clear(); sequence++; errors = {}; modifierBusy = false; modifierBusySequence++;
             // A revision expires writes, while unsaved text still belongs to this node.
             drafts = supportedDrafts(restored, view);
+            importStates=Object.fromEntries(Object.entries(restoredImports).filter(([key])=>view?.controls.some(control=>control.key===key && !!control.inputSpec && controlTableImportFields(control.inputSpec).length)));
             structuredStates=Object.fromEntries(Object.entries(restoredStructures).filter(([key])=>view?.controls.some(control=>control.key===key && ['questions','schedules'].includes(control.inputSpec?.editor??''))));
             schemaStates = Object.fromEntries(Object.entries(restoredSchemas).filter(([key])=>view?.controls.some(control=>control.key===key && control.inputSpec?.editor==='schema')));
         }
@@ -189,7 +196,7 @@
         if(state.invalid){nextDraftGeneration(control.key);requests.delete(control.key);const current=drafts[control.key];drafts={...drafts,[control.key]:{...current,text:current?.text??textFor(control),error:state.feedback,pending:false,editor:control.editor,representation:control.representation}};}
     }
     function save(control: DetailControl) {
-        if (!view || view.readOnly || !actions.editControl) return;
+        if (!view || view.readOnly || !actions.editControl || importStates[control.key]?.open || drafts[control.key]?.pending) return;
         const text = drafts[control.key]?.text ?? textFor(control);
         if(structuredStates[control.key]?.invalid)return;
         if(text!=='' && schemaStates[control.key]?.invalid)return;
@@ -201,7 +208,7 @@
         if (control.inputSpec) {
             const input = typed === undefined ? {format:control.inputSpec.editor==='path'?'json':drafts[control.key]?.format ?? (control.structured ? 'json' : formatFor(control)) as ControlInputFormat,text} : {format:'rows' as const,value:typed as JsonValue};
             const parsed = parseControlInput(control.inputSpec,{...input,currentValue:control.value as JsonValue});
-            if(!parsed.ok){drafts={...drafts,[control.key]:{...drafts[control.key],text,error:parsed.error.message,pending:false,editor:control.editor,representation:control.representation}};return;}
+            if(!parsed.ok){drafts={...drafts,[control.key]:{...drafts[control.key],text,error:inputError(parsed.error),pending:false,editor:control.editor,representation:control.representation}};return;}
             value=parsed.data.value;
         } else if (typed !== undefined) value=typed;
         else if (control.editor === 'json') {
@@ -499,7 +506,7 @@
 </section>
 
 {#snippet controlEditor(control: DetailControl)}
-    <DetailControlEditor {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} structuredIdentity={view ? selectionIdentity(view)+':'+view.revision+':'+draftContract(view,control.key)+':'+(structuredEpoch[control.key]??0) : ''} structuredDraft={structuredStateFor(control)} onStructuredDraft={state=>structuredDraft(control,state)} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key) : ''} schemaDraft={schemaStates[control.key]} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
+    <DetailControlEditor draftFormat={drafts[control.key]?.format} importState={importStates[control.key]} onImportState={state=>importState(control,state)} importIdentity={selectionIdentity(view!)+draftContract(view!,control.key)} {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} structuredIdentity={view ? selectionIdentity(view)+':'+view.revision+':'+draftContract(view,control.key)+':'+(structuredEpoch[control.key]??0) : ''} structuredDraft={structuredStateFor(control)} onStructuredDraft={state=>structuredDraft(control,state)} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key) : ''} schemaDraft={schemaStates[control.key]} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
 {/snippet}
 
 <style>

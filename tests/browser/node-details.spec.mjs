@@ -82,3 +82,13 @@ test('comment inspection preserves an invalid node draft for the mounted workspa
     await expect(editor).toHaveValue('{"unfinished":');
     await expect(editor).toHaveAttribute('aria-invalid', 'true');
 });
+
+
+test('invalid Pattern row entry blocks table import and retains the exact local source',async({page})=>{
+ await setup(page);await page.evaluate(async()=>{const h=window.canvasHarness,{operationDefaults}=await import('/src/workflow/catalog.js?v='+h.version);const graph={id:'n7-details-pattern',schema:3,runtime:2,mode:'native-unified',roles:{},nodes:{pattern:{...operationDefaults('pattern'),id:'pattern',type:'workflow',phase:'post',x:80,y:80}},wires:{},definitions:{},portals:{},groups:{}};await h.activate(graph);h.canvas.select({kind:'node',id:'pattern'});await h.settle();});
+ const panel=details(page),before=await page.evaluate(()=>structuredClone(window.canvasHarness.graph));
+ await panel.getByRole('button',{name:'Edit Rules as JSON',exact:true}).click();const source=panel.getByLabel('Rules',{exact:true});await source.fill('[{"unfinished":');
+ await expect(panel.getByRole('button',{name:'Import Rules table',exact:true})).toBeDisabled();
+ await panel.getByRole('button',{name:'Save Rules',exact:true}).click();await expect(source).toHaveValue('[{"unfinished":');
+ expect(await page.evaluate(()=>window.canvasHarness.graph)).toEqual(before);expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+});

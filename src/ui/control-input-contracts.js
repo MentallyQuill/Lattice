@@ -78,7 +78,8 @@ function compileRecords(spec, entries, currentValue) {
     const ids = new Set();
     for (let index = 0; index < entries.length; index++) {
         const entry = entries[index];
-        if (!entry || typeof entry !== 'object' || Array.isArray(entry) || Object.keys(entry).some(key => !['id', field, 'label'].includes(key)) || typeof entry.id !== 'string' || !entry.id.trim() || entry.id.length > 128 || ids.has(entry.id) || typeof entry[field] !== 'string' || !entry[field].trim() || entry[field].length > (spec.limits.maxStringLength ?? 2048) || (kind === 'extract' || Object.hasOwn(entry, 'label')) && (typeof entry.label !== 'string' || entry.label.length > 2048)) return fail('INVALID_CONTROL_RECORD', 'Use unique IDs and bounded text in the current record shape.', { row: index + 1, path: [index] });
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry) || Object.keys(entry).some(key => !['id', field, 'label'].includes(key)) || typeof entry.id !== 'string' || !entry.id.trim() || entry.id.length > 128 || ids.has(entry.id) || typeof entry[field] !== 'string' || !entry[field].trim() || entry[field].length > (spec.limits.maxStringLength ?? 2048) || (kind === 'extract' || Object.hasOwn(entry, 'label')) && (typeof entry.label !== 'string' || entry.label.length > (kind === 'pattern' ? 128 : 2048))) return fail('INVALID_CONTROL_RECORD', 'Use unique IDs and bounded text in the current record shape.', { row: index + 1, path: [index] });
+        if (kind === 'pattern' && spec.id.endsWith(':regex')) { try { new RegExp(entry.pattern, 'u'); } catch { return fail('INVALID_CONTROL_RECORD', 'Use a valid Unicode regular expression.', {row:index + 1, path:[index,'pattern']}); } }
         ids.add(entry.id);
     }
     return good({ value: entries });

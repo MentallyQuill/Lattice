@@ -304,3 +304,41 @@ test('prepared exact helper choices expose inspected roles and available profile
  const root={definitions:{[definitionRefKey(ref)]:definition},roles:{}},before=structuredClone(root),choices=iterationHelperChoices(root,[{id:'chosen',name:'Chosen connection'}]);
  assert.equal(choices.length,1);assert.deepEqual(choices[0].ref,ref);assert.deepEqual(choices[0].bindings.roles.map(row=>row.role),['decision']);assert.deepEqual(choices[0].bindings.roles[0].profile.options,[{value:'chosen',label:'Chosen connection'}]);assert.deepEqual(root,before);
 });
+
+
+test('Pattern shared admission matches Unicode regex syntax and 128-character labels, retaining Extract 2048',()=>{
+ const spec=mode=>contracts.resolveControlInputSpec({operation:'pattern',controls:{mode},key:'rules',descriptor:{type:'array',items:'record',max:128,default:[]}});
+ for(const format of ['rows','json','plain','csv']){
+  const result=contracts.parseControlInput(spec('regex'),format==='rows'?{format,value:[{id:'x',pattern:'['}]}:{format,text:format==='json'?'[{"id":"x","pattern":"["}]':'['});
+  assert.equal(result.ok,false,'invalid regex '+format);
+ }
+ assert.equal(contracts.parseControlInput(spec('literal'),{format:'rows',value:[{id:'x',pattern:'[',label:'x'.repeat(128)}]}).ok,true);
+ assert.equal(contracts.parseControlInput(spec('literal'),{format:'rows',value:[{id:'x',pattern:'literal',label:'x'.repeat(129)}]}).ok,false);
+ const extract=contracts.resolveControlInputSpec({operation:'extract',key:'patterns',descriptor:{type:'array',items:'record',max:64,default:[]}});
+ assert.equal(contracts.parseControlInput(extract,{format:'rows',value:[{id:'x',literal:'[',label:'x'.repeat(2048)}]}).ok,true);
+});
+
+
+test('exhaustive dynamic catalog projection covers all 33 structured operation families and every declared visibility branch',async()=>{
+ const {OPERATIONS,operationFor}=await import('../src/workflow/catalog.js');const {projectNodeControls}=await import('../src/ui/node-control-projection.js');const {introspectionDefaults}=await import('../src/workflow/introspection/native.js');
+ const expected=['smart-compactor','pattern','filter-text','repair','compose','text-rules','json-decode','select-fields','style-transfer','format-transfer','terminology-map','context','state','condition','join','collect','confidence-gate','for-each','decision','extract','model-call','revise-draft','format','read-file','write-file','project-document','time-trigger','advance-time','item-mention-trigger','collection','recall','hotkey-arm','context-join'].sort(),exposed=new Set(),seen=new Set();
+ for(const [operation,entry]of Object.entries(OPERATIONS)){
+  const dimensions=new Map(Object.entries(entry.controlDescriptors).filter(([,d])=>d.type==='enum').map(([k,d])=>[k,d.values]));
+  for(const d of Object.values(entry.controlDescriptors))if(d.visibleWhen){const values=dimensions.get(d.visibleWhen.key)??[entry.defaults[d.visibleWhen.key]];dimensions.set(d.visibleWhen.key,[...new Set([...values,d.visibleWhen.value])]);}
+  let variants=[{}];for(const [key,values]of dimensions)variants=variants.flatMap(base=>values.map(value=>({...base,[key]:value})));
+  for(const variant of variants){const defaults=['state','context','memory'].includes(operation)?introspectionDefaults(operation,variant.mode):entry.defaults,controls={...defaults,...variant};
+   for(const phase of ['pre','post']){
+    const effective=operationFor({type:'workflow',operation,...controls},{phase})??entry;
+    const fields=projectNodeControls(operation,controls,{phase});
+    for(const field of fields){if(!['json','lines'].includes(field.editor))continue;exposed.add(operation);seen.add(field.inputSpec.id);
+     assert.ok(['list','path','rows','value','schema','questions','schedules','hotkey','helper'].includes(field.inputSpec.editor),operation+'.'+field.key);
+     const resolved=contracts.resolveControlInputSpec({operation,controls,key:field.key,descriptor:effective.controlDescriptors[field.key]});assert.deepEqual(field.inputSpec,resolved);
+    }
+   }
+  }
+ }
+ assert.deepEqual([...exposed].sort(),expected);
+ for(const id of ['state.updates:value','state.durations:curve','context.pins:focus','condition.value','filter-text.protectedLiterals'])assert.ok(seen.has(id),id);
+ for(const type of ['array','object','json-value'])assert.throws(()=>contracts.resolveControlInputSpec({operation:'future-operation',key:'future',descriptor:{type,default:null}}),/Declare an input contract/);
+ assert.equal(contracts.parseControlInput(projectNodeControls('condition',{value:null},{}).find(x=>x.key==='value').inputSpec,{format:'rows',value:null}).data.value,null);
+});

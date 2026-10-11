@@ -5,6 +5,9 @@
     import DiagnosticMessage from './DiagnosticMessage.svelte';
     import TermListControl from './TermListControl.svelte';
     import HotkeyControl from './HotkeyControl.svelte';
+    import ControlImport from './ControlImport.svelte';
+    import {controlTableImportFields} from '../src/ui/control-table-import.js';
+    import type {ControlImportState,ControlImportDraft} from '../src/ui/control-table-import';
     import StructuredControl from './StructuredControl.svelte';
     import DecisionQuestionsControl from './DecisionQuestionsControl.svelte';
     import ScheduleControl from './ScheduleControl.svelte';
@@ -19,8 +22,9 @@
     import type { JsonPath } from '../src/workflow/operations/json-data';
     import type { SchemaDraftState } from '../src/ui/schema-authoring';
     import type { DetailControl } from './detail-types';
-    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, structuredDraft, onStructuredDraft, structuredIdentity = '', schemaDraft, onSchemaDraft, schemaIdentity = '', onvalue, onnumber, onsave, saveButton = true, format = 'auto', onformat }: {
-        control: DetailControl; text: string; structuredIdentity?:string; structuredDraft?:StructuredDraftState; onStructuredDraft?:(state:StructuredDraftState)=>void; schemaIdentity?:string; schemaDraft?:SchemaDraftState; onSchemaDraft?:(state:SchemaDraftState)=>void; saveButton?: boolean; format?: ControlInputFormat; onformat?: (format:ControlInputFormat)=>void; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
+    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, structuredDraft, onStructuredDraft, structuredIdentity = '', schemaDraft, onSchemaDraft, schemaIdentity = '', importState, onImportState, importIdentity = '', onvalue, onnumber, onsave, saveButton = true, format = 'auto', draftFormat, onformat }: {
+        importState?:ControlImportState; onImportState?:(state:ControlImportState)=>void; importIdentity?:string;
+        control: DetailControl; text: string; structuredIdentity?:string; structuredDraft?:StructuredDraftState; onStructuredDraft?:(state:StructuredDraftState)=>void; schemaIdentity?:string; schemaDraft?:SchemaDraftState; onSchemaDraft?:(state:SchemaDraftState)=>void; saveButton?: boolean; format?: ControlInputFormat; draftFormat?:ControlInputFormat; onformat?: (format:ControlInputFormat)=>void; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
         ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; onvalue: (value: unknown) => void; onnumber: (input: HTMLInputElement) => void; onsave: () => void;
     } = $props();
     let termMode = $state(false);
@@ -62,13 +66,26 @@
         const result = formatJsonValueDraftAtPath(typed.data.value, path, source);
         if (result.ok) typedText(result.data.text); else switchError = result.error.message;
     }
+    let localImportState=$state.raw<ControlImportState>({open:false,draft:{text:'',delimiter:',',action:'replace',columns:{}}});
+    const tableState=$derived(importState??localImportState);
+    const tableSupported=$derived(!!control.inputSpec && controlTableImportFields(control.inputSpec).length>0);
+    // Valid row editors already admit typed candidates. Avoid reparsing every row keystroke;
+    // entering import review validates the full current candidate again.
+    const tableValue=$derived(draftValue!==undefined&&!tableState.open?{ok:true as const,data:{value:draftValue as JsonValue}}:control.inputSpec?parseControlInput(control.inputSpec,draftValue===undefined?{format:control.structured?draftFormat??(recordEntry&&termMode?format:'json'):format,text,currentValue:control.value as JsonValue}:{format:'rows',value:draftValue as JsonValue,currentValue:control.value as JsonValue}):null);
+    function tableStateChange(state:ControlImportState){if(disabled||pending)return;const checked=cloneJsonValue(state);if(!checked.ok)return;localImportState=checked.data.value as unknown as ControlImportState;onImportState?.(localImportState);}
+    function tableDraft(draft:ControlImportDraft){tableStateChange({open:true,draft});}
+    function confirmTable(value:JsonValue){if(disabled||pending||!tableValue?.ok)return;typedChange(value);tableStateChange({...tableState,open:false});}
     const entry = $derived(control.inputSpec?.editor === 'list');
     const shortChoices = () => control.editor === 'enum' && (control.options?.length ?? 0) > 1 && (control.options?.length ?? 0) <= 3 && control.options!.every(option => option.label.length <= 10);
     const provenance = () => control.effective !== undefined && control.effective !== text && control.source !== 'Saved setting' ? control.source : '';
 </script>
 
 <div class:pc-control-number={control.editor === 'number'} class="pc-detail-control">
-    {#if entry || recordEntry && termMode}
+    {#if tableSupported && !tableState.open}<button type="button" aria-label={'Import '+control.label+' table'} disabled={disabled||pending||!tableValue?.ok} onclick={()=>{if(tableValue?.ok)tableStateChange({...tableState,open:true});}}>Import {control.label} table</button>{/if}
+    {#if tableSupported && tableState.open && control.inputSpec}
+        {#key importIdentity}<ControlImport spec={control.inputSpec} value={tableValue?.ok?tableValue.data.value:[]} draft={tableState.draft} onDraft={tableDraft} onConfirm={confirmTable} onCancel={()=>tableStateChange({...tableState,open:false})} disabled={disabled||pending||!tableValue?.ok}/>{/key}
+        {#if !tableValue?.ok}<small role="alert">Repair the current {control.label} entry before importing.</small>{/if}
+    {:else if entry || recordEntry && termMode}
         {#if recordEntry}<button type="button" aria-label={'Use '+control.label+' rows'} {disabled} onclick={switchRows}>Use rows</button>{/if}
         <TermListControl {control} {text} {format} {draftValue} {disabled} {idPrefix} {error} {ontext} {onformat} />
         {#if switchError}<small role="status">{switchError}</small>{/if}
@@ -116,7 +133,7 @@
             <textarea id={idPrefix + '-editor'} aria-label={control.label} value={text} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.value); }}></textarea>
         {/if}
     {/if}
-    {#if saveButton && (control.editor === 'json' || control.editor === 'lines')}<button type="button" data-save-control={control.key} disabled={disabled || pending || structured && !!(structuredDraft ?? localStructuredDraft)?.invalid || control.inputSpec?.editor==='schema' && text!=='' && !!(schemaDraft ?? localSchemaDraft)?.invalid} onclick={() => { if (!disabled && !pending && !(structured && (structuredDraft ?? localStructuredDraft)?.invalid) && !(control.inputSpec?.editor==='schema' && text!=='' && (schemaDraft ?? localSchemaDraft)?.invalid)) onsave(); }}>{pending ? 'Validating…' : 'Save ' + control.label}</button>{/if}
+    {#if saveButton && (control.editor === 'json' || control.editor === 'lines')}<button type="button" data-save-control={control.key} disabled={disabled || pending || tableState.open || structured && !!(structuredDraft ?? localStructuredDraft)?.invalid || control.inputSpec?.editor==='schema' && text!=='' && !!(schemaDraft ?? localSchemaDraft)?.invalid} onclick={() => { if (!disabled && !pending && !tableState.open && !(structured && (structuredDraft ?? localStructuredDraft)?.invalid) && !(control.inputSpec?.editor==='schema' && text!=='' && (schemaDraft ?? localSchemaDraft)?.invalid)) onsave(); }}>{pending ? 'Validating…' : 'Save ' + control.label}</button>{/if}
     {#if control.help}<small>{control.help}</small>{/if}
     {#if control.exposureNote}<small>{control.exposureNote}</small>{:else if provenance()}<small>{provenance()} · Effective: {control.effective}</small>{/if}
     {#if error}<div id={idPrefix + '-error'} class="pc-detail-error"><DiagnosticMessage issue={error} context={{ inputLabel: control.label }} /></div>{/if}

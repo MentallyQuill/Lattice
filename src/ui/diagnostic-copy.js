@@ -22,6 +22,7 @@ const variants = [
     ['STALE_SOURCE', /memory/i, { id: 'memory-source-changed', severity: 'error', title: 'Memory evidence changed', message: 'The memory evidence changed after it was read. Inspect the current memory and its source before preparing another change.' }],
 ];
 const extraCopy = {
+    INVALID_CONTROL_JSON: {id:'control-json',severity:'error',title:'Check the JSON entry',message:'Enter valid JSON before saving. Finish the current entry or choose a supported input format.'},
     APPLY_UNVERIFIED: { id: 'apply-unverified', severity: 'warning', title: 'Reply application is not confirmed', message: 'Reply application could not be confirmed. Check the current reply and save status before making another write.' },
     ACCEPTED_SAVE_UNVERIFIED: { id: 'accepted-save-unverified', severity: 'warning', title: 'Saving is not confirmed', message: 'The accepted reply remains. The save outcome could not be confirmed. Check the stored data before making another write.' },
     PUBLICATION_UNKNOWN: unverified, EFFECT_WRITE_UNKNOWN: unverified,

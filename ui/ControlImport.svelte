@@ -6,7 +6,8 @@
     import { controlTableImportFields, parseControlTableImport } from '../src/ui/control-table-import.js';
     import { parseDelimitedInput } from '../src/ui/delimited-input.js';
     import { cloneJsonValue } from '../src/workflow/operations/json-data.js';
-    let { spec, value, draft, onDraft, onConfirm, onCancel }: {
+    let { spec, value, draft, onDraft, onConfirm, onCancel, disabled = false }: {
+        disabled?:boolean;
         spec: ControlInputSpec;
         value: JsonValue;
         draft?: ControlImportDraft;
@@ -38,10 +39,11 @@
     const result = $derived(attempted ? parseControlTableImport(spec, importDraft.text, { delimiter: importDraft.delimiter, columns: importDraft.columns, action: importDraft.action, currentValue: value }) : undefined);
     const canConfirm = $derived(reviewed && result?.ok && reviewedValue === JSON.stringify(value) && reviewedSpec === JSON.stringify(spec));
     function change(next: ControlImportDraft) {
+        if(disabled)return false;
         reviewed = false;
-        const checked = cloneJsonValue(next);
+        const checked = cloneJsonValue({open:true,draft:next});
         if (!checked.ok) { boundaryError = 'Table draft exceeds the bounded JSON budget. Shorten the pasted text.'; return false; }
-        importDraft = checked.data.value as unknown as ControlImportDraft;
+        importDraft = (checked.data.value as unknown as {draft:ControlImportDraft}).draft;
         boundaryError = '';
         onDraft?.({ ...importDraft, columns: { ...importDraft.columns } });
         return true;
@@ -52,13 +54,14 @@
         change({ ...importDraft, columns });
     }
     function review() {
+        if(disabled)return;
         attempted = true;
         reviewedValue = JSON.stringify(value);
         reviewedSpec = JSON.stringify(spec);
         reviewed = true;
     }
     function confirm() {
-        if (!canConfirm || !result?.ok) return;
+        if (disabled || !canConfirm || !result?.ok) return;
         reviewed = false;
         onConfirm(result.data.value);
     }
@@ -68,18 +71,18 @@
 <section class="control-import" aria-label="Table import">
     <p>Paste a table with a header row. Map each supported field to a column, then review before confirming.</p>
     <div class="import-options">
-        <label>Delimiter <select aria-label="Table delimiter" value={importDraft.delimiter} onchange={event => change({ ...importDraft, delimiter: event.currentTarget.value as ',' | '\t' })}>
+        <label>Delimiter <select {disabled} aria-label="Table delimiter" value={importDraft.delimiter} onchange={event => change({ ...importDraft, delimiter: event.currentTarget.value as ',' | '\t' })}>
             <option value=",">CSV (commas)</option><option value={'\t'}>TSV (tabs)</option>
         </select></label>
-        <label>Action <select aria-label="Import action" value={importDraft.action} onchange={event => change({ ...importDraft, action: event.currentTarget.value as 'add' | 'replace' })}>
+        <label>Action <select {disabled} aria-label="Import action" value={importDraft.action} onchange={event => change({ ...importDraft, action: event.currentTarget.value as 'add' | 'replace' })}>
             <option value="add">Add rows</option><option value="replace">Replace rows</option>
         </select></label>
     </div>
-    <label>Table data <textarea aria-label="Table data" value={importDraft.text} rows="6" spellcheck="false" oninput={event => { if (!change({ ...importDraft, text: event.currentTarget.value })) event.currentTarget.value = importDraft.text; }}></textarea></label>
+    <label>Table data <textarea {disabled} aria-label="Table data" value={importDraft.text} rows="6" spellcheck="false" oninput={event => { if (!change({ ...importDraft, text: event.currentTarget.value })) event.currentTarget.value = importDraft.text; }}></textarea></label>
     <p class="import-help">Paths use JSON arrays of exact keys or indices. Required uses true or false; defaults use JSON values. Blank optional typed cells stay absent.</p>
     <div class="import-columns">
         {#each fields as field}
-            <label>{field} column <select aria-label={'Map ' + field + ' column'} value={importDraft.columns[field] ?? ''} onchange={event => mapColumn(field, event.currentTarget.value)}>
+            <label>{field} column <select {disabled} aria-label={'Map ' + field + ' column'} value={importDraft.columns[field] ?? ''} onchange={event => mapColumn(field, event.currentTarget.value)}>
                 <option value="">Omit column</option>
                 {#each headers as header}<option value={header}>{header}</option>{/each}
             </select></label>
@@ -98,9 +101,9 @@
         </div>
     {/if}
     <div class="import-actions">
-        <button type="button" onclick={review} disabled={!fields.length || !!boundaryError}>Review import</button>
-        <button type="button" onclick={confirm} disabled={!canConfirm || !!boundaryError}>Confirm import</button>
-        <button type="button" onclick={() => onCancel?.()}>Cancel import</button>
+        <button type="button" onclick={review} disabled={disabled || !fields.length || !!boundaryError}>Review import</button>
+        <button type="button" onclick={confirm} disabled={disabled || !canConfirm || !!boundaryError}>Confirm import</button>
+        <button type="button" {disabled} onclick={() => {if(!disabled)onCancel?.();}}>Cancel import</button>
     </div>
 </section>
 

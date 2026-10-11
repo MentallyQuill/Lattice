@@ -50,13 +50,16 @@ test('simplified inspector keeps modifier edits undoable and compact confined to
 test('real JSON Decode schema saves as text and survives history',async({page})=>{
     await setup(page);
     await page.evaluate(async()=>{const h=window.canvasHarness;h.canvas.select({kind:'node',id:'json-decode'});await h.settle();});
-    const schema=page.getByLabel('Schema',{exact:true});
+    await page.getByLabel('Schema schema enabled',{exact:true}).check();
+    await page.getByRole('button',{name:'Edit Schema schema as JSON',exact:true}).click();
+    const schema=page.getByLabel('Schema schema JSON',{exact:true});
     const value='{ "type": "object" }'; await schema.fill(value);
     await page.getByRole('button',{name:'Save Schema',exact:true}).click();
     expect(await page.evaluate(()=>window.canvasHarness.graph.nodes['json-decode'].schema)).toBe(value);
     await page.getByRole('button',{name:'Undo',exact:true}).click();
     expect(await page.evaluate(()=>typeof window.canvasHarness.graph.nodes['json-decode'].schema)).toBe('string');
-    await expect(schema).toHaveValue('');
+    expect(await page.evaluate(()=>window.canvasHarness.graph.nodes['json-decode'].schema)).toBe('');
+    await expect(page.getByLabel('Schema schema enabled',{exact:true})).not.toBeChecked();
     await page.getByRole('button',{name:'Redo',exact:true}).click();
     await expect(schema).toHaveValue(value);
 });
@@ -113,3 +116,15 @@ for(const theme of ['lattice','ash']) for(const state of ['model','curve','reado
         expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
     });
 }
+
+
+test('shared table import remains local and cancelling preserves the ordinary inspector and graph',async({page})=>{
+ await setup(page);await page.evaluate(async()=>{const h=window.canvasHarness,{operationDefaults}=await import('/src/workflow/catalog.js?v='+h.version);await h.activate({id:'n7-overhaul-import',schema:3,runtime:2,mode:'native-unified',roles:{},nodes:{fields:{...operationDefaults('select-fields'),id:'fields',type:'workflow',x:80,y:80}},wires:{},definitions:{},portals:{},groups:{}});h.canvas.select({kind:'node',id:'fields'});await h.settle();});
+ const panel=page.getByRole('region',{name:'Node details',exact:true}),before=await page.evaluate(()=>structuredClone(window.canvasHarness.graph));
+ await panel.getByRole('button',{name:'Import Fields table',exact:true}).click();await panel.getByLabel('Table data',{exact:true}).fill('Name,Path\nOne,invalid');
+ await panel.getByLabel('Map name column',{exact:true}).selectOption('Name');await panel.getByLabel('Map path column',{exact:true}).selectOption('Path');await panel.getByRole('button',{name:'Review import',exact:true}).click();
+ await expect(panel.getByRole('alert')).toContainText('Row 2, cell 2');await expect(panel.getByRole('button',{name:'Save Fields',exact:true})).toBeDisabled();
+ await panel.getByRole('button',{name:'Cancel import',exact:true}).click();await expect(panel.getByRole('button',{name:'Save Fields',exact:true})).toBeEnabled();
+ await panel.getByRole('button',{name:'Import Fields table',exact:true}).click();await expect(panel.getByLabel('Table data',{exact:true})).toHaveValue('Name,Path\nOne,invalid');
+ expect(await page.evaluate(()=>window.canvasHarness.graph)).toEqual(before);expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+});

@@ -316,3 +316,10 @@ test('reserved R Recall conflicts name Run to here while duplicate shortcuts kee
  let reads=0;const accessor=api.presentDiagnostic({code:'RECALL_HOTKEY_CONFLICT',get message(){reads++;return 'R is reserved for Run to here. Choose a different key.';}});
  assert.equal(reads,0);assert.match(accessor.message,/another active Recall Shortcut/);
 });
+
+
+test('INVALID_CONTROL_JSON uses actionable static authoring copy without revealing raw draft or exception text',()=>{
+ for(const source of [{code:'INVALID_CONTROL_JSON',message:'private diary sk-secret'},'INVALID_CONTROL_JSON: private diary sk-secret']){
+  const view=api.presentDiagnostic(source,{inputLabel:'Sections'});assert.match(view.message,/Enter valid JSON/);assert.equal(view.technical.code,'INVALID_CONTROL_JSON');assert.doesNotMatch(JSON.stringify(view),/diary|sk-secret/);
+ }
+});

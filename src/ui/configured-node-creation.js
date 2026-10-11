@@ -1,7 +1,7 @@
 import {parseControlInput} from './control-input-contracts.js?v=0.27.0';
 import {prepareIterationBindings} from './iteration-bindings.js?v=0.27.0';
 import {projectNodeControls} from './node-control-projection.js?v=0.27.0';
-import {OPERATIONS,operationDefaults,describeOperation} from '../workflow/catalog.js?v=0.27.0';
+import {OPERATIONS,operationDefaults,describeOperation,phaseForNode} from '../workflow/catalog.js?v=0.27.0';
 import {cloneDefinitionData,definitionRefKey} from '../workflow/definition-data.js?v=0.27.0';
 import {inspectDefinitionGraph} from '../workflow/graph-validation.js?v=0.27.0';
 import {freeze} from '../workflow/record-data.js?v=0.27.0';
@@ -30,7 +30,7 @@ const factories={
 /** Discovery only: accurate declared pins, with no manufactured executable settings or identities. */
 export function deferredNodeDescription(operation,controls={}){const factory=factories[operation],base=OPERATIONS[operation];return factory&&base?{descriptor:base,ports:factory({...base.defaults,...controls})}:null;}
 export function nodeNeedsConfiguration(operation,controls={}){
- if(['decision','advance-time','json-decode','extract','model-call','format','read-file','write-file','project-document'].includes(operation))return true;
+ if(['decision','advance-time','json-decode','extract','model-call','format','read-file','write-file','project-document','smart-compactor','pattern','filter-text','repair','compose','text-rules','select-fields','style-transfer','format-transfer','terminology-map','context','state','condition','join','collect','confidence-gate','revise-draft','collection','context-join'].includes(operation))return true;
  if(!Object.hasOwn(factories,operation))return false;
  const preset=workflowDataPresetFor(operation),checked=cloneDefinitionData(controls,{operation}),base=OPERATIONS[operation];
  if(!preset||!checked.ok||!controls||Array.isArray(controls)||typeof controls!=='object'||Object.keys(controls).some(key=>!base.controls.includes(key)))return true;
@@ -39,7 +39,9 @@ export function nodeNeedsConfiguration(operation,controls={}){
 }
 /** Explicit configuration starts from the current effective stage; fixed operations and stage-specific helper containers lock it. */
 export function configuredCreationStage(operation,mode,effectivePhase,inDefinition=false,controls={}){
- const declared=operation==='extract' && (controls.inputKind ?? OPERATIONS[operation].defaults.inputKind)!=='text' ? 'post' : OPERATIONS[operation]?.phase,containerStage=inDefinition&&['native-pre','native-post'].includes(mode)?mode.slice(7):null;
+ const node={type:'workflow',...operationDefaults(operation),...controls},graph={mode:'native-unified'};
+ const pre=phaseForNode(graph,{...node,phase:'pre'}),post=phaseForNode(graph,{...node,phase:'post'});
+ const declared=pre && !post ? 'pre' : post && !pre ? 'post' : undefined,containerStage=inDefinition&&['native-pre','native-post'].includes(mode)?mode.slice(7):null;
  return {phase:containerStage??(['pre','post'].includes(declared)?declared:effectivePhase==='post'?'post':'pre'),phaseLocked:!!containerStage||['pre','post'].includes(declared)};
 }
 export function iterationHelperChoices(root,profiles=[]){
