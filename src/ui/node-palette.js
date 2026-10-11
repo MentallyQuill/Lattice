@@ -52,6 +52,7 @@ const metadata = {
     'terminology-map': ['Canonical terms', 'tm', 'M3 5h7v14H3zM14 5h7v14h-7zM10 12h4m-2-2 2 2-2 2'],
     'text-rules': ['Revision', 'tr', 'M3 5h18M8 5v16m-4 0h8M16 12h5m-2-2 2 2-2 2M16 18h5'],
     pattern: ['Analysis', 'ps', 'M16 10a6 6 0 1 0-12 0 6 6 0 0 0 12 0Zm-1 5 6 6'],
+    'filter-text': ['Revision', 'tf', 'M3 4h18l-7 8v8l-4-2v-6ZM3 22h4m10 0h4'],
     'validate-patches': ['Validation', 'vp', groups.Validation],
     'json-decode': ['Parsing', 'jd', groups.Parsing],
     'select-fields': ['Extraction', 'sf', groups.Extraction],

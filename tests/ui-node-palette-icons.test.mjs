@@ -14,8 +14,8 @@ import { compiled } from './helpers/svelte-compile.mjs';
 const operations = Object.keys(OPERATIONS);
 const fallback = paletteForOperation('unknown-operation-for-icon-contract').icon;
 
-test('all 74 active operations have explicit purpose icons instead of the common cube fallback', () => {
-    assert.equal(operations.length, 74, 'The complete active catalog is covered');
+test('all 75 active operations have explicit purpose icons instead of the common cube fallback', () => {
+    assert.equal(operations.length, 75, 'The complete active catalog is covered');
     assert.deepEqual(operations.filter(id => !paletteForOperation(id).icon || paletteForOperation(id).icon === fallback), [], 'Operations missing a purpose icon');
 });
 

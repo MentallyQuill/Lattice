@@ -6,7 +6,7 @@ import * as guide from '../src/ui/node-guide-content.js';
 
 test('every selectable operation and structural node offers practical guide content', () => {
     const keys = [...Object.keys(OPERATIONS), 'note', 'comment', 'subgraph', 'subgraph-input', 'subgraph-output'];
-    assert.equal(keys.length, 79);
+    assert.equal(keys.length, 80);
     for (const key of keys) {
         const entry = guide.getNodeGuide(key);
         assert.ok(entry, `${key} has a guide`);
@@ -124,4 +124,20 @@ test('System and Compose guides explain skipped typed contributions and budgets'
     for (const meaning of [/Text.*Guidance/i, /required/i, /skip/i, /empty/i]) assert.match(sections, meaning);
     assert.match(guide.describeGuideControl('compose', 'budgetTokens') ?? '', /budget.*token|token.*budget/i);
     assert.match(guide.describeGuideControl('compose', 'budgetTokens') ?? '', /overflow|exceed/i);
+});
+
+test('Filter Text guide explains live reports, atomic units and held review without model requests', () => {
+    const entry=guide.getNodeGuide('filter-text');
+    assert.ok(entry, 'Filter Text has practical guide content');
+    assert.equal(entry.title, 'Filter Text');
+    const explanation=[entry.summary,...entry.howTo].join(' ');
+    for(const meaning of [/live.*Pattern.*report/i,/same Draft/i,/zero model requests/i,/atomic/i,/blocked.*empty/i,/Review.*Publish/i]) assert.match(explanation,meaning);
+    const action=guide.describeGuideControl('filter-text','action');
+    assert.match(action,/Remove.*matching/i);assert.match(action,/Keep.*nonmatching/i);
+    const unit=guide.describeGuideControl('filter-text','unit');
+    assert.match(unit,/LF.*CRLF.*CR/);assert.match(unit,/paragraph.*blank.*separator/i);assert.match(unit,/retained.*unchanged/i);
+    const scope=guide.describeGuideControl('filter-text','scope');
+    assert.match(scope,/independent.*Pattern.*scan/i);assert.match(scope,/whole.*unit|unit.*entire/i);assert.match(scope,/permission/i);
+    const protections=guide.describeGuideControl('filter-text','protectedLiterals');
+    assert.match(protections,/Pattern.*Draft.*Filter/i);assert.match(protections,/no partial/i);
 });
