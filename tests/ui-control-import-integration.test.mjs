@@ -129,8 +129,8 @@ function detail(root, id = 'node', revision = 'r1') {
     const node = root.nodes[id], phase = node.phase ?? 'pre';
     return { selectionKey: id, revision, address: { workflowId: root.id, instancePath: [], nodeId: id }, title: node.operation, canonicalTitle: node.operation, iconPath: '', family: 'Derive', phase, operation: node.operation, alias: '', compact: false, enabled: true, readOnly: false, canPresent: true, controls: projectNodeControls(node.operation, node, { phase }), model: null, ports: [] };
 }
-function editing(operation) {
-    const root = emptyGraph(); root.nodes.node = { id: 'node', type: 'workflow', operation, ...settings(operation), phase: 'post' };
+function editing(operation, controls = {}) {
+    const root = emptyGraph(); root.nodes.node = { id: 'node', type: 'workflow', operation, ...settings(operation), ...controls, phase: 'post' };
     return controller(root);
 }
 const keyFor = operation => operation === 'decision' ? 'questions' : operation === 'advance-time' ? 'schedules' : 'metadata';
@@ -259,3 +259,75 @@ test('Configure Pattern can cancel a retained import over an invalid Advanced JS
   await click(form.host,'Cancel import');await click(form.host,'Cancel');await pending;
  }finally{await form.close();}
 });
+
+for (const operation of ['pattern', 'extract']) {
+ const label=operation==='pattern'?'Rules':'Literal patterns', key=operation==='pattern'?'rules':'patterns';
+ const record=(id,text)=>operation==='pattern'?{id,pattern:text}:{id,literal:text,label:''};
+ test(operation+' restored editor subsequent JSON edit saves explicit identity through native Save',async()=>{
+  const f=editing(operation,{[key]:[record('saved','old')]});
+  const before=structuredClone(f.root),view=detail(f.root),form=await panel('NodeDetails',view,{editControl:f.editControl});
+  try{
+   await click(form.host,'Use '+label+' terms');input(form.host,label,'local');input(form.host,label+' input format','plain','change');
+   await inspectorRemount(form,view);
+   // Returned term entry explicitly chooses JSON; the old restored JSON editor already advertises it.
+   if(form.host.querySelector('[aria-label="'+label+' input format"]'))input(form.host,label+' input format','json','change');
+   input(form.host,label,JSON.stringify([record('new-rule','Mara')]));await click(form.host,'Save '+label);
+   assert.deepEqual(f.root.nodes.node[key],[record('new-rule','Mara')]);assert.equal(f.commits(),1);oneUndo(f,before);
+  }finally{await form.close();}
+ });
+ test(operation+' restored Plain subsequent edit saves commas and brackets as one native rule',async()=>{
+  const f=editing(operation,{[key]:[record('saved','old')]}),before=structuredClone(f.root),view=detail(f.root),form=await panel('NodeDetails',view,{editControl:f.editControl});
+  try{
+   await click(form.host,'Use '+label+' terms');input(form.host,label,'local');input(form.host,label+' input format','plain','change');await inspectorRemount(form,view);
+   assert.equal(form.host.querySelector('[aria-label="'+label+' input format"]').value,'plain');
+   input(form.host,label,'[red, blue], Mara');await click(form.host,'Save '+label);
+   assert.deepEqual(f.root.nodes.node[key],[record('saved','[red, blue], Mara')]);assert.equal(f.commits(),1);oneUndo(f,before);
+  }finally{await form.close();}
+ });
+ test(operation+' restored Plain commas and brackets keeps term interpretation through rows and JSON edits',async()=>{
+  const f=editing(operation,{[key]:[record('saved','old')]});
+  const view=detail(f.root),form=await panel('NodeDetails',view,{editControl:f.editControl});
+  try{
+   await click(form.host,'Use '+label+' terms');input(form.host,label,'[red, blue]');input(form.host,label+' input format','plain','change');
+   await inspectorRemount(form,view);
+   assert.equal(form.host.querySelector('[aria-label="'+label+' input format"]')?.value,'plain');
+   assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,'[red, blue]');
+   input(form.host,label,'[red, blue], Mara');await click(form.host,'Use '+label+' rows');
+   assert.equal(form.host.querySelector('[aria-label="Pattern 1 '+(operation==='pattern'?'expression':'phrase')+'"]').value,'[red, blue], Mara');
+   await inspectorRemount(form,view);await click(form.host,'Edit '+label+' as JSON');
+   input(form.host,label,JSON.stringify([record('explicit','Rowan')]));await click(form.host,'Save '+label);
+   assert.deepEqual(f.root.nodes.node[key],[record('explicit','Rowan')]);
+  }finally{await form.close();}
+ });
+ test(operation+' restored editor blocks unfinished JSON and retains exact source on return to terms',async()=>{
+  const f=editing(operation,{[key]:[record('saved','old')]});const view=detail(f.root),before=structuredClone(f.root),form=await panel('NodeDetails',view,{editControl:f.editControl});
+  const unfinished='[{"id":"new-rule",';
+  try{
+   await click(form.host,'Use '+label+' terms');input(form.host,label,'local');input(form.host,label+' input format','plain','change');await inspectorRemount(form,view);
+   if(form.host.querySelector('[aria-label="'+label+' input format"]'))input(form.host,label+' input format','json','change');
+   input(form.host,label,unfinished);await click(form.host,'Save '+label);
+   assert.deepEqual(f.root,before);assert.equal(f.commits(),0);assert.match(form.host.textContent,/Enter valid JSON/);
+   await inspectorRemount(form,view);assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,unfinished);
+   await click(form.host,'Use '+label+' rows');assert.equal(form.host.querySelector('[aria-label="'+label+' input format"]').value,'json');
+   assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,unfinished);
+  }finally{await form.close();}
+ });
+ test(operation+' Configure remount preserves Plain and CSV then creates explicit JSON identity once',async()=>{
+  const f=controller(),before=structuredClone(f.root),{form,pending}=await createPanel(f,operation);
+  try{
+   await click(form.host,'Use '+label+' terms');input(form.host,label,'[red, blue]');input(form.host,label+' input format','plain','change');
+   await click(form.host,'Configuration format');await click(form.host,'Configuration format');
+   assert.equal(form.host.querySelector('[aria-label="'+label+' input format"]')?.value,'plain');
+   assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,'[red, blue]');
+   input(form.host,label+' input format','csv','change');input(form.host,label,'"red, blue",green');
+   await click(form.host,'Configuration format');await click(form.host,'Configuration format');
+   assert.equal(form.host.querySelector('[aria-label="'+label+' input format"]').value,'csv');
+   assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,'"red, blue",green');
+   await click(form.host,'Use '+label+' rows');await click(form.host,'Edit '+label+' as JSON');
+   input(form.host,label,'[{"unfinished":');await click(form.host,'Create node');assert.equal(f.preparations(),0);assert.deepEqual(f.root,before);
+   input(form.host,label,JSON.stringify([record('created-id','Mara')]));await click(form.host,'Create node');
+   const prepared=await pending;assert.equal(prepared.ok,true,JSON.stringify(prepared));assert.equal(f.environment.commitNodeCreation(f.token,prepared).ok,true);
+   const node=Object.values(f.root.nodes)[0];assert.deepEqual(node[key],[record('created-id','Mara')]);assert.equal(f.commits(),1);assert.equal(node.phase,'post');oneUndo(f,before);
+  }finally{await form.close();}
+ });
+}

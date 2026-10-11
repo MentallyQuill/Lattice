@@ -22,12 +22,15 @@
     import type { JsonPath } from '../src/workflow/operations/json-data';
     import type { SchemaDraftState } from '../src/ui/schema-authoring';
     import type { DetailControl } from './detail-types';
-    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, structuredDraft, onStructuredDraft, structuredIdentity = '', schemaDraft, onSchemaDraft, schemaIdentity = '', importState, onImportState, importIdentity = '', onvalue, onnumber, onsave, saveButton = true, format = 'auto', draftFormat, onformat }: {
-        importState?:ControlImportState; onImportState?:(state:ControlImportState)=>void; importIdentity?:string;
+    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, structuredDraft, onStructuredDraft, structuredIdentity = '', schemaDraft, onSchemaDraft, schemaIdentity = '', importState, onImportState, importIdentity = '', onvalue, onnumber, onsave, saveButton = true, format = 'auto', draftFormat, onformat, recordMode, onRecordMode }: {
+        recordMode?:'terms'|'rows'; onRecordMode?:(mode:'terms'|'rows')=>void; importState?:ControlImportState; onImportState?:(state:ControlImportState)=>void; importIdentity?:string;
         control: DetailControl; text: string; structuredIdentity?:string; structuredDraft?:StructuredDraftState; onStructuredDraft?:(state:StructuredDraftState)=>void; schemaIdentity?:string; schemaDraft?:SchemaDraftState; onSchemaDraft?:(state:SchemaDraftState)=>void; saveButton?: boolean; format?: ControlInputFormat; draftFormat?:ControlInputFormat; onformat?: (format:ControlInputFormat)=>void; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
         ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; onvalue: (value: unknown) => void; onnumber: (input: HTMLInputElement) => void; onsave: () => void;
     } = $props();
-    let termMode = $state(false);
+    let localRecordMode = $state<'terms'|'rows'>('rows');
+    const termMode = $derived((recordMode ?? localRecordMode) === 'terms');
+    function setRecordMode(mode:'terms'|'rows'){localRecordMode=mode;onRecordMode?.(mode);}
+    function structuredText(source:string){if(disabled)return;onformat?.('json');ontext(source);}
     let switchError = $state('');
     let localSchemaDraft=$state.raw<SchemaDraftState>();
     function schemaStateChange(state:SchemaDraftState){if(disabled)return;localSchemaDraft=state;onSchemaDraft?.(state);}
@@ -40,10 +43,10 @@
             const exported=formatControlInput(control.inputSpec,result.data.value,'auto');
             if(exported.ok){onformat?.('auto');ontext(exported.data);}
             else {if(onDraft)onDraft(result.data.value);else ontext(JSON.stringify(result.data.value,null,2));onformat?.('json');}
-        } else if(result.ok){if(onDraft)onDraft(result.data.value);else ontext(JSON.stringify(result.data.value,null,2));}
+        } else if(result.ok){if(onDraft)onDraft(result.data.value);else ontext(JSON.stringify(result.data.value,null,2));onformat?.('json');}
         else onformat?.('json');
         // Use expression/term text only when export proves it preserves records; otherwise keep explicit JSON.
-        termMode=!termMode;switchError='';
+        setRecordMode(termMode?'rows':'terms');switchError='';
     }
     const structured = $derived(['questions','schedules'].includes(control.inputSpec?.editor ?? ''));
     let localStructuredDraft=$state.raw<StructuredDraftState>();
@@ -74,7 +77,7 @@
     const tableValue=$derived(draftValue!==undefined&&!tableState.open?{ok:true as const,data:{value:draftValue as JsonValue}}:control.inputSpec?parseControlInput(control.inputSpec,draftValue===undefined?{format:control.structured?draftFormat??(recordEntry&&termMode?format:'json'):format,text,currentValue:control.value as JsonValue}:{format:'rows',value:draftValue as JsonValue,currentValue:control.value as JsonValue}):null);
     function tableStateChange(state:ControlImportState){if(disabled||pending)return;const checked=cloneJsonValue(state);if(!checked.ok)return;localImportState=checked.data.value as unknown as ControlImportState;onImportState?.(localImportState);}
     function tableDraft(draft:ControlImportDraft){tableStateChange({open:true,draft});}
-    function confirmTable(value:JsonValue){if(disabled||pending||!tableValue?.ok)return;typedChange(value);tableStateChange({...tableState,open:false});}
+    function confirmTable(value:JsonValue){if(disabled||pending||!tableValue?.ok)return;typedChange(value);if(recordEntry){onformat?.('json');setRecordMode('rows');}tableStateChange({...tableState,open:false});}
     const entry = $derived(control.inputSpec?.editor === 'list');
     const shortChoices = () => control.editor === 'enum' && (control.options?.length ?? 0) > 1 && (control.options?.length ?? 0) <= 3 && control.options!.every(option => option.label.length <= 10);
     const provenance = () => control.effective !== undefined && control.effective !== text && control.source !== 'Saved setting' ? control.source : '';
@@ -109,7 +112,7 @@
     {:else if control.structured && control.editor === 'json'}
         <span class="pc-control-label">{control.label}</span>
         {#if recordEntry}<button type="button" aria-label={'Use '+control.label+' terms'} {disabled} onclick={switchRows}>Terms / CSV</button>{/if}
-        <StructuredControl {control} {text} {disabled} {ontext} {onDraft} {draftValue} {idPrefix} {error} />
+        <StructuredControl {control} {text} {disabled} ontext={structuredText} {onDraft} {draftValue} {idPrefix} {error} />
     {:else if control.editor === 'boolean'}
         <label class="pc-detail-check"><input aria-label={control.label} type="checkbox" checked={Boolean(control.value)} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.checked); }} />{control.label}</label>
     {:else if shortChoices()}

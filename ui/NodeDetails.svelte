@@ -24,6 +24,7 @@
     // View/navigation state never owns the canonical text of an untouched control.
     let schemaStates = $state.raw<Record<string, SchemaDraftState>>({});
     let importStates=$state.raw<Record<string,ControlImportState>>({});
+    let recordModes=$state.raw<Record<string,'terms'|'rows'>>({});
     function importState(control:DetailControl,state:ControlImportState){if(!view||view.readOnly||!actions.editControl||drafts[control.key]?.pending)return;const checked=cloneJsonValue(state);if(!checked.ok)return;importStates={...importStates,[control.key]:checked.data.value as unknown as ControlImportState};}
     let structuredStates=$state.raw<Record<string,StructuredDraftState>>({});
     let structuredEpoch=$state<Record<string,number>>({});
@@ -35,7 +36,7 @@
     const modifierGenerations = new Map<string, number>();
     const draftGenerations = new Map<string, number>();
     // The mounted workspace inspector owns drafts; qualified nodes never share them.
-    const draftCache = new Map<string, { contract: string; drafts: typeof drafts; schemas: typeof schemaStates; structures: typeof structuredStates; imports: typeof importStates }>();
+    const draftCache = new Map<string, { contract: string; drafts: typeof drafts; schemas: typeof schemaStates; structures: typeof structuredStates; imports: typeof importStates; recordModes: typeof recordModes }>();
     const settledDrafts = (values: typeof drafts) => Object.fromEntries(Object.entries(values).map(([key, value]) => [key, { ...value, pending: false }]));
     function supportedDrafts(values: typeof drafts, node: NodeDetailsView | null) {
         if (!node) return {};
@@ -70,16 +71,17 @@
             if (changedSelection || nextSupport !== support) { boundaryDraftSequence++; modifierEpoch++; }
             if (changedSelection) {
                 draftVisit++;
-                if (identity) draftCache.set(identity, { contract: support, drafts: untrack(() => settledDrafts(drafts)), schemas: untrack(() => ({...schemaStates})), structures: untrack(()=>({...structuredStates})), imports:untrack(()=>({...importStates})) });
+                if (identity) draftCache.set(identity, { contract: support, drafts: untrack(() => settledDrafts(drafts)), schemas: untrack(() => ({...schemaStates})), structures: untrack(()=>({...structuredStates})), imports:untrack(()=>({...importStates})), recordModes:untrack(()=>({...recordModes})) });
             }
             const incompatible = !changedSelection && nextSupport !== support;
             const retained = draftCache.get(next), changedContract = incompatible || !!retained && retained.contract !== nextSupport;
             let restored = changedSelection ? retained?.drafts ?? {} : untrack(() => drafts);
             let restoredSchemas = changedSelection ? retained?.schemas ?? {} : untrack(() => schemaStates);
             let restoredImports=changedSelection?retained?.imports??{}:untrack(()=>importStates);
+            let restoredRecordModes=changedSelection?retained?.recordModes??{}:untrack(()=>recordModes);
             let restoredStructures=changedSelection?retained?.structures??{}:untrack(()=>structuredStates);
             if (changedContract) {
-                draftCache.delete(next); restoredSchemas = {}; restoredStructures={}; restoredImports={};
+                draftCache.delete(next); restoredSchemas = {}; restoredStructures={}; restoredImports={}; restoredRecordModes={};
                 // Boundary label/required fields keep the same contract when the allowed
                 // artifact kinds change. Revalidate only that field; other incompatible
                 // editor drafts must remain discarded when an old contract returns.
@@ -89,6 +91,7 @@
             identity = next; revision = nextRevision; support = nextSupport; requests.clear(); sequence++; errors = {}; modifierBusy = false; modifierBusySequence++;
             // A revision expires writes, while unsaved text still belongs to this node.
             drafts = supportedDrafts(restored, view);
+            recordModes=Object.fromEntries(Object.entries(restoredRecordModes).filter(([key])=>view?.controls.some(control=>control.key===key && ['patterns','extract'].includes(control.structured??''))));
             importStates=Object.fromEntries(Object.entries(restoredImports).filter(([key])=>view?.controls.some(control=>control.key===key && !!control.inputSpec && controlTableImportFields(control.inputSpec).length)));
             structuredStates=Object.fromEntries(Object.entries(restoredStructures).filter(([key])=>view?.controls.some(control=>control.key===key && ['questions','schedules'].includes(control.inputSpec?.editor??''))));
             schemaStates = Object.fromEntries(Object.entries(restoredSchemas).filter(([key])=>view?.controls.some(control=>control.key===key && control.inputSpec?.editor==='schema')));
@@ -506,7 +509,7 @@
 </section>
 
 {#snippet controlEditor(control: DetailControl)}
-    <DetailControlEditor draftFormat={drafts[control.key]?.format} importState={importStates[control.key]} onImportState={state=>importState(control,state)} importIdentity={selectionIdentity(view!)+draftContract(view!,control.key)} {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} structuredIdentity={view ? selectionIdentity(view)+':'+view.revision+':'+draftContract(view,control.key)+':'+(structuredEpoch[control.key]??0) : ''} structuredDraft={structuredStateFor(control)} onStructuredDraft={state=>structuredDraft(control,state)} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key) : ''} schemaDraft={schemaStates[control.key]} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
+    <DetailControlEditor recordMode={recordModes[control.key]??'rows'} onRecordMode={mode=>{if(view&&!view.readOnly&&!drafts[control.key]?.pending)recordModes={...recordModes,[control.key]:mode};}} draftFormat={drafts[control.key]?.format} importState={importStates[control.key]} onImportState={state=>importState(control,state)} importIdentity={selectionIdentity(view!)+draftContract(view!,control.key)} {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} structuredIdentity={view ? selectionIdentity(view)+':'+view.revision+':'+draftContract(view,control.key)+':'+(structuredEpoch[control.key]??0) : ''} structuredDraft={structuredStateFor(control)} onStructuredDraft={state=>structuredDraft(control,state)} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key) : ''} schemaDraft={schemaStates[control.key]} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
 {/snippet}
 
 <style>

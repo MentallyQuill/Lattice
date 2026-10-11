@@ -27,6 +27,9 @@ async function setup(page, fixture = 'empty') {
         if (fixture === 'pattern') {
             graph.nodes.pattern = node('pattern', 'pattern', { mode: 'literal', rules: [{ id: 'pattern-1', pattern: 'old', label: 'Keep' }] });
             graph.nodes.other = node('other', 'compose', { sections: [{ name: 'Body', text: 'Synthetic text.' }] }, 400);
+        } else if (fixture === 'extract') {
+            graph.nodes.pattern = node('pattern', 'extract', { mode:'literal', patterns:[{id:'pattern-1',literal:'old',label:''}] });
+            graph.nodes.other = node('other', 'compose', { sections:[{name:'Body',text:'Synthetic text.'}] },400);
         } else if (fixture === 'fields') graph.nodes.fields = node('fields', 'select-fields', { fields: [] });
         else if (fixture === 'null-condition') graph.nodes.condition = node('condition', 'condition', { value: null });
         else if (fixture === 'curve') graph.nodes.curve = { ...operationDefaults('state', { mode: 'curve' }), id: 'curve', type: 'workflow', operation: 'state', operationVersion: 1, enabled: true, x: 80, y: 80 };
@@ -302,3 +305,40 @@ test('unsaved Plain Pattern terms remain the import Add base after real selectio
  await details(page).getByRole('button',{name:'Save Rules',exact:true}).click();expect((await saved(page)).nodes.pattern.rules).toEqual([{id:'pattern-1',pattern:'local',label:'Keep'},{id:'added',pattern:'added'}]);
  await undo(page);expect((await saved(page)).nodes.pattern.rules).toEqual(before.nodes.pattern.rules);await noWork(page);
 });
+
+for(const operation of ['pattern','extract']) {
+ const label=operation==='pattern'?'Rules':'Literal patterns',key=operation==='pattern'?'rules':'patterns';
+ const record=(id,text)=>operation==='pattern'?{id,pattern:text}:{id,literal:text,label:''};
+ test(operation+' restored Plain editor converts rows and subsequent JSON native Save retains explicit ID',async({page})=>{
+  await setup(page,operation);
+  await select(page,'pattern');const panel=details(page),before=(await saved(page)).nodes.pattern[key];
+  await panel.getByRole('button',{name:'Use '+label+' terms',exact:true}).click();
+  await panel.getByLabel(label,{exact:true}).fill('[red, blue]');await panel.getByLabel(label+' input format',{exact:true}).selectOption('plain');
+  await select(page,'other');await select(page,'pattern');
+  await expect(panel.getByLabel(label+' input format',{exact:true})).toHaveValue('plain');await expect(panel.getByLabel(label,{exact:true})).toHaveValue('[red, blue]');
+  await panel.getByLabel(label,{exact:true}).fill('[red, blue], Mara');await panel.getByRole('button',{name:'Use '+label+' rows',exact:true}).click();
+  await expect(panel.getByLabel('Pattern 1 '+(operation==='pattern'?'expression':'phrase'),{exact:true})).toHaveValue('[red, blue], Mara');
+  await select(page,'other');await select(page,'pattern');await panel.getByRole('button',{name:'Edit '+label+' as JSON',exact:true}).click();
+  const unfinished='[{"id":"new-rule",';await panel.getByLabel(label,{exact:true}).fill(unfinished);await panel.getByRole('button',{name:'Save '+label,exact:true}).click();
+  expect((await saved(page)).nodes.pattern[key]).toEqual(before);
+  await select(page,'other');await select(page,'pattern');await expect(panel.getByLabel(label,{exact:true})).toHaveValue(unfinished);
+  await panel.getByRole('button',{name:'Use '+label+' terms',exact:true}).click();await expect(panel.getByLabel(label+' input format',{exact:true})).toHaveValue('json');
+  await expect(panel.getByLabel(label,{exact:true})).toHaveValue(unfinished);
+  await panel.getByLabel(label,{exact:true}).fill(JSON.stringify([record('new-rule','Mara')]));await panel.getByRole('button',{name:'Save '+label,exact:true}).click();
+  expect((await saved(page)).nodes.pattern[key]).toEqual([record('new-rule','Mara')]);await undo(page);expect((await saved(page)).nodes.pattern[key]).toEqual(before);await noWork(page);
+ });
+ test(operation+' Configure form remount retains Plain CSV and invalid JSON then creates exact identity',async({page})=>{
+  await setup(page);const dialog=await startCreation(page,operation,operation==='pattern'?'Pattern':'Extract');
+  await dialog.getByRole('button',{name:'Use '+label+' terms',exact:true}).click();await dialog.getByLabel(label,{exact:true}).fill('[red, blue]');await dialog.getByLabel(label+' input format',{exact:true}).selectOption('plain');
+  await dialog.getByRole('button',{name:'Configuration format',exact:true}).click();await dialog.getByRole('button',{name:'Configuration format',exact:true}).click();
+  await expect(dialog.getByLabel(label+' input format',{exact:true})).toHaveValue('plain');await expect(dialog.getByLabel(label,{exact:true})).toHaveValue('[red, blue]');
+  await dialog.getByLabel(label+' input format',{exact:true}).selectOption('csv');await dialog.getByLabel(label,{exact:true}).fill('"red, blue",green');
+  await dialog.getByRole('button',{name:'Configuration format',exact:true}).click();await dialog.getByRole('button',{name:'Configuration format',exact:true}).click();
+  await expect(dialog.getByLabel(label+' input format',{exact:true})).toHaveValue('csv');await expect(dialog.getByLabel(label,{exact:true})).toHaveValue('"red, blue",green');
+  await dialog.getByRole('button',{name:'Use '+label+' rows',exact:true}).click();await dialog.getByRole('button',{name:'Edit '+label+' as JSON',exact:true}).click();
+  const unfinished='[{"unfinished":';await dialog.getByLabel(label,{exact:true}).fill(unfinished);await dialog.getByRole('button',{name:'Create node',exact:true}).click();expect(Object.keys((await saved(page)).nodes)).toEqual([]);
+  await dialog.getByRole('button',{name:'Use '+label+' terms',exact:true}).click();await expect(dialog.getByLabel(label+' input format',{exact:true})).toHaveValue('json');await expect(dialog.getByLabel(label,{exact:true})).toHaveValue(unfinished);
+  await dialog.getByLabel(label,{exact:true}).fill(JSON.stringify([record('created-id','Mara')]));await dialog.getByRole('button',{name:'Create node',exact:true}).click();
+  await expect(dialog).toHaveCount(0);const nodes=Object.values((await saved(page)).nodes);expect(nodes).toHaveLength(1);expect(nodes[0][key]).toEqual([record('created-id','Mara')]);expect(nodes[0].phase).toBe('post');await undo(page);expect(Object.keys((await saved(page)).nodes)).toEqual([]);await noWork(page);
+ });
+}
