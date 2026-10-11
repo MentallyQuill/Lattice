@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { untrack } from 'svelte';
+    import { formatJsonValueDraftAtPath } from '../src/ui/json-value-authoring.js';
     import { validateJsonSchema, updateSchemaAtPath, removeSchemaKeyword } from '../src/ui/schema-authoring.js';
     import type { SchemaDraftState } from '../src/ui/schema-authoring';
     import type { JsonValue, JsonPath } from '../src/workflow/operations/json-data';
@@ -12,7 +14,8 @@
     let numberDrafts = $state<Record<string,string>>({...initial()?.numberDrafts});
     let typedDrafts = $state.raw<Record<string,JsonValue>>({...initial()?.typedDrafts});
     let invalidKeyword = $state(initial()?.invalidKeyword ?? '');
-    $effect(()=> { onDraftState?.({path:[...path],raw,rawText,feedback,invalid,inactiveText,invalidText,invalidPath:[...invalidPath],invalidKeyword,numberDrafts:{...numberDrafts},typedDrafts:{...typedDrafts}}); });
+    let typedTextDrafts = $state<Record<string,string>>({...initial()?.typedTextDrafts});
+    $effect(()=> { const authored={path:[...path],raw,rawText,feedback,invalid,inactiveText,invalidText,invalidPath:[...invalidPath],invalidKeyword,numberDrafts:{...numberDrafts},typedDrafts:{...typedDrafts},typedTextDrafts:{...typedTextDrafts}}; untrack(()=>onDraftState?.(authored)); });
     const pageSize = 64;
     const types = ['null','boolean','object','array','number','integer','string'];
     const numbers = ['minItems','maxItems','minLength','maxLength','minimum','maximum'];
@@ -88,14 +91,26 @@
         if(disabled || invalid && invalidKeyword!==keyword)return;
         const result=updateSchemaAtPath(schema,path,{[keyword]:next});
         if(!result.ok) { typedDrafts={...typedDrafts,[token+'|'+keyword]:next}; invalidKeyword=keyword; reject(attempted({[keyword]:next}),result.error.message,[...path,keyword]); return; }
-        const drafts={...typedDrafts}; delete drafts[token+'|'+keyword]; typedDrafts=drafts; commit(result);
+        const drafts={...typedDrafts}; delete drafts[token+'|'+keyword]; typedDrafts=drafts; delete typedTextDrafts[token+'|'+keyword]; commit(result);
     }
-    function typedInvalid(keyword: string, source: string, at: JsonPath) { if(!disabled) { invalidKeyword=keyword; reject(source,'Finish the '+keyword+' value.',[...path,keyword,...at]); } }
+    function typedInvalid(keyword: string, source: string, at: JsonPath) {
+        if(disabled || invalid && invalidKeyword!==keyword)return;
+        const value=Object.hasOwn(typedDrafts,token+'|'+keyword) ? typedDrafts[token+'|'+keyword] : node[keyword];
+        const formatted=formatJsonValueDraftAtPath(value,at,source);
+        if(formatted.ok)typedTextDrafts[token+'|'+keyword]=formatted.data.text;
+        invalidKeyword=keyword; reject(source,'Finish the '+keyword+' value.',[...path,keyword,...at]);
+    }
+    function typedText(keyword: string, source: string) {
+        if(disabled || invalid && invalidKeyword!==keyword)return;
+        typedTextDrafts[token+'|'+keyword]=source;
+        try { typed(keyword,JSON.parse(source)); }
+        catch { invalidKeyword=keyword; reject(source,'Finish the '+keyword+' JSON.',[...path,keyword]); }
+    }
     function jsonInput(source: string) {
         if (disabled) return; rawText=source;
         const result=parse(source);
         if (!result.ok) { reject(source,result.error.message,[]); return; }
-        invalid=false; invalidText=''; invalidPath=[]; feedback=''; numberDrafts={}; typedDrafts={}; invalidKeyword=''; path=[]; ontext(source);
+        invalid=false; invalidText=''; invalidPath=[]; feedback=''; numberDrafts={}; typedDrafts={}; typedTextDrafts={}; invalidKeyword=''; path=[]; ontext(source);
     }
     function mode() {
         if(disabled)return;
@@ -129,7 +144,10 @@
             {#if Object.hasOwn(node,'additionalProperties')}<label class="check"><input type="checkbox" aria-label={label+' additionalProperties'} checked={node.additionalProperties===true} disabled={disabled || invalid} onchange={event=>patch({additionalProperties:event.currentTarget.checked})} /> Allow additional properties</label>{/if}
             {#each ['enum','const'] as keyword}
                 <label class="check"><input type="checkbox" aria-label={label+' '+keyword+' enabled'} checked={Object.hasOwn(node,keyword)} disabled={disabled || invalid} onchange={event=>toggle(keyword,event.currentTarget.checked,keyword==='enum'?[null]:null)} /> {keyword==='enum'?'Allowed values':'Exact value'}</label>
-                {#if Object.hasOwn(node,keyword)}<JsonValueControl value={Object.hasOwn(typedDrafts,token+'|'+keyword) ? typedDrafts[token+'|'+keyword] : node[keyword]} onchange={next=>typed(keyword,next)} oninvalid={(source,at)=>typedInvalid(keyword,source,at)} label={label+' '+keyword} idPrefix={idPrefix+'-'+keyword} disabled={disabled || invalid && invalidKeyword!==keyword} />{/if}
+                {#if Object.hasOwn(node,keyword)}
+                    {#if Object.hasOwn(typedTextDrafts,token+'|'+keyword)}<label for={idPrefix+'-'+keyword+'-draft'}>{keyword} (JSON)</label><textarea id={idPrefix+'-'+keyword+'-draft'} aria-label={label+' '+keyword+' JSON'} value={typedTextDrafts[token+'|'+keyword]} aria-invalid="true" disabled={disabled || invalid && invalidKeyword!==keyword} oninput={event=>typedText(keyword,event.currentTarget.value)}></textarea>
+                    {:else}<JsonValueControl value={Object.hasOwn(typedDrafts,token+'|'+keyword) ? typedDrafts[token+'|'+keyword] : node[keyword]} onchange={next=>typed(keyword,next)} oninvalid={(source,at)=>typedInvalid(keyword,source,at)} label={label+' '+keyword} idPrefix={idPrefix+'-'+keyword} disabled={disabled || invalid && invalidKeyword!==keyword} />{/if}
+                {/if}
             {/each}
             <small>{keys.length} properties. Property names are exact keys.</small>
             {#each visibleKeys as key (key)}<div class="property"><button type="button" aria-label={'Edit '+label+' property '+key} disabled={disabled || invalid} onclick={()=>navigate([...path,'properties',key])}>{key || '(empty key)'}</button><label class="check"><input type="checkbox" aria-label={label+' required '+key} checked={required.includes(key)} disabled={disabled || invalid} onchange={event=>requireProperty(key,event.currentTarget.checked)} /> Required</label><button type="button" aria-label={'Remove '+label+' property '+key} disabled={disabled || invalid} onclick={()=>removeProperty(key)}>Remove</button></div>{/each}

@@ -20,10 +20,10 @@ test('document-backed nodes can be created from search with usable automatic def
  const {prepareNativeConnectionEdit}=await import('../src/workflow/connection-edits.js?v=0.27.0');
  const graph={id:'automatic-data',schema:3,runtime:2,mode:'native-unified',nodes:{},wires:{},definitions:{},portals:{}},prepared=prepareNativeSearchCatalog(scope);
  for(const [operation,key,targetId] of [['read-file','targetId','lattice-default-notes'],['story-clock','clockId','lattice-default-clock'],['commit-outcomes','targetId','lattice-default-outcomes']]){
-  assert.equal(config.nodeNeedsConfiguration(operation),false,operation+' must add immediately');
+  assert.equal(config.nodeNeedsConfiguration(operation),operation==='read-file',operation+' preserves its intended creation route');
   const choice=prepared.data.choices.find(item=>item.id==='operation:'+operation),command=resolveNativeSearchChoice(prepared.data,choice.id);
-  assert.equal(choice.requiresConfiguration,undefined);assert.equal(command.requiresConfiguration,undefined);
-  const created=prepareNativeConnectionEdit(graph,{kind:'create',...command,graphPoint:{x:20,y:30},phase:'post'});assert.equal(created.ok,true,JSON.stringify(created));
+  assert.equal(choice.requiresConfiguration,operation==='read-file'?true:undefined);assert.equal(command.requiresConfiguration,operation==='read-file'?true:undefined);
+  const {requiresConfiguration,...preparedCommand}=command;const created=prepareNativeConnectionEdit(graph,{kind:'create',...preparedCommand,graphPoint:{x:20,y:30},phase:'post'});assert.equal(created.ok,true,JSON.stringify(created));
   const node=created.data.candidate.nodes[created.data.addedNodeIds[0]];assert.equal(node[key],targetId);assert.equal(describeOperation(scope,node).ok,true);
   assert.equal(config.validateConfiguredNodeControls(operation,'{}',{phase:'post',targets:[],helpers:[]}).ok,true);
  }

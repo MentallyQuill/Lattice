@@ -89,7 +89,7 @@ test('friendly schema and whole-controls Advanced JSON preserve the same nested 
   const session=createConfiguredNodeSession({isCurrent:()=>true,prepare:(_capture,command)=>{made.push(command.controls);return {ok:true,data:command};}});
   const opened=session.open({}, {operation:'json-decode'},{phase:'pre',targets:[],helpers:[]});
   const f=await fixture('ConfigureNode',{view:opened.view,actions:{apply:(...args)=>session.apply(...args),cancel:key=>session.cancel(key)}});
-  try {if(advanced){button(f.host,'Advanced JSON').click();flushSync();input(f.host,'Node controls JSON',JSON.stringify({...JSON.parse(opened.view.controls),schema}));}else input(f.host,'Schema',schema);
+  try {if(advanced){button(f.host,'Advanced JSON').click();flushSync();input(f.host,'Node controls JSON',JSON.stringify({...JSON.parse(opened.view.controls),schema}));}else {const enabled=f.host.querySelector('[aria-label="Schema schema enabled"]');enabled.checked=true;enabled.dispatchEvent(new dom.window.Event('change',{bubbles:true}));flushSync();button(f.host,'Edit Schema schema as JSON').click();flushSync();input(f.host,'Schema schema JSON',schema);}
    button(f.host,'Create node').click();await tick();flushSync();assert.equal(f.host.querySelector('[data-diagnostic]'),null,f.host.textContent);assert.equal((await opened.result).ok,true);
   }finally {session.cancel(opened.view.key);await f.close();}
  }

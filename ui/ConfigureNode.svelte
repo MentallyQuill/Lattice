@@ -1,4 +1,5 @@
 <script lang="ts">
+ import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js';
  import DiagnosticMessage from './DiagnosticMessage.svelte';
  import DetailControlEditor from './DetailControl.svelte';
  import {projectNodeControls,controlInputPresentation} from '../src/ui/node-control-projection.js';
@@ -9,14 +10,16 @@
  import type {ConfigureNodeView,ConfigureNodeActions} from './storage-setup-types';
  import type {DetailControl} from './detail-types';
  import type {ControlInputFormat} from '../src/ui/control-input-contracts';
+ import type {SchemaDraftState} from '../src/ui/schema-authoring';
  import type {JsonValue} from '../src/workflow/operations/json-data';
  let {view,actions}:{view:ConfigureNodeView;actions?:ConfigureNodeActions}=$props();
- type Draft={text?:string;value?:unknown;format?:ControlInputFormat;contract:string;error?:string};
+ type Draft={schemaDraft?:SchemaDraftState;text?:string;value?:unknown;format?:ControlInputFormat;contract:string;error?:string};
  let dialog:HTMLDivElement,data=$state<Record<string,unknown>>({}),drafts=$state<Record<string,Draft>>({}),controls=$state(''),advanced=$state(false),phase=$state<'pre'|'post'>('pre'),target=$state(''),helper=$state(''),pending=$state(false),failure=$state('');let capture='',generation=0,advancedBaseline:Record<string,unknown>={},advancedInvalid=false;
  const typedSnapshot=(value:unknown)=>{const checked=cloneJsonValue(value);if(!checked.ok)throw Error(checked.error.message);return checked.data.value;};
  const controlsSnapshot=()=>{const checked=cloneDefinitionData(data,{operation:view.operation});if(!checked.ok)throw Error(checked.error.message);return checked.data as Record<string,unknown>;};
  const selectedHelper=$derived(view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(data.helper)));
  const fields=$derived(projectNodeControls(view.operation,data,{phase}));
+ const automaticTarget=$derived(view.operation==='read-file'?workflowDataPresetFor(view.operation):null);
  const usesDocument=$derived(view.operation==='read-file'||view.operation==='story-clock'||view.operation==='commit-outcomes');
  const contract=(control:DetailControl)=>JSON.stringify([control.inputSpec?.id,control.inputSpec?.version,control.editor,control.representation]);
  const textFor=(control:DetailControl)=>drafts[control.key]?.text ?? controlInputPresentation(control,drafts[control.key]?.format).text;
@@ -56,9 +59,10 @@
   const next={...drafts};delete next.roleOverrides;drafts=next;return true;
  }
  function draft(control:DetailControl,next:Partial<Draft>){drafts={...drafts,[control.key]:{...drafts[control.key],...next,contract:contract(control),error:''}};failure='';}
+ function schemaDraft(control:DetailControl,state:SchemaDraftState){if(pending||!actions)return;if(JSON.stringify(drafts[control.key]?.schemaDraft)===JSON.stringify(state))return;draft(control,{schemaDraft:state,text:drafts[control.key]?.text??textFor(control)});}
  function candidate():Record<string,unknown>|null {
   const result:Record<string,unknown>={...controlsSnapshot()};
-  for(const control of fields){const value=drafts[control.key];if(!value){
+  for(const control of fields){const value=drafts[control.key];if(value?.schemaDraft?.invalid && (value.text??textFor(control))!==''){drafts={...drafts,[control.key]:{...value,error:value.schemaDraft.feedback}};failure='Repair the schema draft before creating the node.';return null;}if(!value){
    if(control.inputSpec?.editor!=='path')continue;
    const checked=parseControlInput(control.inputSpec,{format:'rows',value:control.value as JsonValue});
    if(!checked.ok){draft(control,{text:JSON.stringify(control.value),format:'json',error:checked.error.message});failure='Check the highlighted settings before creating the node.';return null;}
@@ -73,6 +77,7 @@
  function advancedSource():string {
   const result:Record<string,unknown>={...controlsSnapshot()},sources=new Map<string,string>();
   for(const control of fields){const value=drafts[control.key];if(!value)continue;
+   if(value.schemaDraft?.invalid && (value.text??textFor(control))!==''){result[control.key]=value.schemaDraft.invalidText;continue;}
    const input=value.value!==undefined?{format:'rows' as const,value:typedSnapshot(value.value) as JsonValue}:{format:control.inputSpec?.editor==='path'?'json':value.format??(control.structured?'json':formatFor(control)) as ControlInputFormat,text:value.text??textFor(control)};
    const parsed=parseControlInput(control.inputSpec!,{...input,currentValue:control.value as JsonValue});
    if(parsed.ok)result[control.key]=parsed.data.value;
@@ -85,7 +90,7 @@
    const checked=cloneDefinitionData(JSON.parse(controls),{operation:view.operation});
    if(!checked.ok||!checked.data||Array.isArray(checked.data)||typeof checked.data!=='object')throw Error();
    const value=checked.data as Record<string,unknown>;
-   if(validateFields)for(const control of projectNodeControls(view.operation,value,{phase}).filter(control=>['value','path','fields'].includes(control.inputSpec?.editor??''))){
+   if(validateFields)for(const control of projectNodeControls(view.operation,value,{phase}).filter(control=>['value','path','fields','schema'].includes(control.inputSpec?.editor??''))){
     const input=control.inputSpec?.storage==='json-text'?{format:'json' as const,text:typeof control.value==='string'?control.value:undefined}:{format:'rows' as const,value:control.value as JsonValue};
     const parsed=parseControlInput(control.inputSpec!,input);
     if(!parsed.ok){failure=parsed.error.message;return null;}
@@ -100,6 +105,7 @@
    drafts=Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>{
     const control=next.find(control=>control.key===key&&contract(control)===draft.contract);if(!control)return false;
     if(JSON.stringify(parsed[key])===JSON.stringify(advancedBaseline[key]))return true;
+    if(advancedInvalid&&draft.schemaDraft?.invalid&&parsed[key]===draft.schemaDraft.invalidText)return true;
     if(advancedInvalid&&draft.text!==undefined)try{return JSON.stringify(parsed[key])===JSON.stringify(control.inputSpec?.storage==='json-text'?draft.text:JSON.parse(draft.text));}catch{}
     return false;
    }));
@@ -117,7 +123,7 @@
  <p>Complete the required settings before creating the node. Cancel leaves the graph unchanged.</p>
  <form onsubmit={apply}>
   <label>Stage<select aria-label="Node stage" bind:value={phase} disabled={view.phaseLocked||pending}><option value="pre">Preparation</option><option value="post">Response</option></select></label>
-  {#if usesDocument}<label>Workflow data document<select aria-label="Workflow data document" bind:value={target} onchange={()=>setControl(view.operation==='story-clock'?'clockId':'targetId',target)} disabled={pending || !actions}><option value="">Choose an authorized target</option>{#each view.targets.filter(doc=>!['story-clock','commit-outcomes'].includes(view.operation)||doc.format==='json') as doc (doc.targetId)}<option value={doc.targetId}>{doc.name} ({doc.targetId})</option>{/each}</select></label>{#if !view.targets.length}<p>Authorize a document in Workflow › Configure › Workflow Data, then reopen node creation.</p>{/if}{/if}
+  {#if usesDocument}<label>Workflow data document<select aria-label="Workflow data document" bind:value={target} onchange={()=>setControl(view.operation==='story-clock'?'clockId':'targetId',target)} disabled={pending || !actions}><option value="">Choose an authorized target</option>{#if automaticTarget && !view.targets.some(doc=>doc.targetId===automaticTarget.targetId)}<option value={automaticTarget.targetId}>{automaticTarget.name} (automatic)</option>{/if}{#each view.targets.filter(doc=>!['story-clock','commit-outcomes'].includes(view.operation)||doc.format==='json') as doc (doc.targetId)}<option value={doc.targetId}>{doc.name} ({doc.targetId})</option>{/each}</select></label>{#if !view.targets.length && !automaticTarget}<p>Authorize a document in Workflow › Configure › Workflow Data, then reopen node creation.</p>{/if}{/if}
   {#if view.operation==='for-each'}<label>Pinned Data helper<select aria-label="Pinned Data helper" bind:value={helper} onchange={()=>{const choice=view.helpers.find(choice=>choice.key===helper);if(choice)setControl('helper',choice.ref);}} disabled={pending || !actions}><option value="">Choose an existing item/result helper</option>{#each view.helpers.filter(choice=>data.mode!=='projected-state'||choice.stateful) as choice (choice.key)}<option value={choice.key}>{choice.label}{choice.stateful?' (projected state)':''}</option>{/each}</select></label><p>Helpers use exact pinned versions with Data item and result ports. Set iteration mode and requestBoundPerIteration in the controls below.</p>{/if}
   {#if view.operation==='for-each' && selectedHelper?.bindings}
    <details open><summary>Helper model bindings</summary>{#each selectedHelper.bindings.roles as row (row.role)}<fieldset><legend>{row.label}</legend>
@@ -131,7 +137,7 @@
   {#if advanced}<label>Declared node controls<textarea aria-label="Node controls JSON" rows="14" maxlength="200000" bind:value={controls} disabled={pending || !actions}></textarea></label>
   {:else}
    {#each fields.filter(control=>!(usesDocument && ['targetId','clockId'].includes(control.key)) && !(view.operation==='for-each' && control.key==='helper')) as control (control.key)}
-    <DetailControlEditor {control} text={textFor(control)} format={formatFor(control)} error={drafts[control.key]?.error??''} disabled={pending || !actions} idPrefix={'pc-configure-'+control.key} saveButton={false} draftValue={drafts[control.key]?.value} onDraft={value=>draft(control,{value,text:undefined})} ontext={text=>draft(control,{text,value:undefined})} onformat={format=>{if(drafts[control.key]?.value!==undefined){draft(control,{format});return;}const present=controlInputPresentation(control,format);draft(control,drafts[control.key]?.text===undefined?{format:present.format,text:present.text}:{format});}} onvalue={value=>setControl(control.key,value)} onnumber={input=>{if(input.validity.valid&&Number.isFinite(input.valueAsNumber))setControl(control.key,input.valueAsNumber);}} onsave={()=>{}} />
+    <DetailControlEditor {control} text={textFor(control)} format={formatFor(control)} error={drafts[control.key]?.error??''} disabled={pending || !actions} idPrefix={'pc-configure-'+control.key} saveButton={false} draftValue={drafts[control.key]?.value} schemaIdentity={view.key+contract(control)} schemaDraft={drafts[control.key]?.schemaDraft} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value=>draft(control,{value,text:undefined})} ontext={text=>draft(control,{text,value:undefined})} onformat={format=>{if(drafts[control.key]?.value!==undefined){draft(control,{format});return;}const present=controlInputPresentation(control,format);draft(control,drafts[control.key]?.text===undefined?{format:present.format,text:present.text}:{format});}} onvalue={value=>setControl(control.key,value)} onnumber={input=>{if(input.validity.valid&&Number.isFinite(input.valueAsNumber))setControl(control.key,input.valueAsNumber);}} onsave={()=>{}} />
    {/each}
   {/if}
   {#if failure}<div><DiagnosticMessage issue={failure} /></div>{/if}

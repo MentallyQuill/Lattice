@@ -39,7 +39,8 @@ async function fixture(check) {
         mounted = mount((await import(pathToFileURL(harnessPath).href)).default, { target: host, props: { initial: initialView(), actions } }); flushSync(); await tick();
         const update = async view => { mounted.update(view); flushSync(); await tick(); };
         const input = value => { const element = host.querySelector('[aria-label="Data"]'); assert.ok(element); element.value = value; element.dispatchEvent(new dom.window.Event('input', { bubbles: true })); flushSync(); };
-        await check({ host, update, submitted: () => submitted, input, text: () => host.querySelector('[aria-label="Data"]').value, save() { host.querySelector('[data-save-control="data"]').click(); flushSync(); }, async accept() { resolveEdit({ ok: true }); await tick(); flushSync(); } });
+        const typedJson = () => { let element=host.querySelector('[aria-label="Data JSON"]');if(!element){host.querySelector('[aria-label="Edit Data as JSON"]').click();flushSync();element=host.querySelector('[aria-label="Data JSON"]');}assert.ok(element);return element; };
+        await check({ host, update, submitted: () => submitted, input, typedInput(value){const element=typedJson();element.value=value;element.dispatchEvent(new dom.window.Event('input',{bubbles:true}));flushSync();},typedText:()=>typedJson().value, text: () => host.querySelector('[aria-label="Data"]').value, save() { host.querySelector('[data-save-control="data"]').click(); flushSync(); }, async accept() { resolveEdit({ ok: true }); await tick(); flushSync(); } });
     } finally {
         if (mounted) await unmount(mounted); host.remove();
         const scope = relative(resolve(tmpdir()), resolve(directory)); assert.ok(scope && scope.startsWith('lattice-details-drafts-') && !scope.startsWith('..') && !isAbsolute(scope)); await rm(directory, { recursive: true, force: true });
@@ -84,9 +85,9 @@ test('typed structured Save submits detached plain data through the existing act
 test('spec versions and mode grammars invalidate incompatible inspector drafts', async () => fixture(async f => {
     const view=initialView();delete view.editorContractKey;
     const control={...view.controls[0],inputSpec:{id:'condition.value',version:1,editor:'value',formats:['auto','json','rows'],storage:'json-value',limits:{maxBytes:262144}}};
-    const next={...view,controls:[control]};await f.update(next);f.input('{unfinished');
-    await f.update({...next,controls:[{...control,inputSpec:{...control.inputSpec,version:2}}]});assert.equal(f.text(),'[]');
-    await f.update(next);assert.equal(f.text(),'[]');f.input('{unfinished mode');
-    await f.update({...next,controls:[{...control,inputSpec:{...control.inputSpec,id:'pattern.rules:regex'}}]});assert.equal(f.text(),'[]');
-    await f.update(next);assert.equal(f.text(),'[]');
+    const next={...view,controls:[control]};await f.update(next);f.typedInput('{unfinished');
+    await f.update({...next,controls:[{...control,inputSpec:{...control.inputSpec,version:2}}]});assert.equal(f.typedText(),'[]');
+    await f.update(next);assert.equal(f.typedText(),'[]');f.typedInput('{unfinished mode');
+    await f.update({...next,controls:[{...control,inputSpec:{...control.inputSpec,id:'pattern.rules:regex'}}]});assert.equal(f.typedText(),'[]');
+    await f.update(next);assert.equal(f.typedText(),'[]');
 }));

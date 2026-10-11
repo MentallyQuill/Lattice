@@ -6,18 +6,22 @@
     import TermListControl from './TermListControl.svelte';
     import HotkeyControl from './HotkeyControl.svelte';
     import StructuredControl from './StructuredControl.svelte';
+    import SchemaControl from './SchemaControl.svelte';
     import JsonValueControl from './JsonValueControl.svelte';
     import JsonPathControl from './JsonPathControl.svelte';
     import { cloneJsonValue } from '../src/workflow/operations/json-data.js';
     import { formatJsonValueDraftAtPath, validateJsonPath } from '../src/ui/json-value-authoring.js';
     import type { JsonPath } from '../src/workflow/operations/json-data';
+    import type { SchemaDraftState } from '../src/ui/schema-authoring';
     import type { DetailControl } from './detail-types';
-    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, onvalue, onnumber, onsave, saveButton = true, format = 'auto', onformat }: {
-        control: DetailControl; text: string; saveButton?: boolean; format?: ControlInputFormat; onformat?: (format:ControlInputFormat)=>void; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
+    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, schemaDraft, onSchemaDraft, schemaIdentity = '', onvalue, onnumber, onsave, saveButton = true, format = 'auto', onformat }: {
+        control: DetailControl; text: string; schemaIdentity?:string; schemaDraft?:SchemaDraftState; onSchemaDraft?:(state:SchemaDraftState)=>void; saveButton?: boolean; format?: ControlInputFormat; onformat?: (format:ControlInputFormat)=>void; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
         ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; onvalue: (value: unknown) => void; onnumber: (input: HTMLInputElement) => void; onsave: () => void;
     } = $props();
     let termMode = $state(false);
     let switchError = $state('');
+    let localSchemaDraft=$state.raw<SchemaDraftState>();
+    function schemaStateChange(state:SchemaDraftState){if(disabled)return;localSchemaDraft=state;onSchemaDraft?.(state);}
     const recordEntry = $derived(['patterns','extract'].includes(control.structured ?? ''));
     function switchRows() {
         if(disabled || !control.inputSpec) return;
@@ -59,6 +63,8 @@
         {#if recordEntry}<button type="button" aria-label={'Use '+control.label+' rows'} {disabled} onclick={switchRows}>Use rows</button>{/if}
         <TermListControl {control} {text} {format} {draftValue} {disabled} {idPrefix} {error} {ontext} {onformat} />
         {#if switchError}<small role="status">{switchError}</small>{/if}
+    {:else if control.inputSpec?.editor === 'schema'}
+        {#key schemaIdentity}<SchemaControl {text} {ontext} draftState={schemaDraft} onDraftState={schemaStateChange} label={control.label} {idPrefix} {disabled} {error} optional={control.editor==='json' && !!control.allowEmpty} />{/key}
     {:else if typedEntry}
         {#if typed.ok}
             {#if control.inputSpec?.editor === 'path'}<JsonPathControl value={typed.data.value as JsonPath} onchange={typedChange} oninvalid={source => typedInvalid(source)} label={control.label} {idPrefix} {disabled} {error} allowIndices={['select-fields.path','format.path'].includes(control.inputSpec.id)} maxItems={control.inputSpec.limits.maxItems ?? 64} />
@@ -96,7 +102,7 @@
             <textarea id={idPrefix + '-editor'} aria-label={control.label} value={text} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.value); }}></textarea>
         {/if}
     {/if}
-    {#if saveButton && (control.editor === 'json' || control.editor === 'lines')}<button type="button" data-save-control={control.key} disabled={disabled || pending} onclick={() => { if (!disabled && !pending) onsave(); }}>{pending ? 'Validating…' : 'Save ' + control.label}</button>{/if}
+    {#if saveButton && (control.editor === 'json' || control.editor === 'lines')}<button type="button" data-save-control={control.key} disabled={disabled || pending || control.inputSpec?.editor==='schema' && text!=='' && !!(schemaDraft ?? localSchemaDraft)?.invalid} onclick={() => { if (!disabled && !pending && !(control.inputSpec?.editor==='schema' && text!=='' && (schemaDraft ?? localSchemaDraft)?.invalid)) onsave(); }}>{pending ? 'Validating…' : 'Save ' + control.label}</button>{/if}
     {#if control.help}<small>{control.help}</small>{/if}
     {#if control.exposureNote}<small>{control.exposureNote}</small>{:else if provenance()}<small>{provenance()} · Effective: {control.effective}</small>{/if}
     {#if error}<div id={idPrefix + '-error'} class="pc-detail-error"><DiagnosticMessage issue={error} context={{ inputLabel: control.label }} /></div>{/if}

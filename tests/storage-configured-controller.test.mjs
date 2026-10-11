@@ -6,13 +6,14 @@ import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v
 import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.27.0';
 import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.27.0';
 import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.27.0';
+import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js?v=0.27.0';
 import {safe} from '../src/state.js?v=0.27.0';
 const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');
 function actual(name,env){const start=source.indexOf('function '+name+'('),end=source.indexOf('\n}',start)+2;assert.ok(start>=0);return Function('env','with(env){'+source.slice(start,end)+';return '+name+';}')(env);}
 function fixture(){
  const graph={id:'setup-controller',schema:3,runtime:2,mode:'native-unified',definitions:{},portals:{},nodes:{compose:{id:'compose',type:'workflow',operation:'compose',phase:'post',sections:[{name:'body',text:''}]}},wires:{}};
  const context={chatId:'story',chatMetadata:{},chat:[]};let user='default-user',camera=10,commits=0;const catalog=createChatDocumentCatalog({getContext:()=>context,getUserId:()=>user,saveMetadata:()=>true});catalog.define({targetId:'souls.json',name:'Souls',format:'json',content:'[]',visibility:{kind:'public'}});
- const capture={},env={current:graph,selected:{id:'compose'},graphViews:{readEditor:()=>({view:{identity:{kind:'root'}},prepared:{savedGraph:graph}})},editorDraw:{nativeCards:{compose:{phase:'post',ports:[{port:'section.body',dir:'in',kind:'text'}]}}},editorCurrent:token=>token===capture,workflowRuntime:{getStoryDocumentCatalog:()=>catalog},nodeDocumentCaptures:new Map(),nodeCreationScopes:new WeakMap(),pendingConfiguredNode:null,ctx:()=>context,safe,prepareNodeProfileOptions,readNodeProfileMetadata,activeModelMetadata,workbench:{update(value){if('configureNode'in value)env.view=value.configureNode;}},canvas:{toGraph:(x,y)=>({x:x+camera,y:y+camera})},createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices,
+ const capture={},env={current:graph,selected:{id:'compose'},graphViews:{readEditor:()=>({view:{identity:{kind:'root'}},prepared:{savedGraph:graph}})},editorDraw:{nativeCards:{compose:{phase:'post',ports:[{port:'section.body',dir:'in',kind:'text'}]}}},editorCurrent:token=>token===capture,workflowRuntime:{getStoryDocumentCatalog:()=>catalog},nodeDocumentCaptures:new Map(),nodeCreationScopes:new WeakMap(),pendingConfiguredNode:null,ctx:()=>context,safe,prepareNodeProfileOptions,readNodeProfileMetadata,activeModelMetadata,workflowDataPresetFor,workbench:{update(value){if('configureNode'in value)env.view=value.configureNode;}},canvas:{toGraph:(x,y)=>({x:x+camera,y:y+camera})},createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices,
  prepareNativeCreation:(token,command)=>prepareNativeConnectionEdit(graph,command),prepareShelfNodeCreation:(token,command,at)=>prepareNativeConnectionEdit(graph,{...command,graphPoint:at??{x:0,y:0}}),commitCaptured(){commits++;return {ok:true,data:{changed:true}};}};
  env.profiles=actual('profiles',env);
  const start=source.indexOf('const configuredNodeSession ='),end=source.indexOf('\n});',start)+4;assert.ok(start>=0);env.configuredNodeSession=Function('env','with(env){'+source.slice(start,end)+';return configuredNodeSession;}')(env);
@@ -32,16 +33,18 @@ test('actual controller cancellation creates no candidate and scope switches hol
 test('actual controller automatic data nodes need no active chat and inherit the selected response stage',async()=>{
  for(const [operation,key,targetId] of [['read-file','targetId','lattice-default-notes'],['story-clock','clockId','lattice-default-clock'],['commit-outcomes','targetId','lattice-default-outcomes']]){
   const f=fixture();f.env.workflowRuntime={getStoryDocumentCatalog:()=>undefined};
-  const prepared=await f.env.requestNodeCreation(f.capture,{kind:'create',operation,graphPoint:{x:25,y:30}});
+  const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation,graphPoint:{x:25,y:30}});
+  if(operation==='read-file'){assert.ok(f.env.view);assert.equal(f.env.configuredNodeSession.apply(f.env.view.key,f.env.view.controls,f.env.view.phase).ok,true);}
+  const prepared=await pending;
   assert.equal(prepared.ok,true,operation+' '+JSON.stringify(prepared));
   const node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];assert.equal(node[key],targetId);assert.equal(node.phase,'post');
-  assert.equal(f.env.view,undefined);assert.equal(f.env.nodeDocumentCaptures.size,0);assert.equal(f.commits(),0);
+  assert.equal(f.env.view,operation==='read-file'?null:undefined);assert.equal(f.env.nodeDocumentCaptures.size,0);assert.equal(f.commits(),0);
  }
 });
 
 test('actual controller automatic pin creation keeps the origin response stage and commits once through its capture',async()=>{
  const f=fixture();f.env.workflowRuntime={getStoryDocumentCatalog:()=>undefined};
- const prepared=await f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',graphPoint:{x:25,y:30},connection:{origin:{nodeId:'compose',portId:'section.body'},portId:'text'}});
+ const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',graphPoint:{x:25,y:30},connection:{origin:{nodeId:'compose',portId:'section.body'},portId:'text'}});assert.ok(f.env.view);assert.equal(f.env.view.phase,'post');assert.equal(f.env.configuredNodeSession.apply(f.env.view.key,f.env.view.controls,f.env.view.phase).ok,true);const prepared=await pending;
  assert.equal(prepared.ok,true,JSON.stringify(prepared));const id=prepared.data.addedNodeIds[0],node=prepared.data.candidate.nodes[id];assert.equal(node.phase,'post');assert.equal(node.targetId,'lattice-default-notes');
  assert.equal(Object.values(prepared.data.candidate.wires).some(wire=>wire.from===id&&wire.fromPort==='text'&&wire.to==='compose'&&wire.toPort==='section.body'),true);
  assert.equal(f.env.commitNodeCreation(f.capture,prepared).ok,true);assert.equal(f.commits(),1);

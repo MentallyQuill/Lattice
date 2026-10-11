@@ -3,7 +3,7 @@ import { validateCleanupSettings } from '../workflow/operations/prose-cleanup.js
 import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.27.0';
 import { resolveThresholds } from '../workflow/progression.js?v=0.27.0';
 import { OPERATIONS, operationFor } from '../workflow/catalog.js?v=0.27.0';
-import { decodeJson } from '../workflow/operations/json-decode.js?v=0.27.0';
+import { validateJsonSchema } from '../workflow/operations/json-decode.js?v=0.27.0';
 import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.0';
 import { parseDelimitedInput } from './delimited-input.js?v=0.27.0';
 const fail = (code, message, location = {}) => ({ ok: false, error: { code, message, ...location } });
@@ -113,8 +113,11 @@ function finish(spec, value, warnings = [], sourceText, currentValue) {
         const thresholds = resolveThresholds(0, 0, value); if (!thresholds.ok) return thresholds;
     }
     if (spec.editor === 'schema' && value !== '') {
-        const schema = decodeJson(null, { mode: 'check', schema: value });
-        if (!schema.ok && schema.error.code === 'UNSUPPORTED_SCHEMA') return schema;
+        const schema = validateJsonSchema(value);
+        if (!schema.ok) return schema;
+        // Schema-node depth differs from generic JSON depth through properties maps.
+        // Admission already bounds each enum/const; retain the bounded text storage.
+        value = sourceText ?? JSON.stringify(schema.data.schema);
     }
     const kind = recordGrammar(spec);
     if (kind) {
@@ -124,7 +127,7 @@ function finish(spec, value, warnings = [], sourceText, currentValue) {
     if ((Array.isArray(value) ? value.length : value && typeof value === 'object' ? Object.keys(value).length : 0) > (spec.limits.maxItems ?? Infinity)) return fail('CONTROL_ITEM_LIMIT', 'Input exceeds the item limit.');
     if (['list', 'path'].includes(spec.editor) && spec.id !== 'collection.thresholds' && (!Array.isArray(value) || value.some(cell => typeof cell !== 'string' && !(['select-fields.path', 'format.path'].includes(spec.id) && Number.isSafeInteger(cell) && cell >= 0)))) return fail('INVALID_CONTROL_SHAPE', 'Enter a JSON string array.');
     if (Array.isArray(value) && value.some(cell => typeof cell === 'string' && cell.length > (spec.limits.maxStringLength ?? Infinity))) return fail('CONTROL_STRING_LIMIT', 'An entry exceeds the string limit.');
-    if (spec.storage === 'json-text') value = sourceText ?? JSON.stringify(value);
+    if (spec.storage === 'json-text' && spec.editor !== 'schema') value = sourceText ?? JSON.stringify(value);
     if (typeof value === 'string' && value.length > (spec.limits.maxStringLength ?? Infinity)) return fail('CONTROL_STRING_LIMIT', 'Text exceeds the string limit.');
     const [base, mode] = spec.id.split(':'), dot = base.indexOf('.'), operation = base.slice(0, dot), key = base.slice(dot + 1);
     const registration = OPERATIONS[operation];
@@ -158,7 +161,9 @@ export function parseControlInput(spec, input) {
             const property = Object.getOwnPropertyDescriptor(input, key);
             if (!['format', 'text', 'value', 'currentValue'].includes(key) || !property?.enumerable || !Object.hasOwn(property, 'value')) return fail('INVALID_CONTROL_INPUT', 'Use own input fields.');
             if (key === 'value' || key === 'currentValue') {
-                const checked = cloneJsonValue(property.value); if (!checked.ok) return checked; captured[key] = checked.data.value;
+                if(key === 'value' && spec?.editor === 'schema' && property.value !== '') {
+                    const checked=validateJsonSchema(property.value); if(!checked.ok)return checked; captured[key]=checked.data.schema;
+                } else {const checked = cloneJsonValue(property.value); if (!checked.ok) return checked; captured[key] = checked.data.value;}
             } else captured[key] = property.value;
         }
         input = captured;

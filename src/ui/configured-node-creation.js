@@ -27,6 +27,7 @@ const factories={
 /** Discovery only: accurate declared pins, with no manufactured executable settings or identities. */
 export function deferredNodeDescription(operation,controls={}){const factory=factories[operation],base=OPERATIONS[operation];return factory&&base?{descriptor:base,ports:factory({...base.defaults,...controls})}:null;}
 export function nodeNeedsConfiguration(operation,controls={}){
+ if(['json-decode','extract','model-call','format','read-file','write-file','project-document'].includes(operation))return true;
  if(!Object.hasOwn(factories,operation))return false;
  const preset=workflowDataPresetFor(operation),checked=cloneDefinitionData(controls,{operation}),base=OPERATIONS[operation];
  if(!preset||!checked.ok||!controls||Array.isArray(controls)||typeof controls!=='object'||Object.keys(controls).some(key=>!base.controls.includes(key)))return true;
@@ -34,8 +35,8 @@ export function nodeNeedsConfiguration(operation,controls={}){
  return node[preset.controlKey]!==preset.targetId||!describeOperation({schema:3,runtime:2,mode:'native-unified'},node).ok;
 }
 /** Explicit configuration starts from the current effective stage; fixed operations and stage-specific helper containers lock it. */
-export function configuredCreationStage(operation,mode,effectivePhase,inDefinition=false){
- const declared=OPERATIONS[operation]?.phase,containerStage=inDefinition&&['native-pre','native-post'].includes(mode)?mode.slice(7):null;
+export function configuredCreationStage(operation,mode,effectivePhase,inDefinition=false,controls={}){
+ const declared=operation==='extract' && (controls.inputKind ?? OPERATIONS[operation].defaults.inputKind)!=='text' ? 'post' : OPERATIONS[operation]?.phase,containerStage=inDefinition&&['native-pre','native-post'].includes(mode)?mode.slice(7):null;
  return {phase:containerStage??(['pre','post'].includes(declared)?declared:effectivePhase==='post'?'post':'pre'),phaseLocked:!!containerStage||['pre','post'].includes(declared)};
 }
 export function iterationHelperChoices(root,profiles=[]){

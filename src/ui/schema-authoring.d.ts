@@ -16,4 +16,6 @@ export interface SchemaDraftState {
     feedback: string;
     numberDrafts: Record<string, string>;
     typedDrafts: Record<string, JsonValue>;
+    /** Exact unfinished enum/const JSON, keyed by schema path token and keyword. */
+    typedTextDrafts?: Record<string, string>;
 }

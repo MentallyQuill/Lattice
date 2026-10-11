@@ -1870,13 +1870,17 @@ function requestNodeCreation(capture, command, at = null, shelf = false) {
     const editor = graphViews.readEditor(), origin = command.connection?.origin;
     const originCard = origin ? editorDraw?.nativeCards[origin.nodeId] : null;
     const originPort = originCard?.ports.find(port => port.port === origin.portId);
-    const stage = configuredCreationStage(command.operation, editor.prepared.savedGraph.mode, originCard?.phase ?? editorDraw?.nativeCards[selected?.id]?.phase, editor.view.identity.kind === 'instance');
+    const stage = configuredCreationStage(command.operation, editor.prepared.savedGraph.mode, originCard?.phase ?? editorDraw?.nativeCards[selected?.id]?.phase, editor.view.identity.kind === 'instance', command.controls);
     let targets = [], documentScopeKey;
     if (['read-file', 'story-clock', 'commit-outcomes'].includes(command.operation)) {
         const captured = workflowRuntime.getStoryDocumentCatalog?.()?.capture();
-        if (!captured?.ok) return { ok: false, error: { code: 'DOCUMENT_SETUP_UNAVAILABLE', message: 'Open an active chat and authorize a target in Workflow › Configure › Workflow Data before creating this node.' } };
-        documentScopeKey = globalThis.crypto.randomUUID(); nodeDocumentCaptures.set(documentScopeKey, captured.data);
-        targets = captured.data.documents.map(({ content, ...summary }) => summary);
+        const preset = workflowDataPresetFor(command.operation);
+        const automatic = command.operation === 'read-file' && (command.controls?.[preset.controlKey] ?? preset.targetId) === preset.targetId;
+        if (!captured?.ok && !automatic) return { ok: false, error: { code: 'DOCUMENT_SETUP_UNAVAILABLE', message: 'Open an active chat and authorize a target in Workflow › Configure › Workflow Data before creating this node.' } };
+        if (captured?.ok) {
+            documentScopeKey = globalThis.crypto.randomUUID(); nodeDocumentCaptures.set(documentScopeKey, captured.data);
+            targets = captured.data.documents.map(({ content, ...summary }) => summary);
+        }
     }
     const opened = configuredNodeSession.open(capture, command, { ...stage, targets, helpers: iterationHelperChoices(current, prepareNodeProfileOptions(readNodeProfileMetadata(ctx(), profiles()), activeModelMetadata(ctx())).map(option => ({ id: option.value, name: option.label }))), shelf, at, ...(documentScopeKey ? { documentScopeKey } : {}), ...(originPort ? { originKind: originPort.kind, originDirection: originPort.dir } : {}) });
     pendingConfiguredNode = opened.view; workbench?.update({ configureNode: opened.view });
