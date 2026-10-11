@@ -63,3 +63,12 @@ test('awaited node data edits cannot cancel refresh or bind a replacement docume
   const result=await pending;assert.equal(result.ok,false,name);assert.equal(result.error.code,'STALE_CONTEXT',name);assert.equal(effects,0,name+' cannot affect the replacement document');
  }
 });
+
+test('configured shared fields retain controller capture and produce one creation commit',async()=>{
+ const f=fixture(),before=structuredClone(f.graph);
+ const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',controls:{targetId:'souls.json'},graphPoint:{x:10,y:15}});
+ const fields=f.env.view.fields;assert.ok(fields.length);assert.equal(fields.find(control=>control.key==='targetId').inputSpec.storage,'text');
+ assert.equal(f.env.configuredNodeSession.apply(f.env.view.key,f.env.view.controls,'post').ok,true);
+ const prepared=await pending;assert.deepEqual(f.graph,before);assert.equal(f.commits(),0);
+ assert.equal(f.env.commitNodeCreation(f.capture,prepared).ok,true);assert.equal(f.commits(),1);assert.equal(f.env.view,null);
+});

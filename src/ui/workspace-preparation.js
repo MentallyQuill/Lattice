@@ -1,5 +1,5 @@
 import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.27.0';
-import {recallControlLabel} from '../workflow/recall-labels.js?v=0.27.0';
+import { projectNodeControls, detailControl } from './node-control-projection.js?v=0.27.0';
 import { preparedViewContentIdentity } from './graph-view-session.js?v=0.27.0';
 import { prepareIterationBindings } from './iteration-bindings.js?v=0.27.0';
 import { prepareDefinitionRegistry, inspectPreparedDefinition } from '../workflow/graph-validation.js?v=0.27.0';
@@ -196,17 +196,17 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
             const fieldKey = JSON.stringify([selectedId, workflowData?.controlKey]);
             let fields = fieldCache.get(fieldKey);
             if (!fields) {
-                const controls = metadata ? Object.entries(metadata.controlDescriptors).filter(([key, descriptor]) => {
-                    if (workflowData && (key === workflowData.controlKey || saved.operation === 'story-clock' && key === 'calendarId')) return false;
-                    if (key === 'roleOverrides' && saved.operation === 'for-each' || descriptor.hidden || fileInput && ['fileName', 'content', 'loaded'].includes(key)) return false;
-                    const effectiveNode = editor.prepared.effectiveNodes[selectedId];
-                    if (!visibleDetailControl(saved, metadata.defaults, key) && !visibleDetailControl(effectiveNode, metadata.defaults, key)) return false;
-                    const condition = descriptor.visibleWhen;
-                    return !condition || [saved,effectiveNode].some(node => (node?.[condition.key] ?? metadata.defaults[condition.key] ?? metadata.controlDescriptors[condition.key]?.default) === condition.value);
-                }).map(([key, descriptor]) => {
-                    const fallback = metadata.defaults[key] ?? descriptor.default;
-                    const value = saved?.[key] ?? fallback, effectiveValue = editor.prepared.effectiveNodes[selectedId]?.[key] ?? fallback;
-                    return { ...detailControl(key, descriptor.label || friendlyControlLabel(key), ['recall','hotkey-arm'].includes(saved.operation)&&descriptor.values?{...descriptor,valueLabels:Object.fromEntries(descriptor.values.map(value=>[value,recallControlLabel(key,value)??value]))}:descriptor, value), ...detailPresentation(saved.operation, key), ...(JSON.stringify(value) === JSON.stringify(effectiveValue) ? {} : { effective: displayEffective(effectiveValue), source: 'Effective instance override' }) };
+                const effectiveNode = editor.prepared.effectiveNodes[selectedId] ?? saved;
+                const context = {phase:effective?.phase ?? phaseForNode(graph,saved) ?? 'pre',readOnly:editor.readOnly || library};
+                const ownControls = projectNodeControls(saved?.operation,saved,context);
+                const effectiveControls = projectNodeControls(saved?.operation,effectiveNode,context);
+                const controls = metadata ? [...ownControls, ...effectiveControls.filter(control=>!ownControls.some(own=>own.key===control.key))].filter(control => {
+                    const key=control.key;
+                    return !(workflowData && (key===workflowData.controlKey || saved.operation==='story-clock' && key==='calendarId') || key==='roleOverrides' && saved.operation==='for-each' || fileInput && ['fileName','content','loaded'].includes(key));
+                }).map(control=>{
+                    const own=Object.hasOwn(saved,control.key)?saved[control.key]:control.value;
+                    const effectiveValue=Object.hasOwn(effectiveNode,control.key)?effectiveNode[control.key]:control.value;
+                    return {...control,value:own,...(JSON.stringify(own)===JSON.stringify(effectiveValue)?{}:{effective:displayEffective(effectiveValue),source:'Effective instance override'})};
                 }) : [];
                 fields = freeze(structuredClone({ controls, ports: metadata?.ports.map(port => ({ id: port.port, label: port.label, direction: port.dir === 'in' ? 'input' : 'output', kind: port.kind })) ?? [] }));
                 fieldCache.set(fieldKey, fields);
@@ -425,34 +425,7 @@ export function prepareLibraryViews(workflowId, snapshots) {
     return {ok:true,data:{navigation,preparedViews,definitionInfo}};
 }
 
-function detailControl(key,label,descriptor,value) {
- const editor=descriptor.editor==='json'||descriptor.type==='object'||descriptor.type==='array'&&descriptor.items!=='string'?'json':descriptor.type==='enum'?'enum':descriptor.type==='array'?'lines':['integer','number'].includes(descriptor.type)?'number':descriptor.type==='boolean'?'boolean':'text';
- return {key,label,value:value ?? descriptor.default,editor,...(descriptor.help?{help:descriptor.help}:{}),...(editor==='json'?(descriptor.type==='string'?{representation:'json-text',allowEmpty:true}:{representation:'json-value'}):{}),...(descriptor.values?{options:descriptor.values.map(value=>({value,label:descriptor.valueLabels?.[value]??value}))}:{}),...(descriptor.min!==undefined?{min:descriptor.min}:{}),...(descriptor.max!==undefined?{max:descriptor.max}:{}),...(editor==='number'?{step:descriptor.step ?? (descriptor.type==='integer'?1:'any')}:{})};
-}
-const friendlyControlLabel = key => ({ maxTokens: 'Output tokens', budgetTokens: 'Token budget', pins: 'Pinned wording', rules: 'Rules' }[key] ?? key.replace(/([A-Z])/g, char => ' ' + char.toLowerCase()).replace(/^./, char => char.toUpperCase()));
-const displayEffective = value => {const text = typeof value === 'string' ? value : JSON.stringify(value);return text?.length > 256 ? text.slice(0,256) + 'â€¦' : text;};
-function visibleDetailControl(node, defaults, key) {
- const value = name => node?.[name] ?? defaults[name];
- if (node?.operation === 'compose') return key !== 'template' || value('mode') === 'template' ? key !== 'separator' || value('mode') === 'join' : false;
- if (node?.operation === 'text-rules') return key !== 'separator' || value('mode') === 'extract' ? !['scope','protectedLiterals'].includes(key) || value('inputKind') === 'draft' : false;
- if (node?.operation === 'smart-compactor' && key === 'maxTokens') return value('method') === 'compress';
- return true;
-}
-function detailPresentation(operation, key) {
- if (operation === 'read-file' && ['schema', 'columns'].includes(key)) return {group:'Validation', advanced:true};
- if (operation === 'read-file' && ['actorScope', 'actorId'].includes(key)) return {group:'Actor access', advanced:true, ...(key === 'actorId' ? {singleLine:true} : {})};
- const structured = key === 'sections' && operation === 'compose' ? 'sections'
-  : key === 'fields' && operation === 'select-fields' ? 'fields'
-  : key === 'rules' && operation === 'text-rules' ? 'rules'
-  : key === 'inputs' && operation === 'context-join' ? 'slots'
-  : key === 'updates' && operation === 'state' ? 'numeric-map'
-  : key === 'durations' ? 'durations' : undefined;
- const group = ['pins','protectedLiterals','exemptions'].includes(key) ? 'Protections'
-  : ['min','max','baseline','decay'].includes(key) ? 'Bounds'
-  : key === 'durations' ? 'Phases'
-  : ['separator','maxTokens'].includes(key) ? 'Output' : 'Main';
- return {group, ...(group !== 'Main' ? {advanced:true} : {}), ...(structured ? {structured} : {}), ...(['actorId','curveId','trackId','idempotencyKey','promptId'].includes(key) ? {singleLine:true} : {})};
-}
+const displayEffective = value => {const text = typeof value === 'string' ? value : JSON.stringify(value);return text?.length > 256 ? text.slice(0,256) + '…' : text;};
 function modifierView(node, metadata, editable) {
  const outputs = metadata.ports.filter(port => port.dir === 'out');
  if (node.type !== 'workflow' || metadata.hostResult || outputs.length !== 1 || outputs[0].kind !== 'text') return null;
@@ -473,5 +446,5 @@ export function projectDefinitionUpdate(previous,next) {
 
 /** Producer contract contains editor compatibility only; revision/activation are write tokens. */
 function detailsEditorContractKey(node) {
-    return JSON.stringify([node.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured]), node.model?.profile.allowedModes, node.model?.model.allowedModes, node.model?.editable, node.helperBindings && [node.helperBindings.helperKey, node.helperBindings.editable, node.helperBindings.roles.map(row => [row.role, row.model.allowedModes])], node.boundary && [node.boundary.id, node.boundary.direction, node.boundary.kinds], !!node.fileInput, node.modifiers && [node.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), node.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), node.modifiers.editable], node.readOnly]);
+    return JSON.stringify([node.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured, control.inputSpec?.id, control.inputSpec?.version]), node.model?.profile.allowedModes, node.model?.model.allowedModes, node.model?.editable, node.helperBindings && [node.helperBindings.helperKey, node.helperBindings.editable, node.helperBindings.roles.map(row => [row.role, row.model.allowedModes])], node.boundary && [node.boundary.id, node.boundary.direction, node.boundary.kinds], !!node.fileInput, node.modifiers && [node.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), node.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), node.modifiers.editable], node.readOnly]);
 }

@@ -3,7 +3,7 @@ import type {JsonValue} from '../workflow/operations/json-data';
 export interface IterationHelperChoice {key:string;label:string;ref:DefinitionRef;stateful:boolean}
 export interface ConfiguredCreationOptions {phase:WorkflowPhase;phaseLocked?:boolean;targets:{targetId:string;name?:string;format:string}[];helpers:IterationHelperChoice[];originKind?:ArtifactKind;originDirection?:'in'|'out';documentScopeKey?:string;shelf?:boolean;at?:{x:number;y:number}|null}
 export interface ConfiguredCreationCommand {kind?:string;operation:string;controls?:Record<string,JsonValue>;requiresConfiguration?:boolean;connection?:{origin:{nodeId:string;portId:string};portId:string;replace?:boolean};graphPoint?:{x:number;y:number};artifactKind?:ArtifactKind}
-export interface ConfiguredCreationView {key:string;operation:string;title:string;controls:string;phase:WorkflowPhase;phaseLocked:boolean;targets:ConfiguredCreationOptions['targets'];helpers:IterationHelperChoice[]}
+export interface ConfiguredCreationView {key:string;operation:string;title:string;controls:string;fields?:import('../../ui/detail-types').DetailControl[];phase:WorkflowPhase;phaseLocked:boolean;targets:ConfiguredCreationOptions['targets'];helpers:IterationHelperChoice[]}
 /** Pure honest discovery metadata; no executable identities or capabilities are manufactured. */
 export function deferredNodeDescription(operation:string,controls?:Record<string,unknown>):OperationDescription|null;
 /** Preset-backed nodes add immediately; explicit custom targets and malformed controls still require configuration. */

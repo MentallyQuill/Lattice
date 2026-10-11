@@ -1,3 +1,4 @@
+import {projectNodeControls} from './node-control-projection.js?v=0.27.0';
 import {OPERATIONS,operationDefaults,describeOperation} from '../workflow/catalog.js?v=0.27.0';
 import {cloneDefinitionData,definitionRefKey} from '../workflow/definition-data.js?v=0.27.0';
 import {inspectDefinitionGraph} from '../workflow/graph-validation.js?v=0.27.0';
@@ -68,7 +69,7 @@ export function createConfiguredNodeSession(ports){
   open(capture,command,options){
    if(active)cancel(active.key);const key=globalThis.crypto.randomUUID();let resolve;const result=new Promise(done=>resolve=done);
    const controls=Object.fromEntries(Object.entries(operationDefaults(command.operation)).filter(([key])=>OPERATIONS[command.operation].controls.includes(key)));Object.assign(controls,command.controls??{});
-   const view=freeze({key,operation:command.operation,title:OPERATIONS[command.operation].title,controls:JSON.stringify(controls,null,2),phase:options.phase,phaseLocked:options.phaseLocked===true,targets:options.targets,helpers:options.helpers});
+   const view=freeze({key,operation:command.operation,title:OPERATIONS[command.operation].title,controls:JSON.stringify(controls,null,2),fields:projectNodeControls(command.operation,controls,{phase:options.phase}),phase:options.phase,phaseLocked:options.phaseLocked===true,targets:options.targets,helpers:options.helpers});
    active={key,capture,command:structuredClone(command),options:structuredClone(options),resolve};return {view,result};
   },
   apply(key,text,phase){

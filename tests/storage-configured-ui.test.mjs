@@ -143,3 +143,13 @@ test('Outcome Commit automatic defaults stay response-only and custom targets re
  const unified=prepareNativeSearchCatalog(scope).data,choice=unified.choices.find(item=>item.id==='operation:commit-outcomes');assert.ok(choice);assert.equal(choice.requiresConfiguration,undefined);assert.equal(choice.phase,'post');assert.equal(prepareNativeSearchCatalog({...scope,mode:'native-pre'}).ok,false);
  const options={phase:'post',targets:[{targetId:'outcomes.json',format:'json'},{targetId:'notes.txt',format:'text'}],helpers:[]};assert.equal(config.validateConfiguredNodeControls('commit-outcomes','{"targetId":"outcomes.json"}',options).ok,true);assert.equal(config.validateConfiguredNodeControls('commit-outcomes','{"targetId":"notes.txt"}',options).ok,false);assert.equal(config.validateConfiguredNodeControls('commit-outcomes','{"targetId":"missing.json"}',options).ok,false);
 });
+
+test('shared creation projection adds no authority and retains locked phase rejection',async()=>{
+ const capture={};let prepares=0;
+ const session=config.createConfiguredNodeSession({isCurrent:token=>token===capture,prepare:()=>{prepares++;return {ok:true,data:{}};}});
+ const opened=session.open(capture,{operation:'read-file'},{phase:'post',phaseLocked:true,targets:[{targetId:'souls.json',format:'json'}],helpers:[]});
+ assert.equal(opened.view.fields.some(control=>control.inputSpec.id==='read-file.schema'),true);
+ assert.equal(session.apply(opened.view.key,'{"targetId":"souls.json"}','pre').error.code,'INVALID_PHASE');assert.equal(prepares,0);
+ assert.equal(session.apply(opened.view.key,'{"targetId":"unauthorized.json"}','post').error.code,'DOCUMENT_NOT_AUTHORIZED');assert.equal(prepares,0);
+ session.cancel(opened.view.key);assert.equal((await opened.result).error.code,'NODE_CONFIGURATION_CANCELLED');assert.equal(prepares,0);
+});

@@ -13,6 +13,7 @@ export type DetailEditResult = { ok: true } | { ok: false; error: DetailError };
 export type DetailEditResponse = DetailEditResult | Promise<DetailEditResult>;
 interface DetailControlBase {
     key: string; label: string; value: unknown;
+    inputSpec?: import('../src/ui/control-input-contracts').ControlInputSpec; readOnly?: boolean;
     options?: { value: string; label: string }[]; min?: number; max?: number; step?: number | 'any';
     effective?: string; source?: string; help?: string; exposureNote?: string;
     group?: string; advanced?: boolean; singleLine?: boolean;

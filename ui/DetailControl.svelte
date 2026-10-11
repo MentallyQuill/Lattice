@@ -1,17 +1,28 @@
 <script lang="ts">
+    import {parseControlInput} from '../src/ui/control-input-contracts.js';
+    import type {ControlInputFormat} from '../src/ui/control-input-contracts';
+    import type {JsonValue} from '../src/workflow/operations/json-data';
     import DiagnosticMessage from './DiagnosticMessage.svelte';
     import StructuredControl from './StructuredControl.svelte';
     import type { DetailControl } from './detail-types';
-    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, onvalue, onnumber, onsave }: {
-        control: DetailControl; text: string; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
+    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, onvalue, onnumber, onsave, saveButton = true, format = 'auto', onformat }: {
+        control: DetailControl; text: string; saveButton?: boolean; format?: ControlInputFormat; onformat?: (format:ControlInputFormat)=>void; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
         ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; onvalue: (value: unknown) => void; onnumber: (input: HTMLInputElement) => void; onsave: () => void;
     } = $props();
+    const entry = $derived(control.inputSpec?.editor === 'list');
+    const parsed = $derived(entry && control.inputSpec ? parseControlInput(control.inputSpec,{format,text,currentValue:control.value as JsonValue}) : null);
     const shortChoices = () => control.editor === 'enum' && (control.options?.length ?? 0) > 1 && (control.options?.length ?? 0) <= 3 && control.options!.every(option => option.label.length <= 10);
     const provenance = () => control.effective !== undefined && control.effective !== text && control.source !== 'Saved setting' ? control.source : '';
 </script>
 
 <div class:pc-control-number={control.editor === 'number'} class="pc-detail-control">
-    {#if control.structured && control.editor === 'json'}
+    {#if entry}
+        <label for={idPrefix + '-editor'}>{control.label}</label>
+        <select aria-label={control.label+' input format'} value={format} {disabled} onchange={event=>onformat?.(event.currentTarget.value as ControlInputFormat)}><option value="auto">Terms / CSV</option><option value="plain">Plain text</option><option value="json">Advanced JSON</option></select>
+        <textarea id={idPrefix + '-editor'} aria-label={control.label} value={text} {disabled} aria-invalid={!!error} oninput={event=>{if(!disabled)ontext(event.currentTarget.value);}}></textarea>
+        <small>Separate terms with commas or newlines. Quote phrases containing commas.</small>
+        {#if parsed?.ok}<small data-control-items>{parsed.data.displayItems?.length??0} entries{#if parsed.data.displayItems?.length}: {parsed.data.displayItems.join(' � ')}{/if}</small>{#each parsed.data.warnings as warning}<small>{warning}</small>{/each}{/if}
+    {:else if control.structured && control.editor === 'json'}
         <span class="pc-control-label">{control.label}</span>
         <StructuredControl {control} {text} {disabled} {ontext} {onDraft} {draftValue} {idPrefix} {error} />
     {:else if control.editor === 'boolean'}
@@ -37,7 +48,7 @@
             <textarea id={idPrefix + '-editor'} aria-label={control.label} value={text} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.value); }}></textarea>
         {/if}
     {/if}
-    {#if control.editor === 'json' || control.editor === 'lines'}<button type="button" data-save-control={control.key} disabled={disabled || pending} onclick={() => { if (!disabled && !pending) onsave(); }}>{pending ? 'Validating…' : 'Save ' + control.label}</button>{/if}
+    {#if saveButton && (control.editor === 'json' || control.editor === 'lines')}<button type="button" data-save-control={control.key} disabled={disabled || pending} onclick={() => { if (!disabled && !pending) onsave(); }}>{pending ? 'Validating…' : 'Save ' + control.label}</button>{/if}
     {#if control.help}<small>{control.help}</small>{/if}
     {#if control.exposureNote}<small>{control.exposureNote}</small>{:else if provenance()}<small>{provenance()} · Effective: {control.effective}</small>{/if}
     {#if error}<div id={idPrefix + '-error'} class="pc-detail-error"><DiagnosticMessage issue={error} context={{ inputLabel: control.label }} /></div>{/if}

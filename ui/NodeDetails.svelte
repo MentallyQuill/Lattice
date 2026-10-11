@@ -1,4 +1,7 @@
 <script lang="ts">
+    import {parseControlInput} from '../src/ui/control-input-contracts.js';
+    import type {ControlInputFormat} from '../src/ui/control-input-contracts';
+    import type {JsonValue} from '../src/workflow/operations/json-data';
     import DiagnosticMessage from './DiagnosticMessage.svelte';
     import { presentDiagnostics } from '../src/ui/diagnostics.js';
     import { onDestroy, untrack } from 'svelte';
@@ -8,7 +11,7 @@
     import WorkflowData from './WorkflowData.svelte';
     import type { DetailBindingMode, DetailControl, DetailEditResponse, DetailModifier, DetailSelection, NodeDetailsActions, NodeDetailsView } from './detail-types';
     let { view, actions = {}, idPrefix = 'pc-node-details', openGuide }: { view: NodeDetailsView | null; actions?: NodeDetailsActions; idPrefix?: string; openGuide?: () => void } = $props();
-    type LocalDraft = { text: string; typedValue?: unknown; error: string; pending: boolean; editor?: DetailControl['editor']; representation?: 'json-text' | 'json-value'; artifactKind?: string; required?: boolean; boundaryId?: string; boundaryDirection?: 'input' | 'output'; modifierType?: string; helperKey?:string };
+    type LocalDraft = { text: string; format?:ControlInputFormat; typedValue?: unknown; error: string; pending: boolean; editor?: DetailControl['editor']; representation?: 'json-text' | 'json-value'; artifactKind?: string; required?: boolean; boundaryId?: string; boundaryDirection?: 'input' | 'output'; modifierType?: string; helperKey?:string };
     let drafts = $state<Record<string, LocalDraft>>({});
     let errors = $state<Record<string, string>>({});
     let identity = '', revision = '', support = '';
@@ -48,7 +51,7 @@
     onDestroy(() => { alive = false; requests.clear(); draftCache.clear(); draftGenerations.clear(); modifierGenerations.clear(); });
     $effect(() => {
         const next = view ? selectionIdentity(view) : '', nextRevision = view?.revision ?? '';
-        const nextSupport = view?.editorContractKey ?? JSON.stringify([view?.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured]), view?.model?.profile.allowedModes, view?.model?.model.allowedModes, view?.model?.editable, view?.helperBindings && [view.helperBindings.helperKey,view.helperBindings.editable,view.helperBindings.roles.map(row=>[row.role,row.model.allowedModes])], view?.boundary && [view.boundary.id, view.boundary.direction, view.boundary.kinds], !!view?.fileInput, view?.modifiers && [view.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), view.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), view.modifiers.editable, view.readOnly]]);
+        const nextSupport = view?.editorContractKey ?? JSON.stringify([view?.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured, control.inputSpec?.id, control.inputSpec?.version]), view?.model?.profile.allowedModes, view?.model?.model.allowedModes, view?.model?.editable, view?.helperBindings && [view.helperBindings.helperKey,view.helperBindings.editable,view.helperBindings.roles.map(row=>[row.role,row.model.allowedModes])], view?.boundary && [view.boundary.id, view.boundary.direction, view.boundary.kinds], !!view?.fileInput, view?.modifiers && [view.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), view.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), view.modifiers.editable, view.readOnly]]);
         const changedSelection = next !== identity;
         if (changedSelection || nextRevision !== revision || nextSupport !== support) {
             if (changedSelection || nextSupport !== support) { boundaryDraftSequence++; modifierEpoch++; }
@@ -86,7 +89,7 @@
             return binding?.allowedModes.some(option => option.value === 'override') ? JSON.stringify(['binding', key, node.model?.editable ?? !node.readOnly]) : null;
         }
         const control = node.controls.find(control => control.key === key);
-        return control && (control.editor === 'json' || control.editor === 'lines') ? JSON.stringify([control.editor, control.representation, control.allowEmpty, control.structured]) : null;
+        return control && (control.editor === 'json' || control.editor === 'lines') ? JSON.stringify([control.editor, control.representation, control.allowEmpty, control.structured, control.inputSpec?.id, control.inputSpec?.version]) : null;
     }
     function nextDraftGeneration(key: string) {
         const generation = (draftGenerations.get(key) ?? 0) + 1;
@@ -127,7 +130,7 @@
         if (!view || view.readOnly) return;
         nextDraftGeneration(control.key);
         requests.delete(control.key);
-        drafts = { ...drafts, [control.key]: { text, error: '', pending: false, editor: control.editor, representation: control.representation } };
+        drafts = { ...drafts, [control.key]: { text, format:drafts[control.key]?.format, error: '', pending: false, editor: control.editor, representation: control.representation } };
         errors = { ...errors, [control.key]: '' };
     }
     function draftValue(control: DetailControl, value: unknown) {
@@ -138,21 +141,19 @@
     }
     function save(control: DetailControl) {
         if (!view || view.readOnly || !actions.editControl) return;
-        if (control.structured && drafts[control.key]?.typedValue !== undefined) {
-            const value = $state.snapshot(drafts[control.key].typedValue);
-            void perform(control.key, false, captured => actions.editControl!(captured, control.key, value));
-            return;
-        }
         const text = drafts[control.key]?.text ?? textFor(control);
+        const typed = drafts[control.key]?.typedValue;
         let value: unknown = text;
-        if (control.editor === 'json') {
-            try {
-                if (!(control.representation === 'json-text' && control.allowEmpty && text.trim() === '')) {
-                    const parsed = JSON.parse(text);
-                    if (control.representation !== 'json-text') value = parsed;
-                }
-            } catch { drafts = { ...drafts, [control.key]: { text, error: 'Enter valid JSON before saving.', pending: false, editor: control.editor, representation: control.representation } }; return; }
-        } else if (control.editor === 'lines') value = text.split('\n').filter(line => line.trim());
+        if (control.inputSpec) {
+            const input = typed === undefined ? {format:drafts[control.key]?.format ?? (control.structured ? 'json' : 'auto') as ControlInputFormat,text} : {format:'rows' as const,value:$state.snapshot(typed) as JsonValue};
+            const parsed = parseControlInput(control.inputSpec,{...input,currentValue:control.value as JsonValue});
+            if(!parsed.ok){drafts={...drafts,[control.key]:{...drafts[control.key],text,error:parsed.error.message,pending:false,editor:control.editor,representation:control.representation}};return;}
+            value=parsed.data.value;
+        } else if (typed !== undefined) value=$state.snapshot(typed);
+        else if (control.editor === 'json') {
+            try {if (!(control.representation === 'json-text' && control.allowEmpty && text.trim() === '')) {const parsed=JSON.parse(text);if(control.representation !== 'json-text')value=parsed;}}
+            catch {drafts={...drafts,[control.key]:{text,error:'Enter valid JSON before saving.',pending:false,editor:control.editor,representation:control.representation}};return;}
+        } else if (control.editor === 'lines') value=text.split('\n').filter(line=>line.trim());
         void perform(control.key, false, captured => actions.editControl!(captured, control.key, value));
     }
     function editControl(control: DetailControl, value: unknown) {
@@ -443,7 +444,7 @@
 </section>
 
 {#snippet controlEditor(control: DetailControl)}
-    <DetailControlEditor {control} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
+    <DetailControlEditor {control} format={drafts[control.key]?.format??'auto'} onformat={format=>{draft(control,drafts[control.key]?.text??textFor(control));drafts={...drafts,[control.key]:{...drafts[control.key],format}};}} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
 {/snippet}
 
 <style>

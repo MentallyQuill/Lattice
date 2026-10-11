@@ -421,3 +421,18 @@ test('system data projection uses execution addresses without changing authored 
  }
  assert.notEqual(prepared.data.preparedViews[1].effectiveNodes.read.targetId,prepared.data.preparedViews[2].effectiveNodes.read.targetId);assert.deepEqual(root,original);assert.equal(computeDefinitionIdentity(definition).data.semanticHash,identity.data.semanticHash);
 });
+
+test('creation and editing project the same labels and input grammar', async () => {
+ const projection = await import('../src/ui/node-control-projection.js?v=0.27.0');
+ const controls = {mode:'join',sections:[{name:'body',text:'Draft'}],separator:'\n'};
+ const editing = projection.projectNodeControls('compose',controls,{phase:'pre'});
+ const {createConfiguredNodeSession} = await import('../src/ui/configured-node-creation.js');
+ const session = createConfiguredNodeSession({isCurrent:()=>true,prepare:()=>({ok:true,data:{}})});
+ const opened = session.open({}, {operation:'compose',controls}, {phase:'pre',targets:[],helpers:[]});
+ const created = opened.view.fields;
+ assert.ok(created.length);
+ assert.deepEqual(created.map(({key,label,inputSpec})=>({key,label,inputSpec})),editing.map(({key,label,inputSpec})=>({key,label,inputSpec})));
+ assert.equal(created.find(control=>control.key==='sections').label,'Sections');
+ assert.equal(created.find(control=>control.key==='sections').inputSpec.storage,'json-value');
+ session.cancel(opened.view.key); await opened.result;
+});

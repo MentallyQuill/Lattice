@@ -80,3 +80,13 @@ test('typed structured Save submits detached plain data through the existing act
     assert.deepEqual(structuredClone(f.submitted()), [{ name: 'section1', text: 'Typed' }]);
     await f.accept();
 }));
+
+test('spec versions and mode grammars invalidate incompatible inspector drafts', async () => fixture(async f => {
+    const view=initialView();delete view.editorContractKey;
+    const control={...view.controls[0],inputSpec:{id:'condition.value',version:1,editor:'value',formats:['auto','json','rows'],storage:'json-value',limits:{maxBytes:262144}}};
+    const next={...view,controls:[control]};await f.update(next);f.input('{unfinished');
+    await f.update({...next,controls:[{...control,inputSpec:{...control.inputSpec,version:2}}]});assert.equal(f.text(),'[]');
+    await f.update(next);assert.equal(f.text(),'[]');f.input('{unfinished mode');
+    await f.update({...next,controls:[{...control,inputSpec:{...control.inputSpec,id:'pattern.rules:regex'}}]});assert.equal(f.text(),'[]');
+    await f.update(next);assert.equal(f.text(),'[]');
+}));
