@@ -65,7 +65,7 @@ test('local modifier preview is explicitly stale and leaves retained output unto
     root.nodes['compose-json'].modifiers=[{id:'trim',type:'trim',version:1,enabled:true,settings:{edges:'both'}}];
     const prepared=prepareWorkspaceViews(root), session=createGraphViewSession({root,activationId:'local-preview',...prepared.data}).data;
     const target={workflowId:root.id,instancePath:[],nodeId:'compose-json',portId:'out'};
-    const workflow={...projectPreparedWorkflow(prepared.data.workflow,{selectedId:'compose-json'}),result:{ok:true,sections:[{kind:'text',label:'Output',text:'  recorded  ',format:'structured-text',truncated:false,recordedRawText:'  recorded  ',recordedModifierTrace:[]}]}};
+    const workflow={...projectPreparedWorkflow(prepared.data.workflow,{selectedId:'compose-json'}),result:{ok:true,source:{format:'structured-text',text:'{"kind":"text","text":"  recorded  "}',truncated:false,policy:'safe-recording'},sections:[{kind:'text',label:'Output',text:'  recorded  ',format:'structured-text',truncated:false,readable:{kind:'text',text:'  recorded  ',truncated:false},recordedRawText:'  recorded  ',recordedModifierTrace:[]}]}};
     const before=structuredClone(workflow.result);
     const preview=projectWorkspacePanels(session.readEditor(),workflow,{availability:'superseded'},'changed',target,null).outputPreview;
     assert.equal(preview.status,'stale');
@@ -76,12 +76,47 @@ test('local modifier preview is explicitly stale and leaves retained output unto
     assert.equal(projectWorkspacePanels(session.readEditor(),workflow,{availability:'superseded'},'changed',target,pinned).outputPreview.sections.some(section=>section.label.startsWith('Local modifier')),false);
 });
 
+test('local modifier Readable changes while artifact-wide recorded Source retains identity', () => {
+    const root = starterGraph('structured-guidance');
+    root.nodes['compose-json'].modifiers = [{ id: 'trim', type: 'trim', version: 1, enabled: true, settings: { edges: 'both' } }];
+    const prepared = prepareWorkspaceViews(root), session = createGraphViewSession({ root, activationId: 'local-readable-source', ...prepared.data }).data;
+    const target = { workflowId: root.id, instancePath: [], nodeId: 'compose-json', portId: 'out' };
+    const source = Object.freeze({ format: 'structured-text', text: '{\n  "kind": "text",\n  "text": "  recorded  "\n}', truncated: false, policy: 'safe-recording' });
+    const sections = Object.freeze([{ kind: 'text', label: 'Output', text: '  recorded  ', format: 'structured-text', truncated: false, readable: { kind: 'text', text: '  recorded  ', truncated: false }, recordedRawText: '  recorded  ', recordedModifierTrace: [] }]);
+    const workflow = { ...projectPreparedWorkflow(prepared.data.workflow, { selectedId: 'compose-json' }), result: { ok: true, source, sections } };
+    const preview = projectWorkspacePanels(session.readEditor(), workflow, { availability: 'stale' }, 'local', target, null).outputPreview;
+    assert.strictEqual(preview.source, source);
+    assert.equal(preview.sections[0].readable.text, '  recorded  ');
+    assert.deepEqual(preview.sections.at(-1).readable, { kind: 'text', text: 'recorded', truncated: false });
+    const status = projectWorkspacePanels(session.readEditor(), workflow, { status: 'Unrelated step' }, 'local', target, null).outputPreview;
+    assert.strictEqual(status.source, source);
+    assert.strictEqual(status.sections, preview.sections);
+    assert.equal(workflow.result.sections.length, 1);
+});
+
+test('local modifier subsection shares the artifact Readable byte budget and retains a visible final body', () => {
+    const root = starterGraph('structured-guidance');
+    root.nodes['compose-json'].modifiers = [{ id: 'trim', type: 'trim', version: 1, enabled: true, settings: { edges: 'both' } }];
+    const prepared = prepareWorkspaceViews(root), session = createGraphViewSession({ root, activationId: 'bounded-local-readable', ...prepared.data }).data;
+    const target = { workflowId: root.id, instancePath: [], nodeId: 'compose-json', portId: 'out' };
+    const rawText = ' ' + '😀'.repeat(35000) + ' ';
+    const source = Object.freeze({ format: 'structured-text', text: '{"retained":"diagnostic prefix"}', truncated: true, policy: 'safe-recording' });
+    const sections = Object.freeze([{ kind: 'text', label: 'Output', text: '😀'.repeat(16000), format: 'structured-text', truncated: true, readable: { kind: 'text', text: '😀'.repeat(16000), truncated: true }, recordedRawText: rawText, recordedModifierTrace: [] }]);
+    const workflow = { ...projectPreparedWorkflow(prepared.data.workflow, { selectedId: 'compose-json' }), result: { ok: true, source, sections } };
+    const preview = projectWorkspacePanels(session.readEditor(), workflow, { availability: 'stale' }, 'local', target, null).outputPreview;
+    const bytes = preview.sections.reduce((n, section) => n + Buffer.byteLength(section.label) + Buffer.byteLength(section.readable.text ?? ''), 0);
+    assert.ok(bytes <= 65536, `aggregate readable bytes: ${bytes}`);
+    assert.ok(preview.sections.at(-1).readable.text.startsWith('😀'));
+    assert.equal(preview.sections.at(-1).readable.truncated, true);
+    assert.strictEqual(preview.source, source);
+});
+
 test('complete recorded source remains usable when its rendered preview was truncated', () => {
     const root=starterGraph('structured-guidance');
     root.nodes['compose-json'].modifiers=[{id:'trim',type:'trim',version:1,enabled:true,settings:{edges:'both'}}];
     const prepared=prepareWorkspaceViews(root),session=createGraphViewSession({root,activationId:'long-source',...prepared.data}).data;
     const target={workflowId:root.id,instancePath:[],nodeId:'compose-json',portId:'out'},raw=' '+ '😀'.repeat(35000)+' ';
-    const workflow={...projectPreparedWorkflow(prepared.data.workflow,{selectedId:'compose-json'}),result:{ok:true,sections:[{kind:'text',text:'display prefix',format:'structured-text',truncated:true,recordedRawText:raw,recordedModifierTrace:[]}]}};
+    const workflow={...projectPreparedWorkflow(prepared.data.workflow,{selectedId:'compose-json'}),result:{ok:true,source:{format:'structured-text',text:'{"kind":"text","text":"display prefix',truncated:true,policy:'safe-recording'},sections:[{kind:'text',text:'display prefix',format:'structured-text',truncated:true,readable:{kind:'text',text:'display prefix',truncated:true},recordedRawText:raw,recordedModifierTrace:[]}]}};
     const preview=projectWorkspacePanels(session.readEditor(),workflow,{availability:'superseded'},'changed',target,null).outputPreview.sections.at(-1);
     assert.equal(preview.id,'local-modifiers');
     assert.equal(preview.truncated,true);
@@ -184,8 +219,8 @@ test('nested definition bindings remain inherited until root-owned overrides are
     assert.deepEqual(root.definitions, savedDefinitions, 'root override resets preserve every pinned definition');
 });
 
-test('Pattern Scan phrase rules retain their distinct raw schema', () => {
-    const root={id:'scan',schema:3,runtime:2,mode:'native-post',roles:{},nodes:{scan:{id:'scan',type:'workflow',operation:'pattern-scan',rules:[]}},wires:{},definitions:{}};
+test('Pattern rules retain their distinct raw schema', () => {
+    const root={id:'scan',schema:3,runtime:2,mode:'native-post',roles:{},nodes:{scan:{id:'scan',type:'workflow',operation:'pattern',rules:[{id:'phrase',pattern:'synthetic phrase',label:'Synthetic'}]}},wires:{},definitions:{}};
     assert.equal(details(root,'scan').controls.find(control=>control.key==='rules').structured,undefined);
 });
 

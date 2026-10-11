@@ -95,11 +95,14 @@ export interface NodeDetailsActions {
 export interface PreviewSection {
     id: string; label: string; kind: string; text: string;
     format: 'structured-text' | 'json-prefix-text' | 'omitted'; truncated: boolean;
+    readable: import('../src/ui/recorded-preview').ReadableContent;
+    collapsed?: boolean; notices?: readonly string[];
 }
 export interface PreviewChoice { key: string; label: string; kind: string; target: DetailTarget; }
 export interface DetailHandleReviewSelector { handleId: string; runId: string; terminal: { kind: 'terminal'; address: DetailNodeAddress }; }
 export type DetailReviewSelector = DetailHandleReviewSelector;
 export interface OutputPreviewView {
+    source: import('../src/ui/recorded-preview').PreviewSource;
     diagnostics?: import('./diagnostic-types').DiagnosticView[];
     emptyMessage?: string;
     settlement?: { status: 'settled' | 'partial' | 'save-unverified'; published: true; receipts: {intentId:string;targetId:string;status:string;error?:{code:string;message:string}}[] } | null;

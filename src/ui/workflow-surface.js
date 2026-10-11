@@ -4,7 +4,7 @@ import { cloneWorkflowDocument } from '../workflow/document.js?v=0.27.0';
 import { sha256Text } from '../workflow/definition-data.js?v=0.27.0';
 import { prepareCompositionViews } from '../workflow/composition-views.js?v=0.27.0';
 import { createRunState, reduceRunState, projectRunRows } from '../workflow/run-state.js?v=0.27.0';
-import { formatRecordedArtifact, formatRecordedTextModifiers } from '../workflow/recording.js?v=0.27.0';
+import { projectRecordedPreview } from './recorded-preview.js?v=0.27.0';
 import { addressKey, nodeAddress, targetAddress, own, plain, safeBinding, safeError, expandRecordAddress, freeze } from '../workflow/record-data.js?v=0.27.0';
 import { workflowSignature } from '../workflow/runtime.js?v=0.27.0';
 import { FAMILIES, OPERATIONS, operationFor, phaseForNode } from '../workflow/catalog.js?v=0.27.0';
@@ -19,6 +19,7 @@ const projections = new WeakMap();
 const historicalPreviews = new WeakMap();
 const recordedSections = new WeakMap();
 const noRows = freeze([]);
+const noPreview = freeze({ source: projectRecordedPreview(undefined).source, sections: noRows });
 const pathKey = path => JSON.stringify(path);
 const targetKey = target => target?.kind === 'terminal' ? 'terminal:' + addressKey(target.address) : addressKey(target) + ':' + target.portId;
 const ownedPreviewTarget = raw => { const target = targetAddress(raw); return target ? freeze(target) : null; };
@@ -185,8 +186,8 @@ function cachedRows(owner, source, viewPath) {
     return views.get(key);
 }
 const progressSource = (recording, runState) => runState && (!recording || runState.runId !== recording.runId || runState.lastSeq > recording.lastSeq) ? runState : recording;
-function boundedSections(recording, target) {
-    if (!recording || !target) return noRows;
+function boundedPreview(recording, target) {
+    if (!recording || !target) return noPreview;
     let cache = Object.isFrozen(recording) ? recordedSections.get(recording) : null;
     if (!cache) { cache = new Map(); if (Object.isFrozen(recording)) recordedSections.set(recording, cache); }
     const key = targetKey(target); if (cache.has(key)) return cache.get(key);
@@ -201,10 +202,9 @@ function boundedSections(recording, target) {
         artifactId = unit?.ports.find(port => port.direction === 'output' && recording.identities.strings[port.port] === target.portId)?.artifact;
     }
     const artifact = recording.artifacts.find(item => item.id === artifactId);
-    if (!artifact) { cache.set(key, noRows); return noRows; }
-    const textSections=formatRecordedTextModifiers(artifact);
-    const sections = freeze(structuredClone(textSections.length ? textSections : [{ kind: artifact.kind, ...formatRecordedArtifact(artifact) }]));
-    cache.set(key, sections); return sections;
+    if (!artifact) { cache.set(key, noPreview); return noPreview; }
+    const preview = projectRecordedPreview(artifact);
+    cache.set(key, preview); return preview;
 }
 function recordedOutputStatus(recording, target) {
     if (!recording || !target || target.kind === 'terminal') return null;
@@ -219,7 +219,7 @@ export function projectPreparedWorkflow(prepared, { viewPath = [], selectedId = 
     const owner = projections.get(prepared);
     if (!owner) return emptyView('Use an actual prepared projection.');
     result ??= owner.result;
-    if (owner.failure) return { ...owner.failure, busy, status, result: result ? { kind: 'bounded', ok: result.ok === true, error: result.error?.message || '', ...(result.error ? { errorDiagnostic: presentDiagnostic(result.error) } : {}), actualCalls: result.actualCalls || 0, callBound: 0, sections: [], applyAvailable: false, applyIssue: owner.failure.issues[0], tokenMethods: [] } : null };
+    if (owner.failure) return { ...owner.failure, busy, status, result: result ? { kind: 'bounded', ok: result.ok === true, error: result.error?.message || '', ...(result.error ? { errorDiagnostic: presentDiagnostic(result.error) } : {}), actualCalls: result.actualCalls || 0, callBound: 0, ...noPreview, applyAvailable: false, applyIssue: owner.failure.issues[0], tokenMethods: [] } : null };
     recording ??= result?.recording;
     const path = safeWorkflowData(viewPath) && Array.isArray(viewPath) ? pathKey(viewPath) : '', view = owner.views.get(path);
     if (!view) return { ...owner.base, ...emptyView('The selected workflow view is unavailable.'), busy, status };
@@ -234,8 +234,9 @@ export function projectPreparedWorkflow(prepared, { viewPath = [], selectedId = 
     const validHandle = cached && selector.runId === cached.handle.runId && targetKey(selector.terminal) === targetKey(cached.handle.terminal) && target?.kind === 'terminal' && targetKey(target) === targetKey(cached.handle.terminal)
         && result?.mode === 'root' && result?.ok && result.runId === selector.runId && recording?.runId === selector.runId && availability === 'current' && !view.instancePath.length;
     const preview = historicalPreviewTarget(recording, pinned || target), displayedTarget = preview.target;
+    const content = preview.unavailable ? projectRecordedPreview({ kind: 'diagnostic', format: 'omitted', reason: 'historical wrapper mapping unavailable' }) : boundedPreview(recording, displayedTarget);
     const resultView = result || recording ? { kind: 'bounded', ok: result?.ok === true, error: result?.error?.message || '', actualCalls: result?.actualCalls || 0, callBound: result?.callBound ?? recording?.plan?.callBound ?? summary.callBound,
-        runId: recording?.runId || result?.runId || '', sections: preview.unavailable ? [{ kind: 'diagnostic', ...formatRecordedArtifact({ format: 'omitted', reason: 'historical wrapper mapping unavailable' }) }] : boundedSections(recording, displayedTarget), previewTarget: displayedTarget, applyAvailable: !!validHandle,
+        runId: recording?.runId || result?.runId || '', ...content, previewTarget: displayedTarget, applyAvailable: !!validHandle,
         selectedReviewHandle: validHandle ? cached.handle : null, persistOnly: !!(validHandle && cached.persistOnly), ...(safeSettlement(result?.settlement) ? {settlement:safeSettlement(result.settlement)} : {}), applyIssue: validHandle ? cached.issue || applyIssue : applyIssue, tokenMethods: [...new Set((recording?.units || []).map(unit => unit.request?.tokenCount?.method).filter(Boolean))] } : null;
     if (resultView && result?.error) resultView.errorDiagnostic = presentDiagnostic({ ...safeError(result.error), ...(nodeAddress(result.error.address) ? { address: nodeAddress(result.error.address) } : {}) });
     if (resultView) resultView.previewStatus = recordedOutputStatus(recording, displayedTarget);

@@ -20,10 +20,12 @@ import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.27.
 import { projectWorkflowData } from './workflow-data-setup.js?v=0.27.0';
 import { presentDiagnostic, presentDiagnostics } from './diagnostics.js?v=0.27.0';
 import { previewDiagnostics } from './preview-diagnostics.js?v=0.27.0';
+import { projectRecordedPreview, boundReadablePreviewSections } from './recorded-preview.js?v=0.27.0';
 const panelCaches = new WeakMap();
 const authoredFieldCaches = new WeakMap();
 const runPanelCaches = new WeakMap();
 const noDisplayRows = Object.freeze([]);
+const unavailablePreviewSource = projectRecordedPreview(undefined).source;
 const rootIdentity = root => ({ kind: 'root', workflowId: root.id });
 /** First activation favors readable named cards; users can pan or explicitly Fit. */
 export function initialWorkspaceCamera(node, { width, shelf, meter } = {}) {
@@ -263,14 +265,15 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
     const sectionDependencies = [result?.sections, saved?.modifiers, targetKey(target), state.busy];
     let sectionCache = immutableScope && (!result || Object.isFrozen(result.sections)) ? cache.get(sectionKey) : null;
     if (!sectionCache || sectionDependencies.some((value, index) => value !== sectionCache.dependencies[index])) {
-        const sections = result ? result.sections.map((section,i) => ({ id: String(i), label: section.kind, ...section })) : [];
+        let sections = result ? result.sections.map((section,i) => ({ id: String(i), label: section.kind, ...section })) : [];
         if (!library && !state.busy && saved && nodeDetails?.modifiers && target?.nodeId === selectedId && target?.workflowId === workflow.graphId && target?.portId === nodeDetails.modifiers.outputPortId && JSON.stringify(target.instancePath) === JSON.stringify(path)) {
             const source = sections.find(section => section.format === 'structured-text' && typeof section.recordedRawText === 'string');
             if (source) {
                 const local = applyTextModifiers(source.recordedRawText, saved.modifiers ?? []);
                 if (local.ok && JSON.stringify(local.data.trace) !== JSON.stringify(source.recordedModifierTrace ?? [])) {
                     const text = boundedText(local.data.text, RENDERED_TEXT_BYTES - 2);
-                    sections.push({id:'local-modifiers',kind:'text',label:'Local modifier preview · recorded source',text,format:'structured-text',truncated:text !== local.data.text});
+                    sections.push({id:'local-modifiers',kind:'text',label:'Local modifier preview · recorded source',text,format:'structured-text',truncated:text !== local.data.text,readable:{kind:'text',text,truncated:text !== local.data.text}});
+                    sections = boundReadablePreviewSections(sections, sections.length - 1);
                 }
             }
         }
@@ -279,7 +282,7 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
     const sections = sectionCache.sections;
     const selector = editor?.view.identity.kind === 'root' ? result?.selectedReviewHandle ?? null : null;
     const presentationState = previewDiagnostics({ workflow, state, target, selectedKey, sections, library, enabled: state.enabled ?? workflow.enabled, title: choices.find(choice => choice.key === selectedKey)?.label || 'Output preview' });
-    const outputPreview = { sourceKey: revision, title: 'Output preview', statusDetail: state.status || '', status: !library && target && !selectedKey ? 'removed' : !result ? 'not-run' : state.availability === 'current' ? 'current' : 'stale', choices, selectedKey, pinned: !!pinnedPreview, followSelection: !pinnedPreview, sections: library || target && !selectedKey ? noDisplayRows : sections, issues: library ? ['Library inspection is read-only and has no runtime output.'] : workflow.issues, busy: state.busy, settlement: library ? null : result?.settlement ?? null, runHere: library || !selectedKey ? null : { enabled: !state.busy && !workflow.targetSummary?.issues?.length, callBound: workflow.targetSummary?.callBound ?? workflow.callBound, issue: workflow.targetSummary?.issues?.join(' ') }, review: selector ? { selector, canApply: result.applyAvailable, persistOnly: result.persistOnly, fresh: !result.applyIssue && state.availability === 'current', selectedRootTerminal: editor?.view.identity.kind === 'root' && target?.kind === 'terminal' && !target.address.instancePath.length, mode: 'root', issue: result.applyIssue } : null };
+    const outputPreview = { sourceKey: revision, source: library || target && !selectedKey ? unavailablePreviewSource : result?.source ?? unavailablePreviewSource, title: 'Output preview', statusDetail: state.status || '', status: !library && target && !selectedKey ? 'removed' : !result ? 'not-run' : state.availability === 'current' ? 'current' : 'stale', choices, selectedKey, pinned: !!pinnedPreview, followSelection: !pinnedPreview, sections: library || target && !selectedKey ? noDisplayRows : sections, issues: library ? ['Library inspection is read-only and has no runtime output.'] : workflow.issues, busy: state.busy, settlement: library ? null : result?.settlement ?? null, runHere: library || !selectedKey ? null : { enabled: !state.busy && !workflow.targetSummary?.issues?.length, callBound: workflow.targetSummary?.callBound ?? workflow.callBound, issue: workflow.targetSummary?.issues?.join(' ') }, review: selector ? { selector, canApply: result.applyAvailable, persistOnly: result.persistOnly, fresh: !result.applyIssue && state.availability === 'current', selectedRootTerminal: editor?.view.identity.kind === 'root' && target?.kind === 'terminal' && !target.address.instancePath.length, mode: 'root', issue: result.applyIssue } : null };
     Object.assign(outputPreview, { diagnostics: presentationState.diagnostics, emptyMessage: presentationState.emptyMessage, statusDetail: presentationState.statusDetail, historyNotice: presentationState.historyNotice });
     if (outputPreview.runHere) outputPreview.runHere.reason = presentationState.runReason;
     if (outputPreview.review) outputPreview.review.reason = state.busy ? 'Wait for the current run to finish.' : outputPreview.review.issue ? presentDiagnostic(outputPreview.review.issue).message : !outputPreview.review.fresh ? 'This result is out of date. Create a fresh review before applying it.' : '';

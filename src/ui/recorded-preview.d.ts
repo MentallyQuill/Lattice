@@ -54,3 +54,5 @@ export interface RecordedPreviewProjection {
 }
 /** Uses bounded own-data reads and only a complete structured retained capture. */
 export function projectRecordedPreview(artifact: RecordedArtifact | undefined): RecordedPreviewProjection;
+/** Keeps tab order while giving a local subsection first claim on the shared UTF-8 budget. */
+export function boundReadablePreviewSections<T extends RecordedPreviewSection>(sections: readonly T[], prioritySection?: number): T[];

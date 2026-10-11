@@ -12,6 +12,14 @@ test('retained draft preserves exact prose rather than its diagnostic envelope',
     assert.deepEqual(result.sections[0].readable, { kind: 'text', text: '**Reply**\n\n  exact whitespace\n', truncated: false });
 });
 
+test('default content labels debit the same aggregate budget as large JSON', () => {
+    const result = projectRecordedPreview(recorded({ kind: 'data', value: { text: 'x'.repeat(100000) } }));
+    const section = result.sections[0];
+    const displayedLabel = section.label ?? section.kind;
+    assert.ok(Buffer.byteLength(displayedLabel) + Buffer.byteLength(section.readable.text) <= 65536);
+    assert.equal(section.readable.truncated, true);
+});
+
 test('Source carries recording privacy projection while ordinary Data fields retain their meaning', () => {
     const address = { workflowId: 'synthetic', instancePath: [], nodeId: 'output' };
     const recorder = createRunRecorder({ runId: 'synthetic' });
@@ -129,11 +137,11 @@ test('one UTF-8 budget includes draft prose and message labels, clipping a final
     assert.equal(readable.messages.length, 2);
     assert.equal(readable.messages[0].text, 'A'.repeat(16384));
     assert.equal(readable.messages[1].truncated, true);
-    // Draft/body + title + metadata + snapshot notice leaves 16,298 bytes.
-    assert.equal(readable.messages[1].text, '😀'.repeat(4074));
+    // Draft/body + both section titles + metadata + snapshot notice leaves 16,293 bytes.
+    assert.equal(readable.messages[1].text, '😀'.repeat(4073));
     assert.equal(readable.omittedMessages, 1);
     assert.equal(readable.snapshotOmittedMessages, 4);
-    const total = result.sections[1].notices.reduce((n, text) => n + Buffer.byteLength(text), 0) + Buffer.byteLength(result.sections[1].label) + Buffer.byteLength(result.sections[0].readable.text) + readable.messages.reduce((n, m) => n + ['id', 'role', 'speaker', 'timestamp', 'text'].reduce((s, key) => s + Buffer.byteLength(m[key] ?? ''), 0), 0);
+    const total = result.sections[1].notices.reduce((n, text) => n + Buffer.byteLength(text), 0) + Buffer.byteLength(result.sections[0].label) + Buffer.byteLength(result.sections[1].label) + Buffer.byteLength(result.sections[0].readable.text) + readable.messages.reduce((n, m) => n + ['id', 'role', 'speaker', 'timestamp', 'text'].reduce((s, key) => s + Buffer.byteLength(m[key] ?? ''), 0), 0);
     assert.ok(total <= 65536);
     assert.ok(Buffer.byteLength(result.source.text) <= 65536);
     assert.equal(result.source.truncated, true);

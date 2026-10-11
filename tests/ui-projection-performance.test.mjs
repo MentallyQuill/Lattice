@@ -7,6 +7,7 @@ import { fixtureGraph } from './helpers/workflow-fixtures.mjs';
 import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.27.0';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.27.0';
 import * as history from '../src/history.js?v=0.27.0';
+import { runWorkflow } from '../src/workflow/runtime.js?v=0.27.0';
 
 test('endpoint attachments visit each wire once and retain direct and portal navigation', () => {
     assert.equal(typeof preparation.prepareEndpointAttachments, 'function');
@@ -82,13 +83,35 @@ test('unchanged selected Details and preview payloads survive runtime status upd
     const root = fixtureGraph('structured-guidance'), prepared = preparation.prepareWorkspaceViews(root);
     const session = createGraphViewSession({ root, activationId: 'display-identity', ...prepared.data }).data;
     const workflow = projectPreparedWorkflow(prepared.data.workflow, { selectedId: 'compose-json' });
-    const source = Object.freeze([{ kind: 'text', format: 'structured-text', text: 'Output', truncated: false }]);
-    const displayed = { ...workflow, result: { ok: true, sections: source } };
+    const source = Object.freeze([{ kind: 'text', format: 'structured-text', text: 'Output', truncated: false, readable: { kind: 'text', text: 'Output', truncated: false } }]);
+    const displayed = { ...workflow, result: { ok: true, sections: source, source: Object.freeze({ format: 'structured-text', text: '{"kind":"text","text":"Output"}', truncated: false, policy: 'safe-recording' }) } };
     const first = preparation.projectWorkspacePanels(session.readEditor(), displayed, {}, 'one', null, null);
     const next = preparation.projectWorkspacePanels(session.readEditor(), displayed, { status: 'Unrelated runtime message' }, 'one', null, null);
     assert.equal(next.nodeDetails, first.nodeDetails);
     assert.equal(next.outputPreview.sections, first.outputPreview.sections);
     assert.equal(next.outputPreview.choices, first.outputPreview.choices);
+});
+
+test('retained artifact Source and Readable references survive new recording status envelopes', async () => {
+    const root = fixtureGraph('structured-guidance');
+    const target = { workflowId: root.id, instancePath: [], nodeId: 'compose-json', portId: 'out' };
+    const result = await runWorkflow(root, { target });
+    assert.equal(result.ok, true, JSON.stringify(result.error));
+    const prepared = preparation.prepareWorkspaceViews(root);
+    const session = createGraphViewSession({ root, activationId: 'retained-source', ...prepared.data }).data;
+    const first = projectPreparedWorkflow(prepared.data.workflow, { selectedTarget: target, result });
+    assert.equal(first.result.sections[0].readable.kind, 'text');
+    assert.equal(first.result.source.policy, 'safe-recording');
+    assert.equal(JSON.parse(first.result.source.text).kind, 'text');
+    const recording = Object.freeze({ ...result.recording, status: 'running' });
+    const next = projectPreparedWorkflow(prepared.data.workflow, { selectedTarget: target, result, recording, status: 'Other step running' });
+    assert.strictEqual(next.result.sections, first.result.sections);
+    assert.strictEqual(next.result.source, first.result.source);
+    const before = preparation.projectWorkspacePanels(session.readEditor(), first, {}, 'same', target, null).outputPreview;
+    const after = preparation.projectWorkspacePanels(session.readEditor(), next, { status: 'Other step running' }, 'same', target, null).outputPreview;
+    assert.strictEqual(after.source, before.source);
+    assert.strictEqual(after.sections, before.sections);
+    assert.strictEqual(after.sections[0].readable, before.sections[0].readable);
 });
 
 for (const [fixture, selectedId] of [['structured-guidance', 'compose-json'], ['native-guidance', 'response-plan']]) {

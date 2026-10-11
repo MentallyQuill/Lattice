@@ -83,7 +83,7 @@ export interface WorkflowNodeView { id: string; title: string; canonicalTitle: s
 export interface WorkflowAddress { workflowId: string; instancePath: string[]; nodeId: string }
 export type WorkflowTarget = (WorkflowAddress & { portId: string }) | { kind: 'terminal'; address: WorkflowAddress };
 export interface WorkflowReviewSelector { handleId: string; runId: string; terminal: { kind: 'terminal'; address: WorkflowAddress } }
-export interface WorkflowBoundedResultView { kind: 'bounded'; ok: boolean; error: string; errorDiagnostic?: import('./diagnostic-types').DiagnosticView; applyDiagnostic?: import('./diagnostic-types').DiagnosticView; previewStatus?: string | null; actualCalls: number; callBound: number; runId?: string; sections: { kind: string; format: string; text: string; truncated: boolean }[]; previewTarget?: WorkflowTarget | null; tokenMethods: string[]; applyAvailable: boolean; selectedReviewHandle?: WorkflowReviewSelector | null; applyIssue: string }
+export interface WorkflowBoundedResultView { kind: 'bounded'; ok: boolean; error: string; errorDiagnostic?: import('./diagnostic-types').DiagnosticView; applyDiagnostic?: import('./diagnostic-types').DiagnosticView; previewStatus?: string | null; actualCalls: number; callBound: number; runId?: string; source: import('../src/ui/recorded-preview').PreviewSource; sections: import('../src/workflow/types').RecordedPreviewSection[]; previewTarget?: WorkflowTarget | null; tokenMethods: string[]; applyAvailable: boolean; selectedReviewHandle?: WorkflowReviewSelector | null; applyIssue: string }
 export interface WorkflowView {
     diagnostics?: import('./diagnostic-types').DiagnosticView[];
     enabled?: boolean;

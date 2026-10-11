@@ -48,11 +48,14 @@ function diagnosticJSON(value, limit = TEXT_BUDGET) {
     visit(value, 0);
     return { text: chunks.join(''), truncated };
 }
-function boundSections(sections) {
+function boundSections(sections, prioritySection = 0) {
     let remaining = TEXT_BUDGET;
     for (const section of sections) {
         if (section.label) { const bounded = clip(section.label, remaining); section.label = bounded.text; remaining -= bounded.bytes; }
         if (section.notices) section.notices = section.notices.map(notice => { const bounded = clip(notice, remaining); remaining -= bounded.bytes; return bounded.text; });
+    }
+    const allocation = sections[prioritySection] ? [sections[prioritySection], ...sections.filter((_, index) => index !== prioritySection)] : sections;
+    for (const section of allocation) {
         const readable = section.readable;
         if (readable.kind === 'text' || readable.kind === 'json') {
             const bounded = clip(readable.text, remaining); Object.assign(readable, { text: bounded.text, truncated: readable.truncated || bounded.truncated }); remaining -= bounded.bytes;
@@ -62,16 +65,23 @@ function boundSections(sections) {
                 const labelBytes = ['id', 'role', 'speaker', 'timestamp'].reduce((n, key) => n + clip(message[key] ?? '', remaining + 1).bytes, 0);
                 if (labelBytes > remaining) break;
                 remaining -= labelBytes;
-                const bounded = clip(message.text, remaining); Object.assign(message, { text: bounded.text, truncated: bounded.truncated }); remaining -= bounded.bytes;
+                const bounded = clip(message.text, remaining); Object.assign(message, { text: bounded.text, truncated: message.truncated || bounded.truncated }); remaining -= bounded.bytes;
                 displayed.push(message); if (bounded.truncated) break;
             }
-            readable.omittedMessages = readable.messages.length - displayed.length;
-            readable.messages = displayed; readable.truncated = readable.omittedMessages > 0 || displayed.some(message => message.truncated);
+            readable.omittedMessages += readable.messages.length - displayed.length;
+            readable.messages = displayed; readable.truncated = readable.truncated || readable.omittedMessages > 0 || displayed.some(message => message.truncated);
         } else if (readable.kind === 'unavailable') {
             const bounded = clip(readable.reason, remaining); readable.reason = bounded.text; remaining -= bounded.bytes;
         }
         section.text = readable.text ?? ''; section.truncated = readable.truncated ?? false;
     }
+}
+
+/** Rebound already-projected sections after a local text preview, keeping their tab order. */
+export function boundReadablePreviewSections(sections, prioritySection = 0) {
+    const detached = structuredClone(sections);
+    boundSections(detached, prioritySection);
+    return freeze(detached);
 }
 
 function contextSection(context, collapsed = false) {
@@ -152,7 +162,7 @@ function project(artifact) {
     if (context) { if (kind === 'context') sections[0] = context; else if (kind === 'draft' || kind === 'candidate') sections.push(context); }
     if (wrapper && context) sections.push(context);
     else if (!context && hasDraft) sections.push({ kind: 'context', label: 'Captured context unavailable', collapsed: true, readable: { kind: 'unavailable', reason: retainedContext === undefined ? 'Captured context was not retained.' : 'Captured context is unavailable from the retained recording.' } });
-    for (const section of sections) Object.assign(section, { format: 'structured-text', text: section.readable.text ?? '', truncated: false });
+    for (const section of sections) Object.assign(section, { label: section.label ?? section.kind, format: 'structured-text', text: section.readable.text ?? '', truncated: false });
     boundSections(sections);
     return { source, sections };
 }

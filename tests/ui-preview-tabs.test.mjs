@@ -35,9 +35,10 @@ async function fixture(initial, actions = {}, collapse) {
     } catch (error) { await close(); throw error; }
 }
 const target = { workflowId: 'root', instancePath: ['nested/one'], nodeId: 'fields', portId: 'out' };
-const section = (id, label, text, extra = {}) => ({ id, label, kind: 'data', text, format: 'structured-text', truncated: false, ...extra });
+const section = (id, label, text, extra = {}) => ({ id, label, kind: 'data', text, format: 'structured-text', truncated: false, readable: { kind: 'json', text, truncated: false }, ...extra });
 const preview = extra => ({
     sourceKey: 'record-one', title: 'Output preview', status: 'current',
+    source: { format: 'structured-text', text: '{"kind":"data","value":{"direction":"north"}}', truncated: false, policy: 'safe-recording' },
     choices: [{ key: 'fields/out', label: 'Scene Fields · Output', kind: 'data', target }],
     selectedKey: 'fields/out', pinned: false, followSelection: true,
     sections: [section('out', 'Output', '{"direction":"north"}'), section('in', 'Input', '{"direction":"north","unused":true}')],

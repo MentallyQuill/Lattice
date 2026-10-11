@@ -277,7 +277,7 @@ export function formatRecordedArtifact(raw) {
 
 /** Complete retained Text source for deterministic local previews; never authority or a fresh run.
  * @param {unknown} raw
- * @returns {readonly import('./types').RecordedPreviewSection[]}
+ * @returns {readonly Omit<import('./types').RecordedPreviewSection, 'readable' | 'collapsed' | 'notices'>[]}
  */
 export function formatRecordedTextModifiers(raw) {
     try {

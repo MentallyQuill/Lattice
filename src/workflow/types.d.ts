@@ -263,6 +263,8 @@ export interface Recording {
 }
 export interface RecordedPreviewSection {
     kind: string; label?: string; format: 'structured-text' | 'json-prefix-text' | 'omitted'; text: string; truncated: boolean;
+    readable: import('../ui/recorded-preview').ReadableContent;
+    collapsed?: boolean; notices?: readonly string[];
     /** Present only for a complete retained Text source; local recomputation is always a stale preview. */
     recordedRawText?: string; recordedModifierTrace?: readonly import('./modifiers').ModifierTrace[];
 }
