@@ -17,11 +17,13 @@ export interface FinalCandidateArtifact {
     readonly revisionId: string; readonly rootRevisionId: string; readonly lineage: readonly DraftRevisionEntry[];
 }
 export interface DraftRevisionSettings { nodeId: string; scope: DraftScope; protectedLiterals?: string[]; }
+export interface DraftDeleteRange { start: number; end: number; }
 export interface DraftSection { id: string; text: string; }
 export type DraftResult = Result<{ draft: DraftArtifact; report: unknown[] }>;
 /** Cloning an arbitrary serialized successor cannot reconstruct live revision authority. */
 export function snapshotDraft(input: unknown): Result<{ draft: DraftArtifact; original: string; revised: boolean }>;
 export function createDraftRevision(parent: unknown, text: string, settings: DraftRevisionSettings): DraftResult;
+export function createDraftDeletionRevision(parent: unknown, ranges: DraftDeleteRange[], settings: DraftRevisionSettings): DraftResult;
 /** Same-text annotations may add protection and narrow spans, never remove disclosure restrictions. */
 export function retainDraftAuthority(parent: unknown, output: unknown): Result<{ draft: DraftArtifact }>;
 export function appendDraftSections(parent: unknown, sections: DraftSection[], settings: { nodeId: string; separator?: string }): DraftResult;

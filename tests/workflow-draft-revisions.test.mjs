@@ -174,3 +174,159 @@ test('successor scans may add narrowing exemptions while preserving previous exe
     assert.equal(revisions.retainDraftAuthority(scanned.artifact, { ...scanned.artifact, caseSensitive: true }).error.code, 'INVALID_SPANS');
     assert.equal(revisions.retainDraftAuthority(first, { ...first, exemptions: ['KEEP', 'Warm'] }).error.code, 'INVALID_SPANS', 'New exemptions must actually narrow spans');
 });
+
+test('exact deletion removes the selected middle line and retains native source', () => {
+    assert.equal(typeof revisions.createDraftDeletionRevision, 'function', 'Exact Draft deletion helper is required');
+    const text = 'A\nElara\nB';
+    const parent = { kind: 'draft', text, source: { originalText: text } };
+    const result = must(revisions.createDraftDeletionRevision(parent, [{ start: 2, end: 8 }], { nodeId: 'filter', scope: 'whole' })).draft;
+    assert.equal(result.text, 'A\nB');
+    assert.equal(result.source.originalText, text);
+    assert.equal(result.lineage[0].nodeId, 'filter');
+    assert.equal(must(revisions.toFinalCandidate(result)).candidate.original, text);
+});
+
+test('exact deletion refuses immutable gaps and inherited or configured protected text atomically', () => {
+    const text = 'one KEEP two';
+    const scoped = { ...root(text), spans: [{ index: 0, start: 0, end: 3, text: 'one' }, { index: 1, start: 9, end: 12, text: 'two' }] };
+    for (const [parent, range, controls] of [
+        [scoped, { start: 0, end: 10 }, {}],
+        [{ ...root(text), protectedLiterals: ['KEEP'] }, { start: 0, end: 9 }, {}],
+        [root(text), { start: 4, end: 8 }, { protectedLiterals: ['KEEP'] }],
+    ]) {
+        const result = revisions.createDraftDeletionRevision(parent, [range], { nodeId: 'filter', scope: 'whole', ...controls });
+        assert.equal(result.ok, false, 'A whole deletion must be authorized, including its surrounding text');
+        assert.equal(result.error.code, 'OUT_OF_SCOPE_CHANGE');
+        assert.equal(result.data, undefined);
+        assert.equal(parent.text, text);
+    }
+});
+
+test('exact deletion rejects malformed ordered UTF-16 ranges without reading accessors', () => {
+    const parent = root('A😀BCD');
+    let reads = 0;
+    const accessor = { end: 4 }; Object.defineProperty(accessor, 'start', { enumerable: true, get() { reads++; return 3; } });
+    for (const ranges of [null, {}, new Array(1), [accessor], [{ start: -1, end: 1 }], [{ start: 0, end: 8 }], [{ start: 1, end: 2 }], [{ start: 2, end: 3 }], [{ start: 3, end: 3 }], [{ start: 3.5, end: 4 }], [{ start: 4, end: 5 }, { start: 3, end: 4 }], [{ start: 3, end: 5 }, { start: 4, end: 6 }], Array.from({ length: 257 }, () => ({ start: 0, end: 1 }))]) {
+        const result = revisions.createDraftDeletionRevision(parent, ranges, { nodeId: 'filter', scope: 'whole' });
+        assert.equal(result.ok, false);
+        assert.equal(result.error.code, 'INVALID_DELETE_RANGES');
+        assert.equal(result.data, undefined);
+    }
+    assert.equal(reads, 0);
+});
+
+test('exact deletion validates controls and preserves no-op Draft identity', () => {
+    const parent = root('Native.');
+    let reads = 0;
+    const accessor = { nodeId: 'filter' }; Object.defineProperty(accessor, 'scope', { enumerable: true, get() { reads++; return 'whole'; } });
+    for (const settings of [null, {}, { nodeId: '', scope: 'whole' }, { nodeId: 'filter', scope: 'bad' }, { nodeId: 'filter', scope: 'whole', extra: true }, { nodeId: 'filter', scope: 'whole', protectedLiterals: [''] }, accessor]) {
+        assert.equal(revisions.createDraftDeletionRevision(parent, [], settings).error.code, 'INVALID_SETTINGS');
+    }
+    assert.equal(reads, 0);
+    assert.equal(must(revisions.createDraftDeletionRevision(parent, [], { nodeId: 'filter', scope: 'whole' })).draft, parent);
+    const successor = must(revisions.createDraftRevision(parent, 'Current.', { nodeId: 'one', scope: 'whole' })).draft;
+    assert.equal(must(revisions.createDraftDeletionRevision(successor, [], { nodeId: 'filter', scope: 'authorized' })).draft, successor);
+    assert.equal(revisions.createDraftDeletionRevision({ ...successor }, [], { nodeId: 'filter', scope: 'whole' }).error.code, 'INVALID_ANCESTRY');
+});
+
+test('exact deletion retains stored exemption case and removes newly joined exempt text from permissions', () => {
+    const text = 'keep KxEEP tail';
+    const parent = { ...root(text), caseSensitive: false, exemptions: ['KEEP'], scope: 'whole', spans: [{ index: 0, start: 4, end: 15, text: ' KxEEP tail' }] };
+    assert.equal(revisions.createDraftDeletionRevision(parent, [{ start: 0, end: 4 }], { nodeId: 'filter', scope: 'whole' }).error.code, 'OUT_OF_SCOPE_CHANGE');
+    const deleted = must(revisions.createDraftDeletionRevision(parent, [{ start: 6, end: 7 }], { nodeId: 'filter', scope: 'authorized' })).draft;
+    assert.equal(deleted.text, 'keep KEEP tail');
+    assert.deepEqual(deleted.spans.map(span => [span.start, span.end, span.text]), [[4, 5, ' '], [9, 14, ' tail']]);
+    assert.equal(deleted.caseSensitive, false);
+    assert.deepEqual(deleted.exemptions, ['KEEP']);
+    assert.equal(revisions.createDraftDeletionRevision(deleted, [{ start: 5, end: 9 }], { nodeId: 'next', scope: 'whole' }).error.code, 'OUT_OF_SCOPE_CHANGE');
+});
+
+test('exact deletion rejects empty story bodies even when presentation remains nonblank', () => {
+    for (const text of ['Story', ' Story \n']) {
+        const start = text.indexOf('Story');
+        assert.equal(revisions.createDraftDeletionRevision(root(text), [{ start, end: start + 5 }], { nodeId: 'filter', scope: 'whole' }).error.code, 'EMPTY_FILTER_RESULT');
+    }
+    const parent = must(revisions.appendDraftSections(root('Story'), [{ id: 'notes', text: 'Notes remain.' }], { nodeId: 'append' })).draft;
+    const result = revisions.createDraftDeletionRevision(parent, [{ start: 0, end: 5 }], { nodeId: 'filter', scope: 'whole' });
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, 'EMPTY_FILTER_RESULT');
+    for (const blank of ['', '  \n']) assert.equal(revisions.createDraftRevision(root('Story'), blank, { nodeId: 'model', scope: 'whole' }).error.code, 'OUTPUT_LIMIT');
+});
+
+test('exact deletion remaps assembled body authority and preserves the presentation suffix', () => {
+    const body = 'First.\r\n\r\nElara.\r\n\r\nLast.';
+    const first = must(revisions.createDraftRevision(root('Native.'), body, { nodeId: 'one', scope: 'whole' })).draft;
+    const note = 'Notes with an unmatched " quote.';
+    const assembled = must(revisions.appendDraftSections(first, [{ id: 'notes', text: note }], { nodeId: 'append', separator: '\r\n--\r\n' })).draft;
+    const result = must(revisions.createDraftDeletionRevision(assembled, [{ start: 10, end: 20 }], { nodeId: 'filter', scope: 'narration' })).draft;
+    assert.equal(result.text, 'First.\r\n\r\nLast.\r\n--\r\n' + note);
+    const view = must(revisions.readDraftBody(result));
+    assert.equal(view.text, 'First.\r\n\r\nLast.');
+    assert.equal(view.provenance.revisionId, result.revisionId);
+    assert.equal(result.rootRevisionId, first.rootRevisionId);
+    assert.equal(result.lineage.at(-1).parentId, assembled.revisionId);
+    assert.deepEqual(result.presentationSections.map(section => [section.id, section.text]), [['notes', note]]);
+    const replaced = must(revisions.appendDraftSections(result, [{ id: 'notes', text: 'Updated.' }], { nodeId: 'append', separator: '\n\n' })).draft;
+    assert.equal(replaced.text, 'First.\r\n\r\nLast.\n\nUpdated.');
+    assert.equal(revisions.createDraftDeletionRevision(assembled, [{ start: body.length, end: body.length + 2 }], { nodeId: 'bad', scope: 'whole' }).error.code, 'OUT_OF_SCOPE_CHANGE');
+    assert.equal(revisions.createDraftDeletionRevision(structuredClone(result), [], { nodeId: 'copy', scope: 'whole' }).error.code, 'INVALID_ANCESTRY');
+});
+
+test('exact deletion cannot widen inherited dialogue scope through whole scope', () => {
+    const text = 'A "cold warm" B';
+    const parent = { ...root(text), scope: 'dialogue', spans: [{ index: 0, start: 3, end: 12, text: 'cold warm' }] };
+    const result = must(revisions.createDraftDeletionRevision(parent, [{ start: 3, end: 8 }], { nodeId: 'filter', scope: 'whole' })).draft;
+    assert.equal(result.text, 'A "warm" B');
+    assert.equal(result.scope, 'dialogue');
+    assert.deepEqual(result.spans.map(span => [span.start, span.end, span.text]), [[3, 7, 'warm']]);
+    assert.equal(revisions.createDraftDeletionRevision(result, [{ start: 0, end: 1 }], { nodeId: 'next', scope: 'whole' }).error.code, 'OUT_OF_SCOPE_CHANGE');
+});
+
+test('exact deletion refuses successors whose lineage would exceed the authenticated bound', () => {
+    let parent = root('Native.');
+    for (let index = 0; index < 64; index++) parent = must(revisions.createDraftRevision(parent, 'Current.', { nodeId: 'one', scope: index ? 'authorized' : 'whole' })).draft;
+    const result = revisions.createDraftDeletionRevision(parent, [{ start: 0, end: 1 }], { nodeId: 'filter', scope: 'authorized' });
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, 'LINEAGE_LIMIT');
+    assert.equal(parent.lineage.length, 64);
+    assert.equal(must(revisions.createDraftDeletionRevision(parent, [], { nodeId: 'noop', scope: 'authorized' })).draft, parent);
+});
+
+test('exact deletion does not emit a successor beyond the bounded readable snapshot', () => {
+    const parent = { ...root('abc'), extra: 'x'.repeat(499750) };
+    assert.equal(revisions.snapshotDraft(parent).ok, true);
+    const result = revisions.createDraftDeletionRevision(parent, [{ start: 0, end: 1 }], { nodeId: 'filter', scope: 'whole' });
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, 'OUTPUT_LIMIT');
+    assert.equal(result.data, undefined);
+});
+
+test('exact deletion keeps original delimiters and Unicode across first last multiple and adjacent ranges', () => {
+    for (const [text, ranges, expected] of [
+        ['First\r\nSecond\r\nLast', [{ start: 0, end: 7 }], 'Second\r\nLast'],
+        ['First\nLast', [{ start: 6, end: 10 }], 'First\n'],
+        ['A\rB\rC\rD', [{ start: 0, end: 2 }, { start: 4, end: 6 }], 'B\rD'],
+        ['A😀BC', [{ start: 1, end: 3 }, { start: 3, end: 4 }], 'AC'],
+        ['😀 x 😀', [{ start: 2, end: 5 }], '😀😀'],
+    ]) {
+        const parent = root(text);
+        const result = must(revisions.createDraftDeletionRevision(parent, ranges, { nodeId: 'filter', scope: 'whole' })).draft;
+        assert.equal(result.text, expected);
+        assert.deepEqual(result.spans.map(span => [span.start, span.end, span.text]), [[0, expected.length, expected]]);
+        assert.equal(result.source.token, 'native-token');
+        assert.equal(result.source.chatId, 'story');
+        assert.equal(result.source.originalText, text);
+        assert.equal(must(revisions.toFinalCandidate(result)).candidate.text, expected);
+        assert.equal(revisions.toFinalCandidate(structuredClone(result)).error.code, 'INVALID_ANCESTRY');
+    }
+});
+
+test('exact deletion permits case-sensitive stored exemption alternatives and retains protection union', () => {
+    const parent = { ...root('keep cold KEEP'), exemptions: ['KEEP'], caseSensitive: true, scope: 'whole', spans: [{ index: 0, start: 0, end: 10, text: 'keep cold ' }], protectedLiterals: ['cold'] };
+    const result = must(revisions.createDraftDeletionRevision(parent, [{ start: 0, end: 5 }], { nodeId: 'filter', scope: 'whole', protectedLiterals: ['KEEP'] })).draft;
+    assert.equal(result.text, 'cold KEEP');
+    assert.deepEqual(result.protectedLiterals, ['cold', 'KEEP']);
+    assert.deepEqual(result.spans.map(span => [span.start, span.end, span.text]), [[4, 5, ' ']]);
+    assert.equal(result.caseSensitive, true);
+    assert.equal(revisions.createDraftDeletionRevision(root('body'), [], { nodeId: 'filter', scope: 'authorized' }).error.code, 'SCOPE_REQUIRED');
+});

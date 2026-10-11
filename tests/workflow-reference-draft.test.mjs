@@ -211,3 +211,19 @@ test('blank changed parents still fail the native patch gate through reconstruct
         }
     }
 });
+
+test('exact deletions consume reference permissions without relaxing ordinary blank patch gates', async () => {
+    const revisions = await import('../src/workflow/draft-revisions.js?v=0.27.0');
+    const text = 'A|Elara|B';
+    const parent = { ...rawDraft(text), spans: [{ index: 0, start: 2, end: 7, text: 'Elara' }] };
+    const prepared = must(helper.prepareReferenceDraft(parent, { scope: 'whole' }));
+    assert.equal(helper.createReferencePatches(prepared, ['']).error.code, 'INVALID_PATCHES');
+    const deleted = must(revisions.createDraftDeletionRevision(parent, [{ start: 2, end: 7 }], { nodeId: 'filter', scope: 'authorized' })).draft;
+    assert.equal(deleted.text, 'A||B');
+    assert.deepEqual(deleted.spans, []);
+    assert.equal(deleted.source.originalText, text);
+    const next = must(helper.prepareReferenceDraft(deleted, { scope: 'whole' }));
+    assert.deepEqual(next.windows, []);
+    assert.equal(helper.alignReferenceCandidate(next, 'A|changed|B').error.code, 'OUT_OF_SCOPE_CHANGE');
+    assert.equal(helper.prepareReferenceDraft(structuredClone(deleted), { scope: 'whole' }).error.code, 'INVALID_ANCESTRY');
+});

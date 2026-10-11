@@ -97,7 +97,7 @@ function narrowExemptions(text, spans, exemptions, caseSensitive) {
     }
     return result;
 }
-function alignRevision(parent, text, scope, pins) {
+function authorizedWindows(parent, scope, pins) {
     if (parent.scope !== undefined && !['whole', 'narration', 'dialogue'].includes(parent.scope)) throw new Error('INVALID_SPANS');
     const body = authenticated.get(parent)?.assembly?.baseText ?? parent.text;
     const selected = scopeRanges(body, scope), retained = scopeRanges(body, parent.scope ?? 'whole');
@@ -128,6 +128,10 @@ function alignRevision(parent, text, scope, pins) {
         }
     }
     if (windows.length > 256) throw new Error('WINDOW_LIMIT');
+    return windows;
+}
+function alignRevision(parent, text, scope, pins) {
+    const windows = authorizedWindows(parent, scope, pins);
     if (!windows.length) { if (text !== parent.text) throw new Error('OUT_OF_SCOPE_CHANGE'); return []; }
     if (text === parent.text) return windows.map((window, index) => ({ index, ...window, text: text.slice(window.start, window.end) }));
     const prefix = parent.text.slice(0, windows[0].start), suffix = parent.text.slice(windows.at(-1).end);
@@ -186,6 +190,50 @@ export function createDraftRevision(parent, text, settings = {}) {
     const id = `draft-revision:${++sequence}`;
     if (authority.assembly) authority = { ...authority, assembly: { ...authority.assembly, bodyRevisionId: text === previous.text ? authority.assembly.bodyRevisionId : id } };
     const draft = freeze({ ...previous, text, revisionId: id, rootRevisionId: authority.rootId, lineage: [...lineage, { id, parentId: previous.revisionId ?? authority.rootId, nodeId: controls.nodeId, scope: controls.scope }], scope: effectiveScope, spans, protectedLiterals: pins });
+    try { snapshot(draft); } catch { return fail('OUTPUT_LIMIT', 'Draft output exceeds its own bounded snapshot contract.'); }
+    authenticated.set(draft, authority);
+    return { ok: true, data: { draft, report: [{ code: 'DRAFT_REVISION', revisionId: id, parentId: draft.lineage.at(-1).parentId, reviewRequired: true }] } };
+}
+/** Exact deletion uses parent offsets and independently prepared permissions. */
+export function createDraftDeletionRevision(parent, ranges, settings = {}) {
+    const checked = snapshotDraft(parent);
+    if (!checked.ok) return checked;
+    const previous = checked.data.draft;
+    try { settings = snapshot(settings); } catch { return fail('INVALID_SETTINGS', 'Revision controls require own plain data.'); }
+    if (!settings || Array.isArray(settings) || Object.keys(settings).some(key => !['nodeId', 'scope', 'protectedLiterals'].includes(key)) || typeof settings.nodeId !== 'string' || !settings.nodeId.trim() || settings.nodeId.length > 256 || !['whole', 'authorized', 'narration', 'dialogue'].includes(settings.scope)) return fail('INVALID_SETTINGS', 'Specify a node identity and explicit supported revision scope.');
+    const suppliedPins = settings.protectedLiterals ?? [];
+    if (!Array.isArray(suppliedPins) || !Array.isArray(previous.protectedLiterals ?? []) || [...suppliedPins, ...(previous.protectedLiterals ?? [])].some(pin => typeof pin !== 'string' || !pin.trim() || pin.length > 2048)) return fail('INVALID_SETTINGS', 'Protections require bounded nonblank literals.');
+    try { ranges = snapshot(ranges); } catch { return fail('INVALID_DELETE_RANGES', 'Deletion ranges require bounded own plain data.'); }
+    if (!Array.isArray(ranges) || ranges.length > 256 || ranges.some((range, index) => !range || Array.isArray(range) || Object.keys(range).length !== 2 || !Number.isSafeInteger(range.start) || !Number.isSafeInteger(range.end) || range.start < 0 || range.end <= range.start || range.end > previous.text.length || !boundary(previous.text, range.start) || !boundary(previous.text, range.end) || index > 0 && range.start < ranges[index - 1].end)) return fail('INVALID_DELETE_RANGES', 'Use at most 256 sorted nonoverlapping Unicode-safe exact ranges.');
+
+    const pins = [...new Set([...(previous.protectedLiterals ?? []), ...(settings.protectedLiterals ?? [])])];
+    if (pins.length > 128) return fail('INVALID_SETTINGS', 'At most 128 protected literals are permitted.');
+    let windows;
+    try { windows = authorizedWindows(previous, settings.scope, pins); }
+    catch (error) { return fail(error.message, 'Deletion requires valid parent permissions.'); }
+    if (!ranges.length) return { ok: true, data: { draft: parent, report: [] } };
+    if (ranges.some(range => !windows.some(window => range.start >= window.start && range.end <= window.end))) return fail('OUT_OF_SCOPE_CHANGE', 'A deletion crosses immutable, protected or exempt text.');
+    // Validate each authored unit atomically before merging adjacent removals.
+    const merged = [];
+    for (const range of ranges) {
+        if (merged.at(-1)?.end === range.start) merged.at(-1).end = range.end;
+        else merged.push({ ...range });
+    }
+    ranges = merged;
+    let cursor = 0, text = '';
+    for (const range of ranges) { text += previous.text.slice(cursor, range.start); cursor = range.end; }
+    text += previous.text.slice(cursor);
+    const offset = position => position - ranges.reduce((removed, range) => removed + Math.max(0, Math.min(position, range.end) - range.start), 0);
+    const bodyLength = authenticated.get(previous)?.assembly?.baseText.length ?? previous.text.length;
+    if (!text.slice(0, offset(bodyLength)).trim()) return fail('EMPTY_FILTER_RESULT', 'Deletion must retain a nonblank story body.');
+    let spans;
+    try { spans = narrowExemptions(text, windows.map(window => ({ start: offset(window.start), end: offset(window.end) })).filter(span => span.end > span.start), previous.exemptions, previous.caseSensitive); }
+    catch (error) { return fail(error.message, 'Deletion cannot emit invalid exemption permissions.'); }
+    let authority = authenticated.get(previous) ?? { rootId: `draft-root:${++sequence}`, source: previous.source };
+    if ((previous.lineage?.length ?? 0) >= 64) return fail('LINEAGE_LIMIT', 'At most 64 revisions may be composed; ancestry is never truncated.');
+    const id = `draft-revision:${++sequence}`;
+    if (authority.assembly) authority = { ...authority, assembly: { ...authority.assembly, baseText: text.slice(0, offset(bodyLength)), bodyRevisionId: id } };
+    const draft = freeze({ ...previous, text, revisionId: id, rootRevisionId: authority.rootId, lineage: [...(previous.lineage ?? []), { id, parentId: previous.revisionId ?? authority.rootId, nodeId: settings.nodeId, scope: settings.scope }], scope: settings.scope === 'authorized' || previous.scope && settings.scope === 'whole' ? previous.scope ?? 'whole' : settings.scope, spans, protectedLiterals: pins });
     try { snapshot(draft); } catch { return fail('OUTPUT_LIMIT', 'Draft output exceeds its own bounded snapshot contract.'); }
     authenticated.set(draft, authority);
     return { ok: true, data: { draft, report: [{ code: 'DRAFT_REVISION', revisionId: id, parentId: draft.lineage.at(-1).parentId, reviewRequired: true }] } };
