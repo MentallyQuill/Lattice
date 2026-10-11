@@ -68,7 +68,7 @@ function selectClosure(index, target) {
         if (boundaries.length > 1) return fail('MULTIPLE_NATIVE_GENERATIONS', 'A selected unified root supports one native generation boundary.');
         if (boundaries.length) {
             const boundary = boundaries[0], boundaryKey = nodeAddressKey(boundary.address);
-            if (boundary.address.instancePath.length || selected.filter(unit => unit.node.operation === 'on-send').length !== 1) return fail('NATIVE_ACTIVATION_REQUIRED', 'A native root boundary requires one selected root On Send activation.');
+            if (selected.filter(unit => unit.node.operation === 'on-send').length !== 1) return fail('NATIVE_ACTIVATION_REQUIRED', 'A native boundary requires one selected owned On Send activation.');
             // These links order stages and appear in safe plans; they never supply
             // an artifact, connect a port or expand a manual target's authority.
             effectiveDependencies = new Map([...dependencies].map(([key, values]) => [key, [...values]]));

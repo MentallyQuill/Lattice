@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { OPERATIONS } from '../src/workflow/catalog.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const documents = ['README.md', 'docs/README.md', 'docs/examples.md', 'docs/operators-manual.md', 'docs/node-reference.md', 'docs/lattice-workspace.md', 'docs/native-workflows.md', 'docs/development.md', 'docs/unified-workflows.md', 'docs/lattice-reference-library.md', 'docs/introspection-package.md'];
+const documents = ['README.md', 'docs/README.md', 'docs/examples.md', 'docs/operators-manual.md', 'docs/node-reference.md', 'docs/lattice-workspace.md', 'docs/native-workflows.md', 'docs/development.md', 'docs/unified-workflows.md', 'docs/lattice-reference-library.md', 'docs/introspection-package.md', 'docs/story-systems.md', 'docs/media.md'];
 const texts = new Map(await Promise.all(documents.map(async path => [path, (await readFile(join(root, path), 'utf8')).replace(/\r\n?/g, '\n')])));
 const failures = [], images = new Set();
 let links = 0;
@@ -42,6 +42,13 @@ for (const operation of Object.values(OPERATIONS)) {
     const heading = sharedHeadings[operation.title] ?? operation.title;
     if (!texts.get('docs/node-reference.md').includes('### ' + heading + '\n')) failures.push('Reference missing ' + operation.title);
 }
+const gifs = (await readdir(join(root, 'docs/images'))).filter(name => name.endsWith('.gif'));
+for (const name of gifs) {
+    const path = join(root, 'docs/images', name), buffer = await readFile(path);
+    if (!['GIF87a', 'GIF89a'].includes(buffer.subarray(0, 6).toString()) || !buffer.readUInt16LE(6) || !buffer.readUInt16LE(8) || buffer.at(-1) !== 0x3b) failures.push('Invalid GIF ' + name);
+    if (buffer.length > 3 * 1024 * 1024) failures.push('GIF exceeds 3 MiB budget ' + name);
+    if (!images.has(path)) failures.push('Unreferenced animation ' + name);
+}
 const pngs = (await readdir(join(root, 'docs/images'))).filter(name => name.endsWith('.png'));
 for (const name of pngs) {
     const path = join(root, 'docs/images', name), buffer = await readFile(path);
@@ -49,4 +56,4 @@ for (const name of pngs) {
     if (!images.has(path)) failures.push('Unreferenced screenshot ' + name);
 }
 if (failures.length) throw new Error(failures.join('\n'));
-console.log(JSON.stringify({ documents: documents.length, localLinks: links, operations: Object.keys(OPERATIONS).length, screenshots: pngs.length, status: 'passed' }));
+console.log(JSON.stringify({ documents: documents.length, localLinks: links, operations: Object.keys(OPERATIONS).length, screenshots: pngs.length, animations: gifs.length, status: 'passed' }));

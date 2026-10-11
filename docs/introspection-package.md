@@ -19,7 +19,7 @@ Reflect, Internalize and State produce candidate records. Express Behavior/Atten
 
 Reflect and Internalize create evidence-backed proposals; Express renders diagnostics without writing. Generate Reply accepts private guidance only from its selected actor's authorized live Character Direction or Recall producer. General private Express output is not a substitute for that grant.
 
-Memory Read, Recall and Commit remain root-only. Commit stages its exact proposal for the accepted Review / Publish result. Target execution, previews, cancellation, failed branches and public runner calls never settle it. Native memory uses the active chat and host-selected actor, excludes unsupported or unfinished sources, and rechecks evidence and versions before writing.
+Memory Read, Recall and Commit can run at the root or inside static subgraphs under the enclosing workflow's host authority. Commit stages its exact proposal for the accepted Review / Publish result. Target execution, previews, cancellation, failed branches and public runner calls never settle it. Native memory uses the active chat and host-selected actor, excludes unsupported or unfinished sources, and rechecks evidence and versions before writing.
 
 The original manifest executor and example manifests have been retired. Current canvas roots are unified workflow packages. Five pinned stage-specific utility subgraphs remain reusable; their body contracts are independent of root admission.
 

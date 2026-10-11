@@ -95,13 +95,15 @@ test('validation and Help show current data and documentation without running or
 test('View pins the selected output and Workflow diagnostics retain its exact source and target', async ({ page }) => {
     await load(page);
     await page.evaluate(async () => { const h = window.canvasHarness; await h.reset(); h.canvas.select({kind: 'node', id: 'n1'}); await h.settle(); });
-    const choice = page.locator('.pc-output-preview').getByRole('combobox', { name: 'Preview output', exact: true });
-    const target = JSON.parse(await choice.inputValue());
+    const title = page.locator('.pc-output-preview h3');
+    await expect(title).toHaveText('Compose · Output');
+    const target = { workflowId: 'browser-fixture', instancePath: [], nodeId: 'n1', portId: 'out' };
     const before = await page.evaluate(() => structuredClone(window.canvasHarness.graph));
     await viewMenu(page);
     await page.getByRole('menuitemradio', { name: 'Pin current output', exact: true }).click();
     await page.evaluate(async () => { const h = window.canvasHarness; h.canvas.select({kind:'node',id:'n0'}); await h.settle(); });
-    expect(JSON.parse(await choice.inputValue())).toEqual(target);
+    await expect(title).toHaveText('Compose · Output');
+    await expect(page.locator('.pc-output-preview footer')).toContainText('Pinned preview');
     await page.getByRole('menubar', {name:'Workspace menus'}).getByRole('menuitem', {name:'Workflow',exact:true}).click();
     await page.getByRole('menuitem', {name:'Run to current output',exact:true}).click();
     await expect(page.locator('.pc-run-meter-label')).toHaveText('Completed');

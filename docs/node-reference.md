@@ -20,7 +20,7 @@ For an in-app explanation, select a node and click **?** beside its name in Deta
 
 A **Unified** graph contains Preparation and Response stages around one owned Generate Reply boundary. Configure both-stage nodes in the intended stage and wire their dependencies explicitly. Executable roots are unified. Pre/Post labels on retained shared tools describe their Preparation/Response stage contracts. A stage does not turn ordinary Text into a reply Draft. Reply sources and host outputs enforce their own phase and context requirements. An input accepts one connection and an output can feed multiple consumers. There is no implicit conversion between Text, Data, Context, and Draft.
 
-Model calls below are maximum auxiliary calls **per execution of that operation**. A subgraph's total depends on its expanded body and how many instances run. Deterministic operations require no model profile. Stage/type validation and model bindings may block a full workflow before execution. A skipped path is distinct from an unresolved path; native sources, publication and other root-only operations retain their authority requirements.
+Model calls below are maximum auxiliary calls **per execution of that operation**. A subgraph's total depends on its expanded body and how many instances run. Deterministic operations require no model profile. Stage/type validation and model bindings may block a full workflow before execution. A skipped path is distinct from an unresolved path; native sources and publication retain the enclosing workflow's host authority requirements inside static subgraphs.
 
 ## Operation index
 
@@ -28,7 +28,7 @@ Model calls below are maximum auxiliary calls **per execution of that operation*
 | --- | --- | --- | --- | ---: |
 | Input | [Text](#text) | Both | Literal → Text | 0 |
 | Input | [File Input](#file-input) | Both | Imported snapshot → Text | 0 |
-| Input | [Prompt Source](#prompt-source) | Both; root only | Configured host block → Text | 0 |
+| Input | [Prompt Source](#prompt-source) | Both; root or static body | Configured host block → Text | 0 |
 | Input | [Scene Context](#scene-context) | Pre | Source → Context | 0 |
 | Input | [Reply Snapshot](#reply-snapshot) | Post | Source → Draft | 0 |
 | Shaping | [Smart Compactor](#smart-compactor) | Pre | Context → Context | 0–1 |
@@ -54,10 +54,10 @@ Model calls below are maximum auxiliary calls **per execution of that operation*
 | Output | [Guidance](#guidance) | Pre | Guidance → Host result | 0 |
 | Output | [Review Gate](#review-gate) | Post | Candidate → Candidate requiring review | 0 |
 | Output | [Apply Reply](#apply-reply) | Post | Candidate → Host result | 0 |
-| Input | [On Send](#on-send) | Preparation; unified root | Native activation → Data | 0 |
-| Input | [Player Event Source](#player-event-source) | Preparation; unified root | Actual player turn → Data | 0 |
-| Input | [Generate Reply · SillyTavern](#unified-lifecycle) | Native boundary; unified root | Activation + optional Guidance → Draft/metadata | 0 auxiliary |
-| Output | [Review / Publish](#unified-lifecycle) | Response; unified root | Final Draft → reviewed Host result | 0 |
+| Input | [On Send](#on-send) | Preparation; unified workflow | Native activation → Data | 0 |
+| Input | [Player Event Source](#player-event-source) | Preparation; unified workflow | Actual player turn → Data | 0 |
+| Input | [Generate Reply · SillyTavern](#unified-lifecycle) | Native boundary; unified workflow | Activation + optional Guidance → Draft/metadata | 0 auxiliary |
+| Output | [Review / Publish](#unified-lifecycle) | Response; unified workflow | Final Draft → reviewed Host result | 0 |
 | Shaping | [Model Call](#model-call) | Both | Text + optional Context/Data → Text/Data | 1 |
 | Surface | [Revise Draft](#revise-draft) | Response | Draft + optional Context/Data → Draft | 1 |
 | Derive | [Extract](#extract) | Both | Draft/Text + optional Context → records Data | 0–1 |
@@ -78,7 +78,7 @@ Model calls below are maximum auxiliary calls **per execution of that operation*
 | Events | [Confirm Events](#confirm-events) | Both | Occurrences + judgments → confirmed occurrences | 0 |
 | Events | [Current Holder](#current-holder) | Both | Ordered events + holders → attributed events/holders | 0 |
 | Events | [Scene Presence](#scene-presence) | Both | Checked cast → one actor participation | 0 |
-| Events | [Actor Context](#actor-context) | Both; root | Exact presence → authorized private Context | 0 |
+| Events | [Actor Context](#actor-context) | Both; root or static body | Exact presence → authorized private Context | 0 |
 | Events | [Character Direction](#character-direction) | Both | Exact presence + optional Data → private Guidance | 0–1 |
 | Events | [Prompted Memory](#prompted-memory) | Both | Presence + actual holder event → private proposal | 0–1 |
 | Input | [Read File](#read-file) | Both; root or static system body | Authorized target + optional presence → Text/document/reference | 0 |
@@ -96,8 +96,8 @@ Model calls below are maximum auxiliary calls **per execution of that operation*
 | Shaping | [Advance Time](#advance-time) | Both | Clock + proposal/schedules → clock/events/remainder/report | 0 |
 | Derive | [Time Trigger](#time-trigger) | Both | Previous/destination clocks → due events/report | 0 |
 | Output | [Clock Commit](#clock-commit) | Response; root or static system body | Retained time projection → staged receipt | 0 |
-| Recall | [Recall](#recall) | Both; root | Authorized records/presence/trigger → private Guidance/report | 0 |
-| Recall | [Recall Shortcut](#recall-shortcut) | Both; root | Configured policy → descriptive recall proposal | 0 |
+| Recall | [Recall](#recall) | Both; root or static body | Authorized records/presence/trigger → private Guidance/report | 0 |
+| Recall | [Recall Shortcut](#recall-shortcut) | Both; root or static body | Configured policy → descriptive recall proposal | 0 |
 
 Open a shelf family to choose a node directly. Each operation appears once; choose modes and artifact kinds in **Details**. The **Subgraphs** family has Input/Output interface nodes and saved definitions. Interface nodes are available inside editable subgraphs. Right-click a wrapper to save it and right-click a saved shelf entry to delete it. **Transpose** contains Style Transfer, Format Transfer and Terminology Map; see [the reference library guide](lattice-reference-library.md). **Introspection** contains its original modes plus generic State progression/time-decay selected in Details; their named pins and controls change with the selected mode.
 
@@ -119,7 +119,7 @@ Choose a UTF-8 text file in Details. The filename and imported contents are save
 
 Read a configured host prompt block as Text. **Source → System** selects the enabled system template with supported host character/chat override rules. **Source → Prompt entry** selects a configured Prompt Manager entry by stable **Prompt ID**. Known disabled or inactive entries fail; if the host exposes no activation order, the snapshot reports its enabled state as unknown. This is the configured block, not the final assembled generation prompt.
 
-**Form → Raw** preserves any bounded template. **Resolved** expands pure host name and formatting macros such as `{{char}}`, `{{user}}`, and `{{newline}}`. It rejects custom, state-changing, character-field, lore, random/time, angle-token macros, and literal brace fragments. Use Raw for structured templates with braces or broader macro syntax. Missing, disabled, unsupported, or oversized sources fail visibly. Prompt sources are frozen before execution and checked again before host settlement. Both phases are supported, at the root only; pass their Text into a reusable subgraph through a boundary. Exports retain selectors, not captured prompt text.
+**Form → Raw** preserves any bounded template. **Resolved** expands pure host name and formatting macros such as `{{char}}`, `{{user}}`, and `{{newline}}`. It rejects custom, state-changing, character-field, lore, random/time, angle-token macros, and literal brace fragments. Use Raw for structured templates with braces or broader macro syntax. Missing, disabled, unsupported, or oversized sources fail visibly. Prompt sources are frozen before execution and checked again before host settlement. Both phases are supported at the root and inside static subgraphs under the enclosing workflow's host capture. Exports retain selectors, not captured prompt text.
 
 **Connect:** Prompt Source → Compose section, Text Rules, or Style Transfer Reference. Reading a prompt does not publish or replace it; Compose → Guidance supplies generation guidance.
 
@@ -345,7 +345,7 @@ State also supports **progression** and **time-decay**, alongside the original V
 
 Deterministically read or propose state with zero model calls. **Value** returns the state snapshot when Values is absent; configured Values propose numeric updates within Minimum/Maximum (defaults 0–1). **Curve** advances a bounded recovery curve toward Baseline through onset, peak, plateau, decline, aftermath and baseline. **Track** counts distinct settled event IDs; repeats do not advance it. These controls do not infer emotional truth.
 
-**Pins:** optional `state` (Data), falling back to scoped Memory Read at the root. Track also requires `events` (Data). `out` is snapshot or state-proposal Data. Inside a subgraph, explicitly wire `state`; implicit Memory access is root-only.
+**Pins:** optional `state` (Data), falling back to the enclosing workflow's scoped Memory Read at the root or inside a static subgraph. Track also requires `events` (Data). `out` is snapshot or state-proposal Data. For Each helpers require an explicitly connected State snapshot.
 
 **Controls:** Value: Values JSON object, Minimum, Maximum. For example `{"trust":0.35}`; arrays are invalid and fractional numeric bounds are supported. Curve: Curve ID, Steps (1–64), Decay (0–1, fractions allowed), Baseline (finite number), Phase durations JSON object, with positive integer durations (1–64) for `onset`, `peak`, `plateau`, `decline`, `aftermath`. Track: Track ID. Save object edits in Details before running.
 
@@ -436,19 +436,21 @@ Expose a source-bound Candidate diagnostic in the root recording. The shared ope
 
 Boundary nodes belong to the subgraph interface. Click one to edit its name, type, and required setting in Details. Add or delete boundaries like ordinary nodes; deleting a boundary also removes its attached parent and body connections. Pinned definitions open read-only. Right-click a wrapper and choose **Make editable copy** for private body edits. Use **Add to Subgraphs** to explicitly save a new shelf entry or update an existing one; placed copies keep their saved contents.
 
-A static system body may read authorized files and clocks and stage file, clock or outcome effects. It may span Preparation and Response within the same unified run. Main owns native generation and the final Review / Publish. **Workflow → Add system…** inserts an editable saved body with explicit typed bindings and a reviewed Guidance merge or state-only terminals. Its connections determine participation; body tabs are views.
+A static system body may contain any ordinary workflow node, including native sources, Guidance, Memory, Recall, Recall Shortcut and the complete On Send → Generate Reply → Review / Publish path. It may span Preparation and Response within the same unified run. The enclosing workflow owns native generation, review and accepted effects. **Workflow → Add system…** inserts an editable saved body with explicit typed bindings and a reviewed Guidance merge or state-only terminals. Its connections determine participation; body tabs are views.
 
 **Details → Run this system** off skips the wrapper and every descendant, including reads, auxiliary models, terminal effects and default provisioning. Optional Guidance consumers can omit the skipped output; required consumers retain their normal skipped-input behavior.
 
 The shared default Chat clock remains one timeline. Default notes/outcomes inside each instance resolve to stable separate sources for that workflow and full instance path. Explicit author-selected targets keep their chosen identity. Reading a target and writing through its exact live reference remains required. Multiple staged writes to the same target are rejected; there is no implicit last-writer-wins.
 
-Memory, Recall, Recall Shortcut, native lifecycle/source operations and other root-only operations keep their existing limits. Static host operations are not legal inside For Each helpers.
+Group any connected portion of the workflow, or the entire lifecycle, inside a static subgraph. Crossing connections become typed boundaries. The enclosing workflow still permits one selected On Send and one native generation; nesting does not create additional owners.
 
-The supplied [Literal cleanup subgraph](../workflows/subgraphs/literal-cleanup.json) exposes Draft → Patches and a Rules parameter. Keep native sources and final application/review authority in the parent. Draft→Patches tools retain validation and candidate diagnostics; publication requires an owned Draft ending in Review / Publish. See [the manual's subgraph walkthrough](operators-manual.md#reuse-a-process-with-subgraphs).
+Nested host operations retain live source, actor privacy and acceptance checks. Recall shortcuts and queue commands identify each instance independently, even when reused bodies have the same local node IDs. For Each retains its bounded helper contract and cannot run host operations, publication or native generation.
+
+The supplied [Literal cleanup subgraph](../workflows/subgraphs/literal-cleanup.json) exposes Draft → Patches and a Rules parameter. Native sources and Review / Publish may also live inside static bodies under the enclosing workflow's authority. Draft→Patches tools retain validation and candidate diagnostics; publication requires an owned Draft ending in Review / Publish. See [the manual's subgraph walkthrough](operators-manual.md#reuse-a-process-with-subgraphs).
 
 ## Unified lifecycle
 
-These four nodes belong to a native-unified **root** workflow. They cannot be hidden inside an iteration helper or imported to manufacture a native generation owner.
+These four nodes belong to a native-unified workflow and may live at its root or inside static subgraphs. They retain the enclosing workflow's generation owner and cannot run inside a For Each helper.
 
 ### On Send
 
@@ -556,7 +558,7 @@ Choose an existing pinned Data item/result helper in **Configure node**. **Detai
 
 ### Actor Context
 
-**Both stages; root only; zero calls.** Required exact live presence Data, configured **Actor ID**, Context output. Provides that loaded actor's authorized card fields, filtered messages and memories with actor-private visibility. Absent skips; unresolved holds. Context and private file inputs for a model must belong to the same exact current actor grant. Separate actors require separate branches, not a mixed private prompt.
+**Both stages; root or static subgraph; zero calls.** Required exact live presence Data, configured **Actor ID**, Context output. Provides that loaded actor's authorized card fields, filtered messages and memories with actor-private visibility. Absent skips; unresolved holds. Context and private file inputs for a model must belong to the same exact current actor grant. Separate actors require separate branches, not a mixed private prompt.
 
 ### Character Direction
 
@@ -656,13 +658,13 @@ When used inside a system, this terminal stages its proposal for Main's exact ac
 
 ### Recall
 
-**Both stages; root only; zero model calls.** Records and live presence Data feed actor-private Guidance, selected-record Data and report Data. Automatic keyword modes add source Data; event modes add genuine confirmed occurrences. Controls: Actor ID, Memory set ID, Target (`reply`/`swipe`/`both`), Activation (Manual queue, `keyword`, `event`, `character`, or manual queue or automatic variants), filters for keywords/event types/partners/tags/record IDs, result/character/token budgets and Title.
+**Both stages; root or static subgraph; zero model calls.** Records and live presence Data feed actor-private Guidance, selected-record Data and report Data. Automatic keyword modes add source Data; event modes add genuine confirmed occurrences. Controls: Actor ID, Memory set ID, Target (`reply`/`swipe`/`both`), Activation (Manual queue, `keyword`, `event`, `character`, or manual queue or automatic variants), filters for keywords/event types/partners/tags/record IDs, result/character/token budgets and Title.
 
 Records must descend unchanged from the actual authorized File/Memory read. Imported labels, rewritten model records and invented defaults cannot authorize retrieval. Exact scene presence and event evidence are also required where used. Selection retains whole records; matching none skips, unresolved trigger evidence holds. Native Recall currently binds the selected native actor. The Guidance is private; it is not a public notes section. Wire it causally to Generate Reply for a preparation reminder, or to the appropriate authorized response model for response processing.
 
 ### Recall Shortcut
 
-**Both stages; root only; zero calls.** Controls: Actor ID, matching Memory set ID, Target, Repetition, Consume on and physical-key modifiers. Target labels are Reply, Generated swipe, and Reply and generated swipe. Repetition labels are Next matching generation, Once for each generation type, and Until cancelled. Consumption labels are Successful completion and Accepted result.
+**Both stages; root or static subgraph; zero calls.** Controls: Actor ID, matching Memory set ID, Target, Repetition, Consume on and physical-key modifiers. Target labels are Reply, Generated swipe, and Reply and generated swipe. Repetition labels are Next matching generation, Once for each generation type, and Until cancelled. Consumption labels are Successful completion and Accepted result.
 
 Its output describes a recall policy. Preview does not queue it. Use the node's context menu or Memory recall controls in Details to Queue recall or Cancel recall. Matching Recall and Shortcut cards show shared green queued or amber pending status. **Workflow → Memory recall** provides selection/global actions and a grouped overview.
 

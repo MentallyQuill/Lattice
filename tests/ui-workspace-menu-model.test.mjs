@@ -48,6 +48,13 @@ test('Review host result remains available for the actual saved root terminal fr
  assert.equal(item({...base,workflow:child,rootWorkflow:root},'Workflow','review-host-result').disabled,false);
  assert.equal(item({...base,workflow:child,rootWorkflow:{...root,nodes:[]}},'Workflow','review-host-result').disabled,true);
 });
+test('Review host result uses the root expanded review inventory when every native step is nested',()=>{
+ const terminal={kind:'terminal',address:{workflowId:'nested-reply',instancePath:['body'],nodeId:'review-publish'}};
+ const root={phase:'unified',nodes:[{operation:'subgraph',terminal:false}],reviewTerminals:[terminal]};
+ const child={phase:'unified',nodes:[],reviewTerminals:[]};
+ assert.equal(item({...base,workflow:child,rootWorkflow:root},'Workflow','review-host-result').disabled,false);
+ assert.equal(item({...base,workflow:{...child,reviewTerminals:[terminal]},rootWorkflow:{...root,reviewTerminals:[]}},'Workflow','review-host-result').disabled,true);
+});
 test('owned root activity disables diagnostics even when the selected preview is idle',()=>{
  const outputPreview={selectedKey:'choice',busy:false,runHere:{enabled:true}};
  const rootWorkflow={phase:'unified',ownedBusy:true,nodes:[]};

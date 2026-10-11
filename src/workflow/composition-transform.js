@@ -1,5 +1,6 @@
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.0';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.0';
-import { portsForNode, operationFor } from './catalog.js?v=0.27.0';
+import { portsForNode, operationFor, phaseForNode } from './catalog.js?v=0.27.0';
 import { computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from './definition-data.js?v=0.27.0';
 import { inspectExpandedGraph } from './graph-validation.js?v=0.27.0';
 import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.0';
@@ -96,9 +97,9 @@ export function prepareCreateFromSelection(root, command) {
     const affectedGroups = new Set(command.nodeIds.map(id => scope.nodes[id].inGroup).filter(id => Object.hasOwn(scope.groups ?? {}, id)));
     if (command.groupPresentation !== undefined && (!record(command.groupPresentation) || Object.entries(command.groupPresentation).some(([id, presentation]) => !affectedGroups.has(id) || !groupPresentationValid(presentation)))) return fail('INVALID_COMPOSITION', 'Supply finite presentation for affected groups only.');
     for (const id of selected) {
-        const node = scope.nodes[id], operation = operationFor(node, { phase: scope.mode.slice(7) });
-        if (operation?.rootOnly || ['scene-context', 'reply-snapshot', 'guidance', 'apply-reply'].includes(node.operation) || ['subgraph-input', 'subgraph-output'].includes(node.type)) return fail('ROOT_ONLY_OPERATION', 'Root-only operations and existing boundaries cannot be selected.');
-        if (operation?.requiresStateInDefinition && !Object.values(scope.wires).some(wire => wire.to === id && wire.toPort === 'state')) return fail('ROOT_ONLY_OPERATION', 'State extraction requires an explicit snapshot connection.');
+        const node = scope.nodes[id], operation = operationFor(node, { mode: scope.mode, phase: phaseForNode(scope, node) });
+        if (operation?.rootOnly && !isScopedSystemOperation(node) || ['subgraph-input', 'subgraph-output'].includes(node.type)) return fail('ROOT_ONLY_OPERATION', 'Select eligible operations; existing boundaries stay in their containing definition.');
+        if (operation?.requiresStateInDefinition && !isScopedSystemOperation(node) && !Object.values(scope.wires).some(wire => wire.to === id && wire.toPort === 'state')) return fail('ROOT_ONLY_OPERATION', 'This operation requires an explicit snapshot connection.');
     }
     const instanceId = command.instanceId ?? ids.next('subgraph');
     if (command.instanceId !== undefined && !ids.claim(instanceId)) return fail('INVALID_INSTANCE', 'The wrapper requires a fresh ID.');
@@ -210,14 +211,22 @@ export function prepareUnpack(root, command) {
     if (instance?.type !== 'subgraph') return fail('INVALID_INSTANCE', 'Expected a subgraph instance.');
     const definition = candidate.definitions[definitionRefKey(instance.definition)], expanded = inspectExpandedGraph(root); if (!expanded.ok) return expanded;
     const materialized = expanded.data.scopes.find(item => samePath(item.instancePath, instancePath)).graph;
+    // Bypass optional adapters to preserve absence, but retain explicitly disabled boundaries.
+    const optionalInputs = new Map(definition.interface.filter(port => port.direction === 'input' && !port.required && definition.body.nodes[port.boundaryNodeId].enabled !== false)
+        .map(port => [port.boundaryNodeId, Object.values(scope.wires).find(wire => wire.to === instanceId && wire.toPort === port.id)]));
+    const unboundPortals = new Set(Object.values(definition.body.portals ?? {}).filter(portal => optionalInputs.has(portal.source.nodeId) && !optionalInputs.get(portal.source.nodeId)).map(portal => portal.id));
     const identityMap = { nodes: {}, wires: {}, groups: {}, portals: {} }, generatedReroutes = [], generatedRoles = [], changedRefs = [];
     const parentRoles = expanded.data.scopes.find(item => samePath(item.instancePath, path)).graph.roles;
     const occupiedRoles = new Set(expanded.data.scopes.flatMap(item => [...Object.keys(item.graph.roles ?? {}), ...Object.values(item.graph.nodes).map(node => node.modelRole).filter(Boolean)]));
     let roleCounter = 1;
-    for (const field of Object.keys(identityMap)) for (const id of Object.keys(definition.body[field] ?? {})) identityMap[field][id] = ids.next(field === 'nodes' ? 'node' : field === 'wires' ? 'edge' : field === 'groups' ? 'group' : 'portal');
+    for (const field of Object.keys(identityMap)) for (const id of Object.keys(definition.body[field] ?? {})) {
+        if (field === 'nodes' && optionalInputs.has(id) || field === 'portals' && unboundPortals.has(id)) continue;
+        identityMap[field][id] = ids.next(field === 'nodes' ? 'node' : field === 'wires' ? 'edge' : field === 'groups' ? 'group' : 'portal');
+    }
     const enabled = instance.enabled !== false;
     scope.groups ??= {}; scope.portals ??= {};
     for (const [oldId, originalNode] of Object.entries(definition.body.nodes)) {
+        if (optionalInputs.has(oldId)) continue;
         const node = clone(materialized.nodes[oldId]), id = identityMap.nodes[oldId]; node.id = id;
         delete node.localCopy;
         if (node.inGroup) node.inGroup = identityMap.groups[node.inGroup];
@@ -225,10 +234,10 @@ export function prepareUnpack(root, command) {
         if (!enabled) node.enabled = false;
         const boundary = definition.interface.find(port => port.boundaryNodeId === oldId);
         if (boundary) {
-            const mapping = expanded.data.boundaryMappings.find(item => samePath(item.boundary.instancePath, instancePath) && item.boundary.nodeId === oldId);
-            const producer = mapping?.source && expanded.data.primitives.find(unit => samePath(unit.address.instancePath, mapping.source.instancePath) && unit.address.nodeId === mapping.source.nodeId);
             node.type = 'workflow'; node.operation = 'reroute'; node.operationVersion = 1;
-            node.phase = materialized.mode === 'native-unified' ? producer?.phase ?? 'pre' : materialized.mode.slice(7);
+            // Unified reroutes inherit their stage from authored dependencies, including disabled native outputs.
+            if (materialized.mode === 'native-unified') delete node.phase;
+            else node.phase = materialized.mode.slice(7);
             node.artifactKind = boundary.kind; delete node.interfacePortId;
             generatedReroutes.push({ nodeId: id, interfacePortId: boundary.id, direction: boundary.direction, kind: boundary.kind });
         } else if (node.type === 'workflow') {
@@ -261,25 +270,37 @@ export function prepareUnpack(root, command) {
     }
     for (const [oldId, group] of Object.entries(definition.body.groups ?? {})) {
         const next = clone(group); next.id = identityMap.groups[oldId];
-        if (next.members) next.members = next.members.map(id => identityMap.nodes[id]);
+        if (next.members) next.members = next.members.filter(id => !optionalInputs.has(id)).map(id => identityMap.nodes[id]);
         scope.groups[next.id] = next;
     }
     for (const group of Object.values(scope.groups)) {
         if (group.members?.includes(instanceId)) group.members = group.members.flatMap(id => id === instanceId ? Object.values(identityMap.nodes).filter(nodeId => scope.nodes[nodeId]?.inGroup === group.id) : [id]);
     }
     const portNode = portId => identityMap.nodes[definition.interface.find(port => port.id === portId).boundaryNodeId];
+    const remapSource = source => source.nodeId === instanceId ? { nodeId: portNode(source.portId), portId: 'out' } : source;
     for (const wire of Object.values(scope.wires)) {
-        if (wire.to === instanceId) { wire.to = portNode(wire.toPort); wire.toPort = 'in'; }
+        if (wire.to === instanceId) {
+            const boundary = definition.interface.find(port => port.id === wire.toPort);
+            if (optionalInputs.has(boundary.boundaryNodeId)) { delete scope.wires[wire.id]; continue; }
+            wire.to = portNode(wire.toPort); wire.toPort = 'in';
+        }
         if (wire.route === 'wire' && wire.from === instanceId) { wire.from = portNode(wire.fromPort); wire.fromPort = 'out'; }
     }
     for (const portal of Object.values(scope.portals)) if (portal.source.nodeId === instanceId) portal.source = { nodeId: portNode(portal.source.portId), portId: 'out' };
     for (const [oldId, wire] of Object.entries(definition.body.wires)) {
+        const optionalInput = wire.route === 'wire' && optionalInputs.has(wire.from), binding = optionalInput ? optionalInputs.get(wire.from) : null;
+        if (optionalInput && !binding || wire.route === 'portal' && unboundPortals.has(wire.portalId)) { delete identityMap.wires[oldId]; continue; }
         const next = { ...clone(wire), id: identityMap.wires[oldId], to: identityMap.nodes[wire.to] };
-        if (next.route === 'wire') next.from = identityMap.nodes[wire.from]; else next.portalId = identityMap.portals[wire.portalId];
+        if (binding) {
+            next.route = binding.route;
+            if (binding.route === 'wire') { const source = remapSource(sourceOf(scope, binding)); next.from = source.nodeId; next.fromPort = source.portId; }
+            else { next.portalId = binding.portalId; delete next.from; delete next.fromPort; }
+        } else if (next.route === 'wire') next.from = identityMap.nodes[wire.from]; else next.portalId = identityMap.portals[wire.portalId];
         scope.wires[next.id] = next;
     }
     for (const [oldId, portal] of Object.entries(definition.body.portals ?? {})) {
-        const next = { ...clone(portal), id: identityMap.portals[oldId], source: { ...portal.source, nodeId: identityMap.nodes[portal.source.nodeId] } }; scope.portals[next.id] = next;
+        if (unboundPortals.has(oldId)) continue;
+        const next = { ...clone(portal), id: identityMap.portals[oldId], source: optionalInputs.has(portal.source.nodeId) ? clone(remapSource(sourceOf(scope, optionalInputs.get(portal.source.nodeId)))) : { ...portal.source, nodeId: identityMap.nodes[portal.source.nodeId] } }; scope.portals[next.id] = next;
     }
     delete scope.nodes[instanceId];
     const relocate = at => pathStartsWith(at, instancePath) && at.length > instancePath.length ? [...path, identityMap.nodes[at[instancePath.length]], ...at.slice(instancePath.length + 1)] : at;

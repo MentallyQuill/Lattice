@@ -2433,36 +2433,42 @@ function Wi(e, t) {
 }
 //#endregion
 //#region ui/NodeCard.svelte
-var Gi = /* @__PURE__ */ G("<span class=\"pc-modifier-badge svelte-1jilz27\"> </span>"), Ki = /* @__PURE__ */ G("<div><span class=\"pc-native-pin-label\"> </span> <div role=\"img\"><!></div></div>"), qi = /* @__PURE__ */ G("<div class=\"pc-node-body\"> </div>"), Ji = /* @__PURE__ */ G("<span class=\"pc-native-alias\"> </span>"), Yi = /* @__PURE__ */ G("<div class=\"pc-recall-status-space\" aria-hidden=\"true\"></div>"), Xi = /* @__PURE__ */ Fr("<path class=\"pc-recall-marker\" d=\"M17 18h5M19.5 15.5v5\"></path>"), Zi = /* @__PURE__ */ Fr("<path class=\"pc-recall-marker\" d=\"m16 18 3 3 4-6\"></path>"), Qi = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-node-recall-status\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 5a8 8 0 1 1-3 6M3 4v6h6M12 7v5l3 2\"></path><!></svg></button>"), $i = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-node-action pc-host-result\" aria-label=\"Preview host result\"><i class=\"fa-solid fa-eye\" aria-hidden=\"true\"></i> Host result</button>"), ea = /* @__PURE__ */ G("<div role=\"group\" tabindex=\"0\"><div class=\"pc-native-heading\"><svg class=\"pc-native-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path></path></svg><span class=\"pc-node-title\"> </span><!></div> <div class=\"pc-native-pins\"></div> <!> <!> <!> <!> <!></div>");
-function ta(e, t) {
+var Gi = /* @__PURE__ */ G("<span class=\"pc-node-target svelte-1jilz27\" title=\"Preview target\" role=\"img\" aria-label=\"Targeted node\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-1jilz27\"><circle cx=\"12\" cy=\"12\" r=\"6\"></circle><path d=\"M12 2v5m0 10v5M2 12h5m10 0h5\"></path></svg></span>"), Ki = /* @__PURE__ */ G("<span class=\"pc-modifier-badge svelte-1jilz27\"> </span>"), qi = /* @__PURE__ */ G("<div><span class=\"pc-native-pin-label\"> </span> <div role=\"img\"><!></div></div>"), Ji = /* @__PURE__ */ G("<div class=\"pc-node-body\"> </div>"), Yi = /* @__PURE__ */ G("<span class=\"pc-native-alias\"> </span>"), Xi = /* @__PURE__ */ G("<div class=\"pc-recall-status-space\" aria-hidden=\"true\"></div>"), Zi = /* @__PURE__ */ Fr("<path class=\"pc-recall-marker\" d=\"M17 18h5M19.5 15.5v5\"></path>"), Qi = /* @__PURE__ */ Fr("<path class=\"pc-recall-marker\" d=\"m16 18 3 3 4-6\"></path>"), $i = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-node-recall-status\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-1jilz27\"><path d=\"M7 5a8 8 0 1 1-3 6M3 4v6h6M12 7v5l3 2\"></path><!></svg></button>"), ea = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-node-action pc-host-result\" aria-label=\"Preview host result\"><i class=\"fa-solid fa-eye\" aria-hidden=\"true\"></i> Host result</button>"), ta = /* @__PURE__ */ G("<div role=\"group\" tabindex=\"0\"><!> <div class=\"pc-native-heading\"><svg class=\"pc-native-icon svelte-1jilz27\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path></path></svg><span class=\"pc-node-title\"> </span><!></div> <div class=\"pc-native-pins\"></div> <!> <!> <!> <!> <!></div>");
+function na(e, t) {
 	Ue(t, !0);
-	let n;
+	let n = Pi(t, "targeted", 3, !1), r;
 	Cn(() => {
 		let e = t.status;
-		if (t.card.className, n) {
-			for (let e of [...n.classList]) e.startsWith("pc-trace-") && n.classList.remove(e);
-			e && /^[a-z0-9_-]+$/i.test(e) && n.classList.add("pc-trace-" + e);
+		if (t.card.className, r) {
+			for (let e of [...r.classList]) e.startsWith("pc-trace-") && r.classList.remove(e);
+			e && /^[a-z0-9_-]+$/i.test(e) && r.classList.add("pc-trace-" + e);
 		}
 	});
-	let r = (e) => e.stopPropagation();
-	var i = ea();
-	let a, o;
-	var s = R(i), c = R(s), l = R(c);
-	P(c);
-	var u = B(c), d = R(u, !0);
-	P(u);
-	var f = B(u), p = (e) => {
-		var n = Gi(), r = R(n);
+	let i = (e) => e.stopPropagation();
+	var a = ta();
+	let o, s;
+	var c = R(a), l = (e) => {
+		K(e, Gi());
+	};
+	J(c, (e) => {
+		n() && e(l);
+	});
+	var u = B(c, 2), d = R(u), f = R(d);
+	P(d);
+	var p = B(d), m = R(p, !0);
+	P(p);
+	var h = B(p), g = (e) => {
+		var n = Ki(), r = R(n);
 		P(n), V(() => {
 			Z(n, "title", t.card.modifierSummary.text), Z(n, "aria-label", t.card.modifierSummary.text), q(r, `+${t.card.modifierSummary.count ?? ""}`);
 		}), K(e, n);
 	};
-	J(f, (e) => {
-		t.card.modifierSummary && e(p);
-	}), P(s);
-	var m = B(s, 2);
-	Y(m, 21, () => t.card.ports, (e) => e.id, (e, n) => {
-		var r = Ki();
+	J(h, (e) => {
+		t.card.modifierSummary && e(g);
+	}), P(u);
+	var _ = B(u, 2);
+	Y(_, 21, () => t.card.ports, (e) => e.id, (e, n) => {
+		var r = qi();
 		let i;
 		var a = R(r), o = R(a, !0);
 		P(a);
@@ -2476,60 +2482,60 @@ function ta(e, t) {
 			dir: H(n).dir,
 			port: H(n).port
 		})), U("mouseleave", s, () => t.actions.hoverPin(null)), K(e, r);
-	}), P(m);
-	var h = B(m, 2), g = (e) => {
-		var n = qi(), r = R(n, !0);
+	}), P(_);
+	var v = B(_, 2), y = (e) => {
+		var n = Ji(), r = R(n, !0);
 		P(n), V(() => q(r, t.card.body)), K(e, n);
 	};
-	J(h, (e) => {
-		t.card.type === "note" && e(g);
+	J(v, (e) => {
+		t.card.type === "note" && e(y);
 	});
-	var _ = B(h, 2), v = (e) => {
-		var n = Ji(), r = R(n, !0);
+	var b = B(v, 2), x = (e) => {
+		var n = Yi(), r = R(n, !0);
 		P(n), V(() => {
 			Z(n, "title", t.card.titleHint), q(r, t.card.title);
 		}), K(e, n);
 	};
-	J(_, (e) => {
-		t.card.compact && e(v);
+	J(b, (e) => {
+		t.card.compact && e(x);
 	});
-	var y = B(_, 2), b = (e) => {
-		K(e, Yi());
+	var S = B(b, 2), C = (e) => {
+		K(e, Xi());
 	};
-	J(y, (e) => {
-		(t.card.label === "Recall" || t.card.label === "Recall Shortcut") && e(b);
+	J(S, (e) => {
+		(t.card.label === "Recall" || t.card.label === "Recall Shortcut") && e(C);
 	});
-	var x = B(y, 2), S = (e) => {
-		var n = Qi(), i = R(n), a = B(R(i)), o = (e) => {
-			K(e, Xi());
-		}, s = (e) => {
+	var w = B(S, 2), T = (e) => {
+		var n = $i(), r = R(n), a = B(R(r)), o = (e) => {
 			K(e, Zi());
+		}, s = (e) => {
+			K(e, Qi());
 		};
 		J(a, (e) => {
 			t.recall.state === "generation" ? e(o) : t.recall.state === "acceptance" && e(s, 1);
-		}), P(i), P(n), V(() => {
+		}), P(r), P(n), V(() => {
 			Z(n, "data-recall-state", t.recall.state), Z(n, "title", t.recall.tooltip), Z(n, "aria-label", t.recall.ariaLabel);
-		}), W("pointerdown", n, r), W("mousedown", n, r), W("contextmenu", n, r), W("keydown", n, r), W("click", n, (e) => {
-			r(e), t.actions.openRecallDetails?.(t.card.id);
+		}), W("pointerdown", n, i), W("mousedown", n, i), W("contextmenu", n, i), W("keydown", n, i), W("click", n, (e) => {
+			i(e), t.actions.openRecallDetails?.(t.card.id);
 		}), K(e, n);
 	};
-	J(x, (e) => {
-		t.recall && e(S);
+	J(w, (e) => {
+		t.recall && e(T);
 	});
-	var C = B(x, 2), w = (e) => {
-		var n = $i();
-		W("mousedown", n, r), W("click", n, (e) => {
-			r(e), t.actions.hostResult(t.card.id);
+	var E = B(w, 2), D = (e) => {
+		var n = ea();
+		W("mousedown", n, i), W("click", n, (e) => {
+			i(e), t.actions.hostResult(t.card.id);
 		}), K(e, n);
 	};
-	J(C, (e) => {
-		t.card.hostResult && e(w);
-	}), P(i), Ni(i, (e) => n = e, () => n), V(() => {
-		a = pi(i, 1, si(t.card.className), "svelte-1jilz27", a, { "pc-recall-capable": t.card.label === "Recall" || t.card.label === "Recall Shortcut" }), Z(i, "data-id", t.card.id), Z(i, "title", t.card.offHint), Z(i, "aria-label", `${t.card.label}: ${t.card.title}`), o = hi(i, "", o, {
+	J(E, (e) => {
+		t.card.hostResult && e(D);
+	}), P(a), Ni(a, (e) => r = e, () => r), V(() => {
+		o = pi(a, 1, si(t.card.className), "svelte-1jilz27", o, { "pc-recall-capable": t.card.label === "Recall" || t.card.label === "Recall Shortcut" }), Z(a, "data-id", t.card.id), Z(a, "data-preview-target", n() ? "true" : void 0), Z(a, "title", t.card.offHint), Z(a, "aria-label", `${t.card.label}: ${t.card.title}`), s = hi(a, "", s, {
 			left: `${t.card.x}px`,
 			top: `${t.card.y}px`
-		}), Z(l, "d", t.card.iconPath), Z(u, "title", t.card.titleHint), q(d, t.card.title);
-	}), K(e, i), We();
+		}), Z(f, "d", t.card.iconPath), Z(p, "title", t.card.titleHint), q(m, t.card.title);
+	}), K(e, a), We();
 }
 Er([
 	"pointerdown",
@@ -2540,8 +2546,8 @@ Er([
 ]);
 //#endregion
 //#region ui/GroupCard.svelte
-var na = /* @__PURE__ */ G("<div class=\"pc-node-body\"> </div>"), ra = /* @__PURE__ */ G("<div role=\"group\"><div><i class=\"fa-solid fa-object-group\" aria-hidden=\"true\"></i> <span> </span> <span class=\"pc-group-frame-count\"> </span> <button type=\"button\"></button></div> <!></div>");
-function ia(e, t) {
+var ra = /* @__PURE__ */ G("<div class=\"pc-node-body\"> </div>"), ia = /* @__PURE__ */ G("<div role=\"group\"><div><i class=\"fa-solid fa-object-group\" aria-hidden=\"true\"></i> <span> </span> <span class=\"pc-group-frame-count\"> </span> <button type=\"button\"></button></div> <!></div>");
+function aa(e, t) {
 	Ue(t, !0);
 	function n(e, n) {
 		e.stopPropagation(), e.preventDefault(), t.actions.group(t.group.id, n);
@@ -2549,7 +2555,7 @@ function ia(e, t) {
 	function r(e, n) {
 		e.stopPropagation(), e.detail === 0 && t.actions.group(t.group.id, n);
 	}
-	var i = ra();
+	var i = ia();
 	let a;
 	var o = R(i), s = B(R(o), 2), c = R(s, !0);
 	P(s);
@@ -2558,7 +2564,7 @@ function ia(e, t) {
 	var d = B(l, 2);
 	P(o);
 	var f = B(o, 2), p = (e) => {
-		var n = na(), r = R(n, !0);
+		var n = ra(), r = R(n, !0);
 		P(n), V(() => q(r, t.group.body)), K(e, n);
 	};
 	J(f, (e) => {
@@ -2575,12 +2581,12 @@ function ia(e, t) {
 Er(["mousedown", "click"]);
 //#endregion
 //#region ui/WireLayer.svelte
-var aa = /* @__PURE__ */ Fr("<path class=\"pc-wire-hit\"></path><path><title> </title></path><text text-anchor=\"middle\"> </text>", 1), oa = /* @__PURE__ */ Fr("<path></path>"), sa = /* @__PURE__ */ Fr("<!><!>", 1);
-function ca(e, t) {
+var oa = /* @__PURE__ */ Fr("<path class=\"pc-wire-hit\"></path><path><title> </title></path><text text-anchor=\"middle\"> </text>", 1), sa = /* @__PURE__ */ Fr("<path></path>"), ca = /* @__PURE__ */ Fr("<!><!>", 1);
+function la(e, t) {
 	Ue(t, !0);
-	var n = sa(), r = z(n);
+	var n = ca(), r = z(n);
 	Y(r, 17, () => t.wires, (e) => e.id, (e, t) => {
-		var n = aa(), r = z(n), i = B(r), a = R(i), o = R(a);
+		var n = oa(), r = z(n), i = B(r), a = R(i), o = R(a);
 		P(a), P(i);
 		var s = B(i), c = R(s, !0);
 		P(s), V(() => {
@@ -2588,7 +2594,7 @@ function ca(e, t) {
 		}), K(e, n);
 	});
 	var i = B(r), a = (e) => {
-		var n = oa();
+		var n = sa();
 		V(() => {
 			Z(n, "d", t.ghost.d), pi(n, 0, si(t.ghost.className)), Z(n, "data-kind", t.ghost.kind);
 		}), K(e, n);
@@ -2599,17 +2605,17 @@ function ca(e, t) {
 }
 //#endregion
 //#region ui/CommentFrame.svelte
-var la = /* @__PURE__ */ G("<span class=\"pc-comment-title svelte-118xm2r\"> </span>"), ua = /* @__PURE__ */ G("<input class=\"pc-comment-title-input svelte-118xm2r\" aria-label=\"Comment title\"/>"), da = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-comment-resize svelte-118xm2r\" title=\"Drag to resize comment\"></button>"), fa = /* @__PURE__ */ G("<div role=\"group\"><header class=\"pc-comment-header svelte-118xm2r\"><button type=\"button\" class=\"pc-comment-select svelte-118xm2r\" title=\"Drag header to move comment\">⋮⋮</button> <!></header> <div class=\"pc-comment-notes svelte-118xm2r\"> </div> <!></div>");
-function pa(e, t) {
+var ua = /* @__PURE__ */ G("<span class=\"pc-comment-title svelte-118xm2r\"> </span>"), da = /* @__PURE__ */ G("<input class=\"pc-comment-title-input svelte-118xm2r\" aria-label=\"Comment title\"/>"), fa = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-comment-resize svelte-118xm2r\" title=\"Drag to resize comment\"></button>"), pa = /* @__PURE__ */ G("<div role=\"group\"><header class=\"pc-comment-header svelte-118xm2r\"><button type=\"button\" class=\"pc-comment-select svelte-118xm2r\" title=\"Drag header to move comment\">⋮⋮</button> <!></header> <div class=\"pc-comment-notes svelte-118xm2r\"> </div> <!></div>");
+function ma(e, t) {
 	Ue(t, !0);
 	let n = (e) => e.stopPropagation();
-	var r = fa();
+	var r = pa();
 	let i, a;
 	var o = R(r), s = R(o), c = B(s, 2), l = (e) => {
-		var n = la(), r = R(n, !0);
+		var n = ua(), r = R(n, !0);
 		P(n), V(() => q(r, t.comment.title)), K(e, n);
 	}, u = (e) => {
-		var r = ua();
+		var r = da();
 		X(r), V(() => wi(r, t.comment.title)), U("focus", r, () => t.actions.select(t.comment.id)), U("pointerdown", r, n, !0), U("mousedown", r, n, !0), U("click", r, n, !0), U("keydown", r, n, !0), W("change", r, (e) => {
 			t.comment.readOnly || t.actions.update(t.comment.id, { title: e.currentTarget.value });
 		}), K(e, r);
@@ -2620,7 +2626,7 @@ function pa(e, t) {
 	var d = B(o, 2), f = R(d, !0);
 	P(d);
 	var p = B(d, 2), m = (e) => {
-		var n = da();
+		var n = fa();
 		V(() => Z(n, "aria-label", `Resize comment: ${t.comment.title}`)), W("click", n, (e) => {
 			e.detail === 0 && t.actions.select(t.comment.id);
 		}), K(e, n);
@@ -2645,57 +2651,57 @@ function pa(e, t) {
 Er(["click", "change"]);
 //#endregion
 //#region src/ui/diagnostic-states.js?v=0.27.0
-var ma = (e, t, n) => ({
+var ha = (e, t, n) => ({
 	id: e,
 	severity: "info",
 	title: t,
 	message: n
-}), ha = (e, t, n) => ({
+}), ga = (e, t, n) => ({
 	id: e,
 	severity: "warning",
 	title: t,
 	message: n
-}), ga = (e, t, n) => ({
+}), _a = (e, t, n) => ({
 	id: e,
 	severity: "error",
 	title: t,
 	message: n
-}), _a = "This step starts when you send a message. Enable Lattice, then send a message in SillyTavern to run this workflow.", va = ma("recording-size-limit", "Preview was not retained", "The preview recording reached its size limit, so this output was not retained. This does not mean the model stopped early."), ya = ma("recording-invalid", "Recorded preview is unavailable", "The recorded preview could not be read safely. This does not establish whether the step succeeded. Choose a current output to inspect."), ba = {
-	PREVIEW_NOT_RUN: ma("not-run", "Not run yet", "This step has not run yet. Use Run to here when it is available."),
-	PREVIEW_RUNNING: ma("running", "Running", "This step is running. Its output will appear when it finishes."),
-	PREVIEW_WORKFLOW_RUNNING: ma("workflow-running", "Workflow is running", "The workflow is running. This output is not available yet."),
-	PREVIEW_WAITING: ma("waiting", "Waiting for input", "This step is waiting for an earlier step to finish."),
-	PREVIEW_UNRESOLVED: ma("unresolved", "No input for this branch", "An earlier step did not produce the input this branch needs. Check that step’s output and branch conditions."),
-	PREVIEW_SKIPPED: ma("skipped", "Step skipped", "This branch was intentionally skipped for this run."),
-	OUTPUT_NOT_RETAINED: ma("not-retained", "Output is not retained", "No saved preview is available for this output."),
-	OUTPUT_REMOVED: ma("output-removed", "Output is no longer available", "The selected output was removed or changed. Choose a current output."),
-	EARLIER_OUTPUT: ma("earlier-output", "Earlier output", "This is output from an earlier run. It does not describe the current run."),
-	PREVIEW_TRUNCATED: ma("preview-truncated", "Preview shortened", "Only the displayed preview was shortened. This does not mean the model stopped early."),
-	MANUAL_NATIVE_TRIGGER_REQUIRED: ma("send-required", "Starts with a message", _a),
-	NATIVE_SEND_REQUIRED: ma("send-required", "Starts with a message", _a),
-	RECALL_PREVIEW_NO_ACTIVATION: ma("recall-preview", "Recall waits for generation", "Recall runs during a normal SillyTavern message or generated swipe. A manual preview does not activate it."),
-	ABORTED: ma("stopped", "Stopped", "This action was stopped. Late output will not be used."),
-	CANCELLED: ma("cancelled", "Cancelled", "This action was cancelled."),
-	WORKFLOW_CANCELLED: ma("workflow-cancelled", "Workflow stopped", "The workflow was stopped."),
-	FILE_CANCELLED: ma("file-cancelled", "File action cancelled", "The file action was cancelled. The open draft is still available."),
-	NODE_CONFIGURATION_CANCELLED: ma("node-cancelled", "Node creation cancelled", "Node creation was cancelled."),
-	BUSY: ma("busy", "Another action is running", "Wait for generation or reply application to finish before continuing."),
-	ALREADY_APPLIED: ma("already-applied", "Already applied", "This revision has already been applied."),
-	COMMIT_DISABLED: ma("commit-preview", "Preview does not save memory", "Preview and dry-run execution do not commit memory."),
-	RECALL_REGISTRATION_PENDING: ma("recall-registering", "Shortcut is being prepared", "The Recall Shortcut is still being registered."),
-	CONTEXT_PRESERVATION: ma("context-preserved", "Original context retained", "The original context is retained alongside the compacted output."),
-	COMPRESSION_INPUT_OMITTED: ha("compression-omitted", "Some context was left out", "Some older messages did not fit the compression input. The originals are retained."),
-	PERSISTENCE_PARTIAL: ha("save-partial", "Some changes are not saved", "The accepted reply is retained. Some associated changes could not be saved. Review each target’s save status."),
-	RECENT_STORAGE_FAILED: ha("recent-storage", "Recent files could not be remembered", "The browser could not remember recent workflow files. Your open workflow is still available."),
-	VIEW_PERSISTENCE: ha("view-persistence", "View layout was reset", "The saved graph layout could not be restored. The workflow is available with a fresh view layout.")
+}), va = "This step starts when you send a message. Enable Lattice, then send a message in SillyTavern to run this workflow.", ya = ha("recording-size-limit", "Preview was not retained", "The preview recording reached its size limit, so this output was not retained. This does not mean the model stopped early."), ba = ha("recording-invalid", "Recorded preview is unavailable", "The recorded preview could not be read safely. This does not establish whether the step succeeded. Choose a current output to inspect."), xa = {
+	PREVIEW_NOT_RUN: ha("not-run", "Not run yet", "This step has not run yet. Use Run to here when it is available."),
+	PREVIEW_RUNNING: ha("running", "Running", "This step is running. Its output will appear when it finishes."),
+	PREVIEW_WORKFLOW_RUNNING: ha("workflow-running", "Workflow is running", "The workflow is running. This output is not available yet."),
+	PREVIEW_WAITING: ha("waiting", "Waiting for input", "This step is waiting for an earlier step to finish."),
+	PREVIEW_UNRESOLVED: ha("unresolved", "No input for this branch", "An earlier step did not produce the input this branch needs. Check that step’s output and branch conditions."),
+	PREVIEW_SKIPPED: ha("skipped", "Step skipped", "This branch was intentionally skipped for this run."),
+	OUTPUT_NOT_RETAINED: ha("not-retained", "Output is not retained", "No saved preview is available for this output."),
+	OUTPUT_REMOVED: ha("output-removed", "Output is no longer available", "The selected output was removed or changed. Choose a current output."),
+	EARLIER_OUTPUT: ha("earlier-output", "Earlier output", "This is output from an earlier run. It does not describe the current run."),
+	PREVIEW_TRUNCATED: ha("preview-truncated", "Preview shortened", "Only the displayed preview was shortened. This does not mean the model stopped early."),
+	MANUAL_NATIVE_TRIGGER_REQUIRED: ha("send-required", "Starts with a message", va),
+	NATIVE_SEND_REQUIRED: ha("send-required", "Starts with a message", va),
+	RECALL_PREVIEW_NO_ACTIVATION: ha("recall-preview", "Recall waits for generation", "Recall runs during a normal SillyTavern message or generated swipe. A manual preview does not activate it."),
+	ABORTED: ha("stopped", "Stopped", "This action was stopped. Late output will not be used."),
+	CANCELLED: ha("cancelled", "Cancelled", "This action was cancelled."),
+	WORKFLOW_CANCELLED: ha("workflow-cancelled", "Workflow stopped", "The workflow was stopped."),
+	FILE_CANCELLED: ha("file-cancelled", "File action cancelled", "The file action was cancelled. The open draft is still available."),
+	NODE_CONFIGURATION_CANCELLED: ha("node-cancelled", "Node creation cancelled", "Node creation was cancelled."),
+	BUSY: ha("busy", "Another action is running", "Wait for generation or reply application to finish before continuing."),
+	ALREADY_APPLIED: ha("already-applied", "Already applied", "This revision has already been applied."),
+	COMMIT_DISABLED: ha("commit-preview", "Preview does not save memory", "Preview and dry-run execution do not commit memory."),
+	RECALL_REGISTRATION_PENDING: ha("recall-registering", "Shortcut is being prepared", "The Recall Shortcut is still being registered."),
+	CONTEXT_PRESERVATION: ha("context-preserved", "Original context retained", "The original context is retained alongside the compacted output."),
+	COMPRESSION_INPUT_OMITTED: ga("compression-omitted", "Some context was left out", "Some older messages did not fit the compression input. The originals are retained."),
+	PERSISTENCE_PARTIAL: ga("save-partial", "Some changes are not saved", "The accepted reply is retained. Some associated changes could not be saved. Review each target’s save status."),
+	RECENT_STORAGE_FAILED: ga("recent-storage", "Recent files could not be remembered", "The browser could not remember recent workflow files. Your open workflow is still available."),
+	VIEW_PERSISTENCE: ga("view-persistence", "View layout was reset", "The saved graph layout could not be restored. The workflow is available with a fresh view layout.")
 };
 for (let e of [
 	"PERSISTENCE_UNKNOWN",
 	"PERSISTENCE_UNVERIFIED",
 	"SAVE_UNVERIFIED",
 	"APPLY_SAVE_UNVERIFIED"
-]) ba[e] = ha("save-unverified", "Saving is not confirmed", "The save outcome could not be verified. Confirm the stored data before making another write.");
-var xa = /* @__PURE__ */ new Map([
+]) xa[e] = ga("save-unverified", "Saving is not confirmed", "The save outcome could not be verified. Confirm the stored data before making another write.");
+var Sa = /* @__PURE__ */ new Map([
 	["Enter valid JSON before saving.", {
 		id: "json-setting",
 		severity: "error",
@@ -2744,206 +2750,206 @@ var xa = /* @__PURE__ */ new Map([
 		title: "Check the controls JSON",
 		message: "Use a JSON object before selecting a configured value."
 	}],
-	["Use a positive starting day, a time within the day, and a day length in whole minutes.", ga("clock-starting-values", "Check the clock’s starting values", "Set Starting day to a positive whole number, Starting time to a time within the day, and Hours per day to a positive duration in whole minutes. Enter a Calendar name.")],
-	["Load a valid clock template before changing its starting values.", ga("clock-template-needed", "Load a valid clock template", "Use Load initial values to load a valid clock template before changing its starting values.")],
-	["Load the initial template before saving.", ga("initial-template-needed", "Load initial values first", "Use Load initial values before changing the initial template with Save settings.")],
-	["Choose an actor for private data.", ga("private-actor-needed", "Choose the private actor", "Enter Actor ID when Visibility is Actor private.")],
-	["The initial template could not be loaded.", ga("initial-template-load", "Initial template could not be loaded", "The initial template could not be loaded. Check the source document and its authorization in Workflow Data.")],
-	["Check the initial settings.", ga("initial-settings", "Check the initial settings", "Check the initial template and settings in Workflow Data.")],
-	["Check the new data settings.", ga("new-data-settings", "Check the new data settings", "Check Name, Format, Visibility, and the required initial values in Workflow Data.")],
-	["Workflow data could not be updated.", ha("workflow-data-update-unverified", "Workflow Data update is not confirmed", "The Workflow Data update could not be confirmed. Inspect the current data and initial settings before making another change.")],
-	["Workflow Data setup could not be applied.", ha("workflow-data-setup-unverified", "Workflow Data setup is not confirmed", "The Workflow Data setup change could not be confirmed. Inspect the current configuration before making another change.")],
-	["The subgraph could not be saved. Check the current settings before trying the edit again.", ha("subgraph-save-unverified", "Subgraph saving is not confirmed", "The subgraph save could not be confirmed. Inspect the saved subgraph and current settings before making another change.")],
-	["The edit could not be accepted. Check the current settings before trying the edit again.", ga("edit-not-accepted", "Edit could not be accepted", "The edit could not be accepted. Check the current settings and selection before preparing another edit.")],
-	["The node could not be prepared.", ga("node-not-prepared", "Node could not be prepared", "The node could not be prepared. Check the required controls in node configuration.")],
-	["Memory recall could not be updated.", ga("recall-not-updated", "Recall could not be updated", "Recall could not be updated. Reopen the Recall controls and inspect the current scope and queue status.")],
-	["Memory recall is unavailable.", ma("recall-unavailable", "Recall is unavailable", "Recall is unavailable. Check the active chat, character, and enabled workflow.")],
-	["The portal change could not be accepted.", ga("portal-not-accepted", "Portal change could not be accepted", "The portal change could not be accepted. Check the current graph view and portal settings.")],
-	["Could not change connection profile", ga("profile-not-changed", "Connection profile could not be changed", "The Connection profile could not be changed. Select a current node and check the available profiles.")],
-	["Lattice disabled", ma("lattice-disabled", "Lattice is disabled", "Enable Lattice to use this feature.")],
-	["This Recall uses automatic triggers.", ma("recall-automatic", "Recall uses automatic triggers", "This Recall uses automatic triggers. Queue recall is available for manual activation settings.")],
-	["Recall is already queued.", ma("recall-queued", "Recall is already queued", "Recall is already queued. Use Cancel recall to remove the queued request.")],
-	["Memory recall is available in the root workflow.", ma("recall-root", "Open the root workflow", "Memory recall is available in the root workflow.")],
-	["Memory recall requires an active user, chat, and character.", ma("recall-active-scope", "Recall needs an active chat", "Open an active user, chat, and character to use Recall.")],
-	["This node belongs to another character.", ma("recall-character", "Select the matching character", "This node belongs to another character. Select the matching character to use its Recall controls.")],
-	["Add a matching Recall Shortcut to queue this memory set.", ma("recall-shortcut-needed", "Add a Recall Shortcut", "Add a matching Recall Shortcut to queue this memory set.")],
-	["The Recall and Shortcut generation targets do not overlap.", ma("recall-targets", "Recall targets do not match", "Choose overlapping generation targets for the Recall and matching Shortcut in Details.")],
-	["No manual recall is queued for these nodes.", ma("recall-cancel-empty", "No Recall request to cancel", "No manual recall is queued for these nodes.")],
-	["Select an eligible Recall or Recall Shortcut node.", ma("recall-selection", "Select a Recall node", "Select an eligible Recall or Recall Shortcut node.")],
-	["Library definitions are read-only.", ma("read-only-library", "Library definition", "Library definitions are read-only. Make a local copy to edit this definition.")],
-	["Library inspection is read-only and has no runtime output.", ma("library-preview", "Library definition preview", "Library definitions do not run here. Open a workflow that uses this definition to inspect its output.")],
-	["The previous workspace presentation is unreadable.", ha("recovered-layout", "Saved view could not be restored", "The workflow can be opened, but its saved view layout could not be restored.")],
-	["The previous recovery draft workspace presentation is unreadable.", ha("recovered-layout", "Saved view could not be restored", "The recovery draft can be opened, but its saved view layout could not be restored.")],
-	["No output recorded yet.", ba.PREVIEW_NOT_RUN],
-	["Artifact omitted: recording-byte-limit", va],
-	["Artifact omitted: recording-metadata-limit", va],
-	["Artifact omitted: canonical-prefix-limit", va],
-	["Artifact omitted: invalid-diagnostic-data", ya],
-	["Artifact omitted: invalid diagnostic data", ya],
-	["Artifact omitted: unavailable", ma("recording-unavailable", "Recorded preview is unavailable", "No recorded preview is available for this output. Choose a current output to inspect.")],
-	["Artifact omitted: historical wrapper mapping unavailable", ma("historical-mapping", "Earlier output cannot be located", "This earlier output cannot be matched to the current subgraph. Choose a current output to inspect.")],
-	["Workflow Data setup is unavailable.", ma("data-setup", "Workflow Data needs setup", "Open an active chat to configure Workflow Data.")]
-]), Sa = (e, t, n) => ({
+	["Use a positive starting day, a time within the day, and a day length in whole minutes.", _a("clock-starting-values", "Check the clock’s starting values", "Set Starting day to a positive whole number, Starting time to a time within the day, and Hours per day to a positive duration in whole minutes. Enter a Calendar name.")],
+	["Load a valid clock template before changing its starting values.", _a("clock-template-needed", "Load a valid clock template", "Use Load initial values to load a valid clock template before changing its starting values.")],
+	["Load the initial template before saving.", _a("initial-template-needed", "Load initial values first", "Use Load initial values before changing the initial template with Save settings.")],
+	["Choose an actor for private data.", _a("private-actor-needed", "Choose the private actor", "Enter Actor ID when Visibility is Actor private.")],
+	["The initial template could not be loaded.", _a("initial-template-load", "Initial template could not be loaded", "The initial template could not be loaded. Check the source document and its authorization in Workflow Data.")],
+	["Check the initial settings.", _a("initial-settings", "Check the initial settings", "Check the initial template and settings in Workflow Data.")],
+	["Check the new data settings.", _a("new-data-settings", "Check the new data settings", "Check Name, Format, Visibility, and the required initial values in Workflow Data.")],
+	["Workflow data could not be updated.", ga("workflow-data-update-unverified", "Workflow Data update is not confirmed", "The Workflow Data update could not be confirmed. Inspect the current data and initial settings before making another change.")],
+	["Workflow Data setup could not be applied.", ga("workflow-data-setup-unverified", "Workflow Data setup is not confirmed", "The Workflow Data setup change could not be confirmed. Inspect the current configuration before making another change.")],
+	["The subgraph could not be saved. Check the current settings before trying the edit again.", ga("subgraph-save-unverified", "Subgraph saving is not confirmed", "The subgraph save could not be confirmed. Inspect the saved subgraph and current settings before making another change.")],
+	["The edit could not be accepted. Check the current settings before trying the edit again.", _a("edit-not-accepted", "Edit could not be accepted", "The edit could not be accepted. Check the current settings and selection before preparing another edit.")],
+	["The node could not be prepared.", _a("node-not-prepared", "Node could not be prepared", "The node could not be prepared. Check the required controls in node configuration.")],
+	["Memory recall could not be updated.", _a("recall-not-updated", "Recall could not be updated", "Recall could not be updated. Reopen the Recall controls and inspect the current scope and queue status.")],
+	["Memory recall is unavailable.", ha("recall-unavailable", "Recall is unavailable", "Recall is unavailable. Check the active chat, character, and enabled workflow.")],
+	["The portal change could not be accepted.", _a("portal-not-accepted", "Portal change could not be accepted", "The portal change could not be accepted. Check the current graph view and portal settings.")],
+	["Could not change connection profile", _a("profile-not-changed", "Connection profile could not be changed", "The Connection profile could not be changed. Select a current node and check the available profiles.")],
+	["Lattice disabled", ha("lattice-disabled", "Lattice is disabled", "Enable Lattice to use this feature.")],
+	["This Recall uses automatic triggers.", ha("recall-automatic", "Recall uses automatic triggers", "This Recall uses automatic triggers. Queue recall is available for manual activation settings.")],
+	["Recall is already queued.", ha("recall-queued", "Recall is already queued", "Recall is already queued. Use Cancel recall to remove the queued request.")],
+	["Memory recall is available in the root workflow.", ha("recall-root", "Open the root workflow", "Memory recall is available in the root workflow.")],
+	["Memory recall requires an active user, chat, and character.", ha("recall-active-scope", "Recall needs an active chat", "Open an active user, chat, and character to use Recall.")],
+	["This node belongs to another character.", ha("recall-character", "Select the matching character", "This node belongs to another character. Select the matching character to use its Recall controls.")],
+	["Add a matching Recall Shortcut to queue this memory set.", ha("recall-shortcut-needed", "Add a Recall Shortcut", "Add a matching Recall Shortcut to queue this memory set.")],
+	["The Recall and Shortcut generation targets do not overlap.", ha("recall-targets", "Recall targets do not match", "Choose overlapping generation targets for the Recall and matching Shortcut in Details.")],
+	["No manual recall is queued for these nodes.", ha("recall-cancel-empty", "No Recall request to cancel", "No manual recall is queued for these nodes.")],
+	["Select an eligible Recall or Recall Shortcut node.", ha("recall-selection", "Select a Recall node", "Select an eligible Recall or Recall Shortcut node.")],
+	["Library definitions are read-only.", ha("read-only-library", "Library definition", "Library definitions are read-only. Make a local copy to edit this definition.")],
+	["Library inspection is read-only and has no runtime output.", ha("library-preview", "Library definition preview", "Library definitions do not run here. Open a workflow that uses this definition to inspect its output.")],
+	["The previous workspace presentation is unreadable.", ga("recovered-layout", "Saved view could not be restored", "The workflow can be opened, but its saved view layout could not be restored.")],
+	["The previous recovery draft workspace presentation is unreadable.", ga("recovered-layout", "Saved view could not be restored", "The recovery draft can be opened, but its saved view layout could not be restored.")],
+	["No output recorded yet.", xa.PREVIEW_NOT_RUN],
+	["Artifact omitted: recording-byte-limit", ya],
+	["Artifact omitted: recording-metadata-limit", ya],
+	["Artifact omitted: canonical-prefix-limit", ya],
+	["Artifact omitted: invalid-diagnostic-data", ba],
+	["Artifact omitted: invalid diagnostic data", ba],
+	["Artifact omitted: unavailable", ha("recording-unavailable", "Recorded preview is unavailable", "No recorded preview is available for this output. Choose a current output to inspect.")],
+	["Artifact omitted: historical wrapper mapping unavailable", ha("historical-mapping", "Earlier output cannot be located", "This earlier output cannot be matched to the current subgraph. Choose a current output to inspect.")],
+	["Workflow Data setup is unavailable.", ha("data-setup", "Workflow Data needs setup", "Open an active chat to configure Workflow Data.")]
+]), Ca = (e, t, n) => ({
 	id: e,
 	severity: "error",
 	title: t,
 	message: n
-}), Ca = (e, t, n) => ({
+}), wa = (e, t, n) => ({
 	id: e,
 	severity: "warning",
 	title: t,
 	message: n
-}), wa = " Running it again makes another model request.", Ta = [
+}), Ta = " Running it again makes another model request.", Ea = [
 	[
 		"UNSUPPORTED_BINDING",
 		/discards completion evidence|preserves? (?:its )?completion reason/i,
-		Sa("binding-finish", "Connection cannot verify completion", "This connection does not preserve the completion reason Lattice needs. Choose a connection that reports its completion reason.")
+		Ca("binding-finish", "Connection cannot verify completion", "This connection does not preserve the completion reason Lattice needs. Choose a connection that reports its completion reason.")
 	],
 	[
 		"UNSUPPORTED_BINDING",
 		/proxy|directly resolved/i,
-		Sa("binding-proxy", "Proxy connection cannot be verified", "Lattice cannot verify this proxy route. Choose a direct connection in Connection profile.")
+		Ca("binding-proxy", "Proxy connection cannot be verified", "Lattice cannot verify this proxy route. Choose a direct connection in Connection profile.")
 	],
 	[
 		"UNSUPPORTED_BINDING",
 		/samplers across providers|switching the live connection/i,
-		Sa("binding-provider", "Provider settings do not match", "This text completion profile uses a different provider from the active SillyTavern connection. Choose a profile for the active provider.")
+		Ca("binding-provider", "Provider settings do not match", "This text completion profile uses a different provider from the active SillyTavern connection. Choose a profile for the active provider.")
 	],
 	[
 		"TRUNCATED_OUTPUT",
 		/summary/i,
-		Ca("summary-truncated", "Summary stopped early", "The summary reached Output tokens before finishing. The original context is retained. Increase Output tokens in Details if you choose to run compression again." + wa)
+		wa("summary-truncated", "Summary stopped early", "The summary reached Output tokens before finishing. The original context is retained. Increase Output tokens in Details if you choose to run compression again." + Ta)
 	],
 	[
 		"COMPLETION_UNVERIFIED",
 		/summary/i,
-		Ca("summary-unverified", "Summary completion is not confirmed", "The connection did not confirm that the summary finished. The original context is retained. Check that the connection reports a completion reason.")
+		wa("summary-unverified", "Summary completion is not confirmed", "The connection did not confirm that the summary finished. The original context is retained. Check that the connection reports a completion reason.")
 	],
 	[
 		"EMPTY_OUTPUT",
 		/summary/i,
-		Ca("summary-empty", "Summary is empty", "The model returned no summary text. The original context is retained. Check the connection and compression settings." + wa)
+		wa("summary-empty", "Summary is empty", "The model returned no summary text. The original context is retained. Check the connection and compression settings." + Ta)
 	],
 	[
 		"REQUEST_FAILED",
 		/compression/i,
-		Sa("compression-request", "Compression could not finish", "The compression request could not finish. The original context is retained. Check Connection profile and the provider status." + wa)
+		Ca("compression-request", "Compression could not finish", "The compression request could not finish. The original context is retained. Check Connection profile and the provider status." + Ta)
 	],
 	[
 		"INVALID_SETTINGS",
 		/target\/completion limit|compaction method/i,
-		Sa("compactor-settings", "Check Smart Compactor settings", "Use positive Target tokens and Output tokens, a valid Keep recent count, and a supported Method in Details.")
+		Ca("compactor-settings", "Check Smart Compactor settings", "Use positive Target tokens and Output tokens, a valid Keep recent count, and a supported Method in Details.")
 	],
 	[
 		"INVALID_SETTINGS",
 		/presentation|layout|enabled\/group/i,
-		Sa("node-layout", "Check node appearance", "The saved node appearance or layout is invalid. Check the node’s Details and group membership.")
+		Ca("node-layout", "Check node appearance", "The saved node appearance or layout is invalid. Check the node’s Details and group membership.")
 	],
 	[
 		"INVALID_SETTINGS",
 		/model binding|role binding/i,
-		Sa("binding-setting", "Check model settings", "Check Connection profile, Model mode, and Model identifier in Details.")
+		Ca("binding-setting", "Check model settings", "Check Connection profile, Model mode, and Model identifier in Details.")
 	],
 	[
 		"INVALID_SETTINGS",
 		/^Invalid maxTokens\.$/i,
-		Sa("output-tokens-setting", "Check Output tokens", "Enter a positive whole number within the allowed range for Output tokens in Details.")
+		Ca("output-tokens-setting", "Check Output tokens", "Enter a positive whole number within the allowed range for Output tokens in Details.")
 	]
-], Ea = {
-	UNSUPPORTED_BINDING: Sa("binding-unsupported", "Connection type is not supported", "Choose a supported chat or text completion connection in Connection profile."),
-	BINDING_MISSING: Sa("binding-missing", "Choose a connection", "Choose Connection profile on this node before running it."),
-	PROFILE_MISSING: Sa("profile-missing", "Connection profile is unavailable", "The selected Connection profile is missing or unavailable. Choose an available profile on the node."),
-	MODEL_MISSING: Sa("model-missing", "Choose a model", "Select a model in the connection profile or set Model identifier in Details."),
-	PRESET_MISSING: Sa("preset-missing", "Sampler preset is unavailable", "The selected connection profile’s sampler preset is missing. Select an available preset in SillyTavern Connection Manager."),
-	INSTRUCT_MISSING: Sa("instruct-missing", "Instruct preset is unavailable", "The selected connection profile’s instruct preset is missing. Choose an available instruct preset in SillyTavern."),
-	ENDPOINT_MISSING: Sa("endpoint-missing", "Connection needs provider settings", "Complete the endpoint and account settings for the selected provider in SillyTavern."),
-	BINDING_CHANGED: Sa("binding-changed", "Connection settings changed", "The connection changed after it was checked. Review Connection profile and the current provider settings before running this step."),
-	SERVICE_UNAVAILABLE: Sa("service-unavailable", "SillyTavern service is unavailable", "A required SillyTavern service is unavailable. Check the installed host version and connection settings."),
-	REQUEST_FAILED: Sa("request-failed", "Model request could not finish", "The model request could not finish. Check Connection profile and the provider status." + wa),
-	TRUNCATED_OUTPUT: Ca("model-truncated", "Model output stopped early", "The model reached Output tokens before finishing. Increase Output tokens in Details if you choose to run this step again." + wa),
-	COMPLETION_UNVERIFIED: Ca("completion-unverified", "Completion is not confirmed", "The connection did not confirm that the model finished. The unverified result is not used. Check that the connection reports a completion reason."),
-	EMPTY_OUTPUT: Sa("output-empty", "No text returned", "The model returned no text. Check Connection profile and the request settings." + wa),
-	PIN_MISSING: Sa("pin-missing", "Pinned wording was not found", "A phrase in Pinned wording is missing from the input. Check its exact spelling and capitalization in Details."),
-	PIN_BUDGET_EXCEEDED: Sa("pin-budget", "Protected context exceeds the budget", "Pinned wording and Keep recent preserve more context than Target tokens allows. Increase Target tokens or reduce the protected material in Details."),
-	INPUT_LIMIT: Sa("compression-input-limit", "Context does not fit compression", "No flexible message fits the compression input limit. Reduce the input context or use Method “select”. The original context is retained."),
-	COMPACTION_OVERFLOW: Ca("compaction-overflow", "Summary exceeds the context budget", "The summary and protected messages exceed Target tokens. The original context is retained. Increase Target tokens or reduce Pinned wording and Keep recent."),
-	TOKEN_COUNT_FAILED: Sa("token-count-failed", "Token count is unavailable", "Lattice could not measure the token count. Check the selected connection’s tokenizer. The original input is retained.")
-}, Da = (e, t, n) => ({
+], Da = {
+	UNSUPPORTED_BINDING: Ca("binding-unsupported", "Connection type is not supported", "Choose a supported chat or text completion connection in Connection profile."),
+	BINDING_MISSING: Ca("binding-missing", "Choose a connection", "Choose Connection profile on this node before running it."),
+	PROFILE_MISSING: Ca("profile-missing", "Connection profile is unavailable", "The selected Connection profile is missing or unavailable. Choose an available profile on the node."),
+	MODEL_MISSING: Ca("model-missing", "Choose a model", "Select a model in the connection profile or set Model identifier in Details."),
+	PRESET_MISSING: Ca("preset-missing", "Sampler preset is unavailable", "The selected connection profile’s sampler preset is missing. Select an available preset in SillyTavern Connection Manager."),
+	INSTRUCT_MISSING: Ca("instruct-missing", "Instruct preset is unavailable", "The selected connection profile’s instruct preset is missing. Choose an available instruct preset in SillyTavern."),
+	ENDPOINT_MISSING: Ca("endpoint-missing", "Connection needs provider settings", "Complete the endpoint and account settings for the selected provider in SillyTavern."),
+	BINDING_CHANGED: Ca("binding-changed", "Connection settings changed", "The connection changed after it was checked. Review Connection profile and the current provider settings before running this step."),
+	SERVICE_UNAVAILABLE: Ca("service-unavailable", "SillyTavern service is unavailable", "A required SillyTavern service is unavailable. Check the installed host version and connection settings."),
+	REQUEST_FAILED: Ca("request-failed", "Model request could not finish", "The model request could not finish. Check Connection profile and the provider status." + Ta),
+	TRUNCATED_OUTPUT: wa("model-truncated", "Model output stopped early", "The model reached Output tokens before finishing. Increase Output tokens in Details if you choose to run this step again." + Ta),
+	COMPLETION_UNVERIFIED: wa("completion-unverified", "Completion is not confirmed", "The connection did not confirm that the model finished. The unverified result is not used. Check that the connection reports a completion reason."),
+	EMPTY_OUTPUT: Ca("output-empty", "No text returned", "The model returned no text. Check Connection profile and the request settings." + Ta),
+	PIN_MISSING: Ca("pin-missing", "Pinned wording was not found", "A phrase in Pinned wording is missing from the input. Check its exact spelling and capitalization in Details."),
+	PIN_BUDGET_EXCEEDED: Ca("pin-budget", "Protected context exceeds the budget", "Pinned wording and Keep recent preserve more context than Target tokens allows. Increase Target tokens or reduce the protected material in Details."),
+	INPUT_LIMIT: Ca("compression-input-limit", "Context does not fit compression", "No flexible message fits the compression input limit. Reduce the input context or use Method “select”. The original context is retained."),
+	COMPACTION_OVERFLOW: wa("compaction-overflow", "Summary exceeds the context budget", "The summary and protected messages exceed Target tokens. The original context is retained. Increase Target tokens or reduce Pinned wording and Keep recent."),
+	TOKEN_COUNT_FAILED: Ca("token-count-failed", "Token count is unavailable", "Lattice could not measure the token count. Check the selected connection’s tokenizer. The original input is retained.")
+}, Oa = (e, t, n) => ({
 	id: e,
 	severity: "error",
 	title: t,
 	message: n
-}), Oa = (e, t, n) => ({
+}), ka = (e, t, n) => ({
 	id: e,
 	severity: "info",
 	title: t,
 	message: n
-}), ka = (e, t, n) => ({
+}), Aa = (e, t, n) => ({
 	id: e,
 	severity: "warning",
 	title: t,
 	message: n
-}), Aa = Da("document-authorization", "Choose an authorized document", "Authorize the document in Workflow › Configure › Workflow Data, then select it in the node’s Details."), ja = Da("private-material", "Private material is protected", "This output contains restricted or private material and cannot be published here. Check the source visibility and the intended actor."), Ma = Da("actor-mismatch", "Character scope does not match", "This data belongs to a different character or chat. Select the intended character and check the node’s actor settings."), Na = Da("resource-scope-changed", "The active scope changed", "The active user, chat, character, or workflow changed. Reopen the affected controls for the current scope."), Pa = {
-	FILE_TOO_LARGE: Da("file-size", "File is too large", "Choose a file no larger than 400,000 bytes."),
-	FILE_CONTENT_TOO_LARGE: Da("file-text-size", "File text is too long", "Choose a file containing no more than 100,000 characters."),
-	FILE_NAME_INVALID: Da("file-name", "Filename is invalid", "Choose a file with a filename between 1 and 255 characters."),
-	FILE_INVALID_UTF8: Da("file-encoding", "File text cannot be read", "Choose a UTF-8 text file."),
-	FILE_PERMISSION: Da("file-permission", "File access was denied", "Choose the workflow file again and allow access, or use Save As to choose another destination."),
-	FILE_NOT_FOUND: Da("file-missing", "File is missing", "The selected file or document no longer exists. Choose an existing file or check the target in Workflow Data."),
-	FILE_READ_FAILED: Da("file-read", "File could not be read", "The selected file could not be read. Choose an accessible file and check its permissions."),
-	FILE_WRITE_FAILED: Da("file-save", "Workflow file could not be saved", "The workflow file could not be saved. Your draft remains open. Use Save As to choose an accessible destination."),
-	FILE_DOWNLOAD_FAILED: Da("file-download", "Workflow copy could not be saved", "The workflow JSON copy could not be saved. Your draft remains open. Check browser download permissions."),
-	FILE_CONFLICT: Da("workflow-file-conflict", "Workflow file changed", "The workflow file changed outside Lattice. Use Save As to preserve your draft without overwriting those changes."),
-	FILE_REVISION_CONFLICT: Da("document-revision-conflict", "Document changed", "The target document changed after it was read. Prepare a new projection and its dependent story output from the current document before acceptance."),
-	FILE_REFERENCE_UNAUTHORIZED: Da("file-reference", "Read the document first", "Connect the Reference output from the current authorized Read File node. An older or substituted reference cannot authorize a write."),
-	FILE_RECEIPT_LIMIT: Da("document-receipts", "Document history is full", "The document reached its revision or save history limit. Reconcile its stored history before preparing another write."),
-	FILE_DOCUMENT_LIMIT: Da("document-limit", "Document exceeds the storage limit", "The proposed document and save history are too large to store. Reduce the document size before preparing another write."),
-	FILE_FORMAT_LOCKED: Da("document-format", "Document format is fixed", "An existing document keeps its format. Create a different target in Workflow Data to use another format."),
-	FILE_ACCEPTANCE_REQUIRED: Oa("file-acceptance", "Saving waits for acceptance", "File changes are proposed during execution and are saved only when the full workflow result is accepted."),
-	FILE_STAGE_FAILED: Da("file-staging", "File change could not be prepared", "The file change could not be prepared. Check the target document, current reference, and source evidence."),
-	FILE_INTENT_CONFLICT: Da("file-intent-conflict", "File change identity conflicts", "A previously prepared file change uses this identity for different content. Inspect the retained change and prepare a distinct current change."),
-	FILE_BACKEND_FAILED: Da("document-storage", "Document storage is unavailable", "The document storage service could not complete this action. Check the active chat and Workflow Data configuration."),
-	FILE_EVIDENCE_FAILED: Da("file-evidence", "File evidence could not be checked", "The source evidence for this file change could not be checked. Inspect the current source and prepare evidence from it."),
-	DOCUMENT_SETUP_UNAVAILABLE: Oa("document-setup", "Workflow Data needs setup", "Open an active user and chat, then configure documents in Workflow › Configure › Workflow Data."),
-	CHAT_REQUIRED: Oa("chat-required", "Open a chat", "Open an active chat before using this feature."),
-	ACTOR_REQUIRED: Oa("actor-required", "Select a character", "Select an active character before using character memory."),
-	PRIVATE_MATERIAL: ja,
-	PRIVATE_DESTINATION: Da("private-destination", "Destination cannot receive private data", "Choose a destination whose visibility preserves the data’s private actor scope. Check visibility in Workflow Data."),
-	INVALIDATED_SOURCES: ka("historical-source-changed", "Stored evidence changed", "Some stored evidence changed or was removed. Review and reconcile that evidence before using it for another memory change."),
-	FINAL_EVIDENCE_REEXTRACT_REQUIRED: Da("final-evidence", "Evidence does not match the final reply", "The final reply changed after its evidence was captured. Extract or rebase the evidence from the final narrative before accepting it."),
-	STALE_VERSION: Da("memory-version", "Memory changed", "The memory store changed after this proposal was prepared. Read the current memory and prepare a new proposal before acceptance."),
-	IDEMPOTENCY_CONFLICT: Da("memory-identity-conflict", "Memory change identity conflicts", "This memory change identity already refers to different or unconfirmed content. Inspect the stored change before preparing another write."),
-	MEMORY_SAVE_UNAVAILABLE: Da("memory-save-unavailable", "Memory saving is unavailable", "SillyTavern’s metadata save service is unavailable. Check the active chat and host installation."),
-	MEMORY_BACKEND_FAILED: Da("memory-backend", "Memory storage could not complete this action", "The memory storage service could not complete this action. Check the active chat, character, and memory configuration."),
-	RECEIPT_LIMIT: Da("memory-receipts", "Memory history is full", "The memory save history reached its limit. Reconcile stored receipts before preparing another write."),
-	VERSION_LIMIT: Da("memory-version-limit", "Memory version limit reached", "The memory store reached its version limit. Reconcile the store before preparing another write."),
-	RECALL_UNAVAILABLE: Oa("recall-setup", "Recall needs setup", "Enable Lattice and open a unified workflow for the active character to use Recall."),
-	RECALL_QUEUE_CONFLICT: Da("recall-policy", "Recall settings do not match", "Matching Recall Shortcuts must use matching generation target, repetition, and consumption settings. Check their Details."),
-	RECALL_HOTKEY_CONFLICT: Da("recall-shortcut-conflict", "Shortcut is already assigned", "This key is assigned to another active Recall Shortcut. Choose a different key in Details."),
-	INVALID_RECALL_HOTKEY: Da("recall-shortcut-key", "Choose a supported shortcut", "Choose a physical key with Control, Alt, or Meta, or a function key in Recall Shortcut Details."),
-	RECALL_HOTKEY_UNAVAILABLE: Da("recall-key-unavailable", "Recall shortcut is unavailable", "The Recall keyboard listener is unavailable. Check the active workflow and host installation."),
-	RECALL_NOT_QUEUED: Oa("recall-not-queued", "Recall is not queued", "Use Queue recall on a matching Recall Shortcut to arm manual Recall. Automatic triggers use their own conditions."),
-	RECALL_TARGET_INELIGIBLE: Oa("recall-ineligible", "Recall does not target this generation", "This generation does not match the configured Recall target. Check the generation target in Details."),
-	RECALL_ALREADY_ACTIVATED: Oa("recall-activated", "Recall already activated", "This memory set already activated for this generation."),
-	RECALL_USE_RESERVED: Oa("recall-reserved", "Recall is reserved", "A matching Recall allowance is reserved by another generation. Wait for that generation to finish."),
-	RECALL_QUEUE_LIMIT: Da("recall-queue-limit", "Recall queue is full", "Cancel unused Recall requests before adding more."),
-	RECALL_GRAPH_INVALID: Da("recall-workflow", "Recall workflow needs attention", "Recall requires a valid active unified workflow. Review Workflow validation before queueing Recall."),
-	RECALL_NODE_UNAVAILABLE: Da("recall-node", "Choose a current Recall Shortcut", "Select a configured Recall Shortcut in the current workflow."),
-	RECALL_RECORDS_UNVERIFIED: Da("recall-records", "Recall records are not verified", "Use records from a current authorized File or Memory read. Changed or invented records cannot be used for Recall."),
-	RECALL_PRESENCE_UNVERIFIED: Da("recall-presence", "Character presence is not verified", "Recall needs the intended character’s current scene presence and supporting source evidence.")
+}), ja = Oa("document-authorization", "Choose an authorized document", "Authorize the document in Workflow › Configure › Workflow Data, then select it in the node’s Details."), Ma = Oa("private-material", "Private material is protected", "This output contains restricted or private material and cannot be published here. Check the source visibility and the intended actor."), Na = Oa("actor-mismatch", "Character scope does not match", "This data belongs to a different character or chat. Select the intended character and check the node’s actor settings."), Pa = Oa("resource-scope-changed", "The active scope changed", "The active user, chat, character, or workflow changed. Reopen the affected controls for the current scope."), Fa = {
+	FILE_TOO_LARGE: Oa("file-size", "File is too large", "Choose a file no larger than 400,000 bytes."),
+	FILE_CONTENT_TOO_LARGE: Oa("file-text-size", "File text is too long", "Choose a file containing no more than 100,000 characters."),
+	FILE_NAME_INVALID: Oa("file-name", "Filename is invalid", "Choose a file with a filename between 1 and 255 characters."),
+	FILE_INVALID_UTF8: Oa("file-encoding", "File text cannot be read", "Choose a UTF-8 text file."),
+	FILE_PERMISSION: Oa("file-permission", "File access was denied", "Choose the workflow file again and allow access, or use Save As to choose another destination."),
+	FILE_NOT_FOUND: Oa("file-missing", "File is missing", "The selected file or document no longer exists. Choose an existing file or check the target in Workflow Data."),
+	FILE_READ_FAILED: Oa("file-read", "File could not be read", "The selected file could not be read. Choose an accessible file and check its permissions."),
+	FILE_WRITE_FAILED: Oa("file-save", "Workflow file could not be saved", "The workflow file could not be saved. Your draft remains open. Use Save As to choose an accessible destination."),
+	FILE_DOWNLOAD_FAILED: Oa("file-download", "Workflow copy could not be saved", "The workflow JSON copy could not be saved. Your draft remains open. Check browser download permissions."),
+	FILE_CONFLICT: Oa("workflow-file-conflict", "Workflow file changed", "The workflow file changed outside Lattice. Use Save As to preserve your draft without overwriting those changes."),
+	FILE_REVISION_CONFLICT: Oa("document-revision-conflict", "Document changed", "The target document changed after it was read. Prepare a new projection and its dependent story output from the current document before acceptance."),
+	FILE_REFERENCE_UNAUTHORIZED: Oa("file-reference", "Read the document first", "Connect the Reference output from the current authorized Read File node. An older or substituted reference cannot authorize a write."),
+	FILE_RECEIPT_LIMIT: Oa("document-receipts", "Document history is full", "The document reached its revision or save history limit. Reconcile its stored history before preparing another write."),
+	FILE_DOCUMENT_LIMIT: Oa("document-limit", "Document exceeds the storage limit", "The proposed document and save history are too large to store. Reduce the document size before preparing another write."),
+	FILE_FORMAT_LOCKED: Oa("document-format", "Document format is fixed", "An existing document keeps its format. Create a different target in Workflow Data to use another format."),
+	FILE_ACCEPTANCE_REQUIRED: ka("file-acceptance", "Saving waits for acceptance", "File changes are proposed during execution and are saved only when the full workflow result is accepted."),
+	FILE_STAGE_FAILED: Oa("file-staging", "File change could not be prepared", "The file change could not be prepared. Check the target document, current reference, and source evidence."),
+	FILE_INTENT_CONFLICT: Oa("file-intent-conflict", "File change identity conflicts", "A previously prepared file change uses this identity for different content. Inspect the retained change and prepare a distinct current change."),
+	FILE_BACKEND_FAILED: Oa("document-storage", "Document storage is unavailable", "The document storage service could not complete this action. Check the active chat and Workflow Data configuration."),
+	FILE_EVIDENCE_FAILED: Oa("file-evidence", "File evidence could not be checked", "The source evidence for this file change could not be checked. Inspect the current source and prepare evidence from it."),
+	DOCUMENT_SETUP_UNAVAILABLE: ka("document-setup", "Workflow Data needs setup", "Open an active user and chat, then configure documents in Workflow › Configure › Workflow Data."),
+	CHAT_REQUIRED: ka("chat-required", "Open a chat", "Open an active chat before using this feature."),
+	ACTOR_REQUIRED: ka("actor-required", "Select a character", "Select an active character before using character memory."),
+	PRIVATE_MATERIAL: Ma,
+	PRIVATE_DESTINATION: Oa("private-destination", "Destination cannot receive private data", "Choose a destination whose visibility preserves the data’s private actor scope. Check visibility in Workflow Data."),
+	INVALIDATED_SOURCES: Aa("historical-source-changed", "Stored evidence changed", "Some stored evidence changed or was removed. Review and reconcile that evidence before using it for another memory change."),
+	FINAL_EVIDENCE_REEXTRACT_REQUIRED: Oa("final-evidence", "Evidence does not match the final reply", "The final reply changed after its evidence was captured. Extract or rebase the evidence from the final narrative before accepting it."),
+	STALE_VERSION: Oa("memory-version", "Memory changed", "The memory store changed after this proposal was prepared. Read the current memory and prepare a new proposal before acceptance."),
+	IDEMPOTENCY_CONFLICT: Oa("memory-identity-conflict", "Memory change identity conflicts", "This memory change identity already refers to different or unconfirmed content. Inspect the stored change before preparing another write."),
+	MEMORY_SAVE_UNAVAILABLE: Oa("memory-save-unavailable", "Memory saving is unavailable", "SillyTavern’s metadata save service is unavailable. Check the active chat and host installation."),
+	MEMORY_BACKEND_FAILED: Oa("memory-backend", "Memory storage could not complete this action", "The memory storage service could not complete this action. Check the active chat, character, and memory configuration."),
+	RECEIPT_LIMIT: Oa("memory-receipts", "Memory history is full", "The memory save history reached its limit. Reconcile stored receipts before preparing another write."),
+	VERSION_LIMIT: Oa("memory-version-limit", "Memory version limit reached", "The memory store reached its version limit. Reconcile the store before preparing another write."),
+	RECALL_UNAVAILABLE: ka("recall-setup", "Recall needs setup", "Enable Lattice and open a unified workflow for the active character to use Recall."),
+	RECALL_QUEUE_CONFLICT: Oa("recall-policy", "Recall settings do not match", "Matching Recall Shortcuts must use matching generation target, repetition, and consumption settings. Check their Details."),
+	RECALL_HOTKEY_CONFLICT: Oa("recall-shortcut-conflict", "Shortcut is already assigned", "This key is assigned to another active Recall Shortcut. Choose a different key in Details."),
+	INVALID_RECALL_HOTKEY: Oa("recall-shortcut-key", "Choose a supported shortcut", "Choose a physical key with Control, Alt, or Meta, or a function key in Recall Shortcut Details."),
+	RECALL_HOTKEY_UNAVAILABLE: Oa("recall-key-unavailable", "Recall shortcut is unavailable", "The Recall keyboard listener is unavailable. Check the active workflow and host installation."),
+	RECALL_NOT_QUEUED: ka("recall-not-queued", "Recall is not queued", "Use Queue recall on a matching Recall Shortcut to arm manual Recall. Automatic triggers use their own conditions."),
+	RECALL_TARGET_INELIGIBLE: ka("recall-ineligible", "Recall does not target this generation", "This generation does not match the configured Recall target. Check the generation target in Details."),
+	RECALL_ALREADY_ACTIVATED: ka("recall-activated", "Recall already activated", "This memory set already activated for this generation."),
+	RECALL_USE_RESERVED: ka("recall-reserved", "Recall is reserved", "A matching Recall allowance is reserved by another generation. Wait for that generation to finish."),
+	RECALL_QUEUE_LIMIT: Oa("recall-queue-limit", "Recall queue is full", "Cancel unused Recall requests before adding more."),
+	RECALL_GRAPH_INVALID: Oa("recall-workflow", "Recall workflow needs attention", "Recall requires a valid active unified workflow. Review Workflow validation before queueing Recall."),
+	RECALL_NODE_UNAVAILABLE: Oa("recall-node", "Choose a current Recall Shortcut", "Select a configured Recall Shortcut in the current workflow."),
+	RECALL_RECORDS_UNVERIFIED: Oa("recall-records", "Recall records are not verified", "Use records from a current authorized File or Memory read. Changed or invented records cannot be used for Recall."),
+	RECALL_PRESENCE_UNVERIFIED: Oa("recall-presence", "Character presence is not verified", "Recall needs the intended character’s current scene presence and supporting source evidence.")
 };
 for (let e of [
 	"DOCUMENT_NOT_AUTHORIZED",
 	"FILE_NOT_AUTHORIZED",
 	"FILE_TARGET_UNAUTHORIZED",
 	"DOCUMENT_LEASE_UNAUTHORIZED"
-]) Pa[e] = Aa;
+]) Fa[e] = ja;
 for (let e of [
 	"SCOPE_MISMATCH",
 	"RECALL_ACTOR_MISMATCH",
 	"ACTOR_FILE_SCOPE_MISMATCH",
 	"ACTOR_GUIDANCE_SCOPE"
-]) Pa[e] = Ma;
+]) Fa[e] = Na;
 for (let e of [
 	"STALE_DOCUMENT_SETUP",
 	"STALE_DOCUMENT_SCOPE",
@@ -2953,85 +2959,85 @@ for (let e of [
 	"STALE_RECALL_SHORTCUT",
 	"STALE_RECALL_GENERATION",
 	"STALE_EFFECT_SCOPE"
-]) Pa[e] = Na;
-var Fa = [
-	["INVALID_MEMORY_CONFIG INVALID_MEMORY_CONTEXT INVALID_MEMORY_METADATA INVALID_MEMORY_READ INVALID_MEMORY_RECALL INVALID_MEMORY_SNAPSHOT INVALID_MEMORY_RECEIPTS INVALID_MEMORY_CONTROLS INVALID_MEMORY_CAS", Da("memory-settings", "Memory settings need attention", "The memory settings or stored data are invalid. Check the active character, store, and node settings in Details.")],
-	["INVALID_RECALL_SCOPE INVALID_RECALL_QUEUE INVALID_RECALL_ACTIVATION INVALID_RECALL_TRIGGER INVALID_RECALL_OWNER INVALID_RECALL_AUTHORITY INVALID_RECALL_PORTS INVALID_RECALL_GENERATION INVALID_RECALL_SETTLEMENT", Da("recall-settings", "Recall settings need attention", "Check the Recall actor, memory set, generation target, and activation settings in Details.")],
-	["INVALID_FILE_CONFIG INVALID_FILE_BACKEND_CONFIG INVALID_FILE_METADATA INVALID_FILE_SNAPSHOT INVALID_FILE_INTENT INVALID_FILE_CONTROLS INVALID_FILE_BACKEND_UPDATE INVALID_FILE_RESPONSE", Da("document-settings", "Document data needs attention", "The document data or storage configuration is invalid. Check Workflow Data and the affected node’s Details.")],
-	["INVALID_DOCUMENT_SETUP INVALID_WORKFLOW_DATA INVALID_CLOCK_TEMPLATE DOCUMENT_SETUP_FAILED", Da("document-setup-invalid", "Check Workflow Data settings", "Check the target name, initial template, format, and visibility in Workflow Data.")],
-	["INVALID_INTROSPECTION_EVIDENCE INVALID_ACCEPTED_MEMORY STATE_EVIDENCE_CHANGED", Da("memory-evidence", "Memory evidence needs attention", "Use current settled source evidence that belongs to the intended character and matches the accepted narrative.")],
-	["FILE_CAPTURE_RELEASED FILE_INTENT_UNAUTHORIZED MEMORY_AUTHORITY_RELEASED RECALL_STATE_RELEASED RECALL_CLAIM_CLOSED RECALL_CLAIM_UNAUTHORIZED RECALL_OWNER_MISSING RECALL_SOURCE_UNAVAILABLE RECALL_PROVENANCE_REQUIRED STALE_RECALL_SOURCE STALE_MEMORY_EVIDENCE", Da("resource-expired", "Recorded source is no longer current", "The recorded source or permission is no longer current. Inspect the active source and prepare this action again.")]
+]) Fa[e] = Pa;
+var Ia = [
+	["INVALID_MEMORY_CONFIG INVALID_MEMORY_CONTEXT INVALID_MEMORY_METADATA INVALID_MEMORY_READ INVALID_MEMORY_RECALL INVALID_MEMORY_SNAPSHOT INVALID_MEMORY_RECEIPTS INVALID_MEMORY_CONTROLS INVALID_MEMORY_CAS", Oa("memory-settings", "Memory settings need attention", "The memory settings or stored data are invalid. Check the active character, store, and node settings in Details.")],
+	["INVALID_RECALL_SCOPE INVALID_RECALL_QUEUE INVALID_RECALL_ACTIVATION INVALID_RECALL_TRIGGER INVALID_RECALL_OWNER INVALID_RECALL_AUTHORITY INVALID_RECALL_PORTS INVALID_RECALL_GENERATION INVALID_RECALL_SETTLEMENT", Oa("recall-settings", "Recall settings need attention", "Check the Recall actor, memory set, generation target, and activation settings in Details.")],
+	["INVALID_FILE_CONFIG INVALID_FILE_BACKEND_CONFIG INVALID_FILE_METADATA INVALID_FILE_SNAPSHOT INVALID_FILE_INTENT INVALID_FILE_CONTROLS INVALID_FILE_BACKEND_UPDATE INVALID_FILE_RESPONSE", Oa("document-settings", "Document data needs attention", "The document data or storage configuration is invalid. Check Workflow Data and the affected node’s Details.")],
+	["INVALID_DOCUMENT_SETUP INVALID_WORKFLOW_DATA INVALID_CLOCK_TEMPLATE DOCUMENT_SETUP_FAILED", Oa("document-setup-invalid", "Check Workflow Data settings", "Check the target name, initial template, format, and visibility in Workflow Data.")],
+	["INVALID_INTROSPECTION_EVIDENCE INVALID_ACCEPTED_MEMORY STATE_EVIDENCE_CHANGED", Oa("memory-evidence", "Memory evidence needs attention", "Use current settled source evidence that belongs to the intended character and matches the accepted narrative.")],
+	["FILE_CAPTURE_RELEASED FILE_INTENT_UNAUTHORIZED MEMORY_AUTHORITY_RELEASED RECALL_STATE_RELEASED RECALL_CLAIM_CLOSED RECALL_CLAIM_UNAUTHORIZED RECALL_OWNER_MISSING RECALL_SOURCE_UNAVAILABLE RECALL_PROVENANCE_REQUIRED STALE_RECALL_SOURCE STALE_MEMORY_EVIDENCE", Oa("resource-expired", "Recorded source is no longer current", "The recorded source or permission is no longer current. Inspect the active source and prepare this action again.")]
 ];
-for (let [e, t] of Fa) for (let n of e.split(" ")) Pa[n] = t;
+for (let [e, t] of Ia) for (let n of e.split(" ")) Fa[n] = t;
 //#endregion
 //#region src/ui/diagnostic-workflow.js?v=0.27.0
-var Ia = (e, t, n) => ({
+var La = (e, t, n) => ({
 	id: e,
 	severity: "error",
 	title: t,
 	message: n
-}), La = (e, t, n) => ({
+}), Ra = (e, t, n) => ({
 	id: e,
 	severity: "info",
 	title: t,
 	message: n
-}), Ra = Ia("wire-invalid", "Connection needs attention", "Reconnect existing compatible output and input pins. Remove connections to deleted nodes."), za = Ia("subgraph-invalid", "Subgraph data needs attention", "The subgraph data does not match its saved definition. Check its definition, ports, and overrides before using it."), Ba = La("definition-read-only", "Definition is read-only", "Make a local copy before editing this subgraph definition."), Va = {
-	UPSTREAM_FAILED: Ia("upstream-failed", "An earlier step failed", "This step could not run because an earlier step failed. Inspect the earlier step’s diagnostic first."),
-	ARTIFACT_KIND: Ia("wire-type", "Connection types do not match", "Connect pins with compatible types. The output type must match the input type."),
-	AMBIGUOUS_INPUT: Ia("input-multiple", "Input has more than one source", "Each named input accepts one source. Remove the extra connection or combine the data in an appropriate node first."),
-	CYCLE: Ia("workflow-loop", "Connections form a loop", "The connections form a dependency loop. Remove a connection that feeds a later step back into an earlier step."),
-	MISSING_PORTAL: Ia("portal-missing", "Portal source is missing", "This portal consumer has no publisher in this graph. Select an existing portal or publish a matching output."),
-	INVALID_PORTAL: Ia("portal-invalid", "Portal needs attention", "Check the portal’s name, source output, and type. Publish an existing output with the same type."),
-	MISSING_TERMINAL: Ia("terminal-missing", "Workflow needs an output", "Add Review / Publish to finish a unified workflow, or a stage output to finish a helper."),
-	DISABLED_OPERATION: Ia("dependency-disabled", "A required step is disabled", "Enable the selected step and its required dependencies before using Run to here."),
-	INVALID_STAGE_DEPENDENCY: Ia("stage-reversed", "Preparation depends on a reply", "A preparation step cannot read response-stage output. Move a compatible node to the response stage or remove the reverse connection."),
-	WRONG_PHASE: Ia("stage-mismatch", "Workflow stage does not match", "Choose nodes and subgraphs that support the containing workflow stage. Retired workflows are available for archived export."),
-	INVALID_PHASE: Ia("node-stage", "Node stage does not match", "Choose a supported preparation or response stage in Details for this node."),
-	ROOT_ONLY_OPERATION: Ia("root-only", "Step belongs in the root workflow", "Place this step in the root workflow. Reusable helpers need explicit snapshot inputs for state."),
-	ROOT_BOUNDARY: Ia("root-boundary", "Boundary belongs inside a subgraph", "Add Input and Output boundary nodes inside an editable subgraph."),
-	ROOT_ONLY: Ia("root-authority", "Full workflow acceptance is required", "This action requires the authorized root workflow and cannot run as an isolated helper."),
-	ROOT_REQUIRED: Ia("root-settlement", "Full workflow acceptance is required", "Accept the full workflow result to commit its prepared changes. A manual preview does not authorize saving."),
-	UNKNOWN_OPERATION: Ia("operation-unsupported", "Node type is not supported", "This node type or version is not supported by the installed Lattice version. Check the workflow version and node reference."),
-	INVALID_SETTINGS: Ia("node-settings", "Node settings need attention", "Some saved settings are invalid. Check the affected node’s controls in Details."),
-	INVALID_CONFIGURATION: Ia("node-configuration", "Node configuration needs attention", "Use valid JSON containing the declared node controls, then complete the required settings in node configuration."),
-	INVALID_INPUT: Ia("input-invalid", "Input data does not match", "The input data does not match this step’s expected type or shape. Check the connected source and the node’s Details."),
-	INVALID_CONTEXT: Ia("context-invalid", "Context data does not match", "The context input is invalid. Check the connected context source and its message data."),
-	INVALID_TARGET: Ia("target-invalid", "Choose a current output", "Select an existing output pin or terminal step in the current workflow."),
-	INVALID_SELECTION: Ia("selection-changed", "Selection needs attention", "Select current workflow nodes before continuing."),
-	INVALID_GROUP: Ia("group-selection", "Group selection needs attention", "Select an editable group to ungroup, or at least two ordinary nodes to create a group."),
-	INVALID_JSON: Ia("workflow-json", "JSON could not be read", "The text is not valid JSON. Check the JSON syntax or choose a valid workflow file."),
-	MALFORMED_WORKFLOW: Ia("workflow-malformed", "Workflow data is invalid", "The workflow data is invalid or exceeds its size limit. Choose a valid Lattice workflow file."),
-	UNSUPPORTED_PACKAGE: Ia("workflow-package", "Choose a Lattice workflow", "Choose a compatible Lattice workflow document or supported portable workflow JSON."),
-	UNSUPPORTED_VERSION: Ia("workflow-version", "Workflow version is not supported", "This workflow uses an unsupported format or runtime version. Open a compatible workflow or check the installed Lattice version."),
-	MISSING_DEFINITION: Ia("definition-missing", "Subgraph definition is missing", "The subgraph’s exact saved definition is not included. Import a workflow or subgraph package that includes its pinned definition."),
-	DEFINITION_CONFLICT: Ia("definition-conflict", "Subgraph versions conflict", "Two subgraphs use the same identity and version for different content. Use an unambiguous saved definition or create a local copy."),
-	DEFINITION_RECURSION: Ia("definition-recursion", "Subgraph includes itself", "A subgraph cannot include itself through nested definitions. Remove the recursive instance."),
-	DEFINITION_DEPTH: Ia("definition-depth", "Subgraphs are nested too deeply", "The workflow exceeds eight nested subgraph levels. Flatten or simplify the nested definitions."),
-	DEFINITION_IN_USE: Ia("definition-in-use", "Subgraph is still in use", "Another saved subgraph uses this revision. Remove that dependency before deleting the saved definition."),
-	PARAMETER_IN_USE: Ia("parameter-in-use", "Parameter is still in use", "Reset the surviving override or remove the enclosing parameter exposure before removing this parameter."),
-	BOUNDARY_SELECTION: Ia("boundary-copy", "Copy the subgraph or its interior", "Input and Output boundary nodes belong to their subgraph definition. Copy the interior nodes or the whole subgraph instance."),
-	STALE_CONTEXT: Ia("view-changed", "The view changed", "The view or selection changed after this action was prepared. Reopen the affected controls or select the current node."),
-	STALE_DOCUMENT: Ia("document-changed", "Workflow changed during editing", "The workflow changed after the edit began. Prepare the edit again from the current workflow."),
-	UNSUPPORTED_VIEW: Ia("view-unavailable", "Graph view is unavailable", "This graph view is unavailable. Open an existing view in the current workflow."),
-	VIEW_INACTIVE: Ia("view-inactive", "Graph view is unavailable", "This graph view is unavailable. Open an existing view in the current workflow."),
-	STALE_DEFINITION: Ia("definition-changed", "Subgraph changed", "The subgraph definition changed after this action was prepared. Reopen the current subgraph and prepare the edit again."),
-	STALE_CANDIDATE: Ia("candidate-expired", "Review is no longer current", "This candidate is no longer available or no longer matches the selected reply. Prepare a new review from the current source; running model steps again makes another model request."),
-	APPLY_UNAVAILABLE: Ia("apply-unavailable", "Reply application is unavailable", "Required SillyTavern reply, save, or swipe services are unavailable. Check the host installation before applying this review."),
-	APPLY_FAILED: Ia("apply-failed", "Reply could not be applied", "The revision could not be applied and the original local message was restored. A save that was attempted may still be unverified; inspect the stored chat before taking another action."),
-	MULTIPLE_NATIVE_GENERATIONS: Ia("native-multiple", "More than one Generate Reply path", "A unified workflow supports one Generate Reply boundary. Keep one generation path in the selected workflow."),
-	NATIVE_ACTIVATION_REQUIRED: Ia("activation-required", "Generate Reply needs On Send", "Connect one root On Send activation to Generate Reply. This workflow starts during SillyTavern message generation."),
-	NATIVE_OWNER_MISSING: La("native-start", "Starts with a message", "This step starts when you send a message. Enable Lattice, then send a message in SillyTavern to run this workflow."),
-	OVERLAPPING_GENERATION: Ia("generation-overlap", "Generations overlapped", "Another generation started before this workflow finished. Wait for the active generation to finish before starting another."),
-	GUIDANCE_OVERFLOW: Ia("guidance-budget", "Guidance exceeds the budget", "The guidance exceeds Token budget at Generate Reply. Reduce the guidance or increase Token budget in Details."),
-	READ_ONLY: Ba,
-	READ_ONLY_DEFINITION: Ba
+}), za = La("wire-invalid", "Connection needs attention", "Reconnect existing compatible output and input pins. Remove connections to deleted nodes."), Ba = La("subgraph-invalid", "Subgraph data needs attention", "The subgraph data does not match its saved definition. Check its definition, ports, and overrides before using it."), Va = Ra("definition-read-only", "Definition is read-only", "Make a local copy before editing this subgraph definition."), Ha = {
+	UPSTREAM_FAILED: La("upstream-failed", "An earlier step failed", "This step could not run because an earlier step failed. Inspect the earlier step’s diagnostic first."),
+	ARTIFACT_KIND: La("wire-type", "Connection types do not match", "Connect pins with compatible types. The output type must match the input type."),
+	AMBIGUOUS_INPUT: La("input-multiple", "Input has more than one source", "Each named input accepts one source. Remove the extra connection or combine the data in an appropriate node first."),
+	CYCLE: La("workflow-loop", "Connections form a loop", "The connections form a dependency loop. Remove a connection that feeds a later step back into an earlier step."),
+	MISSING_PORTAL: La("portal-missing", "Portal source is missing", "This portal consumer has no publisher in this graph. Select an existing portal or publish a matching output."),
+	INVALID_PORTAL: La("portal-invalid", "Portal needs attention", "Check the portal’s name, source output, and type. Publish an existing output with the same type."),
+	MISSING_TERMINAL: La("terminal-missing", "Workflow needs an output", "Add Review / Publish to finish a unified workflow, or a stage output to finish a helper."),
+	DISABLED_OPERATION: La("dependency-disabled", "A required step is disabled", "Enable the selected step and its required dependencies before using Run to here."),
+	INVALID_STAGE_DEPENDENCY: La("stage-reversed", "Preparation depends on a reply", "A preparation step cannot read response-stage output. Move a compatible node to the response stage or remove the reverse connection."),
+	WRONG_PHASE: La("stage-mismatch", "Workflow stage does not match", "Choose nodes and subgraphs that support the containing workflow stage. Retired workflows are available for archived export."),
+	INVALID_PHASE: La("node-stage", "Node stage does not match", "Choose a supported preparation or response stage in Details for this node."),
+	ROOT_ONLY_OPERATION: La("root-only", "Step belongs in the root workflow", "Place this step in the root workflow. Reusable helpers need explicit snapshot inputs for state."),
+	ROOT_BOUNDARY: La("root-boundary", "Boundary belongs inside a subgraph", "Add Input and Output boundary nodes inside an editable subgraph."),
+	ROOT_ONLY: La("root-authority", "Full workflow acceptance is required", "This action requires the authorized root workflow and cannot run as an isolated helper."),
+	ROOT_REQUIRED: La("root-settlement", "Full workflow acceptance is required", "Accept the full workflow result to commit its prepared changes. A manual preview does not authorize saving."),
+	UNKNOWN_OPERATION: La("operation-unsupported", "Node type is not supported", "This node type or version is not supported by the installed Lattice version. Check the workflow version and node reference."),
+	INVALID_SETTINGS: La("node-settings", "Node settings need attention", "Some saved settings are invalid. Check the affected node’s controls in Details."),
+	INVALID_CONFIGURATION: La("node-configuration", "Node configuration needs attention", "Use valid JSON containing the declared node controls, then complete the required settings in node configuration."),
+	INVALID_INPUT: La("input-invalid", "Input data does not match", "The input data does not match this step’s expected type or shape. Check the connected source and the node’s Details."),
+	INVALID_CONTEXT: La("context-invalid", "Context data does not match", "The context input is invalid. Check the connected context source and its message data."),
+	INVALID_TARGET: La("target-invalid", "Choose a current output", "Select an existing output pin or terminal step in the current workflow."),
+	INVALID_SELECTION: La("selection-changed", "Selection needs attention", "Select current workflow nodes before continuing."),
+	INVALID_GROUP: La("group-selection", "Group selection needs attention", "Select an editable group to ungroup, or at least two ordinary nodes to create a group."),
+	INVALID_JSON: La("workflow-json", "JSON could not be read", "The text is not valid JSON. Check the JSON syntax or choose a valid workflow file."),
+	MALFORMED_WORKFLOW: La("workflow-malformed", "Workflow data is invalid", "The workflow data is invalid or exceeds its size limit. Choose a valid Lattice workflow file."),
+	UNSUPPORTED_PACKAGE: La("workflow-package", "Choose a Lattice workflow", "Choose a compatible Lattice workflow document or supported portable workflow JSON."),
+	UNSUPPORTED_VERSION: La("workflow-version", "Workflow version is not supported", "This workflow uses an unsupported format or runtime version. Open a compatible workflow or check the installed Lattice version."),
+	MISSING_DEFINITION: La("definition-missing", "Subgraph definition is missing", "The subgraph’s exact saved definition is not included. Import a workflow or subgraph package that includes its pinned definition."),
+	DEFINITION_CONFLICT: La("definition-conflict", "Subgraph versions conflict", "Two subgraphs use the same identity and version for different content. Use an unambiguous saved definition or create a local copy."),
+	DEFINITION_RECURSION: La("definition-recursion", "Subgraph includes itself", "A subgraph cannot include itself through nested definitions. Remove the recursive instance."),
+	DEFINITION_DEPTH: La("definition-depth", "Subgraphs are nested too deeply", "The workflow exceeds eight nested subgraph levels. Flatten or simplify the nested definitions."),
+	DEFINITION_IN_USE: La("definition-in-use", "Subgraph is still in use", "Another saved subgraph uses this revision. Remove that dependency before deleting the saved definition."),
+	PARAMETER_IN_USE: La("parameter-in-use", "Parameter is still in use", "Reset the surviving override or remove the enclosing parameter exposure before removing this parameter."),
+	BOUNDARY_SELECTION: La("boundary-copy", "Copy the subgraph or its interior", "Input and Output boundary nodes belong to their subgraph definition. Copy the interior nodes or the whole subgraph instance."),
+	STALE_CONTEXT: La("view-changed", "The view changed", "The view or selection changed after this action was prepared. Reopen the affected controls or select the current node."),
+	STALE_DOCUMENT: La("document-changed", "Workflow changed during editing", "The workflow changed after the edit began. Prepare the edit again from the current workflow."),
+	UNSUPPORTED_VIEW: La("view-unavailable", "Graph view is unavailable", "This graph view is unavailable. Open an existing view in the current workflow."),
+	VIEW_INACTIVE: La("view-inactive", "Graph view is unavailable", "This graph view is unavailable. Open an existing view in the current workflow."),
+	STALE_DEFINITION: La("definition-changed", "Subgraph changed", "The subgraph definition changed after this action was prepared. Reopen the current subgraph and prepare the edit again."),
+	STALE_CANDIDATE: La("candidate-expired", "Review is no longer current", "This candidate is no longer available or no longer matches the selected reply. Prepare a new review from the current source; running model steps again makes another model request."),
+	APPLY_UNAVAILABLE: La("apply-unavailable", "Reply application is unavailable", "Required SillyTavern reply, save, or swipe services are unavailable. Check the host installation before applying this review."),
+	APPLY_FAILED: La("apply-failed", "Reply could not be applied", "The revision could not be applied and the original local message was restored. A save that was attempted may still be unverified; inspect the stored chat before taking another action."),
+	MULTIPLE_NATIVE_GENERATIONS: La("native-multiple", "More than one Generate Reply path", "A unified workflow supports one Generate Reply boundary. Keep one generation path in the selected workflow."),
+	NATIVE_ACTIVATION_REQUIRED: La("activation-required", "Generate Reply needs On Send", "Connect one root On Send activation to Generate Reply. This workflow starts during SillyTavern message generation."),
+	NATIVE_OWNER_MISSING: Ra("native-start", "Starts with a message", "This step starts when you send a message. Enable Lattice, then send a message in SillyTavern to run this workflow."),
+	OVERLAPPING_GENERATION: La("generation-overlap", "Generations overlapped", "Another generation started before this workflow finished. Wait for the active generation to finish before starting another."),
+	GUIDANCE_OVERFLOW: La("guidance-budget", "Guidance exceeds the budget", "The guidance exceeds Token budget at Generate Reply. Reduce the guidance or increase Token budget in Details."),
+	READ_ONLY: Va,
+	READ_ONLY_DEFINITION: Va
 };
 for (let e of [
 	"DANGLING_WIRE",
 	"INVALID_WIRE",
 	"INVALID_PORT",
 	"CONFIGURATION_PORT_CHANGED"
-]) Va[e] = Ra;
+]) Ha[e] = za;
 for (let e of [
 	"DEFINITION_REF",
 	"DEFINITION_HASH",
@@ -3042,7 +3048,7 @@ for (let e of [
 	"DEFINITION_PARAMETER",
 	"INVALID_OVERRIDE",
 	"LOCAL_COPY_OWNERSHIP"
-]) Va[e] = za;
+]) Ha[e] = Ba;
 for (let e of [
 	"GRAPH_LIMIT",
 	"DEFINITION_LIMIT",
@@ -3051,20 +3057,20 @@ for (let e of [
 	"EVIDENCE_LIMIT",
 	"EFFECT_BUNDLE_LIMIT",
 	"EFFECT_PREVIEW_LIMIT"
-]) Va[e] = Ia("workflow-limit", "Workflow exceeds a size limit", "This workflow or its data exceeds a supported size limit. Simplify the selected workflow or reduce its input data.");
+]) Ha[e] = La("workflow-limit", "Workflow exceeds a size limit", "This workflow or its data exceeds a supported size limit. Simplify the selected workflow or reduce its input data.");
 //#endregion
 //#region src/ui/diagnostic-copy.js?v=0.27.0
-var Ha = Object.freeze({
+var Ua = Object.freeze({
 	id: "unknown",
 	severity: "error",
 	title: "Action could not be completed",
 	message: "Lattice could not complete this action. Check the workflow and its settings for more information."
-}), Ua = {
+}), Wa = {
 	id: "save-status-unverified",
 	severity: "warning",
 	title: "Saving is not confirmed",
 	message: "The stored result could not be verified. Confirm the stored data before making another write."
-}, Wa = [
+}, Ga = [
 	[
 		"RECALL_HOTKEY_CONFLICT",
 		/^R is reserved for Run to here\. Choose a different key\.$/,
@@ -3078,17 +3084,17 @@ var Ha = Object.freeze({
 	[
 		"INVALID_EFFECT_RESULT",
 		/persistence|verified status/i,
-		Ua
+		Wa
 	],
 	[
 		"INVALID_FILE_BACKEND_RESULT",
 		/CAS|acknowledge|durable/i,
-		Ua
+		Wa
 	],
 	[
 		"INVALID_MEMORY_BACKEND_RESULT",
 		/CAS|acknowledge/i,
-		Ua
+		Wa
 	],
 	[
 		"INVALID_PORT",
@@ -3130,7 +3136,7 @@ var Ha = Object.freeze({
 			message: "The memory evidence changed after it was read. Inspect the current memory and its source before preparing another change."
 		}
 	]
-], Ga = {
+], Ka = {
 	APPLY_UNVERIFIED: {
 		id: "apply-unverified",
 		severity: "warning",
@@ -3143,8 +3149,8 @@ var Ha = Object.freeze({
 		title: "Saving is not confirmed",
 		message: "The accepted reply remains. The save outcome could not be confirmed. Check the stored data before making another write."
 	},
-	PUBLICATION_UNKNOWN: Ua,
-	EFFECT_WRITE_UNKNOWN: Ua,
+	PUBLICATION_UNKNOWN: Wa,
+	EFFECT_WRITE_UNKNOWN: Wa,
 	STALE_SOURCE: {
 		id: "review-source-changed",
 		severity: "error",
@@ -3158,40 +3164,40 @@ var Ha = Object.freeze({
 		message: "This step needs an input. Connect a compatible output to that input.",
 		technical: "A required input has no connected source."
 	}
-}, Ka = {
-	...ba,
-	...Ea,
-	...Pa,
-	...Va,
-	...Ga
 }, qa = {
+	...xa,
+	...Da,
+	...Fa,
+	...Ha,
+	...Ka
+}, Ja = {
 	id: "send-required",
 	severity: "info",
 	title: "Starts with a message",
 	message: "Send a message in SillyTavern to run this workflow."
-}, Ja = new Map(Ta.filter(([, , e]) => [
+}, Ya = new Map(Ea.filter(([, , e]) => [
 	"summary-truncated",
 	"summary-unverified",
 	"summary-empty",
 	"compression-request",
 	"compactor-settings"
-].includes(e.id)).map(([e, , t]) => [e, t])), Ya = /* @__PURE__ */ new Map();
-Ya.set(qa.message, qa);
+].includes(e.id)).map(([e, , t]) => [e, t])), Xa = /* @__PURE__ */ new Map();
+Xa.set(Ja.message, Ja);
 for (let e of [
-	...Object.values(Ka),
-	...Ta.map((e) => e[2]),
-	...Wa.map((e) => e[2]),
-	...xa.values()
-]) Ya.set(e.message, e);
-function Xa(e, t) {
+	...Object.values(qa),
+	...Ea.map((e) => e[2]),
+	...Ga.map((e) => e[2]),
+	...Sa.values()
+]) Xa.set(e.message, e);
+function Za(e, t) {
 	if (t.enabled && [
 		"MANUAL_NATIVE_TRIGGER_REQUIRED",
 		"NATIVE_OWNER_MISSING",
 		"NATIVE_SEND_REQUIRED"
-	].includes(e.code)) return qa;
-	for (let [t, n, r] of Wa) if (e.code === t && n.test(e.message)) return r;
-	for (let [t, n, r] of Ta) if (e.code === t && n.test(e.message)) return r;
-	if (t.operation === "smart-compactor" && Ja.has(e.code)) return Ja.get(e.code);
+	].includes(e.code)) return Ja;
+	for (let [t, n, r] of Ga) if (e.code === t && n.test(e.message)) return r;
+	for (let [t, n, r] of Ea) if (e.code === t && n.test(e.message)) return r;
+	if (t.operation === "smart-compactor" && Ya.has(e.code)) return Ya.get(e.code);
 	if (e.code === "MISSING_INPUT" && (t.nodeTitle || t.inputLabel)) return {
 		id: "missing-input",
 		severity: "error",
@@ -3214,61 +3220,61 @@ function Xa(e, t) {
 		title: "Connection types do not match",
 		message: `This output carries ${t.outputType}, but this input needs ${t.inputType}. Connect pins with compatible types.`,
 		technical: "The output and input types do not match."
-	} : e.code.startsWith("PREVIEW_") && !Ka[e.code] ? {
+	} : e.code.startsWith("PREVIEW_") && !qa[e.code] ? {
 		id: "preview-state",
 		severity: "info",
 		title: "Preview status",
 		message: "Check the selected output’s current preview status."
-	} : Ka[e.code] ?? xa.get(e.message) ?? Ya.get(e.message) ?? Ha;
+	} : qa[e.code] ?? Sa.get(e.message) ?? Xa.get(e.message) ?? Ua;
 }
 //#endregion
 //#region src/ui/diagnostics.js
-var Za = (e, t) => {
+var Qa = (e, t) => {
 	try {
 		let n = Object.getOwnPropertyDescriptor(e, t);
 		return n && "value" in n ? n.value : void 0;
 	} catch {
 		return;
 	}
-}, Qa = (e) => {
+}, $a = (e) => {
 	try {
 		return !!e && typeof e == "object" && [Object.prototype, null].includes(Object.getPrototypeOf(e));
 	} catch {
 		return !1;
 	}
-}, $a = (e, t = 4096) => typeof e == "string" ? e.slice(0, t) : "", eo = (e) => {
-	let t = $a(e, 160).replace(/[\u0000-\u001f\u007f]/g, " ").trim();
+}, eo = (e, t = 4096) => typeof e == "string" ? e.slice(0, t) : "", to = (e) => {
+	let t = eo(e, 160).replace(/[\u0000-\u001f\u007f]/g, " ").trim();
 	return /(?:api[_ -]?key|authorization|bearer\s|password|secret\s*[=:]|sk-[\w-]+)/i.test(t) ? "" : t;
 };
-function to(e) {
+function no(e) {
 	if (typeof e == "string") {
-		let t = $a(e), n = /^([A-Z][A-Z0-9_]{0,63}):\s*(.*)$/s.exec(t);
+		let t = eo(e), n = /^([A-Z][A-Z0-9_]{0,63}):\s*(.*)$/s.exec(t);
 		return {
 			code: n?.[1] || "",
 			message: n?.[2] ?? t,
 			nodeId: ""
 		};
 	}
-	if (!Qa(e)) return {
+	if (!$a(e)) return {
 		code: "",
 		message: "",
 		nodeId: ""
 	};
-	let t = Za(e, "code");
+	let t = Qa(e, "code");
 	return {
 		code: typeof t == "string" && /^[A-Z][A-Z0-9_]{0,63}$/.test(t) ? t : "",
-		message: $a(Za(e, "message")),
-		nodeId: $a(Za(e, "nodeId"), 256),
-		address: no(Za(e, "address"))
+		message: eo(Qa(e, "message")),
+		nodeId: eo(Qa(e, "nodeId"), 256),
+		address: ro(Qa(e, "address"))
 	};
 }
-function no(e) {
-	if (!Qa(e)) return;
-	let t = $a(Za(e, "workflowId"), 256), n = $a(Za(e, "nodeId"), 256), r = Za(e, "instancePath"), i = Za(r, "length");
+function ro(e) {
+	if (!$a(e)) return;
+	let t = eo(Qa(e, "workflowId"), 256), n = eo(Qa(e, "nodeId"), 256), r = Qa(e, "instancePath"), i = Qa(r, "length");
 	if (!t || !n || !Array.isArray(r) || !Number.isSafeInteger(i) || i > 8) return;
 	let a = [];
 	for (let e = 0; e < i; e++) {
-		let t = Za(r, String(e));
+		let t = Qa(r, String(e));
 		if (typeof t != "string" || !t || t.length > 256) return;
 		a.push(t);
 	}
@@ -3278,8 +3284,8 @@ function no(e) {
 		nodeId: n
 	};
 }
-function ro(e) {
-	if (!Qa(e)) return {};
+function io(e) {
+	if (!$a(e)) return {};
 	let t = {};
 	for (let n of [
 		"operation",
@@ -3288,23 +3294,23 @@ function ro(e) {
 		"outputType",
 		"inputType",
 		"action"
-	]) t[n] = eo(Za(e, n));
-	return t.enabled = Za(e, "enabled") === !0, t;
+	]) t[n] = to(Qa(e, n));
+	return t.enabled = Qa(e, "enabled") === !0, t;
 }
-var io = (e) => JSON.stringify([
+var ao = (e) => JSON.stringify([
 	e.code,
 	e.message,
 	e.address ?? e.nodeId
 ]);
-function ao(e) {
+function oo(e) {
 	let t = 2166136261;
 	for (let n = 0; n < e.length; n++) t = Math.imul(t ^ e.charCodeAt(n), 16777619);
 	return (t >>> 0).toString(36);
 }
-function oo(e, t = {}) {
-	let n = to(e), r = Xa(n, ro(t));
+function so(e, t = {}) {
+	let n = no(e), r = Za(n, io(t));
 	return {
-		id: `${r.id}-${ao(io(n))}`,
+		id: `${r.id}-${oo(ao(n))}`,
 		severity: r.severity,
 		title: r.title,
 		message: r.message,
@@ -3315,44 +3321,44 @@ function oo(e, t = {}) {
 		...n.address ? { address: n.address } : {}
 	};
 }
-function so(e, t = {}) {
-	return oo(e, t).message;
-}
 function co(e, t = {}) {
+	return so(e, t).message;
+}
+function lo(e, t = {}) {
 	if (!Array.isArray(e)) return [];
-	let n = [], r = /* @__PURE__ */ new Set(), i = Math.min(Za(e, "length") || 0, 1e3);
+	let n = [], r = /* @__PURE__ */ new Set(), i = Math.min(Qa(e, "length") || 0, 1e3);
 	for (let a = 0; a < i; a++) {
-		let i = Za(e, String(a)), o = io(to(i));
-		r.has(o) || (r.add(o), n.push(oo(i, t)));
+		let i = Qa(e, String(a)), o = ao(no(i));
+		r.has(o) || (r.add(o), n.push(so(i, t)));
 	}
 	return n;
 }
 //#endregion
 //#region ui/DiagnosticMessage.svelte
-var lo = /* @__PURE__ */ G("<code class=\"svelte-i9ibmv\"> </code>"), uo = /* @__PURE__ */ G("<p class=\"svelte-i9ibmv\"> </p>"), fo = /* @__PURE__ */ G("<details class=\"svelte-i9ibmv\"><summary class=\"svelte-i9ibmv\">Technical details</summary><!><!></details>"), po = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-i9ibmv\">Show node</button>"), mo = /* @__PURE__ */ G("<div class=\"pc-diagnostic svelte-i9ibmv\"><strong class=\"svelte-i9ibmv\"><span class=\"pc-diagnostic-severity\"> </span> </strong> <p class=\"svelte-i9ibmv\"> </p> <!> <!></div>");
-function ho(e, t) {
+var uo = /* @__PURE__ */ G("<code class=\"svelte-i9ibmv\"> </code>"), fo = /* @__PURE__ */ G("<p class=\"svelte-i9ibmv\"> </p>"), po = /* @__PURE__ */ G("<details class=\"svelte-i9ibmv\"><summary class=\"svelte-i9ibmv\">Technical details</summary><!><!></details>"), mo = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-i9ibmv\">Show node</button>"), ho = /* @__PURE__ */ G("<div class=\"pc-diagnostic svelte-i9ibmv\"><strong class=\"svelte-i9ibmv\"><span class=\"pc-diagnostic-severity\"> </span> </strong> <p class=\"svelte-i9ibmv\"> </p> <!> <!></div>");
+function go(e, t) {
 	Ue(t, !0);
-	let n = Pi(t, "context", 19, () => ({})), r = /* @__PURE__ */ F(() => t.diagnostic ?? oo(t.issue, n())), i = /* @__PURE__ */ F(() => H(r).address), a = /* @__PURE__ */ F(() => !!(t.reveal && H(i) && typeof H(i).workflowId == "string" && H(i).workflowId.trim() && H(i).workflowId.length <= 256 && typeof H(i).nodeId == "string" && H(i).nodeId.trim() && H(i).nodeId.length <= 256 && Array.isArray(H(i).instancePath) && H(i).instancePath.length <= 8 && H(i).instancePath.every((e) => typeof e == "string" && e.trim() && e.length <= 256))), o = (e) => ({
+	let n = Pi(t, "context", 19, () => ({})), r = /* @__PURE__ */ F(() => t.diagnostic ?? so(t.issue, n())), i = /* @__PURE__ */ F(() => H(r).address), a = /* @__PURE__ */ F(() => !!(t.reveal && H(i) && typeof H(i).workflowId == "string" && H(i).workflowId.trim() && H(i).workflowId.length <= 256 && typeof H(i).nodeId == "string" && H(i).nodeId.trim() && H(i).nodeId.length <= 256 && Array.isArray(H(i).instancePath) && H(i).instancePath.length <= 8 && H(i).instancePath.every((e) => typeof e == "string" && e.trim() && e.length <= 256))), o = (e) => ({
 		info: "Information",
 		warning: "Warning",
 		error: "Error"
 	})[e];
-	var s = mo(), c = R(s), l = R(c), u = R(l);
+	var s = ho(), c = R(s), l = R(c), u = R(l);
 	P(l);
 	var d = B(l);
 	P(c);
 	var f = B(c, 2), p = R(f, !0);
 	P(f);
 	var m = B(f, 2), h = (e) => {
-		var t = fo(), n = B(R(t)), i = (e) => {
-			var t = lo(), n = R(t, !0);
+		var t = po(), n = B(R(t)), i = (e) => {
+			var t = uo(), n = R(t, !0);
 			P(t), V(() => q(n, H(r).technical.code)), K(e, t);
 		};
 		J(n, (e) => {
 			H(r).technical.code && e(i);
 		});
 		var a = B(n), o = (e) => {
-			var t = uo(), n = R(t, !0);
+			var t = fo(), n = R(t, !0);
 			P(t), V(() => q(n, H(r).technical.message)), K(e, t);
 		};
 		J(a, (e) => {
@@ -3363,7 +3369,7 @@ function ho(e, t) {
 		H(r).technical && e(h);
 	});
 	var g = B(m, 2), _ = (e) => {
-		var n = po();
+		var n = mo();
 		W("click", n, () => {
 			H(a) && H(i) && t.reveal?.({
 				...H(i),
@@ -3380,8 +3386,8 @@ function ho(e, t) {
 Er(["click"]);
 //#endregion
 //#region ui/NodeProfilePicker.svelte
-var go = /* @__PURE__ */ G("<div class=\"node-model-meta svelte-jdmiua\"> </div>"), _o = /* @__PURE__ */ Fr("<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-jdmiua\"><path d=\"m5 12 4 4L19 6\" class=\"svelte-jdmiua\"></path></svg>"), vo = /* @__PURE__ */ G("<button type=\"button\" role=\"option\"><span class=\"profile-option-copy svelte-jdmiua\"><span class=\"profile-name svelte-jdmiua\"> </span><span class=\"profile-meta svelte-jdmiua\"> </span></span><span class=\"profile-check svelte-jdmiua\"><!></span></button>"), yo = /* @__PURE__ */ G("<p class=\"profile-empty svelte-jdmiua\"> </p>"), bo = /* @__PURE__ */ G("<div class=\"profile-error svelte-jdmiua\"><!></div>"), xo = /* @__PURE__ */ G("<div class=\"profile-menu svelte-jdmiua\"><div class=\"profile-search svelte-jdmiua\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-jdmiua\"><circle cx=\"10\" cy=\"10\" r=\"6\" class=\"svelte-jdmiua\"></circle><path d=\"m15 15 5 5\" class=\"svelte-jdmiua\"></path></svg><input role=\"combobox\" aria-label=\"Search connection profiles\" aria-autocomplete=\"list\" aria-expanded=\"true\" placeholder=\"Search connection profiles…\" autocomplete=\"off\" spellcheck=\"false\" maxlength=\"200\" class=\"svelte-jdmiua\"/></div> <div class=\"profile-options svelte-jdmiua\" role=\"listbox\" aria-label=\"Connection profiles\"></div> <!></div>"), So = /* @__PURE__ */ G("<div class=\"pc-node-profile svelte-jdmiua\" role=\"group\" aria-label=\"Node connection profile\"><!> <div class=\"profile-picker svelte-jdmiua\"><button type=\"button\" class=\"profile-bar svelte-jdmiua\" aria-haspopup=\"listbox\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-jdmiua\"><path d=\"M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2\" class=\"svelte-jdmiua\"></path></svg><span class=\"profile-value svelte-jdmiua\"> </span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-jdmiua\"><path d=\"m6 9 6 6 6-6\" class=\"svelte-jdmiua\"></path></svg></button> <!></div></div>");
-function Co(e, t) {
+var _o = /* @__PURE__ */ G("<div class=\"node-model-meta svelte-jdmiua\"> </div>"), vo = /* @__PURE__ */ Fr("<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-jdmiua\"><path d=\"m5 12 4 4L19 6\" class=\"svelte-jdmiua\"></path></svg>"), yo = /* @__PURE__ */ G("<button type=\"button\" role=\"option\"><span class=\"profile-option-copy svelte-jdmiua\"><span class=\"profile-name svelte-jdmiua\"> </span><span class=\"profile-meta svelte-jdmiua\"> </span></span><span class=\"profile-check svelte-jdmiua\"><!></span></button>"), bo = /* @__PURE__ */ G("<p class=\"profile-empty svelte-jdmiua\"> </p>"), xo = /* @__PURE__ */ G("<div class=\"profile-error svelte-jdmiua\"><!></div>"), So = /* @__PURE__ */ G("<div class=\"profile-menu svelte-jdmiua\"><div class=\"profile-search svelte-jdmiua\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-jdmiua\"><circle cx=\"10\" cy=\"10\" r=\"6\" class=\"svelte-jdmiua\"></circle><path d=\"m15 15 5 5\" class=\"svelte-jdmiua\"></path></svg><input role=\"combobox\" aria-label=\"Search connection profiles\" aria-autocomplete=\"list\" aria-expanded=\"true\" placeholder=\"Search connection profiles…\" autocomplete=\"off\" spellcheck=\"false\" maxlength=\"200\" class=\"svelte-jdmiua\"/></div> <div class=\"profile-options svelte-jdmiua\" role=\"listbox\" aria-label=\"Connection profiles\"></div> <!></div>"), Co = /* @__PURE__ */ G("<div class=\"pc-node-profile svelte-jdmiua\" role=\"group\" aria-label=\"Node connection profile\"><!> <div class=\"profile-picker svelte-jdmiua\"><button type=\"button\" class=\"profile-bar svelte-jdmiua\" aria-haspopup=\"listbox\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-jdmiua\"><path d=\"M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2\" class=\"svelte-jdmiua\"></path></svg><span class=\"profile-value svelte-jdmiua\"> </span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-jdmiua\"><path d=\"m6 9 6 6 6-6\" class=\"svelte-jdmiua\"></path></svg></button> <!></div></div>");
+function wo(e, t) {
 	Ue(t, !0);
 	let n = /* @__PURE__ */ I(!1), r = /* @__PURE__ */ I(""), i = /* @__PURE__ */ I(0), a = /* @__PURE__ */ I(""), o = /* @__PURE__ */ I(!1), s = -1, c = 0, l = !1, u = /* @__PURE__ */ I(35), d, f, p = /* @__PURE__ */ I(void 0), m = /* @__PURE__ */ I(void 0), h = (e) => e.stopPropagation();
 	function g(e) {
@@ -3454,13 +3460,13 @@ function Co(e, t) {
 	Cn(() => {
 		H(n) && (t.row.authorityVersion !== s || !t.row.editable) && A(!1, !0);
 	});
-	var re = So();
+	var re = Co();
 	U("pointerdown", on, (e) => {
 		(H(n) || l) && !d.contains(e.target) && A();
 	});
 	let ie;
 	var ae = R(re), oe = (e) => {
-		var n = go(), r = R(n, !0);
+		var n = _o(), r = R(n, !0);
 		P(n), V(() => {
 			Z(n, "title", t.row.model), q(r, t.row.model);
 		}), K(e, n);
@@ -3473,21 +3479,21 @@ function Co(e, t) {
 	var le = R(se), ue = B(R(le)), de = R(ue, !0);
 	P(ue), Me(), P(le), Ni(le, (e) => f = e, () => f);
 	var fe = B(le, 2), pe = (e) => {
-		var n = xo();
+		var n = So();
 		let s;
 		var c = R(n), l = B(R(c));
 		X(l), Ni(l, (e) => L(p, e), () => H(p)), P(c);
 		var d = B(c, 2);
 		let f;
 		Y(d, 23, () => H(v), (e) => e.value, (e, n, r) => {
-			var a = vo();
+			var a = yo();
 			let s;
 			var c = R(a), l = R(c), u = R(l, !0);
 			P(l);
 			var d = B(l), f = R(d, !0);
 			P(d), P(c);
 			var p = B(c), m = R(p), h = (e) => {
-				K(e, _o());
+				K(e, vo());
 			};
 			J(m, (e) => {
 				H(n).value === t.row.value && e(h);
@@ -3495,12 +3501,12 @@ function Co(e, t) {
 				Z(a, "id", e), s = pi(a, 1, "profile-option svelte-jdmiua", null, s, { "is-active": H(r) === H(i) }), Z(a, "aria-selected", H(n).value === t.row.value), a.disabled = H(o), Z(l, "title", H(n).label), q(u, H(n).label), q(f, c);
 			}, [() => k(H(r)), () => H(n).active ? "Follows SillyTavern’s current model" : [H(n).apiLabel, H(n).model].filter(Boolean).join(" · ")]), W("click", a, () => ee(H(n))), K(e, a);
 		}, (e) => {
-			var t = yo(), n = R(t, !0);
+			var t = bo(), n = R(t, !0);
 			P(t), V((e) => q(n, e), [() => H(r).trim() ? "No connection profiles match. Clear the search to see available profiles." : "No connection profiles are available. Add one in SillyTavern’s Connection Manager."]), K(e, t);
 		}), P(d), Ni(d, (e) => L(m, e), () => H(m));
 		var h = B(d, 2), g = (e) => {
-			var t = bo();
-			ho(R(t), { get issue() {
+			var t = xo();
+			go(R(t), { get issue() {
 				return H(a);
 			} }), P(t), K(e, t);
 		};
@@ -3530,8 +3536,8 @@ function Co(e, t) {
 Er(["click", "input"]);
 //#endregion
 //#region ui/CanvasLayer.svelte
-var wo = /* @__PURE__ */ G("<div class=\"pc-viewport\" data-pc-renderer=\"svelte\"><div class=\"pc-comment-layer svelte-o7b704\"></div> <svg class=\"pc-wires\" aria-label=\"Canvas connections\"><!></svg> <div class=\"pc-nodes\"><!> <!> <!></div> <div class=\"pc-node-profile-layer svelte-o7b704\"></div></div>");
-function To(e, t) {
+var To = /* @__PURE__ */ G("<div class=\"pc-viewport\" data-pc-renderer=\"svelte\"><div class=\"pc-comment-layer svelte-o7b704\"></div> <svg class=\"pc-wires\" aria-label=\"Canvas connections\"><!></svg> <div class=\"pc-nodes\"><!> <!> <!></div> <div class=\"pc-node-profile-layer svelte-o7b704\"></div></div>");
+function Eo(e, t) {
 	Ue(t, !0);
 	class n {
 		id;
@@ -3546,50 +3552,53 @@ function To(e, t) {
 			this.id = e.id, this.value = e;
 		}
 	}
-	let r = /* @__PURE__ */ new Map(), i = /* @__PURE__ */ new Map(), a = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ I([]), s = /* @__PURE__ */ I([]), c = /* @__PURE__ */ I([]), l = /* @__PURE__ */ I({}), u = /* @__PURE__ */ I({}), d = /* @__PURE__ */ I([]), f = /* @__PURE__ */ I([]), p = /* @__PURE__ */ I({
+	let r = /* @__PURE__ */ new Map(), i = /* @__PURE__ */ new Map(), a = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ I([]), s = /* @__PURE__ */ I([]), c = /* @__PURE__ */ I([]), l = /* @__PURE__ */ I({}), u = /* @__PURE__ */ I({}), d = /* @__PURE__ */ I(null), f = /* @__PURE__ */ I([]), p = /* @__PURE__ */ I([]), m = /* @__PURE__ */ I({
 		select() {},
 		update() {},
 		command() {}
-	}), m = /* @__PURE__ */ I(null), h = /* @__PURE__ */ I({
+	}), h = /* @__PURE__ */ I(null), g = /* @__PURE__ */ I({
 		w: 4e3,
 		h: 4e3
-	}), g, _, v, y;
-	function b() {
+	}), _, v, y, b;
+	function x() {
 		return {
-			viewport: g,
-			svg: _,
-			nodeLayer: v,
-			commentLayer: y
+			viewport: _,
+			svg: v,
+			nodeLayer: y,
+			commentLayer: b
 		};
 	}
-	function x(e, t) {
-		L(d, Li(e, H(d), a, (e) => new n(e))), L(p, t);
-	}
-	function S(e) {
-		L(l, e);
+	function S(e, t) {
+		L(f, Li(e, H(f), a, (e) => new n(e))), L(m, t);
 	}
 	function C(e) {
-		L(m, e);
+		L(l, e);
 	}
 	function w(e) {
-		e.nodes && E(e.nodes), e.comments && L(d, Li(e.comments, H(d), a, (e) => new n(e))), e.commentActions && L(p, e.commentActions), e.groups && O(e.groups), e.wires && L(c, e.wires), e.bounds && L(h, e.bounds), "ghost" in e && L(m, e.ghost ?? null), e.nodeProfiles && L(f, e.nodeProfiles);
+		L(h, e);
 	}
 	function T(e) {
-		L(u, e);
+		e.nodes && O(e.nodes), e.comments && L(f, Li(e.comments, H(f), a, (e) => new n(e))), e.commentActions && L(m, e.commentActions), e.groups && A(e.groups), e.wires && L(c, e.wires), e.bounds && L(g, e.bounds), "ghost" in e && L(h, e.ghost ?? null), e.nodeProfiles && L(p, e.nodeProfiles);
 	}
 	function E(e) {
-		L(o, Li(e, H(o), r, (e) => new n(e)));
+		L(u, e);
 	}
 	function D(e) {
-		L(f, e);
+		L(d, e, !0);
 	}
 	function O(e) {
+		L(o, Li(e, H(o), r, (e) => new n(e)));
+	}
+	function k(e) {
+		L(p, e);
+	}
+	function A(e) {
 		L(s, Li(e, H(s), i, (e) => new n(e)));
 	}
-	function k(e, t, n) {
-		L(c, e), L(h, t), L(m, n);
+	function j(e, t, n) {
+		L(c, e), L(g, t), L(h, n);
 	}
-	function A(e, t) {
+	function M(e, t) {
 		for (let t of e) for (let e of [r, a]) {
 			let n = e.get(t.id);
 			n && (n.value = {
@@ -3605,41 +3614,42 @@ function To(e, t) {
 			});
 		}
 	}
-	var j = {
-		getLayers: b,
-		setComments: x,
-		setVisualStatus: S,
-		setWirePreview: C,
-		applyScene: w,
-		setRecallStatus: T,
-		setNodes: E,
-		setNodeProfiles: D,
-		setGroups: O,
-		setWires: k,
-		setPositions: A
-	}, M = wo(), ee = R(M);
-	Y(ee, 21, () => H(d), (e) => e.id, (e, t) => {
-		pa(e, {
+	var ee = {
+		getLayers: x,
+		setComments: S,
+		setVisualStatus: C,
+		setWirePreview: w,
+		applyScene: T,
+		setRecallStatus: E,
+		setPreviewTarget: D,
+		setNodes: O,
+		setNodeProfiles: k,
+		setGroups: A,
+		setWires: j,
+		setPositions: M
+	}, te = To(), ne = R(te);
+	Y(ne, 21, () => H(f), (e) => e.id, (e, t) => {
+		ma(e, {
 			get comment() {
 				return H(t).value;
 			},
 			get actions() {
-				return H(p);
+				return H(m);
 			}
 		});
-	}), P(ee), Ni(ee, (e) => y = e, () => y);
-	var te = B(ee, 2);
-	ca(R(te), {
+	}), P(ne), Ni(ne, (e) => b = e, () => b);
+	var re = B(ne, 2);
+	la(R(re), {
 		get wires() {
 			return H(c);
 		},
 		get ghost() {
-			return H(m);
+			return H(h);
 		}
-	}), P(te), Ni(te, (e) => _ = e, () => _);
-	var ne = B(te, 2), re = R(ne);
-	Y(re, 17, () => H(s).filter((e) => !e.value.collapsed), (e) => e.id, (e, n) => {
-		ia(e, {
+	}), P(re), Ni(re, (e) => v = e, () => v);
+	var ie = B(re, 2), ae = R(ie);
+	Y(ae, 17, () => H(s).filter((e) => !e.value.collapsed), (e) => e.id, (e, n) => {
+		aa(e, {
 			get group() {
 				return H(n).value;
 			},
@@ -3648,11 +3658,11 @@ function To(e, t) {
 			}
 		});
 	});
-	var ie = B(re, 2);
-	Y(ie, 17, () => H(o), (e) => e.id, (e, n) => {
+	var oe = B(ae, 2);
+	Y(oe, 17, () => H(o), (e) => e.id, (e, n) => {
 		{
-			let r = /* @__PURE__ */ F(() => H(l)[H(n).id]?.status);
-			ta(e, {
+			let r = /* @__PURE__ */ F(() => H(l)[H(n).id]?.status), i = /* @__PURE__ */ F(() => H(d) === H(n).id);
+			na(e, {
 				get card() {
 					return H(n).value;
 				},
@@ -3662,13 +3672,16 @@ function To(e, t) {
 				get status() {
 					return H(r);
 				},
+				get targeted() {
+					return H(i);
+				},
 				get actions() {
 					return t.actions;
 				}
 			});
 		}
-	}), Y(B(ie, 2), 17, () => H(s).filter((e) => e.value.collapsed), (e) => e.id, (e, n) => {
-		ia(e, {
+	}), Y(B(oe, 2), 17, () => H(s).filter((e) => e.value.collapsed), (e) => e.id, (e, n) => {
+		aa(e, {
 			get group() {
 				return H(n).value;
 			},
@@ -3676,10 +3689,10 @@ function To(e, t) {
 				return t.actions;
 			}
 		});
-	}), P(ne), Ni(ne, (e) => v = e, () => v);
-	var ae = B(ne, 2);
-	return Y(ae, 21, () => H(f), (e) => e.id, (e, n) => {
-		Co(e, {
+	}), P(ie), Ni(ie, (e) => y = e, () => y);
+	var se = B(ie, 2);
+	return Y(se, 21, () => H(p), (e) => e.id, (e, n) => {
+		wo(e, {
 			get row() {
 				return H(n);
 			},
@@ -3690,13 +3703,13 @@ function To(e, t) {
 				return t.actions.refreshProfiles;
 			}
 		});
-	}), P(ae), P(M), Ni(M, (e) => g = e, () => g), V(() => {
-		Z(te, "width", H(h).w), Z(te, "height", H(h).h), Z(te, "viewBox", `0 0 ${H(h).w} ${H(h).h}`);
-	}), K(e, M), We(j);
+	}), P(se), P(te), Ni(te, (e) => _ = e, () => _), V(() => {
+		Z(re, "width", H(g).w), Z(re, "height", H(g).h), Z(re, "viewBox", `0 0 ${H(g).w} ${H(g).h}`);
+	}), K(e, te), We(ee);
 }
 //#endregion
 //#region ui/workspace-menu-model.ts
-var Eo = {
+var Do = {
 	new: "yellow",
 	save: "blue",
 	"save-as": "blue",
@@ -3731,17 +3744,17 @@ var Eo = {
 	label: e,
 	command: t,
 	icon: n,
-	iconTone: Eo[t],
+	iconTone: Do[t],
 	disabled: r,
 	shortcut: i
-}), Do = (e, t, n, r = !1, i = "check") => ({
+}), Oo = (e, t, n, r = !1, i = "check") => ({
 	label: e,
 	command: t,
 	checked: n,
 	disabled: r,
 	kind: i
 });
-function Oo(e, t = {
+function ko(e, t = {
 	previewOpen: !0,
 	shelfOpen: !0
 }) {
@@ -3766,7 +3779,7 @@ function Oo(e, t = {
 					...Q("Recover previous workflows", "recovery-menu", "library", !s?.recovery.length || s.busy),
 					children: (s?.recovery ?? []).map((e) => ({
 						...Q(e.name, "recover-workflow:" + e.id, "open"),
-						reason: e.issue ? so(e.issue) : void 0
+						reason: e.issue ? co(e.issue) : void 0
 					}))
 				}],
 				[...s?.native ? [Q("Save workflow", "save", "save", s.busy, "Ctrl S"), Q("Save As…", "save-as", "save", s.busy, "Ctrl Shift S")] : [Q("Save As…", "download-document", "save", !!s?.busy, "Ctrl S")], Q("Rename workflow…", "rename", "rename", !r)],
@@ -3799,17 +3812,17 @@ function Oo(e, t = {
 			name: "View",
 			groups: [
 				[
-					Do("Show Details", "inspector", !!e.inspectorOpen),
-					Do("Show preview", "toggle-preview", t.previewOpen),
-					Do("Show node shelf", "toggle-shelf", t.shelfOpen)
+					Oo("Show Details", "inspector", !!e.inspectorOpen),
+					Oo("Show preview", "toggle-preview", t.previewOpen),
+					Oo("Show node shelf", "toggle-shelf", t.shelfOpen)
 				],
-				[Do("Follow selection", "follow-preview", i?.followSelection ?? !0, !i, "radio"), Do("Pin current output", "pin-preview", !!i?.pinned, !i?.selectedKey || i?.status === "removed", "radio")],
+				[Oo("Follow selection", "follow-preview", i?.followSelection ?? !0, !i, "radio"), Oo("Pin current output", "pin-preview", !!i?.pinned, !i?.selectedKey || i?.status === "removed", "radio")],
 				[
 					Q("Fit graph", "fit", "fit"),
 					Q("Fit selection", "fit-selection", "fit", !n.fitSelection, "F"),
 					Q("Center selection", "center-selection", "fit", !n.hasSelection),
-					Q("Zoom in", "zoom-in", "add"),
-					Q("Zoom out", "zoom-out", "minus")
+					Q("Zoom in", "zoom-in", "add", !1, "]"),
+					Q("Zoom out", "zoom-out", "minus", !1, "[")
 				],
 				[Q("Reset panel layout", "reset-layout", "reset"), Q("Theme and colours…", "theme", "theme")]
 			]
@@ -3834,9 +3847,9 @@ function Oo(e, t = {
 					Q("Manage portals…", "manage-portals", "portals")
 				],
 				[
-					Do("Select tool", "select-tool", e.camera?.mode !== "pan", !1, "radio"),
-					Do("Pan tool", "pan-tool", e.camera?.mode === "pan", !1, "radio"),
-					Do("Compact cards", "compact-selection", !!n.compactChecked, !n.compact)
+					Oo("Select tool", "select-tool", e.camera?.mode !== "pan", !1, "radio"),
+					Oo("Pan tool", "pan-tool", e.camera?.mode === "pan", !1, "radio"),
+					Oo("Compact cards", "compact-selection", !!n.compactChecked, !n.compact)
 				]
 			]
 		},
@@ -3844,10 +3857,10 @@ function Oo(e, t = {
 			name: "Workflow",
 			groups: [
 				[Q("Add system…", "add-system", "subgraph", !n.addSystem || o)],
-				[Do("Enable Lattice", "enable-workflow", !!e.enabled, !r)],
+				[Oo("Enable Lattice", "enable-workflow", !!e.enabled, !r)],
 				[
 					Q("Validate workflow", "validate-workflow", "check", !r),
-					Q("Review host result", "review-host-result", "details", !r?.nodes?.some((e) => e.terminal)),
+					Q("Review host result", "review-host-result", "details", r?.reviewTerminals ? !r.reviewTerminals.length : !r?.nodes?.some((e) => e.terminal)),
 					Q("Stop workflow", "stop-workflow", "stop", !n.stop)
 				],
 				[{
@@ -3892,7 +3905,7 @@ function Oo(e, t = {
 		}
 	];
 }
-var ko = /* @__PURE__ */ new Set([
+var Ao = /* @__PURE__ */ new Set([
 	"toggle-preview",
 	"toggle-shelf",
 	"reset-layout",
@@ -3909,7 +3922,8 @@ var ko = /* @__PURE__ */ new Set([
 	"add-node",
 	"story-documents",
 	"memory-recall"
-]), Ao = {
+]), jo = {
+	target: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18 M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M12 1v4 M12 19v4 M1 12h4 M19 12h4",
 	details: "M10 5H3 M12 19H3 M14 3v4 M16 17v4 M21 12h-9 M21 19h-5 M21 5h-7 M8 10v4 M8 12H3",
 	rename: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z M15 5l4 4",
 	duplicate: "M13 13.74a2 2 0 0 1-2 0L2.5 8.87a1 1 0 0 1 0-1.74L11 2.26a2 2 0 0 1 2 0l8.5 4.87a1 1 0 0 1 0 1.74z M20 14.285l1.5.845a1 1 0 0 1 0 1.74L13 21.74a2 2 0 0 1-2 0l-8.5-4.87a1 1 0 0 1 0-1.74l1.5-.845",
@@ -3950,24 +3964,24 @@ var ko = /* @__PURE__ */ new Set([
 	help: "M9 8a3 3 0 1 1 5 2c-2 1-2 2-2 3 M12 17v1 M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z",
 	keyboard: "M2 5h20v14H2z M6 9h1 M11 9h1 M16 9h1 M6 13h1 M11 13h1 M16 13h1 M7 16h10",
 	info: "M12 11v6 M12 7v1 M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"
-}, jo = /* @__PURE__ */ Fr("<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" focusable=\"false\"><path></path></svg>"), Mo = /* @__PURE__ */ G("<small style=\"display:block;white-space:normal;font-size:11px;line-height:1.4\"> </small>"), No = /* @__PURE__ */ G("<kbd class=\"pc-workspace-menu-shortcut\" aria-hidden=\"true\"> </kbd>"), Po = /* @__PURE__ */ G("<span class=\"pc-workspace-menu-shortcut\" aria-hidden=\"true\"></span>"), Fo = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-workspace-menu-item\" tabindex=\"-1\"><span class=\"pc-workspace-menu-icon\" aria-hidden=\"true\"><!></span> <span class=\"pc-workspace-menu-state\" aria-hidden=\"true\"> </span> <span class=\"pc-workspace-menu-label\"> <!></span> <!> <span class=\"pc-workspace-menu-caret\" aria-hidden=\"true\"> </span></button>"), Io = /* @__PURE__ */ G("<button type=\"button\" role=\"menuitem\" class=\"pc-flat-menu\" aria-haspopup=\"menu\"> </button>"), Lo = /* @__PURE__ */ G("<div class=\"pc-workspace-menu-separator\" role=\"separator\"></div>"), Ro = /* @__PURE__ */ G("<!> <!>", 1), zo = /* @__PURE__ */ G("<div id=\"pc-workspace-submenu\" class=\"pc-workspace-menu-panel pc-workspace-submenu\" role=\"menu\" tabindex=\"-1\"><!></div>"), Bo = /* @__PURE__ */ G("<div id=\"pc-workspace-menu\" class=\"pc-workspace-menu-panel\" role=\"menu\" tabindex=\"-1\"></div> <!>", 1), Vo = /* @__PURE__ */ G("<div class=\"pc-workspace-menus\" role=\"menubar\" tabindex=\"-1\" aria-label=\"Workspace menus\"><!> <!></div>");
-function Ho(e, t) {
+}, Mo = /* @__PURE__ */ Fr("<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" focusable=\"false\"><path></path></svg>"), No = /* @__PURE__ */ G("<small style=\"display:block;white-space:normal;font-size:11px;line-height:1.4\"> </small>"), Po = /* @__PURE__ */ G("<kbd class=\"pc-workspace-menu-shortcut\" aria-hidden=\"true\"> </kbd>"), Fo = /* @__PURE__ */ G("<span class=\"pc-workspace-menu-shortcut\" aria-hidden=\"true\"></span>"), Io = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-workspace-menu-item\" tabindex=\"-1\"><span class=\"pc-workspace-menu-icon\" aria-hidden=\"true\"><!></span> <span class=\"pc-workspace-menu-state\" aria-hidden=\"true\"> </span> <span class=\"pc-workspace-menu-label\"> <!></span> <!> <span class=\"pc-workspace-menu-caret\" aria-hidden=\"true\"> </span></button>"), Lo = /* @__PURE__ */ G("<button type=\"button\" role=\"menuitem\" class=\"pc-flat-menu\" aria-haspopup=\"menu\"> </button>"), Ro = /* @__PURE__ */ G("<div class=\"pc-workspace-menu-separator\" role=\"separator\"></div>"), zo = /* @__PURE__ */ G("<!> <!>", 1), Bo = /* @__PURE__ */ G("<div id=\"pc-workspace-submenu\" class=\"pc-workspace-menu-panel pc-workspace-submenu\" role=\"menu\" tabindex=\"-1\"><!></div>"), Vo = /* @__PURE__ */ G("<div id=\"pc-workspace-menu\" class=\"pc-workspace-menu-panel\" role=\"menu\" tabindex=\"-1\"></div> <!>", 1), Ho = /* @__PURE__ */ G("<div class=\"pc-workspace-menus\" role=\"menubar\" tabindex=\"-1\" aria-label=\"Workspace menus\"><!> <!></div>");
+function Uo(e, t) {
 	let n = Rr();
 	Ue(t, !0);
 	let r = (e, t = d, r = d) => {
 		var i = Lr();
 		Y(z(i), 17, t, qr, (e, t) => {
-			var i = Fo(), a = R(i), o = R(a), s = (e) => {
-				var n = jo(), r = R(n);
-				P(n), V(() => Z(r, "d", Ao[H(t).icon])), K(e, n);
+			var i = Io(), a = R(i), o = R(a), s = (e) => {
+				var n = Mo(), r = R(n);
+				P(n), V(() => Z(r, "d", jo[H(t).icon])), K(e, n);
 			};
 			J(o, (e) => {
-				H(t).icon && Ao[H(t).icon] && e(s);
+				H(t).icon && jo[H(t).icon] && e(s);
 			}), P(a);
 			var c = B(a, 2), l = R(c, !0);
 			P(c);
 			var u = B(c, 2), d = R(u, !0), f = B(d), m = (e) => {
-				var r = Mo(), i = R(r, !0);
+				var r = No(), i = R(r, !0);
 				P(r), V(() => {
 					Z(r, "id", n + "-reason-" + H(t).command), q(i, H(t).reason);
 				}), K(e, r);
@@ -3976,10 +3990,10 @@ function Ho(e, t) {
 				H(t).reason && e(m);
 			}), P(u);
 			var h = B(u, 2), g = (e) => {
-				var n = No(), r = R(n, !0);
+				var n = Po(), r = R(n, !0);
 				P(n), V(() => q(r, H(t).shortcut)), K(e, n);
 			}, _ = (e) => {
-				K(e, Po());
+				K(e, Fo());
 			};
 			J(h, (e) => {
 				H(t).shortcut ? e(g) : e(_, -1);
@@ -3991,7 +4005,7 @@ function Ho(e, t) {
 				r() || (H(t).children ? O(H(t), e.currentTarget) : L(p, null));
 			}), K(e, i);
 		}), K(e, i);
-	}, i = /* @__PURE__ */ F(() => Oo(t.state, t.panels)), a = /* @__PURE__ */ I(""), o = /* @__PURE__ */ I(0), s, c = /* @__PURE__ */ I(null), l = /* @__PURE__ */ I(null), u = null, f = null, p = /* @__PURE__ */ I(null), m = /* @__PURE__ */ I(0), h = /* @__PURE__ */ I(0), g = /* @__PURE__ */ I(0), _ = /* @__PURE__ */ I(0), v = 0, y = "", b = "", x = 0, S = {}, C = /* @__PURE__ */ F(() => `${t.state.menuContextKey ?? ""}:${t.state.graphId}:${t.state.graphViews?.active.key ?? ""}:${t.state.graphViews?.viewEpoch ?? ""}`);
+	}, i = /* @__PURE__ */ F(() => ko(t.state, t.panels)), a = /* @__PURE__ */ I(""), o = /* @__PURE__ */ I(0), s, c = /* @__PURE__ */ I(null), l = /* @__PURE__ */ I(null), u = null, f = null, p = /* @__PURE__ */ I(null), m = /* @__PURE__ */ I(0), h = /* @__PURE__ */ I(0), g = /* @__PURE__ */ I(0), _ = /* @__PURE__ */ I(0), v = 0, y = "", b = "", x = 0, S = {}, C = /* @__PURE__ */ F(() => `${t.state.menuContextKey ?? ""}:${t.state.graphId}:${t.state.graphViews?.active.key ?? ""}:${t.state.graphViews?.viewEpoch ?? ""}`);
 	Cn(() => {
 		H(a) && y !== H(C) && T();
 	});
@@ -4053,7 +4067,7 @@ function Ho(e, t) {
 			e.ok || (t.actions.recall?.reportIssue(e.error.code + ": " + e.error.message), t.actions.recall?.refresh());
 		}).catch(() => {
 			t.actions.recall?.reportIssue("RECALL_UNAVAILABLE: Memory recall could not be updated."), t.actions.recall?.refresh();
-		}) : ko.has(r) ? t.local(r) : r === "enable-workflow" ? t.actions.setEnabled(!t.state.enabled) : r === "select-tool" || r === "pan-tool" ? t.actions.mode(r === "select-tool" ? "select" : "pan") : r === "zoom-in" || r === "zoom-out" ? t.actions.zoom(r === "zoom-in" ? 1.15 : 1 / 1.15) : r === "fit-selection" ? t.actions.fitSelection() : t.actions.command(r);
+		}) : Ao.has(r) ? t.local(r) : r === "enable-workflow" ? t.actions.setEnabled(!t.state.enabled) : r === "select-tool" || r === "pan-tool" ? t.actions.mode(r === "select-tool" ? "select" : "pan") : r === "zoom-in" || r === "zoom-out" ? t.actions.zoom(r === "zoom-in" ? 1.15 : 1 / 1.15) : r === "fit-selection" ? t.actions.fitSelection() : t.actions.command(r);
 	}
 	function A(e) {
 		return s.querySelector(`[data-menu="${H(i)[e].name}"]`);
@@ -4106,13 +4120,13 @@ function Ho(e, t) {
 	function M(e) {
 		H(a) && s?.contains(e.target) && e.stopPropagation();
 	}
-	var ee = Vo();
+	var ee = Ho();
 	U("pointerdown", an, (e) => {
 		H(a) && !s.contains(e.target) && T();
 	}), U("resize", an, () => T()), U("keyup", an, M, !0);
 	var te = R(ee);
 	Y(te, 17, () => H(i), qr, (e, t, n) => {
-		var r = Io(), i = R(r, !0);
+		var r = Lo(), i = R(r, !0);
 		P(r), V(() => {
 			Z(r, "data-menu", H(t).name), Z(r, "tabindex", H(o) === n ? 0 : -1), Z(r, "aria-expanded", H(a) === H(t).name), Z(r, "aria-controls", H(a) === H(t).name ? "pc-workspace-menu" : void 0), q(i, H(t).name);
 		}), U("focus", r, () => L(o, n, !0)), W("click", r, (e) => D(H(t).name, e.currentTarget, "first", !0)), U("pointerenter", r, (e) => {
@@ -4120,11 +4134,11 @@ function Ho(e, t) {
 		}), K(e, r);
 	});
 	var ne = B(te, 2), re = (e) => {
-		var t = Bo(), n = z(t);
+		var t = Vo(), n = z(t);
 		let o;
 		Y(n, 21, () => H(i).find((e) => e.name === H(a))?.groups ?? [], qr, (e, t, n) => {
-			var i = Ro(), a = z(i), o = (e) => {
-				K(e, Lo());
+			var i = zo(), a = z(i), o = (e) => {
+				K(e, Ro());
 			};
 			J(a, (e) => {
 				n && e(o);
@@ -4133,7 +4147,7 @@ function Ho(e, t) {
 			r(s, () => H(t), () => !1), K(e, i);
 		}), P(n), Ni(n, (e) => L(c, e), () => H(c));
 		var s = B(n, 2), u = (e) => {
-			var t = zo();
+			var t = Bo();
 			let n;
 			var i = R(t);
 			r(i, () => H(p).children, () => !0), P(t), Ni(t, (e) => L(l, e), () => H(l)), V(() => {
@@ -4164,8 +4178,8 @@ Er([
 ]);
 //#endregion
 //#region ui/Toolbar.svelte
-var Uo = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-btn menu_button pc-root-stop\" title=\"Stop the workflow\">■ Stop</button>"), Wo = /* @__PURE__ */ G("<header class=\"pc-header\" data-pc-ui=\"svelte\"><div class=\"pc-menubar\"><div class=\"pc-brand\"><img width=\"30\" height=\"30\" alt=\"\"/><span>LATTICE</span></div> <!> <button type=\"button\" class=\"pc-btn menu_button pc-close\" title=\"Close\" aria-label=\"Close canvas\">×</button></div> <div class=\"pc-workflow-bar\"><div class=\"pc-document-heading\"><strong class=\"pc-document-name\"> </strong><span class=\"pc-document-status\" role=\"status\" aria-label=\"Document status\"> <!><!></span></div> <div class=\"pc-header-actions pc-history\"><button type=\"button\" aria-label=\"Undo\">↶</button> <button type=\"button\" aria-label=\"Redo\">↷</button> <span> </span></div> <!> <span class=\"pc-root-workflow-status\" role=\"status\" aria-label=\"Workflow status\"> </span> <div class=\"pc-header-actions pc-surface-actions\"><button type=\"button\" title=\"Show or hide the inspector\" aria-label=\"Toggle inspector\">Details</button></div> <label class=\"pc-enable\"><input class=\"pc-enable-input\" type=\"checkbox\"/><span>Enable Lattice</span></label></div></header>");
-function Go(e, t) {
+var Wo = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-btn menu_button pc-root-stop\" title=\"Stop the workflow\">■ Stop</button>"), Go = /* @__PURE__ */ G("<header class=\"pc-header\" data-pc-ui=\"svelte\"><div class=\"pc-menubar\"><div class=\"pc-brand\"><img width=\"30\" height=\"30\" alt=\"\"/><span>LATTICE</span></div> <!> <button type=\"button\" class=\"pc-btn menu_button pc-close\" title=\"Close\" aria-label=\"Close canvas\">×</button></div> <div class=\"pc-workflow-bar\"><div class=\"pc-document-heading\"><strong class=\"pc-document-name\"> </strong><span class=\"pc-document-status\" role=\"status\" aria-label=\"Document status\"> <!><!></span></div> <div class=\"pc-header-actions pc-history\"><button type=\"button\" aria-label=\"Undo\">↶</button> <button type=\"button\" aria-label=\"Redo\">↷</button> <span> </span></div> <!> <span class=\"pc-root-workflow-status\" role=\"status\" aria-label=\"Workflow status\"> </span> <div class=\"pc-header-actions pc-surface-actions\"><button type=\"button\" title=\"Show or hide the inspector\" aria-label=\"Toggle inspector\">Details</button></div> <label class=\"pc-enable\"><input class=\"pc-enable-input\" type=\"checkbox\"/><span>Enable Lattice</span></label></div></header>");
+function Ko(e, t) {
 	Ue(t, !0);
 	let n = /* @__PURE__ */ F(() => t.state.rootWorkflow ?? t.state.workflow), r = /* @__PURE__ */ F(() => t.state.document?.dirty ? "Modified" : t.state.document?.busy || t.state.document?.status ? "" : t.state.document ? "Saved" : "Unsaved"), i, a, o;
 	function s() {
@@ -4175,10 +4189,10 @@ function Go(e, t) {
 			inspBtn: o
 		};
 	}
-	var c = { getParts: s }, l = Wo(), u = R(l), d = R(u), f = R(d);
+	var c = { getParts: s }, l = Go(), u = R(l), d = R(u), f = R(d);
 	Me(), P(d);
 	var p = B(d, 2);
-	Ho(p, {
+	Uo(p, {
 		get state() {
 			return t.state;
 		},
@@ -4213,7 +4227,7 @@ function Go(e, t) {
 	var T = B(g, 2), E = R(T), D = B(E, 2), O = B(D, 2), k = R(O, !0);
 	P(O), P(T);
 	var A = B(T, 2), j = (e) => {
-		var n = Uo();
+		var n = Wo();
 		W("click", n, () => t.actions.command("stop-workflow")), K(e, n);
 	};
 	J(A, (e) => {
@@ -4231,8 +4245,8 @@ function Go(e, t) {
 Er(["click", "change"]);
 //#endregion
 //#region ui/PaneDivider.svelte
-var Ko = /* @__PURE__ */ G("<div class=\"pc-pane-divider\" role=\"separator\" aria-label=\"Resize preview\" aria-orientation=\"horizontal\" tabindex=\"0\"></div>");
-function qo(e, t) {
+var qo = /* @__PURE__ */ G("<div class=\"pc-pane-divider\" role=\"separator\" aria-label=\"Resize preview\" aria-orientation=\"horizontal\" tabindex=\"0\"></div>");
+function Jo(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "min", 3, 90), r = Pi(t, "max", 3, 500), i, a = null, o = (e) => Math.max(n(), Math.min(r(), e));
 	function s(e) {
@@ -4258,7 +4272,7 @@ function qo(e, t) {
 		s !== null && (e.preventDefault(), e.stopPropagation(), t.start(), t.change(o(s))), e.key === "Escape" && a && (e.preventDefault(), e.stopPropagation(), u());
 	}
 	Ii(u);
-	var f = Ko();
+	var f = qo();
 	U("blur", an, u), Ni(f, (e) => i = e, () => i), V((e, t) => {
 		Z(f, "aria-valuemin", n()), Z(f, "aria-valuemax", e), Z(f, "aria-valuenow", t);
 	}, [() => Math.round(r()), () => Math.round(t.height)]), W("pointerdown", f, s), W("pointermove", f, c), W("pointerup", f, (e) => l(!1, e.pointerId)), U("pointercancel", f, (e) => l(!0, e.pointerId)), U("lostpointercapture", f, (e) => l(!0, e.pointerId)), W("keydown", f, d), K(e, f), We();
@@ -4271,8 +4285,8 @@ Er([
 ]);
 //#endregion
 //#region ui/DetailsDivider.svelte
-var Jo = /* @__PURE__ */ G("<div class=\"pc-details-divider svelte-1iyzcro\" role=\"separator\" aria-label=\"Resize Details\" aria-orientation=\"vertical\" tabindex=\"0\"></div>");
-function Yo(e, t) {
+var Yo = /* @__PURE__ */ G("<div class=\"pc-details-divider svelte-1iyzcro\" role=\"separator\" aria-label=\"Resize Details\" aria-orientation=\"vertical\" tabindex=\"0\"></div>");
+function Xo(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "min", 3, 220), r = Pi(t, "max", 3, 520), i, a = null, o = (e) => Math.max(n(), Math.min(r(), e));
 	function s(e = !1, n = a?.id) {
@@ -4303,7 +4317,7 @@ function Yo(e, t) {
 		s !== null && (e.preventDefault(), e.stopPropagation(), c(), t.start(), t.change(o(s)));
 	}
 	Ii(c);
-	var f = Jo();
+	var f = Yo();
 	U("blur", an, c), Ni(f, (e) => i = e, () => i), V((e, t) => {
 		Z(f, "aria-valuemin", n()), Z(f, "aria-valuemax", e), Z(f, "aria-valuenow", t);
 	}, [() => Math.round(r()), () => Math.round(t.width)]), W("pointerdown", f, l), W("pointermove", f, u), W("pointerup", f, (e) => s(!1, e.pointerId)), U("pointercancel", f, (e) => s(!0, e.pointerId)), U("lostpointercapture", f, (e) => s(!0, e.pointerId)), W("keydown", f, d), K(e, f), We();
@@ -4316,8 +4330,8 @@ Er([
 ]);
 //#endregion
 //#region ui/GraphTabs.svelte
-var Xo = /* @__PURE__ */ G("<span class=\"pc-graph-tab-lock svelte-7ptwed\" aria-label=\"Read only\">◇</span>"), Zo = /* @__PURE__ */ G("<input type=\"text\" title=\"Enter to save, Escape to cancel\"/>"), Qo = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-graph-tab-close svelte-7ptwed\">×</button>"), $o = /* @__PURE__ */ G("<div><button type=\"button\" role=\"tab\" aria-haspopup=\"menu\"><span class=\"svelte-7ptwed\"> </span><!></button> <!> <!></div>"), es = /* @__PURE__ */ G("<button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\"> </button>"), ts = /* @__PURE__ */ G("<button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\"> </button> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\"> </button> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\">Close tab</button> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\">Close other tabs</button> <!>", 1), ns = /* @__PURE__ */ G("<!> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\">Close active view</button> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\">Close other views</button> <!>", 1), rs = /* @__PURE__ */ G("<div role=\"menu\" tabindex=\"-1\"><!></div>"), is = /* @__PURE__ */ G("<nav aria-label=\"Open graph views\"><div class=\"pc-graph-tab-list svelte-7ptwed\" role=\"tablist\" aria-label=\"Graph views\"></div> <button type=\"button\" class=\"pc-graph-view-overflow svelte-7ptwed\" aria-label=\"Graph view actions\" title=\"Focus, close or reopen graph views\" aria-haspopup=\"menu\">⋯</button> <!></nav>");
-function as(e, t) {
+var Zo = /* @__PURE__ */ G("<span class=\"pc-graph-tab-lock svelte-7ptwed\" aria-label=\"Read only\">◇</span>"), Qo = /* @__PURE__ */ G("<input type=\"text\" title=\"Enter to save, Escape to cancel\"/>"), $o = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-graph-tab-close svelte-7ptwed\">×</button>"), es = /* @__PURE__ */ G("<div><button type=\"button\" role=\"tab\" aria-haspopup=\"menu\"><span class=\"svelte-7ptwed\"> </span><!></button> <!> <!></div>"), ts = /* @__PURE__ */ G("<button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\"> </button>"), ns = /* @__PURE__ */ G("<button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\"> </button> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\"> </button> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\">Close tab</button> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\">Close other tabs</button> <!>", 1), rs = /* @__PURE__ */ G("<!> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\">Close active view</button> <button type=\"button\" role=\"menuitem\" class=\"svelte-7ptwed\">Close other views</button> <!>", 1), is = /* @__PURE__ */ G("<div role=\"menu\" tabindex=\"-1\"><!></div>"), as = /* @__PURE__ */ G("<nav aria-label=\"Open graph views\"><div class=\"pc-graph-tab-list svelte-7ptwed\" role=\"tablist\" aria-label=\"Graph views\"></div> <button type=\"button\" class=\"pc-graph-view-overflow svelte-7ptwed\" aria-label=\"Graph view actions\" title=\"Focus, close or reopen graph views\" aria-haspopup=\"menu\">⋯</button> <!></nav>");
+function os(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "actions", 19, () => ({})), r = Pi(t, "idPrefix", 3, "pc-graph-view"), i = /* @__PURE__ */ I(null), a = /* @__PURE__ */ I(null), o = /* @__PURE__ */ I(null), s = /* @__PURE__ */ I(!1), c = /* @__PURE__ */ I(""), l = /* @__PURE__ */ I(""), u = /* @__PURE__ */ I(0), d = /* @__PURE__ */ I(0), f = "", p = /* @__PURE__ */ I(""), m = /* @__PURE__ */ I(""), h = /* @__PURE__ */ I(null), g = "", _ = null, v = 0, y = /* @__PURE__ */ F(() => t.views?.tabs.find((e) => e.key === H(l))), b = {};
 	Cn(() => {
@@ -4418,24 +4432,24 @@ function as(e, t) {
 		H(s) && !H(a)?.contains(e.target) && e.target !== H(o) && O();
 	}), U("resize", an, () => O());
 	var ie = z(re), ae = (e) => {
-		var f = is();
+		var f = as();
 		let g;
 		var _ = R(f);
 		Y(_, 23, () => t.views.tabs, (e) => e.key, (e, n, i) => {
-			var a = $o();
+			var a = es();
 			let o;
 			var u = R(a);
 			let d;
 			var f = R(u), g = R(f, !0);
 			P(f);
 			var _ = B(f), v = (e) => {
-				K(e, Xo());
+				K(e, Zo());
 			};
 			J(_, (e) => {
 				H(n).readOnly && e(v);
 			}), P(u), Ni(u, (e, t) => b[t.key] = e, (e) => b?.[e.key], () => [H(n)]);
 			var y = B(u, 2), x = (e) => {
-				var t = Zo();
+				var t = Qo();
 				X(t);
 				let r;
 				Ni(t, (e) => L(h, e), () => H(h)), V(() => {
@@ -4446,7 +4460,7 @@ function as(e, t) {
 				H(p) === H(n).key && e(x);
 			});
 			var O = B(y, 2), A = (e) => {
-				var r = Qo();
+				var r = $o();
 				V((e, i) => {
 					Z(r, "aria-label", e), Z(r, "title", i), Z(r, "tabindex", H(n).key === (H(c) || t.views.active.key) ? 0 : -1);
 				}, [() => `Close ${H(n).label} · ${w(H(n))}`, () => `Close ${w(H(n))}`]), W("click", r, () => D(H(n))), W("contextmenu", r, (e) => k(e, H(n))), W("keydown", r, (e) => E(e, H(i))), K(e, r);
@@ -4465,17 +4479,17 @@ function as(e, t) {
 		var v = B(_, 2);
 		Ni(v, (e) => L(o, e), () => H(o));
 		var O = B(v, 2), A = (e) => {
-			var r = rs();
+			var r = is();
 			let i;
 			var o = R(r), s = (e) => {
 				let r = /* @__PURE__ */ F(() => H(y)), i = /* @__PURE__ */ F(() => n().canRenameView?.(H(r).key) === !1);
-				var a = ts(), o = z(a), s = R(o, !0);
+				var a = ns(), o = z(a), s = R(o, !0);
 				P(o);
 				var c = B(o, 2), l = R(c, !0);
 				P(c);
 				var u = B(c, 2), d = B(u, 2);
 				Y(B(d, 2), 17, () => t.views.closedViews, (e) => e.key, (e, t) => {
-					var r = es(), i = R(r);
+					var r = ts(), i = R(r);
 					P(r), V((e, a) => {
 						r.disabled = !n().reopenView, Z(r, "title", e), q(i, `Reopen ${H(t).label ?? ""} · ${a ?? ""}`);
 					}, [() => w(H(t)), () => w(H(t))]), W("click", r, () => ee(() => n().reopenView?.(H(t).key))), K(e, r);
@@ -4483,16 +4497,16 @@ function as(e, t) {
 					o.disabled = !n().exportView, q(s, H(r).identity.kind === "root" ? "Export workflow JSON" : "Export subgraph JSON"), c.disabled = H(r).identity.kind === "library" || H(i) || !n().renameView, Z(c, "title", H(r).identity.kind === "library" ? "Library inspection is read only." : H(i) ? "Make a local copy of the containing graph to rename this subgraph." : void 0), q(l, H(r).identity.kind === "root" ? "Rename graph" : "Rename subgraph"), u.disabled = H(r).identity.kind === "root" || !n().closeView, d.disabled = e;
 				}, [() => t.views.tabs.every((e) => e.identity.kind === "root" || e.key === H(r).key) || !n().closeOtherViews]), W("click", o, () => te((e) => n().exportView?.(e.key))), W("click", c, () => te((e) => x(e.key))), W("click", u, () => te((e) => D(e))), W("click", d, () => te((e) => n().closeOtherViews?.(e.key))), K(e, a);
 			}, c = (e) => {
-				var r = ns(), i = z(r);
+				var r = rs(), i = z(r);
 				Y(i, 17, () => t.views.tabs, (e) => e.key, (e, t) => {
-					var n = es(), r = R(n);
+					var n = ts(), r = R(n);
 					P(n), V((e, t) => {
 						Z(n, "title", e), q(r, `Focus ${t ?? ""}`);
 					}, [() => w(H(t)), () => w(H(t))]), W("click", n, () => ee(() => T(H(t).key))), K(e, n);
 				});
 				var a = B(i, 2), o = B(a, 2);
 				Y(B(o, 2), 17, () => t.views.closedViews, (e) => e.key, (e, t) => {
-					var r = es(), i = R(r);
+					var r = ts(), i = R(r);
 					P(r), V((e, n) => {
 						Z(r, "title", e), q(i, `Reopen ${H(t).label ?? ""} · ${n ?? ""}`);
 					}, [() => w(H(t)), () => w(H(t))]), W("click", r, () => ee(() => n().reopenView?.(H(t).key))), K(e, r);
@@ -4524,8 +4538,8 @@ Er([
 ]);
 //#endregion
 //#region ui/GraphBreadcrumbs.svelte
-var os = /* @__PURE__ */ G("<span aria-current=\"page\" class=\"svelte-18ovafz\"> </span>"), ss = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-18ovafz\"> </button>"), cs = /* @__PURE__ */ G("<li class=\"svelte-18ovafz\"><!></li>"), ls = /* @__PURE__ */ G("<div class=\"pc-graph-location svelte-18ovafz\"><nav aria-label=\"Graph location\" class=\"svelte-18ovafz\"><ol class=\"svelte-18ovafz\"></ol></nav> <span class=\"pc-graph-scope svelte-18ovafz\"> <!><!></span></div>");
-function us(e, t) {
+var ss = /* @__PURE__ */ G("<span aria-current=\"page\" class=\"svelte-18ovafz\"> </span>"), cs = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-18ovafz\"> </button>"), ls = /* @__PURE__ */ G("<li class=\"svelte-18ovafz\"><!></li>"), us = /* @__PURE__ */ G("<div class=\"pc-graph-location svelte-18ovafz\"><nav aria-label=\"Graph location\" class=\"svelte-18ovafz\"><ol class=\"svelte-18ovafz\"></ol></nav> <span class=\"pc-graph-scope svelte-18ovafz\"> <!><!></span></div>");
+function ds(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "actions", 19, () => ({})), r = /* @__PURE__ */ F(() => t.view?.identity.kind === "library" ? t.view.identity.definitionRef : t.definitionRef ?? t.view?.definitionRef);
 	function i(e) {
@@ -4535,13 +4549,13 @@ function us(e, t) {
 		e.identity.kind === "instance" ? n().openInstance?.(e.identity.instancePath) : n().focusView?.(e.key);
 	}
 	var o = Lr(), s = z(o), c = (e) => {
-		var n = ls(), o = R(n), s = R(o);
+		var n = us(), o = R(n), s = R(o);
 		Y(s, 23, () => t.view.breadcrumbs, (e) => e.key, (e, n, r) => {
-			var o = cs(), s = R(o), c = (e) => {
-				var t = os(), r = R(t, !0);
+			var o = ls(), s = R(o), c = (e) => {
+				var t = ss(), r = R(t, !0);
 				P(t), V(() => q(r, H(n).label)), K(e, t);
 			}, l = (e) => {
-				var t = ss(), r = R(t, !0);
+				var t = cs(), r = R(t, !0);
 				P(t), V((e) => {
 					t.disabled = e, q(r, H(n).label);
 				}, [() => !i(H(n))]), W("click", t, () => a(H(n))), K(e, t);
@@ -4573,8 +4587,8 @@ function us(e, t) {
 Er(["click"]);
 //#endregion
 //#region ui/StructuredControl.svelte
-var ds = /* @__PURE__ */ G("<small class=\"svelte-taw2zx\">Rows are available when this JSON has a supported shape.</small>"), fs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\"> </label><textarea class=\"pc-structured-raw svelte-taw2zx\" spellcheck=\"false\"></textarea> <!>", 1), ps = /* @__PURE__ */ G("<option class=\"svelte-taw2zx\"> </option>"), ms = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Phase</label><select class=\"svelte-taw2zx\"></select> <label class=\"svelte-taw2zx\">Steps</label><input type=\"number\" min=\"1\" max=\"64\" step=\"1\" class=\"svelte-taw2zx\"/>", 1), hs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Name</label><input maxlength=\"128\" class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Value</label><input type=\"number\" step=\"any\" class=\"svelte-taw2zx\"/>", 1), gs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Default (JSON)</label><textarea class=\"svelte-taw2zx\"></textarea>", 1), _s = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Name</label><input class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Path (JSON array)</label><input class=\"svelte-taw2zx\"/> <label class=\"pc-structured-check svelte-taw2zx\"><input type=\"checkbox\" class=\"svelte-taw2zx\"/> Required</label> <label class=\"pc-structured-check svelte-taw2zx\"><input type=\"checkbox\" class=\"svelte-taw2zx\"/> Use default when missing</label><small class=\"svelte-taw2zx\">Defaults apply when Required is off.</small> <!>", 1), vs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">ID</label><input maxlength=\"128\" class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Label</label><input maxlength=\"80\" class=\"svelte-taw2zx\"/>", 1), ys = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Name</label><input class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Text</label><textarea class=\"svelte-taw2zx\"></textarea> <label class=\"svelte-taw2zx\">Kind</label><select class=\"svelte-taw2zx\"><option class=\"svelte-taw2zx\">Text</option><option class=\"svelte-taw2zx\">Guidance</option></select> <label class=\"pc-structured-check svelte-taw2zx\"><input type=\"checkbox\" class=\"svelte-taw2zx\"/> Required input</label> <label class=\"svelte-taw2zx\">Skipped source</label><select class=\"svelte-taw2zx\"><option class=\"svelte-taw2zx\">Use fallback text</option><option class=\"svelte-taw2zx\">Omit section</option></select>", 1), bs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Kind</label><select class=\"svelte-taw2zx\"><option class=\"svelte-taw2zx\">Literal</option><option class=\"svelte-taw2zx\">Regular expression</option></select> <label class=\"svelte-taw2zx\">Pattern</label><input class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Replacement</label><textarea class=\"svelte-taw2zx\"></textarea> <label class=\"svelte-taw2zx\">Flags</label><input class=\"svelte-taw2zx\"/>", 1), xs = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-taw2zx\">Move up</button><button type=\"button\" class=\"svelte-taw2zx\">Move down</button>", 1), Ss = /* @__PURE__ */ G("<fieldset class=\"pc-structured-row svelte-taw2zx\"><legend class=\"svelte-taw2zx\"> </legend> <!> <div class=\"pc-structured-actions svelte-taw2zx\"><!><button type=\"button\" class=\"svelte-taw2zx\">Remove</button></div></fieldset>"), Cs = /* @__PURE__ */ G("<div class=\"pc-structured-rows svelte-taw2zx\"></div> <button type=\"button\" class=\"svelte-taw2zx\"> </button>", 1), ws = /* @__PURE__ */ G("<div class=\"pc-structured-control svelte-taw2zx\"><div class=\"pc-structured-mode svelte-taw2zx\"><button type=\"button\" class=\"svelte-taw2zx\"> </button></div> <!></div>");
-function Ts(e, t) {
+var fs = /* @__PURE__ */ G("<small class=\"svelte-taw2zx\">Rows are available when this JSON has a supported shape.</small>"), ps = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\"> </label><textarea class=\"pc-structured-raw svelte-taw2zx\" spellcheck=\"false\"></textarea> <!>", 1), ms = /* @__PURE__ */ G("<option class=\"svelte-taw2zx\"> </option>"), hs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Phase</label><select class=\"svelte-taw2zx\"></select> <label class=\"svelte-taw2zx\">Steps</label><input type=\"number\" min=\"1\" max=\"64\" step=\"1\" class=\"svelte-taw2zx\"/>", 1), gs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Name</label><input maxlength=\"128\" class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Value</label><input type=\"number\" step=\"any\" class=\"svelte-taw2zx\"/>", 1), _s = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Default (JSON)</label><textarea class=\"svelte-taw2zx\"></textarea>", 1), vs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Name</label><input class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Path (JSON array)</label><input class=\"svelte-taw2zx\"/> <label class=\"pc-structured-check svelte-taw2zx\"><input type=\"checkbox\" class=\"svelte-taw2zx\"/> Required</label> <label class=\"pc-structured-check svelte-taw2zx\"><input type=\"checkbox\" class=\"svelte-taw2zx\"/> Use default when missing</label><small class=\"svelte-taw2zx\">Defaults apply when Required is off.</small> <!>", 1), ys = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">ID</label><input maxlength=\"128\" class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Label</label><input maxlength=\"80\" class=\"svelte-taw2zx\"/>", 1), bs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Name</label><input class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Text</label><textarea class=\"svelte-taw2zx\"></textarea> <label class=\"svelte-taw2zx\">Kind</label><select class=\"svelte-taw2zx\"><option class=\"svelte-taw2zx\">Text</option><option class=\"svelte-taw2zx\">Guidance</option></select> <label class=\"pc-structured-check svelte-taw2zx\"><input type=\"checkbox\" class=\"svelte-taw2zx\"/> Required input</label> <label class=\"svelte-taw2zx\">Skipped source</label><select class=\"svelte-taw2zx\"><option class=\"svelte-taw2zx\">Use fallback text</option><option class=\"svelte-taw2zx\">Omit section</option></select>", 1), xs = /* @__PURE__ */ G("<label class=\"svelte-taw2zx\">Kind</label><select class=\"svelte-taw2zx\"><option class=\"svelte-taw2zx\">Literal</option><option class=\"svelte-taw2zx\">Regular expression</option></select> <label class=\"svelte-taw2zx\">Pattern</label><input class=\"svelte-taw2zx\"/> <label class=\"svelte-taw2zx\">Replacement</label><textarea class=\"svelte-taw2zx\"></textarea> <label class=\"svelte-taw2zx\">Flags</label><input class=\"svelte-taw2zx\"/>", 1), Ss = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-taw2zx\">Move up</button><button type=\"button\" class=\"svelte-taw2zx\">Move down</button>", 1), Cs = /* @__PURE__ */ G("<fieldset class=\"pc-structured-row svelte-taw2zx\"><legend class=\"svelte-taw2zx\"> </legend> <!> <div class=\"pc-structured-actions svelte-taw2zx\"><!><button type=\"button\" class=\"svelte-taw2zx\">Remove</button></div></fieldset>"), ws = /* @__PURE__ */ G("<div class=\"pc-structured-rows svelte-taw2zx\"></div> <button type=\"button\" class=\"svelte-taw2zx\"> </button>", 1), Ts = /* @__PURE__ */ G("<div class=\"pc-structured-control svelte-taw2zx\"><div class=\"pc-structured-mode svelte-taw2zx\"><button type=\"button\" class=\"svelte-taw2zx\"> </button></div> <!></div>");
+function Es(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "disabled", 3, !1), r = Pi(t, "error", 3, ""), i = [
 		"onset",
@@ -4701,15 +4715,15 @@ function Ts(e, t) {
 		let r = [...H(f)];
 		[r[e], r[e + t]] = [r[e + t], r[e]], v(r);
 	}
-	var D = ws(), O = R(D), k = R(O), A = R(k, !0);
+	var D = Ts(), O = R(D), k = R(O), A = R(k, !0);
 	P(k), P(O);
 	var j = B(O, 2), M = (e) => {
-		var i = fs(), a = z(i), o = R(a);
+		var i = ps(), a = z(i), o = R(a);
 		P(a);
 		var s = B(a);
 		at(s);
 		var c = B(s, 2), l = (e) => {
-			K(e, ds());
+			K(e, fs());
 		};
 		J(c, (e) => {
 			H(f) || e(l);
@@ -4717,14 +4731,14 @@ function Ts(e, t) {
 			Z(a, "for", t.idPrefix + "-raw"), q(o, `${t.control.label ?? ""} (JSON)`), Z(s, "id", t.idPrefix + "-raw"), Z(s, "aria-label", t.control.label), Z(s, "aria-invalid", !!r()), Z(s, "aria-describedby", r() ? t.idPrefix + "-error" : void 0), wi(s, H(h)), s.disabled = n();
 		}), W("input", s, (e) => g(e.currentTarget.value)), K(e, i);
 	}, ee = (e) => {
-		var r = Cs(), a = z(r);
+		var r = ws(), a = z(r);
 		Y(a, 21, () => H(f), qr, (e, r, a) => {
-			var o = Ss(), s = R(o), l = R(s);
+			var o = Cs(), s = R(o), l = R(s);
 			P(s);
 			var d = B(s, 2), p = (e) => {
-				var o = ms(), s = z(o), c = B(s);
+				var o = hs(), s = z(o), c = B(s);
 				Z(c, "aria-label", "Duration " + (a + 1) + " phase"), Y(c, 21, () => i, qr, (e, t) => {
-					var n = ps(), r = R(n, !0);
+					var n = ms(), r = R(n, !0);
 					P(n);
 					var i = {};
 					V((e, a) => {
@@ -4738,14 +4752,14 @@ function Ts(e, t) {
 					Z(s, "for", t.idPrefix + "-phase-" + a), Z(c, "id", t.idPrefix + "-phase-" + a), c.disabled = n(), l !== (l = e) && (c.value = (c.__value = e) ?? "", gi(c, e)), Z(u, "for", t.idPrefix + "-steps-" + a), Z(d, "id", t.idPrefix + "-steps-" + a), wi(d, r), d.disabled = n();
 				}, [() => String(H(r).name), () => Number(H(r).number)]), W("change", c, (e) => S(a, e.currentTarget)), W("change", d, (e) => x(a, e.currentTarget)), K(e, o);
 			}, m = (e) => {
-				var i = hs(), o = z(i), s = B(o);
+				var i = gs(), o = z(i), s = B(o);
 				X(s), Z(s, "aria-label", "Value " + (a + 1) + " name");
 				var c = B(s, 2), l = B(c);
 				X(l), Z(l, "aria-label", "Value " + (a + 1) + " number"), V((e, r) => {
 					Z(o, "for", t.idPrefix + "-name-" + a), Z(s, "id", t.idPrefix + "-name-" + a), wi(s, e), s.disabled = n(), Z(c, "for", t.idPrefix + "-number-" + a), Z(l, "id", t.idPrefix + "-number-" + a), wi(l, r), Z(l, "min", t.control.min), Z(l, "max", t.control.max), l.disabled = n();
 				}, [() => String(H(r).name), () => Number(H(r).number)]), W("change", s, (e) => S(a, e.currentTarget)), W("change", l, (e) => x(a, e.currentTarget)), K(e, i);
 			}, h = (e) => {
-				var i = _s(), o = z(i), s = B(o);
+				var i = vs(), o = z(i), s = B(o);
 				X(s), Z(s, "aria-label", "Field " + (a + 1) + " name");
 				var c = B(s, 2), l = B(c);
 				X(l), Z(l, "aria-label", "Field " + (a + 1) + " path (JSON array)");
@@ -4754,7 +4768,7 @@ function Ts(e, t) {
 				var f = B(u, 2), p = R(f);
 				X(p), Z(p, "aria-label", "Field " + (a + 1) + " use default"), Me(), P(f);
 				var m = B(f, 3), h = (e) => {
-					var i = gs(), o = z(i), s = B(o);
+					var i = _s(), o = z(i), s = B(o);
 					at(s), Z(s, "aria-label", "Field " + (a + 1) + " default (JSON)"), V((e) => {
 						Z(o, "for", t.idPrefix + "-default-" + a), Z(s, "id", t.idPrefix + "-default-" + a), wi(s, e), s.disabled = n();
 					}, [() => JSON.stringify(H(r).default, null, 2)]), W("change", s, (e) => C(a, "default", e.currentTarget.value)), K(e, i);
@@ -4769,14 +4783,14 @@ function Ts(e, t) {
 					() => Object.hasOwn(H(r), "default")
 				]), W("input", s, (e) => y(a, "name", e.currentTarget.value)), W("change", l, (e) => C(a, "path", e.currentTarget.value)), W("change", d, (e) => y(a, "required", e.currentTarget.checked)), W("change", p, (e) => w(a, e.currentTarget.checked)), K(e, i);
 			}, g = (e) => {
-				var i = vs(), o = z(i), s = B(o);
+				var i = ys(), o = z(i), s = B(o);
 				X(s), Z(s, "aria-label", "Slot " + (a + 1) + " ID");
 				var c = B(s, 2), l = B(c);
 				X(l), Z(l, "aria-label", "Slot " + (a + 1) + " label"), V((e, r) => {
 					Z(o, "for", t.idPrefix + "-slot-id-" + a), Z(s, "id", t.idPrefix + "-slot-id-" + a), wi(s, e), s.disabled = n(), Z(c, "for", t.idPrefix + "-slot-label-" + a), Z(l, "id", t.idPrefix + "-slot-label-" + a), wi(l, r), l.disabled = n();
 				}, [() => String(H(r).id), () => String(H(r).label)]), W("input", s, (e) => y(a, "id", e.currentTarget.value)), W("input", l, (e) => y(a, "label", e.currentTarget.value)), K(e, i);
 			}, _ = (e) => {
-				var i = ys(), o = z(i), s = B(o);
+				var i = bs(), o = z(i), s = B(o);
 				X(s), Z(s, "aria-label", "Section " + (a + 1) + " name");
 				var c = B(s, 2), l = B(c);
 				at(l), Z(l, "aria-label", "Section " + (a + 1) + " text");
@@ -4806,7 +4820,7 @@ function Ts(e, t) {
 					() => String(H(r).onSkipped ?? "fallback")
 				]), W("input", s, (e) => y(a, "name", e.currentTarget.value)), W("input", l, (e) => y(a, "text", e.currentTarget.value)), W("change", d, (e) => y(a, "kind", e.currentTarget.value)), W("change", g, (e) => y(a, "required", e.currentTarget.checked)), W("change", v, (e) => y(a, "onSkipped", e.currentTarget.value)), K(e, i);
 			}, v = (e) => {
-				var i = bs(), o = z(i), s = B(o);
+				var i = xs(), o = z(i), s = B(o);
 				Z(s, "aria-label", "Rule " + (a + 1) + " kind");
 				var c = R(s);
 				c.value = c.__value = "literal";
@@ -4832,7 +4846,7 @@ function Ts(e, t) {
 				t.control.structured === "durations" ? e(p) : t.control.structured === "numeric-map" ? e(m, 1) : t.control.structured === "fields" ? e(h, 2) : t.control.structured === "slots" ? e(g, 3) : t.control.structured === "sections" ? e(_, 4) : e(v, -1);
 			});
 			var b = B(d, 2), D = R(b), O = (e) => {
-				var t = xs(), r = z(t), i = B(r);
+				var t = Ss(), r = z(t), i = B(r);
 				V(() => {
 					Z(r, "aria-label", "Move " + H(c) + " " + (a + 1) + " up"), r.disabled = n() || a === 0, Z(i, "aria-label", "Move " + H(c) + " " + (a + 1) + " down"), i.disabled = n() || a === H(f).length - 1;
 				}), W("click", r, () => E(a, -1)), W("click", i, () => E(a, 1)), K(e, t);
@@ -4865,15 +4879,15 @@ Er([
 ]);
 //#endregion
 //#region ui/DetailControl.svelte
-var Es = /* @__PURE__ */ G("<span class=\"pc-control-label svelte-16a137\"> </span> <!>", 1), Ds = /* @__PURE__ */ G("<label class=\"pc-detail-check svelte-16a137\"><input type=\"checkbox\" class=\"svelte-16a137\"/> </label>"), Os = /* @__PURE__ */ G("<label class=\"svelte-16a137\"><input type=\"radio\" class=\"svelte-16a137\"/><span class=\"svelte-16a137\"> </span></label>"), ks = /* @__PURE__ */ G("<span class=\"pc-control-label svelte-16a137\"> </span> <div class=\"pc-control-segments svelte-16a137\" role=\"radiogroup\"></div>", 1), As = /* @__PURE__ */ G("<option class=\"svelte-16a137\"> </option>"), js = /* @__PURE__ */ G("<select class=\"svelte-16a137\"></select>"), Ms = /* @__PURE__ */ G("<input type=\"number\" class=\"svelte-16a137\"/>"), Ns = /* @__PURE__ */ G("<textarea class=\"svelte-16a137\"></textarea>"), Ps = /* @__PURE__ */ G("<input type=\"text\" class=\"svelte-16a137\"/>"), Fs = /* @__PURE__ */ G("<label class=\"svelte-16a137\"> </label> <!>", 1), Is = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-16a137\"> </button>"), Ls = /* @__PURE__ */ G("<small class=\"svelte-16a137\"> </small>"), Rs = /* @__PURE__ */ G("<div class=\"pc-detail-error svelte-16a137\"><!></div>"), zs = /* @__PURE__ */ G("<div><!> <!> <!> <!> <!></div>");
-function Bs(e, t) {
+var Ds = /* @__PURE__ */ G("<span class=\"pc-control-label svelte-16a137\"> </span> <!>", 1), Os = /* @__PURE__ */ G("<label class=\"pc-detail-check svelte-16a137\"><input type=\"checkbox\" class=\"svelte-16a137\"/> </label>"), ks = /* @__PURE__ */ G("<label class=\"svelte-16a137\"><input type=\"radio\" class=\"svelte-16a137\"/><span class=\"svelte-16a137\"> </span></label>"), As = /* @__PURE__ */ G("<span class=\"pc-control-label svelte-16a137\"> </span> <div class=\"pc-control-segments svelte-16a137\" role=\"radiogroup\"></div>", 1), js = /* @__PURE__ */ G("<option class=\"svelte-16a137\"> </option>"), Ms = /* @__PURE__ */ G("<select class=\"svelte-16a137\"></select>"), Ns = /* @__PURE__ */ G("<input type=\"number\" class=\"svelte-16a137\"/>"), Ps = /* @__PURE__ */ G("<textarea class=\"svelte-16a137\"></textarea>"), Fs = /* @__PURE__ */ G("<input type=\"text\" class=\"svelte-16a137\"/>"), Is = /* @__PURE__ */ G("<label class=\"svelte-16a137\"> </label> <!>", 1), Ls = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-16a137\"> </button>"), Rs = /* @__PURE__ */ G("<small class=\"svelte-16a137\"> </small>"), zs = /* @__PURE__ */ G("<div class=\"pc-detail-error svelte-16a137\"><!></div>"), Bs = /* @__PURE__ */ G("<div><!> <!> <!> <!> <!></div>");
+function Vs(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "error", 3, ""), r = Pi(t, "disabled", 3, !1), i = Pi(t, "pending", 3, !1), a = () => t.control.editor === "enum" && (t.control.options?.length ?? 0) > 1 && (t.control.options?.length ?? 0) <= 3 && t.control.options.every((e) => e.label.length <= 10), o = () => t.control.effective !== void 0 && t.control.effective !== t.text && t.control.source !== "Saved setting" ? t.control.source : "";
-	var s = zs();
+	var s = Bs();
 	let c;
 	var l = R(s), u = (e) => {
-		var i = Es(), a = z(i), o = R(a, !0);
-		P(a), Ts(B(a, 2), {
+		var i = Ds(), a = z(i), o = R(a, !0);
+		P(a), Es(B(a, 2), {
 			get control() {
 				return t.control;
 			},
@@ -4900,7 +4914,7 @@ function Bs(e, t) {
 			}
 		}), V(() => q(o, t.control.label)), K(e, i);
 	}, d = (e) => {
-		var n = Ds(), i = R(n);
+		var n = Os(), i = R(n);
 		X(i);
 		var a = B(i, 1, !0);
 		P(n), V((e) => {
@@ -4909,11 +4923,11 @@ function Bs(e, t) {
 			r() || t.onvalue(e.currentTarget.checked);
 		}), K(e, n);
 	}, f = (e) => {
-		var n = ks(), i = z(n), a = R(i, !0);
+		var n = As(), i = z(n), a = R(i, !0);
 		P(i);
 		var o = B(i, 2);
 		Y(o, 21, () => t.control.options ?? [], (e) => e.value, (e, n) => {
-			var i = Os(), a = R(i);
+			var i = ks(), a = R(i);
 			X(a);
 			var o = B(a), s = R(o, !0);
 			P(o), P(i), V((e) => {
@@ -4925,12 +4939,12 @@ function Bs(e, t) {
 			q(a, t.control.label), Z(o, "aria-label", t.control.label);
 		}), K(e, n);
 	}, p = /* @__PURE__ */ F(() => a()), m = (e) => {
-		var i = Fs(), a = z(i), o = R(a, !0);
+		var i = Is(), a = z(i), o = R(a, !0);
 		P(a);
 		var s = B(a, 2), c = (e) => {
-			var n = js();
+			var n = Ms();
 			Y(n, 21, () => t.control.options ?? [], (e) => e.value, (e, t) => {
-				var n = As(), r = R(n, !0);
+				var n = js(), r = R(n, !0);
 				P(n);
 				var i = {};
 				V(() => {
@@ -4944,28 +4958,28 @@ function Bs(e, t) {
 				r() || t.onvalue(e.currentTarget.value);
 			}), K(e, n);
 		}, l = (e) => {
-			var i = Ms();
+			var i = Ns();
 			X(i), V((e) => {
 				Z(i, "id", t.idPrefix + "-editor"), Z(i, "aria-label", t.control.label), Z(i, "min", t.control.min), Z(i, "max", t.control.max), Z(i, "step", t.control.step ?? 1), Z(i, "aria-invalid", !!n()), Z(i, "aria-describedby", n() ? t.idPrefix + "-error" : void 0), wi(i, e), i.disabled = r();
 			}, [() => Number(t.control.value)]), W("change", i, (e) => {
 				r() || t.onnumber(e.currentTarget);
 			}), K(e, i);
 		}, u = (e) => {
-			var i = Ns();
+			var i = Ps();
 			at(i), V(() => {
 				Z(i, "id", t.idPrefix + "-editor"), Z(i, "aria-label", t.control.label), Z(i, "aria-invalid", !!n()), Z(i, "aria-describedby", n() ? t.idPrefix + "-error" : void 0), wi(i, t.text), i.disabled = r();
 			}), W("input", i, (e) => {
 				r() || t.ontext(e.currentTarget.value);
 			}), K(e, i);
 		}, d = (e) => {
-			var n = Ps();
+			var n = Fs();
 			X(n), V(() => {
 				Z(n, "id", t.idPrefix + "-editor"), Z(n, "aria-label", t.control.label), wi(n, t.text), n.disabled = r();
 			}), W("change", n, (e) => {
 				r() || t.onvalue(e.currentTarget.value);
 			}), K(e, n);
 		}, f = /* @__PURE__ */ F(() => t.control.singleLine && t.control.editor === "text" && !t.text.includes("\n") && !t.text.includes("\r")), p = (e) => {
-			var n = Ns();
+			var n = Ps();
 			at(n), V(() => {
 				Z(n, "id", t.idPrefix + "-editor"), Z(n, "aria-label", t.control.label), wi(n, t.text), n.disabled = r();
 			}), W("change", n, (e) => {
@@ -4982,7 +4996,7 @@ function Bs(e, t) {
 		t.control.structured && t.control.editor === "json" ? e(u) : t.control.editor === "boolean" ? e(d, 1) : H(p) ? e(f, 2) : e(m, -1);
 	});
 	var h = B(l, 2), g = (e) => {
-		var n = Is(), a = R(n, !0);
+		var n = Ls(), a = R(n, !0);
 		P(n), V(() => {
 			Z(n, "data-save-control", t.control.key), n.disabled = r() || i(), q(a, i() ? "Validating…" : "Save " + t.control.label);
 		}), W("click", n, () => {
@@ -4993,27 +5007,27 @@ function Bs(e, t) {
 		(t.control.editor === "json" || t.control.editor === "lines") && e(g);
 	});
 	var _ = B(h, 2), v = (e) => {
-		var n = Ls(), r = R(n, !0);
+		var n = Rs(), r = R(n, !0);
 		P(n), V(() => q(r, t.control.help)), K(e, n);
 	};
 	J(_, (e) => {
 		t.control.help && e(v);
 	});
 	var y = B(_, 2), b = (e) => {
-		var n = Ls(), r = R(n, !0);
+		var n = Rs(), r = R(n, !0);
 		P(n), V(() => q(r, t.control.exposureNote)), K(e, n);
 	}, x = (e) => {
-		var n = Ls(), r = R(n);
+		var n = Rs(), r = R(n);
 		P(n), V((e) => q(r, `${e ?? ""} · Effective: ${t.control.effective ?? ""}`), [() => o()]), K(e, n);
 	}, S = /* @__PURE__ */ F(() => o());
 	J(y, (e) => {
 		t.control.exposureNote ? e(b) : H(S) && e(x, 1);
 	});
 	var C = B(y, 2), w = (e) => {
-		var r = Rs(), i = R(r);
+		var r = zs(), i = R(r);
 		{
 			let e = /* @__PURE__ */ F(() => ({ inputLabel: t.control.label }));
-			ho(i, {
+			go(i, {
 				get issue() {
 					return n();
 				},
@@ -5035,107 +5049,111 @@ Er([
 ]);
 //#endregion
 //#region ui/RecallDetails.svelte
-var Vs = /* @__PURE__ */ G("<p class=\"svelte-1kifnmo\"> </p>"), Hs = /* @__PURE__ */ G("<div><!></div>"), Us = /* @__PURE__ */ G("<p class=\"svelte-1kifnmo\">Add a matching Recall node and connect it to the workflow. Queueing this Shortcut has an effect when that Recall executes.</p>"), Ws = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-recall-link svelte-1kifnmo\"> </button>"), Gs = /* @__PURE__ */ G("<section class=\"pc-recall-details svelte-1kifnmo\" aria-label=\"Memory recall\"><h3 class=\"svelte-1kifnmo\">Memory recall</h3><p role=\"status\" class=\"svelte-1kifnmo\"> </p> <dl class=\"svelte-1kifnmo\"><dt class=\"svelte-1kifnmo\">Memory set</dt><dd class=\"svelte-1kifnmo\"> </dd><dt class=\"svelte-1kifnmo\">Target</dt><dd class=\"svelte-1kifnmo\"> </dd><dt class=\"svelte-1kifnmo\">Repetition</dt><dd class=\"svelte-1kifnmo\"> </dd><dt class=\"svelte-1kifnmo\">Consume on</dt><dd class=\"svelte-1kifnmo\"> </dd></dl> <!> <!> <div class=\"pc-detail-actions svelte-1kifnmo\"><button type=\"button\">Queue recall</button><button type=\"button\">Cancel recall</button></div> <!><!><!> <!> <!> <small class=\"svelte-1kifnmo\">Matching nodes share one request. The first successful matching Recall supplies the selection for a generation. Use different memory-set IDs for independent selections. Automatic triggers keep their own conditions.</small></section>");
-function Ks(e, t) {
+var Hs = /* @__PURE__ */ G("<p class=\"svelte-1kifnmo\"> </p>"), Us = /* @__PURE__ */ G("<div><!></div>"), Ws = /* @__PURE__ */ G("<p class=\"svelte-1kifnmo\">Add a matching Recall node and connect it to the workflow. Queueing this Shortcut has an effect when that Recall executes.</p>"), Gs = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-recall-link svelte-1kifnmo\"> </button>"), Ks = /* @__PURE__ */ G("<section class=\"pc-recall-details svelte-1kifnmo\" aria-label=\"Memory recall\"><h3 class=\"svelte-1kifnmo\">Memory recall</h3><p role=\"status\" class=\"svelte-1kifnmo\"> </p> <dl class=\"svelte-1kifnmo\"><dt class=\"svelte-1kifnmo\">Memory set</dt><dd class=\"svelte-1kifnmo\"> </dd><dt class=\"svelte-1kifnmo\">Target</dt><dd class=\"svelte-1kifnmo\"> </dd><dt class=\"svelte-1kifnmo\">Repetition</dt><dd class=\"svelte-1kifnmo\"> </dd><dt class=\"svelte-1kifnmo\">Consume on</dt><dd class=\"svelte-1kifnmo\"> </dd></dl> <!> <!> <div class=\"pc-detail-actions svelte-1kifnmo\"><button type=\"button\">Queue recall</button><button type=\"button\">Cancel recall</button></div> <!><!><!> <!> <!> <small class=\"svelte-1kifnmo\">Matching nodes share one request. The first successful matching Recall supplies the selection for a generation. Use different memory-set IDs for independent selections. Automatic triggers keep their own conditions.</small></section>");
+function qs(e, t) {
 	let n = Rr();
 	Ue(t, !0);
-	let r = /* @__PURE__ */ I(!1), i = /* @__PURE__ */ I(""), a = "", o = 0, s = /* @__PURE__ */ F(() => H(r) ? "Wait for the Recall change to finish." : t.actions.queue ? t.view.queueAllowed ? "" : t.view.reason || "Recall is already queued." : "Queue recall is unavailable in this workspace."), c = /* @__PURE__ */ F(() => H(r) ? "Wait for the Recall change to finish." : t.actions.cancel ? t.view.cancelAllowed ? "" : "No recall is queued to cancel." : "Cancel recall is unavailable in this workspace.");
+	let r = /* @__PURE__ */ I(!1), i = /* @__PURE__ */ I(""), a = "", o = 0, s = /* @__PURE__ */ F(() => t.view.address ? JSON.stringify([
+		t.view.address.workflowId,
+		t.view.address.instancePath,
+		t.view.address.nodeId
+	]) : t.view.nodeId), c = /* @__PURE__ */ F(() => H(r) ? "Wait for the Recall change to finish." : t.actions.queue ? t.view.queueAllowed ? "" : t.view.reason || "Recall is already queued." : "Queue recall is unavailable in this workspace."), l = /* @__PURE__ */ F(() => H(r) ? "Wait for the Recall change to finish." : t.actions.cancel ? t.view.cancelAllowed ? "" : "No recall is queued to cancel." : "Cancel recall is unavailable in this workspace.");
 	Cn(() => {
-		a !== t.view.nodeId && (a = t.view.nodeId, o++, L(r, !1), L(i, ""));
+		a !== H(s) && (a = H(s), o++, L(r, !1), L(i, ""));
 	});
-	async function l(e) {
+	async function u(e) {
 		if (H(r)) return;
-		let n = t.view.nodeId, a = ++o;
+		let n = H(s), a = ++o;
 		L(r, !0), L(i, "");
 		try {
 			let r = await t.actions[e]?.();
-			a === o && n === t.view.nodeId && r?.ok !== !0 && L(i, (r?.error ? r.error.code + ": " + r.error.message : void 0) ?? "Memory recall is unavailable.", !0);
+			a === o && n === H(s) && r?.ok !== !0 && L(i, (r?.error ? r.error.code + ": " + r.error.message : void 0) ?? "Memory recall is unavailable.", !0);
 		} catch {
-			a === o && n === t.view.nodeId && L(i, "Memory recall could not be updated.");
+			a === o && n === H(s) && L(i, "Memory recall could not be updated.");
 		} finally {
-			a === o && n === t.view.nodeId && L(r, !1);
+			a === o && n === H(s) && L(r, !1);
 		}
 	}
-	var u = Gs(), d = B(R(u)), f = R(d, !0);
-	P(d);
-	var p = B(d, 2), m = B(R(p)), h = R(m, !0);
-	P(m);
-	var g = B(m, 2), _ = R(g, !0);
-	P(g);
-	var v = B(g, 2), y = R(v, !0);
-	P(v);
-	var b = B(v, 2), x = R(b, !0);
-	P(b), P(p);
-	var S = B(p, 2), C = (e) => {
-		var n = Vs(), r = R(n);
+	var d = Ks(), f = B(R(d)), p = R(f, !0);
+	P(f);
+	var m = B(f, 2), h = B(R(m)), g = R(h, !0);
+	P(h);
+	var _ = B(h, 2), v = R(_, !0);
+	P(_);
+	var y = B(_, 2), b = R(y, !0);
+	P(y);
+	var x = B(y, 2), S = R(x, !0);
+	P(x), P(m);
+	var C = B(m, 2), w = (e) => {
+		var n = Hs(), r = R(n);
 		P(n), V(() => q(r, `Remaining: ${t.view.remainingText ?? ""}`)), K(e, n);
 	};
-	J(S, (e) => {
-		t.view.queued && e(C);
+	J(C, (e) => {
+		t.view.queued && e(w);
 	});
-	var w = B(S, 2), T = (e) => {
-		var n = Vs(), r = R(n);
+	var T = B(C, 2), E = (e) => {
+		var n = Hs(), r = R(n);
 		P(n), V(() => q(r, `Pending generations: ${t.view.pendingCount ?? ""}`)), K(e, n);
 	};
-	J(w, (e) => {
-		t.view.pendingCount && e(T);
+	J(T, (e) => {
+		t.view.pendingCount && e(E);
 	});
-	var E = B(w, 2), D = R(E), O = B(D);
-	P(E);
-	var k = B(E, 2), A = (e) => {
-		var t = Vs(), r = R(t, !0);
+	var D = B(T, 2), O = R(D), k = B(O);
+	P(D);
+	var A = B(D, 2), j = (e) => {
+		var t = Hs(), r = R(t, !0);
 		P(t), V(() => {
-			Z(t, "id", n + "-queue-reason"), q(r, H(s));
+			Z(t, "id", n + "-queue-reason"), q(r, H(c));
 		}), K(e, t);
-	}, j = (e) => {
-		var n = Vs(), r = R(n, !0);
+	}, M = (e) => {
+		var n = Hs(), r = R(n, !0);
 		P(n), V(() => q(r, t.view.reason)), K(e, n);
 	};
-	J(k, (e) => {
-		H(s) ? e(A) : t.view.reason && e(j, 1);
+	J(A, (e) => {
+		H(c) ? e(j) : t.view.reason && e(M, 1);
 	});
-	var M = B(k), ee = (e) => {
-		var t = Vs(), r = R(t, !0);
+	var ee = B(A), te = (e) => {
+		var t = Hs(), r = R(t, !0);
 		P(t), V(() => {
-			Z(t, "id", n + "-cancel-reason"), q(r, H(c));
+			Z(t, "id", n + "-cancel-reason"), q(r, H(l));
 		}), K(e, t);
 	};
-	J(M, (e) => {
-		H(c) && e(ee);
+	J(ee, (e) => {
+		H(l) && e(te);
 	});
-	var te = B(M), ne = (e) => {
-		var t = Hs();
-		ho(R(t), { get issue() {
+	var ne = B(ee), re = (e) => {
+		var t = Us();
+		go(R(t), { get issue() {
 			return H(i);
 		} }), P(t), K(e, t);
 	};
-	J(te, (e) => {
-		H(i) && e(ne);
+	J(ne, (e) => {
+		H(i) && e(re);
 	});
-	var re = B(te, 2), ie = (e) => {
-		K(e, Us());
-	}, ae = /* @__PURE__ */ F(() => t.view.shortcutNodeIds.includes(t.view.nodeId) && t.view.consumerCount === 0);
-	J(re, (e) => {
-		H(ae) && e(ie);
-	}), Y(B(re, 2), 17, () => t.view.hotkeys, (e) => e.nodeId, (e, n) => {
-		var r = Ws(), i = R(r);
+	var ie = B(ne, 2), ae = (e) => {
+		K(e, Ws());
+	}, oe = /* @__PURE__ */ F(() => t.view.shortcutNodeIds.includes(H(s)) && t.view.consumerCount === 0);
+	J(ie, (e) => {
+		H(oe) && e(ae);
+	}), Y(B(ie, 2), 17, () => t.view.hotkeys, (e) => e.nodeId, (e, n) => {
+		var r = Gs(), i = R(r);
 		P(r), V(() => {
 			r.disabled = !t.actions.revealShortcut, q(i, `Recall Shortcut · ${H(n).label ?? ""}`);
 		}), W("click", r, () => t.actions.revealShortcut?.(H(n).nodeId)), K(e, r);
-	}), Me(2), P(u), V(() => {
-		q(f, t.view.statusText), q(h, t.view.memorySetId || "Choose a memory set"), q(_, t.view.targetLabel), q(y, t.view.useLabel), q(x, t.view.consumeLabel), D.disabled = H(r) || !t.view.queueAllowed || !t.actions.queue, Z(D, "aria-describedby", H(s) ? n + "-queue-reason" : void 0), O.disabled = H(r) || !t.view.cancelAllowed || !t.actions.cancel, Z(O, "aria-describedby", H(c) ? n + "-cancel-reason" : void 0);
-	}), W("click", D, () => l("queue")), W("click", O, () => l("cancel")), K(e, u), We();
+	}), Me(2), P(d), V(() => {
+		q(p, t.view.statusText), q(g, t.view.memorySetId || "Choose a memory set"), q(v, t.view.targetLabel), q(b, t.view.useLabel), q(S, t.view.consumeLabel), O.disabled = H(r) || !t.view.queueAllowed || !t.actions.queue, Z(O, "aria-describedby", H(c) ? n + "-queue-reason" : void 0), k.disabled = H(r) || !t.view.cancelAllowed || !t.actions.cancel, Z(k, "aria-describedby", H(l) ? n + "-cancel-reason" : void 0);
+	}), W("click", O, () => u("queue")), W("click", k, () => u("cancel")), K(e, d), We();
 }
 Er(["click"]);
 //#endregion
 //#region ui/ModifierStack.svelte
-var qs = /* @__PURE__ */ G("<label class=\"svelte-1ibq9q\"><input type=\"checkbox\" class=\"svelte-1ibq9q\"/> </label>"), Js = /* @__PURE__ */ G("<option class=\"svelte-1ibq9q\"> </option>"), Ys = /* @__PURE__ */ G("<label class=\"pc-modifier-check svelte-1ibq9q\"><input type=\"checkbox\" class=\"svelte-1ibq9q\"/> </label>"), Xs = /* @__PURE__ */ G("<select class=\"svelte-1ibq9q\"></select>"), Zs = /* @__PURE__ */ G("<input type=\"number\" class=\"svelte-1ibq9q\"/>"), Qs = /* @__PURE__ */ G("<textarea class=\"svelte-1ibq9q\"></textarea>"), $s = /* @__PURE__ */ G("<label class=\"svelte-1ibq9q\"> </label> <!>", 1), ec = /* @__PURE__ */ G("<small class=\"svelte-1ibq9q\"> </small>"), tc = /* @__PURE__ */ G("<!> <!>", 1), nc = /* @__PURE__ */ G("<details class=\"svelte-1ibq9q\"><summary class=\"svelte-1ibq9q\"> <!></summary> <!> <button type=\"button\" class=\"svelte-1ibq9q\"> </button></details>"), rc = /* @__PURE__ */ G("<div class=\"pc-modifier-error svelte-1ibq9q\"><!></div>"), ic = /* @__PURE__ */ G("<div class=\"pc-modifier-entry svelte-1ibq9q\"><div class=\"pc-modifier-heading svelte-1ibq9q\"><label class=\"svelte-1ibq9q\"><input type=\"checkbox\" class=\"svelte-1ibq9q\"/><span class=\"svelte-1ibq9q\"> <small class=\"svelte-1ibq9q\"> </small></span></label> <div class=\"pc-modifier-order svelte-1ibq9q\"><button type=\"button\" title=\"Move up\" class=\"svelte-1ibq9q\">↑</button> <button type=\"button\" title=\"Move down\" class=\"svelte-1ibq9q\">↓</button> <button type=\"button\" title=\"Remove\" class=\"svelte-1ibq9q\">×</button></div></div> <!> <!></div>"), ac = /* @__PURE__ */ G("<div class=\"pc-modifier-stack svelte-1ibq9q\"><small class=\"svelte-1ibq9q\"> </small> <!></div>"), oc = /* @__PURE__ */ G("<small role=\"status\" class=\"svelte-1ibq9q\">Validating modifiers…</small>"), sc = /* @__PURE__ */ G("<section class=\"pc-modifiers svelte-1ibq9q\" data-modifier-controls=\"\" aria-label=\"Text modifiers\"><div class=\"pc-modifier-quick svelte-1ibq9q\"><!> <select aria-label=\"Add text modifier\" class=\"svelte-1ibq9q\"><option class=\"svelte-1ibq9q\">Add modifier…</option><!></select></div> <!> <!> <!></section>");
-function cc(e, t) {
+var Js = /* @__PURE__ */ G("<label class=\"svelte-1ibq9q\"><input type=\"checkbox\" class=\"svelte-1ibq9q\"/> </label>"), Ys = /* @__PURE__ */ G("<option class=\"svelte-1ibq9q\"> </option>"), Xs = /* @__PURE__ */ G("<label class=\"pc-modifier-check svelte-1ibq9q\"><input type=\"checkbox\" class=\"svelte-1ibq9q\"/> </label>"), Zs = /* @__PURE__ */ G("<select class=\"svelte-1ibq9q\"></select>"), Qs = /* @__PURE__ */ G("<input type=\"number\" class=\"svelte-1ibq9q\"/>"), $s = /* @__PURE__ */ G("<textarea class=\"svelte-1ibq9q\"></textarea>"), ec = /* @__PURE__ */ G("<label class=\"svelte-1ibq9q\"> </label> <!>", 1), tc = /* @__PURE__ */ G("<small class=\"svelte-1ibq9q\"> </small>"), nc = /* @__PURE__ */ G("<!> <!>", 1), rc = /* @__PURE__ */ G("<details class=\"svelte-1ibq9q\"><summary class=\"svelte-1ibq9q\"> <!></summary> <!> <button type=\"button\" class=\"svelte-1ibq9q\"> </button></details>"), ic = /* @__PURE__ */ G("<div class=\"pc-modifier-error svelte-1ibq9q\"><!></div>"), ac = /* @__PURE__ */ G("<div class=\"pc-modifier-entry svelte-1ibq9q\"><div class=\"pc-modifier-heading svelte-1ibq9q\"><label class=\"svelte-1ibq9q\"><input type=\"checkbox\" class=\"svelte-1ibq9q\"/><span class=\"svelte-1ibq9q\"> <small class=\"svelte-1ibq9q\"> </small></span></label> <div class=\"pc-modifier-order svelte-1ibq9q\"><button type=\"button\" title=\"Move up\" class=\"svelte-1ibq9q\">↑</button> <button type=\"button\" title=\"Move down\" class=\"svelte-1ibq9q\">↓</button> <button type=\"button\" title=\"Remove\" class=\"svelte-1ibq9q\">×</button></div></div> <!> <!></div>"), oc = /* @__PURE__ */ G("<div class=\"pc-modifier-stack svelte-1ibq9q\"><small class=\"svelte-1ibq9q\"> </small> <!></div>"), sc = /* @__PURE__ */ G("<small role=\"status\" class=\"svelte-1ibq9q\">Validating modifiers…</small>"), cc = /* @__PURE__ */ G("<section class=\"pc-modifiers svelte-1ibq9q\" data-modifier-controls=\"\" aria-label=\"Text modifiers\"><div class=\"pc-modifier-quick svelte-1ibq9q\"><!> <select aria-label=\"Add text modifier\" class=\"svelte-1ibq9q\"><option class=\"svelte-1ibq9q\">Add modifier…</option><!></select></div> <!> <!> <!></section>");
+function lc(e, t) {
 	Ue(t, !0);
 	let n = (e) => t.options.find((t) => t.type === e.type), r = (e) => n(e)?.label ?? e.type, i = (e) => t.drafts[e.id]?.settings ?? e.settings, a = (e) => t.disabled || t.busy || !t.options.some((t) => t.type === e) || t.items.length >= 16 && !t.items.some((t) => t.type === e);
-	var o = sc(), s = R(o), c = R(s);
+	var o = cc(), s = R(o), c = R(s);
 	Y(c, 16, () => ["trim", "wrap"], qr, (e, n) => {
-		var r = qs(), i = R(r);
+		var r = Js(), i = R(r);
 		X(i);
 		var o = B(i, 1, !0);
 		P(r), V((e, t) => {
@@ -5146,7 +5164,7 @@ function cc(e, t) {
 	});
 	var l = B(c, 2), u = R(l);
 	u.value = u.__value = "", Y(B(u), 17, () => t.options.filter((e) => !["trim", "wrap"].includes(e.type)), (e) => e.type, (e, t) => {
-		var n = Js(), r = R(n, !0);
+		var n = Ys(), r = R(n, !0);
 		P(n);
 		var i = {};
 		V(() => {
@@ -5154,17 +5172,17 @@ function cc(e, t) {
 		}), K(e, n);
 	}), P(l), l.value = l.__value = "", P(s);
 	var d = B(s, 2), f = (e) => {
-		var a = ac(), o = R(a), s = R(o);
+		var a = oc(), o = R(a), s = R(o);
 		P(o), Y(B(o, 2), 19, () => t.items, (e) => e.id, (e, a, o) => {
 			let s = /* @__PURE__ */ F(() => n(H(a))), c = /* @__PURE__ */ F(() => r(H(a))), l = /* @__PURE__ */ F(() => t.drafts[H(a).id]);
-			var u = ic(), d = R(u), f = R(d), p = R(f);
+			var u = ac(), d = R(u), f = R(d), p = R(f);
 			X(p);
 			var m = B(p), h = R(m), g = B(h), _ = R(g, !0);
 			P(g), P(m), P(f);
 			var v = B(f, 2), y = R(v), b = B(y, 2), x = B(b, 2);
 			P(v), P(d);
 			var S = B(d, 2), C = (e) => {
-				var n = nc(), r = R(n), o = R(r), u = B(o), d = (e) => {
+				var n = rc(), r = R(n), o = R(r), u = B(o), d = (e) => {
 					K(e, Ir("· Unsaved"));
 				};
 				J(u, (e) => {
@@ -5173,8 +5191,8 @@ function cc(e, t) {
 				var f = B(r, 2);
 				Y(f, 17, () => H(s).fields, (e) => e.key, (e, n) => {
 					let r = /* @__PURE__ */ F(() => t.idPrefix + "-modifier-" + H(a).id + "-" + H(n).key);
-					var o = tc(), s = z(o), l = (e) => {
-						var o = Ys(), s = R(o);
+					var o = nc(), s = z(o), l = (e) => {
+						var o = Xs(), s = R(o);
 						X(s);
 						var l = B(s, 1, !0);
 						P(o), V((e) => {
@@ -5183,12 +5201,12 @@ function cc(e, t) {
 							t.disabled || t.ondraft(H(a).id, H(n).key, e.currentTarget.checked);
 						}), K(e, o);
 					}, u = (e) => {
-						var o = $s(), s = z(o), l = R(s, !0);
+						var o = ec(), s = z(o), l = R(s, !0);
 						P(s);
 						var u = B(s, 2), d = (e) => {
-							var o = Xs();
+							var o = Zs();
 							Y(o, 21, () => H(n).options ?? [], (e) => e.value, (e, t) => {
-								var n = Js(), r = R(n, !0);
+								var n = Ys(), r = R(n, !0);
 								P(n);
 								var i = {};
 								V(() => {
@@ -5202,14 +5220,14 @@ function cc(e, t) {
 								t.disabled || t.ondraft(H(a).id, H(n).key, e.currentTarget.value);
 							}), K(e, o);
 						}, f = (e) => {
-							var o = Zs();
+							var o = Qs();
 							X(o), V((e) => {
 								Z(o, "id", H(r)), Z(o, "aria-label", H(c) + " " + H(n).label), Z(o, "min", H(n).min), Z(o, "max", H(n).max), Z(o, "step", H(n).step ?? 1), wi(o, e), o.disabled = t.disabled;
 							}, [() => String(i(H(a))[H(n).key] ?? "")]), W("input", o, (e) => {
 								t.disabled || t.ondraft(H(a).id, H(n).key, e.currentTarget.value ? Number(e.currentTarget.value) : null);
 							}), K(e, o);
 						}, p = (e) => {
-							var o = Qs();
+							var o = $s();
 							at(o), V((e) => {
 								Z(o, "id", H(r)), Z(o, "aria-label", H(c) + " " + H(n).label), wi(o, e), o.disabled = t.disabled;
 							}, [() => String(i(H(a))[H(n).key] ?? "")]), W("input", o, (e) => {
@@ -5226,7 +5244,7 @@ function cc(e, t) {
 						H(n).editor === "boolean" ? e(l) : e(u, -1);
 					});
 					var d = B(s, 2), f = (e) => {
-						var t = ec(), r = R(t, !0);
+						var t = tc(), r = R(t, !0);
 						P(t), V(() => q(r, H(n).help)), K(e, t);
 					};
 					J(d, (e) => {
@@ -5244,8 +5262,8 @@ function cc(e, t) {
 				H(s)?.fields.length && e(C);
 			});
 			var w = B(S, 2), T = (e) => {
-				var t = rc();
-				ho(R(t), { get issue() {
+				var t = ic();
+				go(R(t), { get issue() {
 					return H(l).error;
 				} }), P(t), K(e, t);
 			};
@@ -5268,14 +5286,14 @@ function cc(e, t) {
 		t.items.length && e(f);
 	});
 	var p = B(d, 2), m = (e) => {
-		K(e, oc());
+		K(e, sc());
 	};
 	J(p, (e) => {
 		t.busy && e(m);
 	});
 	var h = B(p, 2), g = (e) => {
-		var n = rc();
-		ho(R(n), { get issue() {
+		var n = ic();
+		go(R(n), { get issue() {
 			return t.error;
 		} }), P(n), K(e, n);
 	};
@@ -5293,8 +5311,8 @@ Er([
 ]);
 //#endregion
 //#region ui/WorkflowData.svelte
-var lc = /* @__PURE__ */ G("<button type=\"button\" data-load-workflow-data=\"\" class=\"svelte-8bs3bu\"> </button>"), uc = /* @__PURE__ */ G("<label class=\"pc-wd-number svelte-8bs3bu\"><span class=\"svelte-8bs3bu\">Starting day</span><input aria-label=\"Starting day\" type=\"number\" min=\"1\" step=\"1\" class=\"svelte-8bs3bu\"/></label> <label class=\"pc-wd-number svelte-8bs3bu\"><span class=\"svelte-8bs3bu\">Starting time</span><input aria-label=\"Starting time\" type=\"text\" inputmode=\"numeric\" placeholder=\"00:00\" class=\"svelte-8bs3bu\"/></label> <label class=\"pc-wd-number svelte-8bs3bu\"><span class=\"svelte-8bs3bu\">Hours per day</span><input aria-label=\"Hours per day\" type=\"number\" step=\"any\" class=\"svelte-8bs3bu\"/></label> <p class=\"pc-wd-help svelte-8bs3bu\">Initial values only. Saved time stays unchanged.</p>", 1), dc = /* @__PURE__ */ G("<label class=\"pc-wd-block svelte-8bs3bu\"> <textarea rows=\"4\" maxlength=\"100000\" class=\"svelte-8bs3bu\"></textarea></label> <p class=\"pc-wd-help svelte-8bs3bu\"> </p>", 1), fc = /* @__PURE__ */ G("<output class=\"pc-wd-source-value svelte-8bs3bu\"> </output>"), pc = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-8bs3bu\"> </button>"), mc = /* @__PURE__ */ G("<div class=\"pc-wd-choices svelte-8bs3bu\" role=\"group\"></div>"), hc = /* @__PURE__ */ G("<option class=\"svelte-8bs3bu\"> </option>"), gc = /* @__PURE__ */ G("<select class=\"svelte-8bs3bu\"><!><!></select>"), _c = /* @__PURE__ */ G("<div class=\"pc-wd-create svelte-8bs3bu\"><label class=\"pc-wd-field svelte-8bs3bu\">Name<input maxlength=\"256\" class=\"svelte-8bs3bu\"/></label> <div class=\"pc-wd-actions svelte-8bs3bu\"><button type=\"button\" data-create-workflow-data=\"\" class=\"svelte-8bs3bu\"> </button><button type=\"button\" class=\"svelte-8bs3bu\">Cancel</button></div></div>"), vc = /* @__PURE__ */ G("<label class=\"pc-wd-field svelte-8bs3bu\">Format<select aria-label=\"Document format\" class=\"svelte-8bs3bu\"></select></label><p class=\"pc-wd-help svelte-8bs3bu\">A saved document keeps its format.</p>", 1), yc = /* @__PURE__ */ G("<div class=\"pc-wd-field svelte-8bs3bu\"><span class=\"svelte-8bs3bu\">Format</span><output class=\"svelte-8bs3bu\">JSON</output></div><p class=\"pc-wd-help svelte-8bs3bu\"> </p>", 1), bc = /* @__PURE__ */ G("<label class=\"pc-wd-field svelte-8bs3bu\">Actor ID<input aria-label=\"Private actor ID\" maxlength=\"128\" class=\"svelte-8bs3bu\"/></label>"), xc = /* @__PURE__ */ G("<label class=\"pc-wd-field svelte-8bs3bu\">Columns<input aria-label=\"CSV columns\" placeholder=\"id, text\" class=\"svelte-8bs3bu\"/></label>"), Sc = /* @__PURE__ */ G("<label class=\"pc-wd-field svelte-8bs3bu\">Calendar<input aria-label=\"Initial calendar name\" class=\"svelte-8bs3bu\"/></label><label class=\"pc-wd-field svelte-8bs3bu\">Expected calendar<input aria-label=\"Expected calendar\" placeholder=\"Any calendar\" class=\"svelte-8bs3bu\"/></label><p class=\"pc-wd-help svelte-8bs3bu\">Expected calendar validates saved data.</p>", 1), Cc = /* @__PURE__ */ G("<p class=\"pc-wd-help svelte-8bs3bu\">Open an active chat to save initial settings.</p>"), wc = /* @__PURE__ */ G("<div class=\"pc-wd-help svelte-8bs3bu\"><!></div>"), Tc = /* @__PURE__ */ G("<div class=\"pc-wd-error svelte-8bs3bu\"><!></div>"), Ec = /* @__PURE__ */ G("<p class=\"pc-wd-help svelte-8bs3bu\" role=\"status\"> </p>"), Dc = /* @__PURE__ */ G("<div class=\"pc-workflow-data svelte-8bs3bu\"><p class=\"pc-wd-binding svelte-8bs3bu\"> </p> <details class=\"pc-wd-group svelte-8bs3bu\" data-workflow-initial=\"\"><summary class=\"svelte-8bs3bu\"> <span class=\"svelte-8bs3bu\"> </span></summary> <div class=\"pc-wd-body svelte-8bs3bu\"><!> <!></div></details> <details class=\"pc-wd-group svelte-8bs3bu\" data-workflow-advanced=\"\"><summary class=\"svelte-8bs3bu\">Advanced <span class=\"svelte-8bs3bu\"> </span></summary> <div class=\"pc-wd-body svelte-8bs3bu\"><div class=\"pc-wd-source-row svelte-8bs3bu\"><span class=\"pc-wd-row-label svelte-8bs3bu\"> </span> <!> <button type=\"button\" class=\"pc-wd-add svelte-8bs3bu\">+</button></div> <!> <p class=\"pc-wd-help svelte-8bs3bu\"> </p> <hr class=\"svelte-8bs3bu\"/> <!> <span class=\"pc-wd-label svelte-8bs3bu\">Visibility</span> <div class=\"pc-wd-choices svelte-8bs3bu\" role=\"group\"></div> <!> <!> <label class=\"pc-wd-field svelte-8bs3bu\">Document ID<input readonly=\"\" class=\"svelte-8bs3bu\"/></label> <!></div></details> <div class=\"pc-wd-actions pc-wd-save svelte-8bs3bu\"><button type=\"button\" data-save-workflow-data=\"\" class=\"svelte-8bs3bu\"> </button></div> <!> <!> <!> <!></div>");
-function Oc(e, t) {
+var uc = /* @__PURE__ */ G("<button type=\"button\" data-load-workflow-data=\"\" class=\"svelte-8bs3bu\"> </button>"), dc = /* @__PURE__ */ G("<label class=\"pc-wd-number svelte-8bs3bu\"><span class=\"svelte-8bs3bu\">Starting day</span><input aria-label=\"Starting day\" type=\"number\" min=\"1\" step=\"1\" class=\"svelte-8bs3bu\"/></label> <label class=\"pc-wd-number svelte-8bs3bu\"><span class=\"svelte-8bs3bu\">Starting time</span><input aria-label=\"Starting time\" type=\"text\" inputmode=\"numeric\" placeholder=\"00:00\" class=\"svelte-8bs3bu\"/></label> <label class=\"pc-wd-number svelte-8bs3bu\"><span class=\"svelte-8bs3bu\">Hours per day</span><input aria-label=\"Hours per day\" type=\"number\" step=\"any\" class=\"svelte-8bs3bu\"/></label> <p class=\"pc-wd-help svelte-8bs3bu\">Initial values only. Saved time stays unchanged.</p>", 1), fc = /* @__PURE__ */ G("<label class=\"pc-wd-block svelte-8bs3bu\"> <textarea rows=\"4\" maxlength=\"100000\" class=\"svelte-8bs3bu\"></textarea></label> <p class=\"pc-wd-help svelte-8bs3bu\"> </p>", 1), pc = /* @__PURE__ */ G("<output class=\"pc-wd-source-value svelte-8bs3bu\"> </output>"), mc = /* @__PURE__ */ G("<button type=\"button\" class=\"svelte-8bs3bu\"> </button>"), hc = /* @__PURE__ */ G("<div class=\"pc-wd-choices svelte-8bs3bu\" role=\"group\"></div>"), gc = /* @__PURE__ */ G("<option class=\"svelte-8bs3bu\"> </option>"), _c = /* @__PURE__ */ G("<select class=\"svelte-8bs3bu\"><!><!></select>"), vc = /* @__PURE__ */ G("<div class=\"pc-wd-create svelte-8bs3bu\"><label class=\"pc-wd-field svelte-8bs3bu\">Name<input maxlength=\"256\" class=\"svelte-8bs3bu\"/></label> <div class=\"pc-wd-actions svelte-8bs3bu\"><button type=\"button\" data-create-workflow-data=\"\" class=\"svelte-8bs3bu\"> </button><button type=\"button\" class=\"svelte-8bs3bu\">Cancel</button></div></div>"), yc = /* @__PURE__ */ G("<label class=\"pc-wd-field svelte-8bs3bu\">Format<select aria-label=\"Document format\" class=\"svelte-8bs3bu\"></select></label><p class=\"pc-wd-help svelte-8bs3bu\">A saved document keeps its format.</p>", 1), bc = /* @__PURE__ */ G("<div class=\"pc-wd-field svelte-8bs3bu\"><span class=\"svelte-8bs3bu\">Format</span><output class=\"svelte-8bs3bu\">JSON</output></div><p class=\"pc-wd-help svelte-8bs3bu\"> </p>", 1), xc = /* @__PURE__ */ G("<label class=\"pc-wd-field svelte-8bs3bu\">Actor ID<input aria-label=\"Private actor ID\" maxlength=\"128\" class=\"svelte-8bs3bu\"/></label>"), Sc = /* @__PURE__ */ G("<label class=\"pc-wd-field svelte-8bs3bu\">Columns<input aria-label=\"CSV columns\" placeholder=\"id, text\" class=\"svelte-8bs3bu\"/></label>"), Cc = /* @__PURE__ */ G("<label class=\"pc-wd-field svelte-8bs3bu\">Calendar<input aria-label=\"Initial calendar name\" class=\"svelte-8bs3bu\"/></label><label class=\"pc-wd-field svelte-8bs3bu\">Expected calendar<input aria-label=\"Expected calendar\" placeholder=\"Any calendar\" class=\"svelte-8bs3bu\"/></label><p class=\"pc-wd-help svelte-8bs3bu\">Expected calendar validates saved data.</p>", 1), wc = /* @__PURE__ */ G("<p class=\"pc-wd-help svelte-8bs3bu\">Open an active chat to save initial settings.</p>"), Tc = /* @__PURE__ */ G("<div class=\"pc-wd-help svelte-8bs3bu\"><!></div>"), Ec = /* @__PURE__ */ G("<div class=\"pc-wd-error svelte-8bs3bu\"><!></div>"), Dc = /* @__PURE__ */ G("<p class=\"pc-wd-help svelte-8bs3bu\" role=\"status\"> </p>"), Oc = /* @__PURE__ */ G("<div class=\"pc-workflow-data svelte-8bs3bu\"><p class=\"pc-wd-binding svelte-8bs3bu\"> </p> <details class=\"pc-wd-group svelte-8bs3bu\" data-workflow-initial=\"\"><summary class=\"svelte-8bs3bu\"> <span class=\"svelte-8bs3bu\"> </span></summary> <div class=\"pc-wd-body svelte-8bs3bu\"><!> <!></div></details> <details class=\"pc-wd-group svelte-8bs3bu\" data-workflow-advanced=\"\"><summary class=\"svelte-8bs3bu\">Advanced <span class=\"svelte-8bs3bu\"> </span></summary> <div class=\"pc-wd-body svelte-8bs3bu\"><div class=\"pc-wd-source-row svelte-8bs3bu\"><span class=\"pc-wd-row-label svelte-8bs3bu\"> </span> <!> <button type=\"button\" class=\"pc-wd-add svelte-8bs3bu\">+</button></div> <!> <p class=\"pc-wd-help svelte-8bs3bu\"> </p> <hr class=\"svelte-8bs3bu\"/> <!> <span class=\"pc-wd-label svelte-8bs3bu\">Visibility</span> <div class=\"pc-wd-choices svelte-8bs3bu\" role=\"group\"></div> <!> <!> <label class=\"pc-wd-field svelte-8bs3bu\">Document ID<input readonly=\"\" class=\"svelte-8bs3bu\"/></label> <!></div></details> <div class=\"pc-wd-actions pc-wd-save svelte-8bs3bu\"><button type=\"button\" data-save-workflow-data=\"\" class=\"svelte-8bs3bu\"> </button></div> <!> <!> <!> <!></div>");
+function kc(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "actions", 19, () => ({})), r = Pi(t, "disabled", 3, !1), i = Pi(t, "idPrefix", 3, "pc-workflow-data"), a = /* @__PURE__ */ I(null), o = /* @__PURE__ */ I("1"), s = /* @__PURE__ */ I("00:00"), c = /* @__PURE__ */ I("24"), l = /* @__PURE__ */ I("story-calendar"), u = /* @__PURE__ */ I(""), d = /* @__PURE__ */ I("text"), f = /* @__PURE__ */ I("public"), p = /* @__PURE__ */ I(""), m = /* @__PURE__ */ I(""), h = /* @__PURE__ */ I(!1), g = /* @__PURE__ */ I(""), _ = /* @__PURE__ */ I(""), v = /* @__PURE__ */ I(""), y = /* @__PURE__ */ I(""), b = /* @__PURE__ */ I(!1), x = "", S = 0, C = !0, w = /* @__PURE__ */ F(() => t.model.kind === "clock" ? "Clock" : t.model.kind === "outcomes" ? "Outcomes" : "Document"), T = /* @__PURE__ */ F(() => t.model.kind === "clock" ? "clock" : t.model.kind === "outcomes" ? "outcomes" : "document"), E = /* @__PURE__ */ F(() => !r() && t.model.editable && !!H(a) && !H(_)), D = /* @__PURE__ */ F(() => !r() && t.model.editable && t.model.available && !H(_)), O = [
 		{
@@ -5464,12 +5482,12 @@ function Oc(e, t) {
 	function fe(e) {
 		!r() && t.model.editable && !H(_) && n().editControl && ce("calendar", (t) => n().editControl(t, "calendarId", e));
 	}
-	var pe = Dc(), me = R(pe), he = R(me);
+	var pe = Oc(), me = R(pe), he = R(me);
 	P(me);
 	var ge = B(me, 2), _e = R(ge), ve = R(_e), ye = B(ve), be = R(ye, !0);
 	P(ye), P(_e);
 	var xe = B(_e, 2), Se = R(xe), Ce = (e) => {
-		var i = lc(), a = R(i, !0);
+		var i = uc(), a = R(i, !0);
 		P(i), V(() => {
 			i.disabled = r() || !t.model.editable || !t.model.available || !n().loadWorkflowData || !!H(_), q(a, H(_) === "load" ? "Loading…" : "Load initial values");
 		}), W("click", i, () => {
@@ -5480,7 +5498,7 @@ function Oc(e, t) {
 		H(a) || e(Ce);
 	});
 	var we = B(Se, 2), Te = (e) => {
-		var t = uc(), n = z(t), r = B(R(n));
+		var t = dc(), n = z(t), r = B(R(n));
 		X(r), P(n);
 		var i = B(n, 2), a = B(R(i));
 		X(a), P(i);
@@ -5489,7 +5507,7 @@ function Oc(e, t) {
 			wi(r, H(o)), r.disabled = !H(E), wi(a, H(s)), a.disabled = !H(E), wi(u, H(c)), u.disabled = !H(E);
 		}), W("input", r, (e) => te("day", e.currentTarget.value)), W("input", a, (e) => te("time", e.currentTarget.value)), W("input", u, (e) => te("hours", e.currentTarget.value)), K(e, t);
 	}, Ee = (e) => {
-		var n = dc(), r = z(n), i = R(r, !0), a = B(i);
+		var n = fc(), r = z(n), i = R(r, !0), a = B(i);
 		at(a), P(r);
 		var o = B(r, 2), s = R(o);
 		P(o), V(() => {
@@ -5504,21 +5522,21 @@ function Oc(e, t) {
 	var Ae = B(N, 2), je = R(Ae), Ne = R(je), Pe = R(Ne, !0);
 	P(Ne);
 	var Fe = B(Ne, 2), Ie = (e) => {
-		var n = fc(), r = R(n, !0);
+		var n = pc(), r = R(n, !0);
 		P(n), V((e) => {
 			Z(n, "aria-label", H(w) + " source"), q(r, e);
 		}, [() => t.model.sources.find((e) => e.value === t.model.targetId)?.label ?? t.model.name ?? t.model.targetId]), K(e, n);
 	}, Le = (e) => {
-		var i = mc();
+		var i = hc();
 		Y(i, 21, () => t.model.sources, (e) => e.value, (e, i) => {
-			var a = pc(), o = R(a, !0);
+			var a = mc(), o = R(a, !0);
 			P(a), V(() => {
 				Z(a, "data-workflow-source", H(i).value), Z(a, "aria-pressed", H(i).value === t.model.targetId), a.disabled = r() || !t.model.editable || !n().bindWorkflowData || !!H(_), q(o, H(i).label);
 			}), W("click", a, () => ue(H(i).value)), K(e, a);
 		}), P(i), V(() => Z(i, "aria-label", H(w) + " source")), K(e, i);
 	}, Re = (e) => {
-		var i = gc(), a = R(i), o = (e) => {
-			var n = hc(), r = R(n, !0);
+		var i = _c(), a = R(i), o = (e) => {
+			var n = gc(), r = R(n, !0);
 			P(n);
 			var i = {};
 			V(() => {
@@ -5528,7 +5546,7 @@ function Oc(e, t) {
 		J(a, (e) => {
 			H(s) && e(o);
 		}), Y(B(a), 17, () => t.model.sources, (e) => e.value, (e, t) => {
-			var n = hc(), r = R(n, !0);
+			var n = gc(), r = R(n, !0);
 			P(n);
 			var i = {};
 			V(() => {
@@ -5546,7 +5564,7 @@ function Oc(e, t) {
 	var ze = B(Fe, 2);
 	P(je);
 	var Be = B(je, 2), Ve = (e) => {
-		var t = _c(), n = R(t), r = B(R(n));
+		var t = vc(), n = R(t), r = B(R(n));
 		X(r), P(n);
 		var i = B(n, 2), a = R(i), o = R(a, !0);
 		P(a);
@@ -5565,9 +5583,9 @@ function Oc(e, t) {
 	var He = B(Be, 2), Ge = R(He, !0);
 	P(He);
 	var Ke = B(He, 4), qe = (e) => {
-		var t = vc(), n = z(t), r = B(R(n));
+		var t = yc(), n = z(t), r = B(R(n));
 		Y(r, 21, () => k, qr, (e, t) => {
-			var n = hc(), r = R(n, !0);
+			var n = gc(), r = R(n, !0);
 			P(n);
 			var i = {};
 			V(() => {
@@ -5579,7 +5597,7 @@ function Oc(e, t) {
 			r.disabled = !H(E), i !== (i = H(d)) && (r.value = (r.__value = H(d)) ?? "", gi(r, H(d)));
 		}), W("change", r, (e) => ne(e.currentTarget.value)), K(e, t);
 	}, Je = (e) => {
-		var n = yc(), r = z(n), i = B(R(r));
+		var n = bc(), r = z(n), i = B(R(r));
 		P(r);
 		var a = B(r), o = R(a, !0);
 		P(a), V(() => {
@@ -5591,13 +5609,13 @@ function Oc(e, t) {
 	});
 	var Ye = B(Ke, 2), Xe = B(Ye, 2);
 	Y(Xe, 21, () => O, qr, (e, t) => {
-		var n = pc(), r = R(n, !0);
+		var n = mc(), r = R(n, !0);
 		P(n), V(() => {
 			Z(n, "data-workflow-visibility", H(t).value), Z(n, "aria-pressed", H(f) === H(t).value), n.disabled = !H(D), q(r, H(t).label);
 		}), W("click", n, () => re(H(t).value)), K(e, n);
 	}), P(Xe);
 	var Ze = B(Xe, 2), Qe = (e) => {
-		var t = bc(), n = B(R(t));
+		var t = xc(), n = B(R(t));
 		X(n), P(t), V(() => {
 			wi(n, H(p)), n.disabled = !H(D);
 		}), W("input", n, (e) => te("actor", e.currentTarget.value)), K(e, t);
@@ -5606,7 +5624,7 @@ function Oc(e, t) {
 		H(f) === "actor-private" && e(Qe);
 	});
 	var $e = B(Ze, 2), et = (e) => {
-		var t = xc(), n = B(R(t));
+		var t = Sc(), n = B(R(t));
 		X(n), P(t), V(() => {
 			wi(n, H(m)), n.disabled = !H(E);
 		}), W("input", n, (e) => te("columns", e.currentTarget.value)), K(e, t);
@@ -5617,7 +5635,7 @@ function Oc(e, t) {
 	var tt = B($e, 2), nt = B(R(tt));
 	X(nt), P(tt);
 	var rt = B(tt, 2), it = (e) => {
-		var i = Sc(), a = z(i), o = B(R(a));
+		var i = Cc(), a = z(i), o = B(R(a));
 		X(o), P(a);
 		var s = B(a), c = B(R(s));
 		X(c), P(s), Me(), V(() => {
@@ -5630,14 +5648,14 @@ function Oc(e, t) {
 	var ot = B(De, 2), st = R(ot), ct = R(st, !0);
 	P(st), P(ot);
 	var lt = B(ot, 2), ut = (e) => {
-		K(e, Cc());
+		K(e, wc());
 	};
 	J(lt, (e) => {
 		t.model.available || e(ut);
 	});
 	var dt = B(lt, 2), ft = (e) => {
-		var n = wc();
-		ho(R(n), { get issue() {
+		var n = Tc();
+		go(R(n), { get issue() {
 			return t.model.issue;
 		} }), P(n), K(e, n);
 	};
@@ -5645,8 +5663,8 @@ function Oc(e, t) {
 		t.model.issue && e(ft);
 	});
 	var pt = B(dt, 2), mt = (e) => {
-		var t = Tc();
-		ho(R(t), { get issue() {
+		var t = Ec();
+		go(R(t), { get issue() {
 			return H(v);
 		} }), P(t), K(e, t);
 	};
@@ -5654,7 +5672,7 @@ function Oc(e, t) {
 		H(v) && e(mt);
 	});
 	var ht = B(pt, 2), gt = (e) => {
-		var n = Ec(), r = R(n, !0);
+		var n = Dc(), r = R(n, !0);
 		P(n), V(() => q(r, H(y) || t.model.notice)), K(e, n);
 	};
 	J(ht, (e) => {
@@ -5676,13 +5694,13 @@ Er([
 ]);
 //#endregion
 //#region ui/NodeDetails.svelte
-var kc = /* @__PURE__ */ G("<small data-canonical-title=\"\" class=\"svelte-59ntjv\"> </small>"), Ac = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-node-guide-help svelte-59ntjv\">?</button>"), jc = /* @__PURE__ */ G("<div class=\"pc-detail-error svelte-59ntjv\"><!></div>"), Mc = /* @__PURE__ */ G("<label class=\"svelte-59ntjv\">Workflow stage<select aria-label=\"Workflow stage\" class=\"svelte-59ntjv\"><option class=\"svelte-59ntjv\">Preparation · before Generate Reply</option><option class=\"svelte-59ntjv\">Response · after Generate Reply</option></select></label><!>", 1), Nc = /* @__PURE__ */ G("<span class=\"svelte-59ntjv\">Read-only body</span>"), Pc = /* @__PURE__ */ G("<span class=\"pc-detail-blocked svelte-59ntjv\"> </span>"), Fc = /* @__PURE__ */ G("<p class=\"pc-detail-state svelte-59ntjv\"><!><!></p>"), Ic = /* @__PURE__ */ G("<label class=\"svelte-59ntjv\"><input type=\"checkbox\" aria-label=\"Run this system\" class=\"svelte-59ntjv\"/> Run this system</label><small class=\"svelte-59ntjv\">When off, the whole system and its outputs are skipped. Optional Guidance sections can omit it.</small><!>", 1), Lc = /* @__PURE__ */ G("<option class=\"svelte-59ntjv\"> </option>"), Rc = /* @__PURE__ */ G("<fieldset class=\"pc-detail-group svelte-59ntjv\" data-boundary-controls=\"\"><legend class=\"svelte-59ntjv\"> </legend> <label class=\"svelte-59ntjv\">Type<select aria-label=\"Subgraph port type\" class=\"svelte-59ntjv\"></select></label> <label class=\"pc-detail-check svelte-59ntjv\"><input aria-label=\"Required subgraph port\" type=\"checkbox\" class=\"svelte-59ntjv\"/> Required</label> <div class=\"pc-detail-actions svelte-59ntjv\"><button type=\"button\" data-save-boundary=\"\" class=\"svelte-59ntjv\"> </button></div> <small class=\"svelte-59ntjv\">Labels appear on the subgraph block. Disconnect incompatible connections before changing the type. Deleting this node removes its port and attached connections.</small> <!></fieldset>"), zc = /* @__PURE__ */ G("<p role=\"status\" class=\"svelte-59ntjv\">Loading file…</p>"), Bc = /* @__PURE__ */ G("<div data-file-input-controls=\"\" class=\"svelte-59ntjv\"><label class=\"svelte-59ntjv\"> <input type=\"file\" accept=\".txt,.md,.json,text/plain,text/markdown,application/json\" class=\"svelte-59ntjv\"/></label> <p class=\"svelte-59ntjv\"> </p> <small class=\"svelte-59ntjv\">The file's UTF-8 text is embedded in this workflow. Runs use the saved snapshot; replace the file to refresh it.</small> <small class=\"svelte-59ntjv\">Choose a .txt, .md or .json file up to 400,000 bytes and 100,000 UTF-16 code units.</small> <!> <!></div>"), Vc = /* @__PURE__ */ G("<details class=\"pc-detail-group svelte-59ntjv\"><summary class=\"svelte-59ntjv\"> </summary> <!></details>"), Hc = /* @__PURE__ */ G("<!> <fieldset class=\"pc-detail-group pc-detail-main svelte-59ntjv\" data-operation-controls=\"\"><!> <!></fieldset> <!>", 1), Uc = /* @__PURE__ */ G("<label class=\"svelte-59ntjv\">Model identifier<input class=\"svelte-59ntjv\"/></label>"), Wc = /* @__PURE__ */ G("<small class=\"svelte-59ntjv\"> </small>"), Gc = /* @__PURE__ */ G("<fieldset class=\"svelte-59ntjv\"><legend class=\"svelte-59ntjv\"> </legend> <label class=\"svelte-59ntjv\">Connection profile<select class=\"svelte-59ntjv\"><option class=\"svelte-59ntjv\">Use helper connection</option><!><!></select></label> <label class=\"svelte-59ntjv\">Model mode<select class=\"svelte-59ntjv\"></select></label> <!> <small class=\"svelte-59ntjv\"> </small><small class=\"svelte-59ntjv\"> </small><!> <!></fieldset>"), Kc = /* @__PURE__ */ G("<small class=\"svelte-59ntjv\">This helper has no text model calls to configure.</small>"), qc = /* @__PURE__ */ G("<details class=\"pc-detail-group svelte-59ntjv\" data-helper-model-controls=\"\" open=\"\"><summary class=\"svelte-59ntjv\">Helper model bindings</summary> <small class=\"svelte-59ntjv\">Choose connections for inherited text model roles in the pinned helper. Explicit helper-node bindings take precedence. These selections belong to this For Each node.</small> <!> <!></details>"), Jc = /* @__PURE__ */ G("<label class=\"svelte-59ntjv\">Model identifier<input aria-label=\"Model identifier\" class=\"svelte-59ntjv\"/></label>"), Yc = /* @__PURE__ */ G("<!> <details class=\"pc-detail-group svelte-59ntjv\" data-model-controls=\"\"><summary class=\"svelte-59ntjv\">Advanced model settings</summary> <button type=\"button\" data-reset-profile=\"\" class=\"svelte-59ntjv\"> </button> <small class=\"svelte-59ntjv\">Choose a connection with the bar under this node. Reset removes this node's connection override.</small> <label class=\"svelte-59ntjv\">Model mode<select aria-label=\"Model mode\" class=\"svelte-59ntjv\"></select></label> <!> <label class=\"svelte-59ntjv\">Model role<input aria-label=\"Model role\" class=\"svelte-59ntjv\"/></label> <!><!> <!></details>", 1), Xc = /* @__PURE__ */ G("<p class=\"pc-detail-port svelte-59ntjv\"> <small class=\"svelte-59ntjv\"> </small></p>"), Zc = /* @__PURE__ */ G("<details class=\"pc-detail-group svelte-59ntjv\"><summary class=\"svelte-59ntjv\">Inputs and outputs</summary><!></details>"), Qc = /* @__PURE__ */ G("<p role=\"status\" class=\"svelte-59ntjv\"> </p>"), $c = /* @__PURE__ */ G("<header class=\"svelte-59ntjv\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-59ntjv\"><path class=\"svelte-59ntjv\"></path></svg> <div class=\"pc-detail-identity svelte-59ntjv\"><input class=\"pc-detail-name svelte-59ntjv\" aria-label=\"Node name\"/> <!> <small class=\"svelte-59ntjv\"> </small></div> <!></header> <!> <!> <!> <!> <!> <!> <!> <!> <!> <!> <!> <!> <!>", 1), el = /* @__PURE__ */ G("<p class=\"pc-detail-empty svelte-59ntjv\">Select a node to inspect its settings.</p>"), tl = /* @__PURE__ */ G("<section class=\"pc-node-details svelte-59ntjv\" aria-label=\"Node details\"><!></section>");
-function nl(e, t) {
+var Ac = /* @__PURE__ */ G("<small data-canonical-title=\"\" class=\"svelte-59ntjv\"> </small>"), jc = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-node-guide-help svelte-59ntjv\">?</button>"), Mc = /* @__PURE__ */ G("<div class=\"pc-detail-error svelte-59ntjv\"><!></div>"), Nc = /* @__PURE__ */ G("<label class=\"svelte-59ntjv\">Workflow stage<select aria-label=\"Workflow stage\" class=\"svelte-59ntjv\"><option class=\"svelte-59ntjv\">Preparation · before Generate Reply</option><option class=\"svelte-59ntjv\">Response · after Generate Reply</option></select></label><!>", 1), Pc = /* @__PURE__ */ G("<span class=\"svelte-59ntjv\">Read-only body</span>"), Fc = /* @__PURE__ */ G("<span class=\"pc-detail-blocked svelte-59ntjv\"> </span>"), Ic = /* @__PURE__ */ G("<p class=\"pc-detail-state svelte-59ntjv\"><!><!></p>"), Lc = /* @__PURE__ */ G("<label class=\"svelte-59ntjv\"><input type=\"checkbox\" aria-label=\"Run this system\" class=\"svelte-59ntjv\"/> Run this system</label><small class=\"svelte-59ntjv\">When off, the whole system and its outputs are skipped. Optional Guidance sections can omit it.</small><!>", 1), Rc = /* @__PURE__ */ G("<option class=\"svelte-59ntjv\"> </option>"), zc = /* @__PURE__ */ G("<fieldset class=\"pc-detail-group svelte-59ntjv\" data-boundary-controls=\"\"><legend class=\"svelte-59ntjv\"> </legend> <label class=\"svelte-59ntjv\">Type<select aria-label=\"Subgraph port type\" class=\"svelte-59ntjv\"></select></label> <label class=\"pc-detail-check svelte-59ntjv\"><input aria-label=\"Required subgraph port\" type=\"checkbox\" class=\"svelte-59ntjv\"/> Required</label> <div class=\"pc-detail-actions svelte-59ntjv\"><button type=\"button\" data-save-boundary=\"\" class=\"svelte-59ntjv\"> </button></div> <small class=\"svelte-59ntjv\">Labels appear on the subgraph block. Disconnect incompatible connections before changing the type. Deleting this node removes its port and attached connections.</small> <!></fieldset>"), Bc = /* @__PURE__ */ G("<p role=\"status\" class=\"svelte-59ntjv\">Loading file…</p>"), Vc = /* @__PURE__ */ G("<div data-file-input-controls=\"\" class=\"svelte-59ntjv\"><label class=\"svelte-59ntjv\"> <input type=\"file\" accept=\".txt,.md,.json,text/plain,text/markdown,application/json\" class=\"svelte-59ntjv\"/></label> <p class=\"svelte-59ntjv\"> </p> <small class=\"svelte-59ntjv\">The file's UTF-8 text is embedded in this workflow. Runs use the saved snapshot; replace the file to refresh it.</small> <small class=\"svelte-59ntjv\">Choose a .txt, .md or .json file up to 400,000 bytes and 100,000 UTF-16 code units.</small> <!> <!></div>"), Hc = /* @__PURE__ */ G("<details class=\"pc-detail-group svelte-59ntjv\"><summary class=\"svelte-59ntjv\"> </summary> <!></details>"), Uc = /* @__PURE__ */ G("<!> <fieldset class=\"pc-detail-group pc-detail-main svelte-59ntjv\" data-operation-controls=\"\"><!> <!></fieldset> <!>", 1), Wc = /* @__PURE__ */ G("<label class=\"svelte-59ntjv\">Model identifier<input class=\"svelte-59ntjv\"/></label>"), Gc = /* @__PURE__ */ G("<small class=\"svelte-59ntjv\"> </small>"), Kc = /* @__PURE__ */ G("<fieldset class=\"svelte-59ntjv\"><legend class=\"svelte-59ntjv\"> </legend> <label class=\"svelte-59ntjv\">Connection profile<select class=\"svelte-59ntjv\"><option class=\"svelte-59ntjv\">Use helper connection</option><!><!></select></label> <label class=\"svelte-59ntjv\">Model mode<select class=\"svelte-59ntjv\"></select></label> <!> <small class=\"svelte-59ntjv\"> </small><small class=\"svelte-59ntjv\"> </small><!> <!></fieldset>"), qc = /* @__PURE__ */ G("<small class=\"svelte-59ntjv\">This helper has no text model calls to configure.</small>"), Jc = /* @__PURE__ */ G("<details class=\"pc-detail-group svelte-59ntjv\" data-helper-model-controls=\"\" open=\"\"><summary class=\"svelte-59ntjv\">Helper model bindings</summary> <small class=\"svelte-59ntjv\">Choose connections for inherited text model roles in the pinned helper. Explicit helper-node bindings take precedence. These selections belong to this For Each node.</small> <!> <!></details>"), Yc = /* @__PURE__ */ G("<label class=\"svelte-59ntjv\">Model identifier<input aria-label=\"Model identifier\" class=\"svelte-59ntjv\"/></label>"), Xc = /* @__PURE__ */ G("<!> <details class=\"pc-detail-group svelte-59ntjv\" data-model-controls=\"\"><summary class=\"svelte-59ntjv\">Advanced model settings</summary> <button type=\"button\" data-reset-profile=\"\" class=\"svelte-59ntjv\"> </button> <small class=\"svelte-59ntjv\">Choose a connection with the bar under this node. Reset removes this node's connection override.</small> <label class=\"svelte-59ntjv\">Model mode<select aria-label=\"Model mode\" class=\"svelte-59ntjv\"></select></label> <!> <label class=\"svelte-59ntjv\">Model role<input aria-label=\"Model role\" class=\"svelte-59ntjv\"/></label> <!><!> <!></details>", 1), Zc = /* @__PURE__ */ G("<p class=\"pc-detail-port svelte-59ntjv\"> <small class=\"svelte-59ntjv\"> </small></p>"), Qc = /* @__PURE__ */ G("<details class=\"pc-detail-group svelte-59ntjv\"><summary class=\"svelte-59ntjv\">Inputs and outputs</summary><!></details>"), $c = /* @__PURE__ */ G("<p role=\"status\" class=\"svelte-59ntjv\"> </p>"), el = /* @__PURE__ */ G("<header class=\"svelte-59ntjv\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" class=\"svelte-59ntjv\"><path class=\"svelte-59ntjv\"></path></svg> <div class=\"pc-detail-identity svelte-59ntjv\"><input class=\"pc-detail-name svelte-59ntjv\" aria-label=\"Node name\"/> <!> <small class=\"svelte-59ntjv\"> </small></div> <!></header> <!> <!> <!> <!> <!> <!> <!> <!> <!> <!> <!> <!> <!>", 1), tl = /* @__PURE__ */ G("<p class=\"pc-detail-empty svelte-59ntjv\">Select a node to inspect its settings.</p>"), nl = /* @__PURE__ */ G("<section class=\"pc-node-details svelte-59ntjv\" aria-label=\"Node details\"><!></section>");
+function rl(e, t) {
 	Ue(t, !0);
 	let n = (e, n = d) => {
 		{
 			let s = /* @__PURE__ */ F(() => H(a)[n().key]?.text ?? k(n())), c = /* @__PURE__ */ F(() => H(a)[n().key]?.error || H(o)[n().key] || ""), l = /* @__PURE__ */ F(() => !!t.view?.readOnly || !r().editControl), u = /* @__PURE__ */ F(() => !!H(a)[n().key]?.pending), d = /* @__PURE__ */ F(() => i() + "-" + n().key), f = /* @__PURE__ */ F(() => H(a)[n().key]?.typedValue);
-			Bs(e, {
+			Vs(e, {
 				get control() {
 					return n();
 				},
@@ -6231,15 +6249,15 @@ function nl(e, t) {
 			return s;
 		});
 	}
-	var Ke = tl(), qe = R(Ke), Je = (e) => {
-		var s = $c(), c = z(s);
+	var Ke = nl(), qe = R(Ke), Je = (e) => {
+		var s = el(), c = z(s);
 		let l;
 		var u = R(c), d = R(u);
 		P(u);
 		var f = B(u, 2), p = R(f);
 		X(p);
 		var h = B(p, 2), _ = (e) => {
-			var n = kc(), r = R(n);
+			var n = Ac(), r = R(n);
 			P(n), V(() => q(r, `Canonical type: ${t.view.canonicalTitle ?? ""}`)), K(e, n);
 		};
 		J(h, (e) => {
@@ -6248,7 +6266,7 @@ function nl(e, t) {
 		var v = B(h, 2), y = R(v, !0);
 		P(v), P(f);
 		var b = B(f, 2), x = (e) => {
-			var n = Ac();
+			var n = jc();
 			V(() => {
 				Z(n, "aria-label", `Open ${t.view.canonicalTitle} guide`), Z(n, "title", `Help with ${t.view.canonicalTitle}`);
 			}), W("click", n, function(...e) {
@@ -6259,17 +6277,17 @@ function nl(e, t) {
 			t.openGuide && e(x);
 		}), P(c);
 		var S = B(c, 2), C = (e) => {
-			var n = Mc(), i = z(n), a = B(R(i)), s = R(a);
+			var n = Nc(), i = z(n), a = B(R(i)), s = R(a);
 			s.value = s.__value = "pre";
 			var c = B(s);
 			c.value = c.__value = "post", P(a);
 			var l;
 			_i(a), P(i);
 			var u = B(i), d = (e) => {
-				var n = jc(), r = R(n);
+				var n = Mc(), r = R(n);
 				{
 					let e = /* @__PURE__ */ F(() => ({ nodeTitle: t.view?.title }));
-					ho(r, {
+					go(r, {
 						get issue() {
 							return H(o).phase;
 						},
@@ -6311,7 +6329,7 @@ function nl(e, t) {
 					},
 					revealShortcut: r().revealRecallShortcut
 				}));
-				Ks(e, {
+				qs(e, {
 					get view() {
 						return t.view.recall;
 					},
@@ -6325,14 +6343,14 @@ function nl(e, t) {
 			t.view.recall && e(T);
 		});
 		var E = B(w, 2), O = (e) => {
-			var n = Fc(), r = R(n), i = (e) => {
-				K(e, Nc());
+			var n = Ic(), r = R(n), i = (e) => {
+				K(e, Pc());
 			};
 			J(r, (e) => {
 				t.view.readOnly && e(i);
 			});
 			var a = B(r), o = (e) => {
-				var n = Pc(), r = R(n, !0);
+				var n = Fc(), r = R(n, !0);
 				P(n), V(() => q(r, t.view.system ? "System skipped" : "Blocks run · Disabled")), K(e, n);
 			};
 			J(a, (e) => {
@@ -6343,13 +6361,13 @@ function nl(e, t) {
 			(t.view.readOnly || !t.view.enabled) && e(O);
 		});
 		var k = B(E, 2), A = (e) => {
-			var n = Ic(), i = z(n), a = R(i);
+			var n = Lc(), i = z(n), a = R(i);
 			X(a), Me(), P(i);
 			var s = B(i, 2), c = (e) => {
-				var n = jc(), r = R(n);
+				var n = Mc(), r = R(n);
 				{
 					let e = /* @__PURE__ */ F(() => ({ nodeTitle: t.view?.title }));
-					ho(r, {
+					go(r, {
 						get issue() {
 							return H(o).enabled;
 						},
@@ -6373,10 +6391,10 @@ function nl(e, t) {
 			t.view.system && e(A);
 		});
 		var j = B(k, 2), te = (e) => {
-			var n = jc(), r = R(n);
+			var n = Mc(), r = R(n);
 			{
 				let e = /* @__PURE__ */ F(() => ({ nodeTitle: t.view?.title }));
-				ho(r, {
+				go(r, {
 					get issue() {
 						return H(o).alias;
 					},
@@ -6391,11 +6409,11 @@ function nl(e, t) {
 			H(o).alias && e(te);
 		});
 		var ne = B(j, 2), re = (e) => {
-			var n = Rc(), i = R(n), s = R(i);
+			var n = zc(), i = R(n), s = R(i);
 			P(i);
 			var c = B(i, 2), l = B(R(c));
 			Y(l, 20, () => t.view.boundary.kinds, (e) => e, (e, t) => {
-				var n = Lc(), r = R(n, !0);
+				var n = Rc(), r = R(n, !0);
 				P(n);
 				var i = {};
 				V(() => {
@@ -6409,10 +6427,10 @@ function nl(e, t) {
 			var p = B(d, 2), m = R(p), h = R(m, !0);
 			P(m), P(p);
 			var g = B(p, 4), _ = (e) => {
-				var n = jc(), r = R(n);
+				var n = Mc(), r = R(n);
 				{
 					let e = /* @__PURE__ */ F(() => H(a).boundary?.error || H(o).boundary), n = /* @__PURE__ */ F(() => ({ nodeTitle: t.view?.title }));
-					ho(r, {
+					go(r, {
 						get issue() {
 							return H(e);
 						},
@@ -6437,10 +6455,10 @@ function nl(e, t) {
 			t.view.boundary && e(re);
 		});
 		var ie = B(ne, 2), ae = (e) => {
-			var s = Hc(), c = z(s), l = (e) => {
+			var s = Uc(), c = z(s), l = (e) => {
 				{
 					let n = /* @__PURE__ */ F(() => D(t.view)), a = /* @__PURE__ */ F(() => i() + "-workflow-data");
-					Oc(e, {
+					kc(e, {
 						get model() {
 							return t.view.workflowData;
 						},
@@ -6463,21 +6481,21 @@ function nl(e, t) {
 				t.view.workflowData && e(l);
 			});
 			var u = B(c, 2), d = R(u), f = (e) => {
-				var n = Bc(), s = R(n), c = R(s, !0), l = B(c);
+				var n = Vc(), s = R(n), c = R(s, !0), l = B(c);
 				P(s);
 				var u = B(s, 2), d = R(u, !0);
 				P(u);
 				var f = B(u, 6), p = (e) => {
-					K(e, zc());
+					K(e, Bc());
 				};
 				J(f, (e) => {
 					H(a).fileInput?.pending && e(p);
 				});
 				var m = B(f, 2), h = (e) => {
-					var n = jc(), r = R(n);
+					var n = Mc(), r = R(n);
 					{
 						let e = /* @__PURE__ */ F(() => ({ nodeTitle: t.view?.title }));
-						ho(r, {
+						go(r, {
 							get issue() {
 								return H(o).fileInput;
 							},
@@ -6506,7 +6524,7 @@ function nl(e, t) {
 			}), P(u), Y(B(u, 2), 17, () => H(Ie).filter(([e]) => e !== "Main"), ([e, t]) => e, (e, t) => {
 				var r = /* @__PURE__ */ F(() => m(H(t), 2));
 				let i = () => H(r)[0], a = () => H(r)[1];
-				var o = Vc(), s = R(o), c = R(s, !0);
+				var o = Hc(), s = R(o), c = R(s, !0);
 				P(s);
 				var l = B(s, 2), u = (e) => {
 					var t = Lr();
@@ -6527,14 +6545,14 @@ function nl(e, t) {
 			t.view.boundary || e(ae);
 		});
 		var se = B(ie, 2), ce = (e) => {
-			var n = qc(), r = B(R(n), 4);
+			var n = Jc(), r = B(R(n), 4);
 			Y(r, 17, () => t.view.helperBindings.roles, (e) => e.role, (e, n) => {
-				var r = Gc(), i = R(r), s = R(i, !0);
+				var r = Kc(), i = R(r), s = R(i, !0);
 				P(i);
 				var c = B(i, 2), l = B(R(c)), u = R(l);
 				u.value = u.__value = "";
 				var d = B(u), f = (e) => {
-					var t = Lc(), r = R(t);
+					var t = Rc(), r = R(t);
 					P(t);
 					var i = {};
 					V(() => {
@@ -6544,7 +6562,7 @@ function nl(e, t) {
 				J(d, (e) => {
 					H(p) && e(f);
 				}), Y(B(d), 17, () => H(n).profile.options ?? [], (e) => e.value, (e, t) => {
-					var n = Lc(), r = R(n, !0);
+					var n = Rc(), r = R(n, !0);
 					P(n);
 					var i = {};
 					V(() => {
@@ -6555,7 +6573,7 @@ function nl(e, t) {
 				_i(l), P(c);
 				var h = B(c, 2), g = B(R(h));
 				Y(g, 21, () => H(n).model.allowedModes, (e) => e.value, (e, t) => {
-					var n = Lc(), r = R(n, !0);
+					var n = Rc(), r = R(n, !0);
 					P(n);
 					var i = {};
 					V(() => {
@@ -6565,7 +6583,7 @@ function nl(e, t) {
 				var _;
 				_i(g), P(h);
 				var v = B(h, 2), y = (e) => {
-					var t = Uc(), r = B(R(t));
+					var t = Wc(), r = B(R(t));
 					X(r), P(t), V((e, t) => {
 						Z(r, "aria-label", H(n).role + " model identifier"), wi(r, e), r.disabled = t;
 					}, [() => H(a)[oe(H(n).role, "model")]?.text ?? H(n).model.value ?? "", () => !le(H(n).role, "model")]), W("input", r, (e) => fe(H(n).role, e.currentTarget.value)), W("change", r, (e) => me(H(n).role, e.currentTarget.value)), K(e, t);
@@ -6578,17 +6596,17 @@ function nl(e, t) {
 				var C = B(x), w = R(C, !0);
 				P(C);
 				var T = B(C), E = (e) => {
-					var t = Wc(), r = R(t, !0);
+					var t = Gc(), r = R(t, !0);
 					P(t), V(() => q(r, H(n).caveat)), K(e, t);
 				};
 				J(T, (e) => {
 					H(n).caveat && e(E);
 				});
 				var D = B(T, 2), O = (e) => {
-					var r = jc(), i = R(r);
+					var r = Mc(), i = R(r);
 					{
 						let e = /* @__PURE__ */ F(() => H(o)[oe(H(n).role, "profileId")] || H(o)[oe(H(n).role, "model")]), r = /* @__PURE__ */ F(() => ({ nodeTitle: t.view?.title }));
-						ho(i, {
+						go(i, {
 							get issue() {
 								return H(e);
 							},
@@ -6610,10 +6628,10 @@ function nl(e, t) {
 				]), W("change", l, (e) => de(H(n).role, "profileId", e.currentTarget.value ? "override" : "inherit", e.currentTarget.value || null)), W("change", g, (e) => pe(H(n).role, e.currentTarget.value)), K(e, r);
 			});
 			var i = B(r, 2), s = (e) => {
-				var n = jc(), r = R(n);
+				var n = Mc(), r = R(n);
 				{
 					let e = /* @__PURE__ */ F(() => ({ nodeTitle: t.view?.title }));
-					ho(r, {
+					go(r, {
 						get diagnostic() {
 							return t.view.helperBindings.issueDiagnostic;
 						},
@@ -6627,7 +6645,7 @@ function nl(e, t) {
 				}
 				P(n), K(e, n);
 			}, c = (e) => {
-				K(e, Kc());
+				K(e, qc());
 			};
 			J(i, (e) => {
 				t.view.helperBindings.issueDiagnostic || t.view.helperBindings.issue ? e(s) : t.view.helperBindings.roles.length || e(c, 1);
@@ -6637,11 +6655,11 @@ function nl(e, t) {
 			t.view.helperBindings && e(ce);
 		});
 		var ge = B(se, 2), Te = (e) => {
-			var n = Yc(), i = z(n), s = (e) => {
-				var n = jc(), r = R(n);
+			var n = Xc(), i = z(n), s = (e) => {
+				var n = Mc(), r = R(n);
 				{
 					let e = /* @__PURE__ */ F(() => ({ nodeTitle: t.view?.title }));
-					ho(r, {
+					go(r, {
 						get diagnostic() {
 							return t.view.model.issueDiagnostic;
 						},
@@ -6662,7 +6680,7 @@ function nl(e, t) {
 			P(l);
 			var d = B(l, 4), f = B(R(d));
 			Y(f, 21, () => t.view.model.model.allowedModes, (e) => e.value, (e, n) => {
-				var r = Lc(), i = R(r, !0);
+				var r = Rc(), i = R(r, !0);
 				P(r);
 				var a = {};
 				V((e) => {
@@ -6672,7 +6690,7 @@ function nl(e, t) {
 			var p;
 			_i(f), P(d);
 			var m = B(d, 2), h = (e) => {
-				var t = Jc(), n = B(R(t));
+				var t = Yc(), n = B(R(t));
 				X(n), P(t), V((e, t) => {
 					wi(n, e), n.disabled = t;
 				}, [() => ye("model"), () => !_e()]), W("input", n, (e) => xe("model", e.currentTarget.value)), W("change", n, (e) => Ce("model", e.currentTarget.value)), K(e, t);
@@ -6683,24 +6701,24 @@ function nl(e, t) {
 			var _ = B(m, 2), v = B(R(_));
 			X(v), P(_);
 			var y = B(_, 2), b = (e) => {
-				var n = Wc(), r = R(n);
+				var n = Gc(), r = R(n);
 				P(n), V(() => q(r, `Effective connection: ${t.view.model.effective ?? ""}`)), K(e, n);
 			}, x = /* @__PURE__ */ F(() => !t.view.model.issue || t.view.model.effective.trim() !== t.view.model.issue.trim());
 			J(y, (e) => {
 				H(x) && e(b);
 			});
 			var S = B(y), C = (e) => {
-				var n = Wc(), r = R(n, !0);
+				var n = Gc(), r = R(n, !0);
 				P(n), V(() => q(r, t.view.model.source)), K(e, n);
 			};
 			J(S, (e) => {
 				t.view.model.source && e(C);
 			});
 			var w = B(S, 2), T = (e) => {
-				var n = jc(), r = R(n);
+				var n = Mc(), r = R(n);
 				{
 					let e = /* @__PURE__ */ F(() => H(o).modelRole || H(o).profileId || H(a).model?.error || H(o).model), n = /* @__PURE__ */ F(() => ({ nodeTitle: t.view?.title }));
-					ho(r, {
+					go(r, {
 						get issue() {
 							return H(e);
 						},
@@ -6728,9 +6746,9 @@ function nl(e, t) {
 			t.view.model && e(Te);
 		});
 		var Ee = B(ge, 2), N = (e) => {
-			var n = Zc();
+			var n = Qc();
 			Y(B(R(n)), 17, () => t.view.ports, (e) => e.direction + ":" + e.id, (e, t) => {
-				var n = Xc(), r = R(n), i = B(r), a = R(i, !0);
+				var n = Zc(), r = R(n), i = B(r), a = R(i, !0);
 				P(i), P(n), V(() => {
 					q(r, `${H(t).direction === "input" ? "In" : "Out"} · ${H(t).label ?? ""}`), q(a, H(t).kind);
 				}), K(e, n);
@@ -6740,23 +6758,23 @@ function nl(e, t) {
 			t.view.ports.length && e(N);
 		});
 		var ze = B(Ee, 2), Ue = (e) => {
-			var n = Qc(), r = R(n, !0);
+			var n = $c(), r = R(n, !0);
 			P(n), V(() => q(r, t.view.status)), K(e, n);
 		};
 		J(ze, (e) => {
 			t.view.status && e(Ue);
 		});
 		var We = B(ze, 2);
-		Y(We, 17, () => co((t.view.issues ?? []).filter((e) => e !== t.view?.model?.issue && e !== t.view?.helperBindings?.issue), { nodeTitle: t.view.title }), (e) => e.id, (e, t) => {
-			var n = jc();
-			ho(R(n), { get diagnostic() {
+		Y(We, 17, () => lo((t.view.issues ?? []).filter((e) => e !== t.view?.model?.issue && e !== t.view?.helperBindings?.issue), { nodeTitle: t.view.title }), (e) => e.id, (e, t) => {
+			var n = Mc();
+			go(R(n), { get diagnostic() {
 				return H(t);
 			} }), P(n), K(e, n);
 		});
 		var Ke = B(We, 2), qe = (e) => {
 			{
 				let n = /* @__PURE__ */ F(() => !we()), r = /* @__PURE__ */ F(De), a = /* @__PURE__ */ F(() => H(o).modifiers || "");
-				cc(e, {
+				lc(e, {
 					get items() {
 						return t.view.modifiers.items;
 					},
@@ -6798,7 +6816,7 @@ function nl(e, t) {
 			t.view?.boundary || Be(e.currentTarget.value);
 		}), K(e, s);
 	}, Ye = (e) => {
-		K(e, el());
+		K(e, tl());
 	};
 	J(qe, (e) => {
 		t.view ? e(Je) : e(Ye, -1);
@@ -6811,8 +6829,8 @@ Er([
 ]);
 //#endregion
 //#region src/canvas/pin-alignment.js
-var rl = /* @__PURE__ */ new WeakMap();
-function il(e, t) {
+var il = /* @__PURE__ */ new WeakMap();
+function al(e, t) {
 	let n = e.ownerDocument, r = n.createTreeWalker(e, 4), i = [];
 	for (; r.nextNode();) i.push(r.currentNode);
 	t && i.reverse();
@@ -6832,7 +6850,7 @@ function il(e, t) {
 	}
 	return s;
 }
-function al(e, t = 1) {
+function ol(e, t = 1) {
 	let n = e.ownerDocument, r = n.defaultView, i = Number.isFinite(t) && t > 0 ? t : 1;
 	for (let t of e.querySelectorAll(".pc-native-row")) {
 		let e = t.querySelector(".pc-native-pin-label"), a = t.querySelector(".pc-port");
@@ -6842,14 +6860,14 @@ function al(e, t = 1) {
 			a.style.setProperty("--pc-pin-y", "0px");
 			continue;
 		}
-		if (!rl.has(n)) {
+		if (!il.has(n)) {
 			let e = null;
 			try {
 				e = n.createElement("canvas").getContext("2d");
 			} catch {}
-			rl.set(n, e);
+			il.set(n, e);
 		}
-		let c = rl.get(n);
+		let c = il.get(n);
 		if (!c) {
 			a.style.setProperty("--pc-pin-y", "0px");
 			continue;
@@ -6862,7 +6880,7 @@ function al(e, t = 1) {
 		u.remove(), e.append(u);
 		let f = u.getBoundingClientRect().top;
 		u.remove();
-		let p = Math.abs(f - d) > .01, m = c.measureText(p ? il(e, !1) : e.textContent ?? ""), h = p ? c.measureText(il(e, !0)) : m, g = m.actualBoundingBoxAscent, _ = h.actualBoundingBoxDescent;
+		let p = Math.abs(f - d) > .01, m = c.measureText(p ? al(e, !1) : e.textContent ?? ""), h = p ? c.measureText(al(e, !0)) : m, g = m.actualBoundingBoxAscent, _ = h.actualBoundingBoxDescent;
 		if (!Number.isFinite(g) || !Number.isFinite(_)) continue;
 		let v = ((d + f + (_ - g) * i) / 2 - o.top - o.height / 2) / i;
 		a.style.setProperty("--pc-pin-y", `${v}px`);
@@ -6870,8 +6888,8 @@ function al(e, t = 1) {
 }
 //#endregion
 //#region ui/NodeGuidePreview.svelte
-var ol = /* @__PURE__ */ G("<div class=\"pc-node-guide-preview svelte-y4d0xh\" role=\"img\"><div class=\"pc-node-guide-preview-card svelte-y4d0xh\" inert=\"\"><!></div></div>");
-function sl(e, t) {
+var sl = /* @__PURE__ */ G("<div class=\"pc-node-guide-preview svelte-y4d0xh\" role=\"img\"><div class=\"pc-node-guide-preview-card svelte-y4d0xh\" inert=\"\"><!></div></div>");
+function cl(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "card", 3, null), r = Pi(t, "comment", 3, null), i, a = {
 		hoverPin() {},
@@ -6900,14 +6918,14 @@ function sl(e, t) {
 		let t = !1, a = e.ownerDocument, o = () => {
 			if (t) return;
 			let n = e.querySelector(".pc-node-native");
-			n && al(n, 1);
+			n && ol(n, 1);
 		}, s = typeof ResizeObserver > "u" ? null : new ResizeObserver(o);
 		return s?.observe(e), a.addEventListener("pc-theme", o), a.fonts?.addEventListener("loadingdone", o), mr().then(o), a.fonts?.ready.then(o), () => {
 			t = !0, s?.disconnect(), a.removeEventListener("pc-theme", o), a.fonts?.removeEventListener("loadingdone", o);
 		};
 	});
-	var l = ol(), u = R(l), d = R(u), f = (e) => {
-		pa(e, {
+	var l = sl(), u = R(l), d = R(u), f = (e) => {
+		ma(e, {
 			get comment() {
 				return H(c);
 			},
@@ -6916,7 +6934,7 @@ function sl(e, t) {
 			}
 		});
 	}, p = (e) => {
-		ta(e, {
+		na(e, {
 			get card() {
 				return H(s);
 			},
@@ -6933,24 +6951,24 @@ function sl(e, t) {
 }
 //#endregion
 //#region src/canvas/connection-route.js?v=0.27.0
-var cl = 25, ll = 12, ul = 6, dl = (e) => `${e.x},${e.y}`, fl = (e, t, n = 0) => ({
+var ll = 25, ul = 12, dl = 6, fl = (e) => `${e.x},${e.y}`, pl = (e, t, n = 0) => ({
 	x: e.x + t,
 	y: e.y + n
-}), pl = (e, t, n) => ({
+}), ml = (e, t, n) => ({
 	x: e.x * (1 - n) + t.x * n,
 	y: e.y * (1 - n) + t.y * n
 });
-function ml(e, t) {
+function hl(e, t) {
 	let n = e;
-	for (; n.length > 1;) n = n.slice(1).map((e, r) => pl(n[r], e, t));
+	for (; n.length > 1;) n = n.slice(1).map((e, r) => ml(n[r], e, t));
 	return n[0];
 }
-function hl(e) {
+function gl(e) {
 	let t = [], n = 0, r = Math.max(1, ...e.flat().flatMap((e) => [Math.abs(e.x), Math.abs(e.y)]));
 	for (let i of e) {
 		let e = i.length === 2 ? 1 : 64, a = i[0];
 		for (let o = 1; o <= e; o++) {
-			let s = ml(i, o / e), c = Math.hypot(s.x / r - a.x / r, s.y / r - a.y / r);
+			let s = hl(i, o / e), c = Math.hypot(s.x / r - a.x / r, s.y / r - a.y / r);
 			t.push({
 				points: i,
 				start: (o - 1) / e,
@@ -6963,20 +6981,20 @@ function hl(e) {
 	for (let e of t) {
 		if (i <= e.distance) {
 			let t = e.distance ? i / e.distance : 0;
-			return ml(e.points, e.start + (e.end - e.start) * t);
+			return hl(e.points, e.start + (e.end - e.start) * t);
 		}
 		i -= e.distance;
 	}
 	return e.at(-1).at(-1);
 }
-function gl(e, t) {
+function _l(e, t) {
 	let n = {
 		x: e.x,
 		y: e.y
 	}, r = {
 		x: t.x,
 		y: t.y
-	}, i = e.side === "left" ? -1 : 1, a = t.side === "right" ? 1 : -1, o = fl(n, i * cl), s = fl(r, a * cl), c = [[n, o]], l = Math.hypot(s.x - o.x, s.y - o.y), u = i === -a ? Math.abs(s.x - o.x) / 2 : Infinity, d = Math.min(ll / 2, l / 8, Math.max(.001, u)), f = fl(o, i * d), p = fl(s, a * d), m = p.x - f.x, h = p.y - f.y, g = Math.hypot(m, h), _;
+	}, i = e.side === "left" ? -1 : 1, a = t.side === "right" ? 1 : -1, o = pl(n, i * ll), s = pl(r, a * ll), c = [[n, o]], l = Math.hypot(s.x - o.x, s.y - o.y), u = i === -a ? Math.abs(s.x - o.x) / 2 : Infinity, d = Math.min(ul / 2, l / 8, Math.max(.001, u)), f = pl(o, i * d), p = pl(s, a * d), m = p.x - f.x, h = p.y - f.y, g = Math.hypot(m, h), _;
 	if (Number.isFinite(g)) _ = g ? {
 		x: m / g,
 		y: h / g
@@ -6991,35 +7009,35 @@ function gl(e, t) {
 			y: n / r
 		};
 	}
-	let v = Math.min(1, Math.max(0, -m * i / ll, m * a / ll)), y = v * v * (3 - 2 * v) * ul * Math.max(0, 1 - Math.abs(h) / 12), b = {
+	let v = Math.min(1, Math.max(0, -m * i / ul, m * a / ul)), y = v * v * (3 - 2 * v) * dl * Math.max(0, 1 - Math.abs(h) / 12), b = {
 		x: -_.y * y,
 		y: _.x * y
-	}, x = fl(f, _.x * d + b.x, _.y * d + b.y), S = fl(p, -_.x * d + b.x, -_.y * d + b.y), C = (e) => {
+	}, x = pl(f, _.x * d + b.x, _.y * d + b.y), S = pl(p, -_.x * d + b.x, -_.y * d + b.y), C = (e) => {
 		let t = Math.sqrt(Math.max(0, (1 + e) / 2));
 		return 4 / 3 * d * t / (1 + t) + 2 / 3 * y;
-	}, w = C(i * _.x), T = C(-a * _.x), E = Math.min(1, l / 24), D = E * E * (3 - 2 * E), O = fl(pl(o, s, .5), 0, -i * ul), k = pl(O, x, D), A = pl(O, S, D), j = 6 * (1 - D) + w * D, M = 6 * (1 - D) + T * D, ee = (d * (1 - D) + w * D) * D, te = (d * (1 - D) + T * D) * D;
+	}, w = C(i * _.x), T = C(-a * _.x), E = Math.min(1, l / 24), D = E * E * (3 - 2 * E), O = pl(ml(o, s, .5), 0, -i * dl), k = ml(O, x, D), A = ml(O, S, D), j = 6 * (1 - D) + w * D, M = 6 * (1 - D) + T * D, ee = (d * (1 - D) + w * D) * D, te = (d * (1 - D) + T * D) * D;
 	return c.push([
 		o,
-		fl(o, i * j),
-		fl(k, -_.x * ee, -_.y * ee),
+		pl(o, i * j),
+		pl(k, -_.x * ee, -_.y * ee),
 		k
 	]), (k.x !== A.x || k.y !== A.y) && c.push([k, A]), c.push([
 		A,
-		fl(A, _.x * te, _.y * te),
-		fl(s, a * M),
+		pl(A, _.x * te, _.y * te),
+		pl(s, a * M),
 		s
 	], [s, r]), {
-		d: `M ${dl(n)} ` + c.map((e) => `${e.length === 2 ? "L" : "C"} ${e.slice(1).map(dl).join(" ")}`).join(" "),
-		label: hl(c)
+		d: `M ${fl(n)} ` + c.map((e) => `${e.length === 2 ? "L" : "C"} ${e.slice(1).map(fl).join(" ")}`).join(" "),
+		label: gl(c)
 	};
 }
 //#endregion
 //#region src/ui/node-guide-preview.js
-function _l(e, t) {
+function vl(e, t) {
 	return e.flatMap((e) => {
 		let n = t(e.from, e.fromPort), r = t(e.to, e.toPort);
 		if (!n || !r) return [];
-		let i = gl(n, r);
+		let i = _l(n, r);
 		return [{
 			id: e.id,
 			kind: e.kind,
@@ -7033,7 +7051,7 @@ function _l(e, t) {
 		}];
 	});
 }
-function vl(e, t, n, r) {
+function yl(e, t, n, r) {
 	let i = new Map(e.map((e) => [e.id, e])), a = [];
 	for (; i.size;) {
 		let e = [...i.values()].filter((e) => !t.some((t) => t.to === e.id && i.has(t.from) && t.from !== e.id)), n = (e.length ? e : [...i.values()]).sort((e, t) => e.y - t.y || e.x - t.x)[0];
@@ -7054,14 +7072,14 @@ function vl(e, t, n, r) {
 		return c += t.w + 32, u = Math.max(u, t.h), r;
 	});
 }
-function yl(e, t, n, r, i, a) {
+function bl(e, t, n, r, i, a) {
 	if (t.length !== 1 || !e.length) return null;
 	let o = t[0];
 	if (!e.every((e) => {
 		let t = r.get(e.id);
 		return t && e.x >= o.x && e.y >= o.y + 36 && e.x + t.w <= o.x + o.w && e.y + t.h <= o.y + o.h;
 	})) return null;
-	let s = vl(e, n, r, i - 48 * .92), c = 36 + Math.max(0, a) + 24, l = s.map((e) => ({
+	let s = yl(e, n, r, i - 48 * .92), c = 36 + Math.max(0, a) + 24, l = s.map((e) => ({
 		...e,
 		x: e.x + 24,
 		y: e.y + c
@@ -7078,9 +7096,14 @@ function yl(e, t, n, r, i, a) {
 	};
 }
 //#endregion
+//#region src/canvas/camera.js
+function xl(e) {
+	return e.defaultPrevented || e.isComposing || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey ? null : e.key === "]" ? 1.15 : e.key === "[" ? 1 / 1.15 : null;
+}
+//#endregion
 //#region ui/NodeGuideCanvas.svelte
-var bl = /* @__PURE__ */ G("<div class=\"pc-node-guide-canvas-footer svelte-16v7ohd\"><!></div>"), xl = /* @__PURE__ */ G("<div class=\"pc-node-guide-canvas svelte-16v7ohd\"><div class=\"pc-canvas-host pc-node-guide-viewport\" aria-label=\"Example node graph\" role=\"region\" tabindex=\"0\"><!></div> <!></div>");
-function Sl(e, t) {
+var Sl = /* @__PURE__ */ G("<div class=\"pc-node-guide-canvas-footer svelte-16v7ohd\"><!></div>"), Cl = /* @__PURE__ */ G("<div class=\"pc-node-guide-canvas svelte-16v7ohd\"><div class=\"pc-canvas-host pc-node-guide-viewport\" aria-label=\"Example node graph\" role=\"region\" tabindex=\"0\"><!></div> <!></div>");
+function wl(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "focusNodeIds", 19, () => []), r, i, a = {
 		hoverPin() {},
@@ -7110,7 +7133,7 @@ function Sl(e, t) {
 		function x() {
 			if (f || !a.getClientRects().length || !a.clientWidth) return null;
 			let t = [...a.querySelectorAll(".pc-node-native, .pc-comment-frame")];
-			for (let e of t) e.classList.contains("pc-node-native") && al(e, d.scale);
+			for (let e of t) e.classList.contains("pc-node-native") && ol(e, d.scale);
 			let n = y().viewport.getBoundingClientRect(), r = /* @__PURE__ */ new Map();
 			for (let e of a.querySelectorAll(".pc-port")) {
 				let t = e.getBoundingClientRect();
@@ -7120,7 +7143,7 @@ function Sl(e, t) {
 					side: e.dataset.side
 				});
 			}
-			let i = _l(e.connections, (e, t) => r.get(`${e}\0${t}`)), o = l ? t.filter((e) => l.has(e.dataset.id ?? "")) : t, c = (o.length ? o : t).reduce((e, t) => {
+			let i = vl(e.connections, (e, t) => r.get(`${e}\0${t}`)), o = l ? t.filter((e) => l.has(e.dataset.id ?? "")) : t, c = (o.length ? o : t).reduce((e, t) => {
 				let n = parseFloat(t.style.left), r = parseFloat(t.style.top);
 				return {
 					left: Math.min(e.left, n),
@@ -7150,17 +7173,17 @@ function Sl(e, t) {
 				h: e.offsetHeight
 			}])), c;
 			if (e.comments.length) {
-				let t = yl(e.cards, e.comments, e.connections, i, a.clientWidth, n?.offsetHeight ?? 0);
+				let t = bl(e.cards, e.comments, e.connections, i, a.clientWidth, n?.offsetHeight ?? 0);
 				if (!t) return;
 				zt(() => {
 					s.setPositions(t.nodes, []), s.setComments(t.comments, o);
 				});
-				let r = yl(e.cards, e.comments, e.connections, i, a.clientWidth, n?.offsetHeight ?? 0);
+				let r = bl(e.cards, e.comments, e.connections, i, a.clientWidth, n?.offsetHeight ?? 0);
 				zt(() => {
 					s.setPositions(r.nodes, []), s.setComments(r.comments, o);
 				}), c = r.comments[0].h;
 			} else {
-				let t = vl(e.cards, e.connections, i, a.clientWidth);
+				let t = yl(e.cards, e.connections, i, a.clientWidth);
 				zt(() => s.setPositions(t, [])), c = Math.max(...t.map((e) => e.y + i.get(e.id).h));
 			}
 			v = r(), a.style.height = a.clientWidth < 500 ? `${Math.min(650, Math.max(320, c * .92 + 40))}px` : "";
@@ -7249,11 +7272,12 @@ function Sl(e, t) {
 		});
 		T("keydown", (e) => {
 			let t = e;
-			t.key !== "Escape" && t.key !== "Tab" && (t.stopPropagation(), t.key === "Home" ? (t.preventDefault(), C()) : [
-				"+",
-				"=",
-				"-"
-			].includes(t.key) ? (t.preventDefault(), w(t.key === "-" ? .8 : 1.25, a.clientWidth / 2, a.clientHeight / 2)) : t.key.startsWith("Arrow") && (t.preventDefault(), d.x += t.key === "ArrowLeft" ? 40 : t.key === "ArrowRight" ? -40 : 0, d.y += t.key === "ArrowUp" ? 40 : t.key === "ArrowDown" ? -40 : 0, m = !1, b()));
+			if (t.key === "Escape" || t.key === "Tab") return;
+			t.stopPropagation();
+			let n = t.target;
+			if (c.activeElement !== a || n?.closest("input, textarea, select, button, summary, a, [contenteditable]:not([contenteditable=\"false\"]), [role=\"button\"], [role=\"textbox\"], [role=\"combobox\"], [role=\"slider\"], [role=\"spinbutton\"]")) return;
+			let r = _.size ? null : xl(t);
+			t.key === "Home" ? (t.preventDefault(), C()) : r === null ? t.key.startsWith("Arrow") && (t.preventDefault(), d.x += t.key === "ArrowLeft" ? 40 : t.key === "ArrowRight" ? -40 : 0, d.y += t.key === "ArrowUp" ? 40 : t.key === "ArrowDown" ? -40 : 0, m = !1, b()) : (t.preventDefault(), w(r, a.clientWidth / 2, a.clientHeight / 2));
 		});
 		let D = () => {
 			!f && p && (m ? C() : (S(), b(), x()));
@@ -7273,12 +7297,12 @@ function Sl(e, t) {
 			_.clear(), a.classList.remove("pc-panning");
 		};
 	});
-	var s = xl(), c = R(s);
-	Ni(To(R(c), { get actions() {
+	var s = Cl(), c = R(s);
+	Ni(Eo(R(c), { get actions() {
 		return a;
 	} }), (e) => i = e, () => i), P(c), Ni(c, (e) => r = e, () => r);
 	var l = B(c, 2), u = (e) => {
-		var n = bl();
+		var n = Sl();
 		ri(R(n), () => t.footer), P(n), K(e, n);
 	};
 	J(l, (e) => {
@@ -7287,8 +7311,8 @@ function Sl(e, t) {
 }
 //#endregion
 //#region ui/NodeGuide.svelte
-var Cl = /* @__PURE__ */ G("<li class=\"svelte-1bq62g5\"> </li>"), wl = /* @__PURE__ */ G("<div class=\"svelte-1bq62g5\"><dt class=\"svelte-1bq62g5\"> </dt><dd class=\"svelte-1bq62g5\"> </dd></div>"), Tl = /* @__PURE__ */ G("<p class=\"svelte-1bq62g5\">This node has no settings to configure.</p>"), El = /* @__PURE__ */ G("<p class=\"pc-guide-requirements svelte-1bq62g5\"><strong>Before running:</strong> </p>"), Dl = /* @__PURE__ */ G("<div class=\"pc-guide-fixture svelte-1bq62g5\"><div class=\"svelte-1bq62g5\"><strong class=\"svelte-1bq62g5\"> </strong><button type=\"button\" class=\"pc-btn svelte-1bq62g5\">Copy</button></div> <textarea readonly=\"\" class=\"svelte-1bq62g5\"></textarea></div>"), Ol = /* @__PURE__ */ G("<p role=\"status\" class=\"svelte-1bq62g5\"> </p>"), kl = /* @__PURE__ */ G("<details class=\"pc-guide-fixtures svelte-1bq62g5\"><summary class=\"svelte-1bq62g5\">Setup data</summary> <p class=\"svelte-1bq62g5\">Copy each sample into its named workflow file before running the example.</p> <!> <!></details>"), Al = /* @__PURE__ */ G("<p class=\"svelte-1bq62g5\"> </p>"), jl = /* @__PURE__ */ G("<p role=\"alert\" class=\"svelte-1bq62g5\"> </p>"), Ml = /* @__PURE__ */ G("<div class=\"pc-guide-example-action svelte-1bq62g5\"><button type=\"button\" class=\"pc-btn svelte-1bq62g5\"> </button> <!> <!></div>"), Nl = /* @__PURE__ */ G("<h3 class=\"svelte-1bq62g5\"> </h3><p class=\"svelte-1bq62g5\"> </p> <!> <!> <!> <ol class=\"svelte-1bq62g5\"></ol> <p class=\"svelte-1bq62g5\"><strong>Result:</strong> </p>", 1), Pl = /* @__PURE__ */ G("<div class=\"pc-node-guide svelte-1bq62g5\"><p class=\"pc-guide-summary svelte-1bq62g5\"> </p> <!> <section><h3 class=\"svelte-1bq62g5\">How to use it</h3><ol class=\"svelte-1bq62g5\"></ol></section> <details data-guide-settings=\"\" open=\"\" class=\"svelte-1bq62g5\"><summary class=\"svelte-1bq62g5\">Settings and options</summary> <dl class=\"svelte-1bq62g5\"></dl> <!></details> <details data-guide-example=\"\" class=\"svelte-1bq62g5\"><summary class=\"svelte-1bq62g5\">Example</summary> <!></details></div>");
-function Fl(e, t) {
+var Tl = /* @__PURE__ */ G("<li class=\"svelte-1bq62g5\"> </li>"), El = /* @__PURE__ */ G("<div class=\"svelte-1bq62g5\"><dt class=\"svelte-1bq62g5\"> </dt><dd class=\"svelte-1bq62g5\"> </dd></div>"), Dl = /* @__PURE__ */ G("<p class=\"svelte-1bq62g5\">This node has no settings to configure.</p>"), Ol = /* @__PURE__ */ G("<p class=\"pc-guide-requirements svelte-1bq62g5\"><strong>Before running:</strong> </p>"), kl = /* @__PURE__ */ G("<div class=\"pc-guide-fixture svelte-1bq62g5\"><div class=\"svelte-1bq62g5\"><strong class=\"svelte-1bq62g5\"> </strong><button type=\"button\" class=\"pc-btn svelte-1bq62g5\">Copy</button></div> <textarea readonly=\"\" class=\"svelte-1bq62g5\"></textarea></div>"), Al = /* @__PURE__ */ G("<p role=\"status\" class=\"svelte-1bq62g5\"> </p>"), jl = /* @__PURE__ */ G("<details class=\"pc-guide-fixtures svelte-1bq62g5\"><summary class=\"svelte-1bq62g5\">Setup data</summary> <p class=\"svelte-1bq62g5\">Copy each sample into its named workflow file before running the example.</p> <!> <!></details>"), Ml = /* @__PURE__ */ G("<p class=\"svelte-1bq62g5\"> </p>"), Nl = /* @__PURE__ */ G("<p role=\"alert\" class=\"svelte-1bq62g5\"> </p>"), Pl = /* @__PURE__ */ G("<div class=\"pc-guide-example-action svelte-1bq62g5\"><button type=\"button\" class=\"pc-btn svelte-1bq62g5\"> </button> <!> <!></div>"), Fl = /* @__PURE__ */ G("<h3 class=\"svelte-1bq62g5\"> </h3><p class=\"svelte-1bq62g5\"> </p> <!> <!> <!> <ol class=\"svelte-1bq62g5\"></ol> <p class=\"svelte-1bq62g5\"><strong>Result:</strong> </p>", 1), Il = /* @__PURE__ */ G("<div class=\"pc-node-guide svelte-1bq62g5\"><p class=\"pc-guide-summary svelte-1bq62g5\"> </p> <!> <section><h3 class=\"svelte-1bq62g5\">How to use it</h3><ol class=\"svelte-1bq62g5\"></ol></section> <details data-guide-settings=\"\" open=\"\" class=\"svelte-1bq62g5\"><summary class=\"svelte-1bq62g5\">Settings and options</summary> <dl class=\"svelte-1bq62g5\"></dl> <!></details> <details data-guide-example=\"\" class=\"svelte-1bq62g5\"><summary class=\"svelte-1bq62g5\">Example</summary> <!></details></div>");
+function Ll(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "actions", 19, () => ({})), r = /* @__PURE__ */ I(!1), i = /* @__PURE__ */ I(!1), a = /* @__PURE__ */ I(""), o = /* @__PURE__ */ I(null), s = /* @__PURE__ */ I(null), c = /* @__PURE__ */ I(tn({
 		enabled: !1,
@@ -7327,10 +7351,10 @@ function Fl(e, t) {
 			}
 		}
 	}
-	var p = Pl(), m = R(p), h = R(m, !0);
+	var p = Il(), m = R(p), h = R(m, !0);
 	P(m);
 	var g = B(m, 2);
-	sl(g, {
+	cl(g, {
 		get card() {
 			return t.guide.card;
 		},
@@ -7340,12 +7364,12 @@ function Fl(e, t) {
 	});
 	var _ = B(g, 2), v = B(R(_));
 	Y(v, 21, () => t.guide.howTo, qr, (e, t) => {
-		var n = Cl(), r = R(n, !0);
+		var n = Tl(), r = R(n, !0);
 		P(n), V(() => q(r, H(t))), K(e, n);
 	}), P(v), P(_);
 	var y = B(_, 2), b = B(R(y), 2);
 	Y(b, 21, () => t.guide.settings, (e) => e.key, (e, t) => {
-		var n = wl(), r = R(n), i = R(r, !0);
+		var n = El(), r = R(n), i = R(r, !0);
 		P(r);
 		var a = B(r), o = R(a, !0);
 		P(a), P(n), V(() => {
@@ -7353,27 +7377,27 @@ function Fl(e, t) {
 		}), K(e, n);
 	}), P(b);
 	var x = B(b, 2), S = (e) => {
-		K(e, Tl());
+		K(e, Dl());
 	};
 	J(x, (e) => {
 		t.guide.settings.length || e(S);
 	}), P(y);
 	var C = B(y, 2), w = B(R(C), 2), T = (e) => {
-		var t = Nl(), n = z(t), r = R(n, !0);
+		var t = Fl(), n = z(t), r = R(n, !0);
 		P(n);
 		var u = B(n), p = R(u, !0);
 		P(u);
 		var m = B(u, 2), h = (e) => {
-			var t = El(), n = B(R(t));
+			var t = Ol(), n = B(R(t));
 			P(t), V((e) => q(n, ` ${e ?? ""}`), [() => H(o).requirements.join(" ")]), K(e, t);
 		};
 		J(m, (e) => {
 			H(o).requirements.length && e(h);
 		});
 		var g = B(m, 2), _ = (e) => {
-			var t = kl(), n = B(R(t), 4);
+			var t = jl(), n = B(R(t), 4);
 			Y(n, 17, () => H(o).fixtures, (e) => e.name, (e, t) => {
-				var n = Dl(), r = R(n), i = R(r), a = R(i, !0);
+				var n = kl(), r = R(n), i = R(r), a = R(i, !0);
 				P(i);
 				var o = B(i);
 				P(r);
@@ -7383,7 +7407,7 @@ function Fl(e, t) {
 				}), W("click", o, () => d(H(t))), K(e, n);
 			});
 			var r = B(n, 2), i = (e) => {
-				var t = Ol(), n = R(t, !0);
+				var t = Al(), n = R(t, !0);
 				P(t), V(() => q(n, H(l))), K(e, t);
 			};
 			J(r, (e) => {
@@ -7396,17 +7420,17 @@ function Fl(e, t) {
 		var v = B(g, 2);
 		{
 			let e = (e) => {
-				var t = Ml(), n = R(t), r = R(n, !0);
+				var t = Pl(), n = R(t), r = R(n, !0);
 				P(n);
 				var o = B(n, 2), s = (e) => {
-					var t = Al(), n = R(t, !0);
+					var t = Ml(), n = R(t, !0);
 					P(t), V(() => q(n, H(c).reason)), K(e, t);
 				};
 				J(o, (e) => {
 					H(c).reason && e(s);
 				});
 				var l = B(o, 2), u = (e) => {
-					var t = jl(), n = R(t, !0);
+					var t = Nl(), n = R(t, !0);
 					P(t), V(() => q(n, H(a))), K(e, t);
 				};
 				J(l, (e) => {
@@ -7415,7 +7439,7 @@ function Fl(e, t) {
 					n.disabled = !H(c).enabled || H(i), Z(n, "title", H(c).reason || void 0), q(r, H(i) ? "Adding…" : "Add example to current tab");
 				}), W("click", n, f), K(e, t);
 			}, t = /* @__PURE__ */ F(() => H(o).focus?.nodeIds ?? []);
-			Sl(v, {
+			wl(v, {
 				get scene() {
 					return H(s);
 				},
@@ -7428,7 +7452,7 @@ function Fl(e, t) {
 		}
 		var y = B(v, 2);
 		Y(y, 21, () => H(o).steps, qr, (e, t) => {
-			var n = Cl(), r = R(n, !0);
+			var n = Tl(), r = R(n, !0);
 			P(n), V(() => q(r, H(t))), K(e, n);
 		}), P(y);
 		var b = B(y, 2), x = B(R(b));
@@ -7436,7 +7460,7 @@ function Fl(e, t) {
 			q(r, H(o).title), q(p, H(o).description), q(x, ` ${H(o).expected ?? ""}`);
 		}), K(e, t);
 	}, E = (e) => {
-		var t = Ol(), n = R(t, !0);
+		var t = Al(), n = R(t, !0);
 		P(t), V(() => q(n, H(a) || "This example is unavailable.")), K(e, t);
 	};
 	J(w, (e) => {
@@ -7452,7 +7476,7 @@ var $ = (e, t, ...n) => ({
 	title: e,
 	summary: t,
 	howTo: n
-}), Il = {
+}), Rl = {
 	"scene-context": $("Scene Context", "Bring a bounded selection of recent chat and character information into the workflow.", "Choose how many recent messages to include and whether to include character information.", "Choose Public for observable material or Actor for the selected character perspective.", "Connect Context to Smart Compactor, Response Plan, or another Context input."),
 	"reply-snapshot": $("Reply Snapshot", "Freeze the latest completed assistant reply so proposed edits stay tied to the correct reply.", "Place this source in the Response stage after a supported completed text reply.", "Connect Draft to Text Rules or Pattern Scan, then inspect proposed changes before applying them."),
 	"smart-compactor": $("Smart Compactor", "Fit conversation context into a smaller budget while keeping recent messages and protected wording.", "Connect a Context source and set the target size.", "Choose Select to remove older flexible messages, or Compress to request a summary when needed.", "Set recent-message retention and protected phrases, then inspect the resulting context."),
@@ -7495,15 +7519,15 @@ var $ = (e, t, ...n) => ({
 	extract: $("Extract", "Extract structured records from Text or a Draft using literal patterns or one model request.", "Choose the source type, connect it, and choose Literal or Model extraction.", "Save literal patterns or write model instructions and an optional record schema.", "Inspect the records; extracting a claim does not confirm that it actually happened."),
 	"model-call": $("Model Call", "Make one explicit auxiliary model request using a text prompt and optional supporting values.", "Connect Text and any relevant Context or Data.", "Write instructions, choose Text or Data output, and set an optional Data schema.", "Choose the model binding and inspect its result before continuing."),
 	"revise-draft": $("Revise Draft", "Ask a model to revise permitted parts of an owned Draft while retaining its reply identity.", "Connect a Draft in Response and any relevant Context or Data.", "Write revision instructions and choose editable scope and protected wording.", "Inspect the revised Draft, then send the final result to Review / Publish."),
-	"player-event-source": $("Player Event Source", "Expose the actual player turn that activated the unified workflow as checked source Data.", "Place this source in the Preparation stage of a unified root workflow.", "Connect Source to an item trigger or event-normalization path; mentions still need interpretation and confirmation."),
-	"on-send": $("On Send", "Start a unified workflow from the native chat activation that owns one reply generation.", "Place On Send in the Preparation stage of the root workflow.", "Connect Activation to Generate Reply to establish the workflow’s generation path."),
+	"player-event-source": $("Player Event Source", "Expose the actual player turn that activated the unified workflow as checked source Data.", "Place this source in Preparation, either in Main or inside a static subgraph.", "Connect Source to an item trigger or event-normalization path; mentions still need interpretation and confirmation."),
+	"on-send": $("On Send", "Start a unified workflow from the native chat activation that owns one reply generation.", "Place On Send in Preparation, either in Main or inside a static subgraph.", "Connect Activation to Generate Reply to establish the workflow’s generation path."),
 	"generate-reply": $("Generate Reply · SillyTavern", "Generate the workflow’s one native reply through the selected SillyTavern connection.", "Connect On Send’s Activation and optional Preparation Guidance.", "Set the guidance budget and use the host’s selected model and generation settings.", "Connect Draft through any Response processing and finish at Review / Publish."),
-	"review-publish": $("Review / Publish", "Prepare the owned final Draft and staged effects for explicit review and application.", "Connect the final owned Draft in the root Response stage.", "Run the workflow and inspect its reply and proposed effects in Preview.", "Choose Apply reviewed candidate to accept the root result, or reject it."),
+	"review-publish": $("Review / Publish", "Prepare the owned final Draft and staged effects for explicit review and application.", "Connect the final owned Draft in Response, either in Main or inside a static subgraph.", "Run the workflow and inspect its reply and proposed effects in Preview.", "Choose Apply reviewed candidate to accept the root result, or reject it."),
 	format: $("Format", "Validate and serialize explicit records as JSON, JSON Lines, CSV, text, or Markdown.", "Choose Records or raw JSON Text input and connect the matching value.", "Choose serialization, field mapping, and any schema or CSV columns.", "Inspect Records, Text, and the report before connecting a file mutation."),
 	"read-file": $("Read File", "Read an authorized workflow data source and return its text, parsed document, and live write reference.", "Authorize the source in Workflow → Configure → Workflow Data, then select it here.", "Choose selected-actor scope or connect exact presence for the configured actor.", "Use Document for calculations, Text for transformation, and Reference for an authorized Write to File."),
 	"write-file": $("Write to File", "Stage a checked change to an authorized workflow data source for acceptance with the reviewed root result.", "Connect the exact Reference from Read File and the Records or Text required by the mutation.", "Choose the mutation and any collection, identity, schema, or separator policies.", "Inspect the projection and receipt; apply the reviewed root result to save the staged change."),
 	"project-document": $("Project Document", "Preview a document mutation as Text and Data without reading or writing a live file.", "Connect serialized Source Text and the Records or Text needed for the mutation.", "Choose the document format and mutation settings.", "Inspect the projected document or calculate on its Data before an authorized write path."),
-	"commit-clock": $("Clock Commit", "Stage accepted story-clock movement and settled due events from a genuine time projection.", "Connect the retained Report from Advance Time in the root Response stage.", "Connect any additional checked due occurrences and inspect the staging receipt.", "Apply the reviewed root result to save the clock and consumed occurrence IDs."),
+	"commit-clock": $("Clock Commit", "Stage accepted story-clock movement and settled due events from a genuine time projection.", "Connect the retained Report from Advance Time in Response, either in Main or inside a static subgraph.", "Connect any additional checked due occurrences and inspect the staging receipt.", "Apply the reviewed root result to save the clock and consumed occurrence IDs."),
 	"story-clock": $("Story Clock", "Read an accepted story clock from an authorized workflow data source.", "Create or authorize a clock JSON source in Workflow Data and select its identity.", "Optionally specify the expected calendar, then connect Clock to Advance Time or Time Trigger."),
 	"time-trigger": $("Time Trigger", "Find scheduled occurrences crossed between a previous and destination story clock.", "Connect both clocks and choose Daily, Interval, or Delay scheduling.", "Set a stable schedule identity, revision, and the exact due-time settings.", "Set limits and already settled IDs, then inspect due occurrences and their report."),
 	"advance-time": $("Advance Time", "Project explicit forward story time and enumerate due events while retaining any interrupted remainder.", "Connect the previous Clock and an explicit duration or destination proposal in integer minutes.", "Supply schedules through the settings or the input, and choose Interrupt or Catch-up.", "Inspect Clock, Occurrences, Remainder, and Report before passing the retained report to Clock Commit."),
@@ -7529,33 +7553,33 @@ var $ = (e, t, ...n) => ({
 	"context-join": $("Context Join", "Combine ordered Context inputs while checking duplicate message identities and reporting omissions.", "Define between two and sixteen input slots with stable IDs and readable labels.", "Connect every slot to a Context source.", "Inspect retained and duplicate material, especially when joining a compacted branch."),
 	note: $("Note", "Keep a written reminder or explanation beside the workflow without affecting execution.", "Write the explanation in the note’s text editor.", "Move and resize the note beside the nodes it describes."),
 	comment: $("Comment", "Group nearby nodes visually and explain the purpose of that part of the workflow.", "Write a short label or explanation for the group.", "Resize and position the comment around the related nodes; its frame does not change their execution."),
-	subgraph: $("Subgraph", "Reuse a pinned process through its named inputs, outputs, and exposed settings.", "Connect the wrapper’s interface pins and set any exposed parameter or model overrides.", "Open the body to inspect its process; use Make editable copy when private edits are needed.", "Choose Add to Subgraphs to save a reusable definition or update a shelf entry."),
+	subgraph: $("Subgraph", "Group any ordinary workflow nodes into a reusable process with named inputs, outputs, and exposed settings.", "Connect the wrapper’s interface pins and set any exposed parameter or model overrides.", "Open the body to inspect its process; use Make editable copy when private edits are needed.", "Choose Add to Subgraphs to save a reusable definition or update a shelf entry."),
 	"subgraph-input": $("Subgraph Input", "Bring one typed input from a subgraph’s outer interface into its body.", "Set the interface name, value type, and whether the parent must supply it.", "Connect the boundary’s Output to matching inputs inside the subgraph."),
 	"subgraph-output": $("Subgraph Output", "Return one typed result from the subgraph body through its outer interface.", "Set the interface name, value type, and required setting.", "Connect a matching body result to the boundary’s Input and use the wrapper’s output in the parent.")
-}, Ll = Object.freeze(Object.fromEntries(Object.entries(Il).map(([e, t]) => [e, Object.freeze({
+}, zl = Object.freeze(Object.fromEntries(Object.entries(Rl).map(([e, t]) => [e, Object.freeze({
 	key: e,
 	...t,
 	howTo: Object.freeze(t.howTo)
-})]))), Rl = "Caps the tokens the model may return in this node’s request. This is separate from the size of its input or downstream guidance.", zl = "Exact phrases that must survive proposed edits unchanged. Add one phrase per line; missing or removed protected wording stops the change.", Bl = "Authorized follows the Draft’s permitted spans; Whole uses its permitted full text; Narration excludes quoted dialogue; Dialogue uses paired double-quoted speech.", Vl = "Text accepts ordinary text and returns Text in either stage. Draft accepts a frozen reply in Response and returns proposed Patches for validation and review.", Hl = "Text uses an example passage; Data uses structured reference material. Changing this choice changes the Reference input’s type.", Ul = "Light asks for restrained changes; Balanced allows broader changes within the selected scope. Both still require the same protection and review.", Wl = "Choose the exact connected value type: Context for conversation material, Draft for a frozen reply, Patches for edits, Candidate for a validated revision, Guidance for direction, Text for plain text, or Data for structured values.", Gl = "Declare one to sixteen unique slot IDs, labels, and required flags in order. Required contributions must complete; optional skipped branches may be omitted.", Kl = "Player message watches the actual player turn; Draft watches reply narrative; Scene context watches supplied scene material; Accepted event watches confirmed event evidence.", ql = "The canonical actor identity for this path. It must match supplied presence and private evidence; an invented label cannot grant access to another actor.", Jl = "JSON writes structured JSON; JSON Lines writes one record per line; CSV writes declared columns; Text and Markdown write serialized text using the separator policy.", Yl = "Optional supported validation schema entered as raw JSON. Blank skips schema checking; unsupported keywords or mismatched records stop the operation.", Xl = "Ordered CSV field names used to read or serialize records. Supply explicit columns when the document requires a fixed CSV layout.", Zl = {
+})]))), Bl = "Caps the tokens the model may return in this node’s request. This is separate from the size of its input or downstream guidance.", Vl = "Exact phrases that must survive proposed edits unchanged. Add one phrase per line; missing or removed protected wording stops the change.", Hl = "Authorized follows the Draft’s permitted spans; Whole uses its permitted full text; Narration excludes quoted dialogue; Dialogue uses paired double-quoted speech.", Ul = "Text accepts ordinary text and returns Text in either stage. Draft accepts a frozen reply in Response and returns proposed Patches for validation and review.", Wl = "Text uses an example passage; Data uses structured reference material. Changing this choice changes the Reference input’s type.", Gl = "Light asks for restrained changes; Balanced allows broader changes within the selected scope. Both still require the same protection and review.", Kl = "Choose the exact connected value type: Context for conversation material, Draft for a frozen reply, Patches for edits, Candidate for a validated revision, Guidance for direction, Text for plain text, or Data for structured values.", ql = "Declare one to sixteen unique slot IDs, labels, and required flags in order. Required contributions must complete; optional skipped branches may be omitted.", Jl = "Player message watches the actual player turn; Draft watches reply narrative; Scene context watches supplied scene material; Accepted event watches confirmed event evidence.", Yl = "The canonical actor identity for this path. It must match supplied presence and private evidence; an invented label cannot grant access to another actor.", Xl = "JSON writes structured JSON; JSON Lines writes one record per line; CSV writes declared columns; Text and Markdown write serialized text using the separator policy.", Zl = "Optional supported validation schema entered as raw JSON. Blank skips schema checking; unsupported keywords or mismatched records stop the operation.", Ql = "Ordered CSV field names used to read or serialize records. Supply explicit columns when the document requires a fixed CSV layout.", $l = {
 	mode: "Append joins Text or Markdown; Add appends records; Add unique avoids duplicate identities; Upsert inserts or updates by identity; Update fields changes only listed fields in existing records; Replace validates a complete replacement. JSON Lines and CSV support Add and Replace.",
 	collectionPath: "JSON Pointer to the collection being changed, such as /memories. Blank addresses the document root. This differs from a Collection node’s array-of-keys path.",
 	missingPath: "Error stops when the addressed collection is missing. Create permits creating the missing collection for a supported mutation.",
 	key: "Record field that provides a stable identity for Add unique, Upsert, and Update fields. Matching identities must be explicit in the supplied records.",
 	fieldPolicy: "Merge keeps existing fields and overlays the supplied fields during Upsert. Replace substitutes the whole matching record.",
 	fields: "Names of existing-record fields that Update fields may change. Unlisted fields remain unchanged; this mode does not create new records.",
-	schema: Yl,
-	columns: Xl,
+	schema: Zl,
+	columns: Ql,
 	separator: "Text inserted between the existing content and appended text, or between serialized text records. Choose the exact spacing or newline you want.",
 	emptyPolicy: "Omit leaves out the joining separator when the destination is empty. Include adds it even at the beginning of an empty destination.",
 	trailingSeparator: "Add the chosen separator after the final serialized or appended text value when enabled."
-}, Ql = {
+}, eu = {
 	actorScope: "Selected uses the native host’s selected actor. Presence requires exact live Presence for the configured actor and adds a required Presence input.",
 	actorId: "Actor identity used by Presence scope. Match it to the connected live Presence; Selected scope uses the host actor and leaves this blank."
-}, $l = {
-	actorId: ql,
+}, tu = {
+	actorId: Yl,
 	memorySetId: "Stable identity of the memory set to recall. Recall and its shortcut must use the same actor and memory-set identities.",
 	target: "Reply applies to an ordinary generated reply; Generated swipe applies to a new swipe; Both applies to either generation type."
-}, eu = {
+}, nu = {
 	subgraph: { enabled: "Enable this System to run its body. Disabling it skips its outputs without running contained nodes; optional consumers may omit the contribution or use saved text, while required consumers stop." },
 	note: {
 		title: "Optional heading for this note. Use a short label that explains the reminder or instruction.",
@@ -7577,11 +7601,11 @@ var $ = (e, t, ...n) => ({
 		method: "Select removes older flexible messages without a model. Compress may ask a model for one summary when needed and marks it as derived material.",
 		keepRecent: "Number of newest messages to retain word for word rather than remove or summarize.",
 		pins: "Case-sensitive exact phrases whose containing messages must stay word for word. Missing pins stop compaction.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"response-plan": {
 		instructions: "Describe the writing direction, constraints, or possible next beats you want the model to plan. Suggested events remain proposals.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"pattern-scan": {
 		mode: "Literal matches the authored text patterns directly; this scan does not infer meaning or ask a model.",
@@ -7593,16 +7617,16 @@ var $ = (e, t, ...n) => ({
 	},
 	repair: {
 		mode: "Repair asks for JSON patches to selected spans. Scan makes no repair request. Inspect reports cleanup findings without a model. Contextual cleanup asks for context-aware prose cleanup. Strict avoidance asks for prose that avoids the selected policies. The last two may make one request.",
-		scope: Bl,
+		scope: Hl,
 		categories: "Choose the built-in prose-policy categories to inspect or avoid. An empty list selects the full available policy; scope and protected wording remain separate choices.",
 		caseSensitive: "Require matching uppercase and lowercase letters when finding policy phrases in cleanup modes.",
-		strength: Ul,
+		strength: Gl,
 		instructions: "Give the repair or cleanup model specific editorial directions within the selected scope. These instructions do not authorize changes to protected wording.",
-		maxTokens: Rl,
-		protectedLiterals: zl
+		maxTokens: Bl,
+		protectedLiterals: Vl
 	},
 	guidance: { budgetTokens: "Maximum token budget for the exposed writing direction. Guidance that exceeds the budget stops rather than being silently cut." },
-	reroute: { artifactKind: Wl },
+	reroute: { artifactKind: Kl },
 	compose: {
 		mode: "Join combines sections from top to bottom. Template fills named placeholders in your own layout; unused sections are not added automatically.",
 		outputKind: "Text feeds ordinary Text inputs and works in either stage. Guidance supplies instructions for Generate Reply and is available only in Preparation.",
@@ -7616,49 +7640,49 @@ var $ = (e, t, ...n) => ({
 		mode: "Replace applies authored replacements in order. Extract collects matched text into a Text result using the separator.",
 		rules: "Ordered rules with kind, pattern, optional replacement, and flags. Literal matches exact wording; Regex uses a regular expression. Literal flags allow i/u; Regex also allows m/s. Save Rules before running.",
 		separator: "Text placed between extracted matches. It affects Extract output rather than replacement wording.",
-		scope: Bl,
-		protectedLiterals: zl
+		scope: Hl,
+		protectedLiterals: Vl
 	},
 	"json-decode": {
 		mode: "Parse turns raw JSON Text into Data. Check accepts existing Data and validates it without parsing text. Markdown fences are not raw JSON.",
-		schema: Yl
+		schema: Zl
 	},
 	"select-fields": { fields: "Map each unique output name to a path of keys or numeric array indices. Fields are required by default; required:false permits omission or an authored default. Save Fields before running." },
 	"style-transfer": {
-		inputKind: Vl,
-		referenceKind: Hl,
+		inputKind: Ul,
+		referenceKind: Wl,
 		mode: "Narration transfers narrative style; Character voice transfers speech style; Rhythm transfers pacing; Register transfers formality or diction. Choose the text scope separately.",
-		scope: Bl,
-		protectedLiterals: zl,
-		strength: Ul,
+		scope: Hl,
+		protectedLiterals: Vl,
+		strength: Gl,
 		instructions: "Describe the stylistic qualities to borrow from the reference while preserving the supplied content and selected scope.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"format-transfer": {
-		inputKind: Vl,
-		referenceKind: Hl,
-		scope: Bl,
-		protectedLiterals: zl,
-		strength: Ul,
+		inputKind: Ul,
+		referenceKind: Wl,
+		scope: Hl,
+		protectedLiterals: Vl,
+		strength: Gl,
 		instructions: "Describe the organization or format to borrow. The reference can require existing content but cannot supply new story facts.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"terminology-map": {
-		inputKind: Vl,
-		scope: Bl,
-		protectedLiterals: zl,
+		inputKind: Ul,
+		scope: Hl,
+		protectedLiterals: Vl,
 		caseSensitive: "Require each glossary entry’s uppercase and lowercase letters to match exactly when enabled.",
 		match: "Word replaces complete words at Unicode boundaries. Phrase replaces the literal phrase. Replacements happen together and do not cascade into another glossary entry."
 	},
 	reflect: {
 		mode: "Character considers beliefs, goals, relationships, and conflicts. Recall connects supplied episodes to current evidence. Scene considers conditions, opportunities, pressures, and attention.",
 		instructions: "Tell the model which supported questions to assess. Keep observations, interpretations, and possibilities distinct.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	internalize: {
 		mode: "Experience proposes supported experience updates. Pattern considers supported recurrence. Recovery considers temporary conditions while retaining guarded beliefs and unresolved consequences.",
 		instructions: "Describe the kinds of supported updates to consider from the connected settled events. Enduring traits cannot be rewritten.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	express: {
 		mode: "Behavior renders behavior hints as Guidance without a model. Attention renders attention hints as Guidance. Inner voice asks a model for fictional Text and changes the output type.",
@@ -7711,15 +7735,15 @@ var $ = (e, t, ...n) => ({
 		operator: "Equals and Not equals compare explicit values; Exists checks that the path is present; Nonempty checks strings, arrays, or objects; Greater than, At least, and Less than compare finite numbers.",
 		value: "Explicit value used by the comparison. Match the connected value’s type; ordered comparisons require a finite number. Exists and Nonempty do not need a comparison value."
 	},
-	branch: { artifactKind: Wl },
+	branch: { artifactKind: Kl },
 	join: {
-		artifactKind: Wl,
-		inputs: Gl,
+		artifactKind: Kl,
+		inputs: ql,
 		selection: "First returns the first completed contribution in declared slot order. Last returns the last completed contribution. This is slot order, not completion time."
 	},
 	collect: {
-		artifactKind: Wl,
-		inputs: Gl
+		artifactKind: Kl,
+		inputs: ql
 	},
 	"confidence-gate": {
 		metricPath: "Array of keys selecting a finite numeric metric from Data. Empty selects the whole value. Booleans are not numeric scores.",
@@ -7737,7 +7761,7 @@ var $ = (e, t, ...n) => ({
 	decision: {
 		inputKind: "Data judges structured values; Text judges supplied text. Changing this choice changes the evidence input’s type.",
 		questions: "JSON object of stable question IDs and instructions. Use yes/no, explicit choices, or ordered scores. Unresolved answers remain null; confidence is the model’s own estimate.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	combine: {
 		mode: "Append adds the connected text as a named Draft section while retaining the original narrative body.",
@@ -7754,7 +7778,7 @@ var $ = (e, t, ...n) => ({
 	},
 	enrich: {
 		instructions: "Tell the model what additional supported details to add to the supplied Data. Declared identities must remain intact.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"draft-text": { view: "Body returns only the original narrative text. Assembled includes appended sections in their visible order." },
 	extract: {
@@ -7763,45 +7787,45 @@ var $ = (e, t, ...n) => ({
 		instructions: "Describe the records and evidence the model should extract. Extraction produces candidates, not confirmed events.",
 		schema: "Optional supported schema for extracted records, entered as raw JSON. Invalid or mismatched output stops extraction.",
 		patterns: "Saved literal extraction pattern records used in Literal mode. They specify what to match and how to form the extracted records.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"model-call": {
 		instructions: "Describe the auxiliary task to perform using the connected Text and optional Context or Data.",
 		outputKind: "Text returns the model’s text. Data requests structured JSON and checks it against any supplied schema.",
 		schema: "Optional supported raw JSON schema for Data output. It constrains structured output rather than turning arbitrary prose into records.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"revise-draft": {
 		instructions: "Describe the intended revision to the owned Draft. The model must keep source identity, protected wording, and permitted scope.",
-		scope: Bl,
-		protectedLiterals: zl,
-		maxTokens: Rl
+		scope: Hl,
+		protectedLiterals: Vl,
+		maxTokens: Bl
 	},
 	"generate-reply": { budgetTokens: "Maximum tokens of optional Guidance supplied to this native generation. The reply itself uses SillyTavern’s generation settings." },
 	format: {
 		inputMode: "Records accepts structured Data. JSON text accepts raw JSON Text and parses it before validation and serialization.",
-		format: Jl,
+		format: Xl,
 		jsonShape: "Records writes a JSON array of records. Single writes one object and requires exactly one object in the supplied records.",
 		mapping: "Preserve keeps record fields. Select creates records using the declared field mappings.",
 		fields: "Authored output names and input paths used by Select field mapping. They select explicit values rather than infer fields from prose.",
-		schema: Yl,
-		columns: Xl,
+		schema: Zl,
+		columns: Ql,
 		separator: "Text placed between serialized Text or Markdown records. Other formats use their own structural delimiters.",
 		trailingSeparator: "Add the chosen separator after the last Text or Markdown record when enabled."
 	},
 	"read-file": {
 		targetId: "Authorized workflow data source to read in the active user and chat. Configure sources in Workflow Data; this is a logical identity, not an OS file path.",
-		schema: Yl,
-		columns: Xl,
-		...Ql
+		schema: Zl,
+		columns: Ql,
+		...eu
 	},
 	"write-file": {
-		...Zl,
-		...Ql
+		...$l,
+		...eu
 	},
 	"project-document": {
-		...Zl,
-		format: Jl
+		...$l,
+		format: Xl
 	},
 	"story-clock": {
 		clockId: "Authorized accepted-clock data source identity. Its JSON must contain a valid calendar, absolute minute, revision, and day length.",
@@ -7828,40 +7852,40 @@ var $ = (e, t, ...n) => ({
 		limit: "Maximum due occurrences in this projection. Overflow stops the whole projection before partial clock movement can be accepted.",
 		consumedIds: "Already settled occurrence IDs to exclude from this projection. The matching input can supply the retained set."
 	},
-	"actor-context": { actorId: ql },
+	"actor-context": { actorId: Yl },
 	"event-normalize": {
 		mode: "Candidates checks candidate occurrences against exact source text and authored entities. Progression converts confirmed events to occurrence Data for State rules.",
 		eventType: "Optional authored event type assigned to resulting Progression occurrences. Leave blank to retain each confirmed event’s type. Candidates mode uses the supplied candidate types.",
 		absoluteMinute: "Optional exact story minute, with -1 meaning unspecified. When a Clock is connected, its timestamp must agree with an authored minute."
 	},
 	"prompted-memory": {
-		actorId: ql,
+		actorId: Yl,
 		mode: "Recall searches authorized existing memories. Create proposes a new memory. Recall-or-create recalls first and may propose one when needed; creation also needs Allow create.",
 		prompt: "Describe what memory to recall or propose for the supplied genuine holder event. Only this actor’s authorized memories are read.",
 		allowCreate: "Explicitly permit proposing a new memory. Creation remains a proposal and requires a separate authorized persistence path.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"item-mention-trigger": {
-		actorId: ql,
+		actorId: Yl,
 		itemId: "Canonical item identity to watch in the supplied Entities. A textual alias does not establish who holds or uses the item.",
 		aliases: "One to thirty-two literal names or phrases to match for this item, one per line.",
-		watch: Kl,
+		watch: Jl,
 		activation: "Per occurrence returns each matching occurrence. Once per source activates once for a source revision. Edge once activates on a new matching edge using the connected prior trigger state.",
 		caseSensitive: "Require aliases to match the source’s uppercase and lowercase letters when enabled."
 	},
 	"item-use-trigger": {
 		itemId: "Canonical item identity to check against supplied Entities and exact source evidence.",
 		mode: "Candidates checks connected candidate Data without a model. Extract makes one bounded model request to identify candidate uses and their evidence.",
-		watch: Kl,
+		watch: Jl,
 		instructions: "Tell extraction which actual item-use evidence to identify. Proposed, negated, or hypothetical use remains distinct from actual candidates.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"confirm-events": { mode: "Records matches each occurrence with its decision record. Single gate applies one explicit accepted result to a bounded single event. Both retain source and identity checks." },
-	"scene-presence": { actorId: ql },
+	"scene-presence": { actorId: Yl },
 	"character-direction": {
-		actorId: ql,
+		actorId: Yl,
 		systemPrompt: "Separate system instructions for this actor’s writing-direction request. Its authorized card, context, and memories supply the actor background.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	"parse-effect-library": {
 		format: "Data reads structured library Data. JSON parses raw JSON Text. Text parses a plain-text list into checked effect entries.",
@@ -7878,7 +7902,7 @@ var $ = (e, t, ...n) => ({
 	"commit-outcomes": { targetId: "Authorized JSON outcomes source to stage the resolved results into. The write settles only with the exact accepted root result." },
 	"effect-author": {
 		instructions: "Describe the bounded effect to invent for the already selected generated branch. Actor, item, and cast identities stay fixed.",
-		maxTokens: Rl
+		maxTokens: Bl
 	},
 	collection: {
 		mode: "Lookup returns one unambiguous match; Filter returns matching records; Count returns array length; Sum totals a numeric field; Threshold reports crossed values; Merge combines ordered arrays; Rule lookup matches authored rules; Project selects one field from each record; Flatten removes one array level.",
@@ -7892,7 +7916,7 @@ var $ = (e, t, ...n) => ({
 		identityPath: "Array of keys locating each record’s stable scalar identity for Add unique merging, such as [\"id\"]."
 	},
 	recall: {
-		...$l,
+		...tu,
 		activation: "Manual queue requires a queued recall. Keyword matches supplied source text; Event matches genuine confirmed occurrences for this actor; Character activates when the configured actor is present in supplied scene participation. Manual queue or Keyword, Event, or Character accepts either the queue or that automatic trigger.",
 		keywords: "Literal keywords used by keyword activation modes, one per line. Connect the checked source being watched.",
 		caseSensitive: "Require keyword matches to use the same uppercase and lowercase letters when enabled.",
@@ -7906,13 +7930,13 @@ var $ = (e, t, ...n) => ({
 		title: "Heading used to identify the recalled-memory guidance and report."
 	},
 	"hotkey-arm": {
-		...$l,
+		...tu,
 		uses: "Next matching generation consumes one matching use. Once for each generation type allows one reply and one generated swipe. Until cancelled keeps the queue active until explicitly cancelled.",
 		consumeOn: "Successful completion consumes the queued use after a successful generation. Accepted result consumes it only after the reviewed result is accepted.",
 		hotkey: "Physical keyboard code plus Ctrl, Alt, Shift, or Meta modifiers. Choose a unique combination; shortcuts skip typing, composition, and key-repeat events."
 	},
 	"context-join": { inputs: "Two to sixteen required Context slots with stable IDs and visible labels, joined in declared order. Connect every slot; identical messages deduplicate and conflicting identities stop the join." }
-}, tu = {
+}, ru = {
 	enabled: "Allow this node to participate in workflow execution when enabled. Disabled paths may leave downstream required inputs unavailable.",
 	phase: "Preparation runs before Generate Reply; Response runs after it. The selected node’s input and output types must support that stage. Compose Text works in either; Compose Guidance requires Preparation.",
 	stage: "Preparation runs before Generate Reply; Response runs after it. Choose a stage supported by this node’s operation and connected values.",
@@ -7930,7 +7954,7 @@ var $ = (e, t, ...n) => ({
 	parameters: "Override settings explicitly exposed by the reusable definition. Unchanged parameters use the definition’s saved values.",
 	bindings: "Role or node-specific model choices exposed by the subgraph. Inspect effective bindings to see which requests an override changes.",
 	label: "Visible interface name shown on the boundary and its wrapper pin. Use a name that explains what the parent should supply or receive.",
-	kind: Wl,
+	kind: Kl,
 	required: "Require this interface contribution to be available. A missing required value holds execution rather than supplying a guessed default.",
 	interfacePortId: "Stable identity of the boundary’s interface pin. Its visible label may change while connections keep using this identity.",
 	text: "Written explanation displayed in the note or comment. It documents the canvas and makes no model request.",
@@ -7938,28 +7962,28 @@ var $ = (e, t, ...n) => ({
 	width: "Display width of the note or comment frame on the canvas.",
 	height: "Display height of the note or comment frame on the canvas."
 };
-function nu(e, t) {
-	if (!ru(e) || typeof t != "string") return null;
-	let n = eu[e];
-	return n && Object.hasOwn(n, t) ? n[t] : Object.hasOwn(tu, t) ? tu[t] : null;
+function iu(e, t) {
+	if (!au(e) || typeof t != "string") return null;
+	let n = nu[e];
+	return n && Object.hasOwn(n, t) ? n[t] : Object.hasOwn(ru, t) ? ru[t] : null;
 }
-function ru(e) {
-	return typeof e == "string" && Object.hasOwn(Ll, e) ? Ll[e] : null;
+function au(e) {
+	return typeof e == "string" && Object.hasOwn(zl, e) ? zl[e] : null;
 }
 //#endregion
 //#region src/ui/node-guide.js
-function iu(e) {
+function ou(e) {
 	if (!e) return null;
-	let t = e.guideKey ?? e.operation, n = ru(t);
+	let t = e.guideKey ?? e.operation, n = au(t);
 	if (!n) return null;
 	let r = e.controls.map((e) => ({
 		key: e.key,
 		label: e.label,
-		description: nu(t, e.key) || e.help
+		description: iu(t, e.key) || e.help
 	})), i = (e, t) => r.push({
 		key: e,
 		label: t,
-		description: nu(n.key, e)
+		description: iu(n.key, e)
 	});
 	return e.fileInput && i("file", "Choose / replace file"), e.workflowData && i("workflowData", "Workflow Data"), e.boundary ? (i("label", "Port name"), i("kind", "Type"), i("required", "Required")) : (i("alias", "Node name"), i("compact", "Compact card"), (e.system || e.guideKey !== "note" && e.guideKey !== "subgraph") && i("enabled", e.system ? "Run this system" : "Enabled"), e.guideKey === "subgraph" && (i("definition", "Pinned definition"), i("parameters", "Exposed settings"), i("bindings", "Model bindings")), e.guideKey === "note" && i("content", "Notes")), e.phaseEditable && i("phase", "Workflow stage"), e.model && (i("profileId", "Connection"), i("model", "Model override"), i("modelRole", "Model role")), e.helperBindings && i("helperBindings", "Helper model connections"), e.modifiers && i("modifiers", "Text modifiers"), {
 		...n,
@@ -7967,8 +7991,8 @@ function iu(e) {
 		settings: r
 	};
 }
-function au(e) {
-	let t = ru("comment");
+function su(e) {
+	let t = au("comment");
 	return t ? {
 		...t,
 		card: null,
@@ -7986,14 +8010,14 @@ function au(e) {
 				color: "Color",
 				moveContents: "Move contents"
 			}[e],
-			description: nu("comment", e)
+			description: iu("comment", e)
 		}))
 	} : null;
 }
 //#endregion
 //#region ui/CommentDetails.svelte
-var ou = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-comment-help svelte-17djc3u\" aria-label=\"Open Comment guide\" title=\"Help with Comment\">?</button>"), su = /* @__PURE__ */ G("<p class=\"pc-detail-meta svelte-17djc3u\">Read-only comment</p>"), cu = /* @__PURE__ */ G("<section class=\"pc-comment-details svelte-17djc3u\" aria-label=\"Comment details\"><header class=\"svelte-17djc3u\"><h3 class=\"svelte-17djc3u\">Comment</h3><!></header> <!> <fieldset class=\"pc-detail-group svelte-17djc3u\"><legend class=\"svelte-17djc3u\">Comment</legend> <label class=\"svelte-17djc3u\">Title<input aria-label=\"Comment title\" class=\"svelte-17djc3u\"/></label> <label class=\"svelte-17djc3u\">Notes<textarea aria-label=\"Comment notes\" rows=\"5\" class=\"svelte-17djc3u\"></textarea></label> <label class=\"pc-comment-color-label svelte-17djc3u\">Color<input aria-label=\"Comment color\" type=\"color\" class=\"svelte-17djc3u\"/></label> <label class=\"pc-detail-check svelte-17djc3u\"><input aria-label=\"Move contents\" type=\"checkbox\" class=\"svelte-17djc3u\"/> Move contents</label> <small class=\"svelte-17djc3u\">Moves fully contained nodes when you drag the comment header.</small></fieldset> <div class=\"pc-comment-commands svelte-17djc3u\"><button type=\"button\" class=\"pc-btn svelte-17djc3u\">Fit to contents</button> <button type=\"button\" class=\"pc-btn pc-danger svelte-17djc3u\">Delete comment</button></div> <small class=\"svelte-17djc3u\">Deleting this comment keeps its contents.</small></section>");
-function lu(e, t) {
+var cu = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-comment-help svelte-17djc3u\" aria-label=\"Open Comment guide\" title=\"Help with Comment\">?</button>"), lu = /* @__PURE__ */ G("<p class=\"pc-detail-meta svelte-17djc3u\">Read-only comment</p>"), uu = /* @__PURE__ */ G("<section class=\"pc-comment-details svelte-17djc3u\" aria-label=\"Comment details\"><header class=\"svelte-17djc3u\"><h3 class=\"svelte-17djc3u\">Comment</h3><!></header> <!> <fieldset class=\"pc-detail-group svelte-17djc3u\"><legend class=\"svelte-17djc3u\">Comment</legend> <label class=\"svelte-17djc3u\">Title<input aria-label=\"Comment title\" class=\"svelte-17djc3u\"/></label> <label class=\"svelte-17djc3u\">Notes<textarea aria-label=\"Comment notes\" rows=\"5\" class=\"svelte-17djc3u\"></textarea></label> <label class=\"pc-comment-color-label svelte-17djc3u\">Color<input aria-label=\"Comment color\" type=\"color\" class=\"svelte-17djc3u\"/></label> <label class=\"pc-detail-check svelte-17djc3u\"><input aria-label=\"Move contents\" type=\"checkbox\" class=\"svelte-17djc3u\"/> Move contents</label> <small class=\"svelte-17djc3u\">Moves fully contained nodes when you drag the comment header.</small></fieldset> <div class=\"pc-comment-commands svelte-17djc3u\"><button type=\"button\" class=\"pc-btn svelte-17djc3u\">Fit to contents</button> <button type=\"button\" class=\"pc-btn pc-danger svelte-17djc3u\">Delete comment</button></div> <small class=\"svelte-17djc3u\">Deleting this comment keeps its contents.</small></section>");
+function du(e, t) {
 	Ue(t, !0);
 	let n = Pi(t, "readOnly", 3, !1), r = /* @__PURE__ */ F(() => n() || t.comment.readOnly), i = (e) => e.stopPropagation();
 	function a(e) {
@@ -8002,8 +8026,8 @@ function lu(e, t) {
 	function o(e) {
 		H(r) || t.onCommand(e);
 	}
-	var s = cu(), c = R(s), l = B(R(c)), u = (e) => {
-		var n = ou();
+	var s = uu(), c = R(s), l = B(R(c)), u = (e) => {
+		var n = cu();
 		W("click", n, function(...e) {
 			t.openGuide?.apply(this, e);
 		}), K(e, n);
@@ -8012,7 +8036,7 @@ function lu(e, t) {
 		t.openGuide && e(u);
 	}), P(c);
 	var d = B(c, 2), f = (e) => {
-		K(e, su());
+		K(e, lu());
 	};
 	J(d, (e) => {
 		H(r) && e(f);
@@ -8033,12 +8057,12 @@ function lu(e, t) {
 Er(["click", "change"]);
 //#endregion
 //#region ui/OutputPreview.svelte
-var uu = /* @__PURE__ */ G("<option class=\"svelte-ee2ehy\"> </option>"), du = /* @__PURE__ */ G("<label class=\"pc-preview-choice svelte-ee2ehy\"><span class=\"pc-preview-sr-only svelte-ee2ehy\">Preview output</span><select aria-label=\"Preview output\" class=\"svelte-ee2ehy\"><option disabled=\"\" class=\"svelte-ee2ehy\">Choose an output</option><!></select></label>"), fu = /* @__PURE__ */ G("<button type=\"button\" aria-label=\"Collapse preview\" title=\"Collapse preview\" class=\"svelte-ee2ehy\">▴</button>"), pu = /* @__PURE__ */ G("<button type=\"button\" role=\"tab\" class=\"svelte-ee2ehy\"> </button>"), mu = /* @__PURE__ */ G("<div class=\"pc-preview-tabs svelte-ee2ehy\" role=\"tablist\" aria-label=\"Recorded artifacts\"></div>"), hu = /* @__PURE__ */ G("<pre class=\"svelte-ee2ehy\"> </pre>"), gu = /* @__PURE__ */ G("<small class=\"pc-preview-note svelte-ee2ehy\"> </small>"), _u = /* @__PURE__ */ G("<div role=\"tabpanel\" tabindex=\"0\" class=\"svelte-ee2ehy\"><article class=\"svelte-ee2ehy\"><div class=\"pc-preview-section-heading svelte-ee2ehy\"><span class=\"svelte-ee2ehy\"> </span><small class=\"svelte-ee2ehy\"> </small></div> <!> <!></article></div>"), vu = /* @__PURE__ */ G("<p class=\"pc-preview-empty svelte-ee2ehy\"> </p>"), yu = /* @__PURE__ */ G("<p class=\"pc-preview-note svelte-ee2ehy\"> </p> <!>", 1), bu = /* @__PURE__ */ G("<section aria-label=\"Accepted consequences\" class=\"pc-preview-settlement svelte-ee2ehy\"><strong class=\"svelte-ee2ehy\"> </strong> <!></section>"), xu = /* @__PURE__ */ G("<p class=\"pc-preview-note svelte-ee2ehy\"> </p>"), Su = /* @__PURE__ */ G("<div class=\"pc-preview-note svelte-ee2ehy\"><span class=\"svelte-ee2ehy\"> </span><!></div>"), Cu = /* @__PURE__ */ G("<div class=\"svelte-ee2ehy\"><!></div>"), wu = /* @__PURE__ */ G("<button type=\"button\" data-run-here=\"\" title=\"Runs the selected output's dependencies within the displayed request limit.\" class=\"svelte-ee2ehy\"> </button><!>", 1), Tu = /* @__PURE__ */ G("<button type=\"button\" data-preview-apply=\"\" class=\"svelte-ee2ehy\"> </button><!><button type=\"button\" class=\"svelte-ee2ehy\"> </button>", 1), Eu = /* @__PURE__ */ G("<header class=\"svelte-ee2ehy\"><h3 class=\"svelte-ee2ehy\"> </h3> <!> <div class=\"pc-preview-tools svelte-ee2ehy\"><button type=\"button\" aria-label=\"Pin preview\" class=\"svelte-ee2ehy\"> </button><!></div></header> <!> <div class=\"pc-preview-sections svelte-ee2ehy\"><!> <!> <!> <!> <!> <!> <!></div> <footer class=\"svelte-ee2ehy\"><span class=\"pc-preview-status svelte-ee2ehy\"> </span> <span class=\"svelte-ee2ehy\"> </span> <!> <!></footer>", 1), Du = /* @__PURE__ */ G("<p class=\"pc-preview-empty svelte-ee2ehy\">Select a node output to inspect its recorded result.</p>"), Ou = /* @__PURE__ */ G("<section class=\"pc-output-preview svelte-ee2ehy\" aria-label=\"Output preview\"><!></section>");
+var fu = /* @__PURE__ */ G("<button type=\"button\" aria-label=\"Collapse preview\" title=\"Collapse preview\" class=\"svelte-ee2ehy\">▴</button>"), pu = /* @__PURE__ */ G("<button type=\"button\" role=\"tab\" class=\"svelte-ee2ehy\"> </button>"), mu = /* @__PURE__ */ G("<div class=\"pc-preview-tabs svelte-ee2ehy\" role=\"tablist\" aria-label=\"Recorded artifacts\"></div>"), hu = /* @__PURE__ */ G("<pre class=\"svelte-ee2ehy\"> </pre>"), gu = /* @__PURE__ */ G("<small class=\"pc-preview-note svelte-ee2ehy\"> </small>"), _u = /* @__PURE__ */ G("<div role=\"tabpanel\" tabindex=\"0\" class=\"svelte-ee2ehy\"><article class=\"svelte-ee2ehy\"><div class=\"pc-preview-section-heading svelte-ee2ehy\"><span class=\"svelte-ee2ehy\"> </span><small class=\"svelte-ee2ehy\"> </small></div> <!> <!></article></div>"), vu = /* @__PURE__ */ G("<p class=\"pc-preview-empty svelte-ee2ehy\"> </p>"), yu = /* @__PURE__ */ G("<p class=\"pc-preview-note svelte-ee2ehy\"> </p> <!>", 1), bu = /* @__PURE__ */ G("<section aria-label=\"Accepted consequences\" class=\"pc-preview-settlement svelte-ee2ehy\"><strong class=\"svelte-ee2ehy\"> </strong> <!></section>"), xu = /* @__PURE__ */ G("<p class=\"pc-preview-note svelte-ee2ehy\"> </p>"), Su = /* @__PURE__ */ G("<div class=\"pc-preview-note svelte-ee2ehy\"><span class=\"svelte-ee2ehy\"> </span><!></div>"), Cu = /* @__PURE__ */ G("<div class=\"svelte-ee2ehy\"><!></div>"), wu = /* @__PURE__ */ G("<button type=\"button\" data-run-here=\"\" title=\"Runs the selected output's dependencies within the displayed request limit.\" class=\"svelte-ee2ehy\"> </button><!>", 1), Tu = /* @__PURE__ */ G("<button type=\"button\" data-preview-apply=\"\" class=\"svelte-ee2ehy\"> </button><!><button type=\"button\" class=\"svelte-ee2ehy\"> </button>", 1), Eu = /* @__PURE__ */ G("<header class=\"svelte-ee2ehy\"><h3 class=\"svelte-ee2ehy\"> </h3> <div class=\"pc-preview-tools svelte-ee2ehy\"><button type=\"button\" aria-label=\"Pin preview\" class=\"svelte-ee2ehy\"> </button><!></div></header> <!> <div class=\"pc-preview-sections svelte-ee2ehy\"><!> <!> <!> <!> <!> <!> <!></div> <footer class=\"svelte-ee2ehy\"><span class=\"pc-preview-status svelte-ee2ehy\"> </span> <span class=\"svelte-ee2ehy\"> </span> <!> <!></footer>", 1), Du = /* @__PURE__ */ G("<p class=\"pc-preview-empty svelte-ee2ehy\">Select a node on the canvas to inspect its recorded result.</p>"), Ou = /* @__PURE__ */ G("<section class=\"pc-output-preview svelte-ee2ehy\" aria-label=\"Output preview\"><!></section>");
 function ku(e, t) {
 	let n = Rr();
 	Ue(t, !0);
 	let r = Pi(t, "actions", 19, () => ({})), i = /* @__PURE__ */ F(() => {
-		let e = t.view?.diagnostics ?? co([
+		let e = t.view?.diagnostics ?? lo([
 			t.view?.runHere?.issue,
 			...t.view?.issues ?? [],
 			t.view?.review?.issue
@@ -8097,12 +8121,8 @@ function ku(e, t) {
 	} : {
 		...e,
 		instancePath: [...e.instancePath]
-	}, m = /* @__PURE__ */ F(() => !!(t.view && H(u) && t.view.status !== "removed" && !t.view.busy && t.view.runHere?.enabled && r().runHere)), h = /* @__PURE__ */ F(() => !!(t.view && H(u) && t.view.review?.mode === "root" && t.view.review.selectedRootTerminal && "kind" in H(u).target && H(u).target.address.instancePath.length === 0 && f(H(u).target) === f(t.view.review.selector.terminal))), g = /* @__PURE__ */ F(() => !!(t.view && t.view.status === "current" && !t.view.busy && H(h) && t.view.review?.fresh && t.view.review.canApply && r().apply)), _ = /* @__PURE__ */ F(() => !!(t.view && !t.view.busy && H(h) && r().reject)), v = /* @__PURE__ */ F(() => H(m) ? void 0 : t.view?.runHere?.reason || (t.view?.busy ? "Wait for the current run to finish." : H(u) ? r().runHere ? "This output cannot run with the current workflow settings." : "Run to here is unavailable in this workspace." : "Choose an output before running.")), y = /* @__PURE__ */ F(() => H(g) ? void 0 : t.view?.review?.reason || (t.view?.busy ? "Wait for the current run to finish." : t.view?.status !== "current" || !t.view?.review?.fresh ? "Run this workflow again to review a current result." : H(h) ? r().apply ? "This reviewed reply cannot be applied with the current workflow settings." : "Apply is unavailable in this workspace." : "Select the root workflow’s reviewed reply to apply it.")), b = /* @__PURE__ */ F(() => H(i).findIndex((e) => e.message === H(v))), x = /* @__PURE__ */ F(() => H(i).findIndex((e) => e.message === H(y))), S = /* @__PURE__ */ F(() => H(v) ? n + (H(b) >= 0 ? "-diagnostic-" + H(b) : "-run-reason") : void 0), C = /* @__PURE__ */ F(() => H(y) ? n + (H(x) >= 0 ? "-diagnostic-" + H(x) : "-apply-reason") : void 0);
+	}, m = /* @__PURE__ */ F(() => !!(t.view && H(u) && t.view.status !== "removed" && !t.view.busy && t.view.runHere?.enabled && r().runHere)), h = /* @__PURE__ */ F(() => !!(t.view && H(u) && t.view.review?.mode === "root" && t.view.review.selectedRootTerminal && "kind" in H(u).target && f(H(u).target) === f(t.view.review.selector.terminal))), g = /* @__PURE__ */ F(() => !!(t.view && t.view.status === "current" && !t.view.busy && H(h) && t.view.review?.fresh && t.view.review.canApply && r().apply)), _ = /* @__PURE__ */ F(() => !!(t.view && !t.view.busy && H(h) && r().reject)), v = /* @__PURE__ */ F(() => H(m) ? void 0 : t.view?.runHere?.reason || (t.view?.busy ? "Wait for the current run to finish." : H(u) ? r().runHere ? "This output cannot run with the current workflow settings." : "Run to here is unavailable in this workspace." : "Select a node on the canvas before running.")), y = /* @__PURE__ */ F(() => H(g) ? void 0 : t.view?.review?.reason || (t.view?.busy ? "Wait for the current run to finish." : t.view?.status !== "current" || !t.view?.review?.fresh ? "Run this workflow again to review a current result." : H(h) ? r().apply ? "This reviewed reply cannot be applied with the current workflow settings." : "Apply is unavailable in this workspace." : "Select the root workflow’s reviewed reply to apply it.")), b = /* @__PURE__ */ F(() => H(i).findIndex((e) => e.message === H(v))), x = /* @__PURE__ */ F(() => H(i).findIndex((e) => e.message === H(y))), S = /* @__PURE__ */ F(() => H(v) ? n + (H(b) >= 0 ? "-diagnostic-" + H(b) : "-run-reason") : void 0), C = /* @__PURE__ */ F(() => H(y) ? n + (H(x) >= 0 ? "-diagnostic-" + H(x) : "-apply-reason") : void 0);
 	function w(e) {
-		let n = t.view?.choices.find((t) => t.key === e);
-		t.view && n && r().select?.(t.view.sourceKey, n.key, p(n.target));
-	}
-	function T(e) {
 		let t = {
 			kind: "terminal",
 			address: {
@@ -8116,39 +8136,21 @@ function ku(e, t) {
 			terminal: t
 		};
 	}
-	var E = Ou(), D = R(E), O = (e) => {
-		var f = Eu(), h = z(f), E = R(h), D = R(E, !0);
-		P(E);
-		var O = B(E, 2), k = (e) => {
-			var n = du(), i = B(R(n)), a = R(i);
-			a.value = a.__value = "", Y(B(a), 17, () => t.view.choices, (e) => e.key, (e, t) => {
-				var n = uu(), r = R(n);
-				P(n);
-				var i = {};
-				V(() => {
-					q(r, `${H(t).label ?? ""} · ${H(t).kind ?? ""}`), i !== (i = H(t).key) && (n.value = (n.__value = H(t).key) ?? "");
-				}), K(e, n);
-			}), P(i);
-			var o;
-			_i(i), P(n), V(() => {
-				i.disabled = !r().select, o !== (o = t.view.selectedKey ?? "") && (i.value = (i.__value = t.view.selectedKey ?? "") ?? "", gi(i, t.view.selectedKey ?? ""));
-			}), W("change", i, (e) => w(e.currentTarget.value)), K(e, n);
-		};
-		J(O, (e) => {
-			t.view.choices.length && e(k);
-		});
-		var A = B(O, 2), j = R(A), M = R(j, !0);
-		P(j);
-		var ee = B(j), te = (e) => {
+	var T = Ou(), E = R(T), D = (e) => {
+		var f = Eu(), h = z(f), T = R(h), E = R(T, !0);
+		P(T);
+		var D = B(T, 2), O = R(D), k = R(O, !0);
+		P(O);
+		var A = B(O), j = (e) => {
 			var n = fu();
 			W("click", n, function(...e) {
 				t.collapse?.apply(this, e);
 			}), K(e, n);
 		};
-		J(ee, (e) => {
-			t.collapse && e(te);
-		}), P(A), P(h);
-		var ne = B(h, 2), re = (e) => {
+		J(A, (e) => {
+			t.collapse && e(j);
+		}), P(D), P(h);
+		var M = B(h, 2), ee = (e) => {
 			var r = mu();
 			Y(r, 23, () => t.view.sections, (e) => e.id, (e, t, r) => {
 				var i = pu(), u = R(i, !0);
@@ -8162,17 +8164,17 @@ function ku(e, t) {
 				}), U("keydown", i, (e) => l(e, H(r)), !0), K(e, i);
 			}), P(r), K(e, r);
 		};
-		J(ne, (e) => {
-			t.view.sections.length && e(re);
+		J(M, (e) => {
+			t.view.sections.length && e(ee);
 		});
-		var ie = B(ne, 2), ae = R(ie), oe = (e) => {
+		var te = B(M, 2), ne = R(te), re = (e) => {
 			let t = /* @__PURE__ */ F(() => H(s));
 			var r = _u(), i = R(r), a = R(i), o = R(a), l = R(o, !0);
 			P(o);
 			var u = B(o), d = R(u, !0);
 			P(u), P(a);
 			var f = B(a, 2), p = (e) => {
-				ho(e, { get issue() {
+				go(e, { get issue() {
 					return H(t).text;
 				} });
 			}, m = (e) => {
@@ -8191,14 +8193,14 @@ function ku(e, t) {
 			}), P(i), P(r), V((e) => {
 				Z(r, "id", n + "-panel"), Z(r, "aria-labelledby", e), Z(i, "data-artifact-kind", H(t).kind), q(l, H(t).label), q(d, H(t).kind);
 			}, [() => c(H(t).id)]), U("keydown", r, (e) => e.stopPropagation(), !0), U("paste", r, (e) => e.stopPropagation(), !0), K(e, r);
-		}, se = (e) => {
+		}, ie = (e) => {
 			var n = vu(), r = R(n, !0);
 			P(n), V(() => q(r, t.view.emptyMessage ?? (t.view.status === "not-run" ? "This output has not run yet. Use Run to here, or enable Lattice and send a message in SillyTavern." : "No output was kept for this step. Run it again if you need to inspect its result."))), K(e, n);
 		};
-		J(ae, (e) => {
-			H(s) ? e(oe) : H(i).length || e(se, 1);
+		J(ne, (e) => {
+			H(s) ? e(re) : H(i).length || e(ie, 1);
 		});
-		var ce = B(ae, 2), le = (e) => {
+		var ae = B(ne, 2), oe = (e) => {
 			var n = bu(), r = R(n), i = R(r);
 			P(r), Y(B(r, 2), 17, () => t.view.settlement.receipts, (e) => e.intentId + ":" + e.targetId, (e, t) => {
 				var n = yu(), r = z(n), i = R(r);
@@ -8209,7 +8211,7 @@ function ku(e, t) {
 							operation: "save",
 							nodeTitle: H(t).targetId
 						}));
-						ho(e, {
+						go(e, {
 							get issue() {
 								return H(t).error;
 							},
@@ -8224,28 +8226,28 @@ function ku(e, t) {
 				}), V(() => q(i, `${H(t).targetId ?? ""} · ${(H(t).status === "confirmed" || H(t).status === "persisted" ? "Saved" : H(t).status === "failed" ? "Save failed" : H(t).status === "unknown" ? "Save outcome unknown" : H(t).status === "save-unverified" || H(t).status === "unverified" ? "Save not verified" : H(t).status === "unchanged" ? "Already current" : H(t).status) ?? ""}`)), K(e, n);
 			}), P(n), V(() => q(i, `Accepted consequences · ${t.view.settlement.status === "settled" ? "Saved" : t.view.settlement.status === "partial" ? "Some targets failed" : "Save confirmation needed"}`)), K(e, n);
 		};
-		J(ce, (e) => {
-			t.view.settlement && e(le);
+		J(ae, (e) => {
+			t.view.settlement && e(oe);
 		});
-		var ue = B(ce, 2), de = (e) => {
+		var se = B(ae, 2), ce = (e) => {
 			var n = xu(), r = R(n, !0);
 			P(n), V(() => q(r, t.view.statusDetail)), K(e, n);
 		};
-		J(ue, (e) => {
-			t.view.statusDetail && e(de);
+		J(se, (e) => {
+			t.view.statusDetail && e(ce);
 		});
-		var fe = B(ue, 2), pe = (e) => {
+		var le = B(se, 2), ue = (e) => {
 			var n = xu(), r = R(n, !0);
 			P(n), V(() => q(r, t.view.historyNotice)), K(e, n);
 		};
-		J(fe, (e) => {
-			t.view.historyNotice && e(pe);
+		J(le, (e) => {
+			t.view.historyNotice && e(ue);
 		});
-		var me = B(fe, 2);
-		Y(me, 17, () => t.view.sections.filter((e) => e.id !== H(s)?.id && (e.format === "omitted" || e.truncated)), (e) => e.id, (e, t) => {
+		var de = B(le, 2);
+		Y(de, 17, () => t.view.sections.filter((e) => e.id !== H(s)?.id && (e.format === "omitted" || e.truncated)), (e) => e.id, (e, t) => {
 			var n = Lr(), r = z(n), i = (e) => {
 				var n = Su(), r = R(n), i = R(r, !0);
-				P(r), ho(B(r), { get issue() {
+				P(r), go(B(r), { get issue() {
 					return H(t).text;
 				} }), P(n), V(() => q(i, H(t).label)), K(e, n);
 			}, a = (e) => {
@@ -8256,10 +8258,10 @@ function ku(e, t) {
 				H(t).format === "omitted" ? e(i) : e(a, -1);
 			}), K(e, n);
 		});
-		var he = B(me, 2);
-		Y(he, 19, () => H(i), (e) => e.id, (e, t, i) => {
+		var fe = B(de, 2);
+		Y(fe, 19, () => H(i), (e) => e.id, (e, t, i) => {
 			var a = Cu();
-			ho(R(a), {
+			go(R(a), {
 				get diagnostic() {
 					return H(t);
 				},
@@ -8268,18 +8270,18 @@ function ku(e, t) {
 				}
 			}), P(a), V(() => Z(a, "id", n + "-diagnostic-" + H(i))), K(e, a);
 		});
-		var ge = B(he, 2), _e = (e) => {
+		var pe = B(fe, 2), me = (e) => {
 			var n = gu(), r = R(n, !0);
 			P(n), V(() => q(r, t.view.review.persistOnly ? "Retry keeps the accepted reply and retries only authorized targets whose saves failed. It makes no model request. Unknown or unverified saves cannot be retried here." : "Apply checks that the source, connection and reviewed reply are still current. The displayed preview may show only part of the recorded output.")), K(e, n);
 		};
-		J(ge, (e) => {
-			t.view.review && e(_e);
-		}), P(ie);
-		var ve = B(ie, 2), ye = R(ve), be = R(ye, !0);
-		P(ye);
-		var xe = B(ye, 2), Se = R(xe, !0);
-		P(xe);
-		var Ce = B(xe, 2), we = (e) => {
+		J(pe, (e) => {
+			t.view.review && e(me);
+		}), P(te);
+		var he = B(te, 2), ge = R(he), _e = R(ge, !0);
+		P(ge);
+		var ve = B(ge, 2), ye = R(ve, !0);
+		P(ve);
+		var be = B(ve, 2), xe = (e) => {
 			var i = wu(), a = z(i), o = R(a);
 			P(a);
 			var s = B(a), c = (e) => {
@@ -8296,10 +8298,10 @@ function ku(e, t) {
 				t.view && H(u) && H(m) && r().runHere?.(t.view.sourceKey, p(H(u).target));
 			}), K(e, i);
 		};
-		J(Ce, (e) => {
-			t.view.runHere && e(we);
+		J(be, (e) => {
+			t.view.runHere && e(xe);
 		});
-		var Te = B(Ce, 2), Ee = (e) => {
+		var Se = B(be, 2), Ce = (e) => {
 			var i = Tu(), a = z(i), o = R(a, !0);
 			P(a);
 			var s = B(a), c = (e) => {
@@ -8315,32 +8317,32 @@ function ku(e, t) {
 			P(l), V(() => {
 				Z(a, "aria-describedby", H(C)), a.disabled = !H(g), q(o, t.view.review.persistOnly ? "Retry failed saves" : "Apply reviewed reply"), l.disabled = !H(_), q(u, t.view.review.persistOnly ? "Close save review" : "Reject reply");
 			}), W("click", a, () => {
-				t.view?.review && H(g) && r().apply?.(T(t.view.review.selector));
+				t.view?.review && H(g) && r().apply?.(w(t.view.review.selector));
 			}), W("click", l, () => {
-				t.view?.review && H(_) && r().reject?.(T(t.view.review.selector));
+				t.view?.review && H(_) && r().reject?.(w(t.view.review.selector));
 			}), K(e, i);
 		};
-		J(Te, (e) => {
-			t.view.review && e(Ee);
-		}), P(ve), V((e) => {
-			q(D, H(u)?.label ?? t.view.title), Z(j, "title", t.view.pinned ? "Unpin and follow selection" : "Keep this output visible"), Z(j, "aria-pressed", t.view.pinned), j.disabled = t.view.pinned ? !r().follow : !H(u) || !r().pin, q(M, t.view.pinned ? "Pinned output" : "Pin output"), Z(ye, "data-status", t.view.status), q(be, e), q(Se, t.view.pinned ? "Pinned preview" : t.view.followSelection ? "Following selection" : "Selection not followed");
-		}, [() => d(t.view.status)]), W("click", j, () => {
+		J(Se, (e) => {
+			t.view.review && e(Ce);
+		}), P(he), V((e) => {
+			q(E, H(u)?.label ?? t.view.title), Z(O, "title", t.view.pinned ? "Unpin and follow selection" : "Keep this output visible"), Z(O, "aria-pressed", t.view.pinned), O.disabled = t.view.pinned ? !r().follow : !H(u) || !r().pin, q(k, t.view.pinned ? "Pinned output" : "Pin output"), Z(ge, "data-status", t.view.status), q(_e, e), q(ye, t.view.targeted ? "Targeted node" : t.view.pinned ? "Pinned preview" : t.view.followSelection ? "Following selection" : "Selection not followed");
+		}, [() => d(t.view.status)]), W("click", O, () => {
 			t.view?.pinned ? r().follow?.() : t.view && H(u) && r().pin?.(t.view.sourceKey, p(H(u).target));
 		}), K(e, f);
-	}, k = (e) => {
+	}, O = (e) => {
 		K(e, Du());
 	};
-	J(D, (e) => {
-		t.view ? e(O) : e(k, -1);
-	}), P(E), K(e, E), We();
+	J(E, (e) => {
+		t.view ? e(D) : e(O, -1);
+	}), P(T), K(e, T), We();
 }
-Er(["change", "click"]);
+Er(["click"]);
 //#endregion
 //#region ui/RunDetails.svelte
 var Au = /* @__PURE__ */ G("<p class=\"pc-run-empty svelte-f9s2fm\">No execution plan has been recorded.</p>"), ju = /* @__PURE__ */ G("<span aria-hidden=\"true\" class=\"svelte-f9s2fm\">▱</span>"), Mu = /* @__PURE__ */ G("<small class=\"svelte-f9s2fm\"> </small>"), Nu = /* @__PURE__ */ G("<div class=\"pc-run-error svelte-f9s2fm\"><!></div>"), Pu = /* @__PURE__ */ G("<details class=\"svelte-f9s2fm\"><summary class=\"svelte-f9s2fm\">Reported usage</summary><div class=\"pc-run-usage svelte-f9s2fm\"><small class=\"svelte-f9s2fm\"> </small><small class=\"svelte-f9s2fm\"> </small><small class=\"svelte-f9s2fm\"> </small><small class=\"svelte-f9s2fm\"> </small></div></details>"), Fu = /* @__PURE__ */ G("<li class=\"svelte-f9s2fm\"><div class=\"pc-run-row-heading svelte-f9s2fm\"><button type=\"button\" class=\"svelte-f9s2fm\"><!> </button><span class=\"pc-run-status svelte-f9s2fm\"> </span></div> <!> <div class=\"pc-run-row-meta svelte-f9s2fm\"><small class=\"svelte-f9s2fm\"> </small><small class=\"svelte-f9s2fm\"> </small></div> <!> <!></li>"), Iu = /* @__PURE__ */ G("<header class=\"svelte-f9s2fm\"><h3 class=\"svelte-f9s2fm\">Run details</h3><span class=\"pc-run-status svelte-f9s2fm\"> </span></header> <div class=\"pc-run-summary svelte-f9s2fm\"><p class=\"svelte-f9s2fm\"> </p><p class=\"svelte-f9s2fm\"> </p><p class=\"svelte-f9s2fm\"> </p></div> <!> <!> <ol class=\"pc-run-rows svelte-f9s2fm\"></ol>", 1), Lu = /* @__PURE__ */ G("<p class=\"pc-run-empty svelte-f9s2fm\">Enable Lattice and Send with the open workflow, or use Run to here to inspect its processing stages.</p>"), Ru = /* @__PURE__ */ G("<section class=\"pc-run-details svelte-f9s2fm\" aria-label=\"Run details\"><!></section>");
 function zu(e, t) {
 	Ue(t, !0);
-	let n = Pi(t, "actions", 19, () => ({})), r = (e) => e === "not-run" ? "Not run" : e === "empty" ? "Ready" : e.charAt(0).toUpperCase() + e.slice(1), i = (e) => e !== null && Number.isFinite(e) && e >= 0 ? (e / 1e3).toFixed(2) + "s" : "Unknown", a = (e) => e != null && Number.isFinite(e) && e >= 0 ? String(e) : "Unknown", o = /* @__PURE__ */ F(() => t.view?.diagnostics ?? co(t.view?.issue ? [t.view.issue] : []));
+	let n = Pi(t, "actions", 19, () => ({})), r = (e) => e === "not-run" ? "Not run" : e === "empty" ? "Ready" : e.charAt(0).toUpperCase() + e.slice(1), i = (e) => e !== null && Number.isFinite(e) && e >= 0 ? (e / 1e3).toFixed(2) + "s" : "Unknown", a = (e) => e != null && Number.isFinite(e) && e >= 0 ? String(e) : "Unknown", o = /* @__PURE__ */ F(() => t.view?.diagnostics ?? lo(t.view?.issue ? [t.view.issue] : []));
 	var s = Ru(), c = R(s), l = (e) => {
 		var s = Iu(), c = z(s), l = B(R(c)), u = R(l, !0);
 		P(l), P(c);
@@ -8356,7 +8358,7 @@ function zu(e, t) {
 				let i = /* @__PURE__ */ F(() => n().jump ? (e) => {
 					t.view && n().jump?.(t.view.runId, e);
 				} : void 0);
-				ho(e, {
+				go(e, {
 					get diagnostic() {
 						return H(r);
 					},
@@ -8398,10 +8400,10 @@ function zu(e, t) {
 			var S = B(b), C = R(S);
 			P(S), P(y);
 			var w = B(y, 2);
-			Y(w, 17, () => H(s).diagnostics ?? co(H(s).issue ? [H(s).issue] : [], { nodeTitle: H(s).title }), (e) => e.id, (e, t) => {
+			Y(w, 17, () => H(s).diagnostics ?? lo(H(s).issue ? [H(s).issue] : [], { nodeTitle: H(s).title }), (e) => e.id, (e, t) => {
 				var n = Lr(), r = z(n), i = (e) => {
 					var n = Nu();
-					ho(R(n), { get diagnostic() {
+					go(R(n), { get diagnostic() {
 						return H(t);
 					} }), P(n), K(e, n);
 				}, a = /* @__PURE__ */ F(() => !H(o).some((e) => e.id === H(t).id));
@@ -8728,7 +8730,7 @@ function sd(e, t) {
 		});
 		var he = B(pe, 2), ge = (e) => {
 			var n = nd();
-			ho(R(n), { get issue() {
+			go(R(n), { get issue() {
 				return t.view.issue;
 			} }), P(n), K(e, n);
 		};
@@ -8737,7 +8739,7 @@ function sd(e, t) {
 		});
 		var _e = B(he, 2), ve = (e) => {
 			var t = nd();
-			ho(R(t), { get issue() {
+			go(R(t), { get issue() {
 				return H(l);
 			} }), P(t), K(e, t);
 		};
@@ -9078,7 +9080,7 @@ function Ad(e, t) {
 		var n = Od(), r = R(n);
 		{
 			let e = /* @__PURE__ */ F(() => t.view.error || H(o));
-			ho(r, { get issue() {
+			go(r, { get issue() {
 				return H(e);
 			} });
 		}
@@ -9347,7 +9349,7 @@ function Qd(e, t) {
 	P(C);
 	var T = B(C, 4), E = (e) => {
 		var n = Gd();
-		ho(R(n), { get issue() {
+		go(R(n), { get issue() {
 			return t.view.issue;
 		} }), P(n), K(e, n);
 	};
@@ -9416,7 +9418,7 @@ function Qd(e, t) {
 	at(Te), P(we);
 	var Ee = B(we, 4), De = (e) => {
 		var t = Gd();
-		ho(R(t), { get issue() {
+		go(R(t), { get issue() {
 			return H(d);
 		} }), P(t), K(e, t);
 	};
@@ -9471,7 +9473,7 @@ function sf(e, t) {
 		var n = ef(), r = R(n);
 		{
 			let e = /* @__PURE__ */ F(() => H(i) || t.view?.issue);
-			ho(r, { get issue() {
+			go(r, { get issue() {
 				return H(e);
 			} });
 		}
@@ -9540,7 +9542,7 @@ function sf(e, t) {
 		Y(O, 21, () => H(i).linkedNodes, (e) => e.nodeId, (e, n) => {
 			var r = rf(), i = R(r), a = R(i);
 			P(i), P(r), V(() => {
-				i.disabled = !t.actions, q(a, `${H(n).title ?? ""} · ${H(n).nodeId ?? ""}`);
+				i.disabled = !t.actions, q(a, `${H(n).title ?? ""} · ${H(n).displayId ?? H(n).nodeId ?? ""}`);
 			}), W("click", i, () => t.actions?.reveal(H(n).nodeId)), K(e, r);
 		}), P(O);
 		var k = B(O, 2), A = R(k);
@@ -9652,7 +9654,7 @@ function mf(e, t) {
 	at(j), P(A);
 	var M = B(A, 2), ee = (e) => {
 		var t = ff();
-		ho(R(t), { get issue() {
+		go(R(t), { get issue() {
 			return H(c);
 		} }), P(t), K(e, t);
 	};
@@ -10756,7 +10758,7 @@ function xp(e, t) {
 	}
 	var v = bp(), y = z(v), b = (e) => {
 		var n = np(), i = R(n);
-		ho(i, { get issue() {
+		go(i, { get issue() {
 			return r();
 		} });
 		var a = B(i), o = (e) => {
@@ -10847,7 +10849,7 @@ function xp(e, t) {
 		});
 		var f = B(u, 2), p = (e) => {
 			var t = cp();
-			ho(R(t), { get issue() {
+			go(R(t), { get issue() {
 				return H(m).issue;
 			} }), P(t), V(() => Z(t, "id", `pc-example-issue-${H(m).number}`)), K(e, t);
 		};
@@ -10943,7 +10945,7 @@ function xp(e, t) {
 		P(g), P(i);
 		var y = B(i, 2), b = (e) => {
 			var n = cp();
-			ho(R(n), { get issue() {
+			go(R(n), { get issue() {
 				return H(t).issue;
 			} }), P(n), V(() => Z(n, "id", `pc-example-issue-${H(t).number}`)), K(e, n);
 		};
@@ -11021,7 +11023,7 @@ function jp(e, t) {
 	});
 	var k = B(E, 4), A = (e) => {
 		var r = Op();
-		ho(R(r), { get issue() {
+		go(R(r), { get issue() {
 			return t.view.error;
 		} }), P(r), V(() => Z(r, "id", n + "-error")), K(e, r);
 	};
@@ -11043,10 +11045,10 @@ function jp(e, t) {
 Er(["keydown", "click"]);
 //#endregion
 //#region ui/WorkspaceReport.svelte
-var Mp = /* @__PURE__ */ G("<li class=\"svelte-1xdk4mm\"><!></li>"), Np = /* @__PURE__ */ G("<ul></ul>"), Pp = /* @__PURE__ */ G("<p role=\"status\" class=\"svelte-1xdk4mm\">No validation issues found.</p>"), Fp = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\">Root workflow: <strong> </strong> </p> <!> <p class=\"svelte-1xdk4mm\">Validation checks the current workflow without running it. Diagnostic previews and Apply recheck their inputs when used.</p>", 1), Ip = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\">Workflow validation is unavailable.</p>"), Lp = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\"><strong> </strong></p> <p class=\"svelte-1xdk4mm\">Named-pin workflows, optional scene guidance and reviewed reply repairs for SillyTavern.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Project guide</a></p>", 1), Rp = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\">Browse the node shelf by family. Select a node to read its controls, connections and help in Details.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Open the complete node reference</a></p>", 1), zp = /* @__PURE__ */ G("<table class=\"svelte-1xdk4mm\"><thead><tr><th class=\"svelte-1xdk4mm\">Action</th><th class=\"svelte-1xdk4mm\">Shortcut</th></tr></thead><tbody><tr><td class=\"svelte-1xdk4mm\">Undo / Redo</td><td class=\"svelte-1xdk4mm\">Ctrl Z / Ctrl Shift Z</td></tr><tr><td class=\"svelte-1xdk4mm\">Cut / Copy / Paste</td><td class=\"svelte-1xdk4mm\">Ctrl X / Ctrl C / Ctrl V</td></tr><tr><td class=\"svelte-1xdk4mm\">Duplicate / Delete selection</td><td class=\"svelte-1xdk4mm\">Ctrl D / Delete</td></tr><tr><td class=\"svelte-1xdk4mm\">Select all</td><td class=\"svelte-1xdk4mm\">Ctrl A</td></tr><tr><td class=\"svelte-1xdk4mm\">Group / Ungroup</td><td class=\"svelte-1xdk4mm\">Ctrl G / Ctrl Shift G</td></tr><tr><td class=\"svelte-1xdk4mm\">Comment selection / Add comment</td><td class=\"svelte-1xdk4mm\">C</td></tr><tr><td class=\"svelte-1xdk4mm\">Fit and center selection</td><td class=\"svelte-1xdk4mm\">F</td></tr><tr><td class=\"svelte-1xdk4mm\">Rename selection</td><td class=\"svelte-1xdk4mm\">F2</td></tr><tr><td class=\"svelte-1xdk4mm\">Run to selected node</td><td class=\"svelte-1xdk4mm\">R</td></tr><tr><td class=\"svelte-1xdk4mm\">Pan / Zoom</td><td class=\"svelte-1xdk4mm\">Middle mouse / Wheel</td></tr><tr><td class=\"svelte-1xdk4mm\">Dismiss a menu or panel</td><td class=\"svelte-1xdk4mm\">Escape</td></tr></tbody></table> <p class=\"svelte-1xdk4mm\">In menus, use arrows to move, Home/End to jump, type a label to find it, and Enter/Space to choose it. Tab dismisses the menu.</p>", 1), Bp = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\">Browse node families on the floating shelf. Middle mouse pans the graph; the wheel zooms around the pointer. Use the dividers or their arrow keys to resize Preview and Details. View controls panel visibility and restores the default layout.</p> <p class=\"svelte-1xdk4mm\">File opens workflow documents, saves the current file, imports a fragment into the current graph, and exports a portable copy without local connections. Graph tabs open child views of the current document.</p> <p class=\"svelte-1xdk4mm\">Enable Lattice while the unified document is open, then Send in SillyTavern. Choose model connections on the node bar and advanced overrides in Details. Workflow › Configure opens Workflow Data, and Memory recall offers queue actions and an overview.</p> <p class=\"svelte-1xdk4mm\">Graph groups nodes, creates and saves subgraphs, adds comments and manages portals. Right-click actions remain available beside the relevant node or pin.</p> <p class=\"svelte-1xdk4mm\">Preview follows selection until you pin an output. Workflow › Run to current output tests its dependencies within the displayed request bound. Apply and Reject stay beside the exact result they review.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Open the project guide</a> · <a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Node reference</a></p>", 1);
+var Mp = /* @__PURE__ */ G("<li class=\"svelte-1xdk4mm\"><!></li>"), Np = /* @__PURE__ */ G("<ul></ul>"), Pp = /* @__PURE__ */ G("<p role=\"status\" class=\"svelte-1xdk4mm\">No validation issues found.</p>"), Fp = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\">Root workflow: <strong> </strong> </p> <!> <p class=\"svelte-1xdk4mm\">Validation checks the current workflow without running it. Diagnostic previews and Apply recheck their inputs when used.</p>", 1), Ip = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\">Workflow validation is unavailable.</p>"), Lp = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\"><strong> </strong></p> <p class=\"svelte-1xdk4mm\">Named-pin workflows, optional scene guidance and reviewed reply repairs for SillyTavern.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Project guide</a></p>", 1), Rp = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\">Browse the node shelf by family. Select a node to read its controls, connections and help in Details.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Open the complete node reference</a></p>", 1), zp = /* @__PURE__ */ G("<table class=\"svelte-1xdk4mm\"><thead><tr><th class=\"svelte-1xdk4mm\">Action</th><th class=\"svelte-1xdk4mm\">Shortcut</th></tr></thead><tbody><tr><td class=\"svelte-1xdk4mm\">Undo / Redo</td><td class=\"svelte-1xdk4mm\">Ctrl Z / Ctrl Shift Z</td></tr><tr><td class=\"svelte-1xdk4mm\">Cut / Copy / Paste</td><td class=\"svelte-1xdk4mm\">Ctrl X / Ctrl C / Ctrl V</td></tr><tr><td class=\"svelte-1xdk4mm\">Duplicate / Delete selection</td><td class=\"svelte-1xdk4mm\">Ctrl D / Delete</td></tr><tr><td class=\"svelte-1xdk4mm\">Select all</td><td class=\"svelte-1xdk4mm\">Ctrl A</td></tr><tr><td class=\"svelte-1xdk4mm\">Group / Ungroup</td><td class=\"svelte-1xdk4mm\">Ctrl G / Ctrl Shift G</td></tr><tr><td class=\"svelte-1xdk4mm\">Comment selection / Add comment</td><td class=\"svelte-1xdk4mm\">C</td></tr><tr><td class=\"svelte-1xdk4mm\">Fit and center selection</td><td class=\"svelte-1xdk4mm\">F</td></tr><tr><td class=\"svelte-1xdk4mm\">Rename selection</td><td class=\"svelte-1xdk4mm\">F2</td></tr><tr><td class=\"svelte-1xdk4mm\">Run to selected node</td><td class=\"svelte-1xdk4mm\">R</td></tr><tr><td class=\"svelte-1xdk4mm\">Target selected node / Clear target</td><td class=\"svelte-1xdk4mm\">T</td></tr><tr><td class=\"svelte-1xdk4mm\">Pan / Zoom</td><td class=\"svelte-1xdk4mm\">Middle mouse / Wheel</td></tr><tr><td class=\"svelte-1xdk4mm\">Zoom out / Zoom in</td><td class=\"svelte-1xdk4mm\">[ / ] with a graph camera focused</td></tr><tr><td class=\"svelte-1xdk4mm\">Dismiss a menu or panel</td><td class=\"svelte-1xdk4mm\">Escape</td></tr></tbody></table> <p class=\"svelte-1xdk4mm\">In menus, use arrows to move, Home/End to jump, type a label to find it, and Enter/Space to choose it. Tab dismisses the menu.</p>", 1), Bp = /* @__PURE__ */ G("<p class=\"svelte-1xdk4mm\">Browse node families on the floating shelf. Middle mouse pans the graph; the wheel zooms around the pointer. Use the dividers or their arrow keys to resize Preview and Details. View controls panel visibility and restores the default layout.</p> <p class=\"svelte-1xdk4mm\">File opens workflow documents, saves the current file, imports a fragment into the current graph, and exports a portable copy without local connections. Graph tabs open child views of the current document.</p> <p class=\"svelte-1xdk4mm\">Enable Lattice while the unified document is open, then Send in SillyTavern. Choose model connections on the node bar and advanced overrides in Details. Workflow › Configure opens Workflow Data, and Memory recall offers queue actions and an overview.</p> <p class=\"svelte-1xdk4mm\">Graph groups nodes, creates and saves subgraphs, adds comments and manages portals. Right-click actions remain available beside the relevant node or pin.</p> <p class=\"svelte-1xdk4mm\">Preview follows selection until you pin an output or target a node with T. Targeting keeps that node's output visible while you select other nodes; T moves or clears the target. Workflow › Run to current output tests its dependencies within the displayed request bound. Apply and Reject stay beside the exact result they review.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Open the project guide</a> · <a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Node reference</a></p>", 1);
 function Vp(e, t) {
 	Ue(t, !0);
-	let n = /* @__PURE__ */ F(() => t.workflow?.diagnostics ?? co(t.workflow?.issues ?? []));
+	let n = /* @__PURE__ */ F(() => t.workflow?.diagnostics ?? lo(t.workflow?.issues ?? []));
 	var r = Lr(), i = z(r), a = (e) => {
 		var r = Lr(), i = z(r), a = (e) => {
 			var r = Fp(), i = z(r), a = B(R(i)), o = R(a, !0);
@@ -11057,7 +11059,7 @@ function Vp(e, t) {
 				var t = Np();
 				Y(t, 21, () => H(n), (e) => e.id, (e, t) => {
 					var n = Mp();
-					ho(R(n), { get diagnostic() {
+					go(R(n), { get diagnostic() {
 						return H(t);
 					} }), P(n), K(e, n);
 				}), P(t), K(e, t);
@@ -11193,7 +11195,7 @@ function Jp(e, t) {
 		H(k).selectionKey,
 		H(k).address,
 		H(r).commentDetails ? "comment" : H(r).nodeDetails?.guideKey ?? H(r).nodeDetails?.operation
-	]) : ""), j = /* @__PURE__ */ F(() => H(D) === "node-guide" ? H(r).commentDetails ? au(H(r).commentDetails.comment) : iu(H(r).nodeDetails) : null);
+	]) : ""), j = /* @__PURE__ */ F(() => H(D) === "node-guide" ? H(r).commentDetails ? su(H(r).commentDetails.comment) : ou(H(r).nodeDetails) : null);
 	Cn(() => {
 		H(D) === "node-guide" && (H(O) !== H(A) || !H(j)) && _e();
 	});
@@ -11310,7 +11312,7 @@ function Jp(e, t) {
 			previewOpen: !H(b),
 			shelfOpen: H(S)
 		}));
-		Ni(Go(Ee, {
+		Ni(Ko(Ee, {
 			get state() {
 				return H(r);
 			},
@@ -11344,7 +11346,7 @@ function Jp(e, t) {
 	var Ie = B(Oe, 2), Le = (e) => {
 		{
 			let t = /* @__PURE__ */ F(() => Math.min(H(y), H(x)));
-			qo(e, {
+			Jo(e, {
 				get height() {
 					return H(t);
 				},
@@ -11362,7 +11364,7 @@ function Jp(e, t) {
 		H(b) || e(Le);
 	});
 	var Re = B(Ie, 2);
-	Ni(as(Re, {
+	Ni(os(Re, {
 		get views() {
 			return H(r).graphViews;
 		},
@@ -11374,7 +11376,7 @@ function Jp(e, t) {
 	var ze = B(Re, 2);
 	{
 		let e = /* @__PURE__ */ F(() => H(r).graphViews?.active);
-		us(ze, {
+		ds(ze, {
 			get view() {
 				return H(e);
 			},
@@ -11400,7 +11402,7 @@ function Jp(e, t) {
 	Ni(Ge, (e) => o = e, () => o);
 	var Ke = B(Ge, 2), qe = (e) => {
 		var t = Up();
-		ho(R(t), { get issue() {
+		go(R(t), { get issue() {
 			return H(r).nativeDiagnostic;
 		} }), P(t), K(e, t);
 	};
@@ -11431,7 +11433,7 @@ function Jp(e, t) {
 	var Ye = B(N, 2), Xe = (e) => {
 		var t = Lr();
 		Kr(z(t), () => H(r).graphViews?.active.key ?? H(r).graphId, (e) => {
-			Yo(e, {
+			Xo(e, {
 				get width() {
 					return H(T);
 				},
@@ -11451,7 +11453,7 @@ function Jp(e, t) {
 	P(Qe);
 	var et = B(Qe, 2), tt = (e) => {
 		let t = /* @__PURE__ */ F(() => H(r).commentDetails);
-		lu(e, {
+		du(e, {
 			get comment() {
 				return H(t).comment;
 			},
@@ -11466,7 +11468,7 @@ function Jp(e, t) {
 	var nt = B(et, 2), rt = R(nt);
 	{
 		let e = /* @__PURE__ */ F(() => H(r).commentDetails ? null : H(r).nodeDetails ?? null);
-		nl(rt, {
+		rl(rt, {
 			get view() {
 				return H(e);
 			},
@@ -11487,7 +11489,7 @@ function Jp(e, t) {
 		var d = B(o, 2), f = (e) => {
 			var t = Lr();
 			Kr(z(t), () => H(A), (e) => {
-				Fl(e, {
+				Ll(e, {
 					get guide() {
 						return H(j);
 					},
@@ -11723,7 +11725,7 @@ function Yp(e, t) {
 	n.style.cssText = "position:absolute;left:0;top:0;visibility:hidden;pointer-events:none", n.setAttribute("aria-hidden", "true"), n.inert = !0, e.append(n);
 	let r;
 	try {
-		r = zr(ta, {
+		r = zr(na, {
 			target: n,
 			props: {
 				card: t,
@@ -11743,7 +11745,7 @@ function Yp(e, t) {
 	}
 }
 function Xp(e, t) {
-	let n = zr(To, {
+	let n = zr(Eo, {
 		target: e,
 		props: { actions: t }
 	});
@@ -11754,6 +11756,7 @@ function Xp(e, t) {
 		setVisualStatus: (e) => zt(() => n.setVisualStatus(e)),
 		setComments: (e, t) => zt(() => n.setComments(e, t)),
 		setRecallStatus: (e) => zt(() => n.setRecallStatus(e)),
+		setPreviewTarget: (e) => zt(() => n.setPreviewTarget(e)),
 		setNodes: (e) => zt(() => n.setNodes(e)),
 		setNodeProfiles: (e) => zt(() => n.setNodeProfiles(e)),
 		setGroups: (e) => zt(() => n.setGroups(e)),

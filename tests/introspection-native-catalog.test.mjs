@@ -102,9 +102,9 @@ const definition = (node, phase = 'pre', explicitState = false) => {
 };
 for (const mode of modes.memory) {
     const memory = native('memory', introspectionDefaults('memory', mode));
-    assert.equal(validateDefinition(definition(memory, mode === 'commit' ? 'post' : 'pre')).error?.code, 'ROOT_ONLY_OPERATION', `Memory ${mode} is root-only`);
+    assert.equal(validateDefinition(definition(memory, mode === 'commit' ? 'post' : 'pre')).ok, true, `Memory ${mode} preserves host authority in static definitions`);
 }
-assert.equal(validateDefinition(definition(value)).error?.code, 'ROOT_ONLY_OPERATION', 'implicit State memory is unavailable inside definitions');
+assert.equal(validateDefinition(definition(value)).ok, true, 'implicit State retains the enclosing host snapshot inside static definitions');
 assert.equal(validateDefinition(definition(value, 'pre', true)).ok, true, 'State remains reusable with an explicit snapshot input');
 const malformedStateWire = definition(value, 'pre', true);
 malformedStateWire.body.wires.state = null;

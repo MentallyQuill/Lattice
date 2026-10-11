@@ -27,7 +27,7 @@ for (const width of [1024, 320]) test(`recorded preview keeps a useful artifact 
     const selector = leaf.getByRole('combobox', { name: 'Preview output', exact: true });
     const run = leaf.locator('[data-run-here]');
     await expect(leaf.locator('h3')).toHaveText('Select Fields · Output');
-    await expect(selector).toBeVisible();
+    await expect(selector).toHaveCount(0);
     await expect(run).toBeVisible(); await expect(run).toContainText('maximum 0 requests');
     await expect(leaf.locator('footer')).toContainText('Current');
     await expect(leaf.locator('footer')).toContainText('Following selection');

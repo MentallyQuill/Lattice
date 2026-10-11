@@ -31,19 +31,15 @@
     const addressKey = (target: DetailTarget) => 'kind' in target ? JSON.stringify(['terminal', target.address.workflowId, target.address.instancePath, target.address.nodeId]) : JSON.stringify(['output', target.workflowId, target.instancePath, target.nodeId, target.portId]);
     const copyTarget = (target: DetailTarget): DetailTarget => 'kind' in target ? { kind: 'terminal', address: { ...target.address, instancePath: [...target.address.instancePath] } } : { ...target, instancePath: [...target.instancePath] };
     let canRun = $derived(!!(view && selected && view.status !== 'removed' && !view.busy && view.runHere?.enabled && actions.runHere));
-    let selectedReview = $derived(!!(view && selected && view.review?.mode === 'root' && view.review.selectedRootTerminal && 'kind' in selected.target && selected.target.address.instancePath.length === 0 && addressKey(selected.target) === addressKey(view.review.selector.terminal)));
+    let selectedReview = $derived(!!(view && selected && view.review?.mode === 'root' && view.review.selectedRootTerminal && 'kind' in selected.target && addressKey(selected.target) === addressKey(view.review.selector.terminal)));
     let canApply = $derived(!!(view && view.status === 'current' && !view.busy && selectedReview && view.review?.fresh && view.review.canApply && actions.apply));
     let canReject = $derived(!!(view && !view.busy && selectedReview && actions.reject));
-    let runReason = $derived(!canRun ? view?.runHere?.reason || (view?.busy ? 'Wait for the current run to finish.' : !selected ? 'Choose an output before running.' : !actions.runHere ? 'Run to here is unavailable in this workspace.' : 'This output cannot run with the current workflow settings.') : undefined);
+    let runReason = $derived(!canRun ? view?.runHere?.reason || (view?.busy ? 'Wait for the current run to finish.' : !selected ? 'Select a node on the canvas before running.' : !actions.runHere ? 'Run to here is unavailable in this workspace.' : 'This output cannot run with the current workflow settings.') : undefined);
     let applyReason = $derived(!canApply ? view?.review?.reason || (view?.busy ? 'Wait for the current run to finish.' : view?.status !== 'current' || !view?.review?.fresh ? 'Run this workflow again to review a current result.' : !selectedReview ? 'Select the root workflow’s reviewed reply to apply it.' : !actions.apply ? 'Apply is unavailable in this workspace.' : 'This reviewed reply cannot be applied with the current workflow settings.') : undefined);
     let runDiagnosticIndex = $derived(diagnostics.findIndex(item => item.message === runReason));
     let applyDiagnosticIndex = $derived(diagnostics.findIndex(item => item.message === applyReason));
     let runDescription = $derived(runReason ? previewId + (runDiagnosticIndex >= 0 ? '-diagnostic-' + runDiagnosticIndex : '-run-reason') : undefined);
     let applyDescription = $derived(applyReason ? previewId + (applyDiagnosticIndex >= 0 ? '-diagnostic-' + applyDiagnosticIndex : '-apply-reason') : undefined);
-    function choose(key: string) {
-        const choice = view?.choices.find(item => item.key === key);
-        if (view && choice) actions.select?.(view.sourceKey, choice.key, copyTarget(choice.target));
-    }
     function copySelector(value: DetailReviewSelector): DetailReviewSelector {
         const terminal = { kind: 'terminal' as const, address: { ...value.terminal.address, instancePath: [...value.terminal.address.instancePath] } };
         return { handleId: value.handleId, runId: value.runId, terminal };
@@ -54,9 +50,6 @@
 {#if view}
     <header>
         <h3>{selected?.label ?? view.title}</h3>
-        {#if view.choices.length}
-            <label class="pc-preview-choice"><span class="pc-preview-sr-only">Preview output</span><select aria-label="Preview output" value={view.selectedKey ?? ''} disabled={!actions.select} onchange={event => choose(event.currentTarget.value)}><option value="" disabled>Choose an output</option>{#each view.choices as choice (choice.key)}<option value={choice.key}>{choice.label} · {choice.kind}</option>{/each}</select></label>
-        {/if}
         <div class="pc-preview-tools"><button type="button" aria-label="Pin preview" title={view.pinned ? 'Unpin and follow selection' : 'Keep this output visible'} aria-pressed={view.pinned} disabled={view.pinned ? !actions.follow : !selected || !actions.pin} onclick={() => { if (view?.pinned) actions.follow?.(); else if (view && selected) actions.pin?.(view.sourceKey, copyTarget(selected.target)); }}>{view.pinned ? 'Pinned output' : 'Pin output'}</button>{#if collapse}<button type="button" aria-label="Collapse preview" title="Collapse preview" onclick={collapse}>▴</button>{/if}</div>
     </header>
     {#if view.sections.length}
@@ -99,12 +92,12 @@
     </div>
     <footer>
         <span class="pc-preview-status" data-status={view.status}>{statusLabel(view.status)}</span>
-        <span>{view.pinned ? 'Pinned preview' : view.followSelection ? 'Following selection' : 'Selection not followed'}</span>
+        <span>{view.targeted ? 'Targeted node' : view.pinned ? 'Pinned preview' : view.followSelection ? 'Following selection' : 'Selection not followed'}</span>
         {#if view.runHere}<button type="button" data-run-here aria-describedby={runDescription} title="Runs the selected output's dependencies within the displayed request limit." disabled={!canRun} onclick={() => { if (view && selected && canRun) actions.runHere?.(view.sourceKey, copyTarget(selected.target)); }}>Run to here · maximum {view.runHere.callBound} {view.runHere.callBound === 1 ? 'request' : 'requests'}</button>{#if runReason && runDiagnosticIndex < 0}<p id={previewId + '-run-reason'} class="pc-preview-note">{runReason}</p>{/if}{/if}
         {#if view.review}<button type="button" data-preview-apply aria-describedby={applyDescription} disabled={!canApply} onclick={() => { if (view?.review && canApply) actions.apply?.(copySelector(view.review.selector)); }}>{view.review.persistOnly ? 'Retry failed saves' : 'Apply reviewed reply'}</button>{#if applyReason && applyDiagnosticIndex < 0}<p id={previewId + '-apply-reason'} class="pc-preview-note">{applyReason}</p>{/if}<button type="button" disabled={!canReject} onclick={() => { if (view?.review && canReject) actions.reject?.(copySelector(view.review.selector)); }}>{view.review.persistOnly ? 'Close save review' : 'Reject reply'}</button>{/if}
     </footer>
 {:else}
-    <p class="pc-preview-empty">Select a node output to inspect its recorded result.</p>
+    <p class="pc-preview-empty">Select a node on the canvas to inspect its recorded result.</p>
 {/if}
 </section>
 
@@ -116,12 +109,9 @@
     button { min-height: 25px; max-width: 100%; padding: 4px 7px; border: 0; border-radius: 2px; background: transparent; color: inherit; font: inherit; font-size: 12px; line-height: 1.4; cursor: pointer; box-shadow: none; overflow-wrap: anywhere; }
     button:hover:not(:disabled) { background: var(--pc-raised, #353632); }
     button[aria-pressed='true'], button[aria-selected='true'] { background: #ffffff06; }
-    :is(button, select, [role='tabpanel']):focus-visible { outline: 2px solid var(--pc-accent, #e18a24); outline-offset: -2px; }
+    :is(button, [role='tabpanel']):focus-visible { outline: 2px solid var(--pc-accent, #e18a24); outline-offset: -2px; }
     :disabled { opacity: .55; cursor: default; }
     .pc-preview-tools { display: flex; flex-wrap: wrap; gap: 2px; min-width: 0; }
-    .pc-preview-choice { flex: 0 1 210px; min-width: 0; margin: 0; }
-    .pc-preview-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-    select { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; min-height: 27px; padding: 3px 6px; border: 1px solid var(--pc-border, #3a3c35); border-radius: 2px; background: var(--pc-node, #1d1e1d); color: inherit; font: inherit; }
     .pc-preview-tabs { flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 2px; padding: 0 7px; border-bottom: 1px solid var(--pc-border, #3a3c35); }
     .pc-preview-tabs button { position: relative; border-radius: 0; }
     .pc-preview-tabs button[aria-selected='true']::after { content: ''; position: absolute; left: 7px; right: 7px; bottom: 0; height: 2px; background: var(--pc-accent, #e18a24); }
@@ -137,7 +127,6 @@
     @media (max-width: 480px) {
         header { gap: 3px; padding: 5px 8px; }
         h3 { flex-basis: 100%; font-size: 13px; }
-        .pc-preview-choice { flex: 1 1 100%; }
         .pc-preview-tools { flex-wrap: nowrap; width: 100%; }
         .pc-preview-tools button { flex: 1 1 auto; min-width: 0; padding: 3px 4px; font-size: 11px; }
         .pc-preview-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }

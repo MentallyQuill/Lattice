@@ -1,144 +1,88 @@
-# LATTICE
+# LATTICE · Beta
 
-**A visual workspace for engineering writing workflows.**
+**Give your roleplay a little more memory, a little more structure, and a lot more possibility.**
 
-LATTICE turns a writing process into a system you can build, inspect, and reuse. Connect context sources, model operations, text transformations, structured data, and review steps in a node graph. Package a useful process as a subgraph, edit its body in a graph tab, and compose it into a larger workflow.
+Lattice is a visual story workshop inside SillyTavern. Connect small tools to shape the next scene, give characters their own direction, polish a reply, or keep track of what your story has actually established. Start with an example, change it to suit your world, and build from there.
 
-It runs inside SillyTavern. A unified workflow prepares guidance, uses it for the ordinary SillyTavern generation, then processes the completed reply in the same graph. Auxiliary models can revise prose, extract scene records or enrich notes. Review the final result before Apply creates a new swipe and accepts its staged consequences.
+Your normal SillyTavern model still writes the reply. Lattice can prepare its guidance, bring in other models for specific jobs, and process the result—all in one connected workflow. You inspect the result before accepting it.
 
-![LATTICE workspace with a structured writing brief flowing through JSON Decode, Select Fields, Compose, and Guidance](docs/images/workspace-overview.png)
+![Lattice beta workspace with broken-wand, weather, and relationship systems connected to one SillyTavern reply](docs/images/beta-overview.png)
 
-*Build a writing brief from structured fields, inspect its result in Preview, and configure the selected operation in Details—all in one workspace.*
+*Three story systems, one reply. Open any system to see how it works, edit its rules, or switch it off.*
 
-## What you can build
+[Install and try it](#install-and-try-it) · [Operator’s manual](docs/operators-manual.md) · [30 example workflows](docs/examples.md) · [Node reference](docs/node-reference.md)
 
-- **Context preparation pipelines:** select recent material, preserve protected passages, compact context, and combine branches before planning.
-- **Scene planning workflows:** define instructions and budgets for model-assisted direction, intentions, constraints, and possible next beats.
-- **Structured writing briefs:** parse JSON, select the fields you need, and compose them into repeatable guidance templates.
-- **Editorial pipelines:** scan configured patterns, apply literal or regex rules, or ask a model for bounded repairs; validate and review the proposed result.
-- **Actor memory and state:** reflect on supplied evidence, express optional behavior guidance, internalize settled events, and track deterministic consequences.
-- **Reusable writing tools:** wrap a sequence in a subgraph with named inputs and outputs, then use it in other workflows.
+## What could you build?
 
-These are combinations of the shipped tools. **File → Open examples…** offers [30 numbered unified lessons](docs/examples.md), searchable by goal or node technique and filterable by difficulty. Lessons include prose-and-notes chains, item effects, story-time triggers, generic progression and scoped actor memory. Each opens as an editable copy with its own setup instructions. The workflow JSON examples below also explore individual capabilities.
+**A broken wand with a 10% chance of chaos magic.** Give ordinary magic a weight of 90 and a list of fixed chaos effects a combined weight of 10: butterflies, sudden frost, voices from nowhere. Once an eligible use is confirmed, Lattice’s weighted Random Pick chooses an effect and keeps that draw tied to the event. The fixed selection needs no model call. Models can recognize the action and narrate the consequence; your rules decide the odds. [Build this version](docs/story-systems.md#a-wand-with-a-10-chaos-chance).
 
-## Key features
+And it goes well beyond enchanted items:
 
-| Feature | What it gives you |
+| Story idea | What Lattice brings to it |
 | --- | --- |
-| **Typed node graphs** | Connect Context, Draft, Text, Data, Guidance, Patches, and Candidate artifacts through named pins. Connections determine dependencies. |
-| **Reusable subgraphs** | Package operations behind a typed interface, customize an editable copy, and compose nested processes. |
-| **Graph tabs** | Open subgraph bodies without losing your place in the parent workflow. Each instance retains its own view. |
-| **Node shelf and contextual search** | Open a family to choose an operation directly, search operations and subgraphs, or discover compatible nodes while connecting a pin. |
-| **Node details** | Edit operation controls, aliases, compact cards, and model bindings; inspect effective values and validation issues. |
-| **Node guides** | Open the **?** beside a node’s name in Details for plain-language instructions, settings explanations, and an example graph in your current theme. Add a compatible example to the current tab with one undoable action. |
-| **Per-operation model connections** | Choose each model node’s connection profile and model in Details without switching SillyTavern’s main connection; For Each exposes its pinned helper’s role selectors too. |
-| **One native workflow** | Connect preparation to Generate Reply, process its owned Draft, and review the result in one graph. |
-| **Typed decisions and branches** | Use ordinary Decision with explicit accepted, rejected and unresolved routes; Confidence Gate handles authored numeric policies. |
-| **Workflow Data and accepted effects** | Read authorized logical targets within Main or static system bodies, then accept file/clock/outcome consequences with Main's reviewed result. |
-| **Scoped character context and Recall** | Process present actors separately and queue selected-actor memories through canvas controls or shortcuts. |
-| **Recorded previews** | Inspect inputs and outputs, follow selection, pin an artifact, or run only a selected output's dependencies. |
-| **Execution visibility** | See node states, expanded subgraph stages, request bounds, actual calls, and failures. |
-| **Portals and reroutes** | Keep a large graph readable while preserving its dependencies. |
-| **Review before application** | Compare a proposed revision with its original; applying creates a new swipe and preserves the source. |
-| **Portable workflow packages** | Import, export, and share workflows with pinned subgraph definitions. Add fragments through a reviewed import. |
-| **Editing controls** | Undo/redo, copy/paste, multiselection, pan/zoom, pane resizing, and presentation aliases. |
-| **Workflow comments** | Frame selected nodes with a labeled comment, add notes, and move or resize it with undo support. |
+| **A relationship that grows slowly** | Track trust, desire, tension, and excitement with authored limits, cooldowns, and changes over accepted story time. A warm conversation needn’t jump straight to devotion. |
+| **One moment, two private perspectives** | Let each present character reflect on the same event using their own context and memories. Give the next reply character-specific direction. |
+| **A world with a sense of time** | Advance a story clock after an agreed journey or rest. Trigger weather, a curse, or a routine when the story crosses its scheduled time. |
+| **A campaign notebook that earns its entries** | Extract a recap or scene record, review the reply, and save the record only when you accept it. Rejected scenes stay out of the notebook. |
+| **A narrator with an editorial team** | Have one model plan the scene, let SillyTavern write it, ask another model to polish the prose, then append useful notes. Choose a connection for each job. |
+| **Memories you can call back deliberately** | Queue a character’s memories from the canvas or a shortcut, or author a story trigger for Recall. Inspect what reached the next reply. |
 
-![LATTICE context assembly graph with two context branches joining before a Response Plan](docs/images/context-assembly.png)
+These ideas build on shipped nodes and examples. [Story systems](docs/story-systems.md) explains their rules and setup. The advanced wand lesson also offers a model-authored wild branch; the fixed 90/10 library above is a variation you can author.
 
-*Combine context branches with named inputs. This authored example includes a model planning step; choose that node's connection profile in Details before a full run.*
+## Build it by connecting the pieces
 
-## Available nodes
+Find a tool by name or browse the shelf, then drag it onto the canvas. Nodes have small, specific jobs: read context, choose fields, compose instructions, call a model, transform text, make a decision, or propose a story-state change.
 
-The [node reference](docs/node-reference.md) lists the actual reusable operations, ports and controls. **0** calls means no auxiliary model request; the ordinary SillyTavern reply is separate.
+![Cursor searches the node shelf for Text Rules and drags the node onto the canvas](docs/images/search-and-place.gif)
 
-| Tools | Examples |
-| --- | --- |
-| **Native lifecycle** | On Send, Player Event Source, Generate Reply · SillyTavern, Review / Publish |
-| **Context and model work** | Scene Context, Actor Context, Model Call, Response Plan, Revise Draft, Extract, Enrich |
-| **Assembly and editing** | Compose, Text Rules, Transpose, Draft Text, Render Notes, Append/Combine |
-| **Decisions and control** | Decision, Confidence Gate, Condition, Branch, Join, Collect, pinned For Each |
-| **Canonical events and item rules** | Event Normalize, Confirm Events, Scene Presence, Current Holder, Character Direction, Prompted Memory |
-| **Randomness** | Effect Library, Random Pick, Effect Author, Stage Outcome, Outcome Commit |
-| **Documents and collections** | Read File, Format, Project Document, Write to File; lookup/filter/count/sum/threshold/project/flatten |
-| **Time and progression** | Story Clock, Advance Time, Time Trigger, Clock Commit; generic State progression and time-decay |
-| **Memory** | Reflect, Internalize, Express, scoped Memory, Recall and Recall Shortcut |
+*Search, grab, place. Configure the tool in Details.*
 
-Repair also offers Inspect, Contextual Cleanup and Strict Avoidance modes using the complete category-based policy. Nodes have phase and artifact requirements; the [node reference](docs/node-reference.md) explains their ports and controls. The [reference library guide](docs/lattice-reference-library.md) covers reusable Context Lens, Scene Compass and cleanup workflows.
+Connect output pins to compatible input pins to decide what feeds what. Follow the colored connections to understand the process, and inspect recorded results at each step instead of guessing what went into the prompt.
 
-The shelf and contextual search offer one entry per operation. Choose variants in **Details**: Reflect's Character/Recall/Scene modes, JSON Decode's Parse/Check modes, Reroute's Artifact kind, and the other operation controls. Introspection modes and generic State progression/time-decay use these controls. The Subgraphs shelf shows the latest explicitly saved entry for each reusable item; placed copies retain their exact saved contents.
+![Cursor connects a scene source to JSON Decode, then connects its Data output to Select Fields](docs/images/connect-nodes.gif)
 
-New Transpose nodes accept and return **Text** in either graph phase. Choose **Input type → Draft** in the Response stage to produce source-bound Patches for validation and review. Existing saved nodes without an Input type setting retain their Draft behavior. See the [reference library guide](docs/lattice-reference-library.md) for reference inputs and independent mode/scope controls.
+*Here, a written scene brief becomes structured data that the next tool can work with.*
 
-Memory is root-only; Commit is a Response terminal. Its effects wait for the chosen accepted Review / Publish result. Run to here records a preview without writing. Memory uses the active chat and character, including a required selected actor in group chats. See the [Introspection guide](docs/introspection-package.md) for evidence, controls and persistence limits.
+When a useful sequence starts taking up space, select it and turn it into a subgraph. Lattice creates its inputs and outputs, reconnects the parent, and opens the internals in a tab. Save it to the shelf and reuse it in another story.
 
-Memory, Recall and Recall Shortcut keep their root-only contracts. Stateful static systems can contain Read File, Write to File, Story Clock, Clock Commit and Outcome Commit; this does not make those host operations legal inside For Each helpers.
+![Three processing nodes selected from a larger workflow and turned into a connected reusable subgraph](docs/images/create-subgraph.gif)
 
-## Reuse a process, inspect its internals
+*Turn a scene-brief pipeline into one reusable block without losing its connections.*
 
-Select processing nodes, right-click, and choose **Create Subgraph**. The editor opens their body in a new editable tab, creates and wires typed input/output boundaries, and reconnects the parent workflow through the new subgraph block. Click a boundary to edit its port in Details. Add Input and Output nodes from the Subgraphs shelf; they are enabled inside editable subgraphs. Save a wrapper with **Add to Subgraphs**, then explicitly create or update a shelf entry. Placed copies retain their saved contents. Undo restores the original nodes and connections in one step.
+You can also frame sections with comments, open a node’s **?** guide, pin a preview while exploring the graph, and use **Run to here** to inspect a supported part of the process. Undo and redo cover graph edits. [The manual](docs/operators-manual.md) walks through all of it.
 
-Use **Workflow → Add system…** to add a saved reusable subgraph to Main, including while a body tab is open. Choose its typed sources and destinations, preview the connections, then add an editable copy with one Undo step. A preparation Guidance output can join an existing Compose Guidance merge or create one when Generate Reply's guidance input is empty. A state-only system can participate through its staged terminals.
+## Your story still gets the final say
 
-Select a system wrapper and use **Details → Run this system** to enable or skip its whole body. Connections determine what runs and what influences the reply. Opening, switching or closing body tabs only changes your view. Main keeps the one On Send, Generate Reply and Review / Publish; Apply accepts this result's staged system effects.
+Lattice’s normal path is **Send → prepare guidance → SillyTavern reply → process → review**. Apply adds the reviewed reply as a new swipe, preserving the original, and accepts that result’s staged story changes. Reject keeps those proposals from becoming accepted state.
 
-Compose sections accept Text or original Guidance in authored order. Set an optional section's **Skipped source → Omit section** to leave out an inactive contribution. **Token budget** can cap the complete rendered result; overflow holds without truncating it. Preview shows the exact recorded composition.
+![Completed reply in Preview with explicit Apply reviewed reply and Reject reply controls](docs/images/review-candidate.png)
 
-![LATTICE subgraph body open in a second graph tab, showing Draft and Patches boundaries around Text Rules](docs/images/subgraph-tab.png)
-
-*The Literal cleanup subgraph exposes Draft → Patches. Its body opens in a tab; validation, review, and application remain in the parent workflow. Pinned bodies are read-only until you make a local copy.*
+*Inspect the recorded result before applying it. Preview and Run to here do not accept story changes.*
 
 ## Install and try it
 
 1. In SillyTavern, open **Extensions → Install extension**.
-2. Enter `https://github.com/MentallyQuill/Lattice`, leaving the branch field blank to install `main`.
-3. Install, then reload SillyTavern. Open LATTICE from its logo on the left of the chat bar or with `/lattice`. Fresh launch opens **Unified story workflow**, with Lattice disabled. Existing installations restore their unified recovery draft; previous unified documents remain available through **File → Recover previous workflows**.
-4. Keep the starter open, select **Enable Lattice**, and Send a player message in SillyTavern. The starter makes no auxiliary calls and exposes its completed native Draft for review.
-5. Select **Review / Publish · Host result** in Preview, inspect it, and Apply or Reject. For a richer pipeline, open a unified example and configure its model nodes, For Each helper roles and required workflow data documents before the next Send.
-New Story Clock, Read File and Outcome Commit nodes have automatic Workflow Data presets.
+2. Enter `https://github.com/MentallyQuill/Lattice`. Leave the branch blank to install `main`, then reload SillyTavern.
+3. Click the Lattice logo beside the chat bar, or type `/lattice`. A fresh installation opens **Unified story workflow** with Lattice disabled.
+4. Select **Enable Lattice** and send a player message normally. The starter uses your usual SillyTavern generation and makes no extra model calls.
+5. Select **Review / Publish** and inspect its **Host result** in Preview. Choose **Apply reviewed reply** or **Reject reply**.
 
-Systems share the default Chat clock. Default notes and outcomes inside each system have stable separate sources; explicit named targets remain shared when you choose the same target. Apply reports each save separately. Several system saves and reply publication are not one atomic disk transaction.
+Ready for more? Open **File → Open examples…**. Thirty lessons take you from scene direction to memories, notebooks, item effects, progression, and relationships. Each opens as an editable copy with setup steps and a stated call budget. Model-based lessons need their connections configured; some also need Workflow Data sources.
 
-For updates, use **Manage Extensions**, then reload. Installation, import, and editing do not make model calls.
+![Examples browser with thirty roleplay lessons, graph thumbnails, search, and difficulty filters](docs/images/examples-curriculum.png)
 
-The [unified workflow guide](docs/unified-workflows.md) walks through applying an example to **Story-2 on default-user**, chaining different models, using Decision, recording private moments, queueing recall and managing accepted effects. A full unified native generation starts with ordinary Send; supported **Run to here** paths inspect without acceptance.
+Lattice is in beta. Save your workflows and try substantial story systems in a separate chat first. Update through SillyTavern’s **Manage Extensions**, then reload.
 
-Opening a unified example makes an independent editable copy the active document. It makes no model request and does not change **Enable Lattice**. Choose each auxiliary model’s connection on its node bar; Details provides advanced model settings; configure For Each’s **Helper model bindings** separately. **Workflow → Configure → Workflow Data…** authorizes logical JSON/text targets. Local connection IDs and credentials are excluded from portable exports.
+## Learn more
 
-Adjust a node’s **Details → Starting values** or initial content, and use **Advanced** for its source, Format and Visibility. Nodes using the same clock share saved time; create a separate clock with **+** for an independent timeline. Changing initial values preserves existing saved time and document content. **Workflow → Configure → Workflow Data…** remains available for managing custom targets, including those named by imported examples. Local connection IDs and credentials are excluded from portable exports.
+- [Operator’s manual](docs/operators-manual.md) — illustrated instructions for editing, running, reviewing, and sharing.
+- [Story systems](docs/story-systems.md) — concrete roleplay ideas and their operating rules.
+- [30 lessons](docs/examples.md) — choose a starting point and follow its setup.
+- [Node reference](docs/node-reference.md) — find a tool’s inputs, outputs, and settings.
+- [Unified workflows](docs/unified-workflows.md) — model chains, character context, memories, documents, clocks, and accepted effects.
+- [Model setup and troubleshooting](docs/native-workflows.md) — connections, budgets, and host integration.
+- [Development](docs/development.md) — builds, checks, and reproducible screenshots and GIFs.
 
-Saved unified documents retain their content and recovery draft. Earlier unified example IDs remain installable while the visible picker shows the 30 new lessons. Saved pre/post roots are retired. On upgrade, LATTICE preserves their original graphs, bindings and active selection in a cold recovery archive, then opens a disabled unified starter when needed. **File → Export archived workflows** saves a copy of the archive as JSON. Archived roots cannot execute or import as current workflows, and recovery makes no model requests. Rebuild useful operations in a new unified graph; there is no automatic converter.
+Screenshots and animations show the real beta editor on a local demonstration host with synthetic story material. Captures make no provider requests; model profiles shown are illustrative.
 
-Open a current workflow from **File → Open examples…**, or its JSON with **File → Open workflow…**:
-
-| Example | What it demonstrates |
-| --- | --- |
-| [12 · Plan, write, polish, and annotate one reply](examples/remastered/12-plan-write-polish-and-annotate-one-reply.lattice.json) | Guidance, owned native Draft, prose revision and notes |
-| [17 · Record only the scene you accept](examples/remastered/17-record-only-the-scene-you-accept.lattice.json) | Accepted same-target document projection and duplicate identity handling |
-| [21 · Give one present character their own direction](examples/remastered/21-give-one-present-character-their-own-direction.lattice.json) | Presence-verified actor-private direction |
-| [25 · Award experience from confirmed progress](examples/remastered/25-award-experience-from-confirmed-progress.lattice.json) | Evidence-backed deterministic progression |
-| [26 · Recall a memory with a hotkey or a story trigger](examples/remastered/26-recall-a-memory-with-a-hotkey-or-a-story-trigger.lattice.json) | Scoped Recall with visible queue controls |
-| [Wand, weather and relationship](examples/unified/unified-combined-systems.json) | Three editable systems, one ordered native guidance injection and Apply-only state; [setup](docs/combined-system-example.md) |
-
-Five pinned stage-specific subgraph definitions remain available as reusable processing tools. Their bodies retain their own stage contracts; complete executable roots are unified. Run to here records diagnostics without publishing guidance, creating Apply authority or settling memory.
-
-![LATTICE showing a completed cleanup workflow and its original and revised text in the candidate artifact](docs/images/review-candidate.png)
-
-*Inspect the root Host result before choosing Apply reviewed candidate or Reject candidate. Intermediate outputs are diagnostic previews.*
-
-## Learn and build
-
-- [Operator's manual](docs/operators-manual.md) — screenshot-guided workspace, graph editing, subgraphs, Details, Preview, and execution.
-- [Node reference](docs/node-reference.md) — every available operation, its artifacts, controls, and connection examples.
-- [Connections and comments](docs/connection-comments.md) — smooth connections, workflow annotations, and comment editing shortcuts.
-- [Quick start](docs/lattice-workspace.md) — open the zero-auxiliary-call starter, enable Lattice, Send and review.
-- [Unified workflows](docs/unified-workflows.md) — story setup, one-graph Send/Apply, decisions, actor context, documents, Recall, clocks and migration.
-- [Model connections and host integration](docs/native-workflows.md) — local profiles, token budgets, reply review, supported routes, and troubleshooting.
-- [Introspection](docs/introspection-package.md) — Introspection modes, scoped memory and package APIs.
-- [Development guide](docs/development.md) — build tools and reproducible documentation captures.
-
-Screenshots illustrate the editor and existing example tools on a local demonstration host with synthetic writing material; captions identify their demonstrated workflows. The demonstrated completed workflows make no provider requests.
-
-## License
-
-MIT. See [LICENSE](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md).
+MIT · [License](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)

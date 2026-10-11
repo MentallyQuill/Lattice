@@ -323,3 +323,74 @@ test('effective wrapper contents survive editable body changes and explicit shel
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
     expect(await page.evaluate(() => window.canvasHarness.toasts.filter(item => item.level === 'error'))).toEqual([]);
 });
+
+test('Create subgraph accepts Context Join, Smart Compactor, Response Plan and Generate Reply together', async ({ page }) => {
+    await page.goto('/tests/browser/harness.html');
+    await page.waitForFunction(() => !!window.canvasHarness);
+    await page.evaluate(async () => {
+        const h = window.canvasHarness;
+        const n = (id, operation, x, y, controls = {}) => ({ id, type: 'workflow', operation, operationVersion: 1, x, y, ...controls });
+        const w = (id, from, fromPort, to, toPort) => ({ id, route: 'wire', from, fromPort, to, toPort });
+        const edges = [w('activation', 'send', 'activation', 'generate', 'activation'), w('first-context', 'scene', 'out', 'join', 'context-1'), w('second-context', 'other-scene', 'out', 'join', 'context-2'), w('joined', 'join', 'out', 'compact', 'in'), w('compacted', 'compact', 'out', 'plan', 'in'), w('guidance', 'plan', 'out', 'generate', 'guidance'), w('reply', 'generate', 'draft', 'review', 'draft')];
+        await h.activate({ id: 'pictured-generation', name: 'Pictured generation', schema: 3, runtime: 2, mode: 'native-unified', definitions: {}, portals: {}, nodes: {
+            send: n('send', 'on-send', 0, 0), scene: n('scene', 'scene-context', 0, 220), 'other-scene': n('other-scene', 'scene-context', 0, 440),
+            join: n('join', 'context-join', 320, 230), compact: n('compact', 'smart-compactor', 640, 230), plan: n('plan', 'response-plan', 960, 230),
+            generate: n('generate', 'generate-reply', 1280, 0), review: n('review', 'review-publish', 1600, 0),
+        }, wires: Object.fromEntries(edges.map(edge => [edge.id, edge])) });
+        h.canvas.fit();
+    });
+    const before = (await snapshot(page)).root;
+    await page.locator('.pc-node[data-id="join"] .pc-native-heading').click();
+    for (const id of ['compact', 'plan', 'generate']) await page.locator(`.pc-node[data-id="${id}"] .pc-native-heading`).click({ modifiers: ['Shift'] });
+    await expect.poll(() => page.evaluate(() => [...window.canvasHarness.canvas.multi].sort())).toEqual(['compact', 'generate', 'join', 'plan']);
+    await page.locator('.pc-node[data-id="generate"] .pc-native-heading').click({ button: 'right' });
+    const command = page.getByRole('menuitem', { name: 'Create subgraph', exact: true });
+    await expect(command).toBeEnabled();
+    await command.click();
+    await expect(page.locator('.pc-graph-tabs [role="tab"][aria-selected="true"]')).toContainText('Subgraph');
+    await expect(page.locator('.pc-node[data-id="generate"]')).toBeVisible();
+    await expect(page.locator('.pc-node-subgraph-input')).toHaveCount(3);
+    await expect(page.locator('.pc-node-subgraph-output')).toHaveCount(2);
+    const state = await snapshot(page);
+    expect(state.root.wires.activation.to).toBe(state.wrapper.id);
+    expect(state.root.wires.reply.from).toBe(state.wrapper.id);
+    expect(state.definition.body.nodes.generate.operation).toBe('generate-reply');
+    await page.getByRole('button', { name: 'Undo', exact: true }).click();
+    expect((await snapshot(page)).root).toEqual(before);
+    expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
+    expect(await page.evaluate(() => window.canvasHarness.toasts.filter(item => item.level === 'error'))).toEqual([]);
+});
+
+
+test('Create subgraph accepts the complete lifecycle and host sources', async ({ page }) => {
+    await page.goto('/tests/browser/harness.html');
+    await page.waitForFunction(() => !!window.canvasHarness);
+    await page.evaluate(async () => {
+        const h = window.canvasHarness, { operationDefaults } = await import('/src/workflow/catalog.js?v=' + h.version);
+        const n = (id, operation, x, y) => ({ ...operationDefaults(operation), id, type: 'workflow', operation, operationVersion: 1, x, y });
+        const w = (id, from, fromPort, to, toPort) => ({ id, route: 'wire', from, fromPort, to, toPort });
+        const edges = [w('activation', 'send', 'activation', 'generate', 'activation'), w('context', 'scene', 'out', 'plan', 'in'), w('guidance', 'plan', 'out', 'generate', 'guidance'), w('reply', 'generate', 'draft', 'review', 'draft')];
+        await h.activate({ id: 'complete-lifecycle-subgraph', name: 'Complete lifecycle', schema: 3, runtime: 2, mode: 'native-unified', definitions: {}, portals: {}, nodes: {
+            send: n('send', 'on-send', 0, 0), scene: n('scene', 'scene-context', 0, 230), plan: n('plan', 'response-plan', 360, 230),
+            generate: n('generate', 'generate-reply', 720, 0), review: n('review', 'review-publish', 1080, 0),
+            memory: n('memory', 'memory', 360, 480), state: n('state', 'state', 720, 480),
+        }, wires: Object.fromEntries(edges.map(edge => [edge.id, edge])) });
+        h.canvas.fit();
+    });
+    const before = (await snapshot(page)).root;
+    await page.locator('.pc-node[data-id="send"] .pc-native-heading').click();
+    for (const id of ['scene', 'plan', 'generate', 'review', 'memory', 'state']) await page.locator('.pc-node[data-id="' + id + '"] .pc-native-heading').click({ modifiers: ['Shift'] });
+    await expect.poll(() => page.evaluate(() => [...window.canvasHarness.canvas.multi].sort())).toEqual(['generate', 'memory', 'plan', 'review', 'scene', 'send', 'state']);
+    await page.locator('.pc-node[data-id="review"] .pc-native-heading').click({ button: 'right' });
+    const command = page.getByRole('menuitem', { name: 'Create subgraph', exact: true });
+    await expect(command).toBeEnabled();
+    await command.click();
+    await expect(page.locator('.pc-graph-tabs [role="tab"][aria-selected="true"]')).toContainText('Subgraph');
+    const state = await snapshot(page);
+    expect(Object.values(state.root.nodes).filter(node => node.type === 'subgraph')).toHaveLength(1);
+    for (const id of ['send', 'scene', 'plan', 'generate', 'review', 'memory', 'state']) expect(state.definition.body.nodes[id].operation).toBe(before.nodes[id].operation);
+    await page.getByRole('button', { name: 'Undo', exact: true }).click();
+    expect((await snapshot(page)).root).toEqual(before);
+    expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
+    expect(await page.evaluate(() => window.canvasHarness.toasts.filter(item => item.level === 'error'))).toEqual([]);
+});

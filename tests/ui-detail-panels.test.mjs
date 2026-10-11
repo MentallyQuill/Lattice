@@ -335,13 +335,13 @@ const selector = nodeId => ({ handleId: 'opaque-' + nodeId, runId: 'run-one', te
 const preview = extra => ({ sourceKey: 'source-one', title: 'Apply Reply', status: 'current', choices: [{ key: 'applyA', label: 'First host result', kind: 'candidate', target: terminal('applyA') }, { key: 'applyB', label: 'Second host result', kind: 'candidate', target: terminal('applyB') }], selectedKey: null, pinned: false, followSelection: true, sections: [{ id: 'candidate', label: 'Recorded candidate', kind: 'candidate', text: 'Bounded recorded preview', format: 'structured-text', truncated: true }], issues: [], busy: false, runHere: { enabled: true, callBound: 2 }, review: { selector: selector('applyA'), canApply: true, fresh: true, selectedRootTerminal: true, mode: 'root' }, ...extra });
 
 test('preview requires an explicit matching root terminal and never turns recorded text or target runs into Apply authority', async () => {
-    const applied = [], runs = [], selections = [];
-    const f = await fixture('OutputPreview', preview(), { select: (...args) => selections.push(args), runHere: (...args) => runs.push(args), apply: value => applied.push(value) });
+    const applied = [], runs = [];
+    const f = await fixture('OutputPreview', preview(), { runHere: (...args) => runs.push(args), apply: value => applied.push(value) });
     try {
         const apply = () => f.host.querySelector('[data-preview-apply]');
         assert.equal(apply().disabled, true, 'multiple terminals require explicit selection');
         assert.match(f.host.textContent, /display limit does not mean the model stopped early/);
-        change(f.host.querySelector('[aria-label="Preview output"]'), 'applyB'); assert.deepEqual(selections[0], ['source-one', 'applyB', terminal('applyB')]);
+        assert.equal(f.host.querySelector('select'), null, 'preview follows the target selected on the canvas');
         f.update(preview({ selectedKey: 'applyB' })); assert.equal(apply().disabled, true, 'selected terminal must match the opaque handle');
         f.update(preview({ selectedKey: 'applyA' })); assert.equal(apply().disabled, false); apply().click(); assert.deepEqual(applied, [selector('applyA')]); assert.equal('text' in applied[0], false);
         f.host.querySelector('[data-run-here]').click(); assert.deepEqual(runs, [['source-one', terminal('applyA')]]); assert.match(f.host.querySelector('[data-run-here]').textContent, /maximum 2 requests/);

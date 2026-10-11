@@ -8,6 +8,7 @@ import { compile } from 'svelte/compiler';
 import { JSDOM } from 'jsdom';
 import { starterGraph } from '../src/workflow/starters.js?v=0.27.0';
 import { cloneWorkflowDocument } from '../src/workflow/document.js?v=0.27.0';
+import { prepareCreateFromSelection } from '../src/workflow/composition.js?v=0.27.0';
 import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definitions.js?v=0.27.0';
 import { createNativeWorkflowController } from '../src/workflow/host.js?v=0.27.0';
 import { createWorkflowSession, prepareWorkflowProjection, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.0';
@@ -30,7 +31,11 @@ function controllerFunction(name, env) {
     env.documentTransition ??= false;
     if (name === 'selectionMenuCapabilities') env.rootSystemWritable ??= controllerFunction('rootSystemWritable', env);
     const start = controllerText.indexOf('function ' + name + '(');
-    if (start < 0) return null;
+    if (start < 0) {
+        const declaration = controllerText.indexOf('const ' + name + ' =');
+        if (declaration < 0) return null;
+        return Function('env', 'with(env){' + controllerText.slice(declaration, controllerText.indexOf('\n', declaration)) + ';return ' + name + ';}')(env);
+    }
     const end = controllerText.indexOf('\nfunction ', start + 1);
     return Function('env', 'with(env){' + (controllerText.slice(start - 6, start) === 'async ' ? 'async ' : '') + controllerText.slice(start, end) + ';return ' + name + ';}')(env);
 }
@@ -80,8 +85,8 @@ function adapter(schema = 3, suppliedRoot = null) {
     const library = prepareLibraryViews(root.id, { [definitionRefKey(definition)]: definition }); assert.equal(library.ok, true, JSON.stringify(library));
     prepared.data.navigation.push(...library.data.navigation); prepared.data.preparedViews.push(...library.data.preparedViews);
     const graphViews = createGraphViewSession({ root, activationId: 'preview-review-' + schema, ...prepared.data }).data; assert.ok(graphViews);
-    const env = { documentSession: { draftNamespace: () => 'preview-document' }, workflowNodePresentations: new WeakMap(), workflowRuntime: { getNativeWorkflowController: () => runtime }, current: root, graphViews, workspacePrepared: prepared.data, rootRunEpoch: 1, workspaceRevision: 1, uiEpoch: 1, editorCaptures: new WeakMap(), workspaceIssue: '', selectedPreview: null, pinnedPreview: null, selectedKind: 'node', selected: root.nodes['review-publish'], workflowProjection: null, workflowProjectionGraph: null, workflowState: { result: null, reviewHandles: [], busy: false, availability: 'current', applyIssue: '' }, canvas: { selection: null, multi: new Set(), setRecallStatus() {} }, recallDetailsView: null, recallSelectionIds: () => [], projectRecallView, canvasTraceRows: null, editorDraw: null, isOpen: () => true, settings: () => ({}), projectPreparedWorkflow, projectWorkspacePanels, workbench: { update(value) { env.panels = value; } } };
-    for (const name of ['recallSetupView', 'captureEditor', 'editorCurrent', 'samePreviewTerminal', 'currentRootPreviewTerminal', 'currentPreviewHandle', 'applyPreviewReview', 'rejectPreviewReview', 'workflowView', 'selectionMenuCapabilities', 'guideInsertionIsBusy', 'updateWorkflowProjection', 'runPreviewHere']) { const fn = controllerFunction(name, env); if (fn) env[name] = fn; }
+    const env = { documentSession: { draftNamespace: () => 'preview-document' }, workflowNodePresentations: new WeakMap(), workflowRuntime: { getNativeWorkflowController: () => runtime }, current: root, graphViews, workspacePrepared: prepared.data, rootRunEpoch: 1, workspaceRevision: 1, uiEpoch: 1, editorCaptures: new WeakMap(), workspaceIssue: '', selectedPreview: null, pinnedPreview: null, targetedPreview: null, selectedKind: 'node', selected: root.nodes['review-publish'], workflowProjection: null, workflowProjectionGraph: null, workflowState: { result: null, reviewHandles: [], busy: false, availability: 'current', applyIssue: '' }, canvas: { selection: null, multi: new Set(), setRecallStatus() {}, setPreviewTarget() {} }, recallDetailsView: null, recallSelectionIds: () => [], projectRecallView, canvasTraceRows: null, editorDraw: null, isOpen: () => true, settings: () => ({}), projectPreparedWorkflow, projectWorkspacePanels, workbench: { update(value) { env.panels = value; } } };
+    for (const name of ['previewAddress', 'effectivePreview', 'recallSetupView', 'captureEditor', 'editorCurrent', 'samePreviewTerminal', 'currentRootPreviewTerminal', 'currentPreviewHandle', 'applyPreviewReview', 'rejectPreviewReview', 'workflowView', 'selectionMenuCapabilities', 'guideInsertionIsBusy', 'updateWorkflowProjection', 'runPreviewHere']) { const fn = controllerFunction(name, env); if (fn) env[name] = fn; }
     env.workflowSession = createWorkflowSession({ runtime: () => runtime, rootCurrent: () => env.current, runEpoch: () => env.rootRunEpoch, active: () => env.isOpen(), changed(state) { const authorityChanged = state.result !== env.workflowState.result || state.reviewHandles !== env.workflowState.reviewHandles; env.workflowState = state; if (authorityChanged) env.workspacePrepared.workflow = prepareWorkflowProjection(env.current, { ...(prepared.data.planner ? { planner: prepared.data.planner } : {}), result: state.result, candidateStatus: candidate => runtime.candidateStatus(candidate) }); env.updateWorkflowProjection(); } });
     const actions = controllerActions(env);
     return { root, env, actions, graphViews, runtime, counters, context, message, definition, run: async () => {
@@ -93,6 +98,86 @@ function adapter(schema = 3, suppliedRoot = null) {
         const record = runtime.lastAutomaticResult(); assert.ok(record); env.workflowSession.receiveAutomatic(record); return record.result;
     }, refresh: () => env.updateWorkflowProjection(), terminal: { kind: 'terminal', address: { workflowId: root.id, instancePath: [], nodeId: 'review-publish' } } };
 }
+
+function nestedAdapter() {
+    const source = cloneWorkflowDocument(starterGraph('unified-basic')).data;
+    const extracted = prepareCreateFromSelection(source, { nodeIds: Object.keys(source.nodes), definitionId: 'reply-body', instanceId: 'body', name: 'Nested reply' });
+    assert.equal(extracted.ok, true, JSON.stringify(extracted.error));
+    const fixture = adapter(3, extracted.data.candidate);
+    fixture.terminal.address.instancePath = ['body'];
+    return fixture;
+}
+
+test('a native nested review survives the session and addressed child preview can Apply or Reject', async () => {
+    for (const action of ['apply', 'reject']) {
+        const f = nestedAdapter(); await f.run();
+        assert.equal(f.env.workflowState.reviewHandles.length, 1, 'the native root result retains its nested review handle');
+        const handle = f.env.workflowState.reviewHandles[0];
+        assert.deepEqual(handle.terminal.address, { workflowId: f.root.id, instancePath: ['body'], nodeId: 'review-publish' });
+        assert.equal(f.graphViews.openInstance(['body']).ok, true);
+        f.env.selected = f.graphViews.readEditor().prepared.savedGraph.nodes['review-publish'];
+        f.env.selectedPreview = structuredClone(f.terminal); f.refresh();
+        assert.deepEqual(f.env.panels.outputPreview.review?.selector, handle);
+        assert.equal(f.env.workflowProjection.result.applyAvailable, true);
+        const leaf = await previewFixture(f.env.panels.outputPreview, f.actions);
+        try {
+            const apply = leaf.host.querySelector('[data-preview-apply]');
+            const reject = [...leaf.host.querySelectorAll('button')].find(button => button.textContent === 'Reject reply');
+            assert.equal(apply.disabled, false); assert.equal(reject.disabled, false);
+            (action === 'apply' ? apply : reject).click();
+            for (let attempts = 0; attempts < 50 && f.env.workflowState.reviewHandles.length; attempts++) await new Promise(resolve => setTimeout(resolve, 5));
+            assert.equal(f.env.workflowState.reviewHandles.length, 0);
+            assert.equal(f.counters.apply, action === 'apply' ? 1 : 0); assert.equal(f.counters.reject, action === 'reject' ? 1 : 0);
+            assert.equal(f.counters.saves, action === 'apply' ? 1 : 0);
+            assert.deepEqual(f.message.swipes, action === 'apply' ? ['We delve.\n雪', 'We delve.\n雪'] : ['We delve.\n雪']);
+            assert.equal(f.counters.requests, 0);
+        } finally { await leaf.close(); f.runtime.dispose(); }
+    }
+});
+
+test('nested review selectors reject unrelated child, library, forged, replaced and stale ownership', async () => {
+    const f = nestedAdapter(); await f.run();
+    const handle = f.env.workflowState.reviewHandles[0]; assert.ok(handle);
+    f.env.pinnedPreview = structuredClone(f.terminal); f.refresh();
+    assert.deepEqual(f.env.panels.outputPreview.review?.selector, handle, 'the root can inspect its owned nested terminal');
+    const checks = f.counters.checks;
+    assert.equal(f.graphViews.openInstance(['inspection']).ok, true); f.refresh();
+    assert.equal(f.env.panels.outputPreview.review, null);
+    await f.actions.apply(handle); f.actions.reject(handle); assert.equal(f.counters.checks, checks);
+    assert.equal(f.graphViews.openLibrary(f.root.nodes.inspection.definition).ok, true); f.refresh();
+    assert.equal(f.env.panels.outputPreview.review, null);
+    await f.actions.apply(handle); f.actions.reject(handle); assert.equal(f.counters.checks, checks);
+    assert.equal(f.graphViews.openInstance(['body']).ok, true); f.refresh();
+    for (const changed of [{ handleId: 'forged' }, { runId: 'forged' }, { terminal: { kind: 'terminal', address: { ...handle.terminal.address, workflowId: 'other' } } }, { terminal: { kind: 'terminal', address: { ...handle.terminal.address, instancePath: ['inspection'] } } }, { terminal: { kind: 'terminal', address: { ...handle.terminal.address, nodeId: 'generate-reply' } } }]) {
+        await f.actions.apply({ ...handle, ...changed }); f.actions.reject({ ...handle, ...changed });
+    }
+    assert.equal(f.counters.checks, checks); assert.equal(f.counters.apply, 0); assert.equal(f.counters.reject, 0);
+    const currentResult = f.env.workflowState.result;
+    f.env.workflowState.result = { ...currentResult }; await f.actions.apply(handle); f.actions.reject(handle);
+    assert.equal(f.counters.checks, checks); f.env.workflowState.result = currentResult;
+    f.message.mes += ' external change'; await f.actions.apply(handle);
+    assert.equal(f.counters.checks, checks + 1); assert.equal(f.counters.apply, 0); assert.match(f.env.workflowState.applyIssue, /changed|stale|source/i);
+    f.env.workflowSession.invalidate('Semantic edit'); f.refresh(); await f.actions.apply(handle); f.actions.reject(handle);
+    assert.equal(f.counters.apply, 0); assert.equal(f.counters.reject, 0); f.runtime.dispose();
+});
+
+test('Review host result navigates from an unrelated child to the nested candidate address', async () => {
+    const f = nestedAdapter(); await f.run();
+    assert.equal(f.graphViews.openInstance(['inspection']).ok, true); f.refresh();
+    const reveals = [];
+    Object.assign(f.env, {
+        navigateGraphView(action, ...args) { const opened = f.graphViews[action](...args); assert.equal(opened.ok, true); f.refresh(); },
+        showSettings(selection) { f.env.selectedKind = selection.kind; f.env.selected = f.graphViews.readEditor().prepared.savedGraph.nodes[selection.id]; },
+        outputPreviewActions: f.actions,
+    });
+    f.env.workbench.revealPreview = () => reveals.push(true);
+    controllerFunction('reviewHostResult', f.env)();
+    assert.deepEqual(f.graphViews.readEditor().view.identity.instancePath, ['body']);
+    assert.deepEqual(f.env.selectedPreview, f.terminal);
+    assert.deepEqual(f.env.panels.outputPreview.review?.selector, f.env.workflowState.reviewHandles[0]);
+    assert.equal(reveals.length, 1); assert.equal(f.counters.requests, 0); assert.equal(f.counters.apply, 0);
+    f.runtime.dispose();
+});
 
 // Real zero-call host results flow through the actual controller, cached projector and compiled leaf.
 test('current preview preserves final host source freshness checks after review selection', async () => {

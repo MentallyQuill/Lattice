@@ -65,16 +65,11 @@ async function inspectOperation(page, operation) {
 }
 async function selectTerminal(page, operation, pin = true) {
     const id = await operationId(page, operation); expect(id).toBeTruthy();
-    const leaf = preview(page), select = leaf.getByRole('combobox', { name: 'Preview output', exact: true });
-    const key = await select.locator('option').evaluateAll((options, id) => options.find(option => {
-        if (!option.value) return false;
-        const target = JSON.parse(option.value);
-        return target.kind === 'terminal' && target.address.nodeId === id && target.address.instancePath.length === 0;
-    })?.value, id);
-    expect(key, 'the actual root terminal must be an available Preview choice').toBeTruthy();
+    const leaf = preview(page);
     const pinControl = leaf.getByRole('button', { name: 'Pin preview', exact: true });
     if (await pinControl.getAttribute('aria-pressed') === 'true') await pinControl.click();
-    await select.selectOption(key);
+    await page.evaluate(id => window.canvasHarness.canvas.select({ kind: 'node', id }), id);
+    await expect(leaf.locator('h3')).toContainText('Host result');
     if (pin) await pinControl.click();
     await expect(pinControl).toHaveAttribute('aria-pressed', String(pin));
 }

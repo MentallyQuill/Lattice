@@ -5,6 +5,12 @@ export function wheelFactor(delta, mode = 0, height = 800) {
     return Math.exp(-Math.max(-240, Math.min(240, pixels)) * 0.002);
 }
 
+/** Both graph cameras use unmodified brackets for keyboard zoom. */
+export function zoomShortcutFactor(event) {
+    if (event.defaultPrevented || event.isComposing || event.repeat || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return null;
+    return event.key === ']' ? 1.15 : event.key === '[' ? 1 / 1.15 : null;
+}
+
 export function graphPoint(view, point) {
     return { x: (point.x - view.x) / view.zoom, y: (point.y - view.y) / view.zoom };
 }

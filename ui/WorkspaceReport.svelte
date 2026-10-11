@@ -30,7 +30,9 @@
         <tr><td>Fit and center selection</td><td>F</td></tr>
         <tr><td>Rename selection</td><td>F2</td></tr>
         <tr><td>Run to selected node</td><td>R</td></tr>
+        <tr><td>Target selected node / Clear target</td><td>T</td></tr>
         <tr><td>Pan / Zoom</td><td>Middle mouse / Wheel</td></tr>
+        <tr><td>Zoom out / Zoom in</td><td>[ / ] with a graph camera focused</td></tr>
         <tr><td>Dismiss a menu or panel</td><td>Escape</td></tr>
     </tbody></table>
     <p>In menus, use arrows to move, Home/End to jump, type a label to find it, and Enter/Space to choose it. Tab dismisses the menu.</p>
@@ -39,7 +41,7 @@
     <p>File opens workflow documents, saves the current file, imports a fragment into the current graph, and exports a portable copy without local connections. Graph tabs open child views of the current document.</p>
     <p>Enable Lattice while the unified document is open, then Send in SillyTavern. Choose model connections on the node bar and advanced overrides in Details. Workflow › Configure opens Workflow Data, and Memory recall offers queue actions and an overview.</p>
     <p>Graph groups nodes, creates and saves subgraphs, adds comments and manages portals. Right-click actions remain available beside the relevant node or pin.</p>
-    <p>Preview follows selection until you pin an output. Workflow › Run to current output tests its dependencies within the displayed request bound. Apply and Reject stay beside the exact result they review.</p>
+    <p>Preview follows selection until you pin an output or target a node with T. Targeting keeps that node's output visible while you select other nodes; T moves or clears the target. Workflow › Run to current output tests its dependencies within the displayed request bound. Apply and Reject stay beside the exact result they review.</p>
     <p><a href={guideUrl} target="_blank" rel="noreferrer">Open the project guide</a> · <a href={referenceUrl} target="_blank" rel="noreferrer">Node reference</a></p>
 {/if}
 <style>

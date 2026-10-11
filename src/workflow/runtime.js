@@ -291,7 +291,7 @@ async function executeWorkflow(original,ports,hooks={}) {
             const request=trackedRequest;
             const executeHelperUnit=async(child,childInputs,childLocal)=>{
                 const childNode=child.node,childOp=operationFor(childNode,{phase:childLocal.phase,mode:prepared.graph.mode});
-                if(!childOp||childOp.rootOnly||childOp.hostOperation||childOp.nativeBoundary||childOp.terminal)return failure('ITERATION_AUTHORITY','Helpers cannot acquire root authority.',node.id);
+                if(!childOp||childOp.rootOnly||childOp.hostOperation||childOp.nativeBoundary||childOp.terminal||childOp.requiresStateInDefinition&&!childInputs.state)return failure('ITERATION_AUTHORITY','Helpers cannot acquire root authority.',node.id);
                 let childOpen=true,childCalls=0;const childBindings=new Map(),recovered=new WeakSet();
                 const childKey=addressKey(child.address);childAuthorizers.set(childKey,capability=>childOpen?authorizeInputs(childNode,childInputs,child.address,capability):failure('REQUEST_SCOPE_CLOSED','The helper request scope has closed.',childNode.id));
                 const childIterate=childLocal.iterateHelper?async(...args)=>{const result=await childLocal.iterateHelper(...args);if(result?.ok===true)recovered.add(result);return result;}:undefined;
@@ -320,7 +320,8 @@ async function executeWorkflow(original,ports,hooks={}) {
                 finally{childOpen=false;childBindings.clear();childAuthorizers.delete(childKey);}
             };
             const recovered=new WeakSet(),compiled=helperPrograms.get(key),iterateHelper=compiled?async(invocation,helperPorts)=>{const result=await executeCompiledIteration(compiled,invocation,{executeUnit:executeHelperUnit,request:helperPorts.request,signal:ports.signal,retainScopedOutput:payload=>retainScopedOutput({...payload,inputs:payload.seed?inputs:payload.inputs})});if(result?.ok===true)recovered.add(result);return result;}:ports.iterateHelper;
-            const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,rootMode:prepared.graph.mode,binding,request,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0,address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings});
+            // Static instances inherit owned host capabilities; repeated helpers use their separate bounded adapter.
+            const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,rootMode:prepared.graph.mode,binding,request,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0 || isScopedSystemOperation(node) && typeof hooks.executeHostOperation==='function',address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings});
             // Native generation authors the public story from scoped portrayal guidance; it never publishes guidance verbatim.
             const result=preserveArtifactPrivacy(rawResult,node.operation==='generate-reply'?{}:inputs);
             operationOpen=false;
@@ -339,7 +340,7 @@ async function executeWorkflow(original,ports,hooks={}) {
                 let modifierMetadata;if(node.modifiers?.length){const modified=applyTextModifiers(output?.text,node.modifiers);if(!modified.ok){emit('node-settled',{address:unit.address,status:'failed',error:safeError(modified.error)});return finish(modified);}output={...output,text:modified.data.text};modifierMetadata={rawText:modified.data.rawText,trace:modified.data.trace};}
                 const artifact=freezeArtifact(output),recordedArtifact=modifierMetadata?freezeArtifact({...artifact,modifiers:modifierMetadata}):artifact;
                 const scoped=await retainScopedOutput({node,address:unit.address,inputs,inputStates,artifact,portId:port.id,rawResult});if(!scoped.ok)return finish(scoped);
-                if(prepared.graph.mode==='native-unified'&&mode==='root'&&unit.address.instancePath.length===0&&typeof hooks.retainRecallProvenance==='function'){
+                if(prepared.graph.mode==='native-unified'&&mode==='root'&&typeof hooks.retainRecallProvenance==='function'){
                     let retained;try{retained=await hooks.retainRecallProvenance({node,address:unit.address,inputs,artifact,portId:port.id,rawResult});}catch{return finish(failure('RECALL_PROVENANCE_FAILED','The private recall source could not be retained.',node.id));}
                     if(stopped())return finish(failure('ABORTED','Workflow was stopped.',node.id));
                     if(retained?.ok!==true||retained.data?.retained!==true)return finish(failure('RECALL_PROVENANCE_FAILED','The private recall source could not be retained.',node.id));

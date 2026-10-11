@@ -69,7 +69,7 @@ let graphEditAdapter = null;
 let pendingImport = null;
 let graphViews = null, workspacePrepared = null, editorDraw = null, rootRunEpoch = 0, workspaceRevision = 0;
 let documentTransition = false, libraryRevision = 0, restoringEditor = false, canvasTraceRows = null;
-let viewSaveTimer = null, pinnedPreview = null, selectedPreview = null, nativeWireBridge = null, nativeCatalog = null, positionEdit = null;
+let viewSaveTimer = null, pinnedPreview = null, targetedPreview = null, selectedPreview = null, nativeWireBridge = null, nativeCatalog = null, positionEdit = null;
 let nativeGroupPresenter = null, detachedClip = null, workspaceIssue = '';
 let pendingSubgraphSave = null, pendingAddSystem = null;
 const systemPresentationEffects = new WeakMap(), pendingSystemPresentation = new WeakMap();
@@ -188,7 +188,8 @@ function recallSelectionIds(){return canvas?.multi.size?[...canvas.multi]:canvas
 function recallSetupView(){
  let response;try{response=workflowRuntime.getNativeWorkflowController?.()?.syncRecall?.();}catch{}
  const status=response?.ok?response.data:null;
- recallProjection=projectRecallView({rootGraph:current,status,enabled:!!settings().enabled,issue:response?.error ? diagnosticText(response.error, { operation: 'recall' }) : '',nodeIds:recallSelectionIds(),viewKind:graphViews?.readEditor().view.identity.kind??'root'});
+ const identity=graphViews?.readEditor().view.identity;
+ recallProjection=projectRecallView({rootGraph:current,inventory:workspacePrepared?.planner.inventory,status,enabled:!!settings().enabled,issue:response?.error ? diagnosticText(response.error, { operation: 'recall' }) : '',nodeIds:recallSelectionIds(),viewKind:identity?.kind??'root',instancePath:identity?.instancePath??[]});
  canvas?.setRecallStatus(Object.fromEntries(Object.entries(recallProjection.nodes).flatMap(([id,node])=>node.badge?[[id,node.badge]]:[])));
  return recallProjection;
 }
@@ -196,7 +197,7 @@ function refreshRecallOverview(){if(refreshingRecall)return;refreshingRecall=tru
 function recallUiContext(){if(!isOpen()||!graphViews||!recallProjection)return null;return {editorToken:graphViews.readEditContext().sessionId+':'+graphViews.readEditor().view.key,documentToken:documentSession.capture(),selectionEpoch,viewKind:graphViews.readEditor().view.identity.kind,projection:recallProjection};}
 const recallCommands=createRecallCommands({readContext:recallUiContext,isContextCurrent:captured=>{const now=recallUiContext();return !!now&&now.editorToken===captured.editorToken&&now.documentToken===captured.documentToken&&now.selectionEpoch===captured.selectionEpoch;},captureRecall:()=>workflowRuntime.getNativeWorkflowController?.()?.captureRecall?.(),changeRecallQueues:(capture,request)=>workflowRuntime.getNativeWorkflowController?.()?.changeRecallQueues?.(capture,request),openDetails:openRecallDetails,changed:refreshRecallOverview});
 function captureRecallActions(nodeIds,scope='selected'){const captured=recallCommands.capture(nodeIds,scope);return {queue:()=>captured.ok?recallCommands.change(captured.data,'queue'):captured,cancel:()=>captured.ok?recallCommands.change(captured.data,'cancel'):captured};}
-const recallActions={refresh:refreshRecallOverview,capture:captureRecallActions,reportIssue:message=>toast(message,'error'),change(nodeIds,action,scope='selected'){const result=captureRecallActions(nodeIds,scope)[action]();if(!result.ok)toast(result.error,'error');return result;},reveal:openRecallDetails};
+const recallActions={refresh:refreshRecallOverview,capture:captureRecallActions,reportIssue:message=>toast(message,'error'),change(nodeIds,action,scope='selected'){const result=captureRecallActions(nodeIds,scope)[action]();if(!result.ok)toast(result.error,'error');return result;},reveal:nodeId=>openRecallDetails(nodeId,'all')};
 function workspaceInputs() { const context = ctx(), hostProfiles = profiles(); nodeProfileInputsKey = nodeProfileMetadataKey(context, hostProfiles); return { settings: settings(), profiles: readNodeProfileMetadata(context, hostProfiles), activeModel: activeModelMetadata(context), workflowData: workflowDataSetup()?.snapshot() ?? { available: false, key: '', documents: [] }, result: workflowState.result, resolveBinding: (node, graph) => resolveBinding(node, graph, ctx()), candidateStatus: candidate => workflowRuntime.getNativeWorkflowController?.()?.candidateStatus?.(candidate) }; }
 function refreshWorkflowPreparation() {
     if (!current || !workspacePrepared) return;
@@ -369,15 +370,43 @@ function samePreviewTerminal(first, second) {
     return first?.kind === 'terminal' && second?.kind === 'terminal' && Array.isArray(first.address?.instancePath) && Array.isArray(second.address?.instancePath)
         && JSON.stringify([first.address.workflowId, first.address.instancePath, first.address.nodeId]) === JSON.stringify([second.address.workflowId, second.address.instancePath, second.address.nodeId]);
 }
+const previewAddress = target => target?.kind === 'terminal' ? target.address : target;
+const effectivePreview = () => pinnedPreview || targetedPreview || selectedPreview;
+function nodePreviewChoices(node) {
+    const editor = graphViews?.readEditor();
+    if (!node || editor?.view.identity.kind === 'library' || isCommentFrame(node)) return [];
+    const path = editor?.view.identity.instancePath ?? [];
+    return workspacePrepared?.previewChoices.filter(choice => {
+        const address = previewAddress(choice.target);
+        return address.workflowId === current.id && address.nodeId === node.id && JSON.stringify(address.instancePath) === JSON.stringify(path);
+    }) ?? [];
+}
+function togglePreviewTarget(node = selectedKind === 'node' ? selected : null) {
+    if (!node) {
+        if (!targetedPreview) return false;
+        targetedPreview = null; updateWorkflowProjection(); return true;
+    }
+    const choices = nodePreviewChoices(node);
+    if (!choices.length) return false;
+    const address = previewAddress(targetedPreview), next = previewAddress(choices[0].target);
+    if (address && address.workflowId === next.workflowId && address.nodeId === next.nodeId && JSON.stringify(address.instancePath) === JSON.stringify(next.instancePath)) targetedPreview = null;
+    else {
+        const choice = choices.find(choice => JSON.stringify(choice.target) === JSON.stringify(effectivePreview())) ?? choices[0];
+        targetedPreview = structuredClone(choice.target); pinnedPreview = null;
+        workbench.revealPreview();
+    }
+    updateWorkflowProjection(); return true;
+}
 function currentRootPreviewTerminal(target) {
     const editor = graphViews?.readEditor();
-    return isOpen() && editor?.view.identity.kind === 'root' && !editor.readOnly && editor.view.identity.workflowId === current?.id
-        && current?.mode === 'native-unified' && target?.kind === 'terminal' && target.address?.workflowId === current.id && Array.isArray(target.address.instancePath) && !target.address.instancePath.length
-        && current.nodes[target.address.nodeId]?.type === 'workflow' && current.nodes[target.address.nodeId].operation === 'review-publish'
+    return isOpen() && editor && editor.view.identity.workflowId === current?.id
+        && (editor.view.identity.kind === 'root' && !editor.readOnly || editor.view.identity.kind === 'instance' && JSON.stringify(editor.view.identity.instancePath) === JSON.stringify(target?.address?.instancePath))
+        && current?.mode === 'native-unified' && target?.kind === 'terminal' && target.address?.workflowId === current.id && Array.isArray(target.address.instancePath)
+        && workspacePrepared?.planner?.inventory.primitives.some(unit => unit.terminal && unit.node.type === 'workflow' && unit.node.operation === 'review-publish' && samePreviewTerminal({ kind: 'terminal', address: unit.address }, target))
         && workspacePrepared?.previewChoices.some(choice => samePreviewTerminal(choice.target, target));
 }
 function currentPreviewHandle(selector) {
-    const result = workflowState.result, target = pinnedPreview || selectedPreview;
+    const result = workflowState.result, target = effectivePreview();
     return !selector?.kind && current?.schema === 3 && current.runtime === 2 && currentRootPreviewTerminal(target) && samePreviewTerminal(selector?.terminal, target)
         && !workflowState.busy && workflowState.availability === 'current' && result === workflowSession.result() && result?.ok === true && result.mode === 'root' && result.runId === selector.runId
         && workflowState.reviewHandles?.some(handle => handle.handleId === selector.handleId && handle.runId === selector.runId && samePreviewTerminal(handle.terminal, selector.terminal));
@@ -390,13 +419,15 @@ function rejectPreviewReview(selector) {
 }
 function workflowView() {
     if (!workspacePrepared && current) prepareWorkspaceDocument();
+    if (targetedPreview && !workspacePrepared?.previewChoices.some(choice => JSON.stringify(choice.target) === JSON.stringify(targetedPreview))) targetedPreview = null;
     const editor = graphViews?.readEditor(), viewPath = editor?.view.identity.kind === 'instance' ? editor.view.identity.instancePath : [];
     const selectedId = selectedKind === 'node' ? selected?.id : null;
-    let view = projectPreparedWorkflow(workspacePrepared?.workflow, { ...workflowState, viewPath, selectedId, selectedTarget: selectedPreview, pinnedPreview });
+    const heldPreview = pinnedPreview || targetedPreview;
+    let view = projectPreparedWorkflow(workspacePrepared?.workflow, { ...workflowState, viewPath, selectedId, selectedTarget: selectedPreview, pinnedPreview: heldPreview });
     if (!selectedPreview || selectedPreview.workflowId !== current.id && selectedPreview.address?.workflowId !== current.id) selectedPreview = view.targets?.find(target => (target.kind === 'terminal' ? target.address.nodeId : target.nodeId) === selectedId) ?? view.targets?.find(target => target.kind === 'terminal') ?? view.targets?.[0] ?? null;
-    const effectiveTarget = pinnedPreview || selectedPreview;
+    const effectiveTarget = effectivePreview();
     const selectedReviewHandle = workflowState.reviewHandles?.find(handle => samePreviewTerminal(handle.terminal, effectiveTarget));
-    view = projectPreparedWorkflow(workspacePrepared?.workflow, { ...workflowState, viewPath, selectedId, selectedTarget: pinnedPreview || selectedPreview, pinnedPreview, selectedReviewHandle });
+    view = projectPreparedWorkflow(workspacePrepared?.workflow, { ...workflowState, viewPath, selectedId, selectedTarget: effectiveTarget, pinnedPreview: heldPreview, selectedReviewHandle });
     const presentation = editor?.view.nodePresentation ?? {};
     view = { ...view, nodes: view.nodes.map(node => { const saved = editor?.prepared.savedGraph.nodes[node.id] ?? node, overlay = readNodePresentation(saved, presentation[node.id]); const title = (overlay.alias || (typeof saved.title === 'string' ? saved.title : '') || node.canonicalTitle).slice(0,80);
         const key = JSON.stringify([overlay.alias, overlay.compact, title]), previous = workflowNodePresentations.get(node);
@@ -418,10 +449,14 @@ function updateWorkflowProjection() {
     const rootWorkflow = { ...projectPreparedWorkflow(workspacePrepared?.workflow,workflowState), ownedBusy };
     if (canvas && graphViews) canvas.setNodeProfiles?.(projectNodeProfiles(graphViews.readEditor(), view, revision));
     const recall = recallSetupView();
-    const panels = graphViews ? projectWorkspacePanels({ ...graphViews.readEditor(), documentNamespace: documentSession.draftNamespace() }, view, { ...workflowState, enabled: !!settings().enabled }, revision, selectedPreview, pinnedPreview, rootWorkflow, workspacePrepared.idleRunRows, workspacePrepared.previewChoices) : {};
-    recallDetailsView=panels.nodeDetails&&graphViews.readEditor().view.identity.kind==='root'&&recallProjection?.nodes[panels.nodeDetails.address.nodeId]?{...panels.nodeDetails,recall:recallProjection.nodes[panels.nodeDetails.address.nodeId]}:null;
+    const panels = graphViews ? projectWorkspacePanels({ ...graphViews.readEditor(), documentNamespace: documentSession.draftNamespace() }, view, { ...workflowState, enabled: !!settings().enabled }, revision, selectedPreview, pinnedPreview || targetedPreview, rootWorkflow, workspacePrepared.idleRunRows, workspacePrepared.previewChoices) : {};
+    if (canvas && graphViews) {
+        const editor = graphViews.readEditor(), address = previewAddress(targetedPreview);
+        canvas.setPreviewTarget(address && editor.view.identity.kind !== 'library' && address.workflowId === current.id && JSON.stringify(address.instancePath) === JSON.stringify(editor.view.identity.instancePath ?? []) ? address.nodeId : null);
+    }
+    recallDetailsView=panels.nodeDetails&&graphViews.readEditor().view.identity.kind!=='library'&&recallProjection?.nodes[panels.nodeDetails.address.nodeId]?{...panels.nodeDetails,recall:recallProjection.nodes[panels.nodeDetails.address.nodeId]}:null;
     if(recallDetailsView)panels.nodeDetails=recallDetailsView;
-    if (panels.outputPreview) panels.outputPreview = { ...panels.outputPreview, busy: panels.outputPreview.busy || !!activity?.busy };
+    if (panels.outputPreview) panels.outputPreview = { ...panels.outputPreview, pinned: !!pinnedPreview, targeted: !!targetedPreview, followSelection: !pinnedPreview && !targetedPreview, busy: panels.outputPreview.busy || !!activity?.busy };
     if (canvas && graphViews && editorDraw && canvasTraceRows!==view.rows) { canvasTraceRows=view.rows;const traces = []; const visit = rows => { for (const row of rows ?? []) { traces.push({ id: row.address.nodeId, status: row.status }); } }; if(graphViews.readEditor().view.identity.kind!=='library')visit(view.rows); canvas.setTrace(traces); }
     workbench?.update({ workflow: view, rootWorkflow, guideInsertionBusy: guideInsertionIsBusy(activity), menuContextKey: graphViews?.readEditContext().sessionId, menuCapabilities: selectionMenuCapabilities(), recall, ...panels, nativeDiagnostic: workspaceIssue, nativeFlatCanvas: !settings().ui?.theme?.style?.grid });
 }
@@ -508,7 +543,7 @@ function setCanvasGraph({ cancelRun = true } = {}) {
     workflowSession.syncDocument();
     if (cancelRun) workflowSession.cancel('Workflow graph changed');
     documentTransition = false;
-    uiEpoch++; selected = null; selectedKind = null; pinnedPreview = null; selectedPreview = null;
+    uiEpoch++; selected = null; selectedKind = null; pinnedPreview = null; targetedPreview = null; selectedPreview = null;
     canvas?.cancelGesture(); nativeWireBridge?.cancel('root-change'); cancelImportReview();
     pendingSubgraphSave = null; pendingAddSystem = null; workbench?.update({ addSystem: null });
     workbench.update({ graphViews: undefined, portalManager: null, subgraphSave: null, nodeDetails: null, commentDetails: null, outputPreview: null, nativeChoices: [], nativeSearch: null, nativePinMenu: null });
@@ -634,6 +669,10 @@ function build() {
         if (!isOpen()) return; const mod = event.ctrlKey || event.metaKey, key = event.key.toLowerCase();
         if (mod && !event.altKey && ['n', 'o', 's'].includes(key)) { event.preventDefault(); if (!event.repeat) { if (key === 'n') onNewGraph(); else if (key === 'o') onImportGraph(); else onSaveGraph(event.shiftKey); } return; }
         if (typing()) return;
+        if (key === 't' && !mod && !event.shiftKey && !event.altKey && !event.repeat && !event.isComposing && !event.defaultPrevented) {
+            if (togglePreviewTarget()) event.preventDefault();
+            return;
+        }
         if (key === 'r' && !mod && !event.shiftKey && !event.altKey && !event.repeat && !event.defaultPrevented && selectedKind === 'node') {
             const captured = captureEditor(true);
             const run = captured.ok && canvasPreviewMenuItems(selected, captured.data).find(item => item.id === 'run-to-here');
@@ -762,12 +801,16 @@ function stopOwnedWorkflow() {
 }
 function reviewHostResult() {
     if (!isOpen() || !graphViews) return;
-    const choices = workspacePrepared?.previewChoices.filter(choice => choice.target.kind === 'terminal' && choice.target.address.workflowId === current.id && !choice.target.address.instancePath.length) ?? [];
-    const choice = choices.find(item => samePreviewTerminal(item.target, selectedPreview)) ?? choices[0];
+    const terminals = workspacePrepared?.reviewTerminals ?? [];
+    const choices = workspacePrepared?.previewChoices.filter(choice => terminals.some(terminal => samePreviewTerminal(terminal, choice.target))) ?? [];
+    const choice = choices.find(item => workflowState.reviewHandles?.some(handle => samePreviewTerminal(handle.terminal, item.target))) ?? choices.find(item => samePreviewTerminal(item.target, selectedPreview)) ?? choices[0];
     const rootView = graphViews.project().graphViews.tabs.find(tab => tab.identity.kind === 'root');
     if (!choice || !rootView) return;
-    navigateGraphView('focusView', rootView.key);
-    if (graphViews.readEditor().view.identity.kind !== 'root') return;
+    const path = choice.target.address.instancePath;
+    if (path.length) navigateGraphView('openInstance', [...path]);
+    else navigateGraphView('focusView', rootView.key);
+    const editor = graphViews.readEditor();
+    if (editor.view.identity.kind === 'library' || editor.view.identity.workflowId !== current.id || JSON.stringify(editor.view.identity.instancePath ?? []) !== JSON.stringify(path)) return;
     showSettings({ kind: 'node', id: choice.target.address.nodeId });
     outputPreviewActions.follow();
     outputPreviewActions.select(graphViews.readEditContext().sessionId + ':' + workspaceRevision, choice.key, choice.target);
@@ -832,9 +875,11 @@ function updateSelectionCount() {
     const copy = picked.length > 0 && picked.every(copyable), canDelete = selection?.kind === 'wire' ? !!graph?.wires[selection.id] : selection?.kind === 'group' ? !!graph?.groups?.[selection.id] : picked.length > 0 && picked.every(id => !!graph?.nodes[id]);
     workbench.update({ menuCapabilities: selectionMenuCapabilities(), selectionCount: canvas?.multi.size || (selection?.kind === 'node' ? 1 : 0), selectionActions: { copy, cut: copy && !editor?.readOnly, delete: canDelete && !editor?.readOnly } });
 }
-function openRecallDetails(nodeId) {
-    if (!current?.nodes[nodeId] || !graphViews || !canvas) return;
-    if (graphViews.readEditor().view.identity.kind !== 'root') navigateGraphView('focusView',graphViews.project().graphViews.tabs[0].key);
+function openRecallDetails(nodeId,scope='selected') {
+    if (!graphViews || !canvas) return;
+    const address=scope==='all'?recallProjection?.allNodes?.[nodeId]?.address:null;
+    if(address){if(address.instancePath.length)navigateGraphView('openInstance',address.instancePath);else navigateGraphView('focusView',graphViews.project().graphViews.tabs[0].key);nodeId=address.nodeId;}
+    if (!graphViews.readEditor().prepared.savedGraph.nodes[nodeId]) return;
     canvas.setMulti([]); showSettings({kind:'node',id:nodeId}); canvas.fitSelection();
     requestAnimationFrame(()=>workbench.parts.inspector.querySelector('.pc-recall-details')?.scrollIntoView({block:'nearest'}));
 }
@@ -1154,26 +1199,23 @@ function ungroupSelection(id = canvas.selection?.kind === 'group' ? canvas.selec
 function canCreateSubgraph(nodeIds) {
     return nodeIds.length > 0 && nodeIds.every(id => {
         const candidate = editorDraw.nodes[id];
-        if (!candidate || ['subgraph-input', 'subgraph-output'].includes(candidate.type) || (['scene-context', 'reply-snapshot', 'guidance', 'apply-reply'].includes(candidate.operation) || (operationFor(candidate)?.rootOnly && !isScopedSystemOperation(candidate)))) return false;
+        if (!candidate || ['subgraph-input', 'subgraph-output'].includes(candidate.type)) return false;
         const operation = operationFor(candidate, { mode: editorDraw.mode, phase: candidate.phase ?? editorDraw.nativeCards?.[id]?.phase });
-        return (!operation?.rootOnly || isScopedSystemOperation(candidate)) && (!operation?.requiresStateInDefinition || Object.values(editorDraw.wires).some(wire => wire.to === id && wire.toPort === 'state'));
+        return (!operation?.rootOnly || isScopedSystemOperation(candidate)) && (!operation?.requiresStateInDefinition || isScopedSystemOperation(candidate) || Object.values(editorDraw.wires).some(wire => wire.to === id && wire.toPort === 'state'));
     });
 }
 function canvasPreviewMenuItems(node, token) {
     const editor = graphViews.readEditor();
     if (!node || editor.view.identity.kind === 'library') return [];
     const path = editor.view.identity.instancePath ?? [], sourceKey = editorCaptures.get(token)?.revision;
-    const choices = workspacePrepared.previewChoices.filter(choice => {
-        const address = choice.target.kind === 'terminal' ? choice.target.address : choice.target;
-        return address.workflowId === current.id && address.nodeId === node.id && JSON.stringify(address.instancePath) === JSON.stringify(path);
-    });
+    const choices = nodePreviewChoices(node);
     if (!choices.length) return [];
     const ports = editorDraw.nativeCards[node.id]?.ports ?? [];
     const labelFor = target => target.kind === 'terminal' ? 'Host result' : ports.find(port => port.dir === 'out' && port.port === target.portId)?.label || target.portId;
     const summaryFor = target => projectPreparedWorkflow(workspacePrepared.workflow, { ...workflowState, viewPath: path, selectedId: node.id, selectedTarget: target, pinnedPreview: null }).targetSummary;
     const currentKey = () => editorCurrent(token) && sourceKey === graphViews.readEditContext().sessionId + ':' + workspaceRevision;
     const choiceFor = target => choices.find(choice => JSON.stringify(choice.target) === JSON.stringify(target));
-    const choice = choiceFor(pinnedPreview) ?? choiceFor(selectedPreview) ?? choices[0];
+    const choice = choiceFor(pinnedPreview) ?? choiceFor(targetedPreview) ?? choiceFor(selectedPreview) ?? choices[0];
     const target = structuredClone(choice.target), summary = summaryFor(target);
     const busy = () => !!workflowState.busy || !!workflowRuntime.getNativeWorkflowController?.()?.activity?.()?.busy;
     const run = { id: 'run-to-here', label: 'Run to here', icon: 'run', tone: 'preview', shortcut: 'R',
@@ -1194,7 +1236,12 @@ function canvasPreviewMenuItems(node, token) {
             workbench.revealPreview();
         } };
     });
-    return [run, ...(choices.length > 1 ? [
+    const targetNode = { id: 'target-node', label: 'Target Node', icon: 'target', tone: 'preview', shortcut: 'T',
+        checked: choices.some(choice => JSON.stringify(choice.target) === JSON.stringify(targetedPreview)),
+        matchesShortcut: event => event.key.toLowerCase() === 't' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && !event.isComposing,
+        hint: 'Follow this node in Preview. Press T again to clear its target.',
+        action: () => { if (currentKey()) togglePreviewTarget(node); } };
+    return [targetNode, run, ...(choices.length > 1 ? [
         { id: 'pin-preview', label: 'Pin preview', icon: 'pin', tone: 'preview', children: pins },
     ] : pins)];
 }
@@ -1228,8 +1275,8 @@ function onCanvasMenu({ event, node, wire, at, group = null, several = null }) {
         section([entry('copy', 'Copy', 'copy', () => copySelection(), false, 'Ctrl C'), entry('cut', 'Cut', 'cut', () => copySelection(true), readOnly, 'Ctrl X')]);
     }
     if (node && !several && !isCommentFrame(node)) section(canvasPreviewMenuItems(node, captured.data));
-    const recallIds=several??(node?[node.id]:[]),recallNodes=editor.view.identity.kind==='root'?recallIds.filter(id=>recallProjection?.nodes[id]):[];
-    if(recallNodes.length){const view=projectRecallView({rootGraph:current,status:workflowRuntime.getNativeWorkflowController?.()?.statusRecall?.()?.data??null,enabled:!!settings().enabled,nodeIds:recallIds,viewKind:editor.view.identity.kind});const scope=view.commands.selected,actions=captureRecallActions(recallIds),plural=!!several;
+    const recallIds=several??(node?[node.id]:[]),recallNodes=editor.view.identity.kind!=='library'?recallIds.filter(id=>recallProjection?.nodes[id]):[];
+    if(recallNodes.length){const view=projectRecallView({rootGraph:current,inventory:workspacePrepared?.planner.inventory,status:workflowRuntime.getNativeWorkflowController?.()?.statusRecall?.()?.data??null,enabled:!!settings().enabled,nodeIds:recallIds,viewKind:editor.view.identity.kind,instancePath:editor.view.identity.instancePath??[]});const scope=view.commands.selected,actions=captureRecallActions(recallIds),plural=!!several;
         const label=(verb,ids)=>plural&&ids.length?verb+' for '+ids.length+' '+(ids.length===1?'node':'nodes'):verb;
         const hint=(count,reason)=>count?count+' '+(count===1?'memory set':'memory sets'):reason;
         section([entry('queue-recall',label('Queue recall',scope.queueNodeIds),'run',()=>{const result=actions.queue();if(!result.ok)toast(result.error,'error');},!scope.queueNodeIds.length,'',{hint:hint(scope.queueMemorySetCount,scope.queueReason)}),entry('cancel-recall',label('Cancel recall',scope.cancelNodeIds),'stop',()=>{const result=actions.cancel();if(!result.ok)toast(result.error,'error');},!scope.cancelNodeIds.length,'',{hint:hint(scope.cancelMemorySetCount,scope.cancelReason)}),...(!plural?[entry('recall-settings','Recall settings…','details',()=>openRecallDetails(node.id))]:[])]);
@@ -1247,7 +1294,7 @@ function onCanvasMenu({ event, node, wire, at, group = null, several = null }) {
     const subgraphNodes = several ?? (group ? groupMembers(editorDraw, group.id).map(member => member.id) : node && !isCommentFrame(node) ? [node.id] : []);
     if (subgraphNodes.length) {
         const eligible = canCreateSubgraph(subgraphNodes);
-        organization.push(entry('create-subgraph', 'Create subgraph', 'subgraph', () => createSubgraph(subgraphNodes), readOnly || !eligible, '', { tone: 'subgraph', hint: !eligible ? 'Keep root-only operations and existing boundaries in their containing graph; connect an explicit snapshot before extracting State.' : 'Move the selected nodes into an editable subgraph and preserve their connections.' }));
+        organization.push(entry('create-subgraph', 'Create subgraph', 'subgraph', () => createSubgraph(subgraphNodes), readOnly || !eligible, '', { tone: 'subgraph', hint: !eligible ? 'Keep existing boundary nodes in their containing definition.' : 'Move the selected nodes into an editable subgraph and preserve their connections.' }));
     }
     if (several?.length > 1) organization.push(entry('group', 'Group selected nodes', 'group', () => groupSelection(several), readOnly, 'Ctrl G'));
     if (group) organization.push(entry('ungroup', 'Ungroup', 'ungroup', () => ungroupSelection(group.id), readOnly, 'Ctrl Shift G'));
@@ -1644,7 +1691,7 @@ const nodeGuideActions = {
 const nodeDetailsActions = {
     queueRecall(selection){const captured=detailCapture(selection,true);return captured.ok?recallActions.change([selection.address.nodeId],'queue'):captured;},
     cancelRecall(selection){const captured=detailCapture(selection,true);return captured.ok?recallActions.change([selection.address.nodeId],'cancel'):captured;},
-    revealRecallShortcut:nodeId=>openRecallDetails(nodeId),
+    revealRecallShortcut:nodeId=>openRecallDetails(nodeId,'all'),
     loadWorkflowData(selection, key) {
         const captured = detailCapture(selection); if (!captured.ok) return captured;
         const node = graphViews.readEditor().prepared.effectiveNodes[selection.address.nodeId], preset = workflowDataPresetFor(node?.operation);
@@ -1760,8 +1807,8 @@ function revealDiagnosticNode(address) {
 }
 const outputPreviewActions = {
     select(key,choice,target) { if (key !== graphViews?.readEditContext().sessionId + ':' + workspaceRevision) return; selectedPreview = target; updateWorkflowProjection(); },
-    pin(key,target) { if (key !== graphViews?.readEditContext().sessionId + ':' + workspaceRevision) return; pinnedPreview = target; updateWorkflowProjection(); },
-    follow() { pinnedPreview = null; updateWorkflowProjection(); },
+    pin(key,target) { if (key !== graphViews?.readEditContext().sessionId + ':' + workspaceRevision) return; targetedPreview = null; pinnedPreview = target; updateWorkflowProjection(); },
+    follow() { pinnedPreview = null; targetedPreview = null; updateWorkflowProjection(); },
     runHere: runPreviewHere,
     reveal: address => revealDiagnosticNode(address),
     apply: applyPreviewReview, reject: rejectPreviewReview,

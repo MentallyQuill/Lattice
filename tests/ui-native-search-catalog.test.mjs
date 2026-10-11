@@ -198,7 +198,7 @@ test('checked real closures enable exact saved names and ports while bodies stay
     assert.equal(reads, 0);
 });
 
-test('closure preparation rejects hashes, missing children, root-only bodies, duplicates and accessor data', () => {
+test('closure preparation rejects hashes, missing children, duplicates and accessor data', () => {
     const saved = savedClosure(), id = 'definition:' + definitionRefKey(saved.definition);
     const invalid = [
         { definition: { ...saved.definition, semanticHash: 'sha256:' + 'f'.repeat(64) }, snapshots: saved.snapshots },
@@ -206,8 +206,8 @@ test('closure preparation rejects hashes, missing children, root-only bodies, du
         { ...saved, snapshots: null },
         { ...saved, definitionRef: ref(saved.definition) },
     ];
-    const forbidden = structuredClone(saved.definition); forbidden.id = 'forbidden'; forbidden.body.nodes.rootSource = { id: 'rootSource', type: 'workflow', operation: 'scene-context' };
-    invalid.push({ definition: finalize(forbidden), snapshots: saved.snapshots });
+    const hosted = structuredClone(saved.definition); hosted.id = 'hosted'; hosted.body.nodes.rootSource = { id: 'rootSource', type: 'workflow', operation: 'scene-context' };
+    assert.equal(api.prepareNativeSearchCatalog(scope(), { checkedLibraryClosures: [{ definition: finalize(hosted), snapshots: saved.snapshots }] }).ok, true);
     for (const entry of invalid) assert.equal(api.prepareNativeSearchCatalog(scope(), { checkedLibraryClosures: [entry] }).ok, false);
     assert.equal(api.prepareNativeSearchCatalog(scope(), { checkedLibraryClosures: [saved, saved] }).ok, false);
     const metadata = { definitionRef: ref(saved.definition), name: saved.definition.name, phase: 'pre', ports: saved.definition.interface.map(({ boundaryNodeId, ...port }) => port) };
@@ -231,7 +231,7 @@ test('closure phase filtering keeps exact private scope and optional empty snaps
         assert.deepEqual(value.choices.filter(item => item.definitionRef).map(item => item.label), [wanted.definition.name]);
         assert.equal(api.resolveNativeSearchChoice(value, 'definition:' + definitionRefKey(other.definition)), null);
         assert.ok(api.resolveNativeSearchChoice(value, 'definition:' + definitionRefKey(wanted.definition)));
-        for (const operation of ['scene-context', 'reply-snapshot', 'guidance', 'apply-reply']) assert.equal(choice(value, 'operation:' + operation), undefined);
+        for (const operation of mode === 'native-pre' ? ['scene-context', 'guidance'] : ['reply-snapshot', 'apply-reply']) assert.ok(choice(value, 'operation:' + operation));
     }
 });
 
@@ -346,10 +346,11 @@ test('Draft Text Rules, JSON check, Compose Input and Context Join expose actual
     assert.equal(api.filterNativeSearchChoices(pre, { query: 'Compose', origin: { dir: 'in', kind: 'guidance' } })[0].ports.find(p => p.dir === 'out').kind, 'guidance');
 });
 
-test('private bodies exclude root-only and wrong-phase operations while retaining dynamic both-phase choices', () => {
+test('private bodies admit host operations in their phase while retaining dynamic both-phase choices', () => {
     for (const mode of ['native-pre', 'native-post']) {
         const value = catalog(scope(mode, { inDefinition: true, viewPath: ['instance'] }));
-        for (const id of ['scene-context', 'reply-snapshot', 'guidance', 'apply-reply']) assert.equal(choice(value, 'operation:' + id), undefined);
+        for (const id of mode === 'native-pre' ? ['scene-context', 'guidance'] : ['reply-snapshot', 'apply-reply']) assert.ok(choice(value, 'operation:' + id));
+        for (const id of mode === 'native-pre' ? ['reply-snapshot', 'apply-reply'] : ['scene-context', 'guidance']) assert.equal(choice(value, 'operation:' + id), undefined);
         assert.ok(choice(value, 'operation:compose'));
         assert.ok(choice(value, 'operation:json-decode'));
         assert.equal(api.resolveNativeSearchChoice(value, 'operation:json-decode:check').controls.mode, 'check');

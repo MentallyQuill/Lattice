@@ -91,8 +91,8 @@ function inspectScope(graph, { definition, snapshots = {} } = {}) {
         const operation = described.data.descriptor;
         if (node.operationVersion !== undefined && node.operationVersion !== 1) return fail('UNKNOWN_OPERATION', 'Unknown operation or version.', id);
         if (operation.phase !== phaseForNode(graph, node)) return fail('WRONG_PHASE', 'An operation does not support the containing phase.', id);
-        if (definition && (operation.rootOnly && !isScopedSystemOperation(node) || ['scene-context', 'reply-snapshot', 'guidance', 'apply-reply'].includes(operation.id))) return fail('ROOT_ONLY_OPERATION', 'Root-only operations cannot appear in reusable definitions.', id);
-        if (definition && operation.requiresStateInDefinition && !wires.some(wire => wire?.to === id && wire.toPort === 'state')) return fail('ROOT_ONLY_OPERATION', 'State inside a reusable definition requires an explicit snapshot input.', id);
+        if (definition && operation.rootOnly && !isScopedSystemOperation(node)) return fail('ROOT_ONLY_OPERATION', 'This operation is not eligible for static definitions.', id);
+        if (definition && operation.requiresStateInDefinition && !isScopedSystemOperation(node) && !wires.some(wire => wire?.to === id && wire.toPort === 'state')) return fail('ROOT_ONLY_OPERATION', 'This definition operation requires an explicit snapshot input.', id);
         if (operation.id === 'memory' && operation.terminal && node.enabled !== false && ++memoryCommits > 1) return fail('MULTIPLE_MEMORY_COMMITS', 'A root workflow supports one Memory Commit terminal.', id);
         if (!bindingValid(node) || node.modelRole !== undefined && node.modelRole !== null && typeof node.modelRole !== 'string') return fail('INVALID_SETTINGS', 'Invalid model binding.', id);
         for (const [key, descriptor] of Object.entries(operation.controlDescriptors)) if (!controlValid(node[key] === undefined ? descriptor.default : node[key], descriptor)) return fail('INVALID_SETTINGS', `Invalid ${key}.`, id);

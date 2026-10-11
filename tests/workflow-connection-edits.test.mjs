@@ -316,7 +316,7 @@ test('qualified private body edit revises all owned ancestors with full-root sig
     assert.deepEqual(graph, before);
 });
 
-test('pinned bodies, stale exact references, and root-only private operations reject before ID factory', () => {
+test('pinned bodies and stale exact references reject before ID factory while private bodies admit host sources', () => {
     const pinned = nestedFixture(), before = structuredClone(pinned), path = ['one', 'work']; let calls = 0;
     const options = { idFactory() { calls++; return 'new-node'; } };
     const command = { kind: 'create', viewPath: path, operation: 'smart-compactor', graphPoint: { x: 0, y: 0 } };
@@ -324,8 +324,8 @@ test('pinned bodies, stale exact references, and root-only private operations re
     const graph = makeLocalCopy(pinned, { instancePath: path, id: 'private-leaf' }).data.candidate;
     const ref = reference(bodyAt(graph, path).definition);
     assert.equal(prepare(graph, { ...command, expectedRef: { ...ref, version: ref.version + 1 } }, options).error.code, 'STALE_DEFINITION');
-    assert.equal(prepare(graph, { ...command, operation: 'scene-context' }, options).error.code, 'ROOT_ONLY_OPERATION');
     assert.equal(calls, 0); assert.deepEqual(pinned, before);
+    assert.equal(prepare(graph, { ...command, operation: 'scene-context' }).ok, true);
 });
 
 test('private body duplicates and same-pin moves do not revise any immutable snapshot', () => {

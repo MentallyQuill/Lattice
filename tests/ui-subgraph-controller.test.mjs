@@ -115,6 +115,8 @@ function conversionMenu(f, nodeId) {
     Object.assign(f.env, { document, window: dom.window, root: document.querySelector('main'), isCommentFrame, operationFor, isScopedSystemOperation,
         el(tag, cls, text) { const element = document.createElement(tag); if (cls) element.className = cls; if (text !== undefined) element.textContent = text; return element; },
         canCreateSubgraph: (...args) => actual('canCreateSubgraph', f.env)(...args),
+        nodePreviewChoices: (...args) => actual('nodePreviewChoices', f.env)(...args),
+        previewAddress: target => target?.kind === 'terminal' ? target.address : target, targetedPreview: null,
         canvasPreviewMenuItems: (...args) => actual('canvasPreviewMenuItems', f.env)(...args), showContextMenu, readNodePresentation, projectPreparedWorkflow, diagnosticText,
     });
     actual('onCanvasMenu', f.env)({ event: { clientX: 20, clientY: 20 }, node: f.env.editorDraw.nodes[nodeId], at: { x: 0, y: 0 } });
@@ -122,18 +124,18 @@ function conversionMenu(f, nodeId) {
     assert.ok(item); return { item, close: () => dom.window.close() };
 }
 
-for (const mode of ['read', 'recall', 'commit']) test(`Memory ${mode} cannot be offered for subgraph extraction`, () => {
+for (const mode of ['read', 'recall', 'commit']) test(`Memory ${mode} is offered for static subgraph extraction`, () => {
     const f = fixture(graph => Object.assign(graph, { mode: 'native-unified', wires: {}, nodes: {
         memory: { id: 'memory', type: 'workflow', operation: 'memory', operationVersion: 1, mode, ...(mode === 'commit' ? { idempotencyKey: 'extract-test' } : {}) },
     } }));
     const menu = conversionMenu(f, 'memory');
-    assert.equal(menu.item.disabled, true); menu.close();
+    assert.equal(menu.item.disabled, false); menu.close();
 });
 
-test('bare State cannot be offered for subgraph extraction', () => {
+test('bare State is offered for static subgraph extraction with enclosing host memory', () => {
     const f = fixture(graph => Object.assign(graph, { wires: {}, nodes: { state: { id: 'state', type: 'workflow', operation: 'state', operationVersion: 1, mode: 'value' } } }));
     const menu = conversionMenu(f, 'state');
-    assert.equal(menu.item.disabled, true); menu.close();
+    assert.equal(menu.item.disabled, false); menu.close();
 });
 
 test('State with an explicit snapshot remains available for subgraph extraction', () => {
@@ -167,4 +169,28 @@ for (const operation of ['read-file', 'write-file', 'story-clock', 'commit-clock
     const result = f.env.createSubgraph(['scoped'], 'Scoped system');
     assert.equal(result.ok, true, JSON.stringify(result.error));
     assert.equal(f.commits(), 1);
+});
+
+test('Generate Reply can be wrapped with its preparation nodes and opens an editable subgraph', () => {
+    const f = fixture(graph => {
+        graph.nodes.send = { id: 'send', type: 'workflow', operation: 'on-send', x: 0, y: 0 };
+        graph.nodes.generate = { id: 'generate', type: 'workflow', operation: 'generate-reply', x: 1200, y: 40 };
+        graph.nodes.review = { id: 'review', type: 'workflow', operation: 'review-publish', x: 1500, y: 40 };
+        graph.wires.activation = { id: 'activation', route: 'wire', from: 'send', fromPort: 'activation', to: 'generate', toPort: 'activation' };
+        graph.wires.guidance = { id: 'guidance', route: 'wire', from: 'outside', fromPort: 'out', to: 'generate', toPort: 'guidance' };
+        graph.wires.reply = { id: 'reply', route: 'wire', from: 'generate', fromPort: 'draft', to: 'review', toPort: 'draft' };
+    });
+    const before = structuredClone(f.graph);
+    f.env.canvas.setMulti(['first', 'second', 'outside', 'generate']);
+    const menu = conversionMenu(f, 'generate');
+    try { assert.equal(menu.item.disabled, false); } finally { menu.close(); }
+    const result = f.env.createSubgraph(['first', 'second', 'outside', 'generate'], 'Generate the reply');
+    assert.equal(result.ok, true, JSON.stringify(result.error));
+    const editor = f.session.readEditor();
+    assert.equal(editor.readOnly, false);
+    assert.equal(editor.prepared.savedGraph.nodes.generate.operation, 'generate-reply');
+    assert.equal(f.commits(), 1);
+    assert.ok(H.undo(f.graph));
+    f.refresh();
+    assert.deepEqual(f.graph, before);
 });

@@ -102,9 +102,9 @@ test('story clock template uses the real engine contract and no ambient time',as
  assert.equal(typeof setup.createStoryClockTemplate,'function');const made=setup.createStoryClockTemplate('time.json','fantasy-calendar',840);assert.equal(made.ok,true);const clock=JSON.parse(made.data.text);assert.equal(clock.clockId,'time.json');assert.equal(clock.absoluteMinute,840);assert.equal(clock.schemaVersion,1);assert.equal(clock.revision,1);const {advanceStoryClock}=await import('../src/workflow/story-time.js?v=0.27.0');assert.equal(advanceStoryClock(clock,{kind:'duration',minutes:480}).ok,true);assert.equal(setup.createStoryClockTemplate('','calendar',0).ok,false);assert.equal(setup.createStoryClockTemplate('time','calendar',-1).ok,false);
 });
 
-test('Recall deferred ports match their configured activation and root-only authority stays excluded from helpers',()=>{
+test('Recall deferred ports match their configured activation in root and static bodies',()=>{
  const prepared=prepareNativeSearchCatalog(scope).data,body=prepareNativeSearchCatalog({...scope,viewPath:['child'],inDefinition:true}).data;
- for(const operation of ['recall','hotkey-arm']){assert.equal(prepared.choices.find(item=>item.id==='operation:'+operation).requiresConfiguration,true);assert.equal(body.choices.some(item=>item.id==='operation:'+operation),false);}
+ for(const operation of ['recall','hotkey-arm']){assert.equal(prepared.choices.find(item=>item.id==='operation:'+operation).requiresConfiguration,true);assert.equal(body.choices.find(item=>item.id==='operation:'+operation).requiresConfiguration,true);}
  for(const activation of ['armed','keyword','event','armed-or-character']){const controls={actorId:'mara',memorySetId:'memories',activation,keywords:['wand'],eventTypes:['kiss']},described=describeOperation({...scope,mode:'native-unified'},{type:'workflow',...operationDefaults('recall'),...controls});assert.equal(described.ok,true);assert.deepEqual(config.deferredNodeDescription('recall',controls).ports,described.data.ports);}
 });
 

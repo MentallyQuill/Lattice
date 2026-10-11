@@ -158,7 +158,7 @@ export function computeDefinitionIdentity(value) {
                 const controls = {};
                 for (const controlId of operation.controls) {
                     if (operation.family === 'Introspection' && node[controlId] === undefined && !Object.hasOwn(operation.defaults, controlId)) continue;
-                    const control = describeExposedControl(node, controlId);
+                    const control = describeExposedControl({ ...node, phase: operation.phase }, controlId);
                     if (!control.ok) return control;
                     // Draft is the pre-existing Transpose behavior. Its newly declared
                     // editor field must neither change old pins nor enter old bodies.

@@ -110,13 +110,13 @@ test('tabs support roving keyboard selection and isolate navigation and Delete f
     } finally { await f.close(); }
 });
 
-test('preview chrome keeps the actual output choice and bounded actions around a flexible scrolling artifact body', async () => {
+test('preview chrome names the canvas output without a dropdown and keeps bounded actions around a scrolling artifact body', async () => {
     let collapsed = 0;
     const f = await fixture(preview(), { select() {}, pin() {}, follow() {}, runHere() {} }, () => collapsed++);
     try {
         const leaf = f.host.querySelector('.pc-output-preview'), header = leaf.querySelector('header'), footer = leaf.querySelector('footer');
         assert.equal(header.querySelector('h3').textContent, 'Scene Fields · Output');
-        assert.ok(header.querySelector('[aria-label="Preview output"]'), 'the actual selector belongs in the flat header');
+        assert.equal(header.querySelector('select'), null, 'output selection belongs on the canvas');
         assert.ok(footer?.querySelector('[data-run-here]'), 'bounded run action stays reachable below the artifact body');
         assert.match(footer.textContent, /Current/); assert.match(footer.textContent, /Following selection/); assert.match(footer.textContent, /maximum 0 requests/);
         const body = leaf.querySelector('.pc-preview-sections');

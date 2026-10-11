@@ -65,6 +65,34 @@ test('example preview stays readable on a narrow screen and follows theme change
     await canvas.screenshot({path: '.tmp/node-guide-narrow.png'});
 });
 
+test('focused guide bracket hotkeys zoom its camera without changing the parent graph camera', async ({page}) => {
+    await launch(page);
+    await page.getByRole('button', {name: 'Open Compose guide', exact: true}).click();
+    const guide = page.getByRole('dialog', {name: 'Compose guide', exact: true});
+    await guide.locator('details[data-guide-example] > summary').click();
+    const canvas = guide.locator('.pc-canvas-host');
+    await expect(canvas.locator('.pc-wire-native')).toHaveCount(4);
+    const localCamera = () => canvas.evaluate(el => {
+        const matrix = new DOMMatrix(getComputedStyle(el.querySelector('.pc-viewport')).transform);
+        return {x: matrix.e, y: matrix.f, scale: matrix.a};
+    });
+    const parentBefore = await page.evaluate(() => ({camera: {...window.canvasHarness.canvas.view}, graph: JSON.stringify(window.canvasHarness.graph)}));
+    const before = await localCamera();
+    await canvas.focus();
+    await page.keyboard.press('BracketRight');
+    const zoomed = await localCamera();
+    expect(zoomed.scale).toBeCloseTo(before.scale * 1.15, 5);
+    const center = await canvas.evaluate(el => ({x: el.clientWidth / 2, y: el.clientHeight / 2}));
+    expect(zoomed.x).toBeCloseTo(center.x - (center.x - before.x) * 1.15, 3);
+    expect(zoomed.y).toBeCloseTo(center.y - (center.y - before.y) * 1.15, 3);
+    await page.keyboard.press('BracketLeft');
+    const restored = await localCamera();
+    expect(restored.scale).toBeCloseTo(before.scale, 5);
+    expect(restored.x).toBeCloseTo(before.x, 3);
+    expect(restored.y).toBeCloseTo(before.y, 3);
+    expect(await page.evaluate(() => ({camera: {...window.canvasHarness.canvas.view}, graph: JSON.stringify(window.canvasHarness.graph)}))).toEqual(parentBefore);
+});
+
 test('file-backed examples include readable and copyable setup data', async ({page, context}) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await launch(page);

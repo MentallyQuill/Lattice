@@ -6,13 +6,15 @@ import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.0
 import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.0';
 import { siblingWorkflow, twoOutputWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 import { diagnosticText } from '../src/ui/diagnostics.js?v=0.27.0';
+import { isCommentFrame } from '../src/canvas/comment-frames.js?v=0.27.0';
 
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function actual(name, env) {
-    const start = source.indexOf('function ' + name + '(');
+    const functionStart = source.indexOf('function ' + name + '(');
+    const start = functionStart >= 0 ? functionStart : source.indexOf('const ' + name + ' =');
     assert.ok(start >= 0, 'Actual controller function ' + name);
     const line = source.slice(start, source.indexOf('\n', start));
-    const end = line.includes('} ') || line.endsWith('}') ? start + line.length : source.indexOf('\n}', start) + 2;
+    const end = functionStart < 0 || line.includes('} ') || line.endsWith('}') ? start + line.length : source.indexOf('\n}', start) + 2;
     return Function('env', 'with(env){' + source.slice(start, end) + ';return ' + name + ';}')(env);
 }
 function fixture(graph = siblingWorkflow(), path = ['second']) {
@@ -22,12 +24,12 @@ function fixture(graph = siblingWorkflow(), path = ['second']) {
     const session = createGraphViewSession({ root: graph, activationId: 'context-menu', ...prepared.data }).data;
     if (path.length) assert.equal(session.openInstance(path).ok, true);
     const env = { current: graph, graphViews: session, workspacePrepared: prepared.data, editorDraw: projectEditorDraw(session.readEditor()),
-        workspaceRevision: 0, workflowState: { busy: false }, pinnedPreview: null, selectedPreview: null,
-        editorCaptures: new WeakMap(), isOpen: () => true, activeEditRoot: () => graph, projectPreparedWorkflow, diagnosticText,
+        workspaceRevision: 0, workflowState: { busy: false }, pinnedPreview: null, targetedPreview: null, selectedPreview: null, selectedKind: null, selected: null,
+        editorCaptures: new WeakMap(), isOpen: () => true, activeEditRoot: () => graph, projectPreparedWorkflow, diagnosticText, isCommentFrame,
         workflowRuntime: { getNativeWorkflowController: () => ({ activity: () => null }) },
         updateWorkflowProjection() {}, workbench: { revealPreview() {} }, applyPreviewReview() {}, rejectPreviewReview() {},
     };
-    for (const name of ['captureEditor', 'editorCurrent', 'runPreviewHere']) env[name] = actual(name, env);
+    for (const name of ['previewAddress', 'effectivePreview', 'nodePreviewChoices', 'togglePreviewTarget', 'captureEditor', 'editorCurrent', 'runPreviewHere']) env[name] = actual(name, env);
     const start = source.indexOf('const outputPreviewActions = {'), end = source.indexOf('\n};', start) + 3;
     env.outputPreviewActions = Function('env', 'with(env){' + source.slice(start, end) + ';return outputPreviewActions;}')(env);
     env.canvasPreviewMenuItems = actual('canvasPreviewMenuItems', env);

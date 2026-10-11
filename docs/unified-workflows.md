@@ -66,7 +66,7 @@ Nodes usable in either stage expose **Stage → Preparation / Response** in Deta
 
 ## Combine editable systems in one Main
 
-Keep one **On Send → Generate Reply → Review / Publish** in Main. Package the item's effect, weather rules and relationship state as separate static bodies. **Workflow → Add system…** chooses a saved body, binds its typed inputs and destinations, previews the connections and adds an editable instance. It targets Main even when a body tab is focused. For a preparation Guidance output, choose an existing Compose Guidance merge or create one when the generator's guidance input is empty. Occupied destination pins require an explicit choice and are not replaced automatically. A state-only system can stage effects without contributing prompt text.
+Keep one **On Send → Generate Reply → Review / Publish** path in the workflow. Any part of that path, including On Send and Review / Publish, can sit inside a static subgraph. Crossing connections become typed inputs and outputs; the enclosing workflow still owns one activation and native generation. Package the item's effect, weather rules and relationship state as separate static bodies. **Workflow → Add system…** chooses a saved body, binds its typed inputs and destinations, previews the connections and adds an editable instance. It targets Main even when a body tab is focused. For a preparation Guidance output, choose an existing Compose Guidance merge or create one when the generator's guidance input is empty. Occupied destination pins require an explicit choice and are not replaced automatically. A state-only system can stage effects without contributing prompt text.
 
 Main's Compose can receive original Guidance sections in the order you authored. Each row's **Kind**, **Required input** and **Skipped source** control the contract. Choose optional Guidance with **Omit section** for a system that may skip. A completed source overrides the Text fallback; an unconnected optional source keeps it. Skipped optional sources may omit or fall back, while required and unresolved paths retain their dependency rules. In template mode, an omitted `{{section:Name}}` is empty.
 
@@ -74,7 +74,7 @@ Main's Compose can receive original Guidance sections in the order you authored.
 
 Connections govern execution. Body tabs retain your editing view, not a separate story attachment or generation. **Details → Run this system** on the wrapper controls the entire body; off skips its reads, model calls, effects and default provisioning. Closing its tab leaves the connected system active. Save/Open retains Main, definitions, overrides and open tabs; portable export retains the same composition and pinned closure.
 
-Read File, Write to File, Story Clock, Clock Commit and Outcome Commit can run inside these static bodies. Their live target references, selected/present actor scope and source checks still apply. Memory, Recall, Recall Shortcut and native lifecycle/source operations keep their root-only contracts. For Each helpers do not gain those host operations.
+All ordinary workflow nodes can run inside static bodies, including native context sources, Guidance, Memory, State, Recall, Recall Shortcut and the native lifecycle. Their live target references, selected/present actor scope and source checks still apply. Implicit State reads the enclosing workflow's Memory capture. Nested Memory Commit waits for acceptance, and Recall queues and shortcuts distinguish reused instances. For Each keeps its separate bounded contract: host operations remain unavailable, and State requires an explicit snapshot.
 
 Try the [combined wand, weather and relationship example](combined-system-example.md). It uses one shared source clock, public item/weather guidance and state-only private relationship progression. Its agreed eight-hour wait is an authored story action. It stages three independent saves on Apply; Reject, Cancel and Preview retain their initial data. This direct-file example is separate from the thirty numbered lessons.
 
@@ -259,7 +259,7 @@ Saved native-pre and native-post roots are retired. Migration preserves their or
 2. Wire bounded Guidance into Generate Reply's guidance pin.
 3. Use the owned Generate Reply Draft for processing this generation's response.
 4. End the final Draft in Review / Publish. Patch tools retain diagnostic utility but do not grant publication authority.
-5. Keep native sources, publication, Memory, Recall and Recall Shortcut at the root where required. Authorized Read File, Write to File, Story Clock, Clock Commit and Outcome Commit may live in static bodies; For Each keeps its restricted helper contract.
+5. Group ordinary nodes freely into static bodies, including sources, Memory, Recall and native lifecycle nodes. Keep one owned On Send → Generate Reply path; For Each keeps its restricted helper contract.
 6. Rebind local model/helper connections, authorize documents, inspect supported outputs with Run to here, then keep the unified document open and select **Enable Lattice**.
 
 Current imports preserve pinned identities and controls; additive imports use stage/type checks. There is no automatic converter or production compatibility starter for a retired root.

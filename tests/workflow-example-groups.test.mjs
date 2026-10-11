@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { REMASTERED_WORKFLOW_EXAMPLE_DATA as entries } from '../src/workflow/remastered-example-data.js';
 import { layout } from '../tools/remastered/builder.mjs';
+import { portsForNode } from '../src/workflow/catalog.js';
 
 const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const contains = (frame, node) => frame.x <= node.x && frame.y <= node.y && frame.x + frame.w >= node.x + node.w && frame.y + frame.h >= node.y + node.h;
@@ -96,4 +97,49 @@ test('repeated layout clears obsolete memberships without changing its result', 
     const once = structuredClone(graph);
     layout(graph);
     assert.deepEqual(graph, once);
+});
+
+test('independent inputs sit beside their first consumer instead of spanning the lesson', () => {
+    for (const number of [2, 6, 12, 22, 25, 28, 29, 30]) {
+        const graph = structuredClone(entries[number - 1].packages[0].graph);
+        layout(graph);
+        for (const node of Object.values(graph.nodes).filter(node => node.type !== 'note')) {
+            const inputs = Object.values(graph.wires).filter(wire => wire.to === node.id);
+            const consumers = Object.values(graph.wires).filter(wire => wire.from === node.id).map(wire => graph.nodes[wire.to]);
+            if (inputs.length || !consumers.length) continue;
+            assert.ok(Math.min(...consumers.map(consumer => consumer.x)) - node.x <= 420,
+                `${number}: independent ${node.id} is far from its first consumer`);
+        }
+        assertClearGeometry(graph, `Lesson ${number}`);
+    }
+});
+
+function wireSpans(graph) {
+    const pin = (id, portId, direction) => {
+        const node = graph.nodes[id], ports = portsForNode(graph, node).filter(port => port.direction === direction);
+        const row = ports.findIndex(port => port.id === portId);
+        assert.ok(row >= 0, `${id}.${portId} is a real pin`);
+        return { x: node.x + (direction === 'output' ? node.w + 19 : -19), y: node.y + 40 + row * 24 };
+    };
+    return Object.values(graph.wires).map(wire => ({ id: wire.id,
+        from: pin(wire.from, wire.fromPort, 'output'), to: pin(wire.to, wire.toPort, 'input') }));
+}
+
+test('long connections remain distinct instead of sharing a visually merged span', () => {
+    for (const number of [22, 24, 29, 30]) {
+        const graph = structuredClone(entries[number - 1].packages[0].graph);
+        layout(graph);
+        const spans = wireSpans(graph), failures = [];
+        for (let index = 0; index < spans.length; index++) for (const b of spans.slice(index + 1)) {
+            const a = spans[index], left = Math.max(a.from.x, b.from.x), right = Math.min(a.to.x, b.to.x);
+            const y = (span, x) => span.from.y + (span.to.y - span.from.y) * (x - span.from.x) / (span.to.x - span.from.x);
+            let merged = 0;
+            for (let x = left; x < right; x += 8) {
+                const slope = (a.to.y - a.from.y) / (a.to.x - a.from.x);
+                if (Math.abs(y(a, x) - y(b, x)) / Math.hypot(1, slope) < 6) merged += 8;
+            }
+            if (merged > 120) failures.push(`${a.id}/${b.id}: ${merged}px`);
+        }
+        assert.deepEqual(failures, [], `Lesson ${number}: long bundled wires`);
+    }
 });

@@ -77,7 +77,7 @@ assert.equal(converted.data.proposal.inputs.length, 1, 'shared external sources 
 assert.equal(converted.data.proposal.outputs.length, 2, 'crossing and unused selected outputs remain available');
 assert.equal(converted.data.candidate.portals.result.source.nodeId, converted.data.instanceId);
 assert.equal(resolveWorkflow(converted.data.candidate).data.callBound, resolveWorkflow(selectionRoot).data.callBound);
-assert.equal(composition.prepareCreateFromSelection(selectionRoot, { nodeIds: ['source'], definitionId: 'bad', name: 'Bad' }).error.code, 'ROOT_ONLY_OPERATION');
+assert.equal(composition.prepareCreateFromSelection(selectionRoot, { nodeIds: ['source'], definitionId: 'source-body', name: 'Scene Context' }).ok, true);
 const unfinishedSelection = structuredClone(selectionRoot); delete unfinishedSelection.wires.a;
 assert.equal(composition.prepareCreateFromSelection(unfinishedSelection, { nodeIds: ['one'], definitionId: 'unfinished', name: 'Unfinished' }).ok, true);
 
@@ -383,20 +383,20 @@ test('selection group overlays reject invalid geometry and unrelated groups with
 });
 console.log('workflow-composition-edits: nested ownership, bounded revisions, conversion and unpack passed');
 
-for (const mode of ['read', 'recall', 'commit']) test(`selection extraction rejects root-only Memory ${mode} without mutation`, () => {
+for (const mode of ['read', 'recall', 'commit']) test(`selection extraction admits static Memory ${mode} without mutating the source`, () => {
     const graph = { id: 'memory-extraction', schema: 3, runtime: 2, mode: mode === 'commit' ? 'native-post' : 'native-pre', nodes: {
         memory: { id: 'memory', type: 'workflow', operation: 'memory', operationVersion: 1, mode, ...(mode === 'commit' ? { idempotencyKey: 'extract-test' } : {}) },
     }, wires: {}, definitions: {} }, before = structuredClone(graph);
     const result = composition.prepareCreateFromSelection(graph, { nodeIds: ['memory'], definitionId: 'memory-body', name: 'Memory' });
-    assert.equal(result.ok, false); assert.equal(result.error.code, 'ROOT_ONLY_OPERATION'); assert.deepEqual(graph, before);
+    assert.equal(result.ok, true, JSON.stringify(result)); assert.deepEqual(graph, before);
 });
 
-test('selection extraction rejects State that depends on an implicit host snapshot', () => {
+test('selection extraction admits State that depends on the enclosing host snapshot', () => {
     const graph = { id: 'bare-state-extraction', schema: 3, runtime: 2, mode: 'native-pre', nodes: {
         state: { id: 'state', type: 'workflow', operation: 'state', operationVersion: 1, mode: 'value' },
     }, wires: {}, definitions: {} }, before = structuredClone(graph);
     const result = composition.prepareCreateFromSelection(graph, { nodeIds: ['state'], definitionId: 'state-body', name: 'State' });
-    assert.equal(result.ok, false); assert.equal(result.error.code, 'ROOT_ONLY_OPERATION'); assert.deepEqual(graph, before);
+    assert.equal(result.ok, true, JSON.stringify(result)); assert.deepEqual(graph, before);
 });
 
 for (const internal of [false, true]) test(`selection extraction preserves State snapshot supplied by ${internal ? 'an internal wire' : 'an explicit boundary'}`, () => {

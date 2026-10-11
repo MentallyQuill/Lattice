@@ -73,7 +73,7 @@ test('menu capabilities follow exact node, multi, group and wire selection', () 
     assert.equal(f.capabilities().inspect, true); assert.equal(f.capabilities().saveSubgraph, true); assert.equal(f.capabilities().duplicate, true);
     f.select('multi', ['first/path', 'second']);
     assert.equal(f.capabilities().inspect, false); assert.equal(f.capabilities().group, true); assert.equal(f.capabilities().createSubgraph, true); assert.equal(f.capabilities().saveSubgraph, false);
-    f.select('node', 'source'); assert.equal(f.capabilities().createSubgraph, false);
+    f.select('node', 'source'); assert.equal(f.capabilities().createSubgraph, true);
     f.select('wire', 'a'); assert.equal(f.capabilities().hasSelection, true); assert.equal(f.capabilities().inspect, false); assert.equal(f.capabilities().duplicate, false); assert.equal(f.capabilities().comment, false);
 });
 

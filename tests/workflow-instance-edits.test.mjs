@@ -168,15 +168,15 @@ test('pinned paths, absent or stale containing pins and invalid actual interface
     assert.equal(calls, 0);
 });
 
-test('source missing/hash/phase/root-only/portal-cycle and plain-data failures preserve the connected root', () => {
+test('source missing/hash/phase/port/portal-cycle and plain-data failures preserve the connected root', () => {
     const graph = root(), before = structuredClone(graph), saved = source(); let calls = 0, reads = 0;
     const options = { idFactory() { calls++; return 'unused'; } };
     const badChild = structuredClone(saved.snapshots); Object.values(badChild)[0].body.nodes.work.targetTokens = 7;
     const wrongPhase = structuredClone(saved.definition); wrongPhase.body.mode = 'native-post';
-    const rootOnly = structuredClone(leaf()); rootOnly.body.nodes.work.operation = 'scene-context'; delete rootOnly.body.wires.a;
+    const invalidPort = structuredClone(leaf()); invalidPort.body.nodes.work.operation = 'scene-context';
     const cyclic = structuredClone(leaf()); cyclic.body.portals = { hidden: { id: 'hidden', label: 'Hidden', kind: 'context', source: pin('work') } }; cyclic.body.wires.a = { id: 'a', route: 'portal', portalId: 'hidden', to: 'work', toPort: 'in' };
     const getter = command(saved); Object.defineProperty(getter, 'definition', { enumerable: true, get() { reads++; return saved.definition; } });
-    const invalid = [command({ definition: saved.definition }), command({ definition: saved.definition, snapshots: badChild }), command({ definition: finalize(wrongPhase) }), command({ definition: finalize(rootOnly) }), command({ definition: finalize(cyclic) }), getter,
+    const invalid = [command({ definition: saved.definition }), command({ definition: saved.definition, snapshots: badChild }), command({ definition: finalize(wrongPhase) }), command({ definition: finalize(invalidPort) }), command({ definition: finalize(cyclic) }), getter,
         command(saved, { graphPoint: { x: Infinity, y: 0 } }), command(saved, { phase: 'post' }), command(saved, { connection: { origin: pin('target', 'in'), portId: 'output' } })];
     for (const value of invalid) assert.equal(prepare(graph, value, options).ok, false);
     assert.equal(reads, 0); assert.equal(calls, 0); assert.deepEqual(graph, before);

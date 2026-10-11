@@ -41,7 +41,7 @@ test('Text flows through JSON Decode and Compose into zero-call guidance', async
 
 import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js';
 
-test('source discovery has canonical Input entries and hides host prompts inside subgraphs',()=>{
+test('source discovery has canonical Input entries and includes host prompts inside static subgraphs',()=>{
     const scope={schema:3,runtime:2,mode:'native-unified',workflowId:'input-integration',viewPath:[],inDefinition:false};
     const root=prepareNativeSearchCatalog(scope);
     assert.equal(root.ok,true);
@@ -55,7 +55,7 @@ test('source discovery has canonical Input entries and hides host prompts inside
     assert.equal(nested.ok,true);
     assert.ok(nested.data.choices.some(choice=>choice.id==='operation:text'));
     assert.ok(nested.data.choices.some(choice=>choice.id==='operation:file-input'));
-    assert.equal(nested.data.choices.some(choice=>choice.id==='operation:prompt-source'),false);
+    assert.equal(nested.data.choices.some(choice=>choice.id==='operation:prompt-source'),true);
 });
 
 import { exportWorkflow, parseWorkflow } from '../src/workflow/packages.js';
@@ -74,14 +74,10 @@ test('File Input persists a portable snapshot and feeds JSON Decode',async()=>{
     g.nodes.file.content='{}';assert.notEqual(workflowSignature(g),workflowSignature(restored.data));
 });
 
-test('reusable subgraphs accept portable sources and reject host prompt sources',()=>{
-    for(const operation of ['text','file-input']) {
+test('static subgraphs accept portable and owned host prompt sources',()=>{
+    for(const operation of ['text','file-input','prompt-source']) {
         const g=graph('pre',{source:node('source',operation)});
         const wrapped=prepareCreateFromSelection(g,{nodeIds:['source'],definitionId:'source-'+operation,name:'Source'});
         assert.equal(wrapped.ok,true,JSON.stringify(wrapped));
     }
-    const g=graph('pre',{source:node('source','prompt-source')});
-    const wrapped=prepareCreateFromSelection(g,{nodeIds:['source'],definitionId:'host-source',name:'Host'});
-    assert.equal(wrapped.ok,false);
-    assert.equal(wrapped.error.code,'ROOT_ONLY_OPERATION');
 });

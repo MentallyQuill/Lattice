@@ -132,7 +132,7 @@ test('unified metadata getters and unknown runtime fail without invoking accesso
     assert.equal(reads, 0);
 });
 
-test('unified definition bodies hash effective phases and retain root-only source restrictions', () => {
+test('unified definition bodies hash effective phases and admit ordinary host operations', () => {
     const draft = { id: 'unified-helper', version: 1, name: 'Unified helper', parameters: [], interface: [
         { id: 'input', label: 'Input', direction: 'input', kind: 'text', required: true, cardinality: 'one', boundaryNodeId: 'entry' },
         { id: 'output', label: 'Output', direction: 'output', kind: 'text', required: false, cardinality: 'one', boundaryNodeId: 'exit' },
@@ -157,11 +157,11 @@ test('unified definition bodies hash effective phases and retain root-only sourc
     assert.equal(roundtrip.ok, true, JSON.stringify(roundtrip));
     assert.equal(Object.values(roundtrip.data.definitions)[0].semanticHash, snapshot.semanticHash);
     for (const operation of ['scene-context', 'reply-snapshot', 'guidance', 'apply-reply', 'prompt-source']) {
-        const forbidden = structuredClone(draft); forbidden.body.nodes.host = node('host', operation);
-        const hashed = computeDefinitionIdentity(forbidden);
+        const hosted = structuredClone(draft); hosted.body.nodes.host = node('host', operation);
+        const hashed = computeDefinitionIdentity(hosted);
         assert.equal(hashed.ok, true, operation + JSON.stringify(hashed));
-        const unsafe = { ...structuredClone(hashed.data.materializedDefinition), semanticHash: hashed.data.semanticHash };
-        assert.equal(validateDefinition(unsafe).error.code, 'ROOT_ONLY_OPERATION', operation);
+        const staticDefinition = { ...structuredClone(hashed.data.materializedDefinition), semanticHash: hashed.data.semanticHash };
+        assert.equal(validateDefinition(staticDefinition).ok, true, operation);
     }
 });
 

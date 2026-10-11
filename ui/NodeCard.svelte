@@ -2,7 +2,7 @@
     import type { RecallBadgeView } from './recall-types';
     import type { NodeCardData, CanvasActions } from './types';
     import ArtifactPin from './ArtifactPin.svelte';
-    let { card, actions, recall, status }: { card: NodeCardData; actions: CanvasActions; recall?: RecallBadgeView; status?: string } = $props();
+    let { card, actions, recall, status, targeted = false }: { card: NodeCardData; actions: CanvasActions; recall?: RecallBadgeView; status?: string; targeted?: boolean } = $props();
     let element: HTMLDivElement;
     $effect(() => {
         const next = status;
@@ -15,7 +15,8 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex (Cards are keyboard focus stops that reveal named pins and actions in overview.) -->
-<div bind:this={element} class={card.className} class:pc-recall-capable={card.label==='Recall'||card.label==='Recall Shortcut'} data-id={card.id} title={card.offHint} role="group" tabindex="0" aria-label={`${card.label}: ${card.title}`} style:left={`${card.x}px`} style:top={`${card.y}px`}>
+<div bind:this={element} class={card.className} class:pc-recall-capable={card.label==='Recall'||card.label==='Recall Shortcut'} data-id={card.id} data-preview-target={targeted ? 'true' : undefined} title={card.offHint} role="group" tabindex="0" aria-label={`${card.label}: ${card.title}`} style:left={`${card.x}px`} style:top={`${card.y}px`}>
+    {#if targeted}<span class="pc-node-target" title="Preview target" role="img" aria-label="Targeted node"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" /><path d="M12 2v5m0 10v5M2 12h5m10 0h5" /></svg></span>{/if}
     <div class="pc-native-heading"><svg class="pc-native-icon" viewBox="0 0 24 24" aria-hidden="true"><path d={card.iconPath} /></svg><span class="pc-node-title" title={card.titleHint}>{card.title}</span>{#if card.modifierSummary}<span class="pc-modifier-badge" title={card.modifierSummary.text} aria-label={card.modifierSummary.text}>+{card.modifierSummary.count}</span>{/if}</div>
     <div class="pc-native-pins">
         {#each card.ports as port (port.id)}
@@ -37,4 +38,7 @@
 <style>
     .pc-modifier-badge { flex: none; margin-left: auto; padding: 1px 4px; border: 1px solid var(--pc-border); border-radius: 3px; font-size: 9px; line-height: 13px; color: var(--pc-text); background: var(--pc-panel); }
     :global(.pc-node-compact) .pc-modifier-badge { position: absolute; right: -7px; top: -7px; padding: 0 3px; }
+    :global(.pc-node-compact[data-preview-target]) .pc-modifier-badge { right: 16px; }
+    .pc-node-target { position: absolute; top: -9px; right: -9px; z-index: 3; display: grid; place-items: center; box-sizing: border-box; width: 18px; height: 18px; border: 1px solid var(--pc-accent); border-radius: 50%; color: var(--pc-accent); background: var(--pc-panel-solid, var(--pc-panel)); }
+    .pc-node-target svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 </style>

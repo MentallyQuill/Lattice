@@ -11,7 +11,6 @@ const fail = message => ({ ok: false, error: { code: 'INVALID_SEARCH_CATALOG', m
 const text = value => typeof value === 'string' && value.length > 0;
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
 const exact = (value, keys) => record(value) && Object.keys(value).every(key => keys.includes(key));
-const rootOnly = new Set(['scene-context', 'reply-snapshot', 'guidance', 'apply-reply', 'memory']);
 const presets = [
     ['text-rules', 'draft', 'Text Rules · Draft', { inputKind: 'draft', mode: 'replace', scope: 'whole' }],
     ['json-decode', 'check', 'JSON Decode · Check', { mode: 'check' }],
@@ -104,7 +103,7 @@ export function prepareNativeSearchCatalog(scope, options = {}) {
         || ['checkedLibraryEntries', 'checkedLibraryClosures'].some(key => settings[key] !== undefined && !Array.isArray(settings[key]))) return fail('Expected the checked schema-3 scope and local shelf metadata.');
     const phase = input.mode.slice(7), choices = [], commands = new Map();
     const addOperation = (operation, variant, label, controls, artifactKind) => {
-        if (input.inDefinition && (rootOnly.has(operation) || OPERATIONS[operation].rootOnly && !isScopedSystemOperation({type:'workflow',operation}))) return;
+        if (input.inDefinition && OPERATIONS[operation].rootOnly && !isScopedSystemOperation({type:'workflow',operation})) return;
         if (operation === 'reroute' && !artifactKind) artifactKind = 'text';
         if (OPERATIONS[operation].family === 'Transpose' && !variant) controls = { inputKind: 'text', ...controls };
         let description = describeOperation(input, { type: 'workflow', ...operationDefaults(operation, { mode: controls?.mode }), ...controls,

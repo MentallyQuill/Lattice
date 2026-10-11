@@ -91,6 +91,7 @@ export interface WorkflowView {
     profiles: { id: string; name: string }[];
     families: { name: string; description: string; operations: { id: string; title: string; phase: string; compatible: boolean }[] }[];
     nodes: WorkflowNodeView[]; groups: { id: string; title: string; members: string[]; collapsed: boolean; callBound: number }[];
+    reviewTerminals?: WorkflowTarget[];
     callBound: number; issues: string[]; busy: boolean; ownedBusy?: boolean; status: string; quoteHelp: string;
     availability?: 'current' | 'stale' | 'superseded' | 'cancelled'; preparationError?: { code: string; message: string } | null;
     result: WorkflowBoundedResultView | null;

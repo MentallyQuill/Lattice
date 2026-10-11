@@ -51,13 +51,17 @@ The generator validates every package and embedded definition. Runtime opening u
 
 `node tools/profile-workspace-interactions.mjs --label=final` measures pan, zoom, drag, and selection in the full mounted workspace on 25, 100, and 250-node fixtures. `--source=<checkout>` profiles an existing build for a matched comparison. Timings include instrumentation overhead; use the operation counts alongside them. `node tools/capture-interaction-polish.mjs` captures the search, Details handle, shelf scrolling, pin feedback, and left chat-bar logo using synthetic data. Both tools block provider requests and write ignored evidence under `benchmark-results/`.
 
-## Reproduce documentation screenshots
+## Reproduce documentation screenshots and GIFs
 
 ```powershell
 node tools/capture-documentation.mjs
+node tools/capture-beta-documentation.mjs
+node tools/check-documentation.mjs
 ```
 
-This script uses the installed Playwright Chromium browser and a temporary local server on port 4186. It captures the current production UI into `docs/images/`; it does not build the bundle or download a browser. Make sure the port is free and the committed bundle matches the UI you intend to document.
+The reference-still script uses the installed Playwright Chromium browser and a temporary local server on port 4186. It captures the current production UI into `docs/images/`; it does not build the bundle or download a browser. Make sure the port is free and the committed bundle matches the UI you intend to document.
+
+The beta script also needs FFmpeg on PATH. It records the beta overview, systems, example details, profile picker, node help, clock/data setup, validation, and five actual-gesture GIFs. Its screenshots go to `docs/images/`; source frames and checks go to ignored `benchmark-results/beta-media/`. Use `--only=shelf`, `--only=connect`, `--only=subgraph`, `--only=preview`, `--only=comments`, or `--only=screenshots` for a single take. See [documentation media](media.md) for the inventory and capture conventions.
 
 The fixtures supply synthetic writing material, saved workflow data, layout positions, and the supplied Literal cleanup subgraph. Captures use actual navigation, settings panels, Run to here diagnostics, and native review controls. Completed examples must succeed with zero auxiliary model calls. All nonlocal requests and mutating HTTP requests are blocked; any page error or blocked request fails the capture. The script closes its browser and server afterward.
 

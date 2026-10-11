@@ -107,7 +107,7 @@ export interface OutputPreviewView {
     emptyMessage?: string;
     settlement?: { status: 'settled' | 'partial' | 'save-unverified'; published: true; receipts: {intentId:string;targetId:string;status:string;error?:{code:string;message:string}}[] } | null;
     sourceKey: string; title: string; status: 'not-run' | 'current' | 'stale' | 'removed'; statusDetail?: string; historyNotice?: string;
-    choices: PreviewChoice[]; selectedKey: string | null; pinned: boolean; followSelection: boolean;
+    choices: PreviewChoice[]; selectedKey: string | null; pinned: boolean; targeted?: boolean; followSelection: boolean;
     sections: PreviewSection[]; issues: string[]; busy: boolean;
     runHere: { enabled: boolean; callBound: number; issue?: string; reason?: string } | null;
     review: { selector: DetailReviewSelector; canApply: boolean; persistOnly?: boolean; fresh: boolean; selectedRootTerminal: boolean; mode: 'root' | 'target'; issue?: string; reason?: string } | null;

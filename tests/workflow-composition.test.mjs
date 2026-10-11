@@ -40,7 +40,7 @@ assert.equal(definitions.validateDefinition(snapshot, composed().definitions).ok
 assert.equal(validateGraphStructure(composed()).ok, true);
 assert.deepEqual(catalog.portsForNode(composed(), composed().nodes.compact).map(p => p.id), ['input', 'output']);
 for (const [mutate, code] of [
-    [d => { d.body.nodes.work.operation = 'scene-context'; }, 'ROOT_ONLY_OPERATION'],
+    [d => { d.body.nodes.work.operation = 'scene-context'; }, 'INVALID_PORT'],
     [d => { d.body.wires.a.toPort = 'missing'; }, 'INVALID_PORT'],
     [d => { d.parameters[0].target.controlId = 'profileId'; }, 'DEFINITION_PARAMETER'],
 ]) { const draft = definitionDraft(); mutate(draft); const bad = finalize(draft); assert.equal(definitions.validateDefinition(bad, {}).error.code, code); }

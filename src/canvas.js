@@ -1,4 +1,4 @@
-import { graphPoint, zoomAt, zoomTo, wheelFactor } from './canvas/camera.js?v=0.27.0';
+import { graphPoint, zoomAt, zoomTo, wheelFactor, zoomShortcutFactor } from './canvas/camera.js?v=0.27.0';
 import { createFrameScheduler } from './canvas/frame.js?v=0.27.0';
 import { selectionMode, rectangle, intersects, combineSelection } from './canvas/selection.js?v=0.27.0';
 import { createGeometryCache, indexIncidentWires } from './canvas/geometry.js?v=0.27.0';
@@ -191,6 +191,10 @@ export class Canvas {
     setTrace(trace) {
         this.trace = new Map((trace ?? []).map(t => [t.id, t]));
         this.layer.setVisualStatus(Object.fromEntries(this.trace));
+    }
+
+    setPreviewTarget(id) {
+        this.layer.setPreviewTarget(id);
     }
 
     /** Accept prepared profile metadata; layout adds only cached native bounds. */
@@ -950,6 +954,17 @@ export class Canvas {
             if (inNodeProfile(e)) return;
             const root = host.closest('.pc-root');
             if (root && !root.classList.contains('pc-open')) return;
+            const zoomFactor = zoomShortcutFactor(e);
+            if (zoomFactor !== null) {
+                const controls = 'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], button, a, summary, [role="menu"], .pc-workspace-overlay';
+                if (!this.graph || this.drag || this.marquee || this.pan || this.#nativeBridge()?.hasContentGesture()
+                    || !host.contains(e.target) || !host.contains(document.activeElement)
+                    || e.target?.closest?.(controls) || document.activeElement?.closest?.(controls)) return;
+                const rect = host.getBoundingClientRect();
+                e.preventDefault();
+                this.zoomBy(zoomFactor, rect.left + rect.width / 2, rect.top + rect.height / 2);
+                return;
+            }
             if (e.key === 'Escape' && !typing(e) && (host.contains(e.target) || host.contains(document.activeElement))) {
                 if (this.cancelGesture('escape')) e.preventDefault();
                 return;

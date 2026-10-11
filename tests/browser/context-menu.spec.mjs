@@ -144,11 +144,11 @@ test('Pin preview follows the clicked Compose output and Run to here executes on
     const pin = menu(page).getByRole('menuitemcheckbox', { name: 'Pin preview', exact: true });
     await expect(pin).toHaveAttribute('aria-checked', 'false');
     await pin.click();
-    const choice = page.locator('.pc-output-preview').getByRole('combobox', { name: 'Preview output', exact: true });
+    const title = page.locator('.pc-output-preview h3');
     const wanted = { workflowId: 'browser-fixture', instancePath: [], nodeId: 'n1', portId: 'out' };
-    expect(JSON.parse(await choice.inputValue())).toEqual(wanted);
+    await expect(title).toHaveText('Compose · Output');
     await heading(page, 'n0').click();
-    expect(JSON.parse(await choice.inputValue())).toEqual(wanted);
+    await expect(title).toHaveText('Compose · Output');
     await expect(page.locator('.pc-output-preview footer')).toContainText('Pinned');
     await heading(page, 'n1').click({ button: 'right' });
     await expect(menu(page).getByRole('menuitemcheckbox', { name: 'Unpin preview', exact: true })).toHaveAttribute('aria-checked', 'true');
@@ -177,8 +177,8 @@ test('multi-output Run to here directly runs the pinned output and advertises R'
     await action(page, 'Pin preview').click();
     await page.getByRole('menuitemcheckbox', { name: 'Second', exact: true }).click();
     const wanted = { workflowId: 'two-output-root', instancePath: [], nodeId: 'wrapper', portId: 'second' };
-    const choice = page.locator('.pc-output-preview').getByRole('combobox', { name: 'Preview output', exact: true });
-    expect(JSON.parse(await choice.inputValue())).toEqual(wanted);
+    await expect(page.locator('.pc-output-preview h3')).toContainText('Second');
+    await expect(page.locator('.pc-output-preview footer')).toContainText('Pinned preview');
     const before = await snapshot(page);
     const history = await page.evaluate(() => window.canvasHarness.H.peek(window.canvasHarness.graph));
     await heading(page, 'wrapper').click({ button: 'right' });
@@ -198,7 +198,7 @@ test('multi-output Run to here directly runs the pinned output and advertises R'
     expect(await page.evaluate(() => window.canvasHarness.H.peek(window.canvasHarness.graph))).toEqual(history);
 });
 
-test('multi-output Run to here preserves an unpinned output chosen in Preview', async ({ page }) => {
+test('multi-output Run to here preserves an output chosen through the node context menu after unpinning', async ({ page }) => {
     await setup(page);
     await page.evaluate(async () => {
         const h = window.canvasHarness;
@@ -207,8 +207,11 @@ test('multi-output Run to here preserves an unpinned output chosen in Preview', 
     });
     await heading(page, 'wrapper').click();
     const wanted = { workflowId: 'two-output-root', instancePath: [], nodeId: 'wrapper', portId: 'second' };
-    const choice = page.locator('.pc-output-preview').getByRole('combobox', { name: 'Preview output', exact: true });
-    await choice.selectOption(JSON.stringify(wanted));
+    await heading(page, 'wrapper').click({ button: 'right' });
+    await action(page, 'Pin preview').click();
+    await page.getByRole('menuitemcheckbox', { name: 'Second', exact: true }).click();
+    await page.locator('.pc-output-preview').getByRole('button', { name: 'Pin preview', exact: true }).click();
+    await expect(page.locator('.pc-output-preview h3')).toContainText('Second');
     await expect(page.locator('.pc-output-preview footer')).not.toContainText('Pinned');
     await heading(page, 'wrapper').click({ button: 'right' });
     await action(page, 'Run to here').click();
@@ -219,7 +222,7 @@ test('multi-output Run to here preserves an unpinned output chosen in Preview', 
     expect(result.included).toEqual([{ workflowId: 'two-output-root', instancePath: ['wrapper'], nodeId: 'beta' }]);
 });
 
-test('multi-output Run to here directly uses the primary output before choosing a Preview output', async ({ page }) => {
+test('multi-output Run to here directly uses the primary output when no output is pinned', async ({ page }) => {
     await setup(page);
     await page.evaluate(async () => {
         const h = window.canvasHarness;

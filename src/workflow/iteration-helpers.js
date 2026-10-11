@@ -107,6 +107,7 @@ function compile(graph,settings,active,work) {
             const op=operationFor(unit.node,{phase:settings.phase,mode:'native-unified'});
             if(!op||op.phase!==settings.phase)return fail('ITERATION_PHASE','A helper operation conflicts with the invocation stage.');
             if(op.rootOnly||op.hostOperation||op.nativeBoundary||op.terminal||['scene-context','reply-snapshot','guidance','apply-reply'].includes(unit.node.operation))return fail('ITERATION_AUTHORITY','Helper graphs cannot acquire root host, publication or native generation authority.');
+            if(op.requiresStateInDefinition&&!expansion.edges.some(edge=>nodeAddressKey(edge.to)===nodeAddressKey(unit.address)&&edge.to.portId==='state'))return fail('ITERATION_AUTHORITY','State in a repeated helper requires an explicit snapshot connection.');
             maxRelativeDepth=Math.max(maxRelativeDepth,unit.address.instancePath.length-1);
             // Every unit, including unused branches, must be complete before any effect.
             for(const port of unit.outputPorts){const complete=planned.data.summarize({...unit.address,portId:port.id});if(!complete.ok)return complete;}

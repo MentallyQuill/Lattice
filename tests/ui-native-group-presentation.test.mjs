@@ -34,13 +34,19 @@ function controllerFunction(name, env) {
     env.pendingSubgraphPresentation ??= new WeakMap();
     env.pendingSystemPresentation ??= new WeakMap(); env.restoreSystemViews ??= restoreSystemViews;
     env.documentTransition ??= false; env.workflowState ??= { busy: false }; env.workflowRuntime ??= {};
+    env.targetedPreview ??= null;
     env.isCommentFrame ??= isCommentFrame;
     env.operationFor ??= operationFor;
     env.groupMembers ??= groupMembers;
     if (name !== 'applyPendingCommentPresentation') env.applyPendingCommentPresentation ??= controllerFunction('applyPendingCommentPresentation', env);
     if (name === 'activateEditorDraw') { env.applyPendingSubgraphPresentation ??= controllerFunction('applyPendingSubgraphPresentation', env); env.applyPendingSystemPresentation ??= controllerFunction('applyPendingSystemPresentation', env); }
     if (name === 'selectionMenuCapabilities') env.rootSystemWritable ??= controllerFunction('rootSystemWritable', env);
-    const start = controllerText.indexOf('function ' + name + '('); if (start < 0) return null;
+    const start = controllerText.indexOf('function ' + name + '(');
+    if (start < 0) {
+        const declaration = controllerText.indexOf('const ' + name + ' =');
+        if (declaration < 0) return null;
+        return Function('env', 'with(env){' + controllerText.slice(declaration, controllerText.indexOf('\n', declaration)) + ';return ' + name + ';}')(env);
+    }
     const next = controllerText.indexOf('\nfunction ', start + 1);
     return Function('env', 'with(env){' + controllerText.slice(start, next < 0 ? undefined : next) + ';return ' + name + ';}')(env);
 }
@@ -156,7 +162,7 @@ test('folding preserves current private handle ownership through the actual sess
         const native=nativeFixture(f.root,{context,request:async()=>{counters.requests++;throw Error('Scan-only review does not request');}}),host=native.controller;
         const runtime = { ...host, candidateStatus(candidate) { counters.checks++; return host.candidateStatus(candidate); }, apply(candidate) { counters.apply++; return host.apply(candidate); }, cancel(reason) { counters.cancel++; host.cancel(reason); } };
         Object.assign(f.env, { documentSession: { draftNamespace: () => 'native-group-document' }, workflowNodePresentations: new WeakMap(), workflowState: { result: null, reviewHandles: [], busy: false, availability: 'current', applyIssue: '' }, workspaceIssue: '', pinnedPreview: null, uiEpoch: 1, workflowLibrary: null, workflowInspector: null, workflowRuntime: { getNativeWorkflowController: () => runtime }, workflowProjection: null, workflowProjectionGraph: null, projectPreparedWorkflow, projectWorkspacePanels, settings: () => ({}), isWorkflowGraph: root => root?.mode?.startsWith('native-'), executableNative: root => root.schema === 2 && root.runtime === 1 || root.schema === 3 && root.runtime === 2, workbench: { update(value) { f.env.panels = value; } } });
-        for (const name of ['recallSetupView', 'samePreviewTerminal', 'currentRootPreviewTerminal', 'currentPreviewHandle', 'applyPreviewReview', 'rejectPreviewReview', 'workflowView', 'canCreateSubgraph', 'selectionMenuCapabilities', 'guideInsertionIsBusy', 'updateWorkflowProjection']) f.env[name] = controllerFunction(name, f.env);
+        for (const name of ['previewAddress', 'effectivePreview', 'recallSetupView', 'samePreviewTerminal', 'currentRootPreviewTerminal', 'currentPreviewHandle', 'applyPreviewReview', 'rejectPreviewReview', 'workflowView', 'canCreateSubgraph', 'selectionMenuCapabilities', 'guideInsertionIsBusy', 'updateWorkflowProjection']) f.env[name] = controllerFunction(name, f.env);
         f.env.workflowSession = createWorkflowSession({ runtime: () => runtime, rootCurrent: () => f.root, runEpoch: () => f.env.rootRunEpoch, active: () => true, changed(value) {
             const changed = value.result !== f.env.workflowState.result || value.reviewHandles !== f.env.workflowState.reviewHandles; f.env.workflowState = value;
             if (changed) f.env.workspacePrepared.workflow = prepareWorkflowProjection(f.root, { ...(f.preparation.planner ? { planner: f.preparation.planner } : {}), result: value.result, candidateStatus: candidate => runtime.candidateStatus(candidate) });

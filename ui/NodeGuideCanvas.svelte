@@ -4,6 +4,7 @@
     import CanvasLayer from './CanvasLayer.svelte';
     import { nodeGuideWires, layoutNodeGuideCards, layoutNodeGuideComment } from '../src/ui/node-guide-preview.js';
     import { alignCardPins } from '../src/canvas/pin-alignment.js';
+    import { zoomShortcutFactor } from '../src/canvas/camera.js';
     let { scene: providedScene, focusNodeIds = [], footer }: { scene: NodeGuideScene; focusNodeIds?: string[]; footer?: Snippet } = $props();
     let host: HTMLDivElement, layer: ReturnType<typeof CanvasLayer>;
     const actions = { hoverPin() {}, hostResult() {}, group() {} };
@@ -176,8 +177,11 @@
             const event = raw as KeyboardEvent;
             if (event.key === 'Escape' || event.key === 'Tab') return;
             event.stopPropagation();
+            const target = event.target as Element | null;
+            if (doc.activeElement !== surface || target?.closest('input, textarea, select, button, summary, a, [contenteditable]:not([contenteditable="false"]), [role="button"], [role="textbox"], [role="combobox"], [role="slider"], [role="spinbutton"]')) return;
+            const factor = pointers.size ? null : zoomShortcutFactor(event);
             if (event.key === 'Home') { event.preventDefault(); fit(); }
-            else if (['+', '=', '-'].includes(event.key)) { event.preventDefault(); zoom(event.key === '-' ? .8 : 1.25, surface.clientWidth / 2, surface.clientHeight / 2); }
+            else if (factor !== null) { event.preventDefault(); zoom(factor, surface.clientWidth / 2, surface.clientHeight / 2); }
             else if (event.key.startsWith('Arrow')) {
                 event.preventDefault();
                 camera.x += event.key === 'ArrowLeft' ? 40 : event.key === 'ArrowRight' ? -40 : 0;
@@ -210,7 +214,7 @@
     });
 </script>
 <div class="pc-node-guide-canvas">
-    <!-- svelte-ignore a11y_no_noninteractive_tabindex (The local canvas supports arrow pan, +/- zoom and Home to fit.) -->
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (The local canvas supports arrow pan, bracket zoom and Home to fit.) -->
     <div class="pc-canvas-host pc-node-guide-viewport" aria-label="Example node graph" role="region" tabindex="0" bind:this={host}>
         <CanvasLayer {actions} bind:this={layer} />
     </div>

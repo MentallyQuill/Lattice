@@ -97,7 +97,7 @@ const nestedAdded = nestedInventory.find(unit => unit.address.instancePath[0] ==
 assert.equal(nestedAdded.node.model, 'source-model'); assert.equal(nestedAdded.node.profileId, 'source-profile');
 assert.equal(nestedInsert.data.diagnostics.importedCallBound, 2);
 assert.equal(nestedInsert.data.diagnostics.importedBindingOverrides.every(item => item.address.instancePath.slice(0, 2).join(',') === 'placed,work'), true);
-assert.equal(prepareWorkflowInsertion(nestedRoot, { ...source, mode: 'native-pre' }, { viewPath: ['placed', 'work'] }).error.code, 'ROOT_ONLY_OPERATION');
+assert.equal(prepareWorkflowInsertion(nestedRoot, { ...source, mode: 'native-pre' }, { viewPath: ['placed', 'work'] }).ok, true);
 // A readonly import cannot take the recipient's existing private identity or permissions.
 let repeatedRecipient = structuredClone(privateSource.data.candidate);
 const privateOwners = structuredClone(repeatedRecipient.localDefinitionOwners), originalPrivateRef = structuredClone(repeatedRecipient.nodes.placed.definition);

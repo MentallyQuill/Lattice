@@ -103,17 +103,21 @@ import { runWorkflow } from '../src/workflow/runtime.js?v=0.27.0';
 import { validateGraphStructure } from '../src/workflow/contracts.js?v=0.27.0';
 import { isScopedSystemOperation, resolveSystemNode } from '../src/workflow/system-capabilities.js?v=0.27.0';
 
-test('portable fields cannot broaden static lifecycle, memory, recall or source authority', async () => {
-    for (const operation of ['on-send', 'generate-reply', 'review-publish', 'scene-context', 'reply-snapshot', 'recall', 'hotkey-arm', 'memory']) {
-        const selected = node('read', operation, { scopedSystem: true });
-        assert.equal(isScopedSystemOperation(selected), false);
-        const identity = computeDefinitionIdentity({ id: 'excluded', version: 1, name: 'Excluded', interface: [], parameters: [], body: { schema: 3, runtime: 2, mode: 'native-unified', nodes: { read: selected }, wires: {} } });
-        if (identity.ok) assert.equal(validateGraphStructure(main({ ...identity.data.materializedDefinition, semanticHash: identity.data.semanticHash })).ok, false, operation);
-        else assert.equal(identity.error.code, 'UNKNOWN_OPERATION', operation);
+test('static eligibility uses trusted operation types while portable fields grant no execution authority', async () => {
+    for (const operation of ['on-send', 'review-publish', 'scene-context', 'reply-snapshot', 'recall', 'hotkey-arm', 'memory']) {
+        const selected = node('read', operation, { actorId: 'actor', memorySetId: 'memories', scopedSystem: true });
+        assert.equal(isScopedSystemOperation(selected), true);
+        assert.equal(isScopedSystemOperation({ ...selected, scopedSystem: false }), true);
+        const identity = computeDefinitionIdentity({ id: 'static', version: 1, name: 'Static', interface: [], parameters: [], body: { schema: 3, runtime: 2, mode: 'native-unified', nodes: { read: selected }, wires: {} } });
+        assert.equal(identity.ok, true, operation + ': ' + JSON.stringify(identity));
+        assert.equal(validateGraphStructure(main({ ...identity.data.materializedDefinition, semanticHash: identity.data.semanticHash })).ok, true, operation);
     }
-    const graph = main(system({ read: node('read', 'read-file') }));
-    const pure = await runWorkflow(graph, { target: target('one'), executeHostOperation: () => ({ ok: true }) });
+    assert.equal(isScopedSystemOperation(node('forged', 'unregistered-operation', { scopedSystem: true })), false);
+    assert.equal(isScopedSystemOperation({ id: 'forged', type: 'subgraph', operation: 'memory', scopedSystem: true }), false);
+    const graph = main(system({ read: node('read', 'read-file') })); let calls = 0;
+    const pure = await runWorkflow(graph, { target: target('one'), executeHostOperation: () => { calls++; return { ok: true }; } });
     assert.equal(pure.error.code, 'HOST_OPERATION_REQUIRED');
+    assert.equal(calls, 0);
 });
 
 test('root and explicit targets remain unchanged, nested read and outcome ledger controls resolve consistently', () => {
@@ -189,7 +193,7 @@ test('nested clocks and outcome terminals stage around exactly one Main generati
     }
 });
 
-test('search eligibility uses the five-operation rule and For Each cannot acquire those operations', () => {
+test('search exposes static host operations while For Each cannot acquire their authority', () => {
     const catalog = prepareNativeSearchCatalog({ schema: 3, runtime: 2, mode: 'native-unified', workflowId: 'main', viewPath: ['one'], inDefinition: true }); assert.equal(catalog.ok, true, JSON.stringify(catalog));
     for (const operation of ['read-file', 'write-file', 'story-clock', 'commit-clock', 'commit-outcomes']) {
         assert.ok(resolveNativeSearchChoice(catalog.data, 'operation:' + operation), operation);

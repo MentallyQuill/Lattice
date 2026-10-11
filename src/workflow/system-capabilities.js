@@ -2,7 +2,13 @@ import { sha256Text } from './definition-data.js?v=0.27.0';
 import { workflowDataPresetFor } from './workflow-data-defaults.js?v=0.27.0';
 
 /** Static composition eligibility is trusted code, never a portable node flag. */
-const scopedOperations = new Set(['read-file', 'write-file', 'story-clock', 'commit-clock', 'commit-outcomes']);
+// Static placement preserves the enclosing host's authority; repeated helpers still
+// enforce descriptor rootOnly/hostOperation flags and explicit State snapshots.
+const scopedOperations = new Set([
+    'read-file', 'write-file', 'story-clock', 'commit-clock', 'commit-outcomes', 'generate-reply',
+    'scene-context', 'reply-snapshot', 'guidance', 'apply-reply', 'prompt-source', 'actor-context',
+    'player-event-source', 'memory', 'recall', 'hotkey-arm', 'on-send', 'review-publish', 'state',
+]);
 export const isScopedSystemOperation = node => node?.type === 'workflow' && scopedOperations.has(node.operation);
 
 /** Resolve execution-only reserved targets after authored parameter overrides. */

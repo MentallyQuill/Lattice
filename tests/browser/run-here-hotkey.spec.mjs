@@ -40,8 +40,8 @@ test('R runs the selected node even when another node is pinned in Preview', asy
     await heading(page, 'n0').click({ button: 'right' });
     await page.locator('.pc-context-menu').getByRole('menuitemcheckbox', { name: 'Pin preview', exact: true }).click();
     await heading(page, 'n1').click();
-    const choice = page.locator('.pc-output-preview').getByRole('combobox', { name: 'Preview output', exact: true });
-    expect(JSON.parse(await choice.inputValue())).toEqual({ workflowId: 'browser-fixture', instancePath: [], nodeId: 'n0', portId: 'out' });
+    await expect(page.locator('.pc-output-preview h3')).toHaveText('Compose · Output');
+    await expect(page.locator('.pc-output-preview footer')).toContainText('Pinned preview');
     const before = await documentState(page);
     await page.locator('.pc-canvas-host').focus();
     await page.keyboard.press('r');

@@ -20,7 +20,7 @@
  {#if set.reason && set.reason!==queueReason}<p>{set.reason}</p>{/if}
  <div class="pc-recall-overview-actions"><button type="button" data-recall-queue disabled={!!pending||!actions||!set.queueAllowed} aria-label={'Queue recall '+set.memorySetId} aria-describedby={queueReason?uid+'-queue-'+set.memorySetId:undefined} onclick={()=>change(set.memorySetId,set.nodeIds,'queue')}>Queue recall</button><button type="button" disabled={!!pending||!actions||!set.cancelAllowed} aria-label={'Cancel recall '+set.memorySetId} aria-describedby={cancelReason?uid+'-cancel-'+set.memorySetId:undefined} onclick={()=>change(set.memorySetId,set.nodeIds,'cancel')}>Cancel recall</button></div>
  {#if queueReason}<p id={uid+'-queue-'+set.memorySetId}>{queueReason}</p>{/if}{#if cancelReason}<p id={uid+'-cancel-'+set.memorySetId}>{cancelReason}</p>{/if}
- <ul aria-label="Matching nodes">{#each set.linkedNodes as node (node.nodeId)}<li><button type="button" disabled={!actions} onclick={()=>actions?.reveal(node.nodeId)}>{node.title} · {node.nodeId}</button></li>{/each}</ul>
+ <ul aria-label="Matching nodes">{#each set.linkedNodes as node (node.nodeId)}<li><button type="button" disabled={!actions} onclick={()=>actions?.reveal(node.nodeId)}>{node.title} · {node.displayId??node.nodeId}</button></li>{/each}</ul>
  <small>{set.nodeIds.length} linked {set.nodeIds.length===1?'node':'nodes'}{set.hotkeys.length?' · '+set.hotkeys.map(key=>key.label).join(', '):''}</small>
  </fieldset>
 {/each}

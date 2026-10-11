@@ -69,7 +69,7 @@ function historicalPreviewTarget(recording, target) {
 }
 function safeHandle(raw) {
     const terminal = targetAddress(own(raw, 'terminal')), handleId = own(raw, 'handleId'), runId = own(raw, 'runId');
-    return terminal?.kind === 'terminal' && !terminal.address.instancePath.length && typeof handleId === 'string' && handleId && typeof runId === 'string' && runId ? freeze({ handleId, runId, terminal }) : null;
+    return terminal?.kind === 'terminal' && typeof handleId === 'string' && handleId && typeof runId === 'string' && runId ? freeze({ handleId, runId, terminal }) : null;
 }
 function baseWorkflowView(graph, profiles, settings, activeModel = null) {
     const phase = typeof graph.mode === 'string' ? graph.mode.slice(7) : '';
@@ -164,14 +164,15 @@ export function prepareWorkflowProjection(root, { planner, profiles = [], active
         views.set(pathKey(view.instancePath), freeze({ instancePath: view.instancePath, editable: view.editable, nodes, groups, targets: targetsByPath.get(pathKey(view.instancePath)) ?? [] }));
     }
     const handles = new Map();
-    const applyTerminals = new Set(inventory.primitives.filter(unit => unit.terminal && unit.node.operation === 'review-publish').map(unit => addressKey(unit.address)));
+    const reviewTerminals = inventory.primitives.filter(unit => unit.terminal && unit.enabled !== false && unit.node.enabled !== false && unit.node.operation === 'review-publish').map(unit => ({ kind: 'terminal', address: unit.address }));
+    const applyTerminals = new Set(reviewTerminals.map(terminal => addressKey(terminal.address)));
     for (const raw of result?.reviewHandles || []) {
         const handle = safeHandle(raw);
         if (!handle || handle.runId !== result.runId || handle.terminal.address.workflowId !== graph.id || result.mode !== 'root' || !result.ok || !applyTerminals.has(addressKey(handle.terminal.address))) continue;
         const freshness = candidateStatus?.(handle);
         handles.set(handle.handleId, freeze({ handle, issue: freshness?.ok === false ? diagnosticText(freshness.error) : '', diagnostic: freshness?.ok === false ? presentDiagnostic(freshness.error) : null, persistOnly: freshness?.ok === true && freshness.persistOnly === true }));
     }
-    projections.set(token, { base: freeze({ ...baseWorkflowView(graph, profiles, settings, activeModel), workflowData }), rootSummary, summaries, targetInventory, summarize: target => {
+    projections.set(token, { base: freeze({ ...baseWorkflowView(graph, profiles, settings, activeModel), workflowData, reviewTerminals }), rootSummary, summaries, targetInventory, summarize: target => {
         const summary = withBindings(planner.summarize(target));
         if (!summary.requiresNativeGeneration) return summary;
         const manual = presentDiagnostic({ code: 'MANUAL_NATIVE_TRIGGER_REQUIRED', message: 'This step starts when you send a message. Enable Lattice, then send a message in SillyTavern to run this workflow.' });
@@ -232,7 +233,8 @@ export function projectPreparedWorkflow(prepared, { viewPath = [], selectedId = 
     }
     const selector = safeHandle(selectedReviewHandle), cached = selector ? owner.handles.get(selector.handleId) : null;
     const validHandle = cached && selector.runId === cached.handle.runId && targetKey(selector.terminal) === targetKey(cached.handle.terminal) && target?.kind === 'terminal' && targetKey(target) === targetKey(cached.handle.terminal)
-        && result?.mode === 'root' && result?.ok && result.runId === selector.runId && recording?.runId === selector.runId && availability === 'current' && !view.instancePath.length;
+        && result?.mode === 'root' && result?.ok && result.runId === selector.runId && recording?.runId === selector.runId && availability === 'current'
+        && (!view.instancePath.length || pathKey(view.instancePath) === pathKey(cached.handle.terminal.address.instancePath));
     const preview = historicalPreviewTarget(recording, pinned || target), displayedTarget = preview.target;
     const content = preview.unavailable ? projectRecordedPreview({ kind: 'diagnostic', format: 'omitted', reason: 'historical wrapper mapping unavailable' }) : boundedPreview(recording, displayedTarget);
     const resultView = result || recording ? { kind: 'bounded', ok: result?.ok === true, error: result?.error?.message || '', actualCalls: result?.actualCalls || 0, callBound: result?.callBound ?? recording?.plan?.callBound ?? summary.callBound,

@@ -1,5 +1,32 @@
 import { test, expect } from '@playwright/test';
 
+test('selection and Recall status reuse the prepared workflow inventory', async ({ page }) => {
+    await page.goto('/tests/browser/harness.html');
+    await page.waitForFunction(() => !!window.canvasHarness);
+    const result = await page.evaluate(async () => {
+        const h = window.canvasHarness;
+        await h.reset(25, 25);
+        h.canvas.select({ kind: 'node', id: 'n0' });
+        await h.settle();
+        const clone = window.structuredClone;
+        let graphClones = 0;
+        window.structuredClone = function (value, ...args) {
+            if (value?.schema === 3 && value.nodes) graphClones++;
+            return clone.call(this, value, ...args);
+        };
+        try {
+            for (const id of ['n1', 'n2', 'n3']) {
+                h.canvas.select({ kind: 'node', id });
+                document.dispatchEvent(new CustomEvent('pc-recall-state'));
+                await h.settle();
+            }
+        } finally { window.structuredClone = clone; }
+        return { graphClones, selected: h.canvas.selection?.id, providerCalls: h.providerCalls() };
+    });
+    expect(result).toEqual({ graphClones: 0, selected: 'n3', providerCalls: 0 });
+    await expect(page.getByRole('region', { name: 'Node details', exact: true })).toBeVisible();
+});
+
 test('connection reconciliation retains the selected Details and publishes only the replacement scene', async ({page}) => {
     await page.goto('/tests/browser/harness.html');
     await page.waitForFunction(() => !!window.canvasHarness);

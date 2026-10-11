@@ -266,9 +266,13 @@ try {
     await page.locator('.pc-run-meter-label').filter({hasText:'Completed'}).waitFor();
     await select('review-publish');
     const terminal=page.getByRole('combobox',{name:'Preview output',exact:true});
-    const terminalValue=await terminal.locator('option').evaluateAll(options=>options.find(option=>option.textContent.startsWith('Review / Publish · Host result'))?.value);
-    if(!terminalValue)throw Error('Review / Publish result missing from actual preview choices.');
-    await terminal.selectOption(terminalValue);await shot('review-candidate');
+    if (await terminal.count()) {
+        const terminalValue=await terminal.locator('option').evaluateAll(options=>options.find(option=>option.textContent.startsWith('Review / Publish · Host result'))?.value);
+        if(!terminalValue)throw Error('Review / Publish result missing from actual preview choices.');
+        await terminal.selectOption(terminalValue);
+    }
+    if (!await page.locator('.pc-output-preview h3').textContent().then(text => text.includes('Review / Publish'))) throw Error('Owned review is not selected in Preview.');
+    await shot('review-candidate');
     if(!await page.locator('[data-preview-apply]').isEnabled())throw Error('Owned native review action is unavailable.');
     await page.locator('.pc-run-meter').click();await shot('run-details','.pc-workspace-dialog');
     await page.getByRole('button',{name:'Close panel',exact:true}).click();

@@ -1,5 +1,6 @@
 import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.27.0';
 import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.0';
+import { sha256Text } from './definition-data.js?v=0.27.0';
 import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.27.0';
 import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.27.0';
 import { addressKey, safeError } from './record-data.js?v=0.27.0';
@@ -298,9 +299,9 @@ export function createNativeWorkflowController(ports) {
             if(selected.filter(unit=>unit.node.operation==='generate-reply').length!==1)return fail('NATIVE_BOUNDARY_REQUIRED','One selected native generation boundary is required.');
             if(selected.filter(unit=>unit.node.operation==='on-send').length!==1)return fail('NATIVE_ACTIVATION_REQUIRED','One selected On Send activation is required.');
             const native=captureNative(run,options);if(!native.ok)return native;
-            if(plan.primitives.some(unit=>unit.included&&unit.enabled!==false&&!unit.systemDisabled&&(['actor-context','character-direction'].includes(unit.node.operation)||['read-file','write-file'].includes(unit.node.operation)&&unit.node.actorScope==='presence'||unit.address.instancePath.length===0&&['recall','hotkey-arm','prompted-memory'].includes(unit.node.operation)))){const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);if(!actor.ok)return actor;const captured=recall.begin(run,{scope:{userId:run.userId,chatId:run.identity.chatId,workflowId:run.graph.id,actorId:actor.data.actorId},signature:run.signature,signal:run.controller.signal,isCurrent:()=>fresh(run)&&nativePrefixFresh(run),getGeneration:()=>fresh(run)&&nativePrefixFresh(run)?{generationId:String(run.nativeOwner.id),kind:run.nativeType==='swipe'?'swipe':'reply',stage:run.nativeResolved?'post':'pre',newlyGenerated:true}:null});if(!captured.ok)return captured;run.recallCaptured=true;}
+            if(plan.primitives.some(unit=>unit.included&&unit.enabled!==false&&!unit.systemDisabled&&(['actor-context','character-direction'].includes(unit.node.operation)||['read-file','write-file'].includes(unit.node.operation)&&unit.node.actorScope==='presence'||['recall','hotkey-arm','prompted-memory'].includes(unit.node.operation)))){const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);if(!actor.ok)return actor;const captured=recall.begin(run,{scope:{userId:run.userId,chatId:run.identity.chatId,workflowId:run.graph.id,actorId:actor.data.actorId},signature:run.signature,signal:run.controller.signal,isCurrent:()=>fresh(run)&&nativePrefixFresh(run),getGeneration:()=>fresh(run)&&nativePrefixFresh(run)?{generationId:String(run.nativeOwner.id),kind:run.nativeType==='swipe'?'swipe':'reply',stage:run.nativeResolved?'post':'pre',newlyGenerated:true}:null});if(!captured.ok)return captured;run.recallCaptured=true;}
         }
-        for(const unit of plan.primitives)if(unit.included && unit.terminal && unit.address.instancePath.length===0 && unit.node.operation==='memory' && unit.node.mode==='commit')run.memoryTerminals.set(addressKey(unit.address),unit.node);
+        for(const unit of plan.primitives)if(unit.included && unit.terminal && !unit.systemDisabled && unit.enabled!==false && unit.node.operation==='memory' && unit.node.mode==='commit')run.memoryTerminals.set(addressKey(unit.address),unit.node);
         if(run.memoryTerminals.size>1)return fail('MULTIPLE_MEMORY_COMMITS','Use one Memory Commit terminal per native root run.');
         if(!fresh(run))return fail('STALE_RUN','Workflow source or settings changed.');
         for (const unit of plan.primitives) if (unit.included && unit.node.operation === 'prompt-source') {
@@ -356,7 +357,7 @@ export function createNativeWorkflowController(ports) {
             const scoped=scopedMemory(run);if(!scoped.ok)return scoped;session=scoped.data;
         }
         if(settings.operation==='context' && settings.mode==='perspective' && settings.actorId==='character')settings.actorId=session.scope.actorId;
-        if(settings.operation==='memory' && settings.mode==='commit' && settings.idempotencyKey==='lattice-memory-commit')settings.idempotencyKey='lattice:'+await nativeMemoryFingerprint(JSON.stringify([run.graph.id,node.id,inputs.proposal]));
+        if(settings.operation==='memory' && settings.mode==='commit' && settings.idempotencyKey==='lattice-memory-commit')settings.idempotencyKey='lattice:'+await nativeMemoryFingerprint(JSON.stringify([run.graph.id,operationPorts.address.instancePath.length?addressKey(operationPorts.address):node.id,inputs.proposal]));
         if(!fresh(run))return fail('STALE_RUN','Workflow source changed before Introspection execution.');
         const {address,...boundedPorts}=operationPorts;
         if(settings.operation==='reflect' && !inputs.state) {
@@ -723,7 +724,7 @@ export function createNativeWorkflowController(ports) {
             const snapshot=selectedSnapshot(run,operationPorts.phase,node,options);
             if(snapshot?.ok===false)return snapshot;
             let artifact=snapshot?.ok===true?snapshot.artifact:snapshot;
-            if(run.recallCaptured&&node.operation==='scene-context'&&artifact?.kind==='context'){const source={sourceId:'scene:'+run.runId+':'+operationPorts.address.nodeId,revision:run.runId,sceneId:run.identity.chatId,watch:'scene-context'};artifact=freezeArtifact({...artifact,source:{...artifact.source,...source}});const result={ok:true,artifact,reports:snapshot?.report?[snapshot.report]:[]};const captured=recall.capture(run,result,{kind:'source',source,text:artifact.messages.filter(message=>message.source==='chat').map(message=>message.text).join('\n'),fresh:()=>fresh(run)&&nativePrefixFresh(run)&&sourceFresh(run)});return captured.ok?result:captured;}
+            if(run.recallCaptured&&node.operation==='scene-context'&&artifact?.kind==='context'){const source={sourceId:'scene:'+run.runId+':'+(operationPorts.address.instancePath.length?sha256Text(addressKey(operationPorts.address)).slice(7):operationPorts.address.nodeId),revision:run.runId,sceneId:run.identity.chatId,watch:'scene-context'};artifact=freezeArtifact({...artifact,source:{...artifact.source,...source}});const result={ok:true,artifact,reports:snapshot?.report?[snapshot.report]:[]};const captured=recall.capture(run,result,{kind:'source',source,text:artifact.messages.filter(message=>message.source==='chat').map(message=>message.text).join('\n'),fresh:()=>fresh(run)&&nativePrefixFresh(run)&&sourceFresh(run)});return captured.ok?result:captured;}
             return {ok:true,artifact,reports:snapshot?.report?[snapshot.report]:[]};
         }
         return fail('HOST_OPERATION_REQUIRED','Unsupported private host operation.');

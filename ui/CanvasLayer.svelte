@@ -19,6 +19,7 @@
     let nodes = $state.raw<Slot<NodeCardData>[]>([]), groups = $state.raw<Slot<GroupCardData>[]>([]), wires = $state.raw<WireData[]>([]);
     let trace = $state.raw<Readonly<Record<string, {status: string}>>>({});
     let recall = $state.raw<Readonly<Record<string,RecallBadgeView>>>({});
+    let previewTarget = $state<string | null>(null);
     let comments = $state.raw<Slot<CommentFrameData>[]>([]);
     let nodeProfiles = $state.raw<NodeProfileData[]>([]);
     let commentActions = $state.raw<CommentFrameActions>({ select() {}, update() {}, command() {} });
@@ -40,6 +41,7 @@
         if (value.nodeProfiles) nodeProfiles = value.nodeProfiles;
     }
     export function setRecallStatus(value:Readonly<Record<string,RecallBadgeView>>) { recall = value; }
+    export function setPreviewTarget(id: string | null) { previewTarget = id; }
     export function setNodes(value: NodeCardData[]) { nodes = updateRenderSlots(value, nodes, nodeSlots, (row: NodeCardData) => new Slot(row)); }
     export function setNodeProfiles(value: NodeProfileData[]) { nodeProfiles = value; }
     export function setGroups(value: GroupCardData[]) { groups = updateRenderSlots(value, groups, groupSlots, (row: GroupCardData) => new Slot(row)); }
@@ -64,7 +66,7 @@
     </svg>
     <div class="pc-nodes" bind:this={nodeLayer}>
         {#each groups.filter(slot => !slot.value.collapsed) as slot (slot.id)}<GroupCard group={slot.value} {actions} />{/each}
-        {#each nodes as slot (slot.id)}<NodeCard card={slot.value} recall={recall[slot.id]} status={trace[slot.id]?.status} {actions} />{/each}
+        {#each nodes as slot (slot.id)}<NodeCard card={slot.value} recall={recall[slot.id]} status={trace[slot.id]?.status} targeted={previewTarget === slot.id} {actions} />{/each}
         {#each groups.filter(slot => slot.value.collapsed) as slot (slot.id)}<GroupCard group={slot.value} {actions} />{/each}
     </div>
     <div class="pc-node-profile-layer">
