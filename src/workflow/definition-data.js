@@ -1,3 +1,5 @@
+import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.0';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.0';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.0';
 import { validateNodeModifiers } from './modifiers.js?v=0.27.0';
 import { ARTIFACT_KINDS, operationFor, portsForNode, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.27.0';
@@ -10,12 +12,14 @@ const forbiddenKey = key => /^(api[_-]?key|api[_-]?token|access[_-]?token|token|
 /** Bound and detach untrusted metadata before property reads. Does not validate any graph.
  * Reject accessors, cycles, sparse/extended arrays and data outside plain JSON.
  * @param {unknown} value
+ * @param {import('./semantic-json-data').SemanticJsonOptions} [options]
  * @returns {import('./types').Result<any>}
  */
-export function cloneDefinitionData(value) {
+export function cloneDefinitionData(value, options = {}) {
     let entries = 0, characters = 0;
     const ancestors = new Set();
-    const visit = (item, depth) => {
+    const visit = (item, depth, context) => {
+        if (context.root && !cloneJsonValue(item).ok) throw new Error('JSON payload budget');
         if (++entries > 20000 || depth > 40) throw new Error('bounds');
         if (typeof item === 'string') {
             characters += item.length;
@@ -36,14 +40,14 @@ export function cloneDefinitionData(value) {
             if (array && key === 'length') continue;
             const descriptor = descriptors[key];
             characters += key.length;
-            if (characters > 2000000 || forbiddenKey(key) || !descriptor.enumerable || !('value' in descriptor)) throw new Error('property');
-            copy[key] = visit(descriptor.value, depth + 1);
+            if (characters > 2000000 || forbiddenKey(key) && !(context.kind === 'payload' && prototypeJsonKey(key)) || !descriptor.enumerable || !('value' in descriptor)) throw new Error('property');
+            Object.defineProperty(copy, key, { value: visit(descriptor.value, depth + 1, semanticJsonChildContext(item, key, context)), enumerable: true });
         }
         ancestors.delete(item);
         return Object.freeze(copy);
     };
     try {
-        const data = visit(value, 0);
+        const data = visit(value, 0, semanticJsonRootContext(value, options));
         if (new TextEncoder().encode(JSON.stringify(data)).length > 2000000) return fail('DEFINITION_DATA', 'Definition data exceeds the UTF-8 byte limit.');
         return { ok: true, data };
     } catch { return fail('DEFINITION_DATA', 'Expected bounded plain definition data without secrets or runtime records.'); }
@@ -98,7 +102,7 @@ export function inspectDefinitionMetadata(value) {
  * @returns {import('./types').Result<import('./types').ControlDescriptor>}
  */
 export function describeExposedControl(value, controlId) {
-    const copied = cloneDefinitionData(value);
+    const copied = cloneDefinitionData(value, { node: true });
     if (!copied.ok) return copied;
     const node = copied.data, operation = operationFor(node);
     if (!operation || typeof controlId !== 'string' || !Object.hasOwn(operation.controlDescriptors, controlId)) return fail('DEFINITION_PARAMETER', 'Parameter must target a catalog operation control.');
@@ -109,9 +113,10 @@ export function describeExposedControl(value, controlId) {
         : descriptor.type === 'enum' ? descriptor.values.includes(current)
         : descriptor.type === 'object' ? record(current) && [Object.prototype, null].includes(Object.getPrototypeOf(current)) && (descriptor.max === undefined || Object.keys(current).length <= descriptor.max)
         : descriptor.type === 'array' ? Array.isArray(current) && (descriptor.items === 'json' ? cloneDefinitionData(current).ok : current.every(item => typeof item === 'string' || ['string-or-record', 'record', 'context-slot'].includes(descriptor.items) && record(item)))
+        : descriptor.type === 'json-value' ? cloneJsonValue(current).ok
         : typeof current === descriptor.type;
     if (!valid) return fail('DEFINITION_PARAMETER', 'Saved control default does not match its catalog descriptor.');
-    return cloneDefinitionData({ ...descriptor, default: current });
+    return cloneDefinitionData({ ...descriptor, default: current }, { descriptor: true, descriptorOperation: operation.id, controlId });
 }
 
 /** Parameter eligibility is separate from control materialization and identity hashing. */

@@ -1,4 +1,8 @@
 <script lang="ts">
+    import JsonPathControl from './JsonPathControl.svelte';
+    import JsonValueControl from './JsonValueControl.svelte';
+    import { formatJsonValueDraftAtPath } from '../src/ui/json-value-authoring.js';
+    import type { JsonPath } from '../src/workflow/operations/json-data';
     import { readControlRows, allocateControlRowId } from '../src/ui/control-input-adapters.js';
     import type { JsonValue } from '../src/workflow/operations/json-data';
     import type { DetailControl } from './detail-types';
@@ -6,11 +10,6 @@
     type Row = Record<string, unknown>;
     let { control, text, disabled = false, ontext, onDraft, draftValue, idPrefix, error = '' }: { control: StructuredDetailControl; text: string; disabled?: boolean; ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; idPrefix: string; error?: string } = $props();
     const phases = ['onset', 'peak', 'plateau', 'decline', 'aftermath'];
-    function finiteJson(value: unknown): boolean {
-        if (typeof value === 'number') return Number.isFinite(value);
-        if (Array.isArray(value)) return value.every(finiteJson);
-        return value === null || typeof value !== 'object' || Object.values(value).every(finiteJson);
-    }
     let rowName = $derived(control.structured === 'fields' ? 'field' : control.structured === 'sections' ? 'section' : control.structured === 'slots' ? 'slot' : control.structured === 'numeric-map' ? 'value' : control.structured === 'durations' ? 'duration' : ['patterns','extract'].includes(control.structured ?? '') ? 'pattern' : 'rule');
     let rowLimit = $derived(control.inputSpec?.limits.maxItems ?? (control.structured === 'fields' || control.structured === 'patterns' ? 128 : control.structured === 'slots' ? 16 : control.structured === 'numeric-map' ? 32 : control.structured === 'durations' ? 5 : 64));
     let rowMinimum = $derived(control.structured === 'slots' ? ['join.inputs','collect.inputs'].includes(control.inputSpec?.id ?? '') ? 1 : 2 : 0);
@@ -54,17 +53,10 @@
         }
         change(index, 'name', input.value);
     }
-    function jsonField(index: number, key: string, value: string) {
+    function invalidField(index: number, key: string, source: string, path: JsonPath = []) {
         if (disabled || !rows) return;
-        try { const parsed: unknown = JSON.parse(value); if (!finiteJson(parsed)) throw new Error('Nonfinite JSON'); change(index, key, parsed); }
-        catch {
-            // An unfinished nested JSON value belongs to the same parent draft as raw editing.
-            let suffix = 0, marker = '__structured_json_0__';
-            while ((draftValue === undefined ? text : JSON.stringify(draftValue)).includes(marker)) marker = '__structured_json_' + ++suffix + '__';
-            const next = rows.map((row, position) => position === index ? { ...row, [key]: marker } : row);
-            raw = true;
-            ontext(JSON.stringify(next, null, 2).replace(JSON.stringify(marker), () => value));
-        }
+        const draft = formatJsonValueDraftAtPath(rows as JsonValue, [index, key, ...path], source);
+        if (draft.ok) { raw = true; ontext(draft.data.text); }
     }
     function useDefault(index: number, enabled: boolean) {
         if (disabled || !rows) return;
@@ -97,10 +89,10 @@
                         <label for={idPrefix + '-number-' + index}>Value</label><input type="number" id={idPrefix + '-number-' + index} aria-label={'Value ' + (index + 1) + ' number'} value={Number(row.number)} min={control.min} max={control.max} step="any" {disabled} onchange={event => numberField(index, event.currentTarget)} />
                     {:else if control.structured === 'fields'}
                         <label for={idPrefix + '-name-' + index}>Name</label><input id={idPrefix + '-name-' + index} aria-label={'Field ' + (index + 1) + ' name'} value={String(row.name)} {disabled} oninput={event => change(index, 'name', event.currentTarget.value)} />
-                        <label for={idPrefix + '-path-' + index}>Path (JSON array)</label><input id={idPrefix + '-path-' + index} aria-label={'Field ' + (index + 1) + ' path (JSON array)'} value={JSON.stringify(row.path)} {disabled} onchange={event => jsonField(index, 'path', event.currentTarget.value)} />
+                        <JsonPathControl value={row.path as JsonPath} label={'Field ' + (index + 1) + ' path'} idPrefix={idPrefix + '-path-' + index} {disabled} allowIndices={true} onchange={value => change(index, 'path', value)} oninvalid={source => invalidField(index, 'path', source)} />
                         <label class="pc-structured-check"><input type="checkbox" aria-label={'Field ' + (index + 1) + ' required'} checked={row.required !== false} {disabled} onchange={event => change(index, 'required', event.currentTarget.checked)} /> Required</label>
                         <label class="pc-structured-check"><input type="checkbox" aria-label={'Field ' + (index + 1) + ' use default'} checked={Object.hasOwn(row, 'default')} {disabled} onchange={event => useDefault(index, event.currentTarget.checked)} /> Use default when missing</label><small>Defaults apply when Required is off.</small>
-                        {#if Object.hasOwn(row, 'default')}<label for={idPrefix + '-default-' + index}>Default (JSON)</label><textarea id={idPrefix + '-default-' + index} aria-label={'Field ' + (index + 1) + ' default (JSON)'} value={JSON.stringify(row.default, null, 2)} {disabled} onchange={event => jsonField(index, 'default', event.currentTarget.value)}></textarea>{/if}
+                        {#if Object.hasOwn(row, 'default')}<JsonValueControl value={row.default as JsonValue} label={'Field ' + (index + 1) + ' default'} idPrefix={idPrefix + '-default-' + index} {disabled} onchange={value => change(index, 'default', value)} oninvalid={(source, path) => invalidField(index, 'default', source, path)} />{/if}
                     {:else if control.structured === 'patterns' || control.structured === 'extract'}
                         <label for={idPrefix + '-pattern-id-' + index}>ID</label><input id={idPrefix + '-pattern-id-' + index} aria-label={'Pattern ' + (index + 1) + ' ID'} value={String(row.id)} {disabled} oninput={event => change(index, 'id', event.currentTarget.value)} />
                         <label for={idPrefix + '-phrase-' + index}>{control.structured === 'extract' ? 'Phrase' : 'Expression'}</label><input id={idPrefix + '-phrase-' + index} aria-label={'Pattern ' + (index + 1) + (control.structured === 'extract' ? ' phrase' : ' expression')} value={String(row[control.structured === 'extract' ? 'literal' : 'pattern'])} {disabled} oninput={event => change(index, control.structured === 'extract' ? 'literal' : 'pattern', event.currentTarget.value)} />

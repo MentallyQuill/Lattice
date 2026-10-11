@@ -17,7 +17,11 @@
             if (editingRaw) rawText = JSON.stringify(value, null, 2);
         }
     });
-    function source() { return '[' + rows.map(row => row.kind === 'key' ? JSON.stringify(row.text) : row.text).join(',') + ']'; }
+    function source() {
+        // A lone unfinished index must stay an empty slot, never become a valid empty path.
+        const emptySlot = rows.length === 1 && rows[0].kind === 'index' && rows[0].text.trim() === '';
+        return '[' + rows.map(row => row.kind === 'key' ? JSON.stringify(row.text) : row.text).join(',') + (emptySlot ? ',' : '') + ']';
+    }
     function publish() {
         if (disabled) return;
         if (rows.some(row => row.kind === 'index' && (!allowIndices || !validIndex(row.text)))) { feedback = 'Finish each nonnegative integer index.'; oninvalid?.(source()); return; }

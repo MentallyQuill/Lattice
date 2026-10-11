@@ -1,3 +1,5 @@
+import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.0';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.0';
 import { freeze } from './record-data.js?v=0.27.0';
 import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.0';
 import { validateNodeModifiers } from './modifiers.js?v=0.27.0';
@@ -18,10 +20,11 @@ const presentationValid = value => record(value)
 export const nodeAddressKey = ({ workflowId, instancePath, nodeId }) => JSON.stringify([workflowId, instancePath, nodeId]);
 
 /** Bounded plain authoring data shared by current readers and safe exports. */
-export function safeWorkflowData(value) {
+export function safeWorkflowData(value, options = {}) {
     let entries = 0, characters = 0;
     const seen = new Set();
-    const visit = (item, depth) => {
+    const visit = (item, depth, context) => {
+        if (context.root && !cloneJsonValue(item).ok) return false;
         if (++entries > 20000 || depth > 40) return false;
         if (typeof item === 'string') { characters += item.length; return characters <= 2000000; }
         if (item === null || typeof item === 'boolean') return true;
@@ -31,12 +34,12 @@ export function safeWorkflowData(value) {
         if (prototype !== Object.prototype && prototype !== Array.prototype && prototype !== null) return false;
         seen.add(item);
         for (const [key, property] of Object.entries(Object.getOwnPropertyDescriptors(item))) {
-            if (/^(api[_-]?key|api[_-]?token|access[_-]?token|token|password|secret|credentials?|authorization|headers?|provider|endpoint|base[_-]?url)$/i.test(key) || ['__proto__', 'prototype', 'constructor'].includes(key) || !('value' in property) || !visit(property.value, depth + 1)) return false;
+            if (/^(api[_-]?key|api[_-]?token|access[_-]?token|token|password|secret|credentials?|authorization|headers?|provider|endpoint|base[_-]?url)$/i.test(key) || prototypeJsonKey(key) && context.kind !== 'payload' || !('value' in property) || !visit(property.value, depth + 1, semanticJsonChildContext(item, key, context))) return false;
         }
         seen.delete(item);
         return true;
     };
-    try { return visit(value, 0); } catch { return false; }
+    try { return visit(value, 0, semanticJsonRootContext(value, options)); } catch { return false; }
 }
 
 function controlValid(value, descriptor) {
@@ -45,6 +48,7 @@ function controlValid(value, descriptor) {
         : descriptor.type === 'enum' ? descriptor.values.includes(value)
         : descriptor.type === 'object' ? record(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value)) && (descriptor.max === undefined || Object.keys(value).length <= descriptor.max) && cloneDefinitionData(value).ok
         : descriptor.type === 'array' ? Array.isArray(value) && (descriptor.items === 'json' ? cloneDefinitionData(value).ok : value.every(item => typeof item === 'string' || ['string-or-record', 'record', 'context-slot'].includes(descriptor.items) && record(item)))
+        : descriptor.type === 'json-value' ? cloneJsonValue(value).ok
         : typeof value === descriptor.type;
 }
 

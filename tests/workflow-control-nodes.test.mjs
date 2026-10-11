@@ -142,3 +142,69 @@ test('Collect and For Each descriptive copies cannot recover live Filter evidenc
     const forged = await executeControl({ operation: 'for-each', helper }, { in: data([input]) }, { iterateHelper: async () => ({ ok: true, artifact: input }) });
     assert.equal(forged.error.code, 'INVALID_ITERATION_RESULT'); assert.equal(forged.outputs, undefined);
 });
+
+test('Condition JSON comparison values validate in graphs and exposed pinned controls', async () => {
+    const { validateNamedGraphStructure } = await import('../src/workflow/graph-validation.js');
+    const { describeExposedControl } = await import('../src/workflow/definition-data.js');
+    const graph = value => ({ id: 'json-comparison', schema: 3, runtime: 2, mode: 'native-pre', nodes: { check: { id: 'check', type: 'workflow', operation: 'condition', value } }, wires: {}, definitions: {} });
+    for (const value of [null, false, 0, '', [], {}, { 'a.b': ['red, blue', 0, false, null] }]) {
+        const valid = validateNamedGraphStructure(graph(value)); assert.equal(valid.ok, true, JSON.stringify(valid));
+        const exposed = describeExposedControl(graph(value).nodes.check, 'value'); assert.equal(exposed.ok, true, JSON.stringify(exposed));
+        assert.equal(exposed.data.type, 'json-value'); assert.deepEqual(exposed.data.default, value);
+    }
+    const accessor = {}; Object.defineProperty(accessor, 'x', { enumerable: true, get() { throw Error('getter must not run'); } });
+    const inherited = Object.create({ inherited: true }); inherited.own = 1;
+    let deep = null; for (let index = 0; index < 33; index++) deep = [deep];
+    for (const value of [Infinity, undefined, accessor, inherited, 'x'.repeat(262145), Array.from({ length: 10000 }, () => null), deep]) {
+        assert.equal(validateNamedGraphStructure(graph(value)).ok, false);
+        assert.equal(describeExposedControl(graph(value).nodes.check, 'value').ok, false);
+    }
+});
+
+test('declared semantic JSON prototype-like names round trip real graph creation editing and pinned exports', async () => {
+    const { prepareNativeConnectionEdit } = await import('../src/workflow/connection-edits.js');
+    const { prepareNodeControlChange } = await import('../src/workflow/ports.js');
+    const { validateGraphStructure, safeWorkflowData } = await import('../src/workflow/contracts.js');
+    const { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, describeExposedControl } = await import('../src/workflow/definition-data.js');
+    const { serializeWorkflowDocument, parseWorkflowDocument } = await import('../src/workflow/document-file.js');
+    const { exportSubgraph, parseSubgraph } = await import('../src/workflow/packages.js');
+    const value = { ['__proto__']: { constructor: { prototype: [0, false, null, ''] } }, 'a.b': 'red, blue' };
+    const root = { id: 'json-authoring', schema: 3, runtime: 2, mode: 'native-unified', nodes: {}, wires: {}, definitions: {} };
+    const created = prepareNativeConnectionEdit(root, { kind: 'create', operation: 'condition', phase: 'pre', controls: { value }, graphPoint: { x: 0, y: 0 } });
+    assert.equal(created.ok, true, JSON.stringify(created));
+    const node = Object.values(created.data.candidate.nodes)[0];
+    assert.deepEqual(node.value, value); assert.equal(Object.hasOwn(node.value, '__proto__'), true); assert.equal({}.polluted, undefined);
+    const edited = prepareNodeControlChange(created.data.candidate, { nodeId: node.id, controls: { value: { ['__proto__']: { polluted: false } } } });
+    assert.equal(edited.ok, true, JSON.stringify(edited)); assert.equal(validateGraphStructure(edited.data.candidate).ok, true);
+    const document = serializeWorkflowDocument(edited.data.candidate); assert.equal(document.ok, true, JSON.stringify(document));
+    const restored = parseWorkflowDocument(document.data.json); assert.equal(restored.ok, true, JSON.stringify(restored));
+    assert.deepEqual(restored.data.graph.nodes[node.id].value, { ['__proto__']: { polluted: false } });
+    const described = describeExposedControl(node, 'value'); assert.equal(described.ok, true, JSON.stringify(described)); assert.deepEqual(described.data.default, value);
+    const draft = { id: 'json-helper', version: 1, name: 'JSON helper', interface: [{ id: 'in', label: 'Input', kind: 'data', direction: 'input', required: true, cardinality: 'one', boundaryNodeId: 'entry' }, { id: 'out', label: 'Output', kind: 'data', direction: 'output', required: false, cardinality: 'one', boundaryNodeId: 'exit' }], parameters: [{ id: 'comparison', label: 'Comparison', target: { instancePath: [], nodeId: 'check', controlId: 'value' } }], body: { schema: 3, runtime: 2, mode: 'native-pre', nodes: { entry: { id: 'entry', type: 'subgraph-input', interfacePortId: 'in' }, check: { id: 'check', type: 'workflow', operation: 'condition', value }, exit: { id: 'exit', type: 'subgraph-output', interfacePortId: 'out' } }, wires: { a: { id: 'a', route: 'wire', from: 'entry', fromPort: 'out', to: 'check', toPort: 'in' }, b: { id: 'b', route: 'wire', from: 'check', fromPort: 'out', to: 'exit', toPort: 'in' } } } };
+    const identity = computeDefinitionIdentity(draft); assert.equal(identity.ok, true, JSON.stringify(identity));
+    const definition = { ...identity.data.materializedDefinition, semanticHash: identity.data.semanticHash }, table = { [definitionRefKey(definition)]: definition };
+    const exported = exportSubgraph(definition, table), imported = parseSubgraph(JSON.stringify(exported));
+    assert.equal(imported.ok, true, JSON.stringify(imported)); assert.deepEqual(imported.data.definition.body.nodes.check.value, value);
+    const instanceRoot = { ...root, nodes: { instance: { id: 'instance', type: 'subgraph', definition: { id: definition.id, version: definition.version, semanticHash: definition.semanticHash }, parameterOverrides: { comparison: value }, roleOverrides: {}, nodeBindingOverrides: {} } }, definitions: table };
+    assert.equal(validateGraphStructure(instanceRoot).ok, true, 'Exact exposed JSON comparison overrides accept the same own-key payload');
+    const instanceFile = serializeWorkflowDocument(instanceRoot); assert.equal(instanceFile.ok, true, JSON.stringify(instanceFile));
+    const instanceImport = parseWorkflowDocument(instanceFile.data.json); assert.equal(instanceImport.ok, true, JSON.stringify(instanceImport));
+    assert.deepEqual(instanceImport.data.graph.nodes.instance.parameterOverrides.comparison, value);
+    assert.equal(safeWorkflowData({ ...instanceRoot, nodes: { instance: { ...instanceRoot.nodes.instance, parameterOverrides: { unknown: value } } } }), false);
+    for (const operation of ['select-fields','format']) {
+        const fields = [{ name: 'mapped', path: ['a.b', 0], required: false, default: value }];
+        const mappedNode = { id: 'check', type: 'workflow', operation, fields };
+        const mappedDescriptor = describeExposedControl(mappedNode, 'fields'); assert.equal(mappedDescriptor.ok, true, JSON.stringify(mappedDescriptor)); assert.deepEqual(mappedDescriptor.data.default, fields);
+        const mappedDraft = { ...draft, id: 'mapped-' + operation, parameters: [{ id: 'mapping', label: 'Mapping', target: { instancePath: [], nodeId: 'check', controlId: 'fields' } }], body: { ...draft.body, nodes: { ...draft.body.nodes, check: mappedNode }, wires: { ...draft.body.wires, b: { ...draft.body.wires.b, fromPort: operation === 'format' ? 'records' : 'out' } } } };
+        const mappedIdentity = computeDefinitionIdentity(mappedDraft); assert.equal(mappedIdentity.ok, true, JSON.stringify(mappedIdentity));
+        const mappedDefinition = { ...mappedIdentity.data.materializedDefinition, semanticHash: mappedIdentity.data.semanticHash }, mappedTable = { [definitionRefKey(mappedDefinition)]: mappedDefinition };
+        const mappedExport = exportSubgraph(mappedDefinition, mappedTable), mappedImport = parseSubgraph(JSON.stringify(mappedExport)); assert.equal(mappedImport.ok, true, JSON.stringify(mappedImport)); assert.deepEqual(mappedImport.data.definition.body.nodes.check.fields, fields);
+        const mappedRoot = { ...root, definitions: mappedTable, nodes: { instance: { ...instanceRoot.nodes.instance, definition: { id: mappedDefinition.id, version: mappedDefinition.version, semanticHash: mappedDefinition.semanticHash }, parameterOverrides: { mapping: fields } } } };
+        assert.equal(validateGraphStructure(mappedRoot).ok, true); const mappedFile = serializeWorkflowDocument(mappedRoot); assert.equal(mappedFile.ok, true, JSON.stringify(mappedFile)); assert.deepEqual(parseWorkflowDocument(mappedFile.data.json).data.graph.nodes.instance.parameterOverrides.mapping, fields);
+    }
+    for (const metadata of [{ ['__proto__']: value }, { nested: { type: 'workflow', operation: 'condition', value } }, { nested: { type: 'json-value', default: value } }]) {
+        assert.equal(safeWorkflowData(metadata), false); assert.equal(cloneDefinitionData(metadata).ok, false);
+        assert.equal(safeWorkflowData({ ...created.data.candidate, metadata }), false);
+    }
+    for (const secret of ['password', 'provider', 'authorization', 'token', 'headers']) assert.equal(safeWorkflowData({ ...created.data.candidate, nodes: { ...created.data.candidate.nodes, [node.id]: { ...node, value: { [secret]: 'hidden' } } } }), false);
+});

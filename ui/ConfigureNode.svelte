@@ -3,6 +3,8 @@
  import DetailControlEditor from './DetailControl.svelte';
  import {projectNodeControls,controlInputPresentation} from '../src/ui/node-control-projection.js';
  import {parseControlInput} from '../src/ui/control-input-contracts.js';
+ import {cloneJsonValue} from '../src/workflow/operations/json-data.js';
+ import {cloneDefinitionData} from '../src/workflow/definition-data.js';
  import {onMount,tick} from 'svelte';
  import type {ConfigureNodeView,ConfigureNodeActions} from './storage-setup-types';
  import type {DetailControl} from './detail-types';
@@ -10,7 +12,9 @@
  import type {JsonValue} from '../src/workflow/operations/json-data';
  let {view,actions}:{view:ConfigureNodeView;actions?:ConfigureNodeActions}=$props();
  type Draft={text?:string;value?:unknown;format?:ControlInputFormat;contract:string;error?:string};
- let dialog:HTMLDivElement,data=$state<Record<string,unknown>>({}),drafts=$state<Record<string,Draft>>({}),controls=$state(''),advanced=$state(false),phase=$state<'pre'|'post'>('pre'),target=$state(''),helper=$state(''),pending=$state(false),failure=$state('');let capture='',generation=0,advancedBaseline:Record<string,unknown>={};
+ let dialog:HTMLDivElement,data=$state<Record<string,unknown>>({}),drafts=$state<Record<string,Draft>>({}),controls=$state(''),advanced=$state(false),phase=$state<'pre'|'post'>('pre'),target=$state(''),helper=$state(''),pending=$state(false),failure=$state('');let capture='',generation=0,advancedBaseline:Record<string,unknown>={},advancedInvalid=false;
+ const typedSnapshot=(value:unknown)=>{const checked=cloneJsonValue(value);if(!checked.ok)throw Error(checked.error.message);return checked.data.value;};
+ const controlsSnapshot=()=>{const checked=cloneDefinitionData(data,{operation:view.operation});if(!checked.ok)throw Error(checked.error.message);return checked.data as Record<string,unknown>;};
  const selectedHelper=$derived(view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(data.helper)));
  const fields=$derived(projectNodeControls(view.operation,data,{phase}));
  const usesDocument=$derived(view.operation==='read-file'||view.operation==='story-clock'||view.operation==='commit-outcomes');
@@ -20,15 +24,15 @@
  $effect(()=>{if(view.key===capture)return;capture=view.key;generation++;controls=view.controls;advanced=false;drafts={};phase=view.phase;pending=false;failure='';try{data=JSON.parse(controls);target=String(data.targetId??data.clockId??'');helper=view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(data.helper))?.key??'';}catch{data={};target='';helper='';}const key=capture;void tick().then(()=>{if(view.key===key)dialog?.querySelector<HTMLElement>('select,textarea,input')?.focus({preventScroll:true});});});
  onMount(()=>{const anchor=document.activeElement as HTMLElement;return ()=>anchor?.focus({preventScroll:true});});
  function setControl(key:string,value:unknown){
-  let source=$state.snapshot(data);
+  let source=controlsSnapshot();
   if(advanced){try{const parsed=JSON.parse(controls);if(!parsed||Array.isArray(parsed)||typeof parsed!=='object')throw Error();source=parsed;}catch{failure='Use a JSON object before selecting a configured value.';target=String(data.targetId??data.clockId??'');helper=view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(data.helper))?.key??'';return;}}
-  data={...source,[key]:value};failure='';const next=projectNodeControls(view.operation,data,{phase});drafts=Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>next.some(control=>control.key===key&&contract(control)===draft.contract)));if(advanced)controls=JSON.stringify($state.snapshot(data),null,2);
+  data={...source,[key]:value};failure='';const next=projectNodeControls(view.operation,data,{phase});drafts=Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>next.some(control=>control.key===key&&contract(control)===draft.contract)));if(advanced)controls=JSON.stringify(controlsSnapshot(),null,2);
  }
  function bindingValue(role:string,field:'profileId'|'model'){const value=data.roleOverrides as Record<string,Record<string,string|null>>|undefined;return value?.[role]?.[field];}
  function bindingMode(role:string,field:'profileId'|'model'){const value=bindingValue(role,field);return value===undefined?'inherit':value===null?'block':'override';}
  function setBinding(role:string,field:'profileId'|'model',mode:string,value:string|null){
   if(pending||!actions)return false;
-  let source:Record<string,unknown>=$state.snapshot(data) as Record<string,unknown>;
+  let source:Record<string,unknown>=controlsSnapshot() as Record<string,unknown>;
   if(advanced){try{source=JSON.parse(controls);if(!source||typeof source!=='object'||Array.isArray(source))throw Error();}catch{failure='Use a JSON object before selecting a configured value.';return false;}}
   const choice=view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(source.helper)),row=choice?.bindings?.roles.find(row=>row.role===role);
   if(!row||row[field==='profileId'?'profile':'model'].editable===false)return false;
@@ -36,7 +40,7 @@
   if(!spec||!roleControl)return false;
   const fieldDraft=advanced?undefined:drafts.roleOverrides;
   if(fieldDraft){
-   const input=fieldDraft.value!==undefined?{format:'rows' as const,value:$state.snapshot(fieldDraft.value) as JsonValue}:{format:fieldDraft.format??'json' as ControlInputFormat,text:fieldDraft.text??textFor(roleControl)};
+   const input=fieldDraft.value!==undefined?{format:'rows' as const,value:typedSnapshot(fieldDraft.value) as JsonValue}:{format:fieldDraft.format??'json' as ControlInputFormat,text:fieldDraft.text??textFor(roleControl)};
    const parsed=parseControlInput(spec,{...input,currentValue:(source.roleOverrides??{}) as JsonValue});
    if(!parsed.ok){drafts={...drafts,roleOverrides:{...fieldDraft,error:parsed.error.message}};failure='Repair the Role overrides draft before using selectors.';return false;}
    source={...source,roleOverrides:parsed.data.value};
@@ -53,16 +57,49 @@
  }
  function draft(control:DetailControl,next:Partial<Draft>){drafts={...drafts,[control.key]:{...drafts[control.key],...next,contract:contract(control),error:''}};failure='';}
  function candidate():Record<string,unknown>|null {
-  const result:Record<string,unknown>={...$state.snapshot(data)};
+  const result:Record<string,unknown>={...controlsSnapshot()};
   for(const control of fields){const value=drafts[control.key];if(!value)continue;
-   const input=value.value!==undefined?{format:'rows' as const,value:$state.snapshot(value.value) as JsonValue}:{format:value.format??(control.structured?'json':formatFor(control)) as ControlInputFormat,text:value.text??textFor(control)};
+   const input=value.value!==undefined?{format:'rows' as const,value:typedSnapshot(value.value) as JsonValue}:{format:value.format??(control.structured?'json':formatFor(control)) as ControlInputFormat,text:value.text??textFor(control)};
    const parsed=parseControlInput(control.inputSpec!,{...input,currentValue:control.value as JsonValue});
    if(!parsed.ok){drafts={...drafts,[control.key]:{...value,error:parsed.error.message}};failure='Check the highlighted settings before creating the node.';return null;}
    result[control.key]=parsed.data.value;
   }return result;
  }
- function switchMode(){if(advanced){try{const parsed=JSON.parse(controls);if(!parsed||Array.isArray(parsed)||typeof parsed!=='object')throw Error();const next=projectNodeControls(view.operation,parsed,{phase});drafts=Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>JSON.stringify(parsed[key])===JSON.stringify(advancedBaseline[key])&&next.some(control=>control.key===key&&contract(control)===draft.contract)));data=parsed;advanced=false;failure='';}catch{failure='Use a valid JSON object before returning to the form.';}}else{const next=candidate();if(next)controls=JSON.stringify(next,null,2);advancedBaseline=JSON.parse(controls);advanced=true;}}
- async function apply(event:SubmitEvent){event.preventDefault();if(!actions||pending)return;const next=advanced?null:candidate();if(!advanced&&!next)return;const text=advanced?controls:JSON.stringify(next),key=view.key,request=++generation;pending=true;failure='';try{const result:any=await actions.apply(key,text,phase);if(key===view.key&&request===generation&&!result?.ok)failure=(result?.error ? result.error.code + ': ' + result.error.message : undefined)??'The node could not be prepared.';}catch{if(key===view.key&&request===generation)failure='The node could not be prepared.';}finally{if(key===view.key&&request===generation)pending=false;}}
+ function advancedSource():string {
+  const result:Record<string,unknown>={...controlsSnapshot()},sources=new Map<string,string>();
+  for(const control of fields){const value=drafts[control.key];if(!value)continue;
+   const input=value.value!==undefined?{format:'rows' as const,value:typedSnapshot(value.value) as JsonValue}:{format:value.format??(control.structured?'json':formatFor(control)) as ControlInputFormat,text:value.text??textFor(control)};
+   const parsed=parseControlInput(control.inputSpec!,{...input,currentValue:control.value as JsonValue});
+   if(parsed.ok)result[control.key]=parsed.data.value;
+   else {result[control.key]=control.value;sources.set(control.key,control.inputSpec?.storage==='json-text'?JSON.stringify(value.text??textFor(control)):value.text??textFor(control));}
+  }
+  return '{'+Object.keys(result).map(key=>JSON.stringify(key)+':'+(sources.has(key)?sources.get(key):JSON.stringify(result[key]))).join(',')+'}';
+ }
+ function advancedCandidate(validateFields=true):Record<string,unknown>|null {
+  try {
+   const checked=cloneDefinitionData(JSON.parse(controls),{operation:view.operation});
+   if(!checked.ok||!checked.data||Array.isArray(checked.data)||typeof checked.data!=='object')throw Error();
+   const value=checked.data as Record<string,unknown>;
+   if(validateFields)for(const control of projectNodeControls(view.operation,value,{phase}).filter(control=>['value','path','fields'].includes(control.inputSpec?.editor??''))){
+    const input=control.inputSpec?.storage==='json-text'?{format:'json' as const,text:typeof control.value==='string'?control.value:undefined}:{format:'rows' as const,value:control.value as JsonValue};
+    const parsed=parseControlInput(control.inputSpec!,input);
+    if(!parsed.ok){failure=parsed.error.message;return null;}
+   }
+   return value;
+  } catch {failure='Use a valid JSON object before returning to the form or creating the node.';return null;}
+ }
+ function switchMode(){
+  if(advanced){
+   const parsed=advancedCandidate(false);if(!parsed)return;
+   const next=projectNodeControls(view.operation,parsed,{phase});
+   drafts=advancedInvalid?{}:Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>JSON.stringify(parsed[key])===JSON.stringify(advancedBaseline[key])&&next.some(control=>control.key===key&&contract(control)===draft.contract)));
+   data=parsed;advanced=false;failure='';advancedInvalid=false;
+  }else{
+   const next=candidate();advancedInvalid=!next;controls=next?JSON.stringify(next,null,2):advancedSource();
+   advancedBaseline=next??controlsSnapshot();advanced=true;
+  }
+ }
+ async function apply(event:SubmitEvent){event.preventDefault();if(!actions||pending)return;const next=advanced?advancedCandidate():candidate();if(!next)return;const text=advanced?controls:JSON.stringify(next),key=view.key,request=++generation;pending=true;failure='';try{const result:any=await actions.apply(key,text,phase);if(key===view.key&&request===generation&&!result?.ok)failure=(result?.error ? result.error.code + ': ' + result.error.message : undefined)??'The node could not be prepared.';}catch{if(key===view.key&&request===generation)failure='The node could not be prepared.';}finally{if(key===view.key&&request===generation)pending=false;}}
  function keys(event:KeyboardEvent){event.stopPropagation();if(event.key==='Escape'){event.preventDefault();actions?.cancel(view.key);}if(event.key==='Tab'){const elements=[...dialog.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)')],first=elements[0],last=elements.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}}
 </script>
 <div class="pc-workspace-overlay"><div class="pc-workspace-dialog pc-configure-node" role="dialog" aria-modal="true" aria-label="Configure node" tabindex="-1" bind:this={dialog} onkeydowncapture={keys} onpaste={event=>event.stopPropagation()}>

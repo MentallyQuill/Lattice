@@ -188,3 +188,26 @@ test('disabled typed and advanced controls reject forced events', async () => {
         flushSync(); assert.deepEqual(f.read().value, initial); assert.equal(f.read().changes.length, 0); assert.equal(f.read().invalids.length, 0);
     }, { disabled: true });
 });
+
+test('Condition projects one json-value comparison descriptor through null and every JSON type', async () => {
+    const { describeControl } = await import('../src/workflow/operations/control-nodes.js');
+    const { projectNodeControls } = await import('../src/ui/node-control-projection.js');
+    for (const value of [null, {}, [], '', false, 0, { ['__proto__']: [0, false] }]) {
+        const described = describeControl({ type: 'workflow', operation: 'condition', value });
+        assert.equal(described.ok, true);
+        assert.equal(described.data.descriptor.controlDescriptors.value?.type, 'json-value');
+        assert.deepEqual(described.data.descriptor.controlDescriptors.value.default, value);
+        const projected = projectNodeControls('condition', { value }, { phase: 'pre' }).find(control => control.key === 'value');
+        assert.ok(projected); assert.equal(projected.editor, 'json'); assert.deepEqual(projected.value, value);
+    }
+});
+
+test('unfinished nested source is inserted at its exact own path without changing retained JSON', () => {
+    assert.equal(typeof authoring.formatJsonValueDraftAtPath, 'function');
+    const value = [{ name: 'x', path: ['a.b', 0], default: { ['__proto__']: { 'red, blue': 0 } } }];
+    const draft = authoring.formatJsonValueDraftAtPath(value, [0, 'default', '__proto__', 'red, blue'], '-');
+    assert.equal(draft.ok, true);
+    assert.equal(draft.data.text, '[{"name":"x","path":["a.b",0],"default":{"__proto__":{"red, blue":-}}}]');
+    assert.throws(() => JSON.parse(draft.data.text)); assert.equal(value[0].default.__proto__['red, blue'], 0);
+    assert.equal(authoring.formatJsonValueDraftAtPath({}, ['constructor', 'prototype'], '-').ok, false);
+});

@@ -1,3 +1,4 @@
+import { ownJsonData } from './semantic-json-data.js?v=0.27.0';
 import { cloneDefinitionData, definitionRefKey } from './definitions.js?v=0.27.0';
 import { prepareGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.27.0';
 import { cloneWorkflowDocument } from './document.js?v=0.27.0';
@@ -248,7 +249,7 @@ function createInstance(original, normalized, command, path, ref, factory, sourc
  */
 export function prepareNativeConnectionEdit(root, input, options = {}) {
     try {
-        const admitted = cloneDefinitionData(input);
+        const admitted = cloneDefinitionData(input, { command: true, controlsOperation: ownJsonData(input, 'operation') });
         if (!admitted.ok) return fail('INVALID_COMMAND', 'Use bounded own plain command data.');
         const command = admitted.data, factory = optionsFactory(options);
         if (!factory.ok) return factory;

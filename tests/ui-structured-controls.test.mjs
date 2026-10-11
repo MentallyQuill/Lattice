@@ -6,6 +6,7 @@ import { join, resolve, relative, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { compile } from 'svelte/compiler';
 import { JSDOM } from 'jsdom';
+import { compiled as compiledTree } from './helpers/svelte-compile.mjs';
 
 const dom = new JSDOM('<!doctype html><body></body>', { pretendToBeVisual: true });
 globalThis.window = dom.window; globalThis.document = dom.window.document;
@@ -27,7 +28,7 @@ async function fixture(kind, initial, check, extra = {}) {
     let mounted;
     try {
         const source = await readFile(new URL('../ui/StructuredControl.svelte', import.meta.url), 'utf8');
-        const leaf = await compiled('StructuredControl', directory, source);
+        const leaf = await compiledTree('StructuredControl', directory, source);
         const harness = await compiled('StructuredHarness', directory, `<script>import Leaf from ${JSON.stringify(pathToFileURL(leaf.path).href)}; let { initial, control, initialDisabled, initialError } = $props(); let text = $state(initial); let disabled = $state(initialDisabled); let changes = $state([]); let typed = $state(); export function read() { return { text, typed, changes: [...changes] }; } export function update(next) { text = next; } export function disable(next) { disabled = next; } function ontext(next) { typed = undefined; text = next; changes = [...changes, next]; } function onDraft(value) { typed = value; }</script><Leaf {control} {text} {disabled} {ontext} draftValue={typed} onDraft={control.typedMode ? onDraft : undefined} idPrefix="structured-test" error={initialError} />`);
         const control = { key: kind, label: extra.label ?? kind, value: null, editor: 'json', representation: 'json-value', structured: kind, ...extra.control };
         mounted = mount(harness.component, { target: host, props: { initial, control, initialDisabled: extra.disabled ?? false, initialError: extra.error } }); flushSync(); await tick();
@@ -61,11 +62,11 @@ test('rules rows retain supported flags and update the shared JSON draft in orde
 
 test('field rows keep typed paths and explicit defaults without filling absent options', async () => {
     await fixture('fields', '[{"name":"title","path":["items",0,"title"]},{"name":"optional","path":[],"required":false,"default":null}]', async f => {
-        input(f.host, 'Field 1 path (JSON array)', '["items",2,"title"]', 'change');
+        input(f.host, 'Field 1 path segment 2 index', '2');
         assert.deepEqual(JSON.parse(f.read().text), [{ name: 'title', path: ['items', 2, 'title'] }, { name: 'optional', path: [], required: false, default: null }]);
         input(f.host, 'Field 1 required', false, 'change');
         input(f.host, 'Field 1 use default', true, 'change');
-        input(f.host, 'Field 1 default (JSON)', 'false', 'change');
+        input(f.host, 'Field 1 default type', 'boolean', 'change');
         assert.deepEqual(JSON.parse(f.read().text)[0], { name: 'title', path: ['items', 2, 'title'], required: false, default: false });
         input(f.host, 'Field 2 use default', false, 'change');
         assert.equal(Object.hasOwn(JSON.parse(f.read().text)[1], 'default'), false);
@@ -153,15 +154,15 @@ test('unknown keys and options fall back to raw without silently removing them',
 
 test('invalid JSON entered in a field default survives in the shared raw draft', async () => {
     await fixture('fields', '[{"name":"x","path":[],"default":null}]', async f => {
-        input(f.host, 'Field 1 default (JSON)', '{"nested":', 'change');
+        click(f.host, 'Edit Field 1 default as JSON'); input(f.host, 'Field 1 default JSON', '{"nested":');
         const raw = f.host.querySelector('textarea[aria-label="fields"]'); assert.ok(raw, 'Invalid nested JSON should switch to its shared raw draft');
-        assert.equal(raw.value, f.read().text); assert.match(raw.value, /"default": \{"nested":/);
+        assert.equal(raw.value, f.read().text); assert.match(raw.value, /"default":\s*\{"nested":/);
         assert.throws(() => JSON.parse(f.read().text));
         input(f.host, 'fields', '[{"name":"x","path":[],"default":{"nested":false}}]');
         click(f.host, 'Edit fields as rows');
-        input(f.host, 'Field 1 path (JSON array)', '["nested",', 'change');
+        click(f.host, 'Edit Field 1 path as JSON'); input(f.host, 'Field 1 path JSON', '["nested",');
         assert.equal(f.host.querySelector('textarea[aria-label="fields"]').value, f.read().text);
-        assert.match(f.read().text, /"path": \["nested",/);
+        assert.match(f.read().text, /"path":\s*\["nested",/);
     });
 });
 

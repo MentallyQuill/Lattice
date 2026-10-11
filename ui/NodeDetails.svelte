@@ -2,6 +2,7 @@
     import {controlInputPresentation} from '../src/ui/node-control-projection.js';
     import {parseControlInput} from '../src/ui/control-input-contracts.js';
     import type {ControlInputFormat} from '../src/ui/control-input-contracts';
+    import {cloneJsonValue} from '../src/workflow/operations/json-data.js';
     import type {JsonValue} from '../src/workflow/operations/json-data';
     import DiagnosticMessage from './DiagnosticMessage.svelte';
     import { presentDiagnostics } from '../src/ui/diagnostics.js';
@@ -152,14 +153,17 @@
     function save(control: DetailControl) {
         if (!view || view.readOnly || !actions.editControl) return;
         const text = drafts[control.key]?.text ?? textFor(control);
-        const typed = drafts[control.key]?.typedValue;
+        const authored = drafts[control.key]?.typedValue;
+        const cloned = authored === undefined ? undefined : cloneJsonValue(authored);
+        if(cloned && !cloned.ok){drafts={...drafts,[control.key]:{...drafts[control.key],text,error:cloned.error.message,pending:false,editor:control.editor,representation:control.representation}};return;}
+        const typed = cloned?.ok ? cloned.data.value : undefined;
         let value: unknown = text;
         if (control.inputSpec) {
-            const input = typed === undefined ? {format:drafts[control.key]?.format ?? (control.structured ? 'json' : formatFor(control)) as ControlInputFormat,text} : {format:'rows' as const,value:$state.snapshot(typed) as JsonValue};
+            const input = typed === undefined ? {format:drafts[control.key]?.format ?? (control.structured ? 'json' : formatFor(control)) as ControlInputFormat,text} : {format:'rows' as const,value:typed as JsonValue};
             const parsed = parseControlInput(control.inputSpec,{...input,currentValue:control.value as JsonValue});
             if(!parsed.ok){drafts={...drafts,[control.key]:{...drafts[control.key],text,error:parsed.error.message,pending:false,editor:control.editor,representation:control.representation}};return;}
             value=parsed.data.value;
-        } else if (typed !== undefined) value=$state.snapshot(typed);
+        } else if (typed !== undefined) value=typed;
         else if (control.editor === 'json') {
             try {if (!(control.representation === 'json-text' && control.allowEmpty && text.trim() === '')) {const parsed=JSON.parse(text);if(control.representation !== 'json-text')value=parsed;}}
             catch {drafts={...drafts,[control.key]:{text,error:'Enter valid JSON before saving.',pending:false,editor:control.editor,representation:control.representation}};return;}

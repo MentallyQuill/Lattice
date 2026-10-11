@@ -45,3 +45,26 @@ export function validateJsonPath(value, { allowIndices = false, maxItems = 64 } 
     if (!Array.isArray(checked.data.value) || checked.data.value.length > maxItems || checked.data.value.some(key => typeof key !== 'string' && !(allowIndices && Number.isSafeInteger(key) && key >= 0))) return fail('INVALID_JSON_PATH', allowIndices ? 'Use exact keys or nonnegative integer indices.' : 'Use exact string keys.');
     return checked;
 }
+
+/** Encode a retained canonical tree with one exact unfinished node source. */
+export function formatJsonValueDraftAtPath(value, path, source) {
+    if (typeof source !== 'string') return fail('INVALID_JSON_DRAFT', 'Draft source must be text.');
+    const checked = cloneJsonValue(value), checkedPath = validateJsonPath(path, { allowIndices: true, maxItems: 32 });
+    if (!checked.ok) return checked;
+    if (!checkedPath.ok) return checkedPath;
+    const keys = checkedPath.data.value;
+    let node = checked.data.value;
+    for (const key of keys) {
+        if (!node || typeof node !== 'object' || (Array.isArray(node) ? typeof key !== 'number' : typeof key !== 'string')) return fail('INVALID_JSON_PATH', 'Keys address objects; indices address arrays.');
+        const property = Object.getOwnPropertyDescriptor(node, key);
+        if (!property || !Object.hasOwn(property, 'value')) return fail('JSON_PATH_MISSING', 'The value does not exist.');
+        node = property.value;
+    }
+    function encode(current, depth = 0, selected = true) {
+        if (selected && depth === keys.length) return source;
+        if (current === null || typeof current !== 'object') return JSON.stringify(current);
+        if (Array.isArray(current)) return '[' + current.map((entry, index) => encode(entry, depth + 1, selected && keys[depth] === index)).join(',') + ']';
+        return '{' + Object.keys(current).map(key => JSON.stringify(key) + ':' + encode(current[key], depth + 1, selected && keys[depth] === key)).join(',') + '}';
+    }
+    return { ok: true, data: { text: encode(checked.data.value) } };
+}

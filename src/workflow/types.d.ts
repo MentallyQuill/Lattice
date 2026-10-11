@@ -25,6 +25,7 @@ export type ControlDescriptor = ({ label?: string; editor?: 'text' | 'json'; exp
     | { type: 'enum'; values: string[]; default: string }
     | { type: 'string'; default: string }
     | { type: 'boolean'; default: boolean }
+    | { type: 'json-value'; default: import('./operations/json-data').JsonValue }
     | { type: 'array'; items: 'string' | 'string-or-record' | 'record' | 'context-slot' | 'json'; min?: number; max?: number; default: unknown[] }
     | { type: 'object'; max?: number; default: { [key: string]: import('./operations/json-data').JsonValue } }));
 export interface OperationDescriptor {

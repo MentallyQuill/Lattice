@@ -10,7 +10,7 @@ const control = (type, value, extra = {}) => ({ type, default: value, ...extra }
 const canonical = value => Array.isArray(value) ? '['+value.map(canonical).join(',')+']' : plain(value) ? '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}' : JSON.stringify(value);
 const slots = [{ id: 'base', label: 'Base', required: true }, { id: 'optional', label: 'Optional', required: false }];
 export const CONTROL_OPERATIONS = {
-    condition: register('condition', 'Condition', { path: [], operator: 'equals', value: true }, { path: control('array', [], { items: 'string' }), operator: control('enum', 'equals', { values: ['equals', 'not-equals', 'exists', 'nonempty', 'greater-than', 'at-least', 'less-than'] }), value: control('boolean', true) }),
+    condition: register('condition', 'Condition', { path: [], operator: 'equals', value: true }, { path: control('array', [], { items: 'string' }), operator: control('enum', 'equals', { values: ['equals', 'not-equals', 'exists', 'nonempty', 'greater-than', 'at-least', 'less-than'] }), value: control('json-value', true) }),
     branch: register('branch', 'Branch', { artifactKind: 'data' }, { artifactKind: control('enum', 'data', { values: kinds }) }),
     join: { ...register('join', 'Join', { artifactKind: 'data', inputs: slots, selection: 'last' }, { artifactKind: control('enum', 'data', { values: kinds }), inputs: control('array', slots, { items: 'record', max: 16 }), selection: control('enum', 'last', { values: ['first','last'] }) }), acceptsSkippedInputs: true },
     collect: { ...register('collect', 'Collect', { artifactKind: 'data', inputs: slots }, { artifactKind: control('enum', 'data', { values: kinds }), inputs: control('array', slots, { items: 'record', max: 16 }) }), acceptsSkippedInputs: true },
@@ -51,10 +51,7 @@ function resolve(node, options) {
         ports=[pin('in','data','input',true),...['accepted','rejected','unresolved'].map(id=>pin(id,'data','output'))];
     } else if (operation === 'condition') {
         if (!Array.isArray(settings.path) || settings.path.length > 32 || settings.path.some(key => typeof key !== 'string') || !base.controlDescriptors.operator.values.includes(settings.operator)) return fail('INVALID_SETTINGS', 'Condition requires a bounded path and supported comparison.');
-        // Match the actual portable JSON type so graph-level generic control admission stays strict.
-        const type = Array.isArray(settings.value) ? 'array' : settings.value === null ? 'object' : typeof settings.value;
-        if (settings.value === null) delete descriptor.controlDescriptors.value;
-        else descriptor.controlDescriptors.value = control(type, settings.value, type === 'array' ? { items: 'json' } : type==='number'?{min:-Number.MAX_VALUE,max:Number.MAX_VALUE}:{});
+        descriptor.controlDescriptors.value = control('json-value', settings.value);
         ports = [pin('in', 'data', 'input', true), pin('out', 'data', 'output')];
     } else if (['join','collect'].includes(operation)) {
         if (!kinds.includes(settings.artifactKind) || !Array.isArray(settings.inputs) || settings.inputs.length<1 || settings.inputs.length>16 || settings.inputs.some(slot=>!plain(slot)||typeof slot.id!=='string'||!slot.id||slot.id.length>128||slot.id==='out'||typeof slot.label!=='string'||slot.label.length>80||typeof slot.required!=='boolean'||Object.keys(slot).some(key=>!['id','label','required'].includes(key))) || new Set(settings.inputs.map(slot=>slot.id)).size!==settings.inputs.length || operation==='join'&&!['first','last'].includes(settings.selection)) return fail('INVALID_SETTINGS','Join requires 1–16 unique typed input slots with explicit required flags.');

@@ -4,12 +4,13 @@ import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve,relative,isAbsolute} from 'node:path';
 import {JSDOM} from 'jsdom';
+import {pathToFileURL} from 'node:url';
 import {compiled} from './helpers/svelte-compile.mjs';
 import {projectNodeControls} from '../src/ui/node-control-projection.js';
 const dom=new JSDOM('<!doctype html><body></body>',{pretendToBeVisual:true});globalThis.window=dom.window;globalThis.document=dom.window.document;
 for(const key of ['Node','Element','Text','Comment','Document','HTMLElement','HTMLMediaElement','HTMLButtonElement','HTMLInputElement','HTMLSelectElement','MutationObserver'])Object.defineProperty(globalThis,key,{configurable:true,value:dom.window[key]});
 const {mount,unmount,flushSync,tick}=await import(new URL('../node_modules/svelte/src/index-client.js',import.meta.url).href);
-async function fixture(name,props){const directory=await mkdtemp(join(tmpdir(),'lattice-storage-ui-')),host=document.createElement('div');document.body.append(host);let mounted;const close=async()=>{if(mounted)await unmount(mounted);host.remove();const rel=relative(resolve(tmpdir()),resolve(directory));assert.ok(rel&&!rel.startsWith('..')&&!isAbsolute(rel));await rm(directory,{recursive:true,force:true});};try{let leaf;try{leaf=await compiled(name,directory);}catch(error){assert.fail(name+' component must compile: '+error.message);}mounted=mount(leaf.component,{target:host,props});flushSync();await tick();return {host,mounted,close};}catch(error){await close();throw error;}}
+async function fixture(name,props,reactive=false){const directory=await mkdtemp(join(tmpdir(),'lattice-storage-ui-')),host=document.createElement('div');document.body.append(host);let mounted;const close=async()=>{if(mounted)await unmount(mounted);host.remove();const rel=relative(resolve(tmpdir()),resolve(directory));assert.ok(rel&&!rel.startsWith('..')&&!isAbsolute(rel));await rm(directory,{recursive:true,force:true});};try{let leaf;try{leaf=await compiled(name,directory);}catch(error){assert.fail(name+' component must compile: '+error.message);}if(reactive){const harness=await compiled('TypedDraftHarness',directory,`<script>import Leaf from ${JSON.stringify(pathToFileURL(leaf.path).href)};let {initial,actions}=$props();let view=$state.raw(initial);export function update(next){view=next;}</script><Leaf {view} {actions}/>`);mounted=mount(harness.component,{target:host,props:{initial:props.view,actions:props.actions}});}else mounted=mount(leaf.component,{target:host,props});flushSync();await tick();return {host,mounted,close};}catch(error){await close();throw error;}}
 const input=(host,label,value,event='input')=>{const element=host.querySelector('[aria-label="'+label+'"]');assert.ok(element,label);element.value=value;element.dispatchEvent(new dom.window.Event(event,{bubbles:true}));flushSync();return element;};const button=(host,label)=>[...host.querySelectorAll('button')].find(element=>element.getAttribute('aria-label')===label||element.textContent.trim()===label);
 const view={key:'scope-key',revision:'r1',scope:{userId:'default-user',chatId:'story'},documents:[{targetId:'mara.json',name:'Mara memories',format:'json',revision:'doc1',visibility:{kind:'actor-private',actorId:'mara'}}],issue:''};
 
@@ -232,5 +233,104 @@ test('a rejected valid Save retains the typed candidate through further terms fo
   const f=await fixture(creation?'ConfigureNode':'NodeDetails',patternTransitionProps(creation,'literal',rows,value=>saves.push(value),{ok:false,error:{code:'CONTROL_REJECTED',message:'Review this candidate.'}}));
   try{input(f.host,'Pattern 1 label','edited');button(f.host,'Use Rules terms').click();flushSync();button(f.host,creation?'Create node':'Save Rules').click();await tick();flushSync();assert.deepEqual(saves,[expected]);assert.match(f.host.textContent,/CONTROL_REJECTED/);input(f.host,'Rules input format','csv','change');assert.notEqual(f.host.querySelector('[aria-label="Rules"]').value,'');button(f.host,creation?'Create node':'Save Rules').click();await tick();flushSync();assert.deepEqual(saves,[expected,expected]);}
   finally{await f.close();}
+ }
+});
+
+test('Condition typed comparison uses the same Save candidate for creation and editing through every JSON type', async () => {
+ for (const creation of [false,true]) {
+  const saves=[],control=projectNodeControls('condition',{value:null},{phase:'pre'}).find(control=>control.key==='value');
+  const props=creation?{view:{key:'typed-condition',operation:'condition',title:'Condition',controls:'{"value":null}',phase:'pre',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){saves.push(JSON.parse(text).value);return {ok:false,error:{code:'RETAIN',message:'Keep editing'}};},cancel(){}}}:{view:{selectionKey:'typed-condition',revision:'1',address:{workflowId:'root',instancePath:[],nodeId:'condition'},title:'Condition',canonicalTitle:'Condition',iconPath:'',family:'Control',phase:'pre',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:[control],model:null,ports:[]},actions:{editControl(_selection,key,value){assert.equal(key,'value');saves.push(value);return {ok:false,error:{code:'RETAIN',message:'Keep editing'}};}}};
+  const f=await fixture(creation?'ConfigureNode':'NodeDetails',props);
+  try {
+   assert.equal(f.host.querySelector('[aria-label="Value type"]')?.value,'null');
+   for (const [type,value] of [['object',{}],['array',[]],['number',0],['boolean',false],['string',''],['null',null]]) {
+    input(f.host,'Value type',type,'change');button(f.host,creation?'Create node':'Save Value').click();await tick();flushSync();assert.deepEqual(saves.at(-1),value);assert.ok(f.host.querySelector('[aria-label="Value type"]'));
+   }
+   assert.deepEqual(saves,[{},[],0,false,'',null]);
+  } finally {await f.close();}
+ }
+});
+
+test('creation preserves unfinished typed comparisons across whole-form view remounts and unrelated edits', async () => {
+ const saves=[],f=await fixture('ConfigureNode',{view:{key:'invalid-typed-condition',operation:'condition',title:'Condition',controls:'{"value":0}',phase:'pre',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){saves.push(JSON.parse(text));return {ok:true};},cancel(){}}});
+ try {
+  input(f.host,'Value number','-');assert.equal(f.host.querySelector('[aria-label="Value JSON"]').value,'-');
+  input(f.host,'Operator','not-equals','change');assert.equal(f.host.querySelector('[aria-label="Value JSON"]').value,'-');
+  button(f.host,'Create node').click();await tick();flushSync();assert.equal(saves.length,0);
+  button(f.host,'Configuration format').click();flushSync();
+  const raw=f.host.querySelector('[aria-label="Node controls JSON"]');assert.ok(raw);assert.match(raw.value,/"value":\s*-/);
+  button(f.host,'Create node').click();await tick();flushSync();assert.equal(saves.length,0,'Invalid source cannot submit an older canonical comparison');
+  input(f.host,'Node controls JSON','{"value":null,"operator":"not-equals"}');button(f.host,'Configuration format').click();flushSync();
+  assert.equal(f.host.querySelector('[aria-label="Value type"]').value,'null');
+  button(f.host,'Create node').click();await tick();flushSync();assert.deepEqual(saves,[{value:null,operator:'not-equals'}]);
+ } finally {await f.close();}
+});
+
+
+const typedDetails=(operation,settings,extra={})=>({selectionKey:'typed-'+operation,revision:'1',address:{workflowId:'typed-root',instancePath:[],nodeId:operation},title:operation,canonicalTitle:operation,iconPath:'',family:'Control',phase:'pre',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:projectNodeControls(operation,settings,{phase:'pre'}),model:null,ports:[],...extra});
+
+test('unfinished nested Condition value survives unrelated edit, revision, selection removal and view remount',async()=>{
+ const settings={value:JSON.parse('{"a.b":{"__proto__":0},"red, blue":false}'),operator:'equals'},saves=[];
+ const initial=typedDetails('condition',settings),f=await fixture('NodeDetails',{view:initial,actions:{editControl(_selection,key,value){saves.push({key,value});return {ok:true};}}},true);
+ try{
+  button(f.host,'Edit Value key a.b').click();flushSync();button(f.host,'Edit Value key __proto__').click();flushSync();input(f.host,'Value number','1e');
+  const unfinished=f.host.querySelector('[aria-label="Value JSON"]').value;assert.equal(unfinished,'{"a.b":{"__proto__":1e},"red, blue":false}');
+  button(f.host,'Save Value').click();await tick();flushSync();assert.equal(saves.length,0);
+  input(f.host,'Operator','not-equals','change');await tick();flushSync();assert.deepEqual(saves,[{key:'operator',value:'not-equals'}]);assert.equal(f.host.querySelector('[aria-label="Value JSON"]').value,unfinished);
+  const next=typedDetails('condition',{...settings,operator:'not-equals'},{revision:'2'});f.mounted.update(next);flushSync();f.mounted.update(null);flushSync();f.mounted.update(next);flushSync();
+  assert.equal(f.host.querySelector('[aria-label="Value JSON"]').value,unfinished);button(f.host,'Save Value').click();await tick();flushSync();assert.equal(saves.length,1);
+  const repaired=JSON.parse('{"a.b":{"__proto__":0},"red, blue":false}');input(f.host,'Value JSON',JSON.stringify(repaired));button(f.host,'Save Value').click();await tick();flushSync();assert.deepEqual(saves[1],{key:'value',value:repaired});assert.equal(Object.hasOwn(saves[1].value['a.b'],'__proto__'),true);assert.equal({}.polluted,undefined);
+ }finally{await f.close();}
+});
+
+test('both shared parents save typed mapping paths and distinguish omitted defaults from explicit null',async()=>{
+ for(const creation of [false,true]){
+  const saves=[],fields=[{name:'literal',path:['a.b','red, blue','__proto__','0'],required:false}],props=creation?{view:{key:'typed-fields',operation:'select-fields',title:'Select Fields',controls:JSON.stringify({fields}),phase:'pre',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){saves.push(JSON.parse(text).fields);return {ok:false,error:{code:'RETAIN',message:'Keep editing'}};},cancel(){}}}:{view:typedDetails('select-fields',{fields}),actions:{editControl(_selection,key,value){assert.equal(key,'fields');saves.push(value);return {ok:false,error:{code:'RETAIN',message:'Keep editing'}};}}};
+  const f=await fixture(creation?'ConfigureNode':'NodeDetails',props);
+  const save=async()=>{button(f.host,creation?'Create node':'Save Fields').click();await tick();flushSync();};
+  try{
+   assert.equal(f.host.querySelector('[aria-label="Field 1 default type"]'),null);await save();assert.equal(Object.hasOwn(saves[0][0],'default'),false);
+   f.host.querySelector('[aria-label="Field 1 use default"]').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Field 1 default type"]').value,'null');
+   input(f.host,'Field 1 path segment 4 kind','index','change');input(f.host,'Field 1 path segment 4 index','0');button(f.host,'Move Field 1 path segment 4 up').click();flushSync();
+   await save();assert.deepEqual(saves[1],[{...fields[0],path:['a.b','red, blue',0,'__proto__'],default:null}]);
+   input(f.host,'Field 1 default type','object','change');input(f.host,'Field 1 default new key','__proto__');button(f.host,'Add Field 1 default property').click();flushSync();button(f.host,'Edit Field 1 default key __proto__').click();flushSync();input(f.host,'Field 1 default type','boolean','change');await save();
+   assert.deepEqual(saves[2][0].default,JSON.parse('{"__proto__":false}'));assert.equal(typeof saves[2][0].default,'object');assert.equal({}.polluted,undefined);
+   f.host.querySelector('[aria-label="Field 1 use default"]').click();flushSync();await save();assert.equal(Object.hasOwn(saves[3][0],'default'),false);
+  }finally{await f.close();}
+ }
+});
+
+test('string-only Condition and Collection path forms retain string zero and expose no index option',async()=>{
+ for(const operation of ['condition','collection'])for(const creation of [false,true]){
+  const key=operation==='condition'?'path':'identityPath',label=operation==='condition'?'Path':'Identity path',settings={[key]:['a.b','red, blue','__proto__','0']},saves=[];
+  const props=creation?{view:{key:'literal-path-'+operation,operation,title:operation,controls:JSON.stringify(settings),phase:'pre',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){saves.push(JSON.parse(text)[key]);return {ok:true};},cancel(){}}}:{view:typedDetails(operation,settings),actions:{editControl(_selection,_key,value){saves.push(value);return {ok:true};}}};
+  const f=await fixture(creation?'ConfigureNode':'NodeDetails',props);
+  try{assert.equal(f.host.querySelector('[aria-label="'+label+' segment 4 kind"]'),null);assert.equal(f.host.querySelector('[aria-label="Add '+label+' index"]'),null);assert.equal(f.host.querySelector('[aria-label="'+label+' segment 4 key"]').value,'0');button(f.host,'Move '+label+' segment 4 up').click();flushSync();button(f.host,creation?'Create node':'Save '+label).click();await tick();flushSync();assert.deepEqual(saves,[['a.b','red, blue','0','__proto__']]);}
+  finally{await f.close();}
+ }
+});
+
+test('real configured session and native creation retain typed own keys in Condition and mapping defaults',async()=>{
+ const {createConfiguredNodeSession}=await import('../src/ui/configured-node-creation.js'),{prepareNativeConnectionEdit}=await import('../src/workflow/connection-edits.js');
+ const graph={id:'semantic-forms',schema:3,runtime:2,mode:'native-unified',nodes:{},wires:{},definitions:{}};
+ for(const operation of ['condition','select-fields','format']){
+  const payload=JSON.parse('{"__proto__":{"a.b":[0,false,null,""]},"red, blue":{"constructor":{"prototype":"literal"}}}'),controls=operation==='condition'?{value:payload}:{fields:[{name:'chosen',path:['a.b',0],required:false,default:payload}]};
+  const session=createConfiguredNodeSession({isCurrent:()=>true,prepare:(_capture,command)=>prepareNativeConnectionEdit(graph,{kind:'create',...command,graphPoint:{x:0,y:0}})}),opened=session.open({}, {operation,controls},{phase:'pre',targets:[],helpers:[]});
+  const f=await fixture('ConfigureNode',{view:opened.view,actions:{apply:(...args)=>session.apply(...args),cancel:key=>session.cancel(key)}});
+  try{button(f.host,'Create node').click();await tick();flushSync();assert.equal(f.host.querySelector('[data-diagnostic]'),null,f.host.textContent);const result=await opened.result;assert.equal(result.ok,true,JSON.stringify(result));const made=result.data.candidate.nodes[result.data.addedNodeIds[0]],actual=operation==='condition'?made.value:made.fields[0].default;assert.deepEqual(actual,payload);assert.equal(Object.hasOwn(actual,'__proto__'),true);assert.equal({}.polluted,undefined);}
+  finally{session.cancel(opened.view.key);await f.close();}
+ }
+});
+
+
+test('an unfinished sole numeric path segment remains invalid across parent view switches and cannot Save an empty path',async()=>{
+ for(const creation of [false,true]){
+  const fields=[{name:'item',path:[0]}],saves=[];
+  const props=creation?{view:{key:'unfinished-index',operation:'select-fields',title:'Select Fields',controls:JSON.stringify({fields}),phase:'pre',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){saves.push(JSON.parse(text));return {ok:true};},cancel(){}}}:{view:typedDetails('select-fields',{fields}),actions:{editControl(_selection,_key,value){saves.push(value);return {ok:true};}}};
+  const f=await fixture(creation?'ConfigureNode':'NodeDetails',props,!creation);
+  try{input(f.host,'Field 1 path segment 1 index','');button(f.host,creation?'Create node':'Save Fields').click();await tick();flushSync();assert.equal(saves.length,0);
+   if(creation){button(f.host,'Configuration format').click();flushSync();button(f.host,'Create node').click();await tick();flushSync();assert.equal(saves.length,0);assert.match(f.host.querySelector('[aria-label="Node controls JSON"]').value,/\[,\]/);}
+   else{f.mounted.update(null);flushSync();f.mounted.update(props.view);flushSync();assert.match(f.host.querySelector('[aria-label="Fields"]').value,/\[,\]/);button(f.host,'Save Fields').click();await tick();flushSync();assert.equal(saves.length,0);}
+  }finally{await f.close();}
  }
 });
