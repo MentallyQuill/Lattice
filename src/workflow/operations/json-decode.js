@@ -42,6 +42,12 @@ function validateSchema(schema) {
     try { return visit(schema, 0); } catch { return false; }
 }
 
+/** Admit a schema through the same bounded subset used by decodeJson. */
+export function validateJsonSchema(schema) {
+    const checked = validateSchema(schema);
+    return checked ? {ok:true,data:{schema:checked}} : {ok:false,error:{code:'UNSUPPORTED_SCHEMA',message:'Schema must use only the supported bounded subset.'}};
+}
+
 function jsonEqual(a, b) {
     if (a === b) return true;
     if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return false;

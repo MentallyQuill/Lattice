@@ -20,3 +20,6 @@ export interface JsonSchema {
 export interface DecodeJsonOptions { mode?: 'parse' | 'check'; schema?: JsonSchema }
 /** Parse raw JSON text or check a JSON value, with optional bounded subset validation. */
 export function decodeJson(input: unknown, options?: DecodeJsonOptions): Result<{ value: JsonValue; report: SchemaFinding[] }>;
+
+/** Admit exactly the bounded schema subset used by decodeJson. */
+export function validateJsonSchema(schema: unknown): Result<{ schema: JsonValue }>;
