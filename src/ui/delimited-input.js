@@ -35,4 +35,3 @@ export function parseDelimitedInput(text, delimiter) {
     const checked = cloneJsonValue(rows); if (!checked.ok) return checked;
     return { ok: true, data: { rows: checked.data.value } };
 }
-

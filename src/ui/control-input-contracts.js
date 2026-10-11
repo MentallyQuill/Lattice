@@ -175,8 +175,3 @@ export function formatControlInput(spec, value, format) {
         return good(text);
     } catch { return fail('INVALID_CONTROL_INPUT', 'Use bounded own input data.'); }
 }
-
-
-
-
-
