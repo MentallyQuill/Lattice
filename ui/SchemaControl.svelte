@@ -16,6 +16,8 @@
     let invalidKeyword = $state(initial()?.invalidKeyword ?? '');
     let typedTextDrafts = $state<Record<string,string>>({...initial()?.typedTextDrafts});
     $effect(()=> { const authored={path:[...path],raw,rawText,feedback,invalid,inactiveText,invalidText,invalidPath:[...invalidPath],invalidKeyword,numberDrafts:{...numberDrafts},typedDrafts:{...typedDrafts},typedTextDrafts:{...typedTextDrafts}}; untrack(()=>onDraftState?.(authored)); });
+    // A view toggle is not authored text; valid raw views follow authoritative values.
+    $effect(()=> { if(raw && !invalid)rawText=text; });
     const pageSize = 64;
     const types = ['null','boolean','object','array','number','integer','string'];
     const numbers = ['minItems','maxItems','minLength','maxLength','minimum','maximum'];

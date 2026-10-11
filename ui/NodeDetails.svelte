@@ -14,9 +14,11 @@
     import WorkflowData from './WorkflowData.svelte';
     import type { DetailBindingMode, DetailControl, DetailEditResponse, DetailModifier, DetailSelection, NodeDetailsActions, NodeDetailsView } from './detail-types';
     let { view, actions = {}, idPrefix = 'pc-node-details', openGuide }: { view: NodeDetailsView | null; actions?: NodeDetailsActions; idPrefix?: string; openGuide?: () => void } = $props();
-    type LocalDraft = { schemaDraft?:SchemaDraftState; text: string; format?:ControlInputFormat; typedValue?: unknown; error: string; pending: boolean; editor?: DetailControl['editor']; representation?: 'json-text' | 'json-value'; artifactKind?: string; required?: boolean; boundaryId?: string; boundaryDirection?: 'input' | 'output'; modifierType?: string; helperKey?:string };
+    type LocalDraft = { text: string; format?:ControlInputFormat; typedValue?: unknown; error: string; pending: boolean; editor?: DetailControl['editor']; representation?: 'json-text' | 'json-value'; artifactKind?: string; required?: boolean; boundaryId?: string; boundaryDirection?: 'input' | 'output'; modifierType?: string; helperKey?:string };
     let drafts = $state<Record<string, LocalDraft>>({});
     let errors = $state<Record<string, string>>({});
+    // View/navigation state never owns the canonical text of an untouched control.
+    let schemaStates = $state.raw<Record<string, SchemaDraftState>>({});
     let identity = '', revision = '', support = '';
     let sequence = 0, boundaryDraftSequence = 0, draftVisit = 0;
     const requests = new Map<string, number>();
@@ -25,7 +27,7 @@
     const modifierGenerations = new Map<string, number>();
     const draftGenerations = new Map<string, number>();
     // The mounted workspace inspector owns drafts; qualified nodes never share them.
-    const draftCache = new Map<string, { contract: string; drafts: typeof drafts }>();
+    const draftCache = new Map<string, { contract: string; drafts: typeof drafts; schemas: typeof schemaStates }>();
     const settledDrafts = (values: typeof drafts) => Object.fromEntries(Object.entries(values).map(([key, value]) => [key, { ...value, pending: false }]));
     function supportedDrafts(values: typeof drafts, node: NodeDetailsView | null) {
         if (!node) return {};
@@ -60,13 +62,14 @@
             if (changedSelection || nextSupport !== support) { boundaryDraftSequence++; modifierEpoch++; }
             if (changedSelection) {
                 draftVisit++;
-                if (identity) draftCache.set(identity, { contract: support, drafts: untrack(() => settledDrafts(drafts)) });
+                if (identity) draftCache.set(identity, { contract: support, drafts: untrack(() => settledDrafts(drafts)), schemas: untrack(() => ({...schemaStates})) });
             }
             const incompatible = !changedSelection && nextSupport !== support;
             const retained = draftCache.get(next), changedContract = incompatible || !!retained && retained.contract !== nextSupport;
             let restored = changedSelection ? retained?.drafts ?? {} : untrack(() => drafts);
+            let restoredSchemas = changedSelection ? retained?.schemas ?? {} : untrack(() => schemaStates);
             if (changedContract) {
-                draftCache.delete(next);
+                draftCache.delete(next); restoredSchemas = {};
                 // Boundary label/required fields keep the same contract when the allowed
                 // artifact kinds change. Revalidate only that field; other incompatible
                 // editor drafts must remain discarded when an old contract returns.
@@ -76,6 +79,7 @@
             identity = next; revision = nextRevision; support = nextSupport; requests.clear(); sequence++; errors = {}; modifierBusy = false; modifierBusySequence++;
             // A revision expires writes, while unsaved text still belongs to this node.
             drafts = supportedDrafts(restored, view);
+            schemaStates = Object.fromEntries(Object.entries(restoredSchemas).filter(([key])=>view?.controls.some(control=>control.key===key && control.inputSpec?.editor==='schema')));
         }
     });
     const selection = (node: NodeDetailsView): DetailSelection => ({ ...(node.documentNamespace ? { documentNamespace: node.documentNamespace } : {}), selectionKey: node.selectionKey, revision: node.revision, address: 'kind' in node.address ? { ...node.address, definitionRef: { ...node.address.definitionRef } } : { ...node.address, instancePath: [...node.address.instancePath] } });
@@ -98,12 +102,8 @@
         return generation;
     }
     function settleSubmittedDraft(key: string) {
-        const submitted = drafts[key], next = { ...drafts };
-        // Saving optional absence removes the schema from the graph, while its
-        // inactive authored state remains available to this inspector visit.
-        if (submitted?.schemaDraft && submitted.text === '' && submitted.schemaDraft.inactiveText) next[key] = { ...submitted, pending: false, error: '' };
-        else delete next[key];
-        drafts = next;
+        // Submitted text expires; inactive/view schema state remains in its cache.
+        const next = { ...drafts }; delete next[key]; drafts = next;
     }
     async function perform(key: string, presentation: boolean, operation: (captured: DetailSelection) => DetailEditResponse) {
         const node = view;
@@ -139,7 +139,7 @@
         if (!view || view.readOnly) return;
         nextDraftGeneration(control.key);
         requests.delete(control.key);
-        drafts = { ...drafts, [control.key]: { schemaDraft:drafts[control.key]?.schemaDraft, text, format:drafts[control.key]?.format, error: '', pending: false, editor: control.editor, representation: control.representation } };
+        drafts = { ...drafts, [control.key]: { text, format:drafts[control.key]?.format, error: '', pending: false, editor: control.editor, representation: control.representation } };
         errors = { ...errors, [control.key]: '' };
     }
     function draftValue(control: DetailControl, value: unknown) {
@@ -161,14 +161,19 @@
     }
     function schemaDraft(control:DetailControl,state:SchemaDraftState){
         if(!view||view.readOnly||!actions.editControl||drafts[control.key]?.pending)return;
-        if(JSON.stringify(drafts[control.key]?.schemaDraft)===JSON.stringify(state))return;
-        const current=drafts[control.key];
-        drafts={...drafts,[control.key]:{...current,text:current?.text??textFor(control),schemaDraft:state,error:state.invalid&&(current?.text??textFor(control))!==''?state.feedback:'',pending:false,editor:control.editor,representation:control.representation}};
+        if(JSON.stringify(schemaStates[control.key])===JSON.stringify(state))return;
+        schemaStates={...schemaStates,[control.key]:state};
+        // Invalid-only input is a genuine authored generation even without ontext.
+        if(state.invalid){
+            nextDraftGeneration(control.key); requests.delete(control.key);
+            const current=drafts[control.key], text=current?.text??textFor(control);
+            drafts={...drafts,[control.key]:{...current,text,error:text!==''?state.feedback:'',pending:false,editor:control.editor,representation:control.representation}};
+        }
     }
     function save(control: DetailControl) {
         if (!view || view.readOnly || !actions.editControl) return;
         const text = drafts[control.key]?.text ?? textFor(control);
-        if(text!=='' && drafts[control.key]?.schemaDraft?.invalid)return;
+        if(text!=='' && schemaStates[control.key]?.invalid)return;
         const authored = drafts[control.key]?.typedValue;
         const cloned = authored === undefined ? undefined : cloneJsonValue(authored);
         if(cloned && !cloned.ok){drafts={...drafts,[control.key]:{...drafts[control.key],text,error:cloned.error.message,pending:false,editor:control.editor,representation:control.representation}};return;}
@@ -184,6 +189,7 @@
             try {if (!(control.representation === 'json-text' && control.allowEmpty && text.trim() === '')) {const parsed=JSON.parse(text);if(control.representation !== 'json-text')value=parsed;}}
             catch {drafts={...drafts,[control.key]:{text,error:'Enter valid JSON before saving.',pending:false,editor:control.editor,representation:control.representation}};return;}
         } else if (control.editor === 'lines') value=text.split('\n').filter(line=>line.trim());
+        if(control.inputSpec?.editor==='schema' && !drafts[control.key])drafts={...drafts,[control.key]:{text,error:'',pending:false,editor:control.editor,representation:control.representation}};
         void perform(control.key, false, captured => actions.editControl!(captured, control.key, value));
     }
     function editControl(control: DetailControl, value: unknown) {
@@ -474,7 +480,7 @@
 </section>
 
 {#snippet controlEditor(control: DetailControl)}
-    <DetailControlEditor {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key) : ''} schemaDraft={drafts[control.key]?.schemaDraft} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
+    <DetailControlEditor {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key) : ''} schemaDraft={schemaStates[control.key]} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
 {/snippet}
 
 <style>

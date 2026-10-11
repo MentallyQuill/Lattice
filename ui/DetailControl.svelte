@@ -64,7 +64,7 @@
         <TermListControl {control} {text} {format} {draftValue} {disabled} {idPrefix} {error} {ontext} {onformat} />
         {#if switchError}<small role="status">{switchError}</small>{/if}
     {:else if control.inputSpec?.editor === 'schema'}
-        {#key schemaIdentity}<SchemaControl {text} {ontext} draftState={schemaDraft} onDraftState={schemaStateChange} label={control.label} {idPrefix} {disabled} {error} optional={control.editor==='json' && !!control.allowEmpty} />{/key}
+        {#key schemaIdentity}<SchemaControl {text} {ontext} draftState={schemaDraft} onDraftState={schemaStateChange} label={control.label} {idPrefix} disabled={disabled || pending} {error} optional={control.editor==='json' && !!control.allowEmpty} />{/key}
     {:else if typedEntry}
         {#if typed.ok}
             {#if control.inputSpec?.editor === 'path'}<JsonPathControl value={typed.data.value as JsonPath} onchange={typedChange} oninvalid={source => typedInvalid(source)} label={control.label} {idPrefix} {disabled} {error} allowIndices={['select-fields.path','format.path'].includes(control.inputSpec.id)} maxItems={control.inputSpec.limits.maxItems ?? 64} />

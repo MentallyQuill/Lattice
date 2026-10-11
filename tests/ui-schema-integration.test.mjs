@@ -167,3 +167,32 @@ test('disabled creation and read-only inspector schema editors reject synthetic 
   }finally{await form.close();}
  }
 });
+
+
+test('pending schema Save disables numeric and typed edits through acknowledgement and remount',async()=>{
+ for(const typed of [false,true]){
+  const root=graph(),original=typed?'{"const":0}':'{"minimum":0}';root.nodes.node={id:'node',type:'workflow',operation:'json-decode',phase:'post',mode:'parse',schema:original};let release,submitted;const form=await fixture('NodeDetails',{view:detail(root,'node'),actions:{editControl(_selection,_key,value){submitted=value;return new Promise(resolve=>release=resolve);}}});
+  try{const label=typed?'Schema const number':'Schema minimum';input(form.host,label,'2');await click(form.host,'Save Schema');assert.equal(JSON.parse(submitted)[typed?'const':'minimum'],2);
+   assert.equal(form.host.querySelector('[aria-label="'+label+'"]').disabled,true);for(const editor of form.host.querySelectorAll('[data-schema-control] input,[data-schema-control] select,[data-schema-control] textarea,[data-schema-control] button'))assert.equal(editor.disabled,true);
+   input(form.host,label,'-');root.nodes.node.schema=submitted;form.mounted.update({...detail(root,'node'),revision:'r2'});flushSync();await tick();release({ok:true});flushSync();await tick();form.mounted.update(null);flushSync();await tick();form.mounted.update({...detail(root,'node'),revision:'r2'});flushSync();await tick();assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,'2');assert.equal(form.host.querySelector('[aria-label="'+label+'"]').disabled,false);
+  }finally{if(release)release({ok:true});await form.close();}
+ }
+});
+
+test('pristine schema view follows authoritative revision and real Undo without stale Save',async()=>{
+ const root=graph();root.nodes.node={id:'node',type:'workflow',operation:'json-decode',phase:'post',mode:'parse',schema:'{"minimum":0}'};const f=controller(root),save=nativeSave(f),submitted=[],form=await fixture('NodeDetails',{view:detail(root,'node'),actions:{editControl(selection,key,value){submitted.push(value);return save(selection,key,value);}}});
+ try{assert.equal(form.host.querySelector('[aria-label="Schema minimum"]').value,'0');await click(form.host,'Edit Schema schema as JSON'); // View change alone is not authored text.
+  assert.equal(save(detail(root,'node'),'schema','{"minimum":7}').ok,true);f.refresh();form.mounted.update({...detail(root,'node'),revision:'r2'});flushSync();await tick();assert.equal(JSON.parse(form.host.querySelector('[aria-label="Schema schema JSON"]').value).minimum,7);await click(form.host,'Edit Schema schema as builder');assert.equal(form.host.querySelector('[aria-label="Schema minimum"]').value,'7');await click(form.host,'Save Schema');assert.equal(submitted.at(-1),'{"minimum":7}');
+  assert.ok(H.undo(root));assert.equal(root.nodes.node.schema,'{"minimum":0}');f.refresh();form.mounted.update({...detail(root,'node'),revision:'r3'});flushSync();await tick();assert.equal(form.host.querySelector('[aria-label="Schema minimum"]').value,'0');await click(form.host,'Save Schema');assert.equal(submitted.at(-1),'{"minimum":0}');assert.equal(H.undo(root),null);
+ }finally{await form.close();}
+});
+
+
+test('revision-expired Save acknowledgement cannot clear a newer invalid schema generation',async()=>{
+ for(const typed of [false,true]){
+  const root=graph();root.nodes.node={id:'node',type:'workflow',operation:'json-decode',phase:'post',mode:'parse',schema:typed?'{"const":0}':'{"minimum":0}'};let release,calls=0,submitted;const form=await fixture('NodeDetails',{view:detail(root,'node'),actions:{editControl(_selection,_key,value){calls++;submitted=value;return new Promise(resolve=>release=resolve);}}});
+  try{const label=typed?'Schema const number':'Schema minimum';input(form.host,label,'2');await click(form.host,'Save Schema');root.nodes.node.schema=submitted;form.mounted.update({...detail(root,'node'),revision:'r2'});flushSync();await tick();assert.equal(form.host.querySelector('[aria-label="'+label+'"]').disabled,false);input(form.host,label,'-');release({ok:true});flushSync();await tick();form.mounted.update(null);flushSync();await tick();form.mounted.update({...detail(root,'node'),revision:'r2'});flushSync();await tick();
+   const rejected=typed?'Schema const JSON':label;assert.equal(form.host.querySelector('[aria-label="'+rejected+'"]').value,'-');assert.equal(button(form.host,'Save Schema').disabled,true);await click(form.host,'Save Schema');assert.equal(calls,1);input(form.host,rejected,'3');assert.equal(button(form.host,'Save Schema').disabled,false);await click(form.host,'Edit Schema schema as JSON');assert.equal(JSON.parse(form.host.querySelector('[aria-label="Schema schema JSON"]').value)[typed?'const':'minimum'],3);
+  }finally{if(release)release({ok:true});await form.close();}
+ }
+});
