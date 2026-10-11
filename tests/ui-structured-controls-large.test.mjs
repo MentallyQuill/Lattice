@@ -104,3 +104,20 @@ test('64 substantial Compose sections retain exact content through typed Save an
         const scope = relative(resolve(tmpdir()), resolve(directory)); assert.ok(scope && scope.startsWith('lattice-large-details-') && !scope.startsWith('..') && !isAbsolute(scope)); await rm(directory, { recursive: true, force: true });
     }
 });
+
+
+test('128 Pattern expressions keep stable IDs and labels through typed reorder and Save',async()=>{
+ const {projectNodeControls}=await import('../src/ui/node-control-projection.js');
+ const original=Array.from({length:128},(_,i)=>({id:'pattern-'+(i+1),pattern:'term '+i,...(i%2?{label:'Label '+i}:{})}));
+ const control=projectNodeControls('pattern',{rules:original},{phase:'post'}).find(row=>row.key==='rules');
+ const initial={selectionKey:'pattern',revision:'1',address:{workflowId:'root',instancePath:[],nodeId:'pattern'},title:'Pattern',canonicalTitle:'Pattern',iconPath:'',family:'Data',phase:'post',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:[control],model:null,ports:[]};
+ const directory=await mkdtemp(join(tmpdir(),'lattice-large-details-')),host=document.createElement('div');document.body.append(host);let mounted,submitted;
+ try{
+  mounted=mount(await compiledDetails(directory),{target:host,props:{initial,actions:{editControl(_selection,key,value){assert.equal(key,'rules');submitted=value;return {ok:true};}}}});flushSync();await tick();
+  assert.equal(host.querySelectorAll('.pc-structured-row').length,128);assert.equal(host.querySelector('[aria-label="Add pattern"]').disabled,true);
+  const parse=JSON.parse,stringify=JSON.stringify;let parses=0,encodes=0;JSON.parse=function(...args){parses++;return parse.apply(this,args);};JSON.stringify=function(...args){encodes++;return stringify.apply(this,args);};
+  try{const editor=host.querySelector('[aria-label="Pattern 128 expression"]');editor.value='a{1,3}';editor.dispatchEvent(new dom.window.Event('input',{bubbles:true}));flushSync();host.querySelector('[aria-label="Move pattern 128 up"]').click();flushSync();assert.equal(parses,0);assert.equal(encodes,0);}finally{JSON.parse=parse;JSON.stringify=stringify;}
+  assert.equal(submitted,undefined);host.querySelector('[data-save-control="rules"]').click();flushSync();await tick();flushSync();
+  const expected=structuredClone(original);expected[127].pattern='a{1,3}';[expected[126],expected[127]]=[expected[127],expected[126]];assert.deepEqual(submitted,expected);assert.equal(submitted[126].id,'pattern-128');assert.equal(submitted[126].label,'Label 127');assert.deepEqual(control.value,original);
+ }finally{if(mounted)await unmount(mounted);host.remove();await rm(directory,{recursive:true,force:true});}
+});

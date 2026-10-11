@@ -1,3 +1,4 @@
+import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.27.0';
 import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.0';
 import { prepareAddSystem, projectSystemAuthoring } from '../workflow/system-authoring.js?v=0.27.0';
 import { vacantSystemPoint, preflightSystemViews, captureSystemPresentation, refreshSystemPresentation, restoreSystemViews } from './system-authoring-views.js?v=0.27.0';
@@ -1877,7 +1878,7 @@ function requestNodeCreation(capture, command, at = null, shelf = false) {
         documentScopeKey = globalThis.crypto.randomUUID(); nodeDocumentCaptures.set(documentScopeKey, captured.data);
         targets = captured.data.documents.map(({ content, ...summary }) => summary);
     }
-    const opened = configuredNodeSession.open(capture, command, { ...stage, targets, helpers: iterationHelperChoices(current), shelf, at, ...(documentScopeKey ? { documentScopeKey } : {}), ...(originPort ? { originKind: originPort.kind, originDirection: originPort.dir } : {}) });
+    const opened = configuredNodeSession.open(capture, command, { ...stage, targets, helpers: iterationHelperChoices(current, prepareNodeProfileOptions(readNodeProfileMetadata(ctx(), profiles()), activeModelMetadata(ctx())).map(option => ({ id: option.value, name: option.label }))), shelf, at, ...(documentScopeKey ? { documentScopeKey } : {}), ...(originPort ? { originKind: originPort.kind, originDirection: originPort.dir } : {}) });
     pendingConfiguredNode = opened.view; workbench?.update({ configureNode: opened.view });
     return opened.result.finally(() => { if (documentScopeKey) nodeDocumentCaptures.delete(documentScopeKey); if (pendingConfiguredNode?.key === opened.view.key) { pendingConfiguredNode = null; workbench?.update({ configureNode: null }); } });
 }

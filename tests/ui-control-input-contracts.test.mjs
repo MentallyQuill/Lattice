@@ -243,3 +243,64 @@ test('copied specs preserve field checks without requiring sibling save settings
         }
     }
 });
+
+
+test('wave-one row adapters preserve authored identities and metadata with exact bounds', async () => {
+    const adapters = await import('../src/ui/control-input-adapters.js').catch(() => null);
+    assert.ok(adapters, 'Pure row adapters are available');
+    const { readControlRows, writeControlRows, allocateControlRowId } = adapters;
+    const { projectNodeControls } = await import('../src/ui/node-control-projection.js');
+    const spec = (operation, key, controls = {}) => projectNodeControls(operation, controls, {}).find(control => control.key === key).inputSpec;
+    assert.equal(allocateControlRowId('pattern', ['pattern-1', 'pattern-3']), 'pattern-2');
+    for (const [operation, key, field, max] of [['pattern', 'rules', 'pattern', 128], ['extract', 'patterns', 'literal', 64]]) {
+        const original = [{ id: 'first', [field]: 'a{1,3}', label: 'Keep' }, { id: 'second', [field]: 'b', ...(operation === 'extract' ? { label: '' } : {}) }];
+        const input = spec(operation, key);
+        assert.deepEqual(readControlRows(input, original).data.rows, original);
+        const edited = writeControlRows(input, [{ ...original[0], [field]: 'changed' }, original[1]], original).data.value;
+        assert.equal(edited[0].id, original[0].id); assert.equal(edited[0].label, 'Keep');
+        const reordered = writeControlRows(input, [original[1], original[0]], original).data.value;
+        assert.equal(reordered[0].id, original[1].id);
+        assert.equal(writeControlRows(input, [original[0], original[0]]).ok, false);
+        assert.equal(writeControlRows(input, Array.from({ length: max }, (_, i) => ({ ...original[0], id: 'row-' + i }))).ok, true);
+        assert.equal(writeControlRows(input, Array.from({ length: max + 1 }, (_, i) => ({ ...original[0], id: 'row-' + i }))).ok, false);
+    }
+    for (const operation of ['join', 'collect', 'context-join']) {
+        const input = spec(operation, 'inputs');
+        const rows = [{ id: 'one', label: 'One', ...(operation !== 'context-join' ? { required: false } : {}) }];
+        assert.equal(writeControlRows(input, rows).ok, operation !== 'context-join');
+        assert.equal(writeControlRows(input, Array.from({ length: 16 }, (_, i) => ({ ...rows[0], id: 'slot-' + i }))).ok, true);
+        assert.equal(writeControlRows(input, Array.from({ length: 17 }, (_, i) => ({ ...rows[0], id: 'slot-' + i }))).ok, false);
+    }
+    const fields = [{ name: 'Optional', path: ['a.b,c', 0], required: false, default: null }];
+    assert.deepEqual(writeControlRows(spec('format', 'fields'), fields).data.value, fields);
+});
+
+test('wave-one projection selects friendly editors for every list and existing row family', async () => {
+    const { projectNodeControls } = await import('../src/ui/node-control-projection.js');
+    for (const [operation, key, structured] of [['pattern','rules','patterns'],['extract','patterns','extract'],['join','inputs','slots'],['collect','inputs','slots'],['context-join','inputs','slots'],['format','fields','fields'],['select-fields','fields','fields'],['compose','sections','sections'],['text-rules','rules','rules']]) {
+        const field = projectNodeControls(operation, {}, {}).find(control => control.key === key);
+        assert.equal(field?.structured, structured, operation + '.' + key);
+    }
+    const hotkey = projectNodeControls('hotkey-arm', {}, {}).find(control => control.key === 'hotkey').inputSpec;
+    for (const code of ['KeyR','Space','F13']) assert.equal(contracts.parseControlInput(hotkey, { format:'rows', value:{code,ctrl:true,alt:false,shift:false,meta:false} }).ok, false);
+    assert.equal(contracts.parseControlInput(hotkey, { format:'rows', value:{code:'KeyM',ctrl:false,alt:false,shift:true,meta:false} }).ok, false);
+    assert.equal(contracts.parseControlInput(hotkey, { format:'rows', value:{code:'F12',ctrl:false,alt:false,shift:false,meta:false} }).ok, true);
+});
+
+
+test('row adapters reject duplicate map names and hostile row data without silently collapsing them',async()=>{
+ const {writeControlRows}=await import('../src/ui/control-input-adapters.js');const {projectNodeControls}=await import('../src/ui/node-control-projection.js');
+ const spec=projectNodeControls('state',{mode:'value'},{}).find(row=>row.key==='updates').inputSpec;
+ assert.equal(writeControlRows(spec,[{name:'same',number:1},{name:'same',number:2}]).ok,false);
+ let touched=false;const row=Object.defineProperty({name:'value'},'number',{enumerable:true,get(){touched=true;return 1;}});
+ assert.equal(writeControlRows(spec,[row]).ok,false);assert.equal(touched,false);
+});
+
+
+test('prepared exact helper choices expose inspected roles and available profiles without rewriting pins',async()=>{
+ const {iterationHelperChoices}=await import('../src/ui/configured-node-creation.js');const {computeDefinitionIdentity,definitionRefKey}=await import('../src/workflow/definition-data.js');
+ const raw={id:'pinned',version:1,name:'Pinned decision',interface:[{id:'item',label:'Item',direction:'input',kind:'data',required:true,cardinality:'one',boundaryNodeId:'entry'},{id:'result',label:'Result',direction:'output',kind:'data',required:false,cardinality:'one',boundaryNodeId:'exit'}],parameters:[],body:{schema:3,runtime:2,mode:'native-unified',roles:{decision:{profileId:null,model:null}},nodes:{entry:{id:'entry',type:'subgraph-input',interfacePortId:'item'},exit:{id:'exit',type:'subgraph-output',interfacePortId:'result'},decide:{id:'decide',type:'workflow',operation:'decision',questions:{answer:{type:'noul',instructions:'Check the item.'}}}},wires:{a:{id:'a',route:'wire',from:'entry',fromPort:'out',to:'decide',toPort:'in'},b:{id:'b',route:'wire',from:'decide',fromPort:'out',to:'exit',toPort:'in'}}}};
+ const identity=computeDefinitionIdentity(raw);assert.equal(identity.ok,true);const definition={...identity.data.materializedDefinition,semanticHash:identity.data.semanticHash},ref={id:definition.id,version:definition.version,semanticHash:definition.semanticHash};
+ const root={definitions:{[definitionRefKey(ref)]:definition},roles:{}},before=structuredClone(root),choices=iterationHelperChoices(root,[{id:'chosen',name:'Chosen connection'}]);
+ assert.equal(choices.length,1);assert.deepEqual(choices[0].ref,ref);assert.deepEqual(choices[0].bindings.roles.map(row=>row.role),['decision']);assert.deepEqual(choices[0].bindings.roles[0].profile.options,[{value:'chosen',label:'Chosen connection'}]);assert.deepEqual(root,before);
+});

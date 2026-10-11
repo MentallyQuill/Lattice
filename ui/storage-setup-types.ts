@@ -2,5 +2,5 @@ import type { SavedStoryDocumentDefinition, StoryDocumentDefinition } from '../s
 export type SetupResponse = {ok:true;data?:{acknowledged?:boolean;message?:string}} | {ok:false;error:{code:string;message:string}};
 export interface StoryDocumentsView {key:string;revision:string;scope:{userId:string;chatId:string};documents:Omit<SavedStoryDocumentDefinition,'content'>[];issue:string;notice?:string}
 export interface StoryDocumentsActions {refresh():void;load(key:string,targetId:string):unknown;save(key:string,definition:StoryDocumentDefinition):unknown;remove(key:string,targetId:string):unknown}
-export interface ConfigureNodeView {key:string;operation:string;title:string;controls:string;fields?:import('./detail-types').DetailControl[];phase:'pre'|'post';phaseLocked:boolean;targets:{targetId:string;name:string;format:string}[];helpers:{key:string;label:string;ref:{id:string;version:number;semanticHash:string};stateful:boolean}[]}
+export interface ConfigureNodeView {key:string;operation:string;title:string;controls:string;fields?:import('./detail-types').DetailControl[];phase:'pre'|'post';phaseLocked:boolean;targets:{targetId:string;name:string;format:string}[];helpers:import('../src/ui/configured-node-creation').IterationHelperChoice[]}
 export interface ConfigureNodeActions {apply(key:string,controls:string,phase:'pre'|'post'):unknown;cancel(key:string):void}

@@ -1,6 +1,7 @@
 import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.27.0';
 import { projectNodeControls, detailControl } from './node-control-projection.js?v=0.27.0';
 import { preparedViewContentIdentity } from './graph-view-session.js?v=0.27.0';
+import { iterationHelperChoices } from './configured-node-creation.js?v=0.27.0';
 import { prepareIterationBindings } from './iteration-bindings.js?v=0.27.0';
 import { prepareDefinitionRegistry, inspectPreparedDefinition } from '../workflow/graph-validation.js?v=0.27.0';
 import { projectRunRows } from '../workflow/run-state.js?v=0.27.0';
@@ -55,7 +56,7 @@ export function prepareWorkspaceViews(root, options = {}) {
         const drawBase = prepareEditorDrawBase(view, root.definitions, nodeId => primitivePhases.get(addressKey({ workflowId: root.id, instancePath: view.instancePath, nodeId })));
         // Saved primitive null means inheritance; only an explicit enclosing
         // instance null map blocks it. Cache that source distinction with the view.
-        drawBase.iterationBindings = {}; drawBase.bindingBlocks = {}; drawBase.instanceBindingSources = {}; drawBase.profileDefaultModels = {}; drawBase.instanceBindingValues = {};
+        drawBase.iterationHelpers = iterationHelperChoices(root, helperProfiles); drawBase.iterationBindings = {}; drawBase.bindingBlocks = {}; drawBase.instanceBindingSources = {}; drawBase.profileDefaultModels = {}; drawBase.instanceBindingValues = {};
         const chain = view.instancePath.length ? definitionChain(root, view.instancePath) : [];
         let helperRoles=structuredClone(root.roles??{});
         for(const owner of chain){
@@ -206,7 +207,7 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
                 }).map(control=>{
                     const own=Object.hasOwn(saved,control.key)?saved[control.key]:control.value;
                     const effectiveValue=Object.hasOwn(effectiveNode,control.key)?effectiveNode[control.key]:control.value;
-                    return {...control,value:own,...(JSON.stringify(own)===JSON.stringify(effectiveValue)?{}:{effective:displayEffective(effectiveValue),source:'Effective instance override'})};
+                    return {...control,value:own,...(saved.operation==='for-each' && control.key==='helper' ? {helperChoices:(editor.prepared.drawBase.iterationHelpers??[]).filter(choice=>saved.mode!=='projected-state'||choice.stateful)} : {}),...(JSON.stringify(own)===JSON.stringify(effectiveValue)?{}:{effective:displayEffective(effectiveValue),source:'Effective instance override'})};
                 }) : [];
                 fields = freeze(structuredClone({ controls, ports: metadata?.ports.map(port => ({ id: port.port, label: port.label, direction: port.dir === 'in' ? 'input' : 'output', kind: port.kind })) ?? [] }));
                 fieldCache.set(fieldKey, fields);

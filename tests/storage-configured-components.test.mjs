@@ -75,7 +75,7 @@ test('creation discards incompatible Pattern mode drafts before returning to the
  const session=createConfiguredNodeSession({isCurrent:()=>true,prepare:(_capture,command)=>({ok:true,data:command})});
  const opened=session.open({}, {operation:'pattern'},{phase:'post',targets:[],helpers:[]});
  const f=await fixture('ConfigureNode',{view:opened.view,actions:{apply:(...args)=>session.apply(...args),cancel:key=>session.cancel(key)}});
- try {input(f.host,'Rules','{unfinished');f.host.querySelector('[aria-label="regex"]').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Rules"]').value,'[]');f.host.querySelector('[aria-label="literal"]').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Rules"]').value,'[]');}
+ try {f.host.querySelector('[aria-label="Edit Rules as JSON"]').click();flushSync();input(f.host,'Rules','{unfinished');f.host.querySelector('[aria-label="regex"]').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Rules"]').value,'[]');f.host.querySelector('[aria-label="literal"]').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Rules"]').value,'[]');}
  finally{session.cancel(opened.view.key);await opened.result;await f.close();}
 });
 
@@ -151,5 +151,40 @@ test('target and helper selection leave invalid Advanced JSON and current select
    assert.equal(f.host.querySelector('[aria-label="Node controls JSON"]').value,invalid);assert.equal(f.host.querySelector('[aria-label="'+picker+'"]').value,operation==='read-file'?'first.json':'first');assert.match(f.host.textContent,/JSON object/);assert.equal(applies,0);
    button(f.host,'Use form').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Node controls JSON"]').value,invalid);
   }finally{await f.close();}
+ }
+});
+
+
+test('creation helper binding selectors keep sparse values and unrelated advanced overrides',async()=>{
+ const ref={id:'helper',version:1,semanticHash:'sha256:'+'a'.repeat(64)},modes=[{value:'inherit',label:'Use helper model'},{value:'override',label:'Override'},{value:'block',label:'Use profile model'}];
+ const role={role:'decision',label:'Decision',profile:{mode:'inherit',value:null,allowedModes:modes.slice(0,2),options:[{value:'chosen',label:'Chosen connection'}]},model:{mode:'inherit',value:null,allowedModes:modes},effective:'Inherited',source:'Helper'};
+ let submitted;const f=await fixture('ConfigureNode',{view:{key:'bindings',title:'For Each',operation:'for-each',controls:JSON.stringify({helper:ref,mode:'map',roleOverrides:{other:{model:'keep'}}}),phase:'pre',phaseLocked:false,targets:[],helpers:[{key:'exact',label:'Pinned',ref,stateful:false,bindings:{helperKey:'exact',roles:[role]}}]},actions:{apply(_key,text){submitted=JSON.parse(text);return {ok:true};},cancel(){}}});
+ try{
+  input(f.host,'decision connection profile','chosen','change');input(f.host,'decision model mode','override','change');input(f.host,'decision model identifier','authored-model');
+  button(f.host,'Create node').click();await tick();flushSync();
+  assert.deepEqual(submitted.helper,ref);assert.deepEqual(submitted.roleOverrides,{other:{model:'keep'},decision:{profileId:'chosen',model:'authored-model'}});
+  button(f.host,'Advanced JSON').click();flushSync();const raw=f.host.querySelector('[aria-label="Node controls JSON"]');input(f.host,'Node controls JSON',JSON.stringify({...submitted,roleOverrides:{other:{model:'advanced'}}}));input(f.host,'decision connection profile','chosen','change');
+  assert.deepEqual(JSON.parse(raw.value).roleOverrides,{other:{model:'advanced'},decision:{profileId:'chosen',model:null}});
+ }finally{await f.close();}
+});
+
+test('editing renders exact pinned helper choices with a preserved Advanced JSON alternative',async()=>{
+ const {projectNodeControls}=await import('../src/ui/node-control-projection.js');
+ const first={id:'first',version:1,semanticHash:'sha256:'+'a'.repeat(64)},second={id:'second',version:2,semanticHash:'sha256:'+'b'.repeat(64)};
+ const control={...projectNodeControls('for-each',{helper:first},{phase:'pre'}).find(control=>control.key==='helper'),helperChoices:[{key:'first',label:'First v1',ref:first,stateful:false},{key:'second',label:'Second v2',ref:second,stateful:false}]};
+ let submitted;const f=await fixture('NodeDetails',{view:{selectionKey:'each',revision:'1',address:{workflowId:'root',instancePath:[],nodeId:'each'},title:'For Each',canonicalTitle:'For Each',iconPath:'',family:'Control',phase:'pre',operation:'for-each',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:[control],model:null,ports:[]},actions:{editControl(_selection,key,value){submitted={key,value};return {ok:true};}}});
+ try{input(f.host,'Pinned Data helper','second','change');await tick();flushSync();assert.deepEqual(submitted,{key:'helper',value:second});assert.ok(f.host.querySelector('textarea[aria-label="Helper"]'));}
+ finally{await f.close();}
+});
+
+
+test('Pattern terms mode compiles friendly drafts through the shared creation and editing Save path',async()=>{
+ const {projectNodeControls}=await import('../src/ui/node-control-projection.js');
+ for(const creation of [true,false]){
+  let submitted;const control=projectNodeControls('pattern',{}, {phase:'post'}).find(control=>control.key==='rules');
+  const props=creation?{view:{key:'terms-pattern',operation:'pattern',title:'Pattern',controls:'{}',phase:'post',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){submitted=JSON.parse(text).rules;return {ok:true};},cancel(){}}}:{view:{selectionKey:'pattern',revision:'1',address:{workflowId:'root',instancePath:[],nodeId:'pattern'},title:'Pattern',canonicalTitle:'Pattern',iconPath:'',family:'Data',phase:'post',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:[control],model:null,ports:[]},actions:{editControl(_selection,_key,value){submitted=value;return {ok:true};}}};
+  const f=await fixture(creation?'ConfigureNode':'NodeDetails',props);
+  try{const label=control.label,terms=button(f.host,'Use '+label+' terms');assert.ok(terms,f.host.textContent);terms.click();flushSync();input(f.host,label,'though,"red, blue"');button(f.host,creation?'Create node':'Save '+label).click();await tick();flushSync();assert.deepEqual(submitted,[{id:'pattern-1',pattern:'though'},{id:'pattern-2',pattern:'red, blue'}]);}
+  finally{await f.close();}
  }
 });

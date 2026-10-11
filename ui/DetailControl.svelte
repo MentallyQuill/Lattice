@@ -3,27 +3,40 @@
     import type {ControlInputFormat} from '../src/ui/control-input-contracts';
     import type {JsonValue} from '../src/workflow/operations/json-data';
     import DiagnosticMessage from './DiagnosticMessage.svelte';
+    import TermListControl from './TermListControl.svelte';
+    import HotkeyControl from './HotkeyControl.svelte';
     import StructuredControl from './StructuredControl.svelte';
     import type { DetailControl } from './detail-types';
     let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, onvalue, onnumber, onsave, saveButton = true, format = 'auto', onformat }: {
         control: DetailControl; text: string; saveButton?: boolean; format?: ControlInputFormat; onformat?: (format:ControlInputFormat)=>void; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
         ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; onvalue: (value: unknown) => void; onnumber: (input: HTMLInputElement) => void; onsave: () => void;
     } = $props();
+    let termMode = $state(false);
+    let switchError = $state('');
+    const recordEntry = $derived(['patterns','extract'].includes(control.structured ?? ''));
+    function switchRows() {
+        if(disabled || !control.inputSpec) return;
+        if(termMode) { const result = parseControlInput(control.inputSpec,draftValue===undefined?{format,text,currentValue:control.value as JsonValue}:{format:'rows',value:draftValue as JsonValue,currentValue:control.value as JsonValue}); if(!result.ok) {switchError=result.error.message;return;} if(onDraft)onDraft(result.data.value);else ontext(JSON.stringify(result.data.value,null,2)); }
+        termMode=!termMode;switchError='';
+    }
     const entry = $derived(control.inputSpec?.editor === 'list');
-    const parsed = $derived(entry && control.inputSpec ? parseControlInput(control.inputSpec,{format,text,currentValue:control.value as JsonValue}) : null);
     const shortChoices = () => control.editor === 'enum' && (control.options?.length ?? 0) > 1 && (control.options?.length ?? 0) <= 3 && control.options!.every(option => option.label.length <= 10);
     const provenance = () => control.effective !== undefined && control.effective !== text && control.source !== 'Saved setting' ? control.source : '';
 </script>
 
 <div class:pc-control-number={control.editor === 'number'} class="pc-detail-control">
-    {#if entry}
-        <label for={idPrefix + '-editor'}>{control.label}</label>
-        <select aria-label={control.label+' input format'} value={format} {disabled} onchange={event=>onformat?.(event.currentTarget.value as ControlInputFormat)}><option value="auto">Terms / CSV</option><option value="plain">Plain text</option><option value="json">Advanced JSON</option></select>
-        <textarea id={idPrefix + '-editor'} aria-label={control.label} value={text} {disabled} aria-invalid={!!error} oninput={event=>{if(!disabled)ontext(event.currentTarget.value);}}></textarea>
-        <small>Separate terms with commas or newlines. Quote phrases containing commas.</small>
-        {#if parsed?.ok}<small data-control-items>{parsed.data.displayItems?.length??0} entries{#if parsed.data.displayItems?.length}: {parsed.data.displayItems.join(' · ')}{/if}</small>{#each parsed.data.warnings as warning}<small>{warning}</small>{/each}{/if}
+    {#if entry || recordEntry && termMode}
+        {#if recordEntry}<button type="button" aria-label={'Use '+control.label+' rows'} {disabled} onclick={switchRows}>Use rows</button>{/if}
+        <TermListControl {control} {text} {format} {draftValue} {disabled} {idPrefix} {error} {ontext} {onformat} />
+        {#if switchError}<small role="status">{switchError}</small>{/if}
+    {:else if control.inputSpec?.id === 'for-each.helper' && control.helperChoices}
+        <label for={idPrefix+'-helper'}>Pinned Data helper</label><select id={idPrefix+'-helper'} aria-label="Pinned Data helper" value={control.helperChoices.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(control.value))?.key??''} {disabled} onchange={event=>{if(!disabled){const choice=control.helperChoices?.find(choice=>choice.key===event.currentTarget.value);if(choice)onvalue(choice.ref);}}}><option value="">Choose an existing item/result helper</option>{#each control.helperChoices as choice (choice.key)}<option value={choice.key}>{choice.label} · v{choice.ref.version}</option>{/each}</select>
+        <details><summary>Advanced JSON</summary><label for={idPrefix+'-helper-json'}>{control.label} (JSON)</label><textarea id={idPrefix+'-helper-json'} aria-label={control.label} value={text} {disabled} aria-invalid={!!error} aria-describedby={error?idPrefix+'-error':undefined} oninput={event=>{if(!disabled)ontext(event.currentTarget.value);}}></textarea></details>
+    {:else if control.inputSpec?.editor === 'hotkey'}
+        <span class="pc-control-label">{control.label}</span><HotkeyControl {control} {text} {draftValue} {disabled} {idPrefix} {error} {ontext} {onDraft} />
     {:else if control.structured && control.editor === 'json'}
         <span class="pc-control-label">{control.label}</span>
+        {#if recordEntry}<button type="button" aria-label={'Use '+control.label+' terms'} {disabled} onclick={switchRows}>Terms / CSV</button>{/if}
         <StructuredControl {control} {text} {disabled} {ontext} {onDraft} {draftValue} {idPrefix} {error} />
     {:else if control.editor === 'boolean'}
         <label class="pc-detail-check"><input aria-label={control.label} type="checkbox" checked={Boolean(control.value)} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.checked); }} />{control.label}</label>

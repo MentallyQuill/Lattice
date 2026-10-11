@@ -17,7 +17,8 @@ async function compiled(name, directory, source) {
     const output = compile(source, { filename: name + '.svelte', generate: 'client', css: 'injected' });
     assert.deepEqual(output.warnings.filter(warning => warning.code.startsWith('a11y')), []);
     const code = output.js.code.replace(/(['"])(svelte(?:\/[^'"]*)?)\1/g, (_, quote, specifier) => JSON.stringify(specifier === 'svelte' ? clientURL : import.meta.resolve(specifier)));
-    const path = join(directory, name + '.mjs'); await writeFile(path, code);
+    const resolvedCode = code.replace(/from\s+(['"])(\.\.[^'"]+)\1/g, (_, quote, specifier) => 'from ' + JSON.stringify(new URL(specifier, new URL('../ui/', import.meta.url)).href));
+    const path = join(directory, name + '.mjs'); await writeFile(path, resolvedCode);
     return { path, component: (await import(pathToFileURL(path).href)).default };
 }
 async function fixture(kind, initial, check, extra = {}) {
@@ -258,4 +259,51 @@ test('section rows expose Guidance, required and skipped policy through raw and 
             assert.deepEqual(JSON.parse(f.host.querySelector('[aria-label="sections"]').value), result);
         }
     }, { control: { typedMode } });
+});
+
+
+test('Pattern and Extract expression rows keep exact text, IDs and optional labels', async () => {
+    for (const [kind, field, extra] of [['patterns','pattern',{}],['extract','literal',{label:''}]]) await fixture(kind, JSON.stringify([{id:'pattern-1',[field]:'a{1,3}',label:'Keep'},{id:'pattern-3',[field]:'b',...extra}]), async f => {
+        input(f.host, 'Pattern 1 ' + (field === 'pattern' ? 'expression' : 'phrase'), 'edited{1,4}');
+        click(f.host, 'Move pattern 2 up');
+        const rows = JSON.parse(f.read().text); assert.equal(rows[0].id,'pattern-3'); assert.equal(rows[1].id,'pattern-1'); assert.equal(rows[1][field],'edited{1,4}'); assert.equal(rows[1].label,'Keep');
+        click(f.host, 'Add pattern'); assert.equal(JSON.parse(f.read().text)[2].id,'pattern-2');
+    });
+});
+
+test('Join slots use their own minimum and preserve required flags on label edits', async () => {
+    await fixture('slots','[{"id":"one","label":"One","required":false}]',async f=>{
+        input(f.host,'Slot 1 label','Changed'); assert.deepEqual(JSON.parse(f.read().text),[{id:'one',label:'Changed',required:false}]);
+        assert.equal(f.host.querySelector('[aria-label="Remove slot 1"]').disabled,true);
+        click(f.host,'Add slot'); assert.equal(JSON.parse(f.read().text)[1].required,true);
+        click(f.host,'Remove slot 1'); assert.equal(JSON.parse(f.read().text).length,1);
+    },{control:{inputSpec:{id:'join.inputs',version:1,editor:'rows',formats:['auto','json','rows'],storage:'json-value',limits:{maxItems:16}}}});
+});
+
+
+async function leafFixture(name, props, check) {
+    const directory=await mkdtemp(join(tmpdir(),'lattice-structured-controls-')),host=document.createElement('div');document.body.append(host);let mounted;
+    try {
+        const leaf=await compiled(name,directory,await readFile(new URL('../ui/'+name+'.svelte',import.meta.url),'utf8'));
+        const changes=[];mounted=mount(leaf.component,{target:host,props:{...props,ontext:value=>changes.push(value),onDraft:value=>changes.push(value),onformat:()=>{}}});flushSync();
+        await check(host,changes);
+    } finally {if(mounted)await unmount(mounted);host.remove();await rm(directory,{recursive:true,force:true});}
+}
+test('terms show parsed entries before Save and explain nonrepresentable Plain text exports',async()=>{
+    const {projectNodeControls}=await import('../src/ui/node-control-projection.js');
+    const control=projectNodeControls('pattern',{},{}).find(row=>row.key==='protectedLiterals');
+    const source='001,"red, blue","say ""hello"""';
+    await leafFixture('TermListControl',{control,text:source,format:'auto',idPrefix:'terms'},async(host,changes)=>{
+        assert.match(host.querySelector('[data-control-items]').textContent,/3 entries/);assert.match(host.textContent,/001/);assert.match(host.textContent,/red, blue/);
+        click(host,'Export '+control.label+' as Plain text');assert.match(host.textContent,/one entry/);assert.equal(changes.length,0);
+        click(host,'Export '+control.label+' as Advanced JSON');assert.deepEqual(JSON.parse(changes[0]),['001','red, blue','say "hello"']);
+    });
+});
+test('hotkeys expose physical keys and preserve exact modifier states without accepting unknown advanced shape',async()=>{
+    const {projectNodeControls}=await import('../src/ui/node-control-projection.js');const control=projectNodeControls('hotkey-arm',{},{}).find(row=>row.key==='hotkey');
+    const value={code:'KeyM',ctrl:true,alt:false,shift:false,meta:false};
+    await leafFixture('HotkeyControl',{control,text:JSON.stringify(value),idPrefix:'hotkey'},async(host,changes)=>{
+        assert.equal(host.querySelector('[aria-label="Physical key"]').value,'KeyM');input(host,'Alt',true,'change');assert.deepEqual(changes[0],{...value,alt:true});
+    });
+    await leafFixture('HotkeyControl',{control,text:JSON.stringify({...value,extra:true}),idPrefix:'hotkey'},async(host,changes)=>{assert.ok(host.querySelector('textarea'));assert.match(host.textContent,/Advanced JSON/);assert.equal(changes.length,0);});
 });

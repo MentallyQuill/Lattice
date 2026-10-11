@@ -17,7 +17,8 @@ interface DetailControlBase {
     options?: { value: string; label: string }[]; min?: number; max?: number; step?: number | 'any';
     effective?: string; source?: string; help?: string; exposureNote?: string;
     group?: string; advanced?: boolean; singleLine?: boolean;
-    structured?: 'rules' | 'fields' | 'sections' | 'slots' | 'numeric-map' | 'durations';
+    helperChoices?: import('../src/ui/configured-node-creation').IterationHelperChoice[];
+    structured?: 'rules' | 'fields' | 'sections' | 'slots' | 'numeric-map' | 'durations' | 'patterns' | 'extract';
 }
 export type DetailControl = DetailControlBase & (
     /** JSON-text returns the original text; json-value returns JSON.parse(text). */

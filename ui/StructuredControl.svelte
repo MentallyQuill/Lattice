@@ -1,35 +1,25 @@
 <script lang="ts">
+    import { readControlRows, allocateControlRowId } from '../src/ui/control-input-adapters.js';
+    import type { JsonValue } from '../src/workflow/operations/json-data';
     import type { DetailControl } from './detail-types';
     type StructuredDetailControl = DetailControl & { structured?: string };
     type Row = Record<string, unknown>;
     let { control, text, disabled = false, ontext, onDraft, draftValue, idPrefix, error = '' }: { control: StructuredDetailControl; text: string; disabled?: boolean; ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; idPrefix: string; error?: string } = $props();
     const phases = ['onset', 'peak', 'plateau', 'decline', 'aftermath'];
-    function supportedFlags(row: Row) {
-        if (!Object.hasOwn(row, 'flags')) return true;
-        if (typeof row.flags !== 'string') return false;
-        return [...row.flags].every(flag => (row.kind === 'regex' ? 'imsu' : 'iu').includes(flag)) && new Set(row.flags).size === row.flags.length;
-    }
     function finiteJson(value: unknown): boolean {
         if (typeof value === 'number') return Number.isFinite(value);
         if (Array.isArray(value)) return value.every(finiteJson);
         return value === null || typeof value !== 'object' || Object.values(value).every(finiteJson);
     }
-    function record(value: unknown): value is Row { return value !== null && typeof value === 'object' && !Array.isArray(value); }
-    let rowName = $derived(control.structured === 'fields' ? 'field' : control.structured === 'sections' ? 'section' : control.structured === 'slots' ? 'slot' : control.structured === 'numeric-map' ? 'value' : control.structured === 'durations' ? 'duration' : 'rule');
-    let rowLimit = $derived(control.structured === 'fields' ? 128 : control.structured === 'slots' ? 16 : control.structured === 'numeric-map' ? 32 : control.structured === 'durations' ? 5 : 64);
-    let rowMinimum = $derived(control.structured === 'slots' ? 2 : 0);
+    let rowName = $derived(control.structured === 'fields' ? 'field' : control.structured === 'sections' ? 'section' : control.structured === 'slots' ? 'slot' : control.structured === 'numeric-map' ? 'value' : control.structured === 'durations' ? 'duration' : ['patterns','extract'].includes(control.structured ?? '') ? 'pattern' : 'rule');
+    let rowLimit = $derived(control.inputSpec?.limits.maxItems ?? (control.structured === 'fields' || control.structured === 'patterns' ? 128 : control.structured === 'slots' ? 16 : control.structured === 'numeric-map' ? 32 : control.structured === 'durations' ? 5 : 64));
+    let rowMinimum = $derived(control.structured === 'slots' ? ['join.inputs','collect.inputs'].includes(control.inputSpec?.id ?? '') ? 1 : 2 : 0);
     function parseRows(): Row[] | null {
         try {
-            const value: unknown = draftValue === undefined ? JSON.parse(text) : draftValue;
-            if (!finiteJson(value)) return null;
-            if (control.structured === 'durations') return record(value) && Object.entries(value).every(([phase, duration]) => phases.includes(phase) && Number.isSafeInteger(duration) && Number(duration) >= 1 && Number(duration) <= 64) ? Object.entries(value).map(([name, number]) => ({ name, number })) : null;
-            if (control.structured === 'numeric-map') return record(value) && Object.keys(value).length <= 32 && Object.values(value).every(number => typeof number === 'number' && Number.isFinite(number)) ? Object.entries(value).map(([name, number]) => ({ name, number })) : null;
-            if (!Array.isArray(value) || value.length > rowLimit) return null;
-            if (control.structured === 'fields') return value.every(row => record(row) && Object.keys(row).every(key => ['name', 'path', 'required', 'default'].includes(key)) && typeof row.name === 'string' && Array.isArray(row.path) && row.path.every(part => typeof part === 'string' || (Number.isSafeInteger(part) && part >= 0)) && (!Object.hasOwn(row, 'required') || typeof row.required === 'boolean')) ? value : null;
-            if (control.structured === 'sections') return value.every(row => record(row) && Object.keys(row).every(key => ['name', 'text', 'kind', 'required', 'onSkipped'].includes(key)) && typeof row.name === 'string' && typeof row.text === 'string' && (row.kind === undefined || ['text', 'guidance'].includes(String(row.kind))) && (row.required === undefined || typeof row.required === 'boolean') && (row.onSkipped === undefined || ['fallback', 'omit'].includes(String(row.onSkipped)))) ? value : null;
-            if (control.structured === 'slots') return value.length >= 2 && value.every(row => record(row) && Object.keys(row).every(key => ['id', 'label'].includes(key)) && typeof row.id === 'string' && typeof row.label === 'string') ? value : null;
-            if (control.structured !== 'rules') return null;
-            return value.every(row => record(row) && Object.keys(row).every(key => ['kind', 'pattern', 'replacement', 'flags'].includes(key)) && ['literal', 'regex'].includes(String(row.kind)) && typeof row.pattern === 'string' && (!Object.hasOwn(row, 'replacement') || typeof row.replacement === 'string') && supportedFlags(row)) ? value : null;
+            const value = draftValue === undefined ? JSON.parse(text) : draftValue;
+            const id = ({fields:'select-fields.fields',sections:'compose.sections',slots:'context-join.inputs','numeric-map':'state.updates',durations:'state.durations',rules:'text-rules.rules',patterns:'pattern.rules:literal',extract:'extract.patterns'} as Record<string,string>)[control.structured ?? ''];
+            const result = readControlRows(control.inputSpec ?? {id,version:1,editor:'rows',formats:['rows','json'],storage:'json-value',limits:{maxItems:rowLimit}}, value as JsonValue);
+            return result.ok ? result.data.rows as Row[] : null;
         } catch { return null; }
     }
     let rows = $derived(parseRows());
@@ -45,8 +35,9 @@
     }
     function add() {
         if (disabled || !rows || rows.length >= rowLimit) return;
-        let suffix = 1; while (rows.some(row => row.name === rowName + suffix || row.id === 'context-' + suffix)) suffix++;
-        emitRows([...rows, control.structured === 'fields' ? { name: rowName + suffix, path: [] } : control.structured === 'sections' ? { name: rowName + suffix, text: '' } : control.structured === 'slots' ? { id: 'context-' + suffix, label: 'Context ' + suffix } : control.structured === 'numeric-map' ? { name: rowName + suffix, number: 0 } : control.structured === 'durations' ? { name: phases.find(phase => !rows.some(row => row.name === phase)), number: 1 } : { kind: 'literal', pattern: 'text', replacement: '' }]);
+        let suffix = 1; while (rows.some(row => row.name === rowName + suffix)) suffix++;
+        const id = allocateControlRowId(control.structured === 'slots' ? rowMinimum === 2 ? 'context' : 'slot' : 'pattern', rows.map(row => String(row.id)));
+        emitRows([...rows, control.structured === 'fields' ? { name: rowName + suffix, path: [] } : control.structured === 'sections' ? { name: rowName + suffix, text: '' } : control.structured === 'slots' ? { id, label: 'Input ' + id.split('-').at(-1), ...(rowMinimum === 1 ? {required:true} : {}) } : control.structured === 'numeric-map' ? { name: rowName + suffix, number: 0 } : control.structured === 'durations' ? { name: phases.find(phase => !rows.some(row => row.name === phase)), number: 1 } : control.structured === 'patterns' ? {id,pattern:'text'} : control.structured === 'extract' ? {id,literal:'text',label:''} : { kind: 'literal', pattern: 'text', replacement: '' }]);
     }
     function numberField(index: number, input: HTMLInputElement) {
         const value = input.valueAsNumber;
@@ -90,10 +81,10 @@
 </script>
 
 <div class="pc-structured-control" data-structured-control={control.structured}>
-    <div class="pc-structured-mode"><button type="button" aria-label={'Edit ' + control.label + (editingRaw ? ' as rows' : ' as JSON')} disabled={disabled || (editingRaw && !rows)} onclick={() => { if (!disabled && rows) raw = !editingRaw; }}>{editingRaw ? 'Use rows' : 'Edit JSON'}</button></div>
+    <div class="pc-structured-mode"><button type="button" aria-label={'Edit ' + control.label + (editingRaw ? ' as rows' : ' as JSON')} disabled={disabled || (editingRaw && !rows)} onclick={() => { if (!disabled && rows) raw = !editingRaw; }}>{editingRaw ? 'Use rows' : 'Advanced JSON'}</button></div>
     {#if editingRaw}
         <label for={idPrefix + '-raw'}>{control.label} (JSON)</label><textarea class="pc-structured-raw" id={idPrefix + '-raw'} aria-label={control.label} aria-invalid={!!error} aria-describedby={error ? idPrefix + '-error' : undefined} value={rawText} {disabled} oninput={event => rawInput(event.currentTarget.value)} spellcheck="false"></textarea>
-        {#if !rows}<small>Rows are available when this JSON has a supported shape.</small>{/if}
+        {#if !rows}<small>This shape needs Advanced JSON. Authored values are retained; rows are available for supported shapes.</small>{/if}
     {:else if rows}
         <div class="pc-structured-rows">
             {#each rows as row, index}
@@ -110,9 +101,14 @@
                         <label class="pc-structured-check"><input type="checkbox" aria-label={'Field ' + (index + 1) + ' required'} checked={row.required !== false} {disabled} onchange={event => change(index, 'required', event.currentTarget.checked)} /> Required</label>
                         <label class="pc-structured-check"><input type="checkbox" aria-label={'Field ' + (index + 1) + ' use default'} checked={Object.hasOwn(row, 'default')} {disabled} onchange={event => useDefault(index, event.currentTarget.checked)} /> Use default when missing</label><small>Defaults apply when Required is off.</small>
                         {#if Object.hasOwn(row, 'default')}<label for={idPrefix + '-default-' + index}>Default (JSON)</label><textarea id={idPrefix + '-default-' + index} aria-label={'Field ' + (index + 1) + ' default (JSON)'} value={JSON.stringify(row.default, null, 2)} {disabled} onchange={event => jsonField(index, 'default', event.currentTarget.value)}></textarea>{/if}
+                    {:else if control.structured === 'patterns' || control.structured === 'extract'}
+                        <label for={idPrefix + '-pattern-id-' + index}>ID</label><input id={idPrefix + '-pattern-id-' + index} aria-label={'Pattern ' + (index + 1) + ' ID'} value={String(row.id)} {disabled} oninput={event => change(index, 'id', event.currentTarget.value)} />
+                        <label for={idPrefix + '-phrase-' + index}>{control.structured === 'extract' ? 'Phrase' : 'Expression'}</label><input id={idPrefix + '-phrase-' + index} aria-label={'Pattern ' + (index + 1) + (control.structured === 'extract' ? ' phrase' : ' expression')} value={String(row[control.structured === 'extract' ? 'literal' : 'pattern'])} {disabled} oninput={event => change(index, control.structured === 'extract' ? 'literal' : 'pattern', event.currentTarget.value)} />
+                        <label for={idPrefix + '-label-' + index}>Label (optional)</label><input id={idPrefix + '-label-' + index} aria-label={'Pattern ' + (index + 1) + ' label'} value={String(row.label ?? '')} {disabled} oninput={event => change(index, 'label', event.currentTarget.value)} />
                     {:else if control.structured === 'slots'}
                         <label for={idPrefix + '-slot-id-' + index}>ID</label><input id={idPrefix + '-slot-id-' + index} aria-label={'Slot ' + (index + 1) + ' ID'} value={String(row.id)} maxlength="128" {disabled} oninput={event => change(index, 'id', event.currentTarget.value)} />
                         <label for={idPrefix + '-slot-label-' + index}>Label</label><input id={idPrefix + '-slot-label-' + index} aria-label={'Slot ' + (index + 1) + ' label'} value={String(row.label)} maxlength="80" {disabled} oninput={event => change(index, 'label', event.currentTarget.value)} />
+                        {#if rowMinimum === 1}<label class="pc-structured-check"><input type="checkbox" aria-label={'Slot ' + (index + 1) + ' required'} checked={row.required === true} {disabled} onchange={event => change(index, 'required', event.currentTarget.checked)} /> Required</label>{/if}
                     {:else if control.structured === 'sections'}
                         <label for={idPrefix + '-name-' + index}>Name</label><input id={idPrefix + '-name-' + index} aria-label={'Section ' + (index + 1) + ' name'} value={String(row.name)} {disabled} oninput={event => change(index, 'name', event.currentTarget.value)} />
                         <label for={idPrefix + '-text-' + index}>Text</label><textarea id={idPrefix + '-text-' + index} aria-label={'Section ' + (index + 1) + ' text'} value={String(row.text)} {disabled} oninput={event => change(index, 'text', event.currentTarget.value)}></textarea>

@@ -12,7 +12,7 @@ export function projectNodeControls(operation, controls = {}, { phase, readOnly 
   const value = Object.hasOwn(controls, key) ? controls[key] : metadata.defaults[key] ?? descriptor.default;
   const labeled = ['recall','hotkey-arm'].includes(operation) && descriptor.values ? {...descriptor, valueLabels:Object.fromEntries(descriptor.values.map(value=>[value,recallControlLabel(key,value)??value]))} : descriptor;
   const inputSpec=resolveControlInputSpec({operation, controls:node, key, descriptor});
-  return {...detailControl(key, descriptor.label || friendlyControlLabel(key), labeled, value), ...detailPresentation(operation,key), ...(inputSpec.editor==='path'?{editor:'json',representation:'json-value'}:{}), inputSpec, readOnly};
+  return {...detailControl(key, descriptor.label || friendlyControlLabel(key), labeled, value), ...detailPresentation(operation,key), ...(['path','rows'].includes(inputSpec.editor)?{editor:'json',representation:'json-value'}:{}), inputSpec, readOnly};
  });
 }
 export function detailControl(key,label,descriptor,value) {
@@ -31,10 +31,12 @@ function detailPresentation(operation, key) {
  if (operation === 'read-file' && ['schema', 'columns'].includes(key)) return {group:'Validation', advanced:true};
  if (operation === 'read-file' && ['actorScope', 'actorId'].includes(key)) return {group:'Actor access', advanced:true, ...(key === 'actorId' ? {singleLine:true} : {})};
  const structured = key === 'sections' && operation === 'compose' ? 'sections'
-  : key === 'fields' && operation === 'select-fields' ? 'fields'
+  : key === 'fields' && ['select-fields','format'].includes(operation) ? 'fields'
   : key === 'rules' && operation === 'text-rules' ? 'rules'
-  : key === 'inputs' && operation === 'context-join' ? 'slots'
+  : key === 'inputs' && ['context-join','join','collect'].includes(operation) ? 'slots'
   : key === 'updates' && operation === 'state' ? 'numeric-map'
+  : key === 'rules' && operation === 'pattern' ? 'patterns'
+  : key === 'patterns' && operation === 'extract' ? 'extract'
   : key === 'durations' ? 'durations' : undefined;
  const group = ['pins','protectedLiterals','exemptions'].includes(key) ? 'Protections'
   : ['min','max','baseline','decay'].includes(key) ? 'Bounds'

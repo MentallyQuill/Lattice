@@ -1,3 +1,4 @@
+import {prepareIterationBindings} from './iteration-bindings.js?v=0.27.0';
 import {projectNodeControls} from './node-control-projection.js?v=0.27.0';
 import {OPERATIONS,operationDefaults,describeOperation} from '../workflow/catalog.js?v=0.27.0';
 import {cloneDefinitionData,definitionRefKey} from '../workflow/definition-data.js?v=0.27.0';
@@ -37,8 +38,8 @@ export function configuredCreationStage(operation,mode,effectivePhase,inDefiniti
  const declared=OPERATIONS[operation]?.phase,containerStage=inDefinition&&['native-pre','native-post'].includes(mode)?mode.slice(7):null;
  return {phase:containerStage??(['pre','post'].includes(declared)?declared:effectivePhase==='post'?'post':'pre'),phaseLocked:!!containerStage||['pre','post'].includes(declared)};
 }
-export function iterationHelperChoices(root){
- const choices=[];for(const [key,definition] of Object.entries(root?.definitions??{})){const checked=inspectDefinitionGraph(definition,root.definitions);if(!checked.ok)continue;const ports=checked.data.interface;if(!ports.some(port=>port.id==='item'&&port.direction==='input'&&port.kind==='data'&&port.required===true)||!ports.some(port=>port.id==='result'&&port.direction==='output'&&port.kind==='data')||ports.some(port=>port.kind!=='data'||!['item','result','projectedState','nextState'].includes(port.id)||['item','projectedState'].includes(port.id)!==(port.direction==='input')))continue;choices.push({key,label:definition.name,ref:checked.data.ref,stateful:ports.some(port=>port.id==='projectedState'&&port.direction==='input')&&ports.some(port=>port.id==='nextState'&&port.direction==='output')});}return freeze(choices);
+export function iterationHelperChoices(root,profiles=[]){
+ const choices=[];for(const [key,definition] of Object.entries(root?.definitions??{})){const checked=inspectDefinitionGraph(definition,root.definitions);if(!checked.ok)continue;const ports=checked.data.interface;if(!ports.some(port=>port.id==='item'&&port.direction==='input'&&port.kind==='data'&&port.required===true)||!ports.some(port=>port.id==='result'&&port.direction==='output'&&port.kind==='data')||ports.some(port=>port.kind!=='data'||!['item','result','projectedState','nextState'].includes(port.id)||['item','projectedState'].includes(port.id)!==(port.direction==='input')))continue;choices.push({key,label:definition.name,ref:checked.data.ref,stateful:ports.some(port=>port.id==='projectedState'&&port.direction==='input')&&ports.some(port=>port.id==='nextState'&&port.direction==='output'),bindings:prepareIterationBindings({helper:checked.data.ref,roleOverrides:{}},root.definitions,profiles,root.roles??{})});}return freeze(choices);
 }
 export function validateConfiguredNodeControls(operation,text,options){
  try{if(typeof text!=='string'||text.length>200000)return fail('INVALID_CONFIGURATION','Controls must be a bounded JSON object.');const raw=JSON.parse(text),checked=cloneDefinitionData(raw),base=OPERATIONS[operation];if(!checked.ok||!base||!raw||Array.isArray(raw)||typeof raw!=='object'||Object.keys(raw).some(key=>!base.controls.includes(key)))return fail('INVALID_CONFIGURATION','Use only declared node controls in the JSON object.');

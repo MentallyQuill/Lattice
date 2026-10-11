@@ -11,6 +11,7 @@
  let {view,actions}:{view:ConfigureNodeView;actions?:ConfigureNodeActions}=$props();
  type Draft={text?:string;value?:unknown;format?:ControlInputFormat;contract:string;error?:string};
  let dialog:HTMLDivElement,data=$state<Record<string,unknown>>({}),drafts=$state<Record<string,Draft>>({}),controls=$state(''),advanced=$state(false),phase=$state<'pre'|'post'>('pre'),target=$state(''),helper=$state(''),pending=$state(false),failure=$state('');let capture='',generation=0,advancedBaseline:Record<string,unknown>={};
+ const selectedHelper=$derived(view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(data.helper)));
  const fields=$derived(projectNodeControls(view.operation,data,{phase}));
  const usesDocument=$derived(view.operation==='read-file'||view.operation==='story-clock'||view.operation==='commit-outcomes');
  const contract=(control:DetailControl)=>JSON.stringify([control.inputSpec?.id,control.inputSpec?.version,control.editor,control.representation]);
@@ -22,6 +23,25 @@
   let source=$state.snapshot(data);
   if(advanced){try{const parsed=JSON.parse(controls);if(!parsed||Array.isArray(parsed)||typeof parsed!=='object')throw Error();source=parsed;}catch{failure='Use a JSON object before selecting a configured value.';target=String(data.targetId??data.clockId??'');helper=view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(data.helper))?.key??'';return;}}
   data={...source,[key]:value};failure='';const next=projectNodeControls(view.operation,data,{phase});drafts=Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>next.some(control=>control.key===key&&contract(control)===draft.contract)));if(advanced)controls=JSON.stringify($state.snapshot(data),null,2);
+ }
+ function bindingValue(role:string,field:'profileId'|'model'){const value=data.roleOverrides as Record<string,Record<string,string|null>>|undefined;return value?.[role]?.[field];}
+ function bindingMode(role:string,field:'profileId'|'model'){const value=bindingValue(role,field);return value===undefined?'inherit':value===null?'block':'override';}
+ function setBinding(role:string,field:'profileId'|'model',mode:string,value:string|null){
+  if(pending||!actions)return;
+  let source=$state.snapshot(data);
+  if(advanced){try{source=JSON.parse(controls);if(!source||typeof source!=='object'||Array.isArray(source))throw Error();}catch{failure='Use a JSON object before selecting a configured value.';return;}}
+  const choice=view.helpers.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(source.helper)),row=choice?.bindings?.roles.find(row=>row.role===role);
+  if(!row||row[field==='profileId'?'profile':'model'].editable===false)return;
+  const spec=fields.find(control=>control.key==='roleOverrides')?.inputSpec;
+  if(!spec)return;
+  const checked=parseControlInput(spec,{format:'rows',value:(source.roleOverrides??{}) as JsonValue});
+  const own=source.roleOverrides??{};
+  if(!checked.ok && (advanced || !own || typeof own!=='object' || Array.isArray(own) || Object.values(own).some(binding=>!binding || typeof binding!=='object' || Array.isArray(binding)))){failure='Repair the Advanced JSON role bindings before using selectors.';return;}
+  const overrides={...(checked.ok?checked.data.value:own) as Record<string,Record<string,string|null>>},binding={...(overrides[role]??{})};
+  if(mode==='inherit'){delete binding[field];if(field==='profileId'&&binding.model===null)delete binding.model;}
+  else {binding[field]=mode==='block'?null:value;if(field==='profileId'&&!Object.hasOwn(binding,'model'))binding.model=null;}
+  if(Object.keys(binding).length)overrides[role]=binding;else delete overrides[role];
+  setControl('roleOverrides',overrides);
  }
  function draft(control:DetailControl,next:Partial<Draft>){drafts={...drafts,[control.key]:{...drafts[control.key],...next,contract:contract(control),error:''}};failure='';}
  function candidate():Record<string,unknown>|null {
@@ -44,6 +64,14 @@
   <label>Stage<select aria-label="Node stage" bind:value={phase} disabled={view.phaseLocked||pending}><option value="pre">Preparation</option><option value="post">Response</option></select></label>
   {#if usesDocument}<label>Workflow data document<select aria-label="Workflow data document" bind:value={target} onchange={()=>setControl(view.operation==='story-clock'?'clockId':'targetId',target)} disabled={pending || !actions}><option value="">Choose an authorized target</option>{#each view.targets.filter(doc=>!['story-clock','commit-outcomes'].includes(view.operation)||doc.format==='json') as doc (doc.targetId)}<option value={doc.targetId}>{doc.name} ({doc.targetId})</option>{/each}</select></label>{#if !view.targets.length}<p>Authorize a document in Workflow › Configure › Workflow Data, then reopen node creation.</p>{/if}{/if}
   {#if view.operation==='for-each'}<label>Pinned Data helper<select aria-label="Pinned Data helper" bind:value={helper} onchange={()=>{const choice=view.helpers.find(choice=>choice.key===helper);if(choice)setControl('helper',choice.ref);}} disabled={pending || !actions}><option value="">Choose an existing item/result helper</option>{#each view.helpers.filter(choice=>data.mode!=='projected-state'||choice.stateful) as choice (choice.key)}<option value={choice.key}>{choice.label}{choice.stateful?' (projected state)':''}</option>{/each}</select></label><p>Helpers use exact pinned versions with Data item and result ports. Set iteration mode and requestBoundPerIteration in the controls below.</p>{/if}
+  {#if view.operation==='for-each' && selectedHelper?.bindings}
+   <details open><summary>Helper model bindings</summary>{#each selectedHelper.bindings.roles as row (row.role)}<fieldset><legend>{row.label}</legend>
+    <label>Connection profile<select aria-label={row.role+' connection profile'} value={bindingValue(row.role,'profileId')??''} disabled={pending||!actions||row.profile.editable===false} onchange={event=>setBinding(row.role,'profileId',event.currentTarget.value?'override':'inherit',event.currentTarget.value||null)}><option value="">Use helper connection</option>{#each row.profile.options??[] as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
+    <label>Model mode<select aria-label={row.role+' model mode'} value={bindingMode(row.role,'model')} disabled={pending||!actions||row.model.editable===false} onchange={event=>setBinding(row.role,'model',event.currentTarget.value,event.currentTarget.value==='override'?bindingValue(row.role,'model')??'':null)}>{#each row.model.allowedModes as option}<option value={option.value}>{option.label}</option>{/each}</select></label>
+    {#if bindingMode(row.role,'model')==='override'}<label>Model identifier<input aria-label={row.role+' model identifier'} value={bindingValue(row.role,'model')??''} disabled={pending||!actions||row.model.editable===false} oninput={event=>setBinding(row.role,'model','override',event.currentTarget.value)} /></label>{/if}
+    <small>{row.effective}</small>{#if row.caveat}<small>{row.caveat}</small>{/if}
+   </fieldset>{/each}{#if selectedHelper.bindings.issue}<p>{selectedHelper.bindings.issue}</p>{:else if !selectedHelper.bindings.roles.length}<p>This helper has no text model calls to configure.</p>{/if}</details>
+  {/if}
   <button type="button" aria-label="Configuration format" disabled={pending} onclick={switchMode}>{advanced?'Use form':'Advanced JSON'}</button>
   {#if advanced}<label>Declared node controls<textarea aria-label="Node controls JSON" rows="14" maxlength="200000" bind:value={controls} disabled={pending || !actions}></textarea></label>
   {:else}
@@ -56,5 +84,5 @@
  </form>
 </div></div>
 <style>
- .pc-configure-node {width:min(540px,calc(100% - 28px));max-height:calc(100% - 28px);overflow:auto;box-sizing:border-box;padding:16px;font-size:12px;} header,footer {display:flex;gap:8px;align-items:center;} h2 {flex:1;margin:0;font-size:16px;} p {line-height:1.5;color:var(--pc-muted,#aeb7ba);} label {display:block;margin:12px 0;} select,textarea {display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:6px;border:1px solid var(--pc-border,#ffffff30);background:var(--pc-canvas,#141516);color:inherit;font:inherit;} textarea {resize:vertical;font-family:monospace;} button {padding:5px 8px;background:var(--pc-block,#2a2c2e);color:inherit;border:1px solid var(--pc-border,#ffffff30);font:inherit;} footer {justify-content:flex-end;} :disabled {opacity:.5;} :is(select,textarea,button):focus-visible {outline:2px solid var(--pc-flow,#e18a24);outline-offset:1px;}
+ .pc-configure-node {width:min(540px,calc(100% - 28px));max-height:calc(100% - 28px);overflow:auto;box-sizing:border-box;padding:16px;font-size:12px;} header,footer {display:flex;gap:8px;align-items:center;} h2 {flex:1;margin:0;font-size:16px;} p {line-height:1.5;color:var(--pc-muted,#aeb7ba);} label {display:block;margin:12px 0;} select,textarea,input {display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:6px;border:1px solid var(--pc-border,#ffffff30);background:var(--pc-canvas,#141516);color:inherit;font:inherit;} textarea {resize:vertical;font-family:monospace;} button {padding:5px 8px;background:var(--pc-block,#2a2c2e);color:inherit;border:1px solid var(--pc-border,#ffffff30);font:inherit;} footer {justify-content:flex-end;} :disabled {opacity:.5;} :is(select,textarea,input,button):focus-visible {outline:2px solid var(--pc-flow,#e18a24);outline-offset:1px;}
 </style>
