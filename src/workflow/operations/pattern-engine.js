@@ -2,7 +2,6 @@ import { boundary, literalHits, literalCoverage } from './pattern-matching.js?v=
 import { snapshotDraft, readDraftBody } from '../draft-revisions.js?v=0.27.0';
 import { cloneJsonValue } from './json-data.js?v=0.27.0';
 import { validatePatternSettings } from './pattern-nodes.js?v=0.27.0';
-import { prepareReferenceDraft } from './reference-draft.js?v=0.27.0';
 import { freeze } from '../record-data.js?v=0.27.0';
 import { artifactVisibility } from '../artifact-privacy.js?v=0.27.0';
 const failure = (code, message) => ({ ok: false, error: { code, message } });
@@ -29,6 +28,23 @@ function scanRegions(text, scope, spans) {
     if (open) throw new Error('UNMATCHED_QUOTES');
     if (cursor < text.length) narration.push([cursor, text.length]);
     return scope === 'dialogue' ? dialogue : narration;
+}
+/** Inspect existing permissions without producing or limiting an editing plan. */
+function inspectPermissions(parent, text, scope, upstreamExempt) {
+    if (parent.scope !== undefined && !['whole', 'narration', 'dialogue'].includes(parent.scope)) return failure('INVALID_SPANS', 'Draft scope must retain supported original permissions.');
+    if (!Object.hasOwn(parent, 'spans')) {
+        if (Object.hasOwn(parent, 'scope')) return failure('INVALID_SPANS', 'Scoped Drafts require existing permissions.');
+        if (scope === 'authorized') return failure('SCOPE_REQUIRED', 'An unannotated Draft requires explicit scan scope.');
+        return { ok: true, data: { spans: [{ start: 0, end: text.length }] } };
+    }
+    let allowed;
+    try { allowed = scanRegions(text, parent.scope ?? 'whole', []); }
+    catch { return failure('INVALID_SPANS', 'Stored Draft permissions require unambiguous original scope.'); }
+    if (!Array.isArray(parent.spans) || parent.spans.some((span, index) =>
+        !span || span.index !== index || !Number.isSafeInteger(span.start) || !Number.isSafeInteger(span.end) || span.start < 0 || span.end <= span.start || span.end > text.length ||
+        !boundary(text, span.start) || !boundary(text, span.end) || span.text !== text.slice(span.start, span.end) || index > 0 && span.start <= parent.spans[index - 1].end ||
+        !allowed.some(([from, to]) => span.start >= from && span.end <= to) || upstreamExempt(span.start, span.end))) return failure('INVALID_SPANS', 'Draft permissions require exact ordered original spans inside retained scope and outside exemptions.');
+    return { ok: true, data: { spans: parent.spans } };
 }
 function defaultWorkerFactory() {
     if (import.meta.env?.DEV || import.meta.env?.PROD) return new Worker(new URL('./pattern-worker.js', import.meta.url), { type: 'module' });
@@ -89,24 +105,15 @@ export async function scanPatternDraft(draft, settings, local = {}) {
     if (!Array.isArray(parent.exemptions ?? []) || (parent.exemptions ?? []).length > 128 || (parent.exemptions ?? []).some(pin => typeof pin !== 'string' || !pin.trim() || pin.length > 2048) || parent.caseSensitive !== undefined && typeof parent.caseSensitive !== 'boolean') return failure('INVALID_SPANS', 'Draft exemptions require bounded literals and a Boolean case policy.');
     const upstreamExempt = literalCoverage(text, parent.exemptions ?? [], parent.caseSensitive ?? false);
     const configuredExempt = literalCoverage(text, settings.exemptions, settings.caseSensitive);
-    let permissionInput = draft;
-    if (!Object.hasOwn(parent, 'spans') && !Object.hasOwn(parent, 'scope') && settings.scope !== 'authorized' && (parent.exemptions ?? []).length) {
-        const spans = []; let cursor = 0;
-        while (cursor < text.length) {
-            if (upstreamExempt(cursor, cursor + 1)) { cursor++; continue; }
-            const start = cursor; while (cursor < text.length && !upstreamExempt(cursor, cursor + 1)) cursor++;
-            spans.push({ index: spans.length, start, end: cursor, text: text.slice(start, cursor) });
-            if (spans.length > 256) return failure('SPAN_LIMIT', 'Draft exemptions exceed 256 permission spans.');
-        }
-        permissionInput = { ...parent, spans };
-    }
-    const prepared = prepareReferenceDraft(permissionInput, { scope: settings.scope === 'authorized' ? 'authorized' : 'whole', protectedLiterals: settings.protectedLiterals });
-    if (!prepared.ok) return prepared;
+    const permissions = inspectPermissions(parent, text, settings.scope, upstreamExempt); if (!permissions.ok) return permissions;
+    if (!Array.isArray(parent.protectedLiterals ?? []) || (parent.protectedLiterals ?? []).length > 128 || (parent.protectedLiterals ?? []).some(pin => typeof pin !== 'string' || !pin.trim() || pin.length > 2048)) return failure('INVALID_DRAFT', 'Draft protections require bounded nonblank literal lists.');
+    const pins = [...new Set([...(parent.protectedLiterals ?? []), ...settings.protectedLiterals])];
+    if (pins.length > 128) return failure('INVALID_PATTERN_SETTINGS', 'Combined protections accept at most 128 unique literals.');
     const diagnostics = []; let unresolved = false, regions;
     try { scanRegions(text, 'dialogue', []); }
     catch { diagnostics.push({ code: 'UNMATCHED_QUOTES', message: 'Ambiguous double quotes prevent deterministic narration/dialogue scope.' }); unresolved = ['narration', 'dialogue'].includes(settings.scope); }
-    regions = unresolved ? [] : scanRegions(text, settings.scope, prepared.data.draft.spans);
-    const protectedHit = literalCoverage(text, prepared.data.protectedLiterals, true);
+    regions = unresolved ? [] : scanRegions(text, settings.scope, permissions.data.spans);
+    const protectedHit = literalCoverage(text, pins, true);
     let regexOccurrences;
     if (settings.mode === 'regex') {
         const result = await executeRegex({ text, settings, regions, upstreamExemptions: parent.exemptions ?? [], upstreamCaseSensitive: parent.caseSensitive ?? false }, local);
@@ -119,7 +126,8 @@ export async function scanPatternDraft(draft, settings, local = {}) {
             if (!regions.some(([start, end]) => match.start >= start && match.end <= end)) continue;
             if (upstreamExempt(match.start, match.end) || configuredExempt(match.start, match.end)) continue;
             if (occurrences.length >= 4096) return failure('PATTERN_OCCURRENCE_LIMIT', 'Pattern exceeds 4,096 occurrences.');
-            occurrences.push({ ruleId: rule.id, ruleIndex, ...match, protected: protectedHit(match.start, match.end), editable: prepared.data.windows.some(window => match.start >= window.start && match.end <= window.end) });
+            const protectedMatch = protectedHit(match.start, match.end);
+            occurrences.push({ ruleId: rule.id, ruleIndex, ...match, protected: protectedMatch, editable: !protectedMatch && permissions.data.spans.some(span => match.start >= span.start && match.end <= span.end) });
         }
     }
     occurrences.sort((a, b) => a.start - b.start || a.end - b.end || a.ruleIndex - b.ruleIndex);

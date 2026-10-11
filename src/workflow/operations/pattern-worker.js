@@ -7,10 +7,10 @@ export function runPatternRegex({ text, settings, regions, upstreamExemptions, u
     catch { return failure('INVALID_PATTERN_REGEX', 'Pattern contains an invalid Unicode regular expression.'); }
     const upstreamExempt = literalCoverage(text, upstreamExemptions, upstreamCaseSensitive), configuredExempt = literalCoverage(text, settings.exemptions, settings.caseSensitive);
     const occurrences = [];
-    for (const [ruleIndex, expression] of expressions.entries()) for (const match of text.matchAll(expression)) {
+    for (const [ruleIndex, expression] of expressions.entries()) for (const [from, to] of regions) for (const match of text.slice(from, to).matchAll(expression)) {
         if (!match[0].length) return failure('PATTERN_ZERO_WIDTH', 'Zero-width regular expressions cannot produce Pattern occurrences.');
-        const start = match.index, end = start + match[0].length;
-        if (!regions.some(([from, to]) => start >= from && end <= to) || upstreamExempt(start, end) || configuredExempt(start, end)) continue;
+        const start = from + match.index, end = start + match[0].length;
+        if (upstreamExempt(start, end) || configuredExempt(start, end)) continue;
         if (occurrences.length >= 4096) return failure('PATTERN_OCCURRENCE_LIMIT', 'Pattern exceeds 4,096 occurrences.');
         occurrences.push({ ruleIndex, start, end, text: match[0] });
     }

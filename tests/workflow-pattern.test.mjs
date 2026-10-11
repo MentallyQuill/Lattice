@@ -111,12 +111,32 @@ test('Regex uses a terminable Worker for Unicode global nonoverlapping matches a
     }
     assert.equal(harness.resources.length, 3); await harness.cleaned();
 });
+test('Scoped regex matches each selected region before remapping UTF-16 offsets', async () => {
+    const harness = workerHarness();
+    const dialogue = await scanPatternDraft(draft('a "b"'), settings(['a.*b|b'], { mode: 'regex', scope: 'dialogue' }), { workerFactory: harness.factory });
+    assert.equal(dialogue.ok, true); assert.equal(dialogue.outputs.matched.value, true);
+    assert.deepEqual(dialogue.outputs.matches.value.occurrences.map(hit => [hit.start, hit.end, hit.text]), [[3, 4, 'b']]);
+    const input = draft('𐐀 a b x b'); input.spans = [{ index: 0, start: 5, end: 6, text: 'b' }, { index: 1, start: 9, end: 10, text: 'b' }];
+    const authorized = await scanPatternDraft(input, settings(['^b$', '(?<!a )b', 'b(?= x)'], { mode: 'regex', scope: 'authorized' }), { workerFactory: harness.factory });
+    assert.equal(authorized.ok, true);
+    assert.deepEqual(authorized.outputs.matches.value.rules.map(rule => rule.count), [2, 2, 0]);
+    assert.deepEqual(authorized.outputs.matches.value.occurrences.map(hit => [hit.start, hit.end, hit.ruleIndex]), [[5, 6, 0], [5, 6, 1], [9, 10, 0], [9, 10, 1]]);
+    await harness.cleaned();
+});
 test('Pattern scan and complete Data reports fail atomically at their limits', async () => {
     // Nine visited values per occurrence cross generic Data's 10,000-value bound.
     for (const [text, extra, expected] of [['a '.repeat(4097), {}, 'PATTERN_OCCURRENCE_LIMIT'], ['a '.repeat(1400), {}, 'PATTERN_REPORT_LIMIT'], ['a'.repeat(100001), {}, 'INVALID_DRAFT']]) {
         const result = await scanPatternDraft(draft(text), settings(['a'], extra));
         assert.equal(result.ok, false); assert.equal(result.error.code, expected); assert.equal(result.outputs, undefined);
     }
+});
+test('Complete report UTF-8 admission rejects long excerpts independently of traversal and occurrence caps', async () => {
+    // 45 occurrences and roughly 450 traversed values; excerpt bytes alone are
+    // 2,048 * 45 * 3 = 276,480, exceeding the 262,144-byte Data bound.
+    const pattern = '漢'.repeat(2048), input = draft(Array(45).fill(pattern).join(' '));
+    assert.equal(input.text.length, 92204);
+    const result = await scanPatternDraft(input, settings([pattern], { mode: 'literal' }));
+    assert.equal(result.ok, false); assert.equal(result.error.code, 'PATTERN_REPORT_LIMIT'); assert.equal(result.outputs, undefined);
 });
 test('Fresh report binding rejects copies, different Drafts and changed permissions', async () => {
     const input = draft('cold'); const result = await scanPatternDraft(input, settings(['cold'])); const value = result.outputs.matches.value;
@@ -131,6 +151,44 @@ test('Upstream and configured exemptions keep their own case policies', async ()
     const result = await scanPatternDraft(input, settings(['cold', 'ice', 'snow'], { exemptions: ['ICE'] }));
     assert.equal(result.ok, true); assert.deepEqual(result.outputs.matches.value.rules.map(rule => rule.count), [1, 0, 1]);
     assert.equal(result.outputs.out, input); assert.deepEqual(input.exemptions, ['COLD']);
+});
+test('Configured exemptions exclude hits before the occurrence cap in literal and Worker scans', async () => {
+    const harness = workerHarness();
+    for (const mode of ['literal', 'regex']) {
+        const result = await scanPatternDraft(draft('a '.repeat(5000)), settings(['a'], { mode, exemptions: ['a'] }), { workerFactory: harness.factory });
+        assert.equal(result.ok, true); assert.equal(result.outputs.matched.value, false);
+        assert.equal(result.outputs.matches.value.totalOccurrences, 0); assert.deepEqual(result.outputs.matches.value.occurrences, []);
+    }
+    await harness.cleaned();
+});
+test('Read-only scans count dense stored exemptions and protections without editing fragment limits', async () => {
+    for (const restriction of ['exemptions', 'protectedLiterals']) {
+        const input = draft(('x a ').repeat(257)); input[restriction] = ['x'];
+        const result = await scanPatternDraft(input, settings(['a', 'x']));
+        assert.equal(result.ok, true, JSON.stringify(result.error)); assert.equal(result.outputs.out, input); assert.equal(input.spans, undefined);
+        const report = result.outputs.matches.value;
+        assert.deepEqual(report.rules.map(rule => rule.count), restriction === 'exemptions' ? [257, 0] : [257, 257]);
+        assert.equal(report.occurrences.filter(hit => hit.text === 'a').every(hit => hit.editable && !hit.protected), true);
+        if (restriction === 'protectedLiterals') assert.equal(report.occurrences.filter(hit => hit.text === 'x').every(hit => !hit.editable && hit.protected), true);
+        assert.equal(getPatternReportBinding(report, input).ok, true);
+    }
+});
+test('Inspection preserves existing exact permission and live ancestry validation', async () => {
+    for (const invalid of [
+        { ...draft('abc'), scope: 'whole' },
+        { ...draft('abc'), scope: 'invented', spans: [] },
+        { ...draft('abc'), spans: [{ index: 0, start: 0, end: 2, text: 'wrong' }] },
+        { ...draft('abc'), exemptions: ['a'], spans: [{ index: 0, start: 0, end: 3, text: 'abc' }] },
+        { ...draft('a "b"'), scope: 'dialogue', spans: [{ index: 0, start: 0, end: 1, text: 'a' }] },
+        { ...draft('𐐀a'), spans: [{ index: 0, start: 1, end: 3, text: '\uDC00a' }] },
+    ]) {
+        const result = await scanPatternDraft(invalid, settings(['a']));
+        assert.equal(result.ok, false); assert.equal(result.error.code, 'INVALID_SPANS'); assert.equal(result.outputs, undefined);
+    }
+    const { createDraftRevision } = await import('../src/workflow/draft-revisions.js?v=0.27.0');
+    const revision = createDraftRevision(draft('abc'), 'abd', { nodeId: 'edit', scope: 'whole' }); assert.equal(revision.ok, true);
+    const copied = await scanPatternDraft(structuredClone(revision.data.draft), settings(['a']));
+    assert.equal(copied.error.code, 'INVALID_ANCESTRY'); assert.equal(copied.outputs, undefined);
 });
 test('Unmatched quote scopes emit unresolved decisions with null counts', async () => {
     const input = draft('cold "cold');
