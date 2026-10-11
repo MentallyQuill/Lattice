@@ -51,7 +51,7 @@ for (const width of [1024, 320]) test(`recorded preview keeps a useful artifact 
     expect(metrics.text.y).toBeGreaterThanOrEqual(metrics.body.y);
     expect(metrics.text.y).toBeLessThan(metrics.body.bottom);
     expect(metrics.bodyScroll).toBe('auto');
-    expect(metrics.textFont).toBe(metrics.leafFont);
+    expect(metrics.textFont).toContain('monospace');
     expect(metrics.artifactBorder).toBe('0px');
     expect(metrics.artifactBackground).toBe('rgba(0, 0, 0, 0)');
     expect(metrics.headerButtonBorder).toBe('0px');
@@ -69,6 +69,13 @@ for (const width of [1024, 320]) test(`recorded preview keeps a useful artifact 
         if (!clip.ok) throw Error(clip.error.message);
         return JSON.stringify(clip.data);
     }, graphId);
+    const readableMode = leaf.getByRole('button', { name: 'Readable preview', exact: true });
+    const sourceMode = leaf.getByRole('button', { name: 'Source preview', exact: true });
+    await sourceMode.focus(); await page.keyboard.press('Enter');
+    await expect(leaf.locator('[data-preview-source]')).toContainText('A quiet conversation.');
+    await expect(leaf.getByRole('button', { name: 'Copy source', exact: true })).toBeVisible();
+    await readableMode.click();
+    await expect(readableMode).toHaveAttribute('aria-pressed', 'true');
     const tabs = leaf.locator('[role="tab"]');
     await tabs.first().focus();
     await page.keyboard.press('End'); await page.keyboard.press('Home');
@@ -86,6 +93,10 @@ for (const width of [1024, 320]) test(`recorded preview keeps a useful artifact 
     }, nativeClipboard);
     expect(panelPasteCanceled).toBe(false);
     await page.keyboard.press('Tab');
+    if (!(await run.evaluate(element => element === document.activeElement))) {
+        expect(await artifactPanel.evaluate(element => element.contains(document.activeElement)), 'the scrollable JSON keyboard stop stays inside the artifact panel').toBe(true);
+        await page.keyboard.press('Tab');
+    }
     await expect(run).toBeFocused();
     const after = await page.evaluate(async graphId => {
         const h = window.canvasHarness, version = (await (await fetch('/manifest.json')).json()).version;

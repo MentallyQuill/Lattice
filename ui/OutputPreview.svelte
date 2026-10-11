@@ -75,9 +75,12 @@
         <h3>{selected?.label ?? view.title}</h3>
         <div class="pc-preview-tools"><button type="button" aria-label="Pin preview" title={view.pinned ? 'Unpin and follow selection' : 'Keep this output visible'} aria-pressed={view.pinned} disabled={view.pinned ? !actions.follow : !selected || !actions.pin} onclick={() => { if (view?.pinned) actions.follow?.(); else if (view && selected) actions.pin?.(view.sourceKey, copyTarget(selected.target)); }}>{view.pinned ? 'Pinned output' : 'Pin output'}</button>{#if collapse}<button type="button" aria-label="Collapse preview" title="Collapse preview" onclick={collapse}>▴</button>{/if}</div>
     </header>
-    <div class="pc-preview-modes" role="group" aria-label="Preview presentation">
-        <button type="button" aria-label="Readable preview" aria-pressed={mode === 'readable'} onclick={() => changeMode('readable')}>Readable</button>
-        <button type="button" aria-label="Source preview" aria-pressed={mode === 'source'} onclick={() => changeMode('source')}>Source</button>
+    <div class="pc-preview-modes">
+        <div role="group" aria-label="Preview presentation">
+            <button type="button" aria-label="Readable preview" aria-pressed={mode === 'readable'} onclick={() => changeMode('readable')}>Readable</button>
+            <button type="button" aria-label="Source preview" aria-pressed={mode === 'source'} onclick={() => changeMode('source')}>Source</button>
+        </div>
+        {#if mode === 'source' && view.source.format !== 'omitted'}<button type="button" data-preview-copy-source onclick={() => copy(view!.source.text)}>Copy {view.source.truncated || view.source.format === 'json-prefix-text' ? 'partial source' : 'source'}</button>{/if}
     </div>
     {#if mode === 'readable' && view.sections.length}
         <div class="pc-preview-tabs" role="tablist" aria-label="Recorded artifacts">
@@ -93,7 +96,6 @@
                 {#if view.source.format === 'omitted'}<DiagnosticMessage issue={view.source.text} />
                 {:else}
                     {#if view.source.truncated || view.source.format === 'json-prefix-text'}<p class="pc-preview-note">Partial recorded source</p>{/if}
-                    <button type="button" data-preview-copy-source onclick={() => copy(view!.source.text)}>Copy {view.source.truncated || view.source.format === 'json-prefix-text' ? 'partial source' : 'source'}</button>
                     <pre class="pc-preview-source" data-preview-source>{view.source.text}</pre>
                 {/if}
             </div>
@@ -161,7 +163,9 @@
     article { min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
     .pc-preview-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; color: var(--pc-muted, #a1a59b); }
     .pc-preview-source { margin: 8px 0 0; max-width: 100%; overflow-x: auto; white-space: pre; font: 13px/1.55 monospace; }
-    .pc-preview-modes { display: flex; flex: 0 0 auto; gap: 2px; padding: 3px 7px; border-bottom: 1px solid var(--pc-border, #3a3c35); }
+    .pc-preview-modes { display: flex; flex: 0 0 auto; gap: 2px; padding: 1px 7px; border-bottom: 1px solid var(--pc-border, #3a3c35); }
+    .pc-preview-modes [role='group'] { display: flex; min-width: 0; gap: 2px; }
+    .pc-preview-modes [data-preview-copy-source] { margin-left: auto; }
     .pc-preview-modes button[aria-pressed='true'] { box-shadow: inset 0 -2px var(--pc-accent, #e18a24); }
     summary { cursor: pointer; margin-bottom: 8px; }
     summary:focus-visible { outline: 2px solid var(--pc-accent, #e18a24); }

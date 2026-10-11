@@ -82,3 +82,14 @@ test('moving and clearing the preview target preserves cards and marks only the 
         }
     } finally { await f.close(); }
 });
+
+test('source display preserves the existing targeted-node status and never dispatches canvas target actions', async () => {
+    const target = { workflowId: 'root', instancePath: [], nodeId: 'compose', portId: 'out' }, calls = [];
+    const f = await fixture('OutputPreview', { view: { sourceKey: 'record', title: 'Output preview', status: 'current', source: { format: 'structured-text', text: '{"kind":"text","text":"hello"}', truncated: false, policy: 'safe-recording' }, choices: [{ key: 'compose/out', label: 'Compose · Output', kind: 'text', target }], selectedKey: 'compose/out', pinned: false, followSelection: true, targeted: true, sections: [{ id: 'out', label: 'Output', kind: 'text', text: 'hello', readable: { kind: 'text', text: 'hello', truncated: false }, format: 'structured-text', truncated: false }], issues: [], busy: false, review: null }, actions: { select: (...args) => calls.push(args) }, storage: { getItem: () => null, setItem() {} }, copyText: text => calls.push(['copy', text]) });
+    try {
+        f.host.querySelector('[aria-label="Source preview"]').click(); flushSync();
+        assert.match(f.host.querySelector('footer').textContent, /Targeted node/);
+        assert.equal(f.host.querySelector('h3').textContent, 'Compose · Output');
+        assert.deepEqual(calls, []);
+    } finally { await f.close(); }
+});

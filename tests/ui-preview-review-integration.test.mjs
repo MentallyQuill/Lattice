@@ -43,7 +43,7 @@ function controllerActions(env) {
     const start = controllerText.indexOf('const outputPreviewActions = {'), end = controllerText.indexOf('\nconst runDetailsActions', start);
     return Function('env', 'with(env){' + controllerText.slice(start, end) + ';return outputPreviewActions;}')(env);
 }
-async function previewFixture(initial, actions) {
+async function previewFixture(initial, actions, extras = {}) {
     const directory = await mkdtemp(join(tmpdir(), 'lattice-preview-review-')), host = document.createElement('div'); document.body.append(host);
     let mounted;
     async function compiled(name, source) {
@@ -55,8 +55,8 @@ async function previewFixture(initial, actions) {
     }
     try {
         const leaf = await compiled('OutputPreview', await readFile(new URL('../ui/OutputPreview.svelte', import.meta.url), 'utf8'));
-        const harness = await compiled('PreviewHarness', `<script>import Leaf from ${JSON.stringify(pathToFileURL(leaf).href)}; let { initial, actions } = $props(); let view = $state.raw(initial); export function update(next) { view = next; }</script><Leaf {view} {actions} />`);
-        mounted = mount((await import(pathToFileURL(harness).href)).default, { target: host, props: { initial, actions } }); flushSync();
+        const harness = await compiled('PreviewHarness', `<script>import Leaf from ${JSON.stringify(pathToFileURL(leaf).href)}; let { initial, actions, extras } = $props(); let view = $state.raw(initial); export function update(next) { view = next; }</script><Leaf {view} {actions} {...extras} />`);
+        mounted = mount((await import(pathToFileURL(harness).href)).default, { target: host, props: { initial, actions, extras } }); flushSync();
         return { host, update(next) { mounted.update(next); flushSync(); }, close };
     } catch (error) { await close(); throw error; }
 }
@@ -270,4 +270,24 @@ test('forged selector identities and noncurrent results cannot invoke Apply or R
     f.env.workflowState.result = { ...f.env.workflowState.result };
     await f.actions.apply(handle); f.actions.reject(handle);
     assert.equal(f.counters.apply, 0); assert.equal(f.counters.reject, 0); assert.equal(f.counters.saves, 0);
+});
+
+test('actual native review display and exact copies preserve request, freshness, saves and publication authority', async () => {
+    const f = adapter(); await f.run(); const copied = [];
+    const leaf = await previewFixture(f.env.panels.outputPreview, f.actions, { copyText: text => copied.push(text), storage: { getItem: () => null, setItem() {} } });
+    try {
+        const view = f.env.panels.outputPreview, selector = structuredClone(view.review.selector);
+        const before = { counters: { ...f.counters }, message: structuredClone(f.message), graph: structuredClone(f.root), selector, runId: f.runtime.lastAutomaticResult().result.runId, fresh: view.review.fresh };
+        const mode = name => leaf.host.querySelector(`[aria-label="${name} preview"]`);
+        mode('Source').click(); flushSync();
+        leaf.host.querySelector('[data-preview-copy-source]').click(); await Promise.resolve(); flushSync();
+        assert.deepEqual(copied, [view.source.text]);
+        mode('Readable').click(); flushSync();
+        const contextTab = [...leaf.host.querySelectorAll('[role="tab"]')].find(tab => tab.textContent.includes('Captured context'));
+        if (contextTab) { contextTab.click(); flushSync(); const details = leaf.host.querySelector('[data-preview-context]'); assert.equal(details.open, false); details.open = true; }
+        for (const button of leaf.host.querySelectorAll('.pc-readable-content button')) { button.click(); await Promise.resolve(); flushSync(); }
+        assert.deepEqual({ counters: { ...f.counters }, message: structuredClone(f.message), graph: structuredClone(f.root), selector: view.review.selector, runId: f.runtime.lastAutomaticResult().result.runId, fresh: view.review.fresh }, before);
+        assert.equal(leaf.host.querySelector('[data-preview-apply]').disabled, false);
+        assert.ok(copied.length >= 1);
+    } finally { await leaf.close(); f.runtime.dispose(); }
 });
