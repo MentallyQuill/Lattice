@@ -45,9 +45,21 @@ test('readonly portal manager writes a scoped local label and retains the author
 });
 
 test('production node search commits an actual root candidate as one undoable step',async({page})=>{
- const id=await activate(page,'siblingWorkflow'),before=await page.evaluate(id=>Object.keys(window.canvasHarness.S.activeWorkflow().nodes),id),host=page.locator('.pc-canvas-host'),box=await host.boundingBox();
+ const id=await activate(page,'siblingWorkflow'),before=await page.evaluate(id=>Object.keys(window.canvasHarness.S.activeWorkflow().nodes),id),camera=await page.evaluate(()=>({...window.canvasHarness.canvas.view})),host=page.locator('.pc-canvas-host'),box=await host.boundingBox();
  await host.dblclick({position:{x:box.width-40,y:box.height-80}});await expect(page.getByRole('dialog',{name:'Add node',exact:true})).toBeVisible();await page.getByRole('combobox',{name:'Search nodes and subgraphs',exact:true}).fill('Compose');await page.locator('[data-choice="operation:compose"]').click();
- const after=await page.evaluate(id=>Object.keys(window.canvasHarness.S.activeWorkflow().nodes),id);expect(after.length).toBe(before.length+1);await expect(page.getByRole('dialog',{name:'Add node',exact:true})).toHaveCount(0);await page.getByRole('button',{name:'Undo',exact:true}).click();expect(await page.evaluate(id=>Object.keys(window.canvasHarness.S.activeWorkflow().nodes),id)).toEqual(before);
+ const configuration=page.getByRole('dialog',{name:'Configure node',exact:true});
+ await expect(configuration).toBeVisible();
+ await expect(configuration.getByLabel('Node stage',{exact:true})).toHaveValue('pre');
+ await expect(configuration.getByRole('radiogroup',{name:'Mode',exact:true}).locator('input[value="join"]')).toBeChecked();
+ await expect(configuration.getByRole('radiogroup',{name:'Output',exact:true}).locator('input[value="text"]')).toBeChecked();
+ expect(await page.evaluate(id=>Object.keys(window.canvasHarness.S.activeWorkflow().nodes),id)).toEqual(before);
+ expect(await page.evaluate(()=>({...window.canvasHarness.canvas.view}))).toEqual(camera);
+ await configuration.getByRole('button',{name:'Create node',exact:true}).click();await expect(configuration).toHaveCount(0);
+ const after=await page.evaluate(id=>Object.keys(window.canvasHarness.S.activeWorkflow().nodes),id);expect(after.length).toBe(before.length+1);await expect(page.getByRole('dialog',{name:'Add node',exact:true})).toHaveCount(0);
+ const added=after.find(nodeId=>!before.includes(nodeId));expect(await page.evaluate(nodeId=>window.canvasHarness.S.activeWorkflow().nodes[nodeId],added)).toMatchObject({operation:'compose',mode:'join',outputKind:'text',sections:[]});
+ expect(await page.evaluate(()=>({...window.canvasHarness.canvas.view}))).toEqual(camera);
+ await page.getByRole('button',{name:'Undo',exact:true}).click();expect(await page.evaluate(id=>Object.keys(window.canvasHarness.S.activeWorkflow().nodes),id)).toEqual(before);
+ expect(await page.evaluate(()=>({...window.canvasHarness.canvas.view}))).toEqual(camera);
 });
 
 
