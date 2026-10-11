@@ -12,7 +12,9 @@ import { operationFor } from './catalog.js?v=0.27.0';
 import { cloneWorkflowDocument } from './document.js?v=0.27.0';
 import { resolveWorkflow } from './resolve.js?v=0.27.0';
 import { compactContext, formatContext } from './compactor.js?v=0.27.0';
-import { scanDraft, repairDraft, validatePatches } from './repair.js?v=0.27.0';
+import { repairDraft, validatePatches } from './repair.js?v=0.27.0';
+import { scanPatternDraft } from './operations/pattern-engine.js?v=0.27.0';
+import { patternSettingsForNode } from './operations/pattern-nodes.js?v=0.27.0';
 import { graphSemanticSignature } from './ports.js?v=0.27.0';
 import { executePrimitive, PRIMITIVE_OPERATIONS } from './operations/nodes.js?v=0.27.0';
 import { executeInput, INPUT_OPERATIONS } from './operations/input-nodes.js?v=0.27.0';
@@ -106,7 +108,10 @@ async function executeNode(node,inputs,op,local) {
             const measured=await local.countTokens(input.text),result=measured.tokens<=(node.budgetTokens??768)?success(input):failure('GUIDANCE_OVERFLOW','Guidance exceeds its artifact token budget; nothing was published.',node.id);
             result.reports=[{code:'GUIDANCE_BUDGET',nodeId:node.id,...measured,budget:node.budgetTokens??768}];return result;
         }
-        case 'pattern-scan':return scanDraft(input,node);
+        case 'pattern': {
+            const settings = patternSettingsForNode(node); if (!settings.ok) return settings;
+            return scanPatternDraft(input, settings.data, { ...(local.signal ? { signal: local.signal } : {}), ...(local.createWorker ? { workerFactory: local.createWorker } : {}) });
+        }
         case 'repair': {
             if(!CLEANUP_MODES.includes(node.mode))return repairDraft(input,node,local);
             const settings=Object.fromEntries(op.controls.filter(key=>key!=='policyVersion').map(key=>[key,node[key]===undefined?op.defaults[key]:node[key]]));

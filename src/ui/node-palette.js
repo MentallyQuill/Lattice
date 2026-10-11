@@ -51,7 +51,7 @@ const metadata = {
     'format-transfer': ['Reference format', 'ft', 'M4 3h7v7H4zM13 14h7v7h-7zM14 6h6m-3-3 3 3-3 3M4 17h6'],
     'terminology-map': ['Canonical terms', 'tm', 'M3 5h7v14H3zM14 5h7v14h-7zM10 12h4m-2-2 2 2-2 2'],
     'text-rules': ['Revision', 'tr', 'M3 5h18M8 5v16m-4 0h8M16 12h5m-2-2 2 2-2 2M16 18h5'],
-    'pattern-scan': ['Analysis', 'ps', 'M16 10a6 6 0 1 0-12 0 6 6 0 0 0 12 0Zm-1 5 6 6'],
+    pattern: ['Analysis', 'ps', 'M16 10a6 6 0 1 0-12 0 6 6 0 0 0 12 0Zm-1 5 6 6'],
     'validate-patches': ['Validation', 'vp', groups.Validation],
     'json-decode': ['Parsing', 'jd', groups.Parsing],
     'select-fields': ['Extraction', 'sf', groups.Extraction],

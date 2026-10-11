@@ -74,7 +74,7 @@ function baseWorkflowView(graph, profiles, settings, activeModel = null) {
     const phase = typeof graph.mode === 'string' ? graph.mode.slice(7) : '';
     return { graphId: graph.id || '', name: graph.name || '', phase, enabled: settings.enabled === true,
         profiles: prepareNodeProfileOptions(profiles, activeModel).map(({ value, label, ...metadata }) => ({ id: value, name: label, ...metadata })),
-        families: FAMILIES.map(name => ({ name, description: descriptions[name], operations: Object.values(OPERATIONS).filter(op => op.family === name || name === 'Surface' && ['pattern-scan', 'validate-patches'].includes(op.id)).map(op => ({ id: op.id, title: op.title, phase: op.phase === 'both' ? phase : op.phase || phase, compatible: !op.minimumSchema || graph.schema >= op.minimumSchema })) })),
+        families: FAMILIES.map(name => ({ name, description: descriptions[name], operations: Object.values(OPERATIONS).filter(op => op.family === name || name === 'Surface' && ['pattern', 'validate-patches'].includes(op.id)).map(op => ({ id: op.id, title: op.title, phase: op.phase === 'both' ? phase : op.phase || phase, compatible: !op.minimumSchema || graph.schema >= op.minimumSchema })) })),
         quoteHelp: QUOTE_SCOPE_HELP };
 }
 /** Root preparation boundary. The returned token is branded and contains no public authority. */

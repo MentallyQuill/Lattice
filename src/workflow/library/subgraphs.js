@@ -47,7 +47,7 @@ function sceneCompass(lens) {
 }
 function literalCleanup() {
     return definition('literal-cleanup', 'Literal Cleanup', 'post', 'draft', 'draft', 'candidate', 'candidate', {
-        scan: primitive('scan', 'pattern-scan', { scope: 'narration', rules: ['the words hung in the air', 'the tension was palpable', 'something unreadable'] }),
+        scan: primitive('scan', 'pattern', { scope: 'narration', rules: ['the words hung in the air', 'the tension was palpable', 'something unreadable'].map((pattern, index) => ({ id: `prose-${index}`, pattern })) }),
         repair: primitive('repair', 'repair', { mode: 'repair', strength: 'light' }),
         validate: primitive('validate', 'validate-patches'),
     }, { scan: wire('scan', 'entry', 'scan'), repair: wire('repair', 'scan', 'repair'), validate: wire('validate', 'repair', 'validate'), result: wire('result', 'validate', 'exit') }, [

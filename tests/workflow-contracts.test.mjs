@@ -113,7 +113,7 @@ offGroup.groups.off = { id: 'off', collapsed: true }; offGroup.nodes.compact.inG
 assert.equal(validateWorkflow(offGroup).ok, true, 'visual group state does not disable executable nodes');
 const scanOnly = { id: 'post', schema: 3, runtime: 2, mode: 'native-unified', roles: { Prose: { profileId: null, model: null } }, nodes: {
     source: { id: 'source', type: 'workflow', operation: 'reply-snapshot' },
-    scan: { id: 'scan', type: 'workflow', operation: 'pattern-scan' },
+    scan: { id: 'scan', type: 'workflow', operation: 'pattern' },
     repair: { id: 'repair', type: 'workflow', operation: 'repair', mode: 'scan' },
     validate: { id: 'validate', type: 'workflow', operation: 'validate-patches' },
     review: { id: 'review', type: 'workflow', operation: 'review-gate' },

@@ -1,6 +1,7 @@
 /** Plain boundary DTOs: never carry host adapters, authenticated bindings or authority. */
 export type Result<T> = { ok: true; data: T } | { ok: false; error: WorkflowError };
 export interface WorkflowError { code: string; message: string; nodeId?: string; address?: NodeAddress; }
+export type { PatternRule, PatternSettings, PatternOccurrence, PatternMatchReport, PatternReportBinding } from './operations/pattern-engine';
 export type ArtifactKind = 'context' | 'draft' | 'patches' | 'candidate' | 'guidance' | 'text' | 'data';
 export type WorkflowPhase = 'pre' | 'post';
 export type WorkflowRunPhase = WorkflowPhase | 'unified';

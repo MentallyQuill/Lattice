@@ -57,7 +57,7 @@ const searchMetadata = cloneDefinitionData({
     'reply-snapshot': { purpose: 'Capture the assistant response before cleanup.', shortcode: 'rs', searchAliases: ['reply-snapshot', 'original reply'] },
     'smart-compactor': { purpose: 'Reduce token usage while preserving protected facts.', shortcode: 'cp', searchAliases: ['smart-compactor', 'compaction'] },
     'response-plan': { purpose: 'Plan the next response with user agency and scene continuity.', shortcode: 'rp', searchAliases: ['response-plan', 'planner'] },
-    'pattern-scan': { purpose: 'Locate literal matches in narration or dialogue.', shortcode: 'ps', searchAliases: ['pattern-scan', 'literal search'] },
+    pattern: { purpose: 'Detect patterns and count occurrences to route a Draft.', shortcode: 'ps', searchAliases: ['pattern', 'literal search', 'whole word', 'regex', 'keyword'] },
     repair: { purpose: 'Revise prose into guarded patches.', shortcode: 'rr', searchAliases: ['prose repair', 'cleanup'] },
     'validate-patches': { purpose: 'Check patch candidates and protected literals.', shortcode: 'vp', searchAliases: ['validate-patches', 'patch validation'] },
     guidance: { purpose: 'Publish a bounded host instruction.', shortcode: 'gd', searchAliases: ['prompt guidance'] },
