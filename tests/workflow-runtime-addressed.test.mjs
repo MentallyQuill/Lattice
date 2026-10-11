@@ -137,3 +137,27 @@ test('the public complete execution gate resolves only current named-pin documen
     const current=validateWorkflow(starterGraph('native-guidance'));assert.equal(current.ok,true);assert.equal(current.data.primitives.filter(unit=>unit.node.operation==='response-plan').length,1);
     assert.equal(validateWorkflow(siblings(),{phase:'post'}).error.code,'WRONG_PHASE');
 });
+
+
+test('nested static Pattern instances with duplicate local IDs keep separate live evidence and exact Draft authority', async () => {
+    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.0');
+    const { getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.0');
+    const f = await import('./helpers/pattern-routing-fixtures.mjs'), wrappers = f.patternWrappers();
+    const root = f.rootGraph({
+        sourceA: f.node('sourceA', 'reply-snapshot'), sourceB: f.node('sourceB', 'reply-snapshot'),
+        first: f.instance('first', wrappers.outer), second: f.instance('second', wrappers.outer),
+        filterA: f.node('filterA', 'filter-text', { scope: 'whole' }), filterB: f.node('filterB', 'filter-text', { scope: 'whole' }),
+        selected: f.node('selected', 'join', { artifactKind: 'draft', inputs: f.slots('a', 'b') }),
+    }, [f.wire('a', 'sourceA', 'out', 'first', 'draft'), f.wire('b', 'sourceB', 'out', 'second', 'draft'), f.wire('c', 'first', 'out', 'filterA', 'in'), f.wire('d', 'first', 'matches', 'filterA', 'matches'), f.wire('e', 'second', 'out', 'filterB', 'in'), f.wire('f', 'second', 'matches', 'filterB', 'matches'), f.wire('g', 'filterA', 'out', 'selected', 'a'), f.wire('h', 'filterB', 'out', 'selected', 'b')], wrappers.definitions);
+    const outputs = []; let captures = 0;
+    const result = await runWorkflowForHost(root, { target: f.target('selected'), snapshot: () => { captures++; return f.draft(f.fourteen); } }, { retainScopedOutput(payload) { outputs.push(payload); return { ok: true, data: { retained: true } }; } });
+    assert.equal(result.ok, true, JSON.stringify(result.error)); assert.equal(captures, 2); assert.equal(result.actualCalls, 0);
+    const inputA = f.retained(outputs, 'sourceA'), inputB = f.retained(outputs, 'sourceB'); assert.notEqual(inputA, inputB);
+    const reportA = f.retained(outputs, 'work', 'matches', ['first', 'work']), reportB = f.retained(outputs, 'work', 'matches', ['second', 'work']);
+    assert.notEqual(reportA.value, reportB.value); assert.equal(getPatternReportBinding(reportA.value, inputA).ok, true); assert.equal(getPatternReportBinding(reportB.value, inputB).ok, true);
+    assert.equal(f.retained(outputs, 'work', 'out', ['first', 'work']), inputA); assert.equal(f.retained(outputs, 'work', 'out', ['second', 'work']), inputB);
+    assert.equal(f.retained(outputs, 'filterA').text, 'First.\n\nLast.'); assert.equal(f.retained(outputs, 'filterB').text, 'First.\n\nLast.');
+    assert.equal(filterPatternDraft(inputA, reportB, { action: 'remove', unit: 'paragraph', scope: 'whole', protectedLiterals: [] }, { nodeId: 'crossed' }).error.code, 'STALE_MATCH_REPORT');
+    assert.equal(f.unit(result, 'work', ['first', 'work']).status, 'completed'); assert.equal(f.unit(result, 'work', ['second', 'work']).status, 'completed');
+});

@@ -290,3 +290,21 @@ assert.equal(definitions.validateDefinition(child, chainTable).error.code, 'DEFI
 assert.equal(packages.parseSubgraph(JSON.stringify({ ...standalone, schema: 2 })).error.code, 'UNSUPPORTED_PACKAGE');
 assert.equal(packages.parseWorkflow(JSON.stringify({ kind: 'lattice-workflow', schema: 2, minRuntime: 2, graph: escape })).ok, false);
 console.log('workflow-composition: named portals, pinned expansion, targets, portable packages and immutable library edits passed');
+
+
+// A pinned static boundary passes the same live value; an iteration seed cannot mount its Draft interface.
+{
+    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.0');
+    const { getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
+    const { compileIterationHelper } = await import('../src/workflow/iteration-helpers.js?v=0.27.0');
+    const f = await import('./helpers/pattern-routing-fixtures.mjs'), wrappers = f.patternWrappers();
+    const g = f.rootGraph({ source: f.node('source', 'reply-snapshot'), detector: f.instance('detector', wrappers.inner), filter: f.node('filter', 'filter-text', { scope: 'whole' }) }, [f.wire('a', 'source', 'out', 'detector', 'draft'), f.wire('b', 'detector', 'out', 'filter', 'in'), f.wire('c', 'detector', 'matches', 'filter', 'matches')], wrappers.definitions);
+    const outputs = [];
+    const result = await runWorkflowForHost(g, { target: f.target('filter'), snapshot: () => f.draft(f.fourteen) }, { retainScopedOutput(payload) { outputs.push(payload); return { ok: true, data: { retained: true } }; } });
+    assert.equal(result.ok, true, JSON.stringify(result.error));
+    const source = f.retained(outputs, 'source'), report = f.retained(outputs, 'work', 'matches', ['detector']);
+    assert.equal(f.retained(outputs, 'work', 'out', ['detector']), source); assert.equal(getPatternReportBinding(report.value, source).ok, true);
+    assert.equal(f.retained(outputs, 'filter').text, 'First.\n\nLast.'); assert.equal(result.actualCalls, 0);
+    const rejected = compileIterationHelper(g, { helper: { id: wrappers.inner.id, version: wrappers.inner.version, semanticHash: wrappers.inner.semanticHash }, mode: 'map', phase: 'post', address: { workflowId: g.id, instancePath: [], nodeId: 'each' }, requestBoundPerIteration: 0 });
+    assert.equal(rejected.error.code, 'ITERATION_INTERFACE', 'Data iteration inputs cannot acquire a pinned static Draft interface');
+}

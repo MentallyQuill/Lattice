@@ -291,3 +291,27 @@ test('terminal failure and cancellation persist closed active requests and wrapp
         assert.ok(byteSize(record) <= 4194304);
     }
 });
+
+
+test('retained Pattern reports and JSON imports remain descriptive copies without live Filter admission', async () => {
+    const { scanPatternDraft, getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.0');
+    const { executePrimitive } = await import('../src/workflow/operations/nodes.js?v=0.27.0');
+    const f = await import('./helpers/pattern-routing-fixtures.mjs'), input = f.draft(f.fourteen);
+    const scan = await scanPatternDraft(input, f.settings()); assert.equal(scan.ok, true);
+    const report = scan.outputs.matches, recorder = api.createRunRecorder({ runId: 'run' });
+    assert.equal(recorder.accept(event(1, 'plan', { plan: plan() })).ok, true);
+    assert.equal(recorder.capture({ address: address('node-0'), direction: 'output', portId: 'out', artifact: report }).ok, true);
+    const recording = recorder.finish(), retained = recording.artifacts[0].value;
+    assert.deepEqual(retained.value, report.value); assert.notEqual(retained.value, report.value);
+    const decoded = await executePrimitive({ operation: 'json-decode', phase: 'post' }, { in: { kind: 'text', text: JSON.stringify(report.value) } });
+    assert.equal(decoded.ok, true, JSON.stringify(decoded.error));
+    const selected = await executePrimitive({ operation: 'select-fields', phase: 'post', fields: [{ name: 'report', path: [] }] }, { in: report });
+    assert.equal(selected.ok, true, JSON.stringify(selected.error)); assert.deepEqual(selected.artifact.value.report, report.value);
+    for (const copy of [retained, { kind: 'data', value: JSON.parse(JSON.stringify(report.value)) }, decoded.artifact, { kind: 'data', value: selected.artifact.value.report }]) {
+        assert.equal(getPatternReportBinding(copy.value, input).error.code, 'INVALID_MATCH_REPORT');
+        assert.equal(filterPatternDraft(input, copy, { action: 'remove', unit: 'paragraph', scope: 'whole', protectedLiterals: [] }, { nodeId: 'copied' }).error.code, 'INVALID_MATCH_REPORT');
+    }
+    assert.equal(getPatternReportBinding(report.value, input).ok, true, 'recording leaves the live report usable');
+    assert.notEqual(recording.artifacts[0].truncated, true);
+});

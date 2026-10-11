@@ -99,3 +99,46 @@ test('Condition compares object content independently of JSON property order',as
     const result=await executeControl({type:'workflow',operation:'condition',value:{a:1,b:2}},{in:data({b:2,a:1})});
     assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.outputs.out.value.accepted,true);
 });
+
+
+test('Branch, Join and privacy-inherited report envelopes retain live Matches.value identity', async () => {
+    const { scanPatternDraft, getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
+    const { preserveArtifactPrivacy } = await import('../src/workflow/artifact-privacy.js?v=0.27.0');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.0');
+    const { settings, slots } = await import('./helpers/pattern-routing-fixtures.mjs');
+    const input = { kind: 'draft', text: 'First.\n\n1 3\n\nLast.', source: { originalText: 'First.\n\n1 3\n\nLast.' } };
+    const scanned = await scanPatternDraft(input, settings()); assert.equal(scanned.ok, true);
+    const report = scanned.outputs.matches;
+    const branch = await executeControl({ operation: 'branch', artifactKind: 'data' }, { in: report, condition: data(true) });
+    assert.equal(branch.ok, true); assert.equal(branch.outputs.yes, report);
+    const joined = await executeControl({ operation: 'join', artifactKind: 'data', inputs: slots('hit', 'miss') }, { hit: branch.outputs.yes }, { inputStates: { hit: { status: 'completed' }, miss: branch.outputStates.no } });
+    assert.equal(joined.ok, true); assert.equal(joined.outputs.out, report);
+    const privateResult = preserveArtifactPrivacy(joined, { privateDecision: { kind: 'data', value: true, visibility: { kind: 'actor-private', actorId: 'mara' } } });
+    assert.equal(privateResult.ok, true); assert.notEqual(privateResult.outputs.out, report); assert.equal(privateResult.outputs.out.value, report.value);
+    assert.deepEqual(privateResult.outputs.out.visibility, { kind: 'actor-private', actorId: 'mara' });
+    assert.equal(getPatternReportBinding(privateResult.outputs.out.value, input).ok, true);
+    const filtered = filterPatternDraft(input, joined.outputs.out, { action: 'remove', unit: 'paragraph', scope: 'whole', protectedLiterals: [] }, { nodeId: 'filter' });
+    assert.equal(filtered.ok, true); assert.equal(filtered.outputs.out.text, 'First.\n\nLast.');
+    const privateFilter = filterPatternDraft(input, privateResult.outputs.out, { action: 'remove', unit: 'paragraph', scope: 'whole', protectedLiterals: [] }, { nodeId: 'private-filter' });
+    assert.equal(privateFilter.ok, true, JSON.stringify(privateFilter.error));
+    assert.equal(preserveArtifactPrivacy(privateFilter, { in: input, matches: privateResult.outputs.out }).error.code, 'PRIVATE_MATERIAL', 'live evidence does not permit disclosing a private decision');
+});
+
+test('Collect and For Each descriptive copies cannot recover live Filter evidence or Draft authority', async () => {
+    const { scanPatternDraft, getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.0');
+    const { settings, slots } = await import('./helpers/pattern-routing-fixtures.mjs');
+    const input = { kind: 'draft', text: 'First.\n1\nLast.', source: { originalText: 'First.\n1\nLast.' } };
+    const scan = await scanPatternDraft(input, settings()), report = scan.outputs.matches;
+    const collected = await executeControl({ operation: 'collect', artifactKind: 'data', inputs: slots('matches') }, { matches: report });
+    assert.equal(collected.ok, true); assert.notEqual(collected.outputs.out.value[0], report.value);
+    const seen = [];
+    const each = await executeControl({ operation: 'for-each', helper }, { in: collected.outputs.out }, { iterateHelper: async ({ item }) => { seen.push(item); return { ok: true, artifact: data(item) }; } });
+    assert.equal(each.ok, true); assert.notEqual(seen[0], report.value); assert.notEqual(each.outputs.out.value[0], seen[0]);
+    for (const value of [collected.outputs.out.value[0], seen[0], each.outputs.out.value[0]]) {
+        assert.equal(getPatternReportBinding(value, input).error.code, 'INVALID_MATCH_REPORT');
+        assert.equal(filterPatternDraft(input, data(value), { action: 'remove', unit: 'line', scope: 'whole', protectedLiterals: [] }, { nodeId: 'copied-filter' }).error.code, 'INVALID_MATCH_REPORT');
+    }
+    const forged = await executeControl({ operation: 'for-each', helper }, { in: data([input]) }, { iterateHelper: async () => ({ ok: true, artifact: input }) });
+    assert.equal(forged.error.code, 'INVALID_ITERATION_RESULT'); assert.equal(forged.outputs, undefined);
+});

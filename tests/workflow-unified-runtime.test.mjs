@@ -212,3 +212,23 @@ test('retired root modes fail execution admission before any source or model eff
         assert.equal(result.ok, false); assert.equal(result.error.code, 'WRONG_PHASE'); assert.equal(effects, 0); assert.equal(result.actualCalls, 0);
     }
 });
+
+
+test('runtime Reroute and Data Branch/Join retain exact Matches values for a direct Filter', async () => {
+    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.0');
+    const f = await import('./helpers/pattern-routing-fixtures.mjs');
+    const { getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
+    const root = f.routingGraph();
+    root.nodes.reportRoute = f.node('reportRoute', 'reroute', { artifactKind: 'data' });
+    root.nodes.reportBranch = f.node('reportBranch', 'branch', { artifactKind: 'data' });
+    root.nodes.reportJoin = f.node('reportJoin', 'join', { artifactKind: 'data', inputs: f.slots('yes', 'no') });
+    delete root.wires.report;
+    for (const edge of [f.wire('r1', 'pattern', 'matches', 'reportRoute', 'in'), f.wire('r2', 'reportRoute', 'out', 'reportBranch', 'in'), f.wire('r3', 'pattern', 'matched', 'reportBranch', 'condition'), f.wire('r4', 'reportBranch', 'yes', 'reportJoin', 'yes'), f.wire('r5', 'reportBranch', 'no', 'reportJoin', 'no'), f.wire('r6', 'reportJoin', 'out', 'filter', 'matches')]) root.wires[edge.id] = edge;
+    const h = f.hostHarness(f.fourteen), result = await runWorkflowForHost(root, h.ports, h.hooks);
+    assert.equal(result.ok, true, JSON.stringify(result.error)); assert.equal(h.effects.filters, 1); assert.equal(h.effects.requests, 0);
+    const report = f.retained(h.outputs, 'pattern', 'matches'), input = f.retained(h.outputs, 'generate', 'draft');
+    for (const [id, port] of [['reportRoute', 'out'], ['reportBranch', 'yes'], ['reportJoin', 'out']]) {
+        assert.equal(f.retained(h.outputs, id, port), report); assert.equal(f.retained(h.outputs, id, port).value, report.value);
+    }
+    assert.equal(getPatternReportBinding(report.value, input).ok, true); assert.equal(h.effects.commits, 1);
+});
