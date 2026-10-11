@@ -234,3 +234,108 @@ test('typed prose only recognizes declared matching kinds and Data remains JSON'
     assert.match(result.text, /\n  "text"/);
     assert.equal(projectRecordedPreview(recorded({ kind: 'draft', text: 'untrusted mismatch' }, 'data')).sections[0].readable.kind, 'json');
 });
+
+
+const patternReport = () => ({
+    recordType: 'pattern-matches', schemaVersion: 1, status: 'complete', matched: true,
+    totalOccurrences: 14, matchedRuleCount: 2,
+    rules: [{ id: 'one', pattern: '1', label: 'Ones', count: 12 }, { id: 'two', pattern: '2', count: 0 }, { id: 'three', pattern: '3', count: 2 }],
+    occurrences: Array.from({ length: 14 }, (_, index) => ({ ruleId: index < 12 ? 'one' : 'three', ruleIndex: index < 12 ? 0 : 2, start: index * 2, end: index * 2 + 1, text: index < 12 ? '1' : '3', protected: index === 0, editable: index !== 0 })),
+    source: { revisionId: 'old-revision', rootRevisionId: 'old-root', textLength: 28, bodyLength: 28 },
+    settings: { mode: 'whole-word', scope: 'whole', caseSensitive: false, matchPolicy: 'any', minOccurrences: 1, regexFlags: '' }, diagnostics: [],
+});
+const filterReport = overrides => ({ recordType: 'text-filter', schemaVersion: 1, status: 'complete', action: 'remove', unit: 'line', units: [{ start: 0, end: 11, text: '  remove 雪\n', blocked: false }], originalBodyLength: 20, resultBodyLength: 9, retainedUnitCount: 1, diagnostics: [], ...overrides });
+const reportArtifact = report => recorded({ kind: 'data', value: report });
+
+test('recorded Pattern report preserves authored 12/0/2 counts and exact protected occurrence rows without binding authority', () => {
+    const input = freeze(reportArtifact(patternReport()));
+    const result = projectRecordedPreview(input), summary = result.sections[0].readable.report;
+    assert.equal(result.sections[0].readable.kind, 'pattern-matches');
+    assert.equal(summary.totalOccurrences, 14);
+    assert.deepEqual(summary.rules.map(rule => rule.count), [12, 0, 2]);
+    assert.equal(summary.occurrences.length, 14);
+    assert.deepEqual(summary.occurrences[0], { ruleId: 'one', ruleIndex: 0, start: 0, end: 1, text: '1', protected: true, editable: false, truncated: false });
+    assert.match(result.sections[0].notices.join(' '), /recorded.*current/i);
+    assert.equal('source' in summary, false);
+    assert.equal('settings' in summary, false);
+    assert.equal(summary.truncated, false);
+    assert.ok(Object.isFrozen(summary));
+    assert.strictEqual(projectRecordedPreview(input), result);
+    assert.equal(JSON.parse(result.source.text).value.source.revisionId, 'old-revision');
+});
+
+test('unresolved Pattern counts stay unknown and diagnostics stay visible', () => {
+    const report = patternReport(); Object.assign(report, { status: 'unresolved', matched: null, totalOccurrences: null, matchedRuleCount: null, occurrences: [], diagnostics: [{ code: 'UNMATCHED_QUOTES', message: 'Unmatched narration quote.' }] });
+    report.rules.forEach(rule => { rule.count = null; });
+    const content = projectRecordedPreview(reportArtifact(report)).sections[0].readable;
+    assert.equal(content.kind, 'pattern-matches');
+    assert.equal(content.report.totalOccurrences, null);
+    assert.deepEqual(content.report.rules.map(rule => rule.count), [null, null, null]);
+    assert.deepEqual(content.report.diagnostics, [{ code: 'UNMATCHED_QUOTES', message: 'Unmatched narration quote.' }]);
+});
+
+test('malformed report discriminants, counts, offsets and inherited fields stay generic Data', () => {
+    const cases = [
+        { ...patternReport(), schemaVersion: 2 }, { ...patternReport(), recordType: 'other' },
+        { ...patternReport(), totalOccurrences: 15 }, { ...patternReport(), occurrences: [{ ...patternReport().occurrences[0], start: -1 }] },
+        { ...patternReport(), source: {} }, { ...patternReport(), diagnostics: [{ code: 'BAD' }] },
+        filterReport({ status: 'unknown' }), filterReport({ units: [{ start: 0, end: 1, text: 'x', blocked: 'yes' }] }),
+    ];
+    for (const report of cases) assert.equal(projectRecordedPreview(reportArtifact(report)).sections[0].readable.kind, 'json');
+    let reads = 0;
+    const getter = patternReport(); Object.defineProperty(getter, 'status', { enumerable: true, get() { reads++; return 'complete'; } });
+    assert.equal(projectRecordedPreview(reportArtifact(getter)).sections[0].readable.kind, 'json'); assert.equal(reads, 0);
+    const inherited = Object.create(patternReport());
+    assert.equal(projectRecordedPreview(reportArtifact(inherited)).sections[0].readable.kind, 'json');
+});
+
+test('Filter reports retain exact selected unit text and completed, blocked, no-op and empty states', () => {
+    const cases = [filterReport(), filterReport({ status: 'blocked', resultBodyLength: 9, units: [{ start: 0, end: 11, text: '  remove 雪\n', blocked: true }], diagnostics: [{ code: 'FILTER_PERMISSION_BLOCKED', message: 'An atomic line crosses a protection.' }] }), filterReport({ units: [], resultBodyLength: 20, retainedUnitCount: 2 }), filterReport({ status: 'empty', resultBodyLength: 0, retainedUnitCount: 0, units: [{ start: 0, end: 20, text: '  remove 雪\nKeep text', blocked: false }], diagnostics: [{ code: 'EMPTY_FILTER_RESULT', message: 'The proposed result is empty.' }] })];
+    for (const report of cases) {
+        const content = projectRecordedPreview(reportArtifact(report)).sections[0].readable;
+        assert.equal(content.kind, 'text-filter');
+        assert.equal(content.report.status, report.status);
+        assert.deepEqual(content.report.units.map(unit => unit.text), report.units.map(unit => unit.text));
+        assert.deepEqual(content.report.diagnostics, report.diagnostics);
+        assert.equal(content.report.resultBodyLength, report.resultBodyLength);
+        assert.equal(content.report.truncated, false);
+    }
+});
+
+test('report display bounds label partial retained evidence, preserve counts and exact Unicode-safe prefix', () => {
+    const report = filterReport({ originalBodyLength: 100000, resultBodyLength: 1, units: [{ start: 0, end: 99999, text: '😀'.repeat(49999) + 'x', blocked: false }] });
+    const result = projectRecordedPreview(reportArtifact(report)), summary = result.sections[0].readable.report;
+    assert.equal(result.sections[0].readable.kind, 'text-filter');
+    assert.equal(summary.truncated, true);
+    assert.equal(summary.units[0].truncated, true);
+    assert.equal(summary.originalBodyLength, 100000);
+    assert.ok(Buffer.byteLength(summary.units[0].text) < 65536);
+    assert.ok(report.units[0].text.startsWith(summary.units[0].text));
+    assert.ok(!/[\uD800-\uDBFF]$/u.test(summary.units[0].text));
+    assert.equal(result.sections[0].truncated, true);
+    assert.equal(result.source.truncated, true);
+});
+
+
+test('actual synthetic Pattern-to-Filter capture projects typed reports beside exact final Draft output', async () => {
+    const { scanPatternDraft } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.0');
+    const body = 'First.\r\n\r\n' + '1 '.repeat(12) + '3 3\r\n\r\nLast.';
+    const draft = { kind: 'draft', text: body, source: { originalText: body, token: 'PRIVATE_AUTHORITY' } };
+    const scanned = await scanPatternDraft(draft, { ...patternReport().settings, rules: patternReport().rules.map(({ count, ...rule }) => rule), exemptions: [], protectedLiterals: [], timeoutMs: 1000 });
+    assert.equal(scanned.ok, true, JSON.stringify(scanned.error));
+    const filtered = filterPatternDraft(draft, scanned.outputs.matches, { action: 'remove', unit: 'paragraph', scope: 'whole', protectedLiterals: [] }, { nodeId: 'filter' });
+    assert.equal(filtered.ok, true, JSON.stringify(filtered.error));
+    const recorder = createRunRecorder({ runId: 'synthetic-reports' });
+    const address = { workflowId: 'synthetic-reports', instancePath: [], nodeId: 'filter' };
+    const plan = { workflowId: 'synthetic-reports', phase: 'post', mode: 'root', units: [{ address, operation: 'filter-text', included: true, dependencies: [], requestBound: 0, inputPorts: [], outputPorts: ['matches', 'report', 'out'] }], hierarchy: [], terminals: [], callBound: 0 };
+    assert.equal(recorder.accept({ runId: 'synthetic-reports', seq: 1, type: 'plan', at: 1, elapsedMs: 1, plan }).ok, true);
+    for (const [portId, artifact] of [['matches', scanned.outputs.matches], ['report', filtered.outputs.report], ['out', filtered.outputs.out]]) assert.equal(recorder.capture({ address, direction: 'output', portId, artifact }).ok, true);
+    const projected = recorder.finish().artifacts.map(projectRecordedPreview);
+    assert.equal(projected[0].sections[0].readable.kind, 'pattern-matches');
+    assert.deepEqual(projected[0].sections[0].readable.report.rules.map(rule => rule.count), [12, 0, 2]);
+    assert.equal(projected[1].sections[0].readable.kind, 'text-filter');
+    assert.deepEqual(projected[1].sections[0].readable.report.units.map(unit => unit.text), ['1 '.repeat(12) + '3 3\r\n\r\n']);
+    assert.equal(projected[2].sections[0].readable.text, 'First.\r\n\r\nLast.');
+    for (const preview of projected) assert.equal(preview.source.text.includes('PRIVATE_AUTHORITY'), false);
+});

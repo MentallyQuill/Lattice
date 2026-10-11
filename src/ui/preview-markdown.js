@@ -112,19 +112,26 @@ export function renderReadableMarkdown(content, window, options) {
     };
     if (content.kind === 'json') displayContent = { ...content, text: plain(content.text) };
     else if (content.kind === 'unavailable') displayContent = { ...content, reason: plain(content.reason) };
-    else if (content.kind === 'pattern-matches') {
+    else if (content.kind === 'pattern-matches' || content.kind === 'text-filter') {
         reserve(1024);
-        displayContent = { ...content, report: { ...content.report,
-            rules: rows(content.report.rules, rule => ({ ...rule, id: plain(rule.id), pattern: plain(rule.pattern), ...(rule.label !== undefined ? { label: plain(rule.label) } : {}) })),
-            occurrences: rows(content.report.occurrences, occurrence => ({ ...occurrence, ruleId: plain(occurrence.ruleId), text: plain(occurrence.text) })),
-            diagnostics: rows(content.report.diagnostics, diagnostic => ({ ...diagnostic, message: plain(diagnostic.message) })),
-        } };
-    } else if (content.kind === 'text-filter') {
-        reserve(1024);
-        displayContent = { ...content, report: { ...content.report,
-            units: rows(content.report.units, unit => ({ ...unit, text: plain(unit.text) })),
-            diagnostics: rows(content.report.diagnostics, diagnostic => ({ ...diagnostic, message: plain(diagnostic.message) })),
-        } };
+        const report = { ...content.report };
+        const reportRows = (key, omittedKey, transform) => {
+            report[key] = rows(content.report[key], transform);
+            report[omittedKey] = (content.report[omittedKey] ?? 0) + content.report[key].length - report[key].length;
+        };
+        // Explanations precede evidence so long unit text cannot hide blocked/empty diagnostics.
+        reportRows('diagnostics', 'omittedDiagnostics', diagnostic => ({ ...diagnostic, code: plain(diagnostic.code), message: plain(diagnostic.message) }));
+        if (content.kind === 'pattern-matches') {
+            reportRows('rules', 'omittedRules', rule => ({ ...rule, id: plain(rule.id), pattern: plain(rule.pattern), ...(rule.label !== undefined ? { label: plain(rule.label) } : {}) }));
+            reportRows('occurrences', 'omittedOccurrences', occurrence => {
+                const ruleId = plain(occurrence.ruleId), text = plain(occurrence.text);
+                return { ...occurrence, ruleId, text, truncated: occurrence.truncated || text.length < occurrence.text.length };
+            });
+        } else reportRows('units', 'omittedUnits', unit => {
+            const text = plain(unit.text); return { ...unit, text, truncated: unit.truncated || text.length < unit.text.length };
+        });
+        report.truncated = content.report.truncated || truncated;
+        displayContent = { ...content, report };
     }
     const messages = content.kind === 'messages' ? content.messages : null;
     const texts = messages ? messages.map(message => message.text) : content.kind === 'text' ? [content.text] : [];

@@ -25,8 +25,12 @@ export interface PreviewPatternReport {
     readonly totalOccurrences: number | null;
     readonly matchedRuleCount: number | null;
     readonly rules: readonly Readonly<{ id: string; pattern: string; label?: string; count: number | null }>[];
-    readonly occurrences: readonly Readonly<{ ruleId: string; ruleIndex: number; start: number; end: number; text: string; protected: boolean; editable: boolean }>[];
+    readonly omittedRules: number;
+    readonly omittedOccurrences: number;
+    readonly occurrences: readonly Readonly<{ ruleId: string; ruleIndex: number; start: number; end: number; text: string; protected: boolean; editable: boolean; truncated: boolean }>[];
     readonly diagnostics: readonly PreviewDiagnostic[];
+    readonly truncated: boolean;
+    readonly omittedDiagnostics: number;
 }
 export interface PreviewFilterReport {
     readonly recordType: 'text-filter';
@@ -34,11 +38,14 @@ export interface PreviewFilterReport {
     readonly status: 'complete' | 'blocked' | 'empty';
     readonly action: 'remove' | 'keep';
     readonly unit: 'line' | 'paragraph';
-    readonly units: readonly Readonly<{ start: number; end: number; text: string; blocked: boolean }>[];
+    readonly omittedUnits: number;
+    readonly units: readonly Readonly<{ start: number; end: number; text: string; blocked: boolean; truncated: boolean }>[];
     readonly originalBodyLength: number;
     readonly resultBodyLength: number;
     readonly retainedUnitCount: number;
     readonly diagnostics: readonly PreviewDiagnostic[];
+    readonly truncated: boolean;
+    readonly omittedDiagnostics: number;
 }
 export type ReadableContent =
     | { readonly kind: 'text'; readonly text: string; readonly truncated: boolean }

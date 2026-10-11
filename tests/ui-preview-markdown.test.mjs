@@ -232,3 +232,65 @@ for (const [name, create] of nbspFixtures) test(`bounds serialized NBSP expansio
         assert.deepEqual(content, original, 'retained source/copy DTO values remain exact');
     } finally { await f.close(); }
 });
+
+
+test('mounted Pattern report labels recorded unknown counts, protected occurrences and diagnostic codes', async () => {
+    const content = { kind: 'pattern-matches', report: { ...patternBase, status: 'unresolved', matched: null, totalOccurrences: null, matchedRuleCount: null, rules: [{ id: 'one', pattern: '1', count: null }], occurrences: [{ ruleId: 'one', ruleIndex: 0, start: 2, end: 3, text: '<', protected: true, editable: false, truncated: false }], diagnostics: [{ code: 'UNMATCHED_QUOTES', message: 'Unmatched quote.' }], truncated: false, omittedRules: 0, omittedOccurrences: 0, omittedDiagnostics: 0 } };
+    const f = await fixture(content);
+    try {
+        assert.match(f.host.textContent, /Recorded Pattern report/i);
+        assert.match(f.host.textContent, /unresolved/i);
+        assert.match(f.host.textContent, /Unknown occurrences/);
+        assert.match(f.host.textContent, /Protected/);
+        assert.match(f.host.textContent, /Not editable/);
+        assert.match(f.host.textContent, /UNMATCHED_QUOTES/);
+        assert.equal(f.host.querySelector('[data-preview-occurrence] pre').textContent, '<');
+    } finally { await f.close(); }
+});
+
+test('mounted Filter reports distinguish completed removal, blocked proposal, no-op and empty output with exact text', async () => {
+    for (const [status, units, diagnostic, expected] of [
+        ['complete', [{ start: 0, end: 8, text: '  雪\r\n\n', blocked: false, truncated: false }], [], /Selected removals/],
+        ['blocked', [{ start: 0, end: 8, text: '  雪\r\n\n', blocked: true, truncated: false }], [{ code: 'FILTER_PERMISSION_BLOCKED', message: 'Atomic deletion blocked.' }], /Proposed removals/],
+        ['complete', [], [], /No units selected.*unchanged/i],
+        ['empty', [], [{ code: 'EMPTY_FILTER_RESULT', message: 'Empty proposed output.' }], /output.*empty/i],
+    ]) {
+        const f = await fixture({ kind: 'text-filter', report: { ...filterBase, status, units, diagnostics: diagnostic, truncated: false, omittedUnits: 0, omittedDiagnostics: 0 } });
+        try {
+            assert.match(f.host.textContent, /Recorded Filter report/i);
+            assert.match(f.host.textContent, expected);
+            if (units.length) assert.equal(f.host.querySelector('[data-preview-filter-unit] pre').textContent, '  雪\r\n\n');
+            if (status === 'blocked') { assert.match(f.host.textContent, /Blocked/); assert.match(f.host.textContent, /FILTER_PERMISSION_BLOCKED/); }
+        } finally { await f.close(); }
+    }
+});
+
+test('report rendering counts omitted rows and clips diagnostic codes without mutating retained DTOs', () => {
+    const content = { kind: 'text-filter', report: { ...filterBase, units: [{ start: 0, end: 100, text: '&'.repeat(100), blocked: true, truncated: false }, { start: 100, end: 101, text: 'later', blocked: false, truncated: false }], diagnostics: [{ code: '&'.repeat(500), message: 'reason' }], truncated: false, omittedUnits: 0, omittedDiagnostics: 0 } };
+    const original = structuredClone(content), rendered = renderReadableMarkdown(content, window, { maxHtmlBytes: 2000 });
+    assert.ok(rendered.htmlBytes <= 2000);
+    assert.equal(rendered.displayContent.report.truncated, true);
+    assert.ok(rendered.displayContent.report.diagnostics[0].code.length < 500);
+    assert.equal(rendered.displayContent.report.omittedUnits, 2);
+    assert.deepEqual(content, original);
+    const evidence = { ...content, report: { ...content.report, diagnostics: [], units: [{ start: 0, end: 1000, text: '&'.repeat(1000), blocked: true, truncated: false }] } };
+    assert.equal(renderReadableMarkdown(evidence, window, { maxHtmlBytes: 2000 }).displayContent.report.units[0].truncated, true);
+});
+
+test('partial report evidence is visibly incomplete while retained aggregate counts remain explicit', async () => {
+    const f = await fixture({ kind: 'text-filter', report: { ...filterBase, units: [{ start: 0, end: 100, text: 'retained prefix', blocked: false, truncated: true }], truncated: true, omittedUnits: 2, omittedDiagnostics: 0 } });
+    try { assert.match(f.host.textContent, /Only part.*report.*displayed/i); assert.match(f.host.textContent, /2.*units omitted/i); assert.match(f.host.textContent, /part.*unit/i); } finally { await f.close(); }
+});
+
+
+test('report presentation counts offset and permission labels in the shared 64KiB text budget', async () => {
+    const { projectRecordedPreview } = await import('../src/ui/recorded-preview.js');
+    const id = 'r'.repeat(128);
+    const report = { recordType: 'pattern-matches', schemaVersion: 1, status: 'complete', matched: true, totalOccurrences: 2000, matchedRuleCount: 1,
+        rules: [{ id, pattern: 'x', count: 2000 }], occurrences: Array.from({ length: 2000 }, (_, start) => ({ ruleId: id, ruleIndex: 0, start, end: start + 1, text: 'x', protected: false, editable: true })),
+        source: { revisionId: null, rootRevisionId: null, textLength: 2000, bodyLength: 2000 }, settings: { mode: 'literal', scope: 'whole', caseSensitive: false, matchPolicy: 'any', minOccurrences: 1, regexFlags: '' }, diagnostics: [] };
+    const content = projectRecordedPreview({ kind: 'data', format: 'structured', value: { kind: 'data', value: report } }).sections[0].readable;
+    assert.equal(content.kind, 'pattern-matches');
+    const f = await fixture(content);
+    try { assert.ok(bytes(f.host.textContent) <= 65536, `report display text bytes: ${bytes(f.host.textContent)}`); assert.match(f.host.textContent, /occurrences omitted/); assert.equal(content.report.totalOccurrences, 2000); } finally { await f.close(); }
+});

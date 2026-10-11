@@ -48,6 +48,83 @@ function diagnosticJSON(value, limit = TEXT_BUDGET) {
     visit(value, 0);
     return { text: chunks.join(''), truncated };
 }
+
+const integer = (value, max = 100000) => Number.isSafeInteger(value) && value >= 0 && value <= max;
+const string = (value, max) => typeof value === 'string' && value.length <= max;
+const pick = (value, keys) => Object.fromEntries(keys.map(key => [key, own(value, key)]));
+function reportDiagnostics(value) {
+    if (!dense(value, 256)) return null;
+    const result = [];
+    for (let i = 0; i < value.length; i++) {
+        const item = own(value, String(i));
+        if (!plain(item) || !string(own(item, 'code'), 128) || !string(own(item, 'message'), 262144)) return null;
+        result.push(pick(item, ['code', 'message']));
+    }
+    return result;
+}
+/** Verify a retained public report without importing or consulting engine bindings. */
+function reportContent(value) {
+    if (!plain(value) || own(value, 'schemaVersion') !== 1) return null;
+    const type = own(value, 'recordType'), diagnostics = reportDiagnostics(own(value, 'diagnostics'));
+    if (!diagnostics) return null;
+    if (type === 'pattern-matches') {
+        const status = own(value, 'status'), unresolved = status === 'unresolved';
+        if (!['complete', 'unresolved'].includes(status)) return null;
+        const source = own(value, 'source'), settings = own(value, 'settings'), regexFlags = own(settings, 'regexFlags');
+        if (!plain(source) || !['revisionId', 'rootRevisionId'].every(key => own(source, key) === null || string(own(source, key), 262144))
+            || !integer(own(source, 'textLength')) || !integer(own(source, 'bodyLength'), own(source, 'textLength'))) return null;
+        if (!plain(settings) || !['literal', 'whole-word', 'regex'].includes(own(settings, 'mode')) || !['authorized', 'whole', 'narration', 'dialogue'].includes(own(settings, 'scope'))
+            || typeof own(settings, 'caseSensitive') !== 'boolean' || !['any', 'all'].includes(own(settings, 'matchPolicy'))
+            || !integer(own(settings, 'minOccurrences'), 4096) || own(settings, 'minOccurrences') < 1 || !string(regexFlags, 2) || !/^(|m|s|ms|sm)$/.test(regexFlags)) return null;
+        const suppliedRules = own(value, 'rules'), suppliedOccurrences = own(value, 'occurrences');
+        if (!dense(suppliedRules, 128) || !dense(suppliedOccurrences, 4096)) return null;
+        const rules = [], occurrences = [], ids = new Set();
+        for (let i = 0; i < suppliedRules.length; i++) {
+            const rule = own(suppliedRules, String(i)), id = own(rule, 'id'), pattern = own(rule, 'pattern'), label = own(rule, 'label'), count = own(rule, 'count');
+            if (!plain(rule) || !string(id, 128) || !id.trim() || ids.has(id) || !string(pattern, 2048) || !pattern.length || label !== undefined && !string(label, 128)
+                || (unresolved ? count !== null : !integer(count, 4096))) return null;
+            ids.add(id); rules.push({ id, pattern, ...(label !== undefined ? { label } : {}), count });
+        }
+        const counts = rules.map(() => 0), identities = new Set();
+        let prior = null;
+        for (let i = 0; i < suppliedOccurrences.length; i++) {
+            const row = own(suppliedOccurrences, String(i)), occurrence = pick(row, ['ruleId', 'ruleIndex', 'start', 'end', 'text', 'protected', 'editable']);
+            if (!plain(row) || !integer(occurrence.ruleIndex, rules.length - 1) || occurrence.ruleId !== rules[occurrence.ruleIndex]?.id
+                || !integer(occurrence.start, own(source, 'bodyLength')) || !integer(occurrence.end, own(source, 'bodyLength')) || occurrence.end <= occurrence.start
+                || !string(occurrence.text, 100000) || occurrence.text.length !== occurrence.end - occurrence.start
+                || typeof occurrence.protected !== 'boolean' || typeof occurrence.editable !== 'boolean' || occurrence.protected && occurrence.editable) return null;
+            const identity = `${occurrence.ruleIndex}:${occurrence.start}:${occurrence.end}`;
+            if (identities.has(identity) || prior && (occurrence.start < prior.start || occurrence.start === prior.start && (occurrence.end < prior.end || occurrence.end === prior.end && occurrence.ruleIndex < prior.ruleIndex))) return null;
+            identities.add(identity); counts[occurrence.ruleIndex]++; prior = occurrence;
+            occurrences.push({ ...occurrence, truncated: false });
+        }
+        const matched = own(value, 'matched'), totalOccurrences = own(value, 'totalOccurrences'), matchedRuleCount = own(value, 'matchedRuleCount');
+        if (unresolved) {
+            if (matched !== null || totalOccurrences !== null || matchedRuleCount !== null || occurrences.length) return null;
+        } else {
+            if (typeof matched !== 'boolean' || totalOccurrences !== occurrences.length || matchedRuleCount !== counts.filter(count => count > 0).length || rules.some((rule, index) => rule.count !== counts[index])) return null;
+            const expected = rules.length > 0 && (own(settings, 'matchPolicy') === 'all' ? matchedRuleCount === rules.length : matchedRuleCount > 0) && totalOccurrences >= own(settings, 'minOccurrences');
+            if (matched !== expected) return null;
+        }
+        return { kind: type, report: { recordType: type, schemaVersion: 1, status, matched, totalOccurrences, matchedRuleCount, rules, occurrences, diagnostics, truncated: false, omittedRules: 0, omittedOccurrences: 0, omittedDiagnostics: 0 } };
+    }
+    if (type === 'text-filter') {
+        const report = pick(value, ['status', 'action', 'unit', 'originalBodyLength', 'resultBodyLength', 'retainedUnitCount']), suppliedUnits = own(value, 'units');
+        if (!['complete', 'blocked', 'empty'].includes(report.status) || !['remove', 'keep'].includes(report.action) || !['line', 'paragraph'].includes(report.unit)
+            || !integer(report.originalBodyLength) || !integer(report.resultBodyLength, report.originalBodyLength) || !integer(report.retainedUnitCount) || !dense(suppliedUnits, 256)) return null;
+        const units = []; let end = 0;
+        for (let i = 0; i < suppliedUnits.length; i++) {
+            const item = own(suppliedUnits, String(i)), unit = pick(item, ['start', 'end', 'text', 'blocked']);
+            if (!plain(item) || !integer(unit.start, report.originalBodyLength) || !integer(unit.end, report.originalBodyLength) || unit.start < end || unit.end <= unit.start
+                || !string(unit.text, 100000) || unit.text.length !== unit.end - unit.start || typeof unit.blocked !== 'boolean') return null;
+            end = unit.end; units.push({ ...unit, truncated: false });
+        }
+        if (report.resultBodyLength !== report.originalBodyLength - units.reduce((sum, unit) => sum + unit.end - unit.start, 0) || (report.status === 'blocked') !== units.some(unit => unit.blocked)) return null;
+        return { kind: type, report: { recordType: type, schemaVersion: 1, ...report, units, diagnostics, truncated: false, omittedUnits: 0, omittedDiagnostics: 0 } };
+    }
+    return null;
+}
+
 function boundSections(sections, prioritySection = 0) {
     let remaining = TEXT_BUDGET;
     for (const section of sections) {
@@ -70,10 +147,39 @@ function boundSections(sections, prioritySection = 0) {
             }
             readable.omittedMessages += readable.messages.length - displayed.length;
             readable.messages = displayed; readable.truncated = readable.truncated || readable.omittedMessages > 0 || displayed.some(message => message.truncated);
+        } else if (readable.kind === 'pattern-matches' || readable.kind === 'text-filter') {
+            const report = readable.report;
+            // Summary/status/partial notices and per-row offsets/counts/permission labels
+            // consume the same presentation-text budget as exact retained evidence.
+            remaining = Math.max(0, remaining - 1024);
+            const boundedString = text => {
+                const bounded = clip(text, remaining); remaining -= bounded.bytes; report.truncated ||= bounded.truncated; return bounded;
+            };
+            const rows = (key, omittedKey, fields) => {
+                const supplied = report[key], displayed = [];
+                for (const row of supplied) {
+                    if (remaining <= 128) break;
+                    remaining -= 128;
+                    const projected = { ...row };
+                    for (const field of fields) if (typeof row[field] === 'string') {
+                        const bounded = boundedString(row[field]); projected[field] = bounded.text;
+                        if (field === 'text') projected.truncated ||= bounded.truncated;
+                    }
+                    displayed.push(projected); if (!remaining) break;
+                }
+                report[omittedKey] += supplied.length - displayed.length;
+                report[key] = displayed; report.truncated ||= report[omittedKey] > 0;
+            };
+            // Keep diagnostic explanations ahead of potentially long exact unit/occurrence evidence.
+            rows('diagnostics', 'omittedDiagnostics', ['code', 'message']);
+            if (readable.kind === 'pattern-matches') {
+                rows('rules', 'omittedRules', ['id', 'label', 'pattern']);
+                rows('occurrences', 'omittedOccurrences', ['ruleId', 'text']);
+            } else rows('units', 'omittedUnits', ['text']);
         } else if (readable.kind === 'unavailable') {
             const bounded = clip(readable.reason, remaining); readable.reason = bounded.text; remaining -= bounded.bytes;
         }
-        section.text = readable.text ?? ''; section.truncated = readable.truncated ?? false;
+        section.text = readable.text ?? ''; section.truncated = readable.truncated ?? readable.report?.truncated ?? false;
     }
 }
 
@@ -135,10 +241,11 @@ function project(artifact) {
     const text = own(value, 'text');
     const sourceText = diagnosticJSON(value);
     const source = { format: 'structured-text', text: sourceText.text, truncated: sourceText.truncated, policy: 'safe-recording' };
-    const readable = plain(value) && kind === own(value, 'kind') && ['text', 'guidance', 'draft', 'candidate'].includes(kind) && typeof text === 'string'
+    const report = kind === 'data' && plain(value) && own(value, 'kind') === kind ? reportContent(own(value, 'value')) : null;
+    const readable = report ?? (plain(value) && kind === own(value, 'kind') && ['text', 'guidance', 'draft', 'candidate'].includes(kind) && typeof text === 'string'
         ? { kind: 'text', text, truncated: false }
-        : { kind: 'json', ...(kind === 'data' && own(value, 'kind') === kind ? diagnosticJSON(own(value, 'value')) : sourceText) };
-    const sections = [{ kind, readable }];
+        : { kind: 'json', ...(kind === 'data' && own(value, 'kind') === kind ? diagnosticJSON(own(value, 'value')) : sourceText) });
+    const sections = [{ kind, readable, ...(report ? { label: report.kind === 'pattern-matches' ? 'Pattern report' : 'Filter report', notices: ['Recorded report; it does not establish the current Draft state or authorize edits.'] } : {}) }];
     if (kind === 'text' && readable.kind === 'text') {
         const modified = modifierSections(artifact); if (modified) sections.splice(0, 1, ...modified);
     }

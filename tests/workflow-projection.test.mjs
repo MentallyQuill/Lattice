@@ -16,7 +16,7 @@ function joinedGraph(graph){graph.nodes.joined={id:'joined',type:'workflow',oper
 const siblingWorkflow=()=>joinedGraph(savedSiblingWorkflow()),twoOutputWorkflow=swapped=>joinedGraph(savedTwoOutputWorkflow(swapped));
 const { resolveWorkflow }=await import('../src/workflow/resolve.js');
 const { parseRunPlan,freeze }=await import('../src/workflow/record-data.js');
-const { createRunRecorder,formatRecordedArtifact }=await import('../src/workflow/recording.js');
+const { createRunRecorder }=await import('../src/workflow/recording.js');
 const { createRunState,reduceRunState }=await import('../src/workflow/run-state.js');
 const graph3=kind=>cloneWorkflowDocument(starterGraph(kind)).data;
 test('root preparation owns binding work and every selection/view projection uses cached lookups',()=>{
@@ -39,7 +39,7 @@ test('multiple root review handles require explicit terminal selection and targe
     let checks=0;const prepared=surface.prepareWorkflowProjection(root,{result,candidateStatus:()=>{checks++;return {ok:true};}});assert.equal(checks,2);
     const target=handles[0].terminal;
     assert.equal(surface.projectPreparedWorkflow(prepared,{selectedTarget:target}).result.applyAvailable,false);
-    const view=surface.projectPreparedWorkflow(prepared,{selectedTarget:target,selectedReviewHandle:handles[0]});assert.equal(view.result.applyAvailable,true);assert.deepEqual(view.result.sections[0],{kind:recording.artifacts[0].kind,...formatRecordedArtifact(recording.artifacts[0])});assert.equal(view.result.sections[0].format,'json-prefix-text');
+    const view=surface.projectPreparedWorkflow(prepared,{selectedTarget:target,selectedReviewHandle:handles[0]});assert.equal(view.result.applyAvailable,true);assert.deepEqual(view.result.sections[0],{kind:'candidate',format:'json-prefix-text',text:recording.artifacts[0].text.slice(0,65536),truncated:true,readable:{kind:'unavailable',reason:'Readable content is unavailable from partial recorded source.'}});assert.equal(view.result.source.format,'json-prefix-text');assert.equal(view.result.source.truncated,true);assert.equal(view.result.source.text,recording.artifacts[0].text.slice(0,65536));assert.equal(view.result.sections[0].format,'json-prefix-text');
     assert.equal(surface.projectPreparedWorkflow(prepared,{selectedTarget:handles[1].terminal,selectedReviewHandle:handles[0]}).result.applyAvailable,false);
     assert.equal(surface.projectPreparedWorkflow(prepared,{selectedTarget:target,selectedReviewHandle:{...handles[0],handleId:'invented'}}).result.applyAvailable,false);
     assert.equal(surface.projectPreparedWorkflow(prepared,{selectedTarget:target,selectedReviewHandle:handles[0],availability:'stale'}).result.applyAvailable,false);
@@ -80,7 +80,7 @@ test('original current full rendering and cached target recordings retain separa
     assert.equal(result.ok,true);assert.equal(result.schema,3);assert.equal(result.mode,'target');assert.equal(effects,0);
     const prepared=surface.prepareWorkflowProjection(root,{profiles:[{id:'p',name:'Profile'}],result,resolveBinding:()=>{preparations++;return {ok:true,data:{profileId:'p',model:'chosen',authorization:'private'}};}});
     assert.equal(preparations,2,'full and target preparation resolve each original model node once');
-    const view=surface.projectPreparedWorkflow(prepared,{result,selectedTarget:target,selectedAddress:target});assert.equal(view.callBound,0);assert.equal(view.targetSummary.issues.length,0);assert.equal(view.result.kind,'bounded');assert.equal(view.result.applyAvailable,false);assert.ok(view.result.sections[0].text.includes('Original source'));assert.ok(!('calls'in view.result));
+    const view=surface.projectPreparedWorkflow(prepared,{result,selectedTarget:target,selectedAddress:target});assert.equal(view.callBound,0);assert.equal(view.targetSummary.issues.length,0);assert.equal(view.result.kind,'bounded');assert.equal(view.result.applyAvailable,false);assert.equal(view.result.sections[0].readable.kind,'messages');assert.equal(view.result.sections[0].readable.messages[0].text,'Original source');assert.ok(view.result.source.text.includes('Original source'));assert.ok(!('calls'in view.result));
     for(let count=0;count<10;count++)surface.projectPreparedWorkflow(prepared,{selectedTarget:{...target,nodeId:count%2?'response-plan':'scene-context'},status:'select'});assert.equal(preparations,2);assert.equal(root.schema,3);assert.equal(root.runtime,2);assert.equal(Object.isFrozen(root),false);
 });
 test('retained current recording gives way to newer root and target progress with stable cached rows',async()=>{
