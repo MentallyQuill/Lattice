@@ -15,6 +15,7 @@ import { compactContext, formatContext } from './compactor.js?v=0.27.0';
 import { repairDraft, validatePatches } from './repair.js?v=0.27.0';
 import { scanPatternDraft } from './operations/pattern-engine.js?v=0.27.0';
 import { patternSettingsForNode } from './operations/pattern-nodes.js?v=0.27.0';
+import { filterPatternDraft, filterTextSettingsForNode } from './operations/filter-text.js?v=0.27.0';
 import { graphSemanticSignature } from './ports.js?v=0.27.0';
 import { executePrimitive, PRIMITIVE_OPERATIONS } from './operations/nodes.js?v=0.27.0';
 import { executeInput, INPUT_OPERATIONS } from './operations/input-nodes.js?v=0.27.0';
@@ -107,6 +108,10 @@ async function executeNode(node,inputs,op,local) {
         case 'guidance': {
             const measured=await local.countTokens(input.text),result=measured.tokens<=(node.budgetTokens??768)?success(input):failure('GUIDANCE_OVERFLOW','Guidance exceeds its artifact token budget; nothing was published.',node.id);
             result.reports=[{code:'GUIDANCE_BUDGET',nodeId:node.id,...measured,budget:node.budgetTokens??768}];return result;
+        }
+        case 'filter-text': {
+            const settings = filterTextSettingsForNode(node); if (!settings.ok) return settings;
+            return filterPatternDraft(input, inputs.matches, settings.data, { nodeId: node.id });
         }
         case 'pattern': {
             const settings = patternSettingsForNode(node); if (!settings.ok) return settings;

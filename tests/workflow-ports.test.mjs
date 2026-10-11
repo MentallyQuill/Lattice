@@ -155,3 +155,16 @@ assert.equal(contracts.validateGraphStructure(bounded).ok, true);
 bounded.nodes.excess = { id: 'excess', type: 'note' };
 assert.equal(contracts.validateGraphStructure(bounded).error.code, 'MALFORMED_WORKFLOW');
 console.log('workflow-ports: ok');
+
+
+const filterNode = { id: 'filter', type: 'workflow', operation: 'filter-text', phase: 'post' };
+const filterDescription = catalog.describeOperation(fixture(), filterNode);
+assert.equal(filterDescription.ok, true, JSON.stringify(filterDescription.error));
+assert.deepEqual(catalog.portsForNode(fixture(), filterNode).map(port => [port.id, port.kind, port.direction, port.required]), [
+    ['in', 'draft', 'input', true], ['matches', 'data', 'input', true], ['out', 'draft', 'output', false], ['report', 'data', 'output', false],
+]);
+assert.equal(filterDescription.data.descriptor.defaults.unit, 'paragraph');
+assert.equal(filterDescription.data.descriptor.defaults.action, 'remove');
+assert.equal(filterDescription.data.descriptor.defaults.scope, 'whole');
+assert.equal(filterDescription.data.descriptor.requestBound, 0);
+assert.equal(catalog.describeOperation(fixture(), { ...filterNode, phase: 'pre' }).ok, false);

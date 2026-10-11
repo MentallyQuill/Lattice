@@ -178,3 +178,23 @@ ordinaryGroup.groups.ordinary = { id: 'ordinary', title: 'Plain group' };
 assert.equal(parseWorkflow(JSON.stringify({ ...envelope, graph: ordinaryGroup })).ok, true, 'ordinary groups keep optional visual membership');
 assert.equal(parseWorkflow(JSON.stringify({ ...envelope, graph: fixtureVisualGroupGraph() })).ok, true, 'complete canvas-aligned visual groups still import');
 console.log('workflow-contracts: ok');
+
+
+// Filter requires a direct Matches input and zero request/model capabilities.
+const filterGraph = { id: 'filter-contract', schema: 3, runtime: 2, mode: 'native-unified', nodes: {
+    source: { id: 'source', type: 'workflow', operation: 'reply-snapshot', phase: 'post' },
+    scan: { id: 'scan', type: 'workflow', operation: 'pattern', phase: 'post', rules: [{ id: 'term', pattern: 'Elara' }] },
+    filter: { id: 'filter', type: 'workflow', operation: 'filter-text', phase: 'post' },
+}, wires: {
+    draft: { id: 'draft', route: 'wire', from: 'source', fromPort: 'out', to: 'scan', toPort: 'in' },
+    source: { id: 'source', route: 'wire', from: 'scan', fromPort: 'out', to: 'filter', toPort: 'in' },
+    matches: { id: 'matches', route: 'wire', from: 'scan', fromPort: 'matches', to: 'filter', toPort: 'matches' },
+} };
+const filterTarget = { workflowId: filterGraph.id, instancePath: [], nodeId: 'filter', portId: 'out' };
+const { resolveWorkflow } = await import('../src/workflow/resolve.js');
+const filterPlan = resolveWorkflow(filterGraph, { target: filterTarget });
+assert.equal(filterPlan.ok, true, JSON.stringify(filterPlan.error));
+assert.equal(filterPlan.data.callBound, 0);
+assert.deepEqual(filterPlan.data.requiredRoles, []);
+const missingMatches = structuredClone(filterGraph); delete missingMatches.wires.matches;
+assert.equal(resolveWorkflow(missingMatches, { target: filterTarget }).error.code, 'MISSING_INPUT');

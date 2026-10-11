@@ -330,3 +330,25 @@ test('exact deletion permits case-sensitive stored exemption alternatives and re
     assert.equal(result.caseSensitive, true);
     assert.equal(revisions.createDraftDeletionRevision(root('body'), [], { nodeId: 'filter', scope: 'authorized' }).error.code, 'SCOPE_REQUIRED');
 });
+
+
+test('root stored exemptions narrow implicit deletion windows with original case policy', () => {
+    const input = { ...root('First.\n\nElara\n\nPIN Last.'), exemptions: ['pin'], caseSensitive: false };
+    const output = must(revisions.createDraftDeletionRevision(input, [{ start: 8, end: 15 }], { nodeId: 'filter', scope: 'whole' })).draft;
+    assert.equal(output.text, 'First.\n\nPIN Last.');
+    assert.deepEqual(output.spans.map(span => [span.start, span.end, span.text]), [[0,8,'First.\n\n'],[11,17,' Last.']]);
+    assert.deepEqual(output.exemptions, ['pin']); assert.equal(output.caseSensitive, false);
+    assert.equal(revisions.createDraftDeletionRevision(input, [{ start: 15, end: 23 }], { nodeId: 'blocked', scope: 'whole' }).error.code, 'OUT_OF_SCOPE_CHANGE');
+    const sensitive = { ...input, caseSensitive: true };
+    assert.equal(must(revisions.createDraftDeletionRevision(sensitive, [{ start: 15, end: 18 }], { nodeId: 'case', scope: 'whole' })).draft.text, 'First.\n\nElara\n\n Last.');
+    const authored = { ...input, spans: [{ index: 0, start: 0, end: 24, text: input.text }] };
+    assert.equal(revisions.createDraftDeletionRevision(authored, [{ start: 8, end: 15 }], { nodeId: 'bad', scope: 'whole' }).error.code, 'INVALID_SPANS');
+    assert.equal(input.spans, undefined);
+});
+
+test('ordinary revisions also preserve stored root exemptions and still reject blank replacement', () => {
+    const input = { ...root('A PIN B'), exemptions: ['pin'], caseSensitive: false };
+    assert.equal(must(revisions.createDraftRevision(input, 'X PIN Y', { nodeId: 'model', scope: 'whole' })).draft.text, 'X PIN Y');
+    assert.equal(revisions.createDraftRevision(input, 'X GONE Y', { nodeId: 'model', scope: 'whole' }).error.code, 'OUT_OF_SCOPE_CHANGE');
+    assert.equal(revisions.createDraftRevision(input, ' \n', { nodeId: 'model', scope: 'whole' }).error.code, 'OUTPUT_LIMIT');
+});

@@ -16,6 +16,7 @@ import { CONTROL_OPERATIONS, describeControl } from './operations/control-nodes.
 import { DECISION_OPERATIONS, describeDecision } from './operations/decision-nodes.js?v=0.27.0';
 import { MODEL_OPERATIONS, describeModelNode } from './operations/model-nodes.js?v=0.27.0';
 import { PATTERN_OPERATION, describePattern } from './operations/pattern-nodes.js?v=0.27.0';
+import { FILTER_TEXT_OPERATION, describeFilterText } from './operations/filter-text.js?v=0.27.0';
 
 /** Native operation metadata. Artifact flow, rather than canvas placement, defines execution. */
 export const FAMILIES = ['Input', 'Shaping', 'Surface', 'Transpose', 'Introspection', 'Derive', 'Events', 'Collections', 'Randomness', 'Recall', 'Output'];
@@ -36,6 +37,7 @@ export const OPERATIONS = {
     'smart-compactor': descriptor('smart-compactor', 'Smart Compactor', 'Shaping', 'pre', 'context', 'context', { targetTokens: 1200, purpose: '', method: 'select', keepRecent: 2, pins: [], maxTokens: 1024 }, { modelRole: 'Analysis', requestBound: node => node.method === 'compress' ? 1 : 0 }),
     'response-plan': descriptor('response-plan', 'Response Plan', 'Shaping', 'pre', 'context', 'guidance', { instructions: '', maxTokens: 768 }, { modelRole: 'Analysis', requestBound: 1 }),
     pattern: PATTERN_OPERATION,
+    'filter-text': FILTER_TEXT_OPERATION,
     repair: descriptor('repair', 'Repair', 'Surface', 'post', 'draft', 'patches', { mode: 'repair', scope: 'narration', categories: [], caseSensitive: false, strength: 'light', instructions: '', maxTokens: 2048, protectedLiterals: [] }, { modelRole: 'Prose', requestBound: node => ['scan', 'inspect'].includes(node.mode) ? 0 : 1 }),
     'validate-patches': descriptor('validate-patches', 'Validate Patches', 'Derive', 'post', 'patches', 'candidate'),
     guidance: descriptor('guidance', 'Guidance', 'Output', 'pre', 'guidance', null, { budgetTokens: 768 }, { terminal: true }),
@@ -71,7 +73,7 @@ OPERATIONS.repair.controlDescriptors.categories.label = 'Policy categories (empt
 for (const [key, label] of Object.entries({ mode: 'Mode', scope: 'Scope', caseSensitive: 'Case sensitive', strength: 'Strength', instructions: 'Instructions', maxTokens: 'Output tokens', protectedLiterals: 'Protected literals' })) OPERATIONS.repair.controlDescriptors[key].label = label;
 const contextJoinDescriptor = source => ({ ...source, controlDescriptors: { inputs: { ...source.controlDescriptors.inputs, label: 'Inputs', editor: 'json', exposable: false } } });
 OPERATIONS['context-join'] = contextJoinDescriptor(describeContextJoin({ type: 'workflow', operation: 'context-join', operationVersion: 1, inputs: [{ id: 'context-1', label: 'Context 1' }, { id: 'context-2', label: 'Context 2' }] }).data.descriptor);
-const newOperation = id => Object.hasOwn(RECALL_OPERATIONS, id) || Object.hasOwn(LIFECYCLE_OPERATIONS, id) || Object.hasOwn(FILE_OPERATIONS, id) || Object.hasOwn(TIME_OPERATIONS, id) || Object.hasOwn(EVENT_OPERATIONS, id) || Object.hasOwn(RANDOM_OPERATIONS, id) || Object.hasOwn(COLLECTION_OPERATIONS, id) || Object.hasOwn(MODEL_OPERATIONS, id) || Object.hasOwn(DECISION_OPERATIONS, id) || Object.hasOwn(CONTROL_OPERATIONS, id) || Object.hasOwn(INPUT_OPERATIONS, id) || Object.hasOwn(PRIMITIVE_OPERATIONS, id) || Object.hasOwn(TRANSPOSE_OPERATIONS, id) || Object.hasOwn(INTROSPECTION_NATIVE_OPERATIONS, id) || id === 'context-join' || id === 'pattern' || id === 'repair';
+const newOperation = id => Object.hasOwn(RECALL_OPERATIONS, id) || Object.hasOwn(LIFECYCLE_OPERATIONS, id) || Object.hasOwn(FILE_OPERATIONS, id) || Object.hasOwn(TIME_OPERATIONS, id) || Object.hasOwn(EVENT_OPERATIONS, id) || Object.hasOwn(RANDOM_OPERATIONS, id) || Object.hasOwn(COLLECTION_OPERATIONS, id) || Object.hasOwn(MODEL_OPERATIONS, id) || Object.hasOwn(DECISION_OPERATIONS, id) || Object.hasOwn(CONTROL_OPERATIONS, id) || Object.hasOwn(INPUT_OPERATIONS, id) || Object.hasOwn(PRIMITIVE_OPERATIONS, id) || Object.hasOwn(TRANSPOSE_OPERATIONS, id) || Object.hasOwn(INTROSPECTION_NATIVE_OPERATIONS, id) || id === 'context-join' || id === 'pattern' || id === 'filter-text' || id === 'repair';
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 function ownMetadata(value, key) {
     if (!value || typeof value !== 'object' || Array.isArray(value) || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) throw new Error('plain metadata');
@@ -100,6 +102,7 @@ export function phaseForNode(graph, node) {
     } catch { return null; }
 }
 function dynamicDescription(node, phase) {
+    if (node.operation === 'filter-text') return phase === 'post' ? describeFilterText(node) : failure('INVALID_PHASE', 'Filter Text requires post phase.');
     if (node.operation === 'pattern') return phase === 'post' ? describePattern(node) : failure('INVALID_PHASE', 'Pattern requires post phase.');
     if (Object.hasOwn(RECALL_OPERATIONS, node.operation)) return describeRecallNode(node, { phase });
     if (Object.hasOwn(LIFECYCLE_OPERATIONS, node.operation)) return describeLifecycleNode(node, { phase });

@@ -106,6 +106,9 @@ function authorizedWindows(parent, scope, pins) {
         if (parent.scope !== undefined) throw new Error('INVALID_SPANS');
         if (scope === 'authorized') throw new Error('SCOPE_REQUIRED');
         spans = [[0, body.length]].filter(([start, end]) => end > start).map(([start, end], index) => ({ index, start, end, text: parent.text.slice(start, end) }));
+        // Root permissions are implicit; stored exemptions narrow them before
+        // exact inherited-span validation. Authored spans are never repaired.
+        spans = narrowExemptions(parent.text, spans, parent.exemptions, parent.caseSensitive);
     }
     if (!Array.isArray(spans) || spans.length > 256 || spans.some((span, index) => !span || span.index !== index || !Number.isSafeInteger(span.start) || !Number.isSafeInteger(span.end) || span.start < 0 || span.end <= span.start || span.end > parent.text.length || !boundary(parent.text, span.start) || !boundary(parent.text, span.end) || span.text !== parent.text.slice(span.start, span.end) || index > 0 && span.start <= spans[index - 1].end || !retained.some(([start, end]) => span.start >= start && span.end <= end))) throw new Error('INVALID_SPANS');
     const exempted = exemptionCoverage(parent.text, parent.exemptions, parent.caseSensitive);
