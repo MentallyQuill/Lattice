@@ -171,3 +171,75 @@ test('explicit regex CSV import preserves quoted expressions independently of Au
     assert.deepEqual(contracts.parseControlInput(spec, { format: 'csv', text: '"a{1,3}","b+"' }).data.value, rows);
     assert.equal(contracts.formatControlInput(spec, rows, 'csv').ok, true);
 });
+test('inserted terms cannot consume identities reserved for later exact matches', () => {
+    const fixtures = [
+        { operation: 'pattern', key: 'rules', field: 'pattern', currentValue: [{ id: 'pattern-1', pattern: 'a', label: 'A' }, { id: 'pattern-2', pattern: 'b', label: 'B' }], text: 'new,a', expected: [{ id: 'pattern-3', pattern: 'new' }, { id: 'pattern-1', pattern: 'a', label: 'A' }] },
+        { operation: 'pattern', key: 'rules', field: 'pattern', currentValue: [{ id: 'pattern-1', pattern: 'a', label: 'A' }, { id: 'pattern-2', pattern: 'b', label: 'B' }], text: 'new,b,a', expected: [{ id: 'pattern-3', pattern: 'new' }, { id: 'pattern-2', pattern: 'b', label: 'B' }, { id: 'pattern-1', pattern: 'a', label: 'A' }] },
+        { operation: 'pattern', key: 'rules', field: 'pattern', currentValue: [{ id: 'pattern-1', pattern: 'a', label: 'First' }, { id: 'pattern-2', pattern: 'a', label: 'Second' }, { id: 'pattern-3', pattern: 'b', label: 'B' }], text: 'new,a,b,a,a', expected: [{ id: 'pattern-4', pattern: 'new' }, { id: 'pattern-1', pattern: 'a', label: 'First' }, { id: 'pattern-3', pattern: 'b', label: 'B' }, { id: 'pattern-2', pattern: 'a', label: 'Second' }, { id: 'pattern-5', pattern: 'a' }] },
+        { operation: 'extract', key: 'patterns', field: 'literal', currentValue: [{ id: 'pattern-1', literal: 'a', label: 'A' }, { id: 'pattern-2', literal: 'b', label: 'B' }], text: 'new,b,a', expected: [{ id: 'pattern-3', literal: 'new', label: '' }, { id: 'pattern-2', literal: 'b', label: 'B' }, { id: 'pattern-1', literal: 'a', label: 'A' }] },
+    ];
+    for (const fixture of fixtures) {
+        const spec = contracts.resolveControlInputSpec({ operation: fixture.operation, controls: { mode: 'literal' }, key: fixture.key, descriptor: { type: 'array', items: 'record', max: fixture.operation === 'pattern' ? 128 : 64, default: [] } });
+        assert.deepEqual(contracts.parseControlInput(spec, { format: 'auto', text: fixture.text, currentValue: fixture.currentValue }).data.value, fixture.expected);
+    }
+});
+test('literal and identifier lists obey existing engine string and identity constraints', async () => {
+    const { OPERATIONS } = await import('../src/workflow/catalog.js');
+    const fixtures = [
+        { operation: 'pattern', key: 'exemptions', controls: { ...OPERATIONS.pattern.defaults }, limit: 2048 },
+        { operation: 'pattern', key: 'protectedLiterals', controls: { ...OPERATIONS.pattern.defaults }, limit: 2048 },
+        { operation: 'text-rules', key: 'protectedLiterals', controls: { ...OPERATIONS['text-rules'].defaults }, limit: 2048 },
+        { operation: 'style-transfer', key: 'protectedLiterals', controls: { ...OPERATIONS['style-transfer'].defaults }, limit: 2048 },
+        { operation: 'recall', key: 'partnerIds', controls: { ...OPERATIONS.recall.defaults, actorId: 'actor', memorySetId: 'memories' }, limit: 256 },
+        { operation: 'recall', key: 'recordIds', controls: { ...OPERATIONS.recall.defaults, actorId: 'actor', memorySetId: 'memories' }, limit: 256 },
+        { operation: 'time-trigger', key: 'consumedIds', controls: { ...OPERATIONS['time-trigger'].defaults, scheduleId: 'schedule' }, limit: 4096 },
+    ];
+    for (const { operation, key, controls, limit } of fixtures) {
+        const spec = contracts.resolveControlInputSpec({ operation, controls, key, descriptor: OPERATIONS[operation].controlDescriptors[key] });
+        assert.equal(spec.limits.maxStringLength, limit, operation + '.' + key);
+        assert.equal(contracts.parseControlInput(spec, { format: 'rows', value: ['x'.repeat(limit)] }).ok, true, operation + '.' + key);
+        for (const format of ['auto', 'json', 'rows']) {
+            const result = contracts.parseControlInput(spec, format === 'rows' ? { format, value: ['x'.repeat(limit + 1)] } : { format, text: format === 'json' ? JSON.stringify(['x'.repeat(limit + 1)]) : 'x'.repeat(limit + 1) });
+            assert.equal(result.ok, false, operation + '.' + key + ':' + format); assert.equal(Object.hasOwn(result, 'data'), false);
+        }
+    }
+    const recall = contracts.resolveControlInputSpec({ operation: 'recall', controls: { ...OPERATIONS.recall.defaults, actorId: 'actor', memorySetId: 'memories' }, key: 'recordIds', descriptor: OPERATIONS.recall.controlDescriptors.recordIds });
+    for (const value of [['same', 'same'], [' ']]) assert.equal(contracts.parseControlInput(recall, { format: 'rows', value }).ok, false);
+});
+test('copied dynamic specs retain effective mode field admission', async () => {
+    const { operationFor } = await import('../src/workflow/catalog.js');
+    const { introspectionDefaults } = await import('../src/workflow/introspection/native.js');
+    for (const { operation, mode, key, valid, invalid } of [
+        { operation: 'state', mode: 'curve', key: 'durations', valid: { peak: 64 }, invalid: [{ bad: false }, { peak: 0 }, { peak: 65 }, { peak: false }] },
+        { operation: 'context', mode: 'focus', key: 'pins', valid: ['word'], invalid: [Array(65).fill('word'), ['x'.repeat(4097)], [false]] },
+    ]) {
+        const controls = introspectionDefaults(operation, mode), effective = operationFor({ type: 'workflow', operation, ...controls });
+        const original = contracts.resolveControlInputSpec({ operation, controls, key, descriptor: effective.controlDescriptors[key] });
+        for (const spec of [original, structuredClone(original)]) {
+            assert.equal(contracts.parseControlInput(spec, { format: 'rows', value: valid }).ok, true, original.id);
+            for (const value of invalid) {
+                const result = contracts.parseControlInput(spec, { format: 'rows', value });
+                assert.equal(result.ok, false, original.id); assert.equal(Object.hasOwn(result, 'data'), false);
+            }
+        }
+    }
+});
+test('copied specs preserve field checks without requiring sibling save settings', async () => {
+    const { OPERATIONS, operationFor } = await import('../src/workflow/catalog.js');
+    const { introspectionDefaults } = await import('../src/workflow/introspection/native.js');
+    const fixtures = [
+        { operation: 'state', key: 'updates', controls: { ...introspectionDefaults('state', 'value'), min: -4, max: 4 }, valid: { score: 2 }, invalid: { score: false } },
+        { operation: 'recall', key: 'recordIds', controls: { ...OPERATIONS.recall.defaults, actorId: 'actor', memorySetId: 'memories' }, valid: ['record'], invalid: ['same', 'same'] },
+        { operation: 'time-trigger', key: 'metadata', controls: { ...OPERATIONS['time-trigger'].defaults, scheduleId: 'schedule' }, valid: { subjectId: 'actor', consequence: false }, invalid: { scheduleId: 'conflicting' } },
+        { operation: 'hotkey-arm', key: 'hotkey', controls: { ...OPERATIONS['hotkey-arm'].defaults, actorId: 'actor', memorySetId: 'memories' }, valid: { code: 'KeyM', ctrl: true, alt: false, shift: false, meta: false }, invalid: { code: 'KeyR', ctrl: true, alt: false, shift: false, meta: false } },
+        { operation: 'for-each', key: 'roleOverrides', controls: { ...OPERATIONS['for-each'].defaults, helper: { id: 'helper', version: 1, semanticHash: 'sha256:' + '0'.repeat(64) } }, valid: { Writer: { model: null } }, invalid: { Writer: { unknown: 'setting' } } },
+    ];
+    for (const { operation, key, controls, valid, invalid } of fixtures) {
+        const descriptor = operationFor({ type: 'workflow', operation, ...controls }).controlDescriptors[key];
+        const original = contracts.resolveControlInputSpec({ operation, controls, key, descriptor });
+        for (const spec of [original, structuredClone(original)]) {
+            assert.equal(contracts.parseControlInput(spec, { format: 'rows', value: valid }).ok, true, original.id);
+            assert.equal(contracts.parseControlInput(spec, { format: 'rows', value: invalid }).ok, false, original.id);
+        }
+    }
+});

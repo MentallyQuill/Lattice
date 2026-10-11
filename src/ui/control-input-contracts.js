@@ -1,3 +1,6 @@
+import { validIterationRoleOverrides } from '../workflow/operations/control-nodes.js?v=0.27.0';
+import { validateCleanupSettings } from '../workflow/operations/prose-cleanup.js?v=0.27.0';
+import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.27.0';
 import { resolveThresholds } from '../workflow/progression.js?v=0.27.0';
 import { OPERATIONS, operationFor } from '../workflow/catalog.js?v=0.27.0';
 import { decodeJson } from '../workflow/operations/json-decode.js?v=0.27.0';
@@ -7,7 +10,6 @@ const fail = (code, message, location = {}) => ({ ok: false, error: { code, mess
 const good = data => ({ ok: true, data });
 const bytes = text => new TextEncoder().encode(text).byteLength;
 const declarations = new Map();
-const contexts = new WeakMap();
 const declare = (grammar, keys) => keys.split(' ').forEach(key => declarations.set(key, grammar));
 declare('list', 'smart-compactor.pins pattern.exemptions pattern.protectedLiterals repair.categories repair.protectedLiterals text-rules.protectedLiterals style-transfer.protectedLiterals format-transfer.protectedLiterals terminology-map.protectedLiterals revise-draft.protectedLiterals format.columns read-file.columns write-file.fields write-file.columns project-document.fields project-document.columns item-mention-trigger.aliases recall.keywords recall.eventTypes recall.partnerIds recall.tags recall.recordIds context.pins memory.pins time-trigger.consumedIds advance-time.consumedIds filter-text.protectedLiterals');
 declare('path', 'condition.path confidence-gate.metricPath collection.collectionPath collection.fieldPath collection.identityPath select-fields.path format.path');
@@ -19,6 +21,12 @@ declare('hotkey', 'hotkey-arm.hotkey');
 declare('numbers', 'collection.thresholds');
 declare('pattern', 'pattern.rules');
 declare('extract', 'extract.patterns');
+// Engine element budgets not represented by the catalog's array descriptors.
+const listStringBounds = new Map();
+const listBound = (limit, keys) => keys.split(' ').forEach(key => listStringBounds.set(key, limit));
+listBound(2048, 'pattern.exemptions pattern.protectedLiterals repair.protectedLiterals text-rules.protectedLiterals style-transfer.protectedLiterals format-transfer.protectedLiterals terminology-map.protectedLiterals revise-draft.protectedLiterals item-mention-trigger.aliases filter-text.protectedLiterals');
+listBound(256, 'recall.keywords recall.eventTypes recall.partnerIds recall.tags recall.recordIds write-file.fields project-document.fields');
+listBound(4096, 'context.pins time-trigger.consumedIds advance-time.consumedIds');
 const listFormats = ['auto', 'plain', 'csv', 'json', 'rows'];
 export function resolveControlInputSpec({ operation, controls = {}, key, descriptor }) {
     const base = operation + '.' + key;
@@ -30,11 +38,13 @@ export function resolveControlInputSpec({ operation, controls = {}, key, descrip
     const limits = { maxBytes: 262144 };
     if (descriptor.max !== undefined && ['array', 'object'].includes(descriptor.type)) limits.maxItems = descriptor.max;
     if (descriptor.maxLength !== undefined) limits.maxStringLength = descriptor.maxLength;
+    if (listStringBounds.has(base)) limits.maxStringLength = Math.min(limits.maxStringLength ?? Infinity, listStringBounds.get(base));
+    if (base === 'repair.protectedLiterals') limits.maxItems = Math.min(limits.maxItems ?? Infinity, 128);
+    if (base === 'repair.categories') limits.maxItems = Math.min(limits.maxItems ?? Infinity, 14);
     if (grammar === 'numbers') limits.maxItems = 256;
     if (grammar === 'pattern') { limits.maxItems = descriptor.max ?? 128; limits.maxStringLength = descriptor.maxLength ?? 2048; }
     if (grammar === 'extract') { limits.maxItems = descriptor.max ?? 64; limits.maxStringLength = descriptor.maxLength ?? 2048; }
     const spec = { id, version: 1, editor, formats: ['list', 'path', 'numbers', 'pattern', 'extract'].includes(grammar) ? listFormats : editor === 'text' ? ['auto', 'plain', 'json'] : ['auto', 'json', 'rows'], storage, limits };
-    contexts.set(spec, { operation, controls, key, descriptor });
     return spec;
 }
 function recordGrammar(spec) { return spec.id.startsWith('pattern.rules:') ? 'pattern' : spec.id === 'extract.patterns' ? 'extract' : null; }
@@ -46,8 +56,14 @@ function compileRecords(spec, entries, currentValue) {
         if (!checked.ok) return checked;
         if (!Array.isArray(checked.data.value)) return fail('INVALID_CONTROL_SHAPE', 'Current records must be an array.');
         const previous = checked.data.value, reserved = new Set(previous.map(row => row?.id)), used = new Set();
+        // Reserve every unchanged row before an edit can reuse its position.
+        const exactMatches = entries.map(text => {
+            const match = previous.find(row => row?.[field] === text && !used.has(row.id));
+            if (match) used.add(match.id);
+            return match;
+        });
         entries = entries.map((text, index) => {
-            const match = previous.find(row => row?.[field] === text && !used.has(row.id)) ?? (previous[index] && !used.has(previous[index].id) ? previous[index] : undefined);
+            const match = exactMatches[index] ?? (previous[index] && !used.has(previous[index].id) ? previous[index] : undefined);
             if (match) { used.add(match.id); return { ...match, [field]: text }; }
             let suffix = 1; while (reserved.has('pattern-' + suffix)) suffix++;
             const id = 'pattern-' + suffix; reserved.add(id); used.add(id);
@@ -61,6 +77,36 @@ function compileRecords(spec, entries, currentValue) {
         ids.add(entry.id);
     }
     return good({ value: entries });
+}
+/** Intrinsic field checks: sibling ranges, identity and scope are checked at Save. */
+function independentFieldCheck(base, value) {
+    const invalid = message => fail('INVALID_CONTROL_VALUE', message);
+    if (declarations.get(base) === 'list') {
+        const nonblank = base === 'pattern.exemptions' || base.endsWith('.protectedLiterals') || base.startsWith('recall.') || base.endsWith('.fields') || base === 'item-mention-trigger.aliases';
+        const limit = listStringBounds.get(base) ?? Infinity;
+        if (!Array.isArray(value) || value.some(entry => typeof entry !== 'string' || !(nonblank ? entry.trim().length : entry.length) || entry.length > limit)) return invalid('Use bounded nonempty entries for this list.');
+        if ((base.startsWith('recall.') || base.endsWith('.fields') || base.endsWith('.columns')) && new Set(value).size !== value.length) return invalid('This identifier or column list requires distinct entries.');
+        if (base === 'repair.categories') return validateCleanupSettings({ categories: value });
+        return good({ value });
+    }
+    if (base === 'state.updates') {
+        if (Object.entries(value).some(([key, entry]) => !key.trim() || key.length > 128 || typeof entry !== 'number' || !Number.isFinite(entry))) return invalid('Use bounded named finite numeric updates.');
+        return good({ value });
+    }
+    if (base === 'for-each.roleOverrides') return validIterationRoleOverrides(value) ? good({ value }) : invalid('Use supported sparse role bindings.');
+    if (base === 'time-trigger.metadata') {
+        const reserved = ['scheduleId', 'revision', 'kind', 'clockId', 'calendarId', 'minuteOfDay', 'anchorMinute', 'intervalMinutes', 'dueMinute', 'order'];
+        return Object.keys(value).some(key => reserved.includes(key)) ? invalid('Timing and schedule identity belong to their dedicated controls.') : good({ value });
+    }
+    if (base === 'hotkey-arm.hotkey') {
+        // Match the intrinsic physical-key rules in validateRecallQueueProposal.
+        const keys = ['code', 'ctrl', 'alt', 'shift', 'meta'];
+        if (Object.keys(value).length !== keys.length || keys.some(key => !Object.hasOwn(value, key)) || typeof value.code !== 'string' || !/^(Key[A-Z]|Digit[0-9]|F([1-9]|1[0-2]))$/u.test(value.code) || keys.slice(1).some(key => typeof value[key] !== 'boolean')) return invalid('Select a physical key and explicit modifier states.');
+        if (value.code === 'KeyR') return fail('RECALL_HOTKEY_CONFLICT', 'R is reserved for Run to here. Choose a different key.');
+        if (!value.ctrl && !value.alt && !value.meta && !/^F/u.test(value.code)) return invalid('Select Control, Alt or Meta, or a function key.');
+        return good({ value });
+    }
+    return undefined;
 }
 function finish(spec, value, warnings = [], sourceText, currentValue) {
     if (spec.id === 'collection.thresholds') {
@@ -82,7 +128,13 @@ function finish(spec, value, warnings = [], sourceText, currentValue) {
     if (typeof value === 'string' && value.length > (spec.limits.maxStringLength ?? Infinity)) return fail('CONTROL_STRING_LIMIT', 'Text exceeds the string limit.');
     const [base, mode] = spec.id.split(':'), dot = base.indexOf('.'), operation = base.slice(0, dot), key = base.slice(dot + 1);
     const registration = OPERATIONS[operation];
-    const context = contexts.get(spec) ?? (registration && { operation, key, controls: { ...registration.defaults, ...(mode && mode !== 'default' ? { mode } : {}) }, descriptor: registration.controlDescriptors[key] });
+    const dynamic = ['state', 'context', 'memory'].includes(operation);
+    const defaults = dynamic ? introspectionDefaults(operation, mode === 'default' ? undefined : mode) : registration?.defaults;
+    const controls = defaults && { ...defaults, ...(mode && mode !== 'default' ? { mode } : {}) };
+    const effective = controls && operationFor({ type: 'workflow', operation, ...controls });
+    const reconstructed = registration && { operation, key, controls, descriptor: effective?.controlDescriptors[key] ?? registration.controlDescriptors[key] };
+    if (dynamic && !effective?.controlDescriptors[key]) return fail('INVALID_CONTROL_CONTRACT', 'Choose a control declared by this operation mode.');
+    const context = reconstructed;
     if (context?.descriptor) {
         const { operation, controls, key, descriptor } = context;
         if (spec.editor === 'text' && typeof value !== 'string') return fail('INVALID_CONTROL_SHAPE', 'Enter a text value.');
@@ -91,7 +143,8 @@ function finish(spec, value, warnings = [], sourceText, currentValue) {
         }
         if (descriptor.type === 'array' && (!Array.isArray(checked.data.value) || checked.data.value.length < (descriptor.min ?? 0)) || descriptor.type === 'object' && (!checked.data.value || typeof checked.data.value !== 'object' || Array.isArray(checked.data.value))) return fail('INVALID_CONTROL_SHAPE', 'Use the declared control shape.');
         const node = { type: 'workflow', operation, ...controls, [key]: value };
-        if (['rows', 'helper', 'hotkey', 'path'].includes(spec.editor) && !operationFor(node, { phase: operation === 'context-join' ? 'pre' : undefined })) return fail('INVALID_CONTROL_VALUE', 'The value does not satisfy this operation’s control contract.');
+        const independent = independentFieldCheck(base, value); if (independent && !independent.ok) return independent;
+        if (!independent && ['rows', 'helper', 'hotkey', 'path', 'list'].includes(spec.editor) && !operationFor(node, { phase: operation === 'context-join' ? 'pre' : undefined })) return fail('INVALID_CONTROL_VALUE', 'The value does not satisfy this operation’s control contract.');
     }
     const stored = cloneJsonValue(value); if (!stored.ok) return stored;
     if (bytes(JSON.stringify(stored.data.value)) > (spec.limits.maxBytes ?? 262144)) return fail('CONTROL_INPUT_LIMIT', 'Value exceeds the byte limit.');
