@@ -213,7 +213,7 @@ function inspectSnapshots(value) {
     let nodes = 0, wires = 0;
     for (const [key, snapshot] of Object.entries(snapshots)) {
         const retained = ownedDefinitions.get(value[key]);
-        const metadata = retained ? { ok: true } : inspectDefinitionMetadata(snapshot);
+        const metadata = retained ? { ok: true } : inspectDefinitionMetadata(snapshot, {snapshots});
         if (!metadata.ok) return metadata;
         if (typeof snapshot.semanticHash !== 'string' || key !== definitionRefKey(snapshot)) return fail('DEFINITION_REF', 'Snapshot keys must match exact references.');
         nodes += Object.keys(snapshot.body.nodes).length; wires += Object.keys(snapshot.body.wires).length;
@@ -251,7 +251,7 @@ function inspectSnapshots(value) {
             const control = describeExposedParameter(target.data, parameter.target.controlId);
             if (!control.ok) return control;
         }
-        const identity = retained?.identity ?? computeDefinitionIdentity(snapshot);
+        const identity = retained?.identity ?? computeDefinitionIdentity(snapshot, {snapshots});
         if (!identity.ok) return identity;
         const versionKey = JSON.stringify([snapshot.id, snapshot.version]);
         if (versions.has(versionKey) && versions.get(versionKey) !== identity.data.canonicalContent) return fail('DEFINITION_CONFLICT', 'The same ID/version has different canonical content.');
@@ -280,17 +280,18 @@ export function inspectDefinitionGraph(definition, snapshots = {}) {
 }
 
 function inspectDefinition(definition, snapshots, includeExpansion) {
-    if (!safeWorkflowData(definition) || !safeWorkflowData(snapshots) || !record(definition) || !record(snapshots)) return fail('DEFINITION_DATA', 'Expected bounded plain definition data.');
+    const copied=cloneDefinitionData(snapshots);if(!copied.ok)return copied;snapshots=copied.data;
+    if (!safeWorkflowData(definition,{snapshots}) || !safeWorkflowData(snapshots) || !record(definition) || !record(snapshots)) return fail('DEFINITION_DATA', 'Expected bounded plain definition data.');
     const key = definitionRefKey(definition);
     if (Object.hasOwn(snapshots, key)) {
-        const a = computeDefinitionIdentity(definition), b = computeDefinitionIdentity(snapshots[key]);
+        const a = computeDefinitionIdentity(definition, {snapshots}), b = computeDefinitionIdentity(snapshots[key], {snapshots});
         if (!a.ok) return a;
         if (!b.ok) return b;
         if (a.data.canonicalContent !== b.data.canonicalContent) return fail('DEFINITION_CONFLICT', 'The supplied snapshot conflicts with its bundled copy.');
     }
     const prepared = prepareDefinitionRegistry({ ...snapshots, [key]: definition });
     if (!prepared.ok) return prepared;
-    const inspected = inspectPreparedDefinition(prepared.data, definition);
+    const inspected = inspectPreparedDefinition(prepared.data, {id:definition.id,version:definition.version,semanticHash:definition.semanticHash});
     if (!inspected.ok) return inspected;
     if (includeExpansion) return structuredClone(inspected);
     const { expansion, ...diagnostics } = inspected.data;

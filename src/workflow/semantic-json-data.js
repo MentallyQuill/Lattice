@@ -1,7 +1,7 @@
 // Context identifies declared JSON payload slots, never arbitrary nested lookalikes.
 const operations = new Set(['condition', 'select-fields', 'format']);
 export const prototypeJsonKey = key => ['__proto__', 'prototype', 'constructor'].includes(key);
-export const ownJsonData = (value, key) => value !== null && typeof value === 'object' ? Object.getOwnPropertyDescriptor(value, key)?.value : undefined;
+export const ownJsonData = (value, key) => value !== null && typeof value === 'object' && ['string','number','symbol'].includes(typeof key) ? Object.getOwnPropertyDescriptor(value, key)?.value : undefined;
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const graph = value => record(value) && ownJsonData(value,'schema') === 3 && ownJsonData(value,'runtime') === 2 && record(ownJsonData(value,'nodes')) && record(ownJsonData(value,'wires'));
 const definition = value => record(value) && typeof ownJsonData(value,'id') === 'string' && Number.isSafeInteger(ownJsonData(value,'version')) && graph(ownJsonData(value,'body')) && Array.isArray(ownJsonData(value,'interface')) && Array.isArray(ownJsonData(value,'parameters'));
@@ -18,7 +18,7 @@ function rootContext(value, options) {
     if (options.operation !== undefined) return controls(options.operation);
     if (options.node) return node(value);
     if (options.descriptor) return { kind: 'descriptor', operation: operations.has(options.descriptorOperation) ? options.descriptorOperation : undefined, controlId: options.controlId };
-    if (options.command) return { kind: 'command', operation: options.controlsOperation };
+    if (options.command || options.snapshotEnvelope) return { kind: 'command', operation: options.controlsOperation, valueKind: options.commandValueKind, definitionDraft: options.definitionDraft };
     if (graph(value)) return { kind: 'graph' };
     if (definition(value)) return { kind: 'definition' };
     if (table(value)) return { kind: 'definitions' };
@@ -33,7 +33,7 @@ function rootContext(value, options) {
 
 export function semanticJsonRootContext(value, options = {}) {
     const context = rootContext(value, options);
-    return { ...context, snapshots: context.kind === 'definitions' ? value : ownJsonData(value,'definitions') ?? ownJsonData(ownJsonData(value,'graph'),'definitions') };
+    return { ...context, snapshots: options.snapshots ?? (context.kind === 'definitions' ? value : ownJsonData(value,'definitions') ?? (context.kind === 'command' ? ownJsonData(value,'snapshots') : undefined) ?? ownJsonData(ownJsonData(value,'graph'),'definitions')) };
 }
 function exactDefinition(reference, snapshots) {
     if (!record(reference) || !record(snapshots)) return undefined;
@@ -51,10 +51,14 @@ function exposedSlots(instance, snapshots) {
         if (!Array.isArray(path) || path.length > 8) continue;
         let scope = pinned;
         for (let step = 0; step < path.length && scope; step++) {
-            const nested = ownJsonData(ownJsonData(ownJsonData(scope,'body'),'nodes'), ownJsonData(path,String(step)));
+            const pathKey = ownJsonData(path,String(step));
+            if (typeof pathKey !== 'string') { scope = undefined; break; }
+            const nested = ownJsonData(ownJsonData(ownJsonData(scope,'body'),'nodes'), pathKey);
             scope = ownJsonData(nested,'type') === 'subgraph' ? exactDefinition(ownJsonData(nested,'definition'),snapshots) : undefined;
         }
-        const primitive = ownJsonData(ownJsonData(ownJsonData(scope,'body'),'nodes'),ownJsonData(target,'nodeId'));
+        const targetId = ownJsonData(target,'nodeId');
+        if (typeof targetId !== 'string') continue;
+        const primitive = ownJsonData(ownJsonData(ownJsonData(scope,'body'),'nodes'),targetId);
         if (ownJsonData(primitive,'type') !== 'workflow') continue;
         const operation = ownJsonData(primitive,'operation'), controlId = ownJsonData(target,'controlId'), id = ownJsonData(parameter,'id');
         if (typeof id !== 'string') continue;
@@ -76,6 +80,9 @@ function childContext(parent, key, context) {
     if (context.kind === 'envelope' && key === 'graph' && graph(ownJsonData(parent,key))) return { kind: 'graph' };
     if (context.kind === 'envelope' && key === 'definition' && definition(ownJsonData(parent,key))) return { kind: 'definition' };
     if (context.kind === 'command' && key === 'controls') return controls(context.operation);
+    if (context.kind === 'command' && key === 'value' && ['payload','mapping-list'].includes(context.valueKind)) return { kind: context.valueKind, ...(context.valueKind === 'payload' ? { root: true } : {}) };
+    if (context.kind === 'command' && key === 'draft' && context.definitionDraft && definition(ownJsonData(parent,key))) return { kind: 'definition' };
+    if (context.kind === 'command' && key === 'definition' && ownJsonData(parent,'kind') === 'create-instance' && definition(ownJsonData(parent,key))) return { kind: 'definition' };
     if (context.kind === 'command' && key === 'snapshots') return { kind: 'definitions' };
     if (context.kind === 'descriptor' && key === 'default') {
         if (ownJsonData(parent,'type') === 'json-value') return { kind: 'payload', root: true };
@@ -92,4 +99,28 @@ function childContext(parent, key, context) {
 
 export function semanticJsonChildContext(parent, key, context) {
     return { ...childContext(parent,key,context), snapshots: context.snapshots };
+}
+
+
+/** Callers pass an admitted actual root; detached commands never infer payload authority. */
+export function semanticJsonCommandOptions(root, command) {
+    const snapshots = ownJsonData(root,'definitions'), path = ownJsonData(command,'viewPath');
+    const options = { command: true, snapshots };
+    if (!Array.isArray(path) || path.length > 8) return options;
+    let scope = root;
+    for (let index = 0; index < path.length; index++) {
+        const key = ownJsonData(path,String(index));
+        if (typeof key !== 'string') return options;
+        const instance = ownJsonData(ownJsonData(scope,'nodes'),key);
+        const pinned = ownJsonData(instance,'type') === 'subgraph' ? exactDefinition(ownJsonData(instance,'definition'),snapshots) : undefined;
+        if (!pinned) return options;
+        scope = ownJsonData(pinned,'body');
+    }
+    const key = ownJsonData(command,'nodeId');
+    if (typeof key !== 'string') return options;
+    const selected = ownJsonData(ownJsonData(scope,'nodes'),key), kind = ownJsonData(command,'kind');
+    if (kind === 'controls' && ownJsonData(selected,'type') === 'workflow') return {...options, controlsOperation: ownJsonData(selected,'operation')};
+    const parameterId = ownJsonData(command,'parameterId');
+    if (kind === 'parameter-override' && ownJsonData(command,'mode') === 'set' && ownJsonData(selected,'type') === 'subgraph' && typeof parameterId === 'string') return {...options, commandValueKind: exposedSlots(selected,snapshots).get(parameterId)};
+    return options;
 }

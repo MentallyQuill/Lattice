@@ -12,6 +12,7 @@
     const validIndex = (text: string) => /^(0|[1-9]\d*)$/.test(text) && Number.isSafeInteger(Number(text));
     function same(a: JsonPath, b: JsonPath | undefined) { return !!b && a.length === b.length && a.every((key, index) => key === b[index]); }
     $effect(() => {
+        if (!allowed.ok) { committed = undefined; rows = []; rawText = JSON.stringify(value, null, 2) ?? ''; return; }
         if (!same(value, committed)) {
             committed = [...value]; rows = value.map(key => ({ id: sequence++, kind: typeof key === 'number' ? 'index' : 'key', text: String(key) }));
             if (editingRaw) rawText = JSON.stringify(value, null, 2);

@@ -99,7 +99,7 @@ export function prepareDisconnection(graph, edgeIds) {
  * @returns {import('./types').Result<import('./types').PreparedGraphEdit>}
  */
 export function prepareNodeControlChange(graph, command) {
-    const nodeId = ownJsonData(command, 'nodeId'), selected = ownJsonData(ownJsonData(graph, 'nodes'), nodeId), operation = ownJsonData(selected, 'operation');
+    const nodeId = ownJsonData(command, 'nodeId'), selected = typeof nodeId === 'string' ? ownJsonData(ownJsonData(graph, 'nodes'), nodeId) : undefined, operation = ownJsonData(selected, 'operation');
     if (!safeWorkflowData(command, { command: true, controlsOperation: operation }) || !command || typeof command !== 'object' || Array.isArray(command) || typeof command.nodeId !== 'string' || !command.controls || typeof command.controls !== 'object' || Array.isArray(command.controls) || Object.keys(command).some(key => !['nodeId', 'controls', 'removeEdgeIds'].includes(key)) || command.removeEdgeIds !== undefined && (!Array.isArray(command.removeEdgeIds) || command.removeEdgeIds.some(id => typeof id !== 'string'))) return fail('INVALID_SETTINGS', 'Expected declared control changes and explicit incident wire IDs.');
     const normalized = cloneWorkflowDocument(graph);
     if (!normalized.ok) return normalized;

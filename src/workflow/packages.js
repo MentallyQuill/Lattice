@@ -61,7 +61,7 @@ function portableProjection(snapshots) {
             copy.interface = definition.interface.map(port => pick(port, ['id', 'label', 'direction', 'kind', 'required', 'cardinality', 'boundaryNodeId']));
             copy.parameters = definition.parameters.map(parameter => ({ ...pick(parameter, ['id', 'label']), target: pick(parameter.target, ['instancePath', 'nodeId', 'controlId']) }));
             copy.body = portableNativeDocument(definition.body, context);
-            const materialized = computeDefinitionIdentity(copy);
+            const materialized = computeDefinitionIdentity(copy,{snapshots:{...snapshots,...Object.fromEntries([...projected.values()].map(item=>[definitionRefKey(item),item]))}});
             if (!materialized.ok) throw new Error(materialized.error.message);
             const portable = structuredClone({ ...materialized.data.materializedDefinition, semanticHash: materialized.data.semanticHash });
             projected.set(key, portable);
@@ -159,16 +159,17 @@ export function parseWorkflowFragment(json) {
  * @returns {import('./types').Result<{definition: import('./types').DefinitionSnapshot, definitions: import('./types').SnapshotTable}>}
  */
 export function selectSubgraphClosure(definition, snapshots = {}) {
-    const top = cloneDefinitionData(definition), table = cloneDefinitionData(snapshots);
-    if (!top.ok) return top;
+    const table = cloneDefinitionData(snapshots);
     if (!table.ok) return table;
+    const top = cloneDefinitionData(definition,{snapshots:table.data});
+    if (!top.ok) return top;
     if (!table.data || typeof table.data !== 'object' || Array.isArray(table.data)) return fail('DEFINITION_DATA', 'Expected a plain pinned snapshot table.');
-    const metadata = inspectDefinitionMetadata(top.data);
+    const metadata = inspectDefinitionMetadata(top.data,{snapshots:table.data});
     if (!metadata.ok) return metadata;
     const topKey = definitionRefKey(top.data), selected = {}, visited = new Set(), pending = [top.data];
     if (Object.hasOwn(table.data, topKey)) selected[topKey] = table.data[topKey];
     while (pending.length) {
-        const item = pending.pop(), checked = inspectDefinitionMetadata(item);
+        const item = pending.pop(), checked = inspectDefinitionMetadata(item,{snapshots:table.data});
         if (!checked.ok) return checked;
         const key = definitionRefKey(item);
         if (visited.has(key)) continue;
@@ -189,7 +190,8 @@ export function selectSubgraphClosure(definition, snapshots = {}) {
 
 /** Portable standalone snapshots use one flat, local table for the complete pinned closure. */
 export function exportSubgraph(definition, snapshots = {}) {
-    if (!safeWorkflowData(definition) || !safeWorkflowData(snapshots)) throw new Error('Expected bounded plain subgraph data.');
+    const table=cloneDefinitionData(snapshots);if(!table.ok)throw new Error(table.error.message);snapshots=table.data;
+    if (!safeWorkflowData(definition,{snapshots}) || !safeWorkflowData(snapshots)) throw new Error('Expected bounded plain subgraph data.');
     const closure = selectSubgraphClosure(definition, snapshots);
     if (!closure.ok) throw new Error(closure.error.message);
     const context = portableProjection({ ...closure.data.definitions, [definitionRefKey(closure.data.definition)]: closure.data.definition });

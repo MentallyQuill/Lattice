@@ -1,3 +1,4 @@
+import {semanticJsonCommandOptions} from './semantic-json-data.js?v=0.27.0';
 import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, describeExposedParameter, nodeBindingOverrideKey, validateDefinition } from './definitions.js?v=0.27.0';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.0';
 import { prepareGraphArtifacts } from './graph-artifacts.js?v=0.27.0';
@@ -17,10 +18,10 @@ const exactRef = (value, actual) => only(value, ['id', 'version', 'semanticHash'
 
 /** Internal trusted synchronous domain seam, never a callback received from DTO/plugin input. */
 export function prepareQualifiedScopeEdit(root, input, mutateSavedScope) {
-    const admitted = cloneDefinitionData(input); if (!admitted.ok) return admitted;
+    const copied = cloneDefinitionData(root); if (!copied.ok) return copied;
+    const admitted = cloneDefinitionData(input, semanticJsonCommandOptions(copied.data,input)); if (!admitted.ok) return admitted;
     const command = admitted.data;
     if (!record(command) || !Array.isArray(command.viewPath) || command.viewPath.length > 8 || !command.viewPath.every(safeId)) return fail('INVALID_INSTANCE', 'Expected an explicit bounded containing graph path.');
-    const copied = cloneDefinitionData(root); if (!copied.ok) return copied;
     const original = copied.data;
     const artifacts = prepareGraphArtifacts(root); if (!artifacts.ok) return artifacts;
     const normalized = cloneWorkflowDocument(original, { checkedArtifacts: artifacts.data }); if (!normalized.ok) return normalized;
@@ -36,7 +37,7 @@ export function prepareQualifiedScopeEdit(root, input, mutateSavedScope) {
     const applied = mutateSavedScope(context, command); if (!applied.ok) return applied;
     let finished = candidate, details = applied.data ?? {};
     if (draft) {
-        const identity = computeDefinitionIdentity(draft); if (!identity.ok) return identity;
+        const identity = computeDefinitionIdentity(draft,{snapshots:candidate.definitions}); if (!identity.ok) return identity;
         const materialized = { ...structuredClone(identity.data.materializedDefinition), semanticHash: identity.data.semanticHash };
         if (graphDocumentSignature(materialized) !== graphDocumentSignature(definition)) {
             // Incoming snapshots belong to a real full root; final preconditions remain actualOriginal.
@@ -56,7 +57,8 @@ const nodeFields = {
 };
 /** Prepare saved primitive fields or wrapper overrides in one actual qualified root candidate. */
 export function prepareNativeNodeEdit(root, input) {
-    const admitted = cloneDefinitionData(input); if (!admitted.ok) return admitted;
+    const copied = cloneDefinitionData(root); if (!copied.ok) return copied;
+    const admitted = cloneDefinitionData(input, semanticJsonCommandOptions(copied.data,input)); if (!admitted.ok) return admitted;
     const command = admitted.data;
     if (!record(command) || typeof command.kind !== 'string' || !Object.hasOwn(nodeFields, command.kind) || !only(command, ['kind', 'viewPath', 'expectedRef', 'nodeId', ...nodeFields[command.kind]]) || !safeId(command.nodeId)) return fail('INVALID_COMMAND', 'Expected a known qualified node command.');
     if (command.kind === 'controls' && (!record(command.controls) || command.removeEdgeIds !== undefined && (!Array.isArray(command.removeEdgeIds) || !command.removeEdgeIds.every(safeId)))) return fail('INVALID_COMMAND', 'Expected controls and explicit incident wire IDs.');
@@ -491,7 +493,7 @@ function applyDefinitionMetadataEdit(context, command) {
 
 /** Local body editing creates immutable revisions through an explicitly owned qualified path. */
 export function prepareLocalDefinitionEdit(graph, command) {
-    const input = qualifiedInstance(graph, command); if (!input.ok) return input;
+    const input = qualifiedInstance(graph, command, {command:true,definitionDraft:true}); if (!input.ok) return input;
     const { candidate, path, chain } = input.data, node = chain.at(-1).node;
     if (!ownsDefinitionPath(candidate, path)) return fail('READ_ONLY_DEFINITION', 'Make an explicit local copy before editing this definition.');
     if (!record(command.expectedRef) || definitionRefKey(command.expectedRef) !== definitionRefKey(node.definition)) return fail('STALE_DEFINITION', 'The local definition changed; prepare the edit again.');
@@ -499,8 +501,9 @@ export function prepareLocalDefinitionEdit(graph, command) {
     return reviseQualified(graph, candidate, path, chain, structuredClone(command.draft), false, compositionIds(candidate));
 }
 
-function qualifiedInstance(graph, command) {
-    if (!safeWorkflowData(command) || !record(command)) return fail('INVALID_INSTANCE', 'Expected a plain instance command.');
+function qualifiedInstance(graph, command, options = {}) {
+    const copied=cloneDefinitionData(graph);if(!copied.ok)return copied;
+    if (!safeWorkflowData(command,{...options,snapshots:copied.data.definitions}) || !record(command)) return fail('INVALID_INSTANCE', 'Expected a plain instance command.');
     const validation = validateGraphStructure(graph); if (!validation.ok) return validation;
     const path = command.instancePath ?? [command.instanceId], chain = definitionChain(graph, path);
     if (!chain) return fail('INVALID_INSTANCE', 'Expected a bounded existing instance path.');
@@ -522,7 +525,7 @@ function reviseQualified(original, candidate, path, chain, leafDraft, copying, i
         if (!newIdentity) draft.version = Math.max(...Object.values(candidate.definitions).filter(item => item.id === draft.id).map(item => item.version)) + 1;
         else draft.version = 1;
         delete draft.semanticHash;
-        const identity = computeDefinitionIdentity(draft); if (!identity.ok) return identity;
+        const identity = computeDefinitionIdentity(draft,{snapshots:candidate.definitions}); if (!identity.ok) return identity;
         draft = { ...structuredClone(identity.data.materializedDefinition), semanticHash: identity.data.semanticHash };
         candidate.definitions[definitionRefKey(draft)] = draft;
         changedRefs.push({ instancePath: prefix, before: reference(previous), after: reference(draft) });

@@ -58,8 +58,13 @@
  function draft(control:DetailControl,next:Partial<Draft>){drafts={...drafts,[control.key]:{...drafts[control.key],...next,contract:contract(control),error:''}};failure='';}
  function candidate():Record<string,unknown>|null {
   const result:Record<string,unknown>={...controlsSnapshot()};
-  for(const control of fields){const value=drafts[control.key];if(!value)continue;
-   const input=value.value!==undefined?{format:'rows' as const,value:typedSnapshot(value.value) as JsonValue}:{format:value.format??(control.structured?'json':formatFor(control)) as ControlInputFormat,text:value.text??textFor(control)};
+  for(const control of fields){const value=drafts[control.key];if(!value){
+   if(control.inputSpec?.editor!=='path')continue;
+   const checked=parseControlInput(control.inputSpec,{format:'rows',value:control.value as JsonValue});
+   if(!checked.ok){draft(control,{text:JSON.stringify(control.value),format:'json',error:checked.error.message});failure='Check the highlighted settings before creating the node.';return null;}
+   continue;
+  }
+   const input=value.value!==undefined?{format:'rows' as const,value:typedSnapshot(value.value) as JsonValue}:{format:control.inputSpec?.editor==='path'?'json':value.format??(control.structured?'json':formatFor(control)) as ControlInputFormat,text:value.text??textFor(control)};
    const parsed=parseControlInput(control.inputSpec!,{...input,currentValue:control.value as JsonValue});
    if(!parsed.ok){drafts={...drafts,[control.key]:{...value,error:parsed.error.message}};failure='Check the highlighted settings before creating the node.';return null;}
    result[control.key]=parsed.data.value;
@@ -68,7 +73,7 @@
  function advancedSource():string {
   const result:Record<string,unknown>={...controlsSnapshot()},sources=new Map<string,string>();
   for(const control of fields){const value=drafts[control.key];if(!value)continue;
-   const input=value.value!==undefined?{format:'rows' as const,value:typedSnapshot(value.value) as JsonValue}:{format:value.format??(control.structured?'json':formatFor(control)) as ControlInputFormat,text:value.text??textFor(control)};
+   const input=value.value!==undefined?{format:'rows' as const,value:typedSnapshot(value.value) as JsonValue}:{format:control.inputSpec?.editor==='path'?'json':value.format??(control.structured?'json':formatFor(control)) as ControlInputFormat,text:value.text??textFor(control)};
    const parsed=parseControlInput(control.inputSpec!,{...input,currentValue:control.value as JsonValue});
    if(parsed.ok)result[control.key]=parsed.data.value;
    else {result[control.key]=control.value;sources.set(control.key,control.inputSpec?.storage==='json-text'?JSON.stringify(value.text??textFor(control)):value.text??textFor(control));}
@@ -92,7 +97,12 @@
   if(advanced){
    const parsed=advancedCandidate(false);if(!parsed)return;
    const next=projectNodeControls(view.operation,parsed,{phase});
-   drafts=advancedInvalid?{}:Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>JSON.stringify(parsed[key])===JSON.stringify(advancedBaseline[key])&&next.some(control=>control.key===key&&contract(control)===draft.contract)));
+   drafts=Object.fromEntries(Object.entries(drafts).filter(([key,draft])=>{
+    const control=next.find(control=>control.key===key&&contract(control)===draft.contract);if(!control)return false;
+    if(JSON.stringify(parsed[key])===JSON.stringify(advancedBaseline[key]))return true;
+    if(advancedInvalid&&draft.text!==undefined)try{return JSON.stringify(parsed[key])===JSON.stringify(control.inputSpec?.storage==='json-text'?draft.text:JSON.parse(draft.text));}catch{}
+    return false;
+   }));
    data=parsed;advanced=false;failure='';advancedInvalid=false;
   }else{
    const next=candidate();advancedInvalid=!next;controls=next?JSON.stringify(next,null,2):advancedSource();

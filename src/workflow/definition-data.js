@@ -62,10 +62,13 @@ export const artifactAddressKey = ({ workflowId, instancePath, nodeId, portId })
  * Topology, phase/operation compatibility, nested refs, parameter target resolution, recursion,
  * expanded limits and required-input completeness belong to the full definition validator.
  * @param {unknown} value
+ * @param {{snapshots?:unknown}} [options]
  * @returns {import('./types').Result<any>}
  */
-export function inspectDefinitionMetadata(value) {
-    const copied = cloneDefinitionData(value);
+export function inspectDefinitionMetadata(value, options = {}) {
+    const table = options.snapshots === undefined ? undefined : cloneDefinitionData(options.snapshots);
+    if (table && !table.ok) return table;
+    const copied = cloneDefinitionData(value, table?.ok ? {snapshots:table.data} : {});
     if (!copied.ok) return copied;
     const definition = copied.data;
     if (!record(definition) || !idText(definition.id) || !Number.isSafeInteger(definition.version) || definition.version < 1 || typeof definition.name !== 'string' || (definition.description !== undefined && typeof definition.description !== 'string')) return fail('DEFINITION_METADATA', 'A definition requires an ID, positive exact version and display name.');
@@ -143,10 +146,11 @@ const portableBinding = (binding, primitiveFallback = false) => {
  * Hash excludes own ID/version/hash and presentation. Nested refs retain their exact hashes;
  * bundled snapshot tables are storage, checked separately by the full validator.
  * @param {unknown} value
+ * @param {{snapshots?:unknown}} [options]
  * @returns {import('./types').Result<any>}
  */
-export function computeDefinitionIdentity(value) {
-    const metadata = inspectDefinitionMetadata(value);
+export function computeDefinitionIdentity(value, options = {}) {
+    const metadata = inspectDefinitionMetadata(value, options);
     if (!metadata.ok) return metadata;
     const draft = structuredClone(metadata.data.definition);
     try {
@@ -207,7 +211,7 @@ export function computeDefinitionIdentity(value) {
             },
         };
         const canonicalContent = JSON.stringify(canonical(semantic));
-        const materialized = cloneDefinitionData(draft);
+        const materialized = cloneDefinitionData(draft, options);
         if (!materialized.ok) return materialized;
         return { ok: true, data: { canonicalContent, semanticHash: sha256Text(canonicalContent), materializedDefinition: materialized.data, topologyValidated: false } };
     } catch { return fail('DEFINITION_BODY', 'Cannot derive identity from malformed body metadata.'); }
@@ -230,12 +234,12 @@ export function inspectPinnedDefinitionIdentity(reference, snapshots) {
     if (!Object.hasOwn(table, key)) return fail('MISSING_DEFINITION', 'The exact pinned definition is not bundled.');
     const snapshot = table[key];
     if (!record(snapshot) || snapshot.id !== ref.id || snapshot.version !== ref.version || snapshot.semanticHash !== ref.semanticHash) return fail('DEFINITION_REF', 'Snapshot metadata does not match its exact pin.');
-    const identity = computeDefinitionIdentity(snapshot);
+    const identity = computeDefinitionIdentity(snapshot, {snapshots:table});
     if (!identity.ok) return identity;
     if (identity.data.semanticHash !== ref.semanticHash) return fail('DEFINITION_HASH', 'Pinned hash does not match canonical semantic content.');
     for (const [otherKey, other] of Object.entries(table)) {
         if (otherKey === key || !record(other) || other.id !== ref.id || other.version !== ref.version) continue;
-        const otherIdentity = computeDefinitionIdentity(other);
+        const otherIdentity = computeDefinitionIdentity(other, {snapshots:table});
         if (!otherIdentity.ok) return otherIdentity;
         if (otherIdentity.data.canonicalContent !== identity.data.canonicalContent) return fail('DEFINITION_CONFLICT', 'The same definition ID and version has different canonical content.');
         if (other.semanticHash !== otherIdentity.data.semanticHash || otherKey !== definitionRefKey(other)) return fail('DEFINITION_REF', 'A duplicate snapshot has inconsistent identity metadata.');

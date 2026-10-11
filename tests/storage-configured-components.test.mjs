@@ -334,3 +334,26 @@ test('an unfinished sole numeric path segment remains invalid across parent view
   }finally{await f.close();}
  }
 });
+
+
+test('I4 wrong-shape Path JSON stays editable and blocks both parents through remount and repair',async()=>{
+ for(const creation of [false,true])for(const source of ['0','null','{"a.b":0}','"literal"']){
+  const saves=[],settings={path:[]},props=creation?{view:{key:'invalid-path',operation:'condition',title:'Condition',controls:JSON.stringify(settings),phase:'pre',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){saves.push(JSON.parse(text).path);return {ok:true};},cancel(){}}}:{view:typedDetails('condition',settings),actions:{editControl(_selection,key,value){assert.equal(key,'path');saves.push(value);return {ok:true};}}};
+  const f=await fixture(creation?'ConfigureNode':'NodeDetails',props,!creation);
+  try{button(f.host,'Edit Path as JSON').click();flushSync();assert.doesNotThrow(()=>input(f.host,'Path JSON',source));assert.equal(f.host.querySelector('[aria-label="Path JSON"]').value,source);button(f.host,creation?'Create node':'Save Path').click();await tick();flushSync();assert.equal(saves.length,0);
+   if(creation){button(f.host,'Configuration format').click();flushSync();button(f.host,'Create node').click();await tick();flushSync();assert.equal(saves.length,0);button(f.host,'Configuration format').click();flushSync();}
+   else{f.mounted.update(null);flushSync();f.mounted.update(props.view);flushSync();}
+   assert.equal(f.host.querySelector('[aria-label="Path JSON"]').value,source);button(f.host,creation?'Create node':'Save Path').click();await tick();flushSync();assert.equal(saves.length,0);
+   input(f.host,'Path JSON','["a.b","red, blue","__proto__","0"]');button(f.host,creation?'Create node':'Save Path').click();await tick();flushSync();assert.deepEqual(saves,[['a.b','red, blue','__proto__','0']]);
+  }finally{await f.close();}
+ }
+});
+
+
+test('I1 actual Node Details Save reaches controller-used native preparation with exact own-key payload',async()=>{
+ const {prepareNativeNodeEdit}=await import('../src/workflow/definition-library.js');
+ const graph={id:'native-save',schema:3,runtime:2,mode:'native-unified',nodes:{check:{id:'check',type:'workflow',operation:'condition',value:null}},wires:{},definitions:{}},payload=JSON.parse('{"__proto__":{"polluted":false},"a.b":[0,false,null,""]}');let prepared;
+ const view=typedDetails('condition',{value:null},{address:{workflowId:graph.id,instancePath:[],nodeId:'check'}}),f=await fixture('NodeDetails',{view,actions:{editControl(selection,key,value){prepared=prepareNativeNodeEdit(graph,{kind:'controls',viewPath:selection.address.instancePath,nodeId:selection.address.nodeId,controls:{[key]:value}});return prepared;}}});
+ try{button(f.host,'Edit Value as JSON').click();flushSync();input(f.host,'Value JSON',JSON.stringify(payload));button(f.host,'Save Value').click();await tick();flushSync();assert.equal(prepared?.ok,true,JSON.stringify(prepared));assert.deepEqual(prepared.data.candidate.nodes.check.value,payload);assert.equal(Object.hasOwn(prepared.data.candidate.nodes.check.value,'__proto__'),true);assert.equal(graph.nodes.check.value,null);assert.equal({}.polluted,undefined);}
+ finally{await f.close();}
+});

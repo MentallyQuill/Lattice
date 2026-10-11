@@ -159,7 +159,7 @@
         const typed = cloned?.ok ? cloned.data.value : undefined;
         let value: unknown = text;
         if (control.inputSpec) {
-            const input = typed === undefined ? {format:drafts[control.key]?.format ?? (control.structured ? 'json' : formatFor(control)) as ControlInputFormat,text} : {format:'rows' as const,value:typed as JsonValue};
+            const input = typed === undefined ? {format:control.inputSpec.editor==='path'?'json':drafts[control.key]?.format ?? (control.structured ? 'json' : formatFor(control)) as ControlInputFormat,text} : {format:'rows' as const,value:typed as JsonValue};
             const parsed = parseControlInput(control.inputSpec,{...input,currentValue:control.value as JsonValue});
             if(!parsed.ok){drafts={...drafts,[control.key]:{...drafts[control.key],text,error:parsed.error.message,pending:false,editor:control.editor,representation:control.representation}};return;}
             value=parsed.data.value;

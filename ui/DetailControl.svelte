@@ -9,7 +9,7 @@
     import JsonValueControl from './JsonValueControl.svelte';
     import JsonPathControl from './JsonPathControl.svelte';
     import { cloneJsonValue } from '../src/workflow/operations/json-data.js';
-    import { formatJsonValueDraftAtPath } from '../src/ui/json-value-authoring.js';
+    import { formatJsonValueDraftAtPath, validateJsonPath } from '../src/ui/json-value-authoring.js';
     import type { JsonPath } from '../src/workflow/operations/json-data';
     import type { DetailControl } from './detail-types';
     let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, onvalue, onnumber, onsave, saveButton = true, format = 'auto', onformat }: {
@@ -34,14 +34,20 @@
     }
     const typedEntry = $derived(control.editor === 'json' && ['value','path'].includes(control.inputSpec?.editor ?? ''));
     const typed = $derived.by(() => {
-        try { return cloneJsonValue(draftValue === undefined ? JSON.parse(text) : draftValue); }
+        try {
+            const value = draftValue === undefined ? JSON.parse(text) : draftValue;
+            return control.inputSpec?.editor === 'path'
+                ? validateJsonPath(value,{allowIndices:['select-fields.path','format.path'].includes(control.inputSpec.id),maxItems:control.inputSpec.limits.maxItems??64})
+                : cloneJsonValue(value);
+        }
         catch { return { ok: false as const }; }
     });
     function typedChange(value: JsonValue) { if (disabled) return; if (onDraft) onDraft(value); else ontext(JSON.stringify(value, null, 2)); }
+    function typedText(source:string) { if(disabled)return; if(control.inputSpec?.editor==='path')onformat?.('json'); ontext(source); }
     function typedInvalid(source: string, path: JsonPath = []) {
         if (disabled || !typed.ok) return;
         const result = formatJsonValueDraftAtPath(typed.data.value, path, source);
-        if (result.ok) ontext(result.data.text); else switchError = result.error.message;
+        if (result.ok) typedText(result.data.text); else switchError = result.error.message;
     }
     const entry = $derived(control.inputSpec?.editor === 'list');
     const shortChoices = () => control.editor === 'enum' && (control.options?.length ?? 0) > 1 && (control.options?.length ?? 0) <= 3 && control.options!.every(option => option.label.length <= 10);
@@ -57,7 +63,7 @@
         {#if typed.ok}
             {#if control.inputSpec?.editor === 'path'}<JsonPathControl value={typed.data.value as JsonPath} onchange={typedChange} oninvalid={source => typedInvalid(source)} label={control.label} {idPrefix} {disabled} {error} allowIndices={['select-fields.path','format.path'].includes(control.inputSpec.id)} maxItems={control.inputSpec.limits.maxItems ?? 64} />
             {:else}<JsonValueControl value={typed.data.value} onchange={typedChange} oninvalid={typedInvalid} label={control.label} {idPrefix} {disabled} {error} />{/if}
-        {:else}<label for={idPrefix + '-typed-raw'}>{control.label} (Advanced JSON)</label><textarea id={idPrefix + '-typed-raw'} aria-label={control.label + ' JSON'} value={text} {disabled} aria-invalid="true" oninput={event => { if (!disabled) ontext(event.currentTarget.value); }}></textarea><small>Finish this draft to return to the typed editor.</small>{/if}
+        {:else}<label for={idPrefix + '-typed-raw'}>{control.label} (Advanced JSON)</label><textarea id={idPrefix + '-typed-raw'} aria-label={control.label + ' JSON'} value={text} {disabled} aria-invalid="true" oninput={event => typedText(event.currentTarget.value)}></textarea><small>Finish this draft to return to the typed editor.</small>{/if}
     {:else if control.inputSpec?.id === 'for-each.helper' && control.helperChoices}
         <label for={idPrefix+'-helper'}>Pinned Data helper</label><select id={idPrefix+'-helper'} aria-label="Pinned Data helper" value={control.helperChoices.find(choice=>JSON.stringify(choice.ref)===JSON.stringify(control.value))?.key??''} {disabled} onchange={event=>{if(!disabled){const choice=control.helperChoices?.find(choice=>choice.key===event.currentTarget.value);if(choice)onvalue(choice.ref);}}}><option value="">Choose an existing item/result helper</option>{#each control.helperChoices as choice (choice.key)}<option value={choice.key}>{choice.label} · v{choice.ref.version}</option>{/each}</select>
         <details><summary>Advanced JSON</summary><label for={idPrefix+'-helper-json'}>{control.label} (JSON)</label><textarea id={idPrefix+'-helper-json'} aria-label={control.label} value={text} {disabled} aria-invalid={!!error} aria-describedby={error?idPrefix+'-error':undefined} oninput={event=>{if(!disabled)ontext(event.currentTarget.value);}}></textarea></details>

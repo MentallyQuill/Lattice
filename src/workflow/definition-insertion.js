@@ -10,14 +10,14 @@ const fail = (code, message) => ({ ok: false, error: { code, message } });
  */
 export function prepareImportedDefinitionPins(root, snapshots, refs, allocateDefinitionId) {
     try {
-        const admitted = cloneDefinitionData({ snapshots, refs });
+        const admitted = cloneDefinitionData({ snapshots, refs }, {snapshotEnvelope:true});
         if (!admitted.ok) return admitted;
         if (!safeWorkflowData(root) || !admitted.data.snapshots || typeof admitted.data.snapshots !== 'object' || Array.isArray(admitted.data.snapshots)
             || !Array.isArray(admitted.data.refs)) return fail('DEFINITION_DATA', 'Expected a root, pinned snapshot table and exact references.');
         const source = admitted.data.snapshots, definitions = structuredClone(root.definitions ?? {}), addedDefinitionKeys = [], changedRefs = [];
         for (const [key, definition] of Object.entries(source)) {
             if (Object.hasOwn(definitions, key)) {
-                const left = computeDefinitionIdentity(definitions[key]), right = computeDefinitionIdentity(definition);
+                const left = computeDefinitionIdentity(definitions[key],{snapshots:{...definitions,...source}}), right = computeDefinitionIdentity(definition,{snapshots:{...definitions,...source}});
                 if (!left.ok) return left;
                 if (!right.ok) return right;
                 if (left.data.canonicalContent !== right.data.canonicalContent) return fail('DEFINITION_CONFLICT', 'An exact snapshot pin has conflicting semantic content.');
@@ -48,7 +48,7 @@ export function prepareImportedDefinitionPins(root, snapshots, refs, allocateDef
                 if (!allocated?.ok) return allocated ?? fail('INVALID_ID', 'Expected a fresh definition identity.');
                 if (!safeId(allocated.data) || !ids.claim(allocated.data)) return fail('IDENTITY_COLLISION', 'A copied definition requires a fresh safe identity.');
                 draft.id = allocated.data; draft.version = 1; delete draft.semanticHash;
-                const identity = computeDefinitionIdentity(draft);
+                const identity = computeDefinitionIdentity(draft,{snapshots:definitions});
                 if (!identity.ok) return identity;
                 const snapshot = { ...structuredClone(identity.data.materializedDefinition), semanticHash: identity.data.semanticHash };
                 next = { id: snapshot.id, version: snapshot.version, semanticHash: snapshot.semanticHash };
