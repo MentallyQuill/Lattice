@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
 import { compiled } from './helpers/svelte-compile.mjs';
+import { projectRecordedPreview } from '../src/ui/recorded-preview.js';
 
 const dom = new JSDOM('<body></body>', { pretendToBeVisual: true });
 globalThis.window = dom.window; globalThis.document = dom.window.document;
@@ -36,14 +37,25 @@ test('Preview displays supplied diagnostics once, suppresses legacy duplicates a
 test('Preview keeps the Apply save outcome visible alongside the earlier-run notice', async () => {
     const statusDetail = 'Reply applied locally. Saving is unconfirmed.';
     const historyNotice = 'This preview is from an earlier run. The reply outcome is retained for review.';
-    const view = preview({ diagnostics: [], issues: [], runHere: null, status: 'stale', statusDetail, historyNotice, sections: [{ id: 'reply', label: 'Reply', text: 'Accepted reply', format: 'text', truncated: false }] });
-    const f = await fixture('OutputPreview', { view });
+    const artifact = { kind: 'text', format: 'structured', value: { kind: 'text', text: 'Accepted reply' } };
+    const projection = projectRecordedPreview(artifact);
+    const view = preview({ diagnostics: [], issues: [], runHere: null, status: 'stale', statusDetail, historyNotice,
+        source: projection.source, sections: [{ ...projection.sections[0], id: 'reply', label: 'Reply' }] });
+    const before = structuredClone(view), copied = [];
+    const f = await fixture('OutputPreview', { view, copyText: text => copied.push(text), storage: { getItem() { return null; }, setItem() {} } });
     try {
         const notes = [...f.host.querySelectorAll('.pc-preview-note')];
         assert.equal(notes.filter(note => note.textContent === statusDetail).length, 1, 'the Apply outcome remains a separate visible note');
         assert.equal(notes.filter(note => note.textContent === historyNotice).length, 1, 'the earlier-run notice does not replace the Apply outcome');
         assert.match(f.host.textContent, /Accepted reply/);
         assert.equal(f.host.querySelectorAll('[role="alert"], [aria-live]').length, 0, 'retained outcome notices do not duplicate announcements');
+        f.host.querySelector('[aria-label="Source preview"]').click(); flushSync();
+        assert.equal(f.host.querySelector('[data-preview-source]').textContent, projection.source.text);
+        assert.deepEqual(JSON.parse(projection.source.text), artifact.value, 'Source is the entire retained diagnostic artifact');
+        assert.match(f.host.querySelector('.pc-source-policy').textContent, /private host fields are excluded/);
+        f.host.querySelector('[data-preview-copy-source]').click();
+        assert.deepEqual(copied, [projection.source.text], 'copy retains the exact projected source');
+        assert.deepEqual(view, before, 'presentation and copy preserve earlier-run outcome and retained content');
     } finally { await f.close(); }
 });
 
