@@ -37,10 +37,13 @@ function inspectPermissions(parent, text, scope, upstreamExempt) {
         if (scope === 'authorized') return failure('SCOPE_REQUIRED', 'An unannotated Draft requires explicit scan scope.');
         return { ok: true, data: { spans: [{ start: 0, end: text.length }] } };
     }
+    if (!Array.isArray(parent.spans)) return failure('INVALID_SPANS', 'Draft permissions require an exact span array.');
+    // No ranges can cross an ambiguous stored scope when permission is empty.
+    if (!parent.spans.length) return { ok: true, data: { spans: parent.spans } };
     let allowed;
     try { allowed = scanRegions(text, parent.scope ?? 'whole', []); }
     catch { return failure('INVALID_SPANS', 'Stored Draft permissions require unambiguous original scope.'); }
-    if (!Array.isArray(parent.spans) || parent.spans.some((span, index) =>
+    if (parent.spans.some((span, index) =>
         !span || span.index !== index || !Number.isSafeInteger(span.start) || !Number.isSafeInteger(span.end) || span.start < 0 || span.end <= span.start || span.end > text.length ||
         !boundary(text, span.start) || !boundary(text, span.end) || span.text !== text.slice(span.start, span.end) || index > 0 && span.start <= parent.spans[index - 1].end ||
         !allowed.some(([from, to]) => span.start >= from && span.end <= to) || upstreamExempt(span.start, span.end))) return failure('INVALID_SPANS', 'Draft permissions require exact ordered original spans inside retained scope and outside exemptions.');

@@ -204,6 +204,28 @@ test('Unmatched quote scopes emit unresolved decisions with null counts', async 
     assert.equal(whole.outputs.matches.value.totalOccurrences, 2);
     assert.equal(whole.outputs.matches.value.diagnostics[0].code, 'UNMATCHED_QUOTES');
 });
+test('Malformed quote Drafts with upstream empty permissions remain inspectable and scoped unresolved', async () => {
+    const { scanDraft } = await import('../src/workflow/repair.js?v=0.27.0');
+    const upstream = scanDraft(draft('cold "cold'), { scope: 'dialogue', rules: ['cold'] });
+    assert.equal(upstream.ok, true); assert.deepEqual(upstream.artifact.spans, []);
+    const input = upstream.artifact;
+    const whole = await scanPatternDraft(input, settings(['cold']));
+    assert.equal(whole.ok, true, JSON.stringify(whole.error)); assert.equal(whole.outputs.out, input);
+    assert.equal(whole.outputs.matched.value, true);
+    assert.equal(whole.outputs.matches.value.status, 'complete');
+    assert.deepEqual(whole.outputs.matches.value.occurrences.map(hit => [hit.start, hit.end, hit.editable]), [[0, 4, false], [6, 10, false]]);
+    assert.equal(whole.outputs.matches.value.diagnostics[0].code, 'UNMATCHED_QUOTES');
+    for (const scope of ['dialogue', 'narration']) {
+        const result = await scanPatternDraft(input, settings(['cold'], { scope }));
+        assert.equal(result.ok, true, JSON.stringify(result.error)); assert.equal(result.outputs.out, input);
+        assert.equal(result.outputStates.matched.status, 'unresolved'); assert.equal(result.outputStates.matched.reason.code, 'UNMATCHED_QUOTES');
+        const report = result.outputs.matches.value;
+        assert.equal(report.status, 'unresolved'); assert.equal(report.matched, null); assert.equal(report.totalOccurrences, null); assert.equal(report.rules[0].count, null); assert.deepEqual(report.occurrences, []);
+    }
+    const invalid = { ...input, spans: [{ index: 0, start: 6, end: 10, text: 'cold' }] };
+    const rejected = await scanPatternDraft(invalid, settings(['cold']));
+    assert.equal(rejected.ok, false); assert.equal(rejected.error.code, 'INVALID_SPANS'); assert.equal(rejected.outputs, undefined);
+});
 test('Whole inspects protected and noneditable hits while authorized scope stays narrow', async () => {
     const input = draft('cold "cold" cold KEEP cold'); input.scope = 'whole'; input.protectedLiterals = ['KEEP'];
     input.spans = [{ index: 0, start: 0, end: 4, text: 'cold' }];
