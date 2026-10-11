@@ -124,12 +124,13 @@ export function filterPatternDraft(draft, matches, inputSettings, local) {
     for (const unit of selected) { retained += text.slice(cursor, unit.start); cursor = unit.end; }
     retained += text.slice(cursor);
     const blocked = units.some(unit => unit.blocked);
-    const empty = !blocked && (settings.action === 'keep' && value.occurrences.length === 0 || selected.length > 0 && !retained.trim());
+    const retainedUnitCount = allUnits.length - selected.length;
+    const empty = !blocked && (settings.action === 'keep' && (retainedUnitCount === 0 || !retained.trim()) || selected.length > 0 && !retained.trim());
     const reason = blocked ? { code: 'FILTER_PERMISSION_BLOCKED', message: 'A proposed unit crosses immutable, protected or exempt text.' }
         : empty ? { code: 'EMPTY_FILTER_RESULT', message: 'Filter must retain a nonblank story body.' } : null;
     const report = { recordType: 'text-filter', schemaVersion: 1, status: blocked ? 'blocked' : empty ? 'empty' : 'complete',
         action: settings.action, unit: settings.unit, units, originalBodyLength: text.length, resultBodyLength: retained.length,
-        retainedUnitCount: allUnits.length - selected.length, diagnostics: reason ? [reason] : [],
+        retainedUnitCount, diagnostics: reason ? [reason] : [],
     };
     const admitted = cloneJsonValue(report); if (!admitted.ok) return failure('FILTER_REPORT_LIMIT', 'The complete Filter report exceeds Data limits.');
     const visibility = artifactVisibility(draft), metadata = visibility.kind === 'public' ? {} : { visibility };

@@ -233,3 +233,36 @@ test('unannotated stored exemptions allow independent deletion outside their cov
     assert.equal(result.ok, true, JSON.stringify(result.error)); assert.equal(result.outputs.out.text, 'First PIN.\n\nLast.');
     assert.equal(result.outputs.out.caseSensitive, false); assert.deepEqual(result.outputs.out.exemptions, ['pin']);
 });
+
+
+test('Keep resolves empty from matching units when whitespace Pattern hits have no paragraphs', async () => {
+    const input = draft(' \t\r\n');
+    const scanned = await scan(input, [' ']);
+    assert.equal(scanned.ok, true); assert.equal(scanned.outputs.matches.value.totalOccurrences, 1);
+    const result = filter.filterPatternDraft(input, scanned.outputs.matches, controls({ action: 'keep' }), { nodeId: 'filter' });
+    unresolved(result, 'EMPTY_FILTER_RESULT');
+    assert.equal(result.outputs.report.value.status, 'empty');
+    assert.equal(result.outputs.report.value.retainedUnitCount, 0);
+    assert.equal(result.outputs.report.value.originalBodyLength, 4);
+    assert.equal(result.outputs.report.value.resultBodyLength, 4);
+    assert.deepEqual(result.outputs.report.value.units, []);
+    const removed = filter.filterPatternDraft(input, scanned.outputs.matches, controls(), { nodeId: 'filter' });
+    assert.equal(removed.outputs.out, input); assert.equal(removed.outputs.report.value.status, 'complete');
+});
+
+test('Keep preserves a matching nonblank paragraph unchanged when no deletions are selected', async () => {
+    const input = draft('Elara stays.\r\n\r\n');
+    const result = await run(input, ['Elara'], { action: 'keep' });
+    assert.equal(result.ok, true); assert.equal(result.outputs.out, input);
+    assert.equal(result.outputs.report.value.status, 'complete');
+    assert.equal(result.outputs.report.value.retainedUnitCount, 1);
+    assert.deepEqual(result.outputs.report.value.units, []);
+});
+
+test('Keep never completes a whitespace-only retained line even when it matches', async () => {
+    const result = await run(draft(' \t\r\n'), [' '], { action: 'keep', unit: 'line' });
+    unresolved(result, 'EMPTY_FILTER_RESULT');
+    assert.equal(result.outputs.report.value.status, 'empty');
+    assert.equal(result.outputs.report.value.retainedUnitCount, 1);
+    assert.equal(result.outputs.report.value.resultBodyLength, 4);
+});
