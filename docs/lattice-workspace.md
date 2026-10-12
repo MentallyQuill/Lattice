@@ -1,75 +1,91 @@
-# LATTICE quick start
+# Lattice quick start
 
-[Documentation](README.md) · [Unified workflows](unified-workflows.md) · [Operator's manual](operators-manual.md) · [Node reference](node-reference.md)
+[Documentation](README.md) · [Operator’s manual](operators-manual.md) · [Example workflows](examples.md)
 
-Start with one unified graph around ordinary SillyTavern generation.
+This guide assumes SillyTavern is installed and your usual model connection works. Start with the supplied workflow, then add one small change.
 
-## Open the workspace
+## Install and open Lattice
 
-Install from `https://github.com/MentallyQuill/Lattice` in SillyTavern's **Extensions → Install extension**, leaving the branch field blank. Reload, then open the LATTICE logo on the left of the chat bar or type `/lattice`.
+1. In SillyTavern, open **Extensions → Install extension**.
+2. Enter `https://github.com/MentallyQuill/Lattice`. Leave the branch blank to install `main`, then reload.
+3. Click the Lattice logo beside the chat bar, or type `/lattice`.
 
-Fresh launch opens **Unified story workflow**, with Lattice disabled. Existing installations restore their unified recovery draft; previous unified documents are available through **File → Recover previous workflows**. **File → Open examples…** offers [30 numbered unified lessons](examples.md), searchable by goal or technique and filterable by difficulty. Opening a lesson creates an independent editable active document. Opening and importing make no provider request and do not change **Enable Lattice**.
-
-Use **File → Save workflow** or **Save As…** to save the editable document to disk. Browsers without direct file access offer **Save As…** to save a JSON copy; the document stays modified because Lattice cannot confirm that the browser finished saving it to disk. A recovery draft retains committed work across reloads; it does not save the file on disk. **Open Recent** reopens previously accessed files in supported browsers. See [save, import, and share](operators-manual.md#save-import-and-share) for modified-document prompts and recovery.
-
-The menu bar contains **File**, **Edit**, **View**, **Graph**, **Workflow** and **Help**. Use **Graph → Add node…** to search for nodes and subgraphs, and **View → Fit graph** or **Fit selection** to recover your position. Press **F** to fit and center the selection in one action; with nothing selected, it fits the graph.
-
-The default **Ember** theme follows SillyTavern's panel, text, control and quote colors. **View → Theme and colours…** offers Ember, Lattice, Ash, Graphite, Slate, Obsidian, Harbor and Signal. Harbor and Signal also identify connection types with labeled pins, distinct shapes and wire patterns.
+A fresh installation opens **Unified story workflow** with Lattice disabled. Existing installations restore their recovery draft. **File → Recover previous workflows** offers earlier unified documents.
 
 ## Run your first unified workflow
 
-The starter is **On Send → Generate Reply · SillyTavern → Review / Publish**. It makes no auxiliary model requests; the ordinary reply uses your SillyTavern connection.
+The starter connects **On Send → Generate Reply · SillyTavern → Review / Publish**. Your usual SillyTavern connection writes the reply; the starter makes no extra model requests.
 
-1. Open your story and select its native character in SillyTavern.
-2. Keep the starter open, then select **Enable Lattice**.
-3. Send a player message normally. The starter waits for that generation's completed Draft and records its review result.
-4. Select **Review / Publish · Host result** in Preview. Compare the original and candidate. **Apply reviewed candidate** preserves the original as a swipe and publishes the chosen result; **Reject candidate** leaves it alone.
-5. Open a recipe to add preparation, prose editing or notes. Choose ordinary model connections on their node bars and configure For Each helper roles in Details before sending. Automatic Story Clock, Read File and Outcome Commit defaults need no setup. Authorize custom document targets in **Workflow → Configure → Workflow Data…**.
+1. Open a practice chat and select the character who will reply.
+2. In Lattice, select **Enable Lattice**.
+3. Send a player message normally in SillyTavern and wait for the reply to finish.
+4. Select **Review / Publish**. In Preview, choose **Host result** and compare the original with the proposed reply.
+5. Choose **Apply reviewed reply** to add the reviewed version as a new swipe, or **Reject reply** to discard the proposal. The original reply remains available.
 
-Full execution starts with the native generation owned by Send. Stop cancels active work. **Run to here** previews a selected output's supported dependencies without accepting effects or publishing guidance.
+A workflow can also propose memories, notes, clock movement, or other saved story changes. Apply accepts the effects attached to that reviewed result; Preview alone does not. Inspect each save’s status if a workflow writes data.
 
-### Use automatic Workflow Data
+**Run to here** tests the supported inputs needed for a selected output. It does not start another main reply or accept story changes, but model tools on that path can make requests. **Workflow → Stop workflow** cancels active work.
 
-Add **Story Clock** to use **Chat clock**, starting on Day 1 at 00:00 with a 24-hour day. **Read File** uses empty plain-text **Chat notes**, and **Outcome Commit** uses an empty JSON **Chat outcomes** list. The unified workflow supplies the referenced defaults for the active user/chat when they are needed. You can add and connect these nodes without visiting a setup dialog.
+## Try one scene instruction
 
-Select the node to customize it in Details. **Starting values** controls the clock’s starting day, time and hours per day; the other nodes offer initial content or outcomes. Open **Advanced** to choose a shared source, create a separate one with **+**, and adjust **Format** or **Visibility**. Visibility has Public, Hidden and Actor private buttons; the private option also needs its actor ID. Clock and outcomes data keep their required JSON format, while notes offer the supported document formats. Use **Save settings** to apply your changes.
+Choose **File → Open examples… → Give this scene one clear direction**. Select **Text · scene direction** and replace its instruction in Details, for example:
 
-Nodes selecting the same clock share its saved timeline. Separate clocks advance independently; they do not synchronize automatically. Initial values only seed data that has not been saved yet, so editing them preserves existing saved time, notes and outcomes. **Workflow → Configure → Workflow Data…** remains available for custom target management.
+> Describe the dark lighthouse and one sound from the water. Leave my next action to me.
+
+Follow the connections from Text through Compose to Generate Reply’s guidance input. Right-click Compose and choose **Run to here** to inspect the guidance in Preview. Then send your next player message and review the result.
+
+Opening a lesson creates an editable copy. It makes no model request and does not change **Enable Lattice**. Each of the [30 lessons](examples.md) states its setup and request budget. For model-based lessons, choose each model tool’s connection on its grey bar; **For Each** helpers have separate bindings in Details.
+
+Click a node’s **?** button for its guide. It explains the job, settings, connections, and examples without leaving the editor.
+
+## Save your work
+
+Use **File → Save workflow** or **Save As…** to keep an editable file. In browsers without direct file access, Save As downloads a JSON copy. The document stays marked modified because Lattice cannot confirm the download finished.
+
+A recovery draft keeps saved editor changes across reloads, but does not update your file on disk. **Open Recent** reopens previously accessed files in supported browsers. **Export workflow JSON…** creates a sharing copy without local connection identifiers or credentials. See [save, import, and share](operators-manual.md#save-import-and-share).
+
+## Find your way around
+
+Use **Graph → Add node…** to search the shelf. When a tool opens **Configure node**, fill its required settings and choose **Create node**. Connect its output pin to a compatible input pin; the connections decide which results feed the next step. Canvas position does not decide execution order.
+
+**View → Fit graph** and **Fit selection** bring your work into view. Press **F** to fit the selection, or the whole graph when nothing is selected. The default **Ember** theme follows SillyTavern’s colors. **View → Theme and colours…** offers other themes; Harbor and Signal include connection patterns and labeled, shaped pins.
+
+![A structured scene brief with its composed result in Preview](images/workspace-overview.png)
+
+*Preview lets you inspect the result of a step before sending a reply. This demonstration uses a structured scene brief.*
+
+## Use automatic Workflow Data
+
+Add **Story Clock**, **Read File**, or **Outcome Commit** to use their automatic sources:
+
+| Node | Starting source |
+| --- | --- |
+| Story Clock | **Chat clock**: Day 1 at 00:00, with a 24-hour day. |
+| Read File | **Chat notes**: empty plain text. |
+| Outcome Commit | **Chat outcomes**: an empty JSON list. |
+
+Lattice makes the referenced defaults available when the enabled workflow runs. Change starting values or content in Details; **Advanced** lets you choose a source, format, and visibility. Actor-private sources also require an actor ID. Clock and outcomes keep their required JSON format.
+
+Starting values seed unsaved data. Changing them does not overwrite saved time, notes, or outcomes. Nodes choosing the same clock share its timeline; separate clocks do not synchronize automatically.
+
+For named documents required by a lesson, open **Workflow → Configure → Workflow Data…**. These are story documents stored with the chat, not arbitrary files on your computer. See [document setup](unified-workflows.md#authorize-workflow-data-and-preserve-its-structure).
 
 ## Add a reusable system
 
-Choose **Workflow → Add system…**, select a **Saved system**, and bind its required typed inputs. Optional inputs can remain **Unused**. Choose explicit output destinations; for a preparation Guidance output, select an existing Main Compose Guidance merge or **Create Compose Guidance → Generate Reply** when its guidance input is empty. A state-only body can stage its authorized effects without adding prompt text.
+Once a process works, save it as a subgraph and choose **Workflow → Add system…**. Select a saved system, choose its inputs and output destinations, then **Preview connections** before adding it. Lattice opens its editable body in a tab. One Undo removes the whole addition.
 
-Select **Preview connections**, inspect the proposed bindings, then **Add system**. An editable body opens in a tab, and one Undo removes the whole addition. The command targets Main even while you are viewing a body.
-
-Select the wrapper and use **Details → Run this system** to include or skip its entire body. Connections determine what runs; opening or closing its tab only changes the view. Main still owns one native reply and one Review / Publish. Apply accepts this reviewed result's staged proposals. Preview, Run to here, Reject and Stop settle none; each accepted save has its own receipt.
-
-For multiple Guidance contributions, set Compose section **Kind → Guidance** and optional **Skipped source → Omit section**. Section order controls the composed order. **Token budget** caps the complete rendered composition; 0 adds no cap, and overflow holds without shortening it. Preview displays the exact recorded output. Generate Reply still applies its final guidance budget.
-
-The default Chat clock is shared between systems. Default notes and outcomes inside separate instances use stable separate sources; explicit named targets keep their chosen sharing. Keep one final writer for a shared target. Memory, Recall and Recall Shortcut remain at Main, and For Each helpers keep their existing host-operation restrictions.
-
-Open the [combined systems setup](combined-system-example.md) for a direct-file example with fixed wand effects, an agreed eight-hour rain crossing and private relationship state. It is separate from the 30 numbered lessons. Saving the editable document retains Main, the body definitions and your open tabs.
-
-## Build and inspect a brief
-
-Add a Preparation-stage Compose Text source, JSON Decode, Select Fields and Compose Guidance. Connect the selected fields to the final Compose's Data pin, then connect Guidance to Generate Reply's guidance pin. In the source JSON, supply direction, constraint and an optional tone. Use template placeholders such as `{{data:/direction}}`.
-
-![Structured composition inspected with Run to here, showing the composed brief and Compose settings](images/workspace-overview.png)
-
-*This synthetic authoring fixture demonstrates structured composition. Select its Compose Guidance output and use Run to here to inspect the brief without requesting a native reply.*
+Select the system’s wrapper and use **Details → Run this system** to include or skip it. Closing the tab only changes your view. Keep one main reply and one final Review / Publish path. The [combined systems example](combined-system-example.md) shows a wand, weather, and relationship state sharing a workflow.
 
 ## Inspect an editorial process
 
-Text Rules and Transpose can inspect or propose source-bound Patches in the Response stage. Validate Patches and Review Gate preserve the original and expose candidate diagnostics. These patch diagnostics do not grant Apply authority. For publication, process the owned Generate Reply Draft and end the final Draft in **Review / Publish**.
+![Text Rules connected to patch validation and candidate inspection](images/text-rules-graph.png)
 
-![Text Rules connected to deterministic patch validation and candidate inspection](images/text-rules-graph.png)
+*This demonstration proposes text replacements. Run to here shows the replacements and protected text without publishing them.*
 
-*The synthetic cleanup fixture proposes Patches. Run to here lets you inspect exact replacements and protected text without publication.*
-
-See [reply review](native-workflows.md#review-a-reply-repair) and the [unified guide](unified-workflows.md) for current publication, actor authority and accepted effects.
+Patch validation and candidate inspection are intermediate checks. A reply-processing workflow must carry its final Draft to **Review / Publish** before you can apply it. See [reply review](native-workflows.md#review-a-reply-repair).
 
 ## Recover an older setup
 
-Retired pre/post roots are preserved in a cold archive. **File → Export archived workflows** saves a copy of their original graphs, bindings and active selection for recovery. They cannot execute or import as current roots. Rebuild useful logic in a new unified graph with explicit Preparation/Response stages and Review / Publish. There is no automatic conversion or model request during recovery.
+Retired pre/post workflows are kept in an archive. **File → Export archived workflows** saves their original graphs, bindings, and active selection as a recovery copy. They cannot run or import as current workflows. Rebuild useful parts in a unified workflow with Preparation and Response stages and a final Review / Publish. Recovery makes no model requests and does not convert the old graphs.
 
-Read the [operator's manual](operators-manual.md) to connect pins, open subgraph tabs, customize instances and inspect recorded outputs.
+Continue with the [operator’s manual](operators-manual.md) for illustrated editor instructions, or [unified workflows](unified-workflows.md) to build a complete story system.

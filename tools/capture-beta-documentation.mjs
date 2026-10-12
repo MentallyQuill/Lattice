@@ -3,6 +3,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { mkdir, writeFile, readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { screenshotRegion } from './documentation-framing.mjs';
 
 // Actual production UI and gestures. Fixture data supplies a disposable story;
 // the only visual overlay is a cursor, since browser screenshots omit it.
@@ -32,9 +33,22 @@ async function screenshot(name, selector) {
     if (broken.length) throw Error('Missing capture image: ' + broken.join(', '));
     await page.evaluate(() => { const cursor = document.getElementById('documentation-cursor'); if (cursor) cursor.hidden = true; });
     const path = join(output, name + '.png');
-    await (selector ? page.locator(selector) : page).screenshot({ path, animations: 'disabled' });
+    const focused = ['.pc-inspector', '.pc-node-details'].includes(selector) ? '.pc-node-details > *' : selector ?? ({
+        'system-settings': '.pc-node-details > *',
+        'wand-system': '.pc-canvas-host .pc-node-native',
+        'unified-starter': '.pc-canvas-host .pc-node-native',
+        'profile-picker': ['.pc-node-native[data-id="response-plan"]', '.profile-menu'],
+        'file-menu': '.pc-workspace-menu-panel',
+        'connecting-nodes': '.pc-canvas-host .pc-node-native',
+        'selection-subgraph': '.pc-canvas-host .pc-node-native:is(.pc-selected, .pc-multi)',
+        'created-subgraph': '.pc-canvas-host .pc-node-native',
+        'subgraph-parent': '.pc-canvas-host .pc-node-native',
+        'pinned-preview': '.pc-preview-pane',
+        'workflow-comments': ['.pc-comment-frame', '.pc-comment-details'],
+    })[name];
+    const framing = await screenshotRegion(page, path, focused);
     await page.evaluate(() => { const cursor = document.getElementById('documentation-cursor'); if (cursor) cursor.hidden = false; });
-    evidence.screenshots.push({ name, selector: selector ?? 'workspace', bytes: (await stat(path)).size });
+    evidence.screenshots.push({ name, selector: focused ?? 'workspace', framing, bytes: (await stat(path)).size });
     console.log('Captured ' + name);
 }
 async function frame(count = 1) {
@@ -90,12 +104,12 @@ async function menu(group, command) {
     await page.getByRole('menuitem', { name: command, exact: true }).click();
 }
 async function select(id) { await heading(id).click(); await settle(); }
-async function fit(maxZoom = .95) {
-    await page.evaluate(async maxZoom => {
+async function fit(maxZoom = .95, selector = '.pc-node-native') {
+    await page.evaluate(async ({ maxZoom, selector }) => {
         const h = window.canvasHarness, c = h.canvas;
         c.fit(); await h.settle();
         const area = c.host.getBoundingClientRect(), v = c.view;
-        const boxes = [...c.host.querySelectorAll('.pc-node-native')].map(e => {
+        const boxes = [...c.host.querySelectorAll(selector)].map(e => {
             const r = e.getBoundingClientRect(); return { x: (r.x - area.x - v.x) / v.zoom, y: (r.y - area.y - v.y) / v.zoom, w: r.width / v.zoom, h: r.height / v.zoom };
         });
         const left = Math.min(...boxes.map(b => b.x)), top = Math.min(...boxes.map(b => b.y));
@@ -103,7 +117,7 @@ async function fit(maxZoom = .95) {
         const zoom = Math.min(maxZoom, (area.width - 210) / width, (area.height - 100) / height);
         Object.assign(v, { zoom, x: 165 + (area.width - 210 - width * zoom) / 2 - left * zoom, y: (area.height - height * zoom) / 2 - top * zoom });
         c.applyTransform(); await h.settle();
-    }, maxZoom);
+    }, { maxZoom, selector });
 }
 async function load(kind = 'structured') {
     // Each take starts with a fresh panel layout; previous demonstrations may
@@ -213,6 +227,89 @@ try {
     page.on('console', msg => { if (msg.type() === 'error') evidence.errors.push(msg.text()); });
     page.on('response', r => { if (r.status() >= 400) evidence.errors.push('HTTP ' + r.status() + ': ' + r.url()); });
 
+    if (!only || only === 'manual') {
+        await page.setViewportSize({ width: 1440, height: 1000 });
+        await load(); await select('compose-guidance');
+        await screenshot('node-help-button', '.pc-node-details > header');
+        await heading('compose-guidance').click({ button: 'right' });
+        await screenshot('node-actions', '[role="menu"][aria-label="Node actions"]');
+        await page.keyboard.press('Escape');
+
+        await run('compose-guidance');
+        await page.getByRole('button', { name: 'Readable preview', exact: true }).click();
+        await screenshot('preview-modes', '.pc-preview-pane');
+
+        await select('compose-json');
+        await page.getByLabel('Trim output', { exact: true }).check();
+        await page.getByLabel('Wrap output', { exact: true }).check();
+        const wrap = page.locator('[data-modifier-controls] [data-modifier-id]').nth(1);
+        await wrap.locator('summary').click();
+        await page.getByLabel('Wrap Prefix', { exact: true }).fill('<scene>');
+        await page.getByLabel('Wrap Suffix', { exact: true }).fill('</scene>');
+        await page.getByRole('button', { name: 'Save Wrap settings', exact: true }).click();
+        await page.locator('[data-modifier-controls]').scrollIntoViewIfNeeded();
+        await screenshot('text-modifiers', '[data-modifier-controls]');
+
+        await load();
+        await menu('Graph', 'Manage portals…');
+        const source = await page.getByLabel('Portal source', { exact: true }).locator('option').evaluateAll(options => options.find(option => option.value.includes('compose-json'))?.value);
+        if (!source) throw Error('Portal demonstration source missing.');
+        await page.getByLabel('Portal source', { exact: true }).selectOption(source);
+        await page.getByLabel('New portal name', { exact: true }).fill('Scene brief');
+        await page.getByRole('button', { name: 'Create portal', exact: true }).click();
+        await expect(page.getByLabel('Portal name', { exact: true })).toHaveValue('Scene brief');
+        const receiver = await page.getByLabel('Compatible receiver', { exact: true }).locator('option').evaluateAll(options => options.find(option => option.value.includes('json-decode'))?.value);
+        if (!receiver) throw Error('Portal demonstration receiver missing.');
+        await page.getByLabel('Compatible receiver', { exact: true }).selectOption(receiver);
+        const replace = page.getByLabel('Replace existing connection', { exact: true });
+        if (await replace.isVisible()) await replace.check();
+        await page.getByRole('button', { name: 'Connect receiver', exact: true }).click();
+        await expect(page.getByRole('button', { name: 'Restore wire', exact: true })).toBeVisible();
+        await screenshot('portals', '.pc-manager-dialog');
+        await page.keyboard.press('Escape');
+
+        await load('starter');
+        await menu('View', 'Theme and colours…');
+        await page.locator('.pc-theme-pop .pc-th-preset').filter({ has: page.locator('.pc-th-name', { hasText: /^Harbor$/ }) }).click();
+        await screenshot('themes', '.pc-theme-pop');
+        await page.locator('.pc-theme-pop-close').click();
+
+        await load('starter'); await select('review-publish');
+        await page.getByLabel('Node name', { exact: true }).fill('Review the harbor reply');
+        await page.getByLabel('Node name', { exact: true }).press('Tab');
+        await menu('File', 'New workflow');
+        await screenshot('save-changes', '.pc-document-prompt');
+        await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+        await load('starter');
+        await page.evaluate(async () => {
+            const h = window.canvasHarness, graph = structuredClone(h.graph);
+            const { operationDefaults } = await import('/src/workflow/catalog.js?v=' + h.version);
+            for (const [id, operation, x] of [['shortcut', 'hotkey-arm', 80], ['recall', 'recall', 400]]) {
+                graph.nodes[id] = { ...operationDefaults(operation), id, type: 'workflow', actorId: 'character:rowan.png', memorySetId: 'moments', x, y: 350 };
+            }
+            await h.activate(graph); await h.settle();
+        });
+        await page.getByRole('checkbox', { name: 'Enable Lattice', exact: true }).check();
+        await fit(); await select('shortcut');
+        await page.getByRole('region', { name: 'Memory recall', exact: true }).getByRole('button', { name: 'Queue recall', exact: true }).click();
+        await expect(page.locator('.pc-node-recall-status')).toHaveCount(2);
+        await menu('Workflow', 'Memory recall');
+        await page.getByRole('menuitem', { name: 'Memory recall overview…', exact: true }).click();
+        await screenshot('recall-controls', '.pc-workspace-dialog');
+        await page.keyboard.press('Escape');
+
+        await load('starter');
+        await page.evaluate(async () => {
+            const h = window.canvasHarness, graph = structuredClone(h.graph);
+            for (const [id, wire] of Object.entries(graph.wires)) if (wire.to === 'review-publish') delete graph.wires[id];
+            await h.activate(graph); await h.settle();
+        });
+        await menu('Workflow', 'Validate workflow');
+        await screenshot('validation-issue', '.pc-workspace-dialog');
+        await page.keyboard.press('Escape');
+    }
+
     if (!only || only === 'screenshots') {
         await page.setViewportSize({ width: 1680, height: 1050 });
         await load('hero'); await select('compose');
@@ -233,7 +330,9 @@ try {
         await page.getByRole('button', { name: 'Preview connections', exact: true }).click();
         await expect(page.getByText('Connection preview', { exact: true })).toBeVisible();
         await screenshot('add-system', '.pc-system-dialog'); await page.keyboard.press('Escape');
-        await heading('wand').dblclick(); await fit(.85); await screenshot('wand-system');
+        await heading('wand').dblclick();
+        const wandFocus = '.pc-node-native:is([data-id="wand-library"], [data-id="wand-pick"], [data-id="wand-guidance-material"], [data-id="wand-guidance"], [data-id="wand-outcome-commit"])';
+        await fit(.85, wandFocus); await screenshot('wand-system', wandFocus);
         await load('starter'); await select('review-publish'); await screenshot('unified-starter');
         await menu('File', 'Open examples…'); await screenshot('examples-curriculum', '.pc-workspace-dialog');
         await page.locator('.pc-example-details-button').first().click(); await screenshot('example-lesson', '.pc-workspace-dialog'); await page.keyboard.press('Escape');
@@ -267,6 +366,12 @@ try {
             await point(choice); await page.mouse.down(); await frame(4);
             const area = await page.locator('.pc-canvas-host').boundingBox();
             await move(area.x + 500, area.y + 240, 24); await screenshot('shelf-drag'); await frame(5); await page.mouse.up(); await frame(8);
+            const configuration = page.getByRole('dialog', { name: 'Configure node', exact: true });
+            await expect(configuration).toBeVisible();
+            await screenshot('node-creation', '.pc-configure-node');
+            await frame(12);
+            await click(configuration.getByRole('button', { name: 'Create node', exact: true }));
+            await expect(configuration).toHaveCount(0);
             await check('Shelf drag creates exactly one Text Rules node', await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).filter(n => n.operation === 'text-rules').length === 1));
         });
     }

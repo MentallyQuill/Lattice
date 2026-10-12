@@ -1,44 +1,42 @@
-# Unified workflows in LATTICE
+# Unified workflows in Lattice
 
-[Documentation](README.md) · [Quick start](lattice-workspace.md) · [Node reference](node-reference.md) · [Model connections](native-workflows.md)
+[Documentation](README.md) · [Quick start](lattice-workspace.md) · [Operator’s manual](operators-manual.md) · [Model setup](native-workflows.md)
 
-A unified workflow prepares guidance, waits for SillyTavern to generate its ordinary reply, and then processes that reply in the same graph. You work in one open unified workflow document. Preparation and response remain useful stages inside it; they no longer require switching between two graphs.
+A unified workflow prepares guidance, lets SillyTavern write its usual reply, and processes that reply in one connected graph. **Preparation** runs before reply writing; **Response** processes the completed reply. You keep one workflow open rather than switching between separate graphs.
 
-The normal SillyTavern connection writes the main reply. Other model nodes have their own connections and can plan, judge, revise, extract or enrich material. Their outputs become graph artifacts that you can inspect before applying the final result.
+Your usual SillyTavern connection writes the main reply. Other model tools can plan, judge, revise, extract, or enrich material with their own connections. Preview lets you inspect their results. A **Draft** is the reply being processed; **Guidance** is advice connected to the main reply model.
 
-## Apply an example to Story-2
+## Apply an example to your story
 
-1. In SillyTavern, select **default-user**, open **Story-2**, and select the character who will produce the native reply. User, chat and character selection determine the workflow's live sources and private stores.
-2. Open LATTICE beside the chat's Send button, or enter `/lattice`. A fresh workspace starts with **Unified story workflow** and Lattice disabled. Existing installations restore their unified recovery draft; previous unified documents are available through **File → Recover previous workflows**. Retired pre/post roots move to the cold archive described below.
-3. Choose **File → Open examples…**. Open a unified example whose goal fits your story. Each opening makes an independent editable copy the active document; it makes no model request and does not change **Enable Lattice**. The example's description contains its setup and inspection instructions.
-4. Adapt its literal instructions, actor/item identities, schemas and document targets. Example names and actors are authored demonstration material. A loaded character's canonical ID is normally `character:<avatar filename>`; a display name alone is not a live actor identity.
-5. Choose every ordinary text-model node’s connection in its grey profile bar. Use **Active SillyTavern model** to follow the current host connection/model, or choose a saved Connection Manager profile for a fixed connection. Leave **Details → Advanced model settings → Model mode → Use profile model** unless that particular node needs an explicit model identifier. Configure any **For Each → Helper model bindings** as well; assigning the extraction node's profile does not assign its confirmation helper.
-6. Automatic Story Clock, Read File and Outcome Commit defaults need no setup. If the example names custom targets, authorize them in **Workflow → Configure → Workflow Data…** first. Resolve the graph's validation and binding issues before sending.
-7. Select **Enable Lattice** while the configured document is open. Send uses this active root document; switching between its root and subgraph tabs does not change that choice.
-8. Return to SillyTavern and **Send** your next player message normally. The workflow runs the necessary preparation, resumes from the completed native Draft, and records its response-stage results. A generated swipe can run the same open workflow when its configured sources and target policies permit it.
-9. Open Preview and select the desired **Review / Publish · Host result**. Compare the original, proposed body, appended sections, model trace and staged consequences. Choose **Apply reviewed candidate** or **Reject candidate**.
+1. Open your SillyTavern chat and select the character who will reply. User, chat, and character selection determine live sources and private stores.
+2. Open Lattice beside the chat bar, or enter `/lattice`. A fresh workspace opens **Unified story workflow** with Lattice disabled. Existing installations restore a recovery draft; **File → Recover previous workflows** offers previous unified documents.
+3. Choose **File → Open examples…** and read a lesson’s requirements. Opening creates an editable copy, makes no model request, and does not change **Enable Lattice**.
+4. Replace sample instructions, actor/item identities, and document targets with your story’s values. Loaded character IDs normally use `character:<avatar filename>`; a display name alone is not a live actor identity.
+5. Click each model tool’s grey bar and choose **Active SillyTavern model** or a saved Connection Manager profile. Leave **Advanced model settings → Model mode → Use profile model** unless that tool needs a different identifier. Configure any **For Each → Helper model bindings** separately.
+6. Automatic Story Clock, Read File, and Outcome Commit sources need no setup. Authorize named lesson targets in **Workflow → Configure → Workflow Data…** and resolve validation or connection issues.
+7. Select **Enable Lattice** with this document open. Switching between Main and its subgraph tabs changes your view, not the workflow used by Send.
+8. Send your player message normally. Lattice prepares connected guidance, continues from the completed reply, and records its response processing. A generated swipe can use the same workflow when its sources and policies permit it.
+9. Select **Review / Publish → Host result** in Preview. Compare the original, proposed reply, appended notes, model trace, and staged changes. Choose **Apply reviewed reply** or **Reject reply**.
 
-Apply creates a new assistant swipe and preserves the native original. It then settles the effects associated with that exact reviewed root result. Reject leaves the original and does not accept its pending file, clock, random-outcome or accepted-policy Recall effects. A completed candidate is still a proposal until you apply it.
+Apply adds a new assistant swipe preserving the original, then accepts the effects attached to that exact result. Reject does not accept pending file, clock, outcome, or accepted-policy Recall effects. A completed proposal still needs your choice.
 
-Use **Run to here** to inspect supported preparation or source operations without accepting changes. Full execution needs the owned SillyTavern generation; Run to here does not start another main reply.
-
-See [Thirty example workflows](examples.md) for the numbered curriculum and safe setup.
+**Run to here** tests supported steps without accepting changes or starting another main reply. A test that includes model tools can make requests. See [the lessons guide](examples.md) for setup and request budgets.
 
 ## Pick a concrete starting flow
 
-For the guidance/prose/items idea, open **Plan, write, polish, and annotate one reply**. Edit its literal Compose guidance for Story-2, then choose local profiles on **Revise Draft**, **Extract** and **Enrich**. The native reply still uses SillyTavern’s active main connection. Revise Draft polishes narration, Extract keeps source-quoted items, Enrich adds labeled suggestions, and Render Notes → Append adds the expandable section. Inspect the final body and notes together before Apply.
+For a planner and editor around the normal reply, open **Plan, write, polish, and annotate one reply**. Edit its Compose guidance, then configure Revise Draft, Extract, and Enrich. Revise Draft polishes narration; Extract records source-quoted items; Enrich adds labeled suggestions; Render Notes → Append adds an expandable section. Review the reply and notes together.
 
-| Example title in the picker | What to configure first |
+| Example | Configure first |
 | --- | --- |
-| **The broken wand: stable randomness with a wild branch** | Current player-use entities, checked effect library, accepted outcome target and For Each confirmation/effectAuthor roles. |
-| **Give one present character their own direction** | Loaded canonical actor identity, source-backed participation and the Character Direction connection/system prompt. |
-| **Let an item remind its actual holder** | Item aliases/entities, confirmed ordered holder state and that actor’s private document/Prompted Memory branch. |
-| **One kiss, two private perspectives** | Both actors’ actual IDs, an ordinary Decision connection and explicit accepted answer, explicit permission to author both reflections, separate Actor Context models and private targets. |
-| **Recall a memory with a hotkey or a story trigger** | Selected actor, authorized record set, matching Recall/Recall Shortcut memory-set IDs and the visible queue policy. |
-| **The soul-stealing sword: an event ledger and a threshold** | Canonical soul list, confirmed kill identities, projected count/threshold and authorized keyed write. |
-| **A relationship that changes slowly over weeks** | Directed actor scope, authored progression/decay rules, effective story clock and private state target. |
+| **The broken wand: stable randomness with a wild branch** | Player/item identities, effect library, outcome document, and confirmation/effect-author helper roles. |
+| **Give one present character their own direction** | Loaded actor ID, participation evidence, Character Direction connection, and instructions. |
+| **Let an item remind its actual holder** | Item aliases, prior ownership, ordered confirmed events, and the holder’s private memory branch. |
+| **One kiss, two private perspectives** | Both actors’ IDs, Decision connection, separate reflection permissions, actor contexts, and private documents. |
+| **Recall a memory with a hotkey or a story trigger** | Selected actor, authorized records, matching memory-set IDs, and queue policy. |
+| **The soul-stealing sword: an event ledger and a threshold** | Canonical soul list, confirmed kills, threshold, and keyed document update. |
+| **A relationship that changes slowly over weeks** | Directional actor scope, progression/decay rules, story clock, and private state document. |
 
-The picker’s description supplies the exact initial target shape and helper setup for each copy. Adapt its demonstration identities deliberately rather than treating the sample cast as your live Story-2 actors.
+Use each lesson’s description for its exact starting data and helper setup. The [story systems guide](story-systems.md) explains the possibilities in roleplay terms.
 
 ## Read the graph as one generation
 
@@ -56,148 +54,161 @@ Scene Context → planning model → Guidance ────┘
                                       Review / Publish
 ```
 
-Connect the planning Guidance to Generate Reply's optional `guidance` pin, and On Send's activation to its required `activation` pin. The Draft pin is the completed native reply captured for this generation. It can feed several response branches. Generate Reply's metadata is descriptive generation information, not permission to publish a different reply.
+Connect On Send’s activation to Generate Reply’s required activation input. Connect planning Guidance to its optional guidance input. Its Draft is the completed reply for this generation and can feed several response branches. Its metadata describes the generation; it does not permit publication of another reply.
 
-There is one native generation boundary in a unified root workflow. Generate Reply is not an auxiliary model call and does not have a second Connection profile. Its guidance budget caps the material LATTICE supplies to the ordinary native prompt. Quiet/background, impersonation, unsupported media/tool continuations and overlapping generations do not become interchangeable native Drafts.
+A unified workflow has one native generation boundary. Generate Reply uses the main SillyTavern connection, with no second profile selector. Its guidance budget limits the advice Lattice supplies. Quiet/background, impersonation, unsupported media/tool continuations, and overlapping generations do not supply interchangeable Drafts.
 
-Wires determine dependencies. A preparation label on an independent node does not make its output reach the native prompt: wire it into guidance or another required preparation input. A response branch must reach a selected terminal or consumed output to run. Canvas position does not impose order. Cycles, incompatible types, invalid pins and unsupported root-only nodes in a helper are rejected.
+Connections decide dependencies. A Preparation label alone does not put text into the main prompt: connect it to guidance or another required preparation input. A response branch must reach a selected terminal or consumed output to run. Canvas position does not determine order. Cycles, incompatible types, invalid pins, and unsupported helper nodes fail validation.
 
-Nodes usable in either stage expose **Stage → Preparation / Response** in Details. Those settings place an operation around the generation boundary within the same workflow document. Conditions and branch outcomes distinguish **completed**, **skipped** and **unresolved**. A skipped optional contribution can be omitted by Join; an unresolved required contribution holds its dependents rather than treating uncertainty as false.
+Tools that support both stages expose **Stage → Preparation / Response**. A skipped optional branch can be omitted by Join. An unresolved required branch holds its dependents; uncertainty is not automatically false.
 
 ## Detect and filter a reply
 
-Enter terms in Pattern's **Rules → Terms / CSV** during configuration or editing. `Elara` creates one parsed rule; `1, 2, 3` and `["1", "2", "3"]` create the same three string rules. Quote CSV phrases containing commas, for example `"red, blue", green`, and use Plain text for one literal phrase with separators. Save compiles stable canonical rule IDs and validates the whole edit without running the workflow. Regex uses expression rows and keeps its original syntax.
+Enter Pattern rules through **Rules → Terms / CSV**. `Elara` creates one rule; `1, 2, 3` and `["1", "2", "3"]` create three string rules. Quote CSV phrases containing commas, such as `"red, blue", green`. Choose Plain text for one literal phrase containing separators. Save validates the entire edit without running it. Regex uses expression rows.
 
-**Readable** shows retained prose, separate captured messages where available, and counted Pattern/Filter reports. **Source** shows the selected artifact's whole retained privacy-projected diagnostic envelope, with omission/partial notices when required. An automatic generated Draft excludes prior private context; inspect a separately captured Context output for that material. Mode switches, copy, expansion and pinning create no execution or publication.
+**Readable** shows retained prose, separate captured messages where available, and counted reports. **Source** shows the retained diagnostic data, with privacy filtering and omission notices. A generated Draft does not include prior private context; inspect the separately captured Context for that material. Switching views, copying, expanding, and pinning does not run or publish anything.
 
-Open [Detect, route and filter a reply](../examples/pattern-filter-reply.lattice.json) in a practice chat and use its [synthetic source](../examples/remastered/fixtures/pattern-filter-reply.txt). Pattern uses canonical keyword records and whole-word matching, passes the Draft unchanged, and emits Matched plus a counted Matches report. Wire `out` to Branch `in` (Draft), `matched` to `condition`, Branch `yes` to Filter Text `in`, and `matches` to Filter Text `matches`. Join receives Filter `out` and Branch `no` on optional Draft inputs; Join `out` reaches Review / Publish `draft`.
+Open [Detect, route and filter a reply](../examples/pattern-filter-reply.lattice.json) in a practice chat with its [synthetic source](../examples/remastered/fixtures/pattern-filter-reply.txt). Pattern matches whole words, leaves the Draft unchanged, and reports Matched and Matches:
 
-Fourteen occurrences select one branch per reply and remove the matching paragraph once. Filter can remove matching units or keep them by deleting nonmatching units. Lines use actual separators; paragraphs retain their original blank-line delimiters. A selected unit must fit entirely within authorized windows and avoid protections/exemptions. Blocked units hold output without a partial edit; empty results also hold review. Incomplete detection is unresolved, while an ordinary no-hit result is completed false and bypasses filtering unchanged. Both operations use zero model requests.
+1. Connect Pattern `out` to Branch `in`, and `matched` to Branch `condition`.
+2. Connect Branch `yes` to Filter Text `in`, and Pattern `matches` to Filter Text `matches`.
+3. Connect Filter `out` and Branch `no` to optional Draft inputs on Join.
+4. Connect Join `out` to Review / Publish `draft`.
 
-Inspect the retained reports and final Draft before accepting. Copy source copies the privacy-projected retained payload, subject to recording/display bounds and omission notices; it neither runs the workflow nor makes a copied Matches report usable for deletion.
+Repeated hits choose the branch once per reply; a matching paragraph is removed once. Filter can remove matching units or keep them by removing nonmatching units. Lines use actual separators; paragraphs retain original blank-line delimiters.
+
+Each selected unit must fit completely inside permitted editing spans and avoid protected or exempt text. A blocked unit holds output without a partial deletion. An empty resulting reply also holds review. Incomplete detection is unresolved; an ordinary no-hit report takes the unchanged bypass. Pattern and Filter Text use no model requests.
+
+Copying a report does not make it valid evidence for deletion. Review the retained reports and final Draft before accepting.
 
 ## Combine editable systems in one Main
 
-Keep one **On Send → Generate Reply → Review / Publish** path in the workflow. Any part of that path, including On Send and Review / Publish, can sit inside a static subgraph. Crossing connections become typed inputs and outputs; the enclosing workflow still owns one activation and native generation. Package the item's effect, weather rules and relationship state as separate static bodies. **Workflow → Add system…** chooses a saved body, binds its typed inputs and destinations, previews the connections and adds an editable instance. It targets Main even when a body tab is focused. For a preparation Guidance output, choose an existing Compose Guidance merge or create one when the generator's guidance input is empty. Occupied destination pins require an explicit choice and are not replaced automatically. A state-only system can stage effects without contributing prompt text.
+Keep one **On Send → Generate Reply → Review / Publish** path. It can cross static subgraphs: the connections become typed inputs and outputs while the enclosing workflow still owns one activation and reply.
 
-Main's Compose can receive original Guidance sections in the order you authored. Each row's **Kind**, **Required input** and **Skipped source** control the contract. Choose optional Guidance with **Omit section** for a system that may skip. A completed source overrides the Text fallback; an unconnected optional source keeps it. Skipped optional sources may omit or fall back, while required and unresolved paths retain their dependency rules. In template mode, an omitted `{{section:Name}}` is empty.
+Package item effects, weather, or relationship state as separate bodies. Choose **Workflow → Add system…**, select a saved body, bind inputs and destinations, and **Preview connections** before adding. It targets Main even when a body tab is focused. For Guidance, choose an existing Compose merge or create one when Generate Reply’s guidance input is empty. Occupied inputs require an explicit choice. A state-only system can stage changes without adding prompt text.
 
-**Token budget** can cap the complete composition; 0 adds no Compose cap. Overflow holds without truncation, and Generate Reply still checks its final budget. Preview records the exact rendered text and reports ordered contributions. Original selected-actor Character Direction or Recall Guidance retains its live authorization after merging. Private Text/Data or copied labels cannot obtain that permission through Compose.
+Compose combines Guidance sections in your chosen order. Each row’s **Kind**, **Required input**, and **Skipped source** controls its behavior. Use optional Guidance with **Omit section** when a system may skip. Completed connected material replaces the Text fallback; an unconnected optional input retains it. Required or unresolved sources keep their dependency rules. An omitted `{{section:Name}}` renders empty in a template.
 
-Connections govern execution. Body tabs retain your editing view, not a separate story attachment or generation. **Details → Run this system** on the wrapper controls the entire body; off skips its reads, model calls, effects and default provisioning. Closing its tab leaves the connected system active. Save/Open retains Main, definitions, overrides and open tabs; portable export retains the same composition and pinned closure.
+**Token budget** caps the complete composition; 0 adds no Compose cap. Overflow holds rather than shortening the text. Generate Reply still checks its final budget. Preview records the rendered text and ordered contributions. Merging the selected actor’s original Character Direction or Recall Guidance preserves its permission; mixing private Text or Data into Compose does not grant private prompting access.
 
-All ordinary workflow nodes can run inside static bodies, including native context sources, Guidance, Memory, State, Recall, Recall Shortcut and the native lifecycle. Their live target references, selected/present actor scope and source checks still apply. Implicit State reads the enclosing workflow's Memory capture. Nested Memory Commit waits for acceptance, and Recall queues and shortcuts distinguish reused instances. For Each keeps its separate bounded contract: host operations remain unavailable, and State requires an explicit snapshot.
+Select a wrapper and use **Details → Run this system** to include or skip the whole body, including reads, model calls, changes, and automatic data setup. Closing its tab only changes the view. Save/Open retains Main, definitions, instance settings, and tabs. Portable export keeps the composition and its saved dependencies.
 
-Try the [combined wand, weather and relationship example](combined-system-example.md). It uses one shared source clock, public item/weather guidance and state-only private relationship progression. Its agreed eight-hour wait is an authored story action. It stages three independent saves on Apply; Reject, Cancel and Preview retain their initial data. This direct-file example is separate from the thirty numbered lessons.
+Ordinary nodes, including native sources, Memory, State, Recall, and the reply lifecycle, can run inside static bodies. Their actor, target, and source checks still apply. State can use the enclosing workflow’s captured memory. Nested Memory Commit waits for acceptance, and Recall distinguishes reused instances. **For Each** has a separate helper contract: it cannot run host operations, and State needs an explicit snapshot.
+
+Try the [combined wand, weather, and relationship example](combined-system-example.md). It uses one clock, public item/weather guidance, and private relationship state. The eight-hour wait is an agreed story action. Apply stages three independent saves; Reject and Preview leave the saved starting data intact. It is separate from the 30 lessons.
 
 ## Choose a different model for each job
 
-Ordinary model operations can follow **Active SillyTavern model** or use a fixed local Connection Manager profile. Configure Model Call, Decision, Revise Draft, Extract, Enrich, Character Direction and other model-backed nodes independently. New ordinary text-model nodes select the active option; existing fixed and inherited bindings remain. The grey bar below a model node opens a searchable picker: keywords match a saved profile’s name, API label and model, while the active option stays first. Details provides collapsed advanced model settings for overrides, role provenance, errors and reset. A fixed profile supplies its provider route, sampler preset and model; the active option follows the host’s configured route/model at request time. LATTICE does not switch SillyTavern’s active main connection globally.
+Configure Model Call, Decision, Revise Draft, Extract, Enrich, Character Direction, and other model tools independently. New ordinary text-model nodes use **Active SillyTavern model**; existing saved bindings remain.
 
-A **Model Call** accepts a Text prompt and optional Context/Data evidence, returning Text or schema-checked Data. **Revise Draft** returns a source-bound Draft revision. Select its editable scope and protected literals explicitly. **Extract** produces records, while **Enrich** adds bounded details to supplied records. A subsequent **Render Notes → Append** can add a public notes dropdown to the reviewed reply. Render Notes accepts player-visible records; private memories and hidden material cannot become public notes merely through formatting.
+The grey bar opens a searchable connection picker. Search matches profile name, API label, and model; the active option stays first. Details has advanced overrides, binding information, errors, and reset. A saved profile supplies its provider route, sampler preset, and model. The active option follows the host at request time. Lattice does not change the main connection globally.
 
-For a real reusable iteration, select **For Each** and inspect **Helper model bindings**. Each text-model role used by the exact pinned helper has its own friendly Connection profile and Model mode selector. You can use the helper's saved connection, choose **Active SillyTavern model**, choose a local profile and its model, retain a helper model choice, or enter a custom model identifier. Imported helpers with unassigned roles can be configured here without editing or repinning their bodies.
+**Model Call** accepts a Text prompt and optional Context/Data, returning Text or schema-checked Data. **Revise Draft** produces a revision of the source reply; choose its editable scope and protected wording. **Extract** produces records; **Enrich** adds bounded details. **Render Notes → Append** can add public notes, but cannot expose hidden or private records.
 
-An explicit outer role override reaches recursive helpers. Explicit choices in a nested For Each, wrapper or primitive node take precedence; Details reports these exceptions. A helper without text-model calls needs no text profile. Keep the helper's iteration limit and per-item request bound large enough for the authored path, but finite: exceeding a bound holds the run instead of silently processing a partial list. The helper pin includes its exact ID, version and semantic hash; updating a library entry does not silently change placed copies.
+For iteration, open **For Each → Helper model bindings**. Configure each model role used by the saved helper. You can retain its saved choice, follow Active SillyTavern model, use a local profile, or supply a custom model identifier. Imported helpers can be bound here without editing their bodies.
 
-Portable exports omit local saved-profile identifiers and credentials, including local helper-role overrides. After importing on another installation, choose its fixed local profiles again where needed. **Active SillyTavern model** remains a portable selection and follows the recipient’s configured host connection/model. Portable model names may remain, so confirm they are valid for the newly selected route.
+An outer role override reaches nested helpers, but explicit nested choices take precedence. Details reports these exceptions. A helper with no model calls needs no model profile. Keep iteration and per-item request limits finite; exceeding one holds the run rather than processing a partial list. Helpers use exact saved versions, so updating the library does not silently update placed copies.
+
+Portable exports omit local saved-profile identifiers and credentials, including helper overrides. Recipients reselect fixed local profiles. Active SillyTavern model stays portable. Check any retained model names against the new route.
 
 ## Decision and confidence
 
-**Decision** uses an ordinary text-model connection to answer keyed typed questions. The available question types are `noul` (yes/no/unresolved), `choice` (authored alternatives) and `score` (an ordered rubric). A noul text answer exposes `answers.<id>.accepted` as true, false or null. Model-generated confirmation-looking prose is not a canonical event by itself.
+**Decision** asks keyed questions with three types: `noul` for yes/no/unresolved, `choice` for authored alternatives, and `score` for an ordered rubric. A noul answer exposes `answers.<id>.accepted` as true, false, or null.
 
-Use **Select Fields** to expose `answers.<id>.accepted`, then **Branch** or **Confirm Events** to preserve its true, false or null meaning. An unresolved answer does not establish acceptance. **Confidence Gate** remains available for an authored numeric metric, with explicit acceptance and rejection thresholds and an unresolved middle range. A score or successful request alone does not permit a state write; follow the confirmed-event and accepted-effect path.
+Select that field with **Select Fields**, then route it through **Branch** or **Confirm Events**. Null does not mean acceptance. Model-written confirmation prose alone does not establish an event.
 
-Retired Fast workflows and reusable helpers remain available through File’s archived recovery export. They cannot become executable documents. Recovery exports remove local connection selectors while preserving authored identities and pins.
+**Confidence Gate** applies authored acceptance and rejection thresholds to a numeric metric, with an unresolved middle range. A score or successful request does not save state: continue through confirmation and the accepted-effect path.
 
 ## Triggers need a source and an event policy
 
-Use **Player Event Source** when a rule responds to the actual player message before generation. It supplies bounded current-turn text and host source identity. Repeated reads of the same turn retain that identity; a later identical message is another turn. Restricted native text is held rather than exposed as a public trigger source.
+Use **Player Event Source** for a rule responding to the current player message before generation. Repeated reads retain that turn’s identity; a later identical message is a new turn. Restricted native text is held rather than exposed publicly.
 
-For the completed narrative, connect Generate Reply's Draft through **Draft Event Source** with an authored entity/scope table. Its source describes the narrative body, excluding appended notes. **Item Mention Trigger** matches declared aliases in a declared watch source. A mention can activate a reminder; it does not establish item use, ownership or a kill.
+For a completed reply, connect its Draft through **Draft Event Source** and declare the actors/items and scope. It reads the narrative body, excluding appended notes. **Item Mention Trigger** matches declared aliases in its watched source. A mention can start a reminder; it does not establish use, ownership, or a kill.
 
-**Item Use Trigger** either normalizes supplied candidate interpretations or makes one bounded extraction request. Use **Event Normalize** for other authored event types. Then use Decision and **Confirm Events** to distinguish actual occurrences from attempted, negated, hypothetical, quoted or remembered actions. Keep exact quoted source spans and closed actor/item identities. **Current Holder** applies the confirmed event sequence to an explicit holder state; it does not guess ownership from the nearest name.
+**Item Use Trigger** checks supplied interpretations or makes one bounded extraction request. **Event Normalize** handles other declared event types. Decision and **Confirm Events** distinguish actual occurrences from attempts, negation, hypothetical, quoted, or remembered actions. Preserve exact quoted evidence and declared identities.
 
-An actual holder-memory path is:
+**Current Holder** applies ordered confirmed events to explicit prior ownership. It does not choose the nearest named character. A holder-memory path can connect:
 
 ```text
-Player Event Source → Item Use Trigger → For Each confirmation → Collection flatten
-                                                        ↓
-                   prior holder state ───────────→ Current Holder
-                                                        ↓
-                  verified Scene Presence ────→ Prompted Memory
-                                                        ↓
-                                actor-private proposal → Write to File
+Player Event Source → Item Use Trigger → confirmation helper → Collection flatten
+                                                               ↓
+prior holder state ───────────────────────────────────→ Current Holder
+                                                               ↓
+verified Scene Presence ──────────────────────────────→ Prompted Memory
+                                                               ↓
+                                         private proposal → Write to File
 ```
 
-Wire the branch to a selected terminal. Prompted Memory needs both genuine live presence and the unchanged confirmed current-holder event for its configured actor. **Recall**, **Create**, and **Recall-or-create** are separate modes; creation also requires the explicit `allowCreate` control. A created memory is a proposal until an authorized persistence path accepts it.
+Prompted Memory needs both the configured actor’s verified live presence and unchanged confirmed holder event. **Recall**, **Create**, and **Recall-or-create** are separate modes. Creation also requires `allowCreate`; created memory stays a proposal until its authorized save is accepted. Connect the branch to a selected terminal.
 
 ## Character-specific direction and private reflections
 
-A source-backed interpretation of the current scene provides a bounded cast with canonical actor IDs and quoted participation evidence. **Scene Presence** projects one actor's present/absent/unresolved status. Literal or imported cast labels do not authorize native access to a character's private data.
+Use scene evidence to identify current participants with canonical actor IDs and quoted participation. **Scene Presence** reports one actor as present, absent, or unresolved. A literal or imported cast label cannot grant access to private character data.
 
-Connect the exact verified presence to **Character Direction** to apply a separate `systemPrompt` only when that character is present. Absence skips its model call; unresolved participation holds it. The request receives that actor's authorized card fields, scene context and stored memories. Its optional **Data** input can add projected bounded State or file values that are public or authorized by that same exact actor grant; another actor's private data or mixed scopes hold before the request. The separate system prompt remains literal. Its output is actor-private Guidance. Generate Reply accepts that exact live guidance only for the currently selected native actor. A generic private Model Call → Compose branch does not authorize private native Guidance.
+Connect verified presence to **Character Direction**. It calls its model only when that actor is present; absence skips and unresolved participation holds. The request uses that actor’s authorized card, scene context, and memories. Its optional **Data** input accepts public values or State/file values authorized for that same actor. Mixed private scopes hold before a request.
 
-Use **Actor Context** for a character's own Model Call. It makes no request and returns authorized card/context/memory material with actor-private visibility. Two present loaded actors can have separate Actor Context branches, separate model requests and separate private file targets. Do not join their private inputs into a common request or append their reflections to public scene notes. Public Scene Context can supply observable narrative to a general model; the default actor-perspective Scene Context is not a substitute for a grant-backed Actor Context.
+Character Direction’s system prompt stays literal. Its private Guidance can reach Generate Reply only for the selected native actor through that exact live output. A generic private Model Call → Compose branch cannot replace this authorization.
 
-The **One kiss, two private perspectives** lesson confirms actual shared kiss evidence and uses an ordinary Decision before requesting private reflections. Missing kiss evidence deliberately holds with no Review handle or reflection writes. A false answer skips reflection while preserving the ordinary reviewed Draft; a null answer holds Confirm Events before Review with no private writes. Both actors must be genuinely present before either reflection; absence skips both private legs and unresolved participation holds. Separate `rowan-permission-text` and `iris-permission-text` values default `allowModelAuthoredReflection` to `false`; permit each independently only with explicit author permission, especially for a player-controlled character. Configure each Read File and Write to File with **Actor scope → presence**, that actor's canonical ID, and its exact Scene Presence input. Keep each actor's records and model Context on its own leg. Each saved record keeps `sharedQuote` and `sceneEvidence` as exact canonical shared evidence. `reflection` and Recall-compatible `text` contain private model-authored interpretation, marked by `reflectionOrigin: "model-authored"`; its stable `id` comes from the canonical event. Both staged writes can belong to the same reviewed root result. Each file has its own receipt: if one persistence leg fails after the other is saved, inspect the confirmed partial result and supported retry rather than assuming an atomic rollback.
+**Actor Context** makes no request and supplies a character’s authorized private material. Two present loaded actors can have separate contexts, requests, and documents. Keep their private inputs on separate branches and out of public notes. Use public Scene Context for a general narrative model.
 
-Native generation currently has one selected actor. Actor Context allows separate present-actor processing; it does not authorize another actor's private direction as the selected actor's native guidance. Group generation and automatic multi-character native prompting are not implied by a public cast list.
+**One kiss, two private perspectives** confirms actual shared evidence before reflection. Missing evidence holds before Review. A false Decision skips reflections and leaves the ordinary reply reviewable; null holds Confirm Events before Review. Both actors must be verified present. Absence skips both private branches; unresolved participation holds.
+
+The `rowan-permission-text` and `iris-permission-text` values each start with `allowModelAuthoredReflection: false`. Enable them separately with the actor’s authoring permission, especially for a player-controlled character. Set each Read File and Write to File to **Actor scope → presence**, with that actor’s ID and exact Scene Presence input.
+
+Saved `sharedQuote` and `sceneEvidence` retain the shared observation. `reflection` and Recall-compatible `text` contain private model interpretation, labeled `reflectionOrigin: "model-authored"`. The stable record ID derives from the event. Each document has its own save receipt; one successful save does not guarantee the other.
+
+Native generation has one selected actor. Separate Actor Context branches do not let another actor’s private direction guide that selected actor or automatically generate a group’s private prompts.
 
 ## Authorize Workflow Data and preserve its structure
 
-New **Story Clock**, **Read File** and **Outcome Commit** nodes need no prior Workflow Data setup. They select **Chat clock**, empty plain-text **Chat notes** and an empty JSON **Chat outcomes** list respectively. A unified run makes only its referenced presets available in the active user/chat. Adjust initial values or content in the node’s Details, and open **Advanced** for its source, Format and Visibility. Clock and outcomes sources keep their required JSON format. Existing saved content is retained when settings change.
+New **Story Clock**, **Read File**, and **Outcome Commit** nodes select automatic sources: **Chat clock**, empty plain-text **Chat notes**, and an empty JSON **Chat outcomes** list. A unified run makes only the referenced defaults available in the active user/chat. Change starting values or content in Details; use **Advanced** for source, Format, and Visibility. Clock and outcomes require JSON. Changing settings retains saved content.
 
-The default Chat clock is shared across Main and systems. Default notes and outcomes inside each system have stable separate sources for that workflow and full instance path; explicit named targets keep the selected shared identity. A disabled system does not provision its unused defaults. Connect one accepted clock to all bodies that need it and keep one final writer for that source. Two staged writes to one target are rejected.
+The default clock is shared across Main and systems. Default notes and outcomes inside separate systems have stable separate sources; explicit named targets keep their selected sharing. Disabled systems do not create unused defaults. Use one final writer for a shared source: two staged writes to one target are rejected.
 
-**Workflow → Configure → Workflow Data…** manages custom logical targets for the actual user and chat, including named recipe targets. A target such as `souls.json` is a scoped workflow data document identifier, not an arbitrary operating-system file path. Canonical document content lives in LATTICE's chat metadata store.
+**Workflow → Configure → Workflow Data…** manages custom targets for the current user and chat. A name such as `souls.json` identifies a scoped story document stored in chat metadata; it is not a computer file path.
 
-For a custom target, create an authorization with a unique target ID, display name, format, visibility and initial template. Formats are **JSON**, **JSON Lines**, **CSV**, **Plain text** and **Markdown**. CSV needs declared columns. Actor-private authorization also needs its canonical actor ID. Hidden documents cannot be exposed to public model/notes branches by changing a graph label.
+Supply a unique target ID, display name, format, visibility, and initial template. Formats are **JSON**, **JSON Lines**, **CSV**, **Plain text**, and **Markdown**. CSV needs declared columns. Actor-private documents also need the canonical actor ID. Changing a label does not expose Hidden data to public models or notes.
 
-The initial template defines the structure used before canonical content exists. Updating an authorization or its template leaves existing canonical document content intact. For an existing authorization, explicitly choose **Load initial template** before editing that template. **Remove authorization** revokes access; it is not a graph instruction to delete a filesystem file.
+Initial templates seed unsaved content. Updating a template does not overwrite saved data. For an existing authorization, use **Load initial template** before editing that template. **Remove authorization** revokes workflow access.
 
-Nodes with automatic Workflow Data presets are added directly to the canvas. Operations that need additional authored controls still open **Configure node**. Pick the Preparation/Response stage or exact pinned Data helper where offered, and complete the declared controls. Cancel leaves the graph unchanged. Other controls remain editable in Details. A node can be valid without making its branch selected: connect its result where it is needed.
+Automatic-source nodes can be placed directly. Other tools may open **Configure node** for required controls, stage, or saved helper. Cancel leaves the graph unchanged. You can edit remaining controls in Details. Connect a valid node where its output is needed for it to run.
 
-**Read File** returns serialized Text, parsed document Data and a live reference. The exact reference must feed Write to File for the same authorized target and actor scope. A filename string or copied reference cannot replace it. Use JSON Decode, Select Fields or Collection to select a nested list explicitly.
+**Read File** returns serialized Text, parsed Data, and a live reference. Connect that exact reference to Write to File for the same target and actor scope. A filename or copied reference cannot authorize a save. Use JSON Decode, Select Fields, or Collection to choose a nested list.
 
-**Format** validates structured records or parses raw JSON text, maps chosen fields, and serializes the supported format. It does not infer a reliable schema from arbitrary prose. To convert prose into JSON, first use Extract/Model Call with a record schema, then Format. JSON shape **records** serializes a record list; **single** requires one object and preserves an object-shaped state document. Use declared CSV columns and JSON schema checks when their structure matters.
+**Format** validates records or parses raw JSON, maps fields, and serializes the chosen format. It does not infer records from arbitrary prose; use Extract or schema-guided Model Call first. JSON shape **records** produces a list. **single** requires one object and keeps state documents object-shaped.
 
-| Write mode | Intended mutation |
+| Write mode | Change |
 | --- | --- |
-| **append** | Add Text to a text/Markdown destination using the selected separator policy. |
-| **add** | Add record entries to the selected collection. |
-| **add-unique** | Add records whose authored identity key is absent; repeated matching records do not accumulate. |
-| **upsert** | Insert a missing keyed record or update an existing one using merge/replace field policy. |
-| **update-fields** | Update only declared fields of existing keyed records. |
-| **replace** | Replace the complete destination with explicitly supplied serialized Text. |
+| **append** | Add Text to a text/Markdown document with the chosen separator. |
+| **add** | Add records to a collection. |
+| **add-unique** | Add records whose identity key is absent. |
+| **upsert** | Insert a missing keyed record or merge/replace an existing one. |
+| **update-fields** | Change only declared fields of existing keyed records. |
+| **replace** | Replace the whole document with supplied serialized Text. |
 
-For a nested JSON collection, configure **Collection JSON Pointer**, for example `/souls`, and **Missing collection → error/create**. Keyed modes need an Identity field such as `id`; update-fields also needs its explicit allowed field list. Schema checks apply to the proposed result. Keyed mutations target JSON collections; JSON Lines and CSV support Add and Replace. Exact supported combinations are validated; append is not an instruction to paste raw JSON into the end of a JSON array.
+For nested JSON, set **Collection JSON Pointer**, such as `/souls`, and **Missing collection → error/create**. Keyed modes need an Identity field; update-fields also needs an allowed field list. JSON Lines and CSV support Add and Replace. Validation checks the supported combinations and proposed shape. Append does not paste raw JSON onto a JSON array.
 
-**Project Document** uses the same mutation policies on a serialized source and produces projected Text/Data plus a proposed receipt, without any file authority or write. This lets a sword workflow project a new soul record, count the resulting `/souls` collection, test a threshold, and propose a level update before acceptance. Connect the final formatted proposal to Write to File using the original live reference. Reading and writing one target in the same graph is supported; source freshness and version checks protect the read-modify-write operation.
+**Project Document** computes the same changes without saving. For example, project a new soul record, count `/souls`, and test a threshold. It returns projected Text/Data and a proposed receipt. Connect the final formatted content to Write to File with the original live reference. Freshness and version checks protect reading and updating the same target.
 
 ## Keep acceptance and saving distinct
 
-During a unified Send, File, Clock Commit, Outcome Commit and accepted-policy Recall effects are staged. Preview, Run to here, failed branches and ordinary auxiliary results do not accept them. A full response stage must produce an owned fresh reviewed candidate, and the chosen candidate's effects must pass preflight before its publication.
+File, Memory Commit, Clock Commit, Outcome Commit, and accepted-policy Recall effects wait for acceptance. Preview, Run to here, failures, and ordinary model results do not accept them. The response must reach a fresh reviewed result, and its effects must pass checks before publication.
 
-Apply checks the original message/swipe, current user/chat/actor, graph signature, file references and applicable versions. It preserves the original native swipe and applies the chosen revision once. Chat changes, foreign edits, source swipe changes, canceled generations or changed private card/visibility labels can invalidate the proposal. Read again and regenerate rather than reusing stale private data.
+Apply checks the source message/swipe, current user/chat/actor, workflow, target references, and relevant versions. Source changes, foreign edits, cancellation, or changed private visibility can invalidate the proposal. Read fresh data and regenerate.
 
-Persistence is reported per effect. Publication and several stores are not one atomic disk transaction. If one confirmed target saves and a later target fails or conflicts, Preview records the partial result. A supported retry of that accepted bundle resumes its unconfirmed persistence steps without requesting models again, publishing another swipe or rewriting an already confirmed target.
+Publication and several saves are not one atomic transaction. Preview reports each effect separately. If one target saves and another fails, the confirmed result is retained. **Retry failed saves**, when supported, resumes unconfirmed saves without another model request, swipe, draw, or confirmed write. The same rule applies to effects inside reusable systems.
 
-The same acceptance rule covers proposals retained inside static systems. Apply uses Main's exact reviewed result, then confirms each file, clock and outcome target independently. Repeated Apply adds no model requests, random draws or already-confirmed saves.
+**PERSISTENCE_UNKNOWN**, **save unconfirmed**, or an unknown receipt requires reconciliation before later affected writes. A host save finishing alone may not acknowledge durable storage; Lattice checks freshly loaded metadata where supported. Do not change a transaction key to turn an ambiguous save into a duplicate event.
 
-An unknown save outcome is different from a retryable failure. **PERSISTENCE_UNKNOWN**, **save unconfirmed** or an unknown receipt holds later affected writes until fresh confirmed metadata reconciles the receipt. Do not turn an ambiguous save into a duplicate event by changing an idempotency key. The native host verifies freshly loaded metadata where available; a save wrapper resolving by itself is not a positive durability acknowledgment.
-
-State and projection receipts shown before Apply remain proposed diagnostics. Accepted file content uses the schema you authored. A generic JSON writer does not automatically promote every nested `acceptance: "pending"` string in an arbitrary document to canonical truth; author the canonical event/state shape deliberately and consult the accepted effect receipt.
-
-Memory Commit stages its effects for the accepted root Review / Publish result. Diagnostic execution never settles memory.
+State and projection receipts shown before Apply are proposed diagnostics. Save the canonical JSON shape your rules require. A generic writer does not change an arbitrary nested `acceptance: "pending"` string into accepted truth; consult the effect receipt.
 
 ## Story time: midnight, 14:00 and eight-hour intervals
 
-Story time is an authored clock measured in integer minutes. It is separate from your computer's wall clock and the number of messages sent. Add **Story Clock** to use the automatic **Chat clock**, starting at midnight on Day 1 with a 24-hour day. Select the node and use **Details → Starting values** to adjust its starting day, time and hours per day. **Advanced** contains the source, Visibility, required JSON Format and calendar settings. Changing these initial values leaves existing saved time intact.
+Story time uses authored integer minutes, separately from wall-clock time and message count. **Story Clock** defaults to **Chat clock**, Day 1 at midnight, with a 24-hour day. Change **Starting values** in Details; **Advanced** contains source, Visibility, JSON Format, and calendar settings. Saved time stays intact.
 
-Nodes choosing the same clock source share its saved timeline. Use **+** beside the Clock source in Advanced to create a named, independent clock; separate clocks do not synchronize automatically. **Story Clock** reads the accepted scoped clock document when the workflow runs.
+Nodes selecting the same source share its timeline. Use **+** beside the source for an independent named clock. Separate clocks do not synchronize automatically. Story Clock reads accepted time when the workflow runs.
 
-For an explicit custom clock target, **Workflow → Configure → Workflow Data… → Story clock template** in the JSON editor remains available. It creates a valid starting schema whose internal `clockId` must match that target. This custom-target example uses minute 0 for midnight on Day 1, a 1,440-minute day and an explicit calendar identity:
+For a custom target, **Workflow → Configure → Workflow Data… → Story clock template** supplies a valid starting schema. Its `clockId` must match the target. This example starts Day 1 at midnight:
 
 ```json
 {
@@ -214,81 +225,84 @@ For an explicit custom clock target, **Workflow → Configure → Workflow Data�
 }
 ```
 
-Feed **Advance Time** an explicit proposal such as `{"kind":"duration","minutes":120}` or `{"kind":"destination","absoluteMinute":840}`. A model may help extract a stated duration, but vague prose such as “a while later” does not become an established duration automatically. Estimate evidence needs the explicit authored acceptance policy supported by the clock contract.
+Give **Advance Time** an explicit proposal such as `{"kind":"duration","minutes":120}` or `{"kind":"destination","absoluteMinute":840}`. A model can extract a stated duration; “a while later” does not automatically establish time. Estimated evidence needs an explicit supported acceptance policy.
 
-A **Time Trigger** schedule uses **daily** with minuteOfDay `0` for midnight or `840` for 14:00, **interval** with intervalMinutes `480` and an authored anchor for every eight hours, or **delay** for one due minute. Give each schedule a stable identity and revision. Each crossing has its own identity, including the exact due minute; selecting an old swipe does not consume another occurrence.
+**Time Trigger** schedules can be daily, interval, or delay. Midnight is `minuteOfDay: 0`, 14:00 is `840`, and eight-hour intervals use `intervalMinutes: 480` with an authored anchor. Give schedules stable identities and revisions. Each crossing includes its exact due minute; viewing an old swipe does not consume it again.
 
-Advance Time can take authored schedules directly or through its schedules input. **interrupt** stops at the earliest unconsumed due event and returns the unprocessed duration on `remainder`. For example, a two-hour journey beginning at 13:00 stops at the 14:00 curse with an hour remaining. Feed the projected clock and retained remainder into a later Advance Time step only when the story should resume that journey. **catch-up** enumerates all due events across the whole interval, in deterministic order, within the configured limit. A limit overflow holds the whole projection.
+Advance Time accepts authored schedules directly or through its schedules input:
 
-The output clock and due occurrences are proposals. **Clock Commit** stages the genuine retained Advance Time report for acceptance; due IDs become consumed through that accepted clock path. A model or copied JSON report cannot manufacture the host's clock-write authority. Use the effective projected clock for time-based progression before acceptance, and preserve its calendar and occurrence timestamps.
+- **interrupt** stops at the earliest unconsumed event and returns the remaining duration. A two-hour journey from 13:00 stops at a 14:00 curse with one hour left. Resume with the projected clock and retained remainder when appropriate.
+- **catch-up** lists due events across the full interval in order, within a finite limit. Overflow holds the whole projection.
+
+The projected clock and events are proposals. **Clock Commit** stages the actual retained Advance Time report; Apply accepts movement and consumes due IDs. Copied JSON cannot authorize a clock write. Use projected time for progression before acceptance, retaining the calendar and timestamps.
 
 ## Generic values: XP, souls and relationship pacing
 
-There is no dedicated XP or lust node. Use **State → progression** with explicit state values, a versioned authored rule table and confirmed occurrences. Rules address named existing values and support **add**, **set** or **clamp**, numeric bounds and authored identity fields. The ledger prevents an already consumed event identity from advancing the value again.
+Use **State → progression** for numeric story values. Supply existing values, a versioned rule table, and confirmed events. Rules support **add**, **set**, or **clamp**, numeric bounds, and authored identity fields. The ledger prevents an already consumed event from advancing a value again.
 
-Use **Collection → count/sum/threshold/rule-lookup** and **Condition** for derived totals, level tables and consequences. For a soul-stealing sword, confirm an actual kill, preserve the victim/event identity, add-unique its canonical soul record, count the projected collection, and test the 100-soul threshold. A proposed future kill or mere mention of the sword supplies no settled soul.
+**Collection → count/sum/threshold/rule-lookup** and **Condition** provide totals, level tables, and thresholds. For a soul-stealing sword, confirm an actual kill, add its unique victim/event record, count the projected collection, and check 100 souls. A mention or future plan awards none.
 
-For experience, choose stable authored objective/completion identities when one achievement should award once across rewrites or regenerations. A fresh prose source ID alone is not a universal quest-completion identity. Save the projected state with an explicit canonical JSON shape and authorized Write to File. Preserve unrelated fields when projecting a state update.
+For XP, use stable objective/completion identities when one achievement should award once across rewrites or regenerations. A new prose source ID is not automatically a new quest completion. Save a deliberately formatted state document through Write to File, preserving unrelated fields.
 
-A slow-burn relationship can have directed values such as Mara's attraction toward Elias, separate from Elias's attraction toward Mara. Authored rules can apply scene/day positive caps, cooldowns, diminishing factors, zero-delta consumption policy and subject/object scope. A positive cap does not erase separately authorized negative consequences. Private values remain actor-private; numbers are authored story mechanics rather than proof of a person's feelings or consent.
+Relationships can be directed: Mara toward Elias is separate from Elias toward Mara. Set scene/day positive caps, cooldowns, diminishing factors, event-consumption rules, and subject/object scope. Positive caps do not erase separately authorized negative consequences. Private values guide portrayal; they do not establish feelings, consent, or player choices.
 
-**State → time-decay** uses the effective Story Clock and authored baseline/rate/bounds rules. It can reduce a temporary value over elapsed story minutes without changing an enduring relationship value. It does not use message count, real elapsed time or a model's guess of emotional truth. A proposed State result must still reach the appropriate accepted persistence path.
+**State → time-decay** uses the effective clock and authored baselines, rates, and bounds. Temporary excitement can settle over story minutes while another value remains steady. Persist its proposal through an accepted save path; messages and real-world waiting do not advance it.
 
 ## Queue memories manually or recall them automatically
 
-A **Recall** node reads checked stored records through an authorized Read File or native Memory source. Records have distinct `id`, the matching canonical `actorId`, nonempty `text`, and optional revision, partner IDs, tags, event ID, recency and source references. Whole matching records are selected within result, character and token budgets. A model rewrite or invented default record does not inherit live file-read authority.
+**Recall** selects existing checked records from an authorized Read File or native Memory source. Records need distinct `id`, matching `actorId`, and nonempty `text`; optional fields include revision, partners, tags, event identity, recency, and source references. Whole records are selected within result, character, and token budgets. Model-rewritten or invented records do not inherit live-read access.
 
-For a file memory set, create an actor-private JSON target, Read File it in the correct actor scope, and route the record list to Recall's `records` pin. Set the same actor and `memorySetId` on Recall and **Recall Shortcut**. Wire Recall's Guidance causally into Generate Reply for a pre-generation reminder. Verify the actor's live presence independently. For keyword activation, connect the current Player Event Source to Recall's source pin; for event activation, supply genuine confirmed occurrences. A reply-stage trigger can affect response processing or a later generation, not the native prompt that already ran.
+For a file memory set, authorize actor-private JSON, read it in the correct scope, and connect the list to Recall’s `records` input. Set the same actor and `memorySetId` on Recall and **Recall Shortcut**. Connect Recall Guidance to Generate Reply for a reminder before writing. Verify participation separately. Keyword triggers use Player Event Source; event triggers need confirmed occurrences. A response-stage trigger cannot change the main prompt that already ran.
 
-Queue recall from the right-click menu on a matching Recall or Recall Shortcut node, from a selection of those nodes, or from the Memory recall section in Details. A green recall-with-clock badge shows an available manual request; amber shows a reservation or a result awaiting acceptance. Click a badge to inspect its policy. Queue and Cancel do not run a model or change the workflow file.
+Queue from a Recall/Recall Shortcut context menu, a selection, or **Details → Memory recall**. Green badges show available queued requests; amber shows reservations or results awaiting acceptance. Click a badge for its policy. Queue and Cancel make no model request and do not modify the workflow file.
 
-**Workflow → Memory recall** offers commands for the selected nodes and all eligible nodes, plus **Memory recall overview…**. The overview groups matching nodes into one row per memory set. Several selected cards can represent one request. Repeating Queue preserves its remaining uses and pending generation; Cancel removes that shared manual request and its pending claims. Automatic triggers keep their own conditions.
+**Workflow → Memory recall** includes selected/all-node commands and **Memory recall overview…**. Matching nodes share one memory-set request. Repeated Queue preserves remaining uses and pending generation; Cancel removes that manual request and its pending claims. Automatic triggers retain their conditions.
 
 | Setting | Meaning |
 | --- | --- |
-| Reply / Generated swipe / Reply and generated swipe | Which newly generated operations may use recall. Navigating an existing swipe does not consume a use. |
-| Next matching generation | Spend one eligible use. |
-| Once for each generation type | Keep one reply allowance and one generated-swipe allowance. |
-| Until cancelled | Repeat until explicitly cancelled. |
-| Successful completion | Spend only after the full workflow completes successfully. Later rejection does not refund it. |
-| Accepted result | Spend when the reviewed candidate is accepted. Stop, failure and Reject release the pending reservation without spending it. |
+| Reply / Generated swipe / Reply and generated swipe | Eligible newly generated operations. Viewing an existing swipe spends no use. |
+| Next matching generation | One eligible use. |
+| Once for each generation type | One reply allowance and one generated-swipe allowance. |
+| Until cancelled | Repeat until cancelled. |
+| Successful completion | Spend after the full workflow succeeds. Later rejection does not refund it. |
+| Accepted result | Spend when the reviewed reply is accepted. Stop, failure, and Reject release its reservation. |
 
-Recall Shortcuts default to Control+Shift+M and use physical key codes. Letter and digit shortcuts require Control, Alt or Meta; function keys also work. R and every modified R combination are reserved for Run to here. Shortcuts skip typing in inputs, textareas, selects or editable text, composition, key repeat and focused menus. Duplicate active combinations require different keys.
+Shortcuts default to **Control+Shift+M** and use physical keys. Letters/digits need Control, Alt, or Meta; function keys work too. R and modified R combinations are reserved for Run to here. Shortcuts skip typing, composition, repeats, and focused menus. Duplicate active combinations need different keys.
 
-Matching Shortcuts must agree on target, repetition and consumption settings. Different physical keys can share a request. A Recall without a matching Shortcut explains how to add one. Automatic-only Recall nodes are excluded from manual queue actions. For independently requested retrieval selections, use different memory-set IDs; the first successful matching Recall supplies the selection for a given generation.
+Matching Shortcuts must agree on target, repetition, and consumption. Different keys can share a request. Automatic-only Recall nodes are excluded from manual queue commands. Use different memory-set IDs for independent selections; the first successful matching Recall supplies that generation’s selection.
 
-Queues are private ephemeral session state. They are excluded from workflow files, exports, settings, Undo and modified-file status. Changing the semantic graph or opening/replacing a document revokes obsolete queues and shortcuts, even if the replacement has identical contents. Switching user/chat/actor hides unrelated queues; returning to the same unchanged document and scope may reveal an unspent request. Disabling Lattice hides active badges and makes controls unavailable; re-enabling the same document may reveal an unspent queue.
+Queues are private session state, excluded from saved workflows, exports, Undo, and modified status. Meaningful graph changes or opening/replacing a document revoke obsolete requests, even with identical contents. Scope switches hide unrelated queues; returning to the same unchanged document may reveal an unspent request. Disabling Lattice hides badges and controls; re-enabling may reveal the same unspent queue.
 
-Native Recall serves the selected native actor. Other present actors can have independent Actor Context/private file branches, but their Recall cannot supply private guidance for the selected actor. Recall guidance and diagnostic selections stay actor-private; Render Notes does not declassify them.
+Native Recall serves the selected actor. Other present actors can have separate private processing, but cannot supply their private Recall Guidance to that actor. Private selections do not become public through Render Notes.
 
 ## Move an existing pre/post setup
 
-Saved native-pre and native-post roots are retired. Migration preserves their original graphs, bindings and active selection in a cold archive. Existing unified documents remain available as recovery drafts. If the previous active document is retired, Lattice opens a unified document or starter with integration disabled. Archived roots cannot execute, open as current documents, or import into current workflows.
+Retired native-pre/native-post workflows remain in a recovery archive with their original graphs, bindings, and active selection. Unified documents remain recovery drafts. If an old retired document was active, Lattice opens a unified document or starter with integration disabled. Archived roots cannot run, open as current documents, or import into a current workflow.
 
-**File → Export archived workflows** saves a copy of the recovery archive as JSON. This recovery action makes no model requests and does not convert the contents. Preserve that saved copy while rebuilding a needed process in a new unified workflow or updated example:
+**File → Export archived workflows** saves a JSON recovery copy without conversion or model requests. Preserve it while rebuilding:
 
-1. Place preparation Context/Text/Guidance logic upstream of Generate Reply and set explicit stages.
-2. Wire bounded Guidance into Generate Reply's guidance pin.
-3. Use the owned Generate Reply Draft for processing this generation's response.
-4. End the final Draft in Review / Publish. Patch tools retain diagnostic utility but do not grant publication authority.
-5. Group ordinary nodes freely into static bodies, including sources, Memory, Recall and native lifecycle nodes. Keep one owned On Send → Generate Reply path; For Each keeps its restricted helper contract.
-6. Rebind local model/helper connections, authorize documents, inspect supported outputs with Run to here, then keep the unified document open and select **Enable Lattice**.
+1. Place context and guidance upstream of Generate Reply, with explicit stages.
+2. Connect bounded Guidance to Generate Reply.
+3. Process that generation’s owned Draft in Response.
+4. Finish at Review / Publish. Patch diagnostics alone do not publish.
+5. Group ordinary nodes in static subgraphs as useful. Keep one activation/reply path; For Each retains its restricted helper contract.
+6. Reconfigure connections, authorize documents, inspect supported steps, and enable the open workflow before Send.
 
-Current imports preserve pinned identities and controls; additive imports use stage/type checks. There is no automatic converter or production compatibility starter for a retired root.
+Current imports retain saved definitions and supported controls; additive imports check types and stages. There is no automatic converter for retired roots.
 
 ## When a run holds
 
 | Symptom | Check |
 | --- | --- |
-| A unified Run cannot generate | Start with ordinary SillyTavern Send with the configured document open and Lattice enabled; manual Run to here only tests supported dependencies. |
-| A model branch has no usable connection | Configure that node and each selected For Each helper role; inspect the effective profile/model and explicit nested overrides. |
-| A condition is unresolved | Inspect the missing path, null Decision answer or confidence middle range; wire an explicit unresolved policy. |
-| No character call occurred | Confirm genuine current-scene presence and exact loaded canonical identity; absent actors deliberately skip. |
-| Private material cannot reach a general model or notes | Use public Scene Context for observable narrative or an actor's grant-backed Actor Context for its own private leg. |
-| A file target/reference is unavailable | Authorize it in the current user/chat, select the correct actor scope, and use the actual Read File reference. |
-| A time step holds | Supply explicit forward integer minutes, matching calendar, valid schedules and a sufficient bounded due-event limit. |
-| Apply is stale | Return to the unchanged owned message/swipe or generate a fresh result; an edited graph/source cannot authorize the old candidate. |
-| A partial Apply failed | Inspect per-effect receipts; supported retry resumes persistence, while an unknown save requires reconciliation first. |
-| Recall did not activate | Check Enable Lattice, active selected actor, presence, source/record ancestry, target/use policy, budgets and pending claims in Memory recall. |
+| Manual inspection cannot generate | Use normal SillyTavern Send with the configured document open and Lattice enabled. |
+| Model tool lacks a connection | Configure that node and each selected helper role; inspect effective profile/model and nested overrides. |
+| Condition is unresolved | Inspect missing fields, null answers, or the confidence middle range; choose an explicit unresolved policy. |
+| Character call did not run | Check actual participation and the loaded actor’s exact ID. Absence deliberately skips. |
+| Private material cannot reach a model or notes | Use public scene context or the actor’s own authorized private branch. |
+| Document unavailable | Authorize the target in the current user/chat, choose the actor scope, and retain the live Read File reference. |
+| Time step holds | Check forward integer minutes, calendar, schedule, and due-event limit. |
+| Apply is stale | Return to the unchanged owned source or generate a fresh result. |
+| Partial Apply failed | Inspect each receipt. Supported retry resumes saves; an unknown outcome needs reconciliation first. |
+| Recall did not activate | Check Enable Lattice, selected actor, presence, source/records, budgets, queue policy, and pending claims. |
 
-For provider route and token-budget limitations, use [Model connections and host integration](native-workflows.md). For exact ports and controls, use the [node reference](node-reference.md). The [design documents](README.md#workflow-design-records) retain the broader proposals and open choices; this guide describes the authoring and host behavior implemented in the workspace.
+See [model setup](native-workflows.md) for provider and budget limits, or click a node’s **?** guide for its controls. The complete [node reference](node-reference.md) supplies detailed contracts. [Design records](README.md#workflow-design-records) retain broader proposals and open choices.

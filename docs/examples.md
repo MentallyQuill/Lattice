@@ -1,74 +1,99 @@
 # Thirty example workflows
 
-[Documentation](README.md) · [Unified setup](unified-workflows.md) · [Node reference](node-reference.md)
+[Documentation](README.md) · [Quick start](lattice-workspace.md) · [Operator’s manual](operators-manual.md)
 
-**File → Open examples…** supplies 30 independent lessons. Search by goal or node technique, filter difficulty, and open lesson details for requirements, steps, checkpoints, experiments, cases and call budgets. Opening creates an independent editable copy as the active document after guarding modified work. It makes no model request and does not change **Enable Lattice**. Descriptions, comments and named nodes retain teaching instructions after import/export. Portable roots live in [examples/remastered](../examples/remastered/).
+Choose **File → Open examples…** to browse 30 lessons. Search by story goal or tool, filter by difficulty, and read a lesson’s requirements, steps, checkpoints, and model request budget before opening it.
 
-![The thirty-lesson examples browser with difficulty filters and lesson details](images/examples-curriculum.png)
+![Examples browser with search, difficulty filters, and lesson details](images/examples-curriculum.png)
 
-Every lesson has its own On Send → Generate Reply → Review / Publish lifecycle. Earlier lessons are useful preparation, not installation dependencies. Foundations covers 1–8, Composition 9–17, Advanced 18–26 and Capstone 27–30.
+Opening a lesson makes an independent editable copy after offering to save modified work. It does not request a model or change **Enable Lattice**. Instructions stay with the copy in its description, comments, and named nodes. The portable files are also in [examples/remastered](../examples/remastered/).
 
-## Set up a safe copy
+Every lesson includes **On Send → Generate Reply → Review / Publish**. You can open any lesson directly; earlier lessons explain useful techniques rather than adding installation requirements. Foundations covers 1–8, Composition 9–17, Advanced 18–26, and Capstone 27–30.
 
-1. Use a disposable chat and select the actual native reply character. Adapt demonstration actor IDs, item IDs, aliases and instructions deliberately. Canonical actor IDs normally use `character:<avatar filename>`.
-2. Read the lesson requirements and call budget. Inspect its named checkpoints in Preview; independent copies retain aliases while internal IDs change.
-3. Bind every ordinary model node to **Active SillyTavern model** or a local Connection profile. The main reply uses SillyTavern's normal connection. Model Call's **Instructions** is its system message; Prompt Source supplies material. Character Direction uses its own literal `systemPrompt`. Its optional Data input supplies projected State or file values; public data or data from that exact same actor grant stays within the actor request.
-4. Configure **For Each → Helper model bindings** separately. Pure helpers need no model; model-backed helpers make bounded requests per item.
-5. Authorize live logical document targets in **Tools → Workflow Data…**, in the selected user/chat/actor scope, and initialize the shapes named by the lesson. These are not arbitrary OS paths. File Input imports a UTF-8 snapshot; it does not authorize a live file.
-6. Resolve validation/binding issues, keep the configured document open, and select **Enable Lattice**. Send normally in SillyTavern. Manual inspection does not start another native reply or queue recall.
-7. Compare the proposed body and staged effects at Review / Publish. Apply preserves the native original as a swipe and settles this reviewed result's authorized effects. Reject leaves accepted-policy effects unapplied.
+## Set up a practice copy
 
-Auxiliary calls are additional to native generation. The lesson budget includes authored branches and finite helper iteration; enabling fallback or enlarging limits can change it. Preview and retries can spend provider tokens. Local connection IDs/credentials are not portable permissions.
+1. Open a practice chat and select the SillyTavern character who will reply.
+2. Read the lesson requirements and request budget. Replace sample instructions, actor IDs, item IDs, and aliases with your own story’s identities. Loaded character IDs normally use `character:<avatar filename>`; a display name alone is not enough.
+3. For each model tool, choose **Active SillyTavern model** or a saved connection on its grey bar. The main reply always uses your usual SillyTavern connection. Configure **For Each → Helper model bindings** separately when the lesson uses model helpers.
+4. If the lesson names story documents, authorize them in **Workflow → Configure → Workflow Data…**. Supply the document name, target ID, format, visibility, and initial content named in the lesson. Actor-private documents need that actor’s ID.
+5. Resolve validation or connection issues. Keep the copy open, select **Enable Lattice**, and Send normally in SillyTavern.
+6. Inspect the named checkpoints in Preview. At **Review / Publish → Host result**, compare the proposed reply and saved changes. **Apply reviewed reply** preserves the original as a swipe and accepts the proposal; **Reject reply** leaves its accepted-policy effects unapplied.
+
+Extra model requests are additional to the normal reply. Helper iteration, authored branches, fallback settings, and larger limits can change the maximum. **Run to here** can spend tokens on model tools; opening, editing, and saving a lesson do not.
 
 ## Choose a lesson
 
-| # | Independent goal | Dominant technique and visible check |
+| # | Goal | What you will try |
 | --- | --- | --- |
-| 1 | Follow a reply from Send to Review | Owned native Draft reaches Review; zero auxiliary calls. |
-| 2 | Give this scene one clear direction | Text → Compose Guidance reaches the native prompt. |
-| 3 | Give the planner only the context it needs | Public Scene Context → Response Plan, with omissions. |
-| 4 | Give a specialist model a different job | Separate Model Call Instructions, material and binding. |
-| 5 | Reuse a prompt block from SillyTavern | Compare Prompt Source raw and resolved text. |
-| 6 | Bring a lore sheet into the scene | Decode a File Input snapshot and select JSON fields. |
-| 7 | Let a second model polish the narration | Compare narration revision and protected literals. |
-| 8 | Add an Observed Items dropdown | Reply Snapshot → Extract → Render Notes → Append. |
-| 9 | Show a travel card only when there is a destination | Condition → Branch → Join preserves a skipped Draft. |
-| 10 | Decide whether this scene needs a recap | Keyed Decision answers, including unresolved. |
-| 11 | Detect a promise with Decision | Nullable accepted answer with explicit Branch routes. |
-| 12 | Plan, write, polish, and annotate one reply | Grouped planning, revision, extraction and enrichment. |
-| 13 | Build one reusable item-card processor | Exact pinned pure helper reused with parameters. |
-| 14 | Give every clue its own explanation | Bounded For Each model helper and ordered results. |
-| 15 | Keep useful context within a budget | Context Join, Smart Compactor and protected omissions. |
-| 16 | Consult the current campaign notebook | Authorized live Read File contrasted with snapshot. |
-| 17 | Record only the scene you accept | Format → Project Document → staged Write to File. |
-| 18 | Let existing memories shape the next reply | Memory Read/Recall, Reflect/Express and scoped Character Direction. |
-| 19 | Turn narrated actions into confirmed events | Exact Draft evidence → Normalize → Confirm Events. |
-| 20 | React when an item is actually used | Actual Player source, ordered events and Current Holder. |
-| 21 | Give one present character their own direction | Genuine Scene Presence and selected actor direction. |
-| 22 | Let an item remind its actual holder | Mention, confirmed ownership and private Prompted Memory. |
-| 23 | Advance the story clock when the scene is accepted | Explicit Advance Time and accepted Clock Commit. |
-| 24 | Make curses and routines happen on schedule | Midnight, 14:00 and anchored 480-minute crossings. |
-| 25 | Award experience from confirmed progress | Generic State rules, thresholds and identity ledger. |
-| 26 | Recall a memory with a hotkey or a story trigger | Authorized record ancestry and explicit queue policy. |
-| 27 | The broken wand: stable randomness with a wild branch | Confirmed use/holder, saved draw, novelty and Outcome Commit. |
-| 28 | The soul-stealing sword: an event ledger and a threshold | Unique confirmed kills, 99→100 and conditional revision. |
-| 29 | One kiss, two private perspectives | Shared evidence, separate private reflections/receipts. |
-| 30 | A relationship that changes slowly over weeks | Directional State, caps/cooldowns and story-minute decay. |
+| 1 | Follow a reply from Send to Review | Read the normal reply and apply or reject it; no extra model requests. |
+| 2 | Give this scene one clear direction | Edit a Text instruction and inspect its guidance before Send. |
+| 3 | Give the planner only the context it needs | Choose public scene context and inspect what was omitted. |
+| 4 | Give a specialist model a different job | Separate its instructions, material, and model connection. |
+| 5 | Reuse a prompt block from SillyTavern | Compare a prompt’s original and resolved text. |
+| 6 | Bring a lore sheet into the scene | Import a file snapshot and select useful fields. |
+| 7 | Let a second model polish the narration | Compare the revision while preserving selected wording. |
+| 8 | Add an Observed Items dropdown | Extract items and append an expandable notes section. |
+| 9 | Show a travel card only when there is a destination | Branch on a condition and retain the reply when the card skips. |
+| 10 | Decide whether this scene needs a recap | Ask Decision a question and handle unresolved answers. |
+| 11 | Detect a promise with Decision | Route yes, no, and unresolved answers explicitly. |
+| 12 | Plan, write, polish, and annotate one reply | Connect several editorial jobs around the normal reply. |
+| 13 | Build one reusable item-card processor | Reuse a saved helper with different parameters. |
+| 14 | Give every clue its own explanation | Run a model helper over a list with a finite limit. |
+| 15 | Keep useful context within a budget | Select or compress context while protecting important messages. |
+| 16 | Consult the current campaign notebook | Read a live authorized document and compare it with a snapshot. |
+| 17 | Record only the scene you accept | Propose a document update that saves with the reviewed reply. |
+| 18 | Let existing memories shape the next reply | Read stored memories, reflect, and prepare character direction. |
+| 19 | Turn narrated actions into confirmed events | Check exact reply evidence before treating an action as established. |
+| 20 | React when an item is actually used | Check the player’s action and track who holds the item. |
+| 21 | Give one present character their own direction | Verify participation before asking for private portrayal guidance. |
+| 22 | Let an item remind its actual holder | Recall existing memories for the confirmed, present holder. |
+| 23 | Advance the story clock when the scene is accepted | Propose explicit elapsed time and accept the clock change. |
+| 24 | Make curses and routines happen on schedule | Test midnight, 14:00, and eight-hour crossings. |
+| 25 | Award experience from confirmed progress | Apply authored rules and prevent duplicate rewards. |
+| 26 | Recall a memory with a hotkey or a story trigger | Queue authorized records with an explicit use policy. |
+| 27 | The broken wand: stable randomness with a wild branch | Confirm use, retain a weighted draw, and review its consequence. |
+| 28 | The soul-stealing sword: an event ledger and a threshold | Count unique confirmed kills and test the 100-soul threshold. |
+| 29 | One kiss, two private perspectives | Confirm a shared event and separately permit each private reflection. |
+| 30 | A relationship that changes slowly over weeks | Inspect directed values, cooldowns, caps, and decay over story time. |
+
+For a story-first introduction to the advanced lessons, read [Story systems](story-systems.md). Click a node’s **?** button when you need help with its settings.
 
 ## Sources, fixtures and acceptance
 
-Each input has a teaching home: On Send/Generate Reply in 1, Text in 2, public Scene Context in 3, Prompt Source in 5, File Input in 6, Reply Snapshot in 8, authorized Read File in 16, native Memory in 18, Draft Event Source in 19, Player Event Source in 20, Story Clock in 23 and actor-scoped Actor Context in 29. Imported JSON cannot manufacture native Draft ownership, confirmed events, private grants, document references or clock settlement authority.
+The [fixture files](../examples/remastered/fixtures/) provide demonstration content for lessons that need documents. Initialize the named shapes in your practice chat. Workflow Data stores scoped story documents; its target IDs are not paths to arbitrary files on your computer. **File Input** imports a UTF-8 snapshot and does not authorize a live document.
 
-The [disposable fixture files](../examples/remastered/fixtures/) supply the required demonstration shapes. Initialize the named document shapes in a test chat. Format validates/serializes; prose needs Extract to become records. Retain the genuine Read File reference for same-target projections. File, memory, clock and outcome proposals remain pending until their configured acceptance path settles. Multiple files have separate receipts, with no atomic promise; inspect partial failures before using supported retry/reconciliation.
+Use **Read File** when you need saved content and a reference for a later write to that same target. Keep that live reference connected through the update. **Format** validates and serializes supplied records; use Extract first when prose needs to become structured records.
 
-Events require closed actor/item identities and exact unchanged evidence. Mentioned, proposed, negated, hypothetical or remembered actions do not become confirmed occurrences. Current Holder needs explicit prior ownership and confirmed ordered events. Consumed event identities must not award progression or reroll randomness again. The sword ledger grants one soul per canonical victim; repeating that victim with different source evidence deliberately holds as `IDENTITY_CONFLICT` for reconciliation, preserving the accepted ledger.
+File, memory, clock, and outcome changes are proposals until their configured acceptance path completes. Multiple saves have separate receipts and can partly succeed. Inspect the result before using **Retry failed saves** or reconciling an unknown save. See [acceptance and saving](unified-workflows.md#keep-acceptance-and-saving-distinct).
 
-Seed time with the **Story clock template** in an authorized JSON target. Forward integer story minutes differ from wall clock and message count. Midnight is 0, 14:00 is 840, and eight hours is 480 minutes with an explicit origin. Interrupt retains remainder; finite catch-up can hold at its limit. Accepted Clock Commit consumes genuine projected due IDs.
+### Confirm actions and track time
 
-Private portrayal, Recall dispatch and paired reflections require genuine participation and scoped authorization. Selected-actor private file reads in lessons 26 and 30 use the selected actor’s own authority; those reads do not require a presence grant. Actor Context is separate per actor. Only the selected native actor receives permitted private native Guidance. Shared kiss evidence and model-authored reflection remain labeled separately; private material never becomes public notes. Lesson 29 deliberately holds missing kiss evidence with no Review handle or private reflection writes; its required shared-evidence barrier is explicit. Rejected and unresolved confidence skip reflection while preserving the ordinary reviewed Draft; an unresolved metric remains explicit rather than accepted. Both actors must be genuinely present before either reflection; absence skips both private legs and unresolved participation holds. Each actor's reflection permission defaults to false and must be configured separately. Relationship rules feed bounded projected values into Character Direction's Data input. Its exact live output can guide only the selected native actor; generic Model Call → Compose does not authorize private native Guidance. An absent actor receives no private portrayal call, while accepted elapsed-time decay may still update that selected actor’s authorized state without inventing an interaction. These rules influence NPC portrayal, while player choices remain explicit.
+A mention, plan, remembered event, negated action, or hypothetical action does not establish a new occurrence. Event confirmation needs exact unchanged evidence and declared actor/item identities. Current Holder also needs prior ownership and the confirmed events in order.
 
-Lesson 18 reads genuine native actor state and episodes, then gives its private Reflect/Express result to Character Direction through Data. Its post-stage Internalize uses the exact settled native events; each accepted proposal receives its own transaction key. Retained memory remains tied to the exact accepted native revision. Later text edits, selected-swipe changes, deletion or revoked visibility invalidate that evidence; a changed narrative needs new extraction rather than an old swipe fallback. Lesson 22's Prompted Memory recalls existing episodes from the selected actor's native memory store. The separate `rowan-item-memories` Workflow Data target is an output ledger: initializing it to `[]` supplies no native recall episode. Default recall never invents history; opt-in creation needs explicit permission and remains a pending proposal.
+Preserve the authored event identities used by progression and randomness. Repeated events should not award progress or draw again. Lesson 28 grants one soul per canonical victim; a repeated victim with conflicting evidence holds as `IDENTITY_CONFLICT` rather than adding another soul.
 
-For Recall, use **Queue recall** from the node context menu, **Details → Memory recall**, **Node → Memory recall**, or the configured shortcut. Matching Recall and Recall Shortcut cards show green queued or amber pending badges; click a badge to inspect its policy. Previewing Recall Shortcut does not queue it. Native Recall serves the selected actor; accepted consumption needs the exact reviewed result. See the [Recall lifecycle](unified-workflows.md#queue-memories-manually-or-recall-them-automatically).
+Story Clock uses explicit forward integer minutes. It does not advance from message count or real-world waiting. Midnight is minute 0, 14:00 is 840, and eight hours is 480 minutes with an explicit origin. Interrupt retains the remaining duration; catch-up has a finite event limit. Clock Commit accepts the projected time and checked due events with the reviewed reply.
 
-Saved native-unified workflows and earlier unified example IDs remain supported. The visible picker contains the new 30 lessons. Retired native-pre/native-post roots are preserved in a cold recovery archive and cannot execute, open as current documents, or import into current workflows. **File → Export archived workflows…** saves a copy of that archive without requests or conversion; use the [rebuilding steps](unified-workflows.md#move-an-existing-prepost-setup) to recover a useful process in a new unified graph. Reconfigure local connections and document authorization after importing.
+### Keep private perspectives separate
+
+Private context and memories stay tied to their actor. Actor Context supplies each character’s own authorized material; only the selected native actor’s permitted Character Direction or Recall output can provide private guidance to the main reply. A generic Model Call followed by Compose cannot grant that access. Private reflections cannot become public notes by relabeling them.
+
+Model Call’s **Instructions** supplies its system message. Character Direction has its own literal system prompt and can receive public Data or values authorized for that same actor. An absent actor’s portrayal call skips; an unresolved participation check holds.
+
+Lesson 29 requires actual shared kiss evidence and both actors’ verified presence. Missing evidence or unresolved participation stops before Review. A rejected kiss skips reflections and leaves the original reply available for review; a null Decision answer holds before Review. Either actor’s absence skips both private branches. Each actor’s permission to author a reflection starts false and must be enabled separately. Shared observation and model-authored interpretation remain separate in the saved records. If only one reflection is permitted, only that actor’s reflection can run.
+
+Lesson 30 can save elapsed-time decay for the authorized selected actor even when that actor is absent. That does not invent a supportive interaction or run private portrayal. Its directed relationship values influence NPC portrayal while leaving player choices open.
+
+### Use existing memories deliberately
+
+Lesson 18 reads genuine native state and episodes, then gives its private reflection to Character Direction. Accepted memory proposals remain tied to the accepted native revision. Later edits, swipe changes, deletion, or revoked visibility invalidate that evidence; extract new evidence for a changed narrative.
+
+Lesson 22’s Prompted Memory reads the selected actor’s existing native episodes. Its separate `rowan-item-memories` Workflow Data target is an output ledger: starting it at `[]` does not create a recall episode. Recall does not invent history; opt-in creation needs explicit permission and review.
+
+For lesson 26, use **Queue recall** on a Recall or Recall Shortcut node, **Details → Memory recall**, **Workflow → Memory recall**, or the configured shortcut. Green badges show queued requests; amber badges show reservations or results awaiting acceptance. Click a badge to inspect its policy. Previewing Recall Shortcut does not queue it. See [Recall setup and policies](unified-workflows.md#queue-memories-manually-or-recall-them-automatically).
+
+## Reopen and share
+
+Saved unified workflows and earlier unified example IDs remain supported. Portable exports omit local connection identifiers and credentials; reconfigure fixed connections, helper roles, and document authorization after importing.
+
+Retired pre/post roots stay in a recovery archive. **File → Export archived workflows** saves a copy without model requests or conversion. They cannot run or import as current workflows. Use the [rebuilding steps](unified-workflows.md#move-an-existing-prepost-setup) to recover useful parts in a new unified graph.

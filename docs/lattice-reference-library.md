@@ -1,61 +1,81 @@
 # Reference tools and reusable workflows
 
-Transpose applies an example or convention to Text or a completed reply Draft. New nodes accept and return Text in either phase. Draft edits produce source-bound Patches for validation and candidate diagnostics. Publishing an owned final Draft requires Review / Publish in a unified root. Opening a workflow makes it the active document without a model request or changing **Enable Lattice**.
+[Documentation](README.md) · [Operator’s manual](operators-manual.md) · [Example workflows](examples.md)
+
+Use a reference to adjust style, formatting, or terminology, or use cleanup tools to inspect repeated wording. Read the proposed changes before applying them: matching a phrase does not establish that it is unsuitable for your scene.
 
 ## Transpose
 
-| Operation | Inputs | Output | Calls |
+Transpose works on Text or a completed reply Draft. Text input returns Text; Draft input proposes exact patches for validation and review.
+
+| Operation | Reference | Output | Extra model requests |
 | --- | --- | --- | --- |
-| Style Transfer | Text or Draft, reference Text or Data; optional Context | Text or Patches | At most 1 Prose |
-| Format Transfer | Text or Draft, example Text or Data template; optional Context | Text or Patches | At most 1 Prose |
-| Terminology Map | Text or Draft, Data glossary | Text or Patches | 0 |
+| **Style Transfer** | Prose or structured reference; optional Context | Text or Patches | At most 1 Prose request |
+| **Format Transfer** | Example text or structured template; optional Context | Text or Patches | At most 1 Prose request |
+| **Terminology Map** | Structured glossary | Text or Patches | 0 |
 
-The Transpose family opens directly to these three nodes. Choose **Input type → Text** for Text → Text, or **Input type → Draft** in the Response stage for Draft → Patches. New shelf/search nodes default to Text; existing saved nodes without Input type retain Draft behavior. Text transformations can run in Preparation or Response stages and inside reusable subgraphs. Host reply sources and application nodes retain their own context restrictions.
+Choose **Input type → Text** for Text → Text, or **Input type → Draft** in Response for Draft → Patches. New shelf nodes default to Text. Older saved nodes without this setting retain Draft behavior. Text transformations can run in either stage and inside subgraphs; reply-specific tools still need the matching reply context.
 
-Style modes are narration, character voice, rhythm and register, selected in Details. Narration is the default editing scope. To target dialogue, choose **Mode → Character voice** and **Scope → Dialogue** separately. Changing Mode keeps the current Scope. Mode, Scope, Strength, instructions and protected wording are independent controls.
+For Style Transfer, choose narration, character voice, rhythm, or register in Details. Narration is the default edit scope. To target dialogue, set **Mode → Character voice** and **Scope → Dialogue** separately. Changing Mode retains Scope. Strength, instructions, and protected wording are independent settings.
 
-Format Transfer uses material already present. Data templates can include `requiredContent`, an array of exact strings that must occur in the input text. Missing content fails before a request. References supply expression and structure, not additional story facts.
+Format Transfer works with facts already in the source. A Data template can include `requiredContent`, an array of exact strings that must be present; missing content stops before a model request. References guide expression and structure rather than supplying new story facts.
 
-Terminology Map consumes Data such as `{"entries":[{"from":"Captain","to":"Commander"}]}`. Choose word/phrase matching and case sensitivity. Replacements are simultaneous: A-to-B does not cascade into B-to-C. Compose -> JSON Decode can supply Data; Compose Text can supply a prose reference. An occupied Text reference pin cannot silently become Data: explicitly disconnect or replace the incompatible wire.
+Terminology Map accepts Data such as:
+
+```json
+{"entries":[{"from":"Captain","to":"Commander"}]}
+```
+
+Choose word/phrase matching and case sensitivity. Replacements happen together: A → B does not then become C through a B → C entry. Compose → JSON Decode can supply the glossary; Compose Text can supply a prose reference. Disconnect or replace an incompatible connection before changing a reference input from Text to Data.
+
+Draft patches are intermediate results. A current unified workflow must carry its final Draft to **Review / Publish** for publication.
 
 ## One cleanup operation, three modes
 
-Repair retains repair/scan and adds:
+Repair offers these modes alongside repair/scan. Select the categories and text scope independently of the mode.
 
-Legacy repair/scan use the incoming Draft's existing permissions. Scope, policy categories, case matching and the optional Context pin appear for the three cleanup modes below.
-
-| Mode | Behavior | Calls |
+| Mode | Behavior | Extra model requests |
 | --- | --- | --- |
-| Inspect | Report source-offset literal matches; preserve the original | 0 |
-| Contextual Cleanup | Revise formulaic uses while preserving meaningful events and deliberate voice | At most 1 Prose |
-| Strict Avoidance | Request alternatives within permitted text and report remaining/uneditable literal matches | At most 1 Prose |
+| **Inspect** | Report literal matches while preserving the original. | 0 |
+| **Contextual Cleanup** | Ask for revision of formulaic uses while retaining meaningful events and voice. | At most 1 Prose request |
+| **Strict Avoidance** | Ask for alternatives within permitted text and report remaining or uneditable matches. | At most 1 Prose request |
 
-All use the complete policy: 14 categories, 273 source occurrences, 271 unique entries, 17 templates and 2 behavioral policies. Duplicate entries retain their category memberships. Empty categories selects all; categories and narration/dialogue/whole scope are independent of mode. `authorized` uses existing permissions without constructing raw snapshot permissions.
+The policy contains 14 categories, 273 source occurrences, 271 unique entries, 17 templates, and 2 behavioral policies. Repeated entries retain their category membership. An empty category selection uses all categories. Choose narration, dialogue, or whole scope separately. The `authorized` option uses the Draft’s existing editing permissions. Legacy repair/scan also retain those permissions; the extra scope, categories, case matching, and Context controls belong to the three cleanup modes.
 
-Literal inspection respects Unicode word boundaries, so `adequate` does not match inside `inadequate`. Straight/curly apostrophes and quotes retain original UTF-16 offsets. An occurrence is a match, not a semantic defect. Inspect reports that templates and behaviors need semantic assessment; it does not claim to diagnose them without a model.
+Literal matching respects Unicode word boundaries: `adequate` does not match inside `inadequate`. Straight/curly quotes keep source offsets accurate. Inspect identifies literal occurrences; templates and behavioral policies still need interpretation. It does not claim a semantic diagnosis without a model.
 
-The prose writer receives selected typed policies and optional Context. Preserving facts, actions, chronology, refusals, voice and user agency is a model instruction and review responsibility. Local checks enforce source identity, permission windows and protected wording; they do not certify meaning. Strict reports distinguish original uneditable wording from remaining candidate matches. No retry forces an edit. Empty permissions makes no request; failed, incomplete, ambiguous or cancelled output produces no authoritative proposal.
+A cleanup request receives the selected policies and optional Context. Preserving facts, actions, chronology, refusals, voice, and player agency remains an instruction to the model and a review task for you. Local checks enforce source identity, editing spans, and protected wording; they do not certify meaning.
+
+Strict Avoidance distinguishes uneditable original wording from matches remaining in the candidate. Lattice does not retry to force a change. Empty editing permissions make no request. Failed, incomplete, ambiguous, or cancelled output supplies no valid patch proposal.
 
 ## Reusable packages
 
-| Subgraph | Interface | Default bound |
+These saved subgraphs demonstrate common context and cleanup jobs.
+
+| Subgraph | Inputs → output | Default request limit |
 | --- | --- | --- |
-| Context Lens | Context -> Context | 0; compression adds 1 Analysis |
-| Scene Compass | Context -> Guidance | 1 Analysis; compression adds 1 |
-| Literal Cleanup | Draft -> Draft (`filtered-draft`) | 0; one branch decision per reply |
-| Formatting Cleanup | Draft -> Candidate | 0 |
-| Prose Cleanup | Draft and optional Context -> Candidate | 1 Prose; Inspect/empty permissions means 0 |
+| **Context Lens** | Context → Context | 0; compression adds 1 Analysis request. |
+| **Scene Compass** | Context → Guidance | 1 Analysis request; compression adds 1. |
+| **Literal Cleanup** | Draft → Draft (`filtered-draft`) | 0; one branch choice per reply. |
+| **Formatting Cleanup** | Draft → Candidate | 0. |
+| **Prose Cleanup** | Draft and optional Context → Candidate | 1 Prose request; Inspect or empty permissions uses 0. |
 
-Packages in [examples/library/subgraphs](../examples/library/subgraphs/) illustrate reusable typed interfaces. Save a wrapper through **Add to Subgraphs** and insert saved definitions from the Subgraphs shelf. Definitions have verified identities and pinned dependencies; the shelf shows the latest explicitly saved entry for each reusable item. Model bindings remain unresolved until configured. Reusable bodies contain neither root sources nor Apply authority.
+Find them in [examples/library/subgraphs](../examples/library/subgraphs/). Save a wrapper with **Add to Subgraphs**, then place saved entries from the shelf. Entries retain exact saved definitions and dependencies. The shelf shows the latest version you explicitly saved; placed copies do not update silently. Configure model connections before running model-backed packages.
 
-The five canonical definitions remain available for reuse and inspection. Their pinned bodies retain pre/post stage contracts; standalone library root wrappers have been retired. Choose a current unified recipe, place compatible processing in its intended stage, and retain Review / Publish as the root publication authority.
+These five definitions retain older stage-specific contracts. Their standalone library root wrappers are retired. Reuse compatible processing in a current unified workflow and retain Review / Publish as the final publication step. Their Candidate outputs are diagnostic; they do not grant Apply authority.
 
-Literal Cleanup detects canonical rules for `the words hung in the air`, `the tension was palpable`, and `something unreadable`, in narration. Pattern → Branch selects once; Filter Text removes matching paragraphs with explicit narration scope and Join bypasses no-hit replies. Its output is `filtered-draft` (Draft), with zero model requests; send it to Review / Publish. A unit crossing dialogue, permissions, protections or exemptions blocks atomically. Formatting Cleanup defaults to CRLF -> LF with explicit whole scope; supplied permissions and protected wording still narrow it. Prose Cleanup defaults to contextual/narration. Inspect changes before accepting them.
+**Literal Cleanup** detects `the words hung in the air`, `the tension was palpable`, and `something unreadable` in narration. Pattern → Branch chooses once per reply. Filter Text removes matching paragraphs; Join bypasses no-hit replies unchanged. Its Draft output can reach Review / Publish, with no extra model requests.
 
-Pattern passes the Draft and its permissions unchanged while reporting occurrences. It does not prepare editable spans for Repair. Filter Text independently enforces whole-unit deletion permission and retained scan protections/exemptions. Draft Text Rules requires existing permissions or explicit scope construction and reconstructs original parent patches. Whole scope cannot expand permissions already present, including an empty span list.
+A paragraph crossing dialogue, editing spans, protected text, or exemptions blocks as a whole. Pattern leaves Draft permissions unchanged; it does not prepare editable spans for Repair. Filter Text checks each whole deletion independently.
+
+**Formatting Cleanup** defaults to CRLF → LF with whole scope. Existing permissions and protected text still narrow the edit. **Prose Cleanup** defaults to contextual/narration. Inspect both before accepting.
+
+Draft Text Rules needs existing permissions or an explicit scope setup. It translates the edit back to the original source. Whole scope cannot expand permissions already present, including an empty span list.
 
 ## Categories and maintenance
 
-The category editor accepts source category IDs, one per line. See [the canonical policy](../data/ai-slop-policy.json) for labels and entries. Source wording is data. The browser policy module is generated from the JSON and checked for equality by tests.
+The category editor takes source category IDs, one per line. The [canonical policy](../data/ai-slop-policy.json) lists labels and entries. Its wording is data; the browser policy module is generated from it and checked against the source.
 
-The **Introspection** family is available alongside these tools. Its [package guide](introspection-package.md#native-workflow-examples) covers character reflection, experience internalization and deterministic tracks in current unified workflows. Memory access stays in the root graph; reusable State bodies need an explicit snapshot input.
+The [Introspection guide](introspection-package.md#native-workflow-examples) covers character reflection, experience internalization, and state tracks in current unified workflows. Static subgraphs can use the enclosing workflow’s authorized Memory operations. **For Each** helpers need explicit State snapshots and cannot run Memory operations.
+
+Click a node’s **?** button for an illustrated explanation of its controls and connections.

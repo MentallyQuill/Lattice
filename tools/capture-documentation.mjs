@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { screenshotRegion } from './documentation-framing.mjs';
 
 // Real production UI, local mock host, synthetic material, no provider requests.
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -171,9 +172,18 @@ try {
         if (name !== 'node-shelf') await page.mouse.move(1400, 20);
         await page.evaluate(() => window.canvasHarness.settle());
         const path = join(output, name + '.png');
-        if (selector) await page.locator(selector).screenshot({ path, animations: 'disabled' });
-        else await page.screenshot({ path, animations: 'disabled' });
-        evidence.screenshots.push({ name, selector: selector ?? 'workspace', path });
+        const focused = ['.pc-inspector', '.pc-node-details'].includes(selector) ? '.pc-node-details > *' : selector ?? ({
+            'node-shelf': ['.pc-node-shelf', '.pc-family-menu'],
+            'node-search': '.pc-shelf-menu',
+            'review-candidate': '.pc-preview-pane',
+            'text-rules-graph': '.pc-canvas-host .pc-node-native',
+            'subgraph-instance': '.pc-canvas-host .pc-node-native',
+            'subgraph-tab': ['.pc-graph-tabs', '.pc-canvas-host .pc-node-native'],
+            'scene-planning-graph': '.pc-canvas-host .pc-node-native',
+            'context-assembly': '.pc-canvas-host .pc-node-native',
+        })[name];
+        const framing = await screenshotRegion(page, path, focused);
+        evidence.screenshots.push({ name, selector: focused ?? 'workspace', path, framing });
         console.log('Captured ' + name);
         if (selector === '.pc-inspector') {
             await page.setViewportSize({ width: 1680, height: 1000 });
@@ -286,6 +296,14 @@ try {
     await page.locator('.pc-node-native[data-id="text-rules"] .pc-native-heading').dblclick();
     await fit();
     await select('rules');
+    // Bring the body near its tab so this crop teaches navigation without
+    // a large band of empty canvas between the tab and the connected cards.
+    await page.evaluate(async () => {
+        const h = window.canvasHarness, area = document.querySelector('.pc-canvas-host').getBoundingClientRect();
+        const top = Math.min(...[...document.querySelectorAll('.pc-canvas-host .pc-node-native')].map(node => node.getBoundingClientRect().top));
+        h.canvas.view.y += area.top + 48 - top;
+        h.canvas.applyTransform(); await h.settle();
+    });
     await shot('subgraph-tab');
     await page.locator('.pc-graph-tabs').getByRole('tab').first().click();
     await subgraphCommand('text-rules', 'Make editable copy');

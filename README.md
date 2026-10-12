@@ -1,90 +1,87 @@
-# LATTICE · Beta
+<p align="center">
+  <img src="docs/images/lattice-banner.png" alt="Lattice" width="720">
+</p>
 
-**Give your roleplay a little more memory, a little more structure, and a lot more possibility.**
+<p align="center"><strong>A visual story workshop for SillyTavern.</strong></p>
 
-Lattice is a visual story workshop inside SillyTavern. Connect small tools to shape the next scene, give characters their own direction, polish a reply, or keep track of what your story has actually established. Start with an example, change it to suit your world, and build from there.
+<p align="center">
+  <a href="#install-and-try-it">Install</a> ·
+  <a href="docs/operators-manual.md">Operator’s manual</a> ·
+  <a href="docs/developer-guide.md">Developer guide</a> ·
+  <a href="LICENSE">MIT license</a>
+</p>
 
-Your normal SillyTavern model still writes the reply. Lattice can prepare its guidance, bring in other models for specific jobs, and process the result—all in one connected workflow. You inspect the result before accepting it.
+Lattice lets you connect small tools to shape a roleplay: prepare the next scene, give a character their own perspective, edit a reply, or keep track of events your story has established. Start with a working example and change it to suit your world.
 
-![Lattice beta workspace with broken-wand, weather, and relationship systems connected to one SillyTavern reply](docs/images/beta-overview.png)
+Your usual SillyTavern model writes the reply. Lattice can prepare guidance for it, ask other models to handle particular jobs, and process the result. You review the proposed reply and story changes before accepting them.
 
-*Three story systems, one reply. Open any system to see how it works, edit its rules, or switch it off.*
+![Wand, weather, and relationship systems connected to one SillyTavern reply](docs/images/beta-overview.png)
 
-[Install and try it](#install-and-try-it) · [Operator’s manual](docs/operators-manual.md) · [30 example workflows](docs/examples.md) · [Node reference](docs/node-reference.md)
+*Several story systems can share one workflow. Open a system to inspect its rules, edit it, or switch it off.*
 
 ## What could you build?
 
-**A broken wand with a 10% chance of chaos magic.** Give ordinary magic a weight of 90 and a list of fixed chaos effects a combined weight of 10: butterflies, sudden frost, voices from nowhere. Once an eligible use is confirmed, Lattice’s weighted Random Pick chooses an effect and keeps that draw tied to the event. The fixed selection needs no model call. Models can recognize the action and narrate the consequence; your rules decide the odds. [Build this version](docs/story-systems.md#a-wand-with-a-10-chaos-chance).
+**A broken wand with a 10% chance of chaos magic.** Give ordinary magic a weight of 90 and fixed chaos effects a combined weight of 10: butterflies, sudden frost, whispering shadows. After an actual use is confirmed, Random Pick chooses an effect. The weighted choice needs no model request; models can recognize the action and narrate the consequence. A retained draw is reused for the same event. [Build this version](docs/story-systems.md#a-wand-with-a-10-chaos-chance).
 
-And it goes well beyond enchanted items:
-
-| Story idea | What Lattice brings to it |
+| Story idea | How it works |
 | --- | --- |
-| **A relationship that grows slowly** | Track trust, desire, tension, and excitement with authored limits, cooldowns, and changes over accepted story time. A warm conversation needn’t jump straight to devotion. |
-| **One moment, two private perspectives** | Let each present character reflect on the same event using their own context and memories. Give the next reply character-specific direction. |
-| **A world with a sense of time** | Advance a story clock after an agreed journey or rest. Trigger weather, a curse, or a routine when the story crosses its scheduled time. |
-| **A campaign notebook that earns its entries** | Extract a recap or scene record, review the reply, and save the record only when you accept it. Rejected scenes stay out of the notebook. |
-| **A narrator with an editorial team** | Have one model plan the scene, let SillyTavern write it, ask another model to polish the prose, then append useful notes. Choose a connection for each job. |
-| **Memories you can call back deliberately** | Queue a character’s memories from the canvas or a shortcut, or author a story trigger for Recall. Inspect what reached the next reply. |
+| **A relationship that develops over weeks** | Track separate trust, desire, tension, and excitement values. Set limits and cooldowns so one warm conversation has a modest effect. Use accepted story time to let temporary feelings settle. |
+| **One moment, two private perspectives** | Give each present character their own context and memories when reflecting on a reunion, disagreement, or promise. Keep their private interpretations separate. |
+| **Weather and routines on story time** | Advance a clock after an agreed journey or rest. Trigger rain, a curse, or a routine when the story crosses its scheduled time. |
+| **A campaign notebook of accepted scenes** | Propose a recap or clue record alongside the reply. Save it when you accept that result, keeping rejected drafts out of the notebook. |
+| **A narrator with an editorial team** | Have a model plan the scene, let SillyTavern write it, then ask an editor to polish the prose or add useful notes. Choose a connection for each job. |
+| **Memories you can bring back deliberately** | Queue a character’s stored memories from the canvas or a shortcut, or use an authored story trigger. Inspect what reached the reply. |
 
-These ideas build on shipped nodes and examples. [Story systems](docs/story-systems.md) explains their rules and setup. The advanced wand lesson also offers a model-authored wild branch; the fixed 90/10 library above is a variation you can author.
+These are systems you can author with the supplied tools and lessons. [Story systems](docs/story-systems.md) explains the setup and limits; [30 example workflows](docs/examples.md) offer editable starting points.
 
 ## Build it by connecting the pieces
 
-Find a tool by name or browse the shelf, then drag it onto the canvas. Nodes have small, specific jobs: read context, choose fields, compose instructions, call a model, transform text, make a decision, or propose a story-state change.
+Each box, called a **node**, does one job. Search for a tool and drag it onto the canvas. If a setup dialog opens, choose its settings and **Create node**. Connect its output to the next tool’s input. A workflow might read scene context, compose instructions, ask a model a question, edit text, or propose a saved story change.
 
-![Cursor searches the node shelf for Text Rules and drags the node onto the canvas](docs/images/search-and-place.gif)
+![Searching for Text Rules and placing it on the canvas](docs/images/search-and-place.gif)
 
-*Search, grab, place. Configure the tool in Details.*
+*Search, drag, and configure. Select a node to edit its settings in Details.*
 
-Enter a keyword such as `Elara` in Pattern, or a list such as `1, 2, 3`. The editor shows the parsed entries before Save. Pattern and Filter Text can detect repeated terms and remove matching paragraphs without an auxiliary model request. Inspect results in **Readable**, or choose **Source** for the retained diagnostic payload. [Configure and inspect nodes](docs/operators-manual.md#familiar-node-settings).
+Click a node’s **?** button for an illustrated guide to its purpose, settings, connections, and examples. Preview shows recorded results along the way. **Run to here** tests a supported part of the workflow; a test that includes model tools can make additional requests.
 
-Connect output pins to compatible input pins to decide what feeds what. Follow the colored connections to understand the process, and inspect recorded results at each step instead of guessing what went into the prompt.
+When a useful sequence takes up too much space, turn it into a **subgraph**: one box that opens into its own editable tab. Save it to the shelf to reuse it in another workflow.
 
-![Cursor connects a scene source to JSON Decode, then connects its Data output to Select Fields](docs/images/connect-nodes.gif)
+![Selecting a connected sequence and turning it into a reusable subgraph](docs/images/create-subgraph.gif)
 
-*Here, a written scene brief becomes structured data that the next tool can work with.*
+*Keep a working process together and reuse it without rebuilding its connections.*
 
-When a useful sequence starts taking up space, select it and turn it into a subgraph. Lattice creates its inputs and outputs, reconnects the parent, and opens the internals in a tab. Save it to the shelf and reuse it in another story.
+## Review the result
 
-![Three processing nodes selected from a larger workflow and turned into a connected reusable subgraph](docs/images/create-subgraph.gif)
+The usual path is **Send → prepare guidance → SillyTavern reply → process → review**. Select **Review / Publish** and inspect its **Host result** in Preview. **Apply reviewed reply** adds the reviewed version as a new swipe, preserving the original, and accepts that result’s staged story changes. **Reject reply** leaves those proposals unaccepted.
 
-*Turn a scene-brief pipeline into one reusable block without losing its connections.*
+![Reply Preview with Apply reviewed reply and Reject reply controls](docs/images/review-candidate.png)
 
-You can also frame sections with comments, open a node’s **?** guide, pin a preview while exploring the graph, and use **Run to here** to inspect a supported part of the process. Undo and redo cover graph edits. [The manual](docs/operators-manual.md) walks through all of it.
-
-## Your story still gets the final say
-
-Lattice’s normal path is **Send → prepare guidance → SillyTavern reply → process → review**. Apply adds the reviewed reply as a new swipe, preserving the original, and accepts that result’s staged story changes. Reject keeps those proposals from becoming accepted state.
-
-![Completed reply in Preview with explicit Apply reviewed reply and Reject reply controls](docs/images/review-candidate.png)
-
-*Inspect the recorded result before applying it. Preview and Run to here do not accept story changes.*
+*Reading Preview or using Run to here does not accept story changes. If a save fails, inspect its status before continuing.*
 
 ## Install and try it
 
-1. In SillyTavern, open **Extensions → Install extension**.
+With SillyTavern installed and your usual model connection working:
+
+1. Open **Extensions → Install extension** in SillyTavern.
 2. Enter `https://github.com/MentallyQuill/Lattice`. Leave the branch blank to install `main`, then reload SillyTavern.
 3. Click the Lattice logo beside the chat bar, or type `/lattice`. A fresh installation opens **Unified story workflow** with Lattice disabled.
-4. Select **Enable Lattice** and send a player message normally. The starter uses your usual SillyTavern generation and makes no extra model calls.
-5. Select **Review / Publish** and inspect its **Host result** in Preview. Choose **Apply reviewed reply** or **Reject reply**.
+4. Select **Enable Lattice**, then send a player message normally. The starter uses your usual SillyTavern generation and makes no extra model requests.
+5. Select **Review / Publish**, choose **Host result** in Preview, and apply or reject the reviewed reply.
 
-Ready for more? Open **File → Open examples…**. Thirty lessons take you from scene direction to memories, notebooks, item effects, progression, and relationships. Each opens as an editable copy with setup steps and a stated call budget. Model-based lessons need their connections configured; some also need Workflow Data sources.
+Next, choose **File → Open examples…**. Try **Give this scene one clear direction** for a simple editable instruction, or choose a lesson that fits your story. Each lesson explains its setup and model request budget. Model-based lessons need their connections configured; some also need story documents in Workflow Data.
 
-![Examples browser with thirty roleplay lessons, graph thumbnails, search, and difficulty filters](docs/images/examples-curriculum.png)
+Lattice is in beta. Save your workflows and try substantial systems in a separate chat first. Update through SillyTavern’s **Manage Extensions**, then reload.
 
-Lattice is in beta. Save your workflows and try substantial story systems in a separate chat first. Update through SillyTavern’s **Manage Extensions**, then reload.
+## Keep exploring
 
-## Learn more
+- [Quick start](docs/lattice-workspace.md) — installation, your first reply, and saving your work.
+- [Operator’s manual](docs/operators-manual.md) — illustrated instructions for the editor and day-to-day use.
+- [Example workflows](docs/examples.md) — choose among 30 lessons.
+- [Unified workflows](docs/unified-workflows.md) — combine models, memories, documents, clocks, and story rules.
+- [Model setup and troubleshooting](docs/native-workflows.md) — connections, request limits, and save status.
+- [Documentation](docs/README.md) — routes for readers, workflow authors, and developers, including the detailed [node reference](docs/node-reference.md).
+- [Developer guide](docs/developer-guide.md) — architecture, rendering, builds, and contributing.
 
-- [Operator’s manual](docs/operators-manual.md) — illustrated instructions for editing, running, reviewing, and sharing.
-- [Story systems](docs/story-systems.md) — concrete roleplay ideas and their operating rules.
-- [30 lessons](docs/examples.md) — choose a starting point and follow its setup.
-- [Node reference](docs/node-reference.md) — find a tool’s inputs, outputs, and settings.
-- [Unified workflows](docs/unified-workflows.md) — model chains, character context, memories, documents, clocks, and accepted effects.
-- [Model setup and troubleshooting](docs/native-workflows.md) — connections, budgets, and host integration.
-- [Development](docs/development.md) — builds, checks, and reproducible screenshots and GIFs.
+Lattice is released under the [MIT license](LICENSE) so the AI roleplay community can use, adapt, and build on this technology, in part or as a whole. See [third-party notices](THIRD_PARTY_NOTICES.md) for included dependencies.
 
-Screenshots and animations show the real beta editor on a local demonstration host with synthetic story material. Captures make no provider requests; model profiles shown are illustrative.
-
-MIT · [License](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+Screenshots and animations show the real editor on a local demonstration host with synthetic story material. The captures make no provider requests; model profiles shown are illustrative.

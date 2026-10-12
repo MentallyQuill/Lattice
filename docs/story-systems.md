@@ -1,8 +1,8 @@
 # Story systems you can build
 
-[Lattice](../README.md) · [Operator’s manual](operators-manual.md) · [Example lessons](examples.md) · [Node reference](node-reference.md)
+[Lattice](../README.md) · [Operator’s manual](operators-manual.md) · [Example lessons](examples.md)
 
-Combine rules you author with model interpretation and narration. Use models for understanding prose; use deterministic tools for an exact probability, counter, budget, or schedule. These are supported compositions you can build, rather than systems that activate automatically at installation.
+Combine your rules with model interpretation and narration. Models can interpret scene text; fixed rules handle an exact probability, counter, budget, or schedule. The lessons below give you starting points to adapt. These systems need setup before they run in your story.
 
 ## A wand with a 10% chaos chance
 
@@ -21,7 +21,7 @@ The chaos entries add up to 10 out of 100. Weights are relative: changing the to
 2. Authorize its holder, library, and outcome JSON targets in **Workflow → Configure → Workflow Data…**. For `wand-effects`, use the JSON below as initial content in a fresh target, or deliberately update an existing authorized library. Changing an initial template does not overwrite saved content. Set the **Effect Library** node’s **Revision** to `fixed-chaos-r1` as well, so its identity matches the JSON.
 3. Bind action extraction and confirmation models. Keep the event confirmation and accepted-holder checks: a hypothetical use should not count as an actual cast.
 4. Random Pick selects from the live library for that eligible event. This fixed-only library leaves the wild-effect branch unused. Configure that branch’s model bindings if validation requires them, or deliberately remove the unused branch.
-5. Inspect the effect, narration, and proposed outcome. Apply the final reviewed reply to settle it. Reject does not accept it. While the pending draw is retained, rerunning the same event reuses it.
+5. Inspect the effect, narration, and proposed outcome. Apply the final reviewed reply to accept it. Reject leaves it unaccepted. While the pending draw is retained, rerunning the same event reuses it.
 
 ```json
 {
@@ -37,7 +37,7 @@ The chaos entries add up to 10 out of 100. Weights are relative: changing the to
 }
 ```
 
-The initial draw uses runtime randomness. Lattice reuses a matching draw from its pending cache or accepted outcome ledger; event identity alone does not recreate a lost pending draw. Keep the library revision consistent with its contents; a new use is a new event. Extraction and confirmation are still model tasks in this lesson, so inspect their evidence before accepting the result. See [Random Pick](node-reference.md#random-pick) and [fixture setup](../examples/remastered/fixtures/README.md).
+The first selection uses randomness. Lattice reuses a matching pending draw or saved accepted outcome; the event ID alone cannot recreate a lost pending draw. Keep the library revision consistent with its contents; a new use is a new event. Extraction and confirmation still use models in this lesson, so inspect their evidence before accepting. See [Random Pick](node-reference.md#random-pick) and [fixture setup](../examples/remastered/fixtures/README.md).
 
 ## A relationship that grows slowly
 
@@ -59,7 +59,7 @@ Try it for a reunion, disagreement, or promise: characters need not interpret th
 
 An agreed eight-hour wait can cross the time when rain starts. A timed curse can produce guidance when due. A routine can have an explicit schedule and tracked identity. Author the durations, calendar, policy, and guidance; Lattice does not infer reliable elapsed time from every reply.
 
-The [combined example](combined-system-example.md) connects a wand, an eight-hour rain crossing, and private relationship state in one Main. Its supplied wand library has one fixed effect; it is a compact composition example, separate from lesson 27’s weighted wild branch.
+The [combined example](combined-system-example.md) connects a wand, an eight-hour rain crossing, and private relationship state in one workflow. Its supplied wand library has one fixed effect; it demonstrates combining systems, separately from lesson 27’s weighted wild branch.
 
 ![Wand, weather, and relationship systems composed into one Main workflow](images/beta-overview.png)
 
@@ -69,7 +69,7 @@ The [combined example](combined-system-example.md) connects a wand, an eight-hou
 
 [Lesson 16](../examples/remastered/16-consult-the-current-campaign-notebook.lattice.json) reads an authorized notebook into the story process. [Lesson 17](../examples/remastered/17-record-only-the-scene-you-accept.lattice.json) proposes a scene record and saves it with the accepted reply. Discarded drafts stay out of campaign history.
 
-Use it for established clues, summaries, or commitments, with an authored structure and identity rules. Read File and Write to File use scoped Workflow Data targets, rather than arbitrary computer paths. Saves and reply publication have separate receipts; check failed or unconfirmed saves in Preview.
+Use it for established clues, summaries, or commitments, with an authored structure and identity rules. Read File and Write to File use scoped Workflow Data targets stored with the chat. Saves and reply publication have separate receipts; check failed or unconfirmed saves in Preview.
 
 ## A narrator with an editorial team
 

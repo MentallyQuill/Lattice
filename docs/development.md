@@ -1,8 +1,10 @@
 # LATTICE development guide
 
-[Documentation](README.md) · [Operator's manual](operators-manual.md)
+[Documentation](README.md) · [Architecture and source reuse](developer-guide.md) · [Operator's manual](operators-manual.md)
 
 The installed extension uses the committed self-contained UI bundle in `dist/lattice-ui.js`. Users do not need Node.js, npm dependencies, or a CDN connection to load it. Development uses Node.js 24 or later and the pinned lockfile.
+
+Use this guide to build the extension, choose checks, and contribute a change. For adapting parts into another application, start with the [developer guide](developer-guide.md#reuse-the-source) and its runnable examples. The package is private; source imports do not imply a published SDK or a stable versioned API.
 
 ## Build and check
 
@@ -14,14 +16,28 @@ npm run check
 
 `check` runs the Node behavior suite, Svelte type checks, production build, asset import checks, and browser acceptance tests. Commit regenerated `dist/lattice-ui.js` with UI source changes. Documentation-only edits do not require rebuilding the bundle.
 
+Use the complete check before submitting product changes. During development, run the relevant behavior file directly, or use `node --test` for files that use Node's test runner. For example, these cover the source-reuse examples' contracts:
+
+```powershell
+node tests/workflow-compose.test.mjs
+node --test tests/introspection-contracts.test.mjs tests/introspection-memory.test.mjs tests/introspection-nodes.test.mjs
+node tests/introspection-types.test.mjs
+```
+
+`npm run test` discovers the repository's unit files through [tools/test-all.mjs](../tools/test-all.mjs). `npm run check:types` checks Svelte and TypeScript consumers, and `npm run test:browser` exercises the actual built UI with the mock host. Browser tests require installed Playwright Chromium. Tests and capture fixtures use synthetic story data; they are not live-provider validation.
+
 | Location | Responsibility |
 | --- | --- |
 | `ui/*.svelte` | Workbench, nodes, shelf, Details, Preview, and manager presentation |
 | `src/ui/` | Host orchestration, editor projections, scoped editing, navigation, and presentation state |
+| `src/ui/graph-view-session.js`, `src/ui/workspace-preparation.js` | Captured editor scopes and prepared display contracts |
 | `src/ui/native-search-catalog.js` | Canonical family node choices, search aliases, and checked pin-aware creation |
 | `src/canvas.js`, `src/canvas/` | Graph gestures, camera, selection, geometry, cards, and connections |
 | `src/workflow/catalog.js` | Registered operations, controls, phases, and artifact contracts |
 | `src/workflow/operations/` | Operation implementations and deterministic primitives |
+| `src/workflow/introspection/` | Versioned actor records, pure proposals, injected inference and scoped memory |
+| `src/workflow/graph-validation.js`, `src/workflow/resolve.js` | Checked local/expanded graphs and addressed run planning |
+| `src/workflow/host.js`, `src/run.js` | Trusted native generation, source capture, review, and effect authority |
 | `src/workflow/starters.js` | The single zero-auxiliary-call unified starter |
 | `src/workflow/examples.js`, `src/workflow/remastered-example-data.js`, `src/workflow/unified-example-data.js` | Validated curriculum/earlier unified recipes and independent-copy opening |
 | `src/ui/example-catalog.js`, `ui/ExamplesBrowser.svelte` | Actual-package thumbnail projection and compact example picker |
@@ -30,6 +46,25 @@ npm run check
 | `examples/remastered/`, `examples/unified/` | Thirty visible curriculum lessons and earlier independent unified packages |
 | `workflows/subgraphs/`, `examples/library/subgraphs/` | Retained stage-specific reusable processing packages |
 | `tests/browser/` | Mock host and production UI acceptance fixtures |
+
+## Contribute a change
+
+Choose the owning layer before editing. A new control or node must agree across the engine, operation descriptor, named ports, Details, search, node guide, and saved-data validation. A change to host effects must also preserve scope, source revision, cancellation, preview, replay, and persistence checks. The [architecture](developer-guide.md#architecture) and [add-a-node checklist](developer-guide.md#add-a-node) show the relevant files.
+
+Keep user-authored documents and pinned subgraph revisions readable. Test an existing saved configuration as well as the new default when changing modes, controls, or ports. Keep display DTOs separate from private edit/host handles, and keep secrets and authenticated transports outside portable JSON and diagnostics.
+
+Use focused regression checks while working, then the full product check. Explain the behavior changed, why it matters to the author, and what was verified. If a source-reuse contract changes, update its `.d.ts`, consumer fixtures, and documentation together. Documentation changes should pass:
+
+```powershell
+node docs/developer-examples/compose.mjs
+node docs/developer-examples/state-and-memory.mjs
+node docs/developer-examples/introspection.mjs
+node tools/check-documentation.mjs
+```
+
+Read [LICENSE](../LICENSE) when copying or distributing the technology and preserve its copyright and permission notice.
+
+## Releases and example generation
 
 Use `node tools/bump-version.mjs <version>` for release metadata and versioned import queries, then rebuild. Hard reload SillyTavern after updating installed assets so its modules load together.
 
@@ -61,7 +96,7 @@ node tools/check-documentation.mjs
 
 The reference-still script uses the installed Playwright Chromium browser and a temporary local server on port 4186. It captures the current production UI into `docs/images/`; it does not build the bundle or download a browser. Make sure the port is free and the committed bundle matches the UI you intend to document.
 
-The beta script also needs FFmpeg on PATH. It records the beta overview, systems, example details, profile picker, node help, clock/data setup, validation, and five actual-gesture GIFs. Its screenshots go to `docs/images/`; source frames and checks go to ignored `benchmark-results/beta-media/`. Use `--only=shelf`, `--only=connect`, `--only=subgraph`, `--only=preview`, `--only=comments`, or `--only=screenshots` for a single take. See [documentation media](media.md) for the inventory and capture conventions.
+The second capture script also needs FFmpeg on PATH. It records the workflow overview, systems, example details, profile picker, node help, clock/data setup, validation, focused manual controls, and five gesture walkthroughs. Its screenshots go to `docs/images/`; source frames and checks go to ignored `benchmark-results/beta-media/`. Use `--only=manual`, `--only=shelf`, `--only=connect`, `--only=subgraph`, `--only=preview`, `--only=comments`, or `--only=screenshots` for a single take. See [documentation media](media.md) for the inventory and capture conventions.
 
 The fixtures supply synthetic writing material, saved workflow data, layout positions, and the supplied Literal cleanup subgraph. Captures use actual navigation, settings panels, Run to here diagnostics, and native review controls. Completed examples must succeed with zero auxiliary model calls. All nonlocal requests and mutating HTTP requests are blocked; any page error or blocked request fails the capture. The script closes its browser and server afterward.
 

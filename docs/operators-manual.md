@@ -1,12 +1,19 @@
 # LATTICE operator's manual
 
-[Documentation](README.md) · [Unified workflows](unified-workflows.md) · [Quick start](lattice-workspace.md) · [Node reference](node-reference.md) · [Model setup and troubleshooting](native-workflows.md)
+[Documentation](README.md) · [Quick start](lattice-workspace.md) · [Story systems](story-systems.md) · [Node reference](node-reference.md) · [Model setup](native-workflows.md)
 
-Lattice is a visual story workshop inside SillyTavern. This manual takes you from your first reviewed reply to building, inspecting, and reusing your own story systems. For concrete ideas—weighted wand effects, slow relationships, private perspectives, and story-time schedules—see [Story systems](story-systems.md).
+Lattice lets you arrange small tools around a SillyTavern reply. You can give the next scene a direction, polish the narration, remember an event, or keep a story notebook. Start with the first few sections; the later sections explain how to build and reuse more involved systems.
 
-A **node** performs one operation. A **wire** carries a typed result between nodes. A **workflow** connects the whole process around a SillyTavern reply. A **subgraph** packages a process behind named inputs and outputs so you can use it as one block.
+This manual assumes SillyTavern is already installed and you can send a normal message. It follows the 0.27.0 beta interface. The illustrations show the real editor with demonstration story material; the connection names shown are examples.
 
-This manual follows the **0.27.0 beta** interface. Screenshots and GIFs show the actual production editor with synthetic story material on a local demonstration host. Recorded diagnostic runs make zero auxiliary model calls; displayed model profiles are illustrative. Story workflows that use models need your real connections configured.
+## Install Lattice
+
+1. In SillyTavern, open **Extensions → Install extension**.
+2. Enter `https://github.com/MentallyQuill/Lattice`. Leave the branch field blank to install `main`.
+3. Finish installation and reload SillyTavern.
+4. Click the **Lattice logo beside the chat bar**, or type `/lattice`.
+
+A fresh installation opens **Unified story workflow** with Lattice disabled. You can look around and edit it before enabling it. Update Lattice through SillyTavern's **Manage Extensions**, then reload.
 
 ## Contents
 
@@ -18,248 +25,567 @@ This manual follows the **0.27.0 beta** interface. Screenshots and GIFs show the
 - [Configure operations in Details](#configure-operations-in-details)
 - [Run and inspect results](#run-and-inspect-results)
 - [Review a proposed reply edit](#review-a-proposed-reply-edit)
-- [Reuse a process with subgraphs](#reuse-a-process-with-subgraphs)
-- [Organize connections with portals and reroutes](#organize-connections-with-portals-and-reroutes)
 - [Save, import, and share](#save-import-and-share)
 - [Develop your own writing system](#develop-your-own-writing-system)
+- [Reuse a process with subgraphs](#reuse-a-process-with-subgraphs)
+- [Organize connections with portals and reroutes](#organize-connections-with-portals-and-reroutes)
 - [Troubleshoot a workflow](#troubleshoot-a-workflow)
 - [Keyboard and connection reference](#keyboard-and-connection-reference)
 
 ## Orient yourself
 
-![LATTICE workspace showing a structured guidance workflow, recorded output, node shelf, and selected Compose settings](images/workspace-overview.png)
+A **node** is one of the boxes on the canvas. Each does a particular job. A **wire** carries a result from one box to the next. The connected process is your **workflow**. Lattice calls the whole canvas a **graph** in its menus.
 
-*Structured composition after a successful Run to here. The selected Compose receives Data and emits Guidance; the preview displays the recorded artifact.*
+![The Lattice workspace with its menus, Preview, graph, node shelf, and Details panel](images/workspace-overview.png)
 
-| Area | Use it for |
+*Select a box in the graph to configure it in Details on the right. After a run, Preview above the graph shows what that box produced.*
+
+| Area | What you do there |
 | --- | --- |
-| Menu bar | File operations, editing, graph navigation, node discovery, memory recall, and tools |
-| Workflow bar | Open document name and status, undo/redo, Stop while busy, Details, and Enable Lattice |
-| Preview above the graph | Inspect a recorded output and its artifact tabs; pin it or follow selection |
-| Graph tabs | Switch between Main (the root workflow) and opened subgraph bodies |
-| Graph editor | Arrange nodes and connect typed input/output pins |
-| Floating node shelf | Open a family and choose a node directly |
-| Details on the right | Configure the selected node, its presentation, and any model binding |
-| Run meter at bottom left | Open execution details and expanded subgraph stages |
+| Menu bar | Open and save workflows, edit the graph, find tools, and change the view. |
+| Workflow bar | Check the document name and saved status, undo/redo, open Details, stop work, and enable Lattice. |
+| Preview | Read results from a run and review the final reply. |
+| Graph tabs | Switch between Main and the inside of a reusable system. Main is the whole workflow. |
+| Canvas | Move nodes and connect their input and output pins. |
+| Node shelf | Browse tools by family or find a saved subgraph. |
+| Details | Change the selected node's settings and open its **?** guide. |
+| Run meter, bottom left | See progress and open a report of what ran. |
 
-The workflow bar reports the open document’s name, modified/saved status and request bound. Opening or editing a document does not change **Enable Lattice** or make a provider request. Send uses the open root document when Lattice is enabled.
+The menus group the main actions:
 
-Use **View → Theme and colours…** to choose Ember, Lattice, Ash, Graphite, Slate, Obsidian, Harbor or Signal, or customize the selected theme. Ember follows SillyTavern's panel, text, controls and quote accent. Harbor uses blue and amber; Signal uses high contrast grayscale. Both add pin shapes and wire patterns, with a visible type-cue legend in the picker.
+| Menu | Main actions |
+| --- | --- |
+| File | New, Open, examples, recovery, Save, import, export, and Close workspace. |
+| Edit | Undo, redo, copy, cut, paste, duplicate, delete, and selection. |
+| View | Show/hide panels, follow or pin Preview, fit the graph, and choose a theme. |
+| Graph | Add nodes, rename, group, make subgraphs, add comments, and manage portals. |
+| Workflow | Enable Lattice, validate, review the result, inspect a run, add systems, and manage Workflow Data or recall. |
+| Help | Workspace guide, node reference, shortcuts, and version. |
 
-**Enable Lattice** enables host integration for the open unified document. A unified workflow starts through ordinary SillyTavern **Send**, prepares guidance, and resumes from its owned completed reply. Supported **Run to here** paths preview dependencies without accepting effects; a full unified graph containing Generate Reply requires that owned native generation. Reviewed reply editing needs an explicit Apply action.
+**Enable Lattice** makes the open workflow participate when you use SillyTavern's normal **Send**. Opening or saving a workflow does not switch this setting. Opening a different workflow changes which document Send will use, so check the name in the workflow bar before sending.
 
-**Unified** keeps Preparation and Response stages in one graph around a single **Generate Reply · SillyTavern** boundary. Open the desired unified document, select **Enable Lattice**, then Send normally. Inspect **Review / Publish · Host result** in Preview and Apply to add a new swipe preserving the original and accept its staged effects. Opening a workflow makes it the active document without changing **Enable Lattice**.
+The usual process is:
 
-Executable roots are unified. Retained shared tools have Preparation/Response stage requirements, and their intermediate outputs remain diagnostics. Text transformations can run in either stage; reply-specific sources and outputs still require their matching host context. The [unified guide](unified-workflows.md#apply-an-example-to-story-2) gives the actual Story-2/default-user setup.
+**Send → prepare guidance → SillyTavern writes a reply → process the reply → review.**
+
+**Preparation** means work before **Generate Reply · SillyTavern**. **Response** means work after it. A unified workflow keeps both in one canvas. Your normal SillyTavern connection still writes the main reply.
 
 ## Your first Send and review
 
-Install from the [repository instructions](../README.md#install-and-try-it), reload SillyTavern, then open Lattice with its chat-bar logo or `/lattice`.
+The fresh **Unified story workflow** contains only three nodes. It makes **no extra model calls** beyond your usual SillyTavern reply.
 
-1. Keep the fresh **Unified story workflow** open. Its three nodes are On Send, Generate Reply, and Review / Publish.
-2. Select **Enable Lattice**. Confirm the selected character and chat are the story you want to use.
-3. Send a player message in SillyTavern normally. Lattice follows the owned generation and records the completed result.
-4. Select **Review / Publish**. Its **Host result** appears in Preview. With several available targets, choose the intended output; with one, the title identifies it directly.
-5. Inspect the recorded reply, then choose **Apply reviewed reply** or **Reject reply**. Apply creates a new swipe preserving the original. The starter has no auxiliary model requests.
+![On Send, Generate Reply, and Review / Publish in the starter workflow](images/unified-starter.png)
 
-![The unified starter showing On Send, Generate Reply, and Review / Publish](images/unified-starter.png)
+*On Send starts the process. Generate Reply uses your normal SillyTavern generation. Review / Publish gives you the final result to inspect.*
 
-*The smallest complete workflow. Add preparation and response processing around this lifecycle.*
+1. Select a practice chat and character in SillyTavern.
+2. Keep **Unified story workflow** open and select **Enable Lattice**.
+3. Send a player message in SillyTavern as usual. Wait for the reply and Lattice processing to finish.
+4. Select **Review / Publish**. In Preview, open its **Host result**. If there is more than one output, choose the intended one.
+5. Read the result. Choose **Apply reviewed reply** to accept it, or **Reject reply** to decline Lattice's proposed result.
 
-Opening or editing a workflow does not turn integration on or start a request. A complete unified generation begins with ordinary Send; Run to here is for supported diagnostic paths. Keep the active document open while using its integration.
+Apply adds the reviewed reply as a **new swipe**, preserving the original SillyTavern reply. Reject does not remove the original reply that SillyTavern already generated. When you later add notebooks, clocks, or memory updates, Apply also accepts the changes attached to this reviewed result; Reject leaves those proposals unaccepted.
 
-| Menu | What you will find there |
+These actions have different purposes:
+
+| Action | What happens |
 | --- | --- |
-| File | New, Open, examples, recovery, Save/Save As, import, export, and closing the workspace |
-| Edit | Undo/redo, clipboard, duplication, deletion, and selection |
-| View | Details, Preview, shelf visibility, camera controls, reset layout, and themes |
-| Graph | Add node, selection Details, groups, subgraphs, comments, and portals |
-| Workflow | Add system, enable integration, validation, review, run details, Workflow Data, and memory recall |
-| Help | Workspace guide, node reference, keyboard shortcuts, and version information |
+| **Send** in SillyTavern | Starts the complete enabled workflow around a normal reply. |
+| **Run to here** | Tests a supported part of the graph and records its output. Model nodes on that path can make extra calls. It does not publish a reply or accept story changes. |
+| **Apply reviewed reply** | Accepts the current reviewed reply and its attached proposals. |
+| **Reject reply** | Declines the reviewed result and the pending changes that wait for its acceptance. |
+| **Stop** | Cancels active work. An answer arriving after cancellation cannot resume that run. |
+| **Save workflow / Save As…** | Saves your workflow design. It does not run it or accept a story result. |
+
+If you disable Lattice, normal SillyTavern Send continues without this workflow. Closing the workspace retains the current draft and view; use **Enable Lattice** to control integration.
 
 ## Start from a working example
 
-1. Open the LATTICE logo on the left of the chat bar or type `/lattice`.
-2. Choose **File → Open examples…**, immediately below **Open workflow…**.
-3. Choose **12 · Plan, write, polish, and annotate one reply**. The picker closes and its independent, editable copy becomes the current workflow.
-4. Configure Revise Draft, Extract and Enrich in Details. Keep the document open, select **Enable Lattice**, and Send normally.
-5. Select recorded nodes to inspect guidance, the owned Draft, revision and notes before applying Review / Publish.
+Examples are editable lessons. Begin with **1 · Follow a reply from Send to Review** if you want to repeat the starter walkthrough. Then try **2 · Give this scene one clear direction**.
 
-![Thirty-lesson examples browser with goal search and difficulty filters](images/examples-curriculum.png)
+1. Choose **File → Open examples…**.
+2. Search for a story goal or filter by difficulty.
+3. Open the lesson's details. Read its setup, steps, checkpoints, and model-call budget.
+4. Open the lesson. Lattice makes a fresh copy for you to edit.
 
-*Choose a lesson to inspect its setup, checkpoints and call budget, then open its independent unified workflow.*
+![The examples browser with goal search and difficulty filters](images/examples-curriculum.png)
 
-![Lesson details showing its goal, setup, steps, checkpoints, and model-call budget](images/example-lesson.png)
+*Choose a beginner lesson or search for the story job you want to try. Each opening gives you a new independent copy.*
 
-*Read Lesson details before opening an advanced graph. Start with lesson 1 for the lifecycle, lesson 2 for scene direction, or choose a story goal you recognize.*
+![A lesson's goal, setup, steps, checkpoints, and call budget](images/example-lesson.png)
 
-The picker contains [30 numbered unified lessons](examples.md), with goal/technique search, difficulty filters and lesson details. Opening a tile creates a fresh copy every time. Each lesson keeps its preparation and response in one workflow. The copy replaces the active document after guarding modified work. Opening makes no provider request and preserves the **Enable Lattice** setting; earlier unified documents can be recovered through the File menu.
+*Check the requirements before opening. Extra model calls are separate from the normal SillyTavern reply.*
 
-New ordinary text-model nodes select **Active SillyTavern model**, which follows your configured host connection and model. Inspect an ordinary model node’s grey profile bar or **Details → Connection profile**; choose a saved profile when that node needs a fixed connection. The connection’s model is the default; a node model override is optional. Imported unified recipes can have unassigned local connections, including For Each helper roles, so follow their setup instructions. Configure the open unified example before enabling Lattice and using Send. Run to here inspects supported outputs without acceptance. Pending Node Details text, model override mode/value, and boundary drafts survive browsing and returning to their qualified node; invalid JSON still requires correction before Save.
+Opening a lesson replaces the open document after offering to save modified work. It does not run the example or change **Enable Lattice**. The [30-lesson guide](examples.md) lists later topics, including notes, memories, clocks, item effects, and relationships.
 
-The [quick start](lattice-workspace.md) walks through the zero-auxiliary-call unified starter and diagnostic authoring. Choose a saved profile in each model node when it needs a fixed connection.
+### Try lesson 2: give the next scene a direction
 
-There are three useful scales of work:
+Lesson 2 needs no additional model connection. Its **Text** node contains words you write yourself, and **Compose** turns them into **Guidance** for Generate Reply.
 
-| Scale | Example |
-| --- | --- |
-| Operation | Select Fields chooses the structured values a later stage needs |
-| Workflow | JSON source → JSON Decode → Select Fields → Compose → Guidance |
-| Reusable process | A Literal cleanup subgraph accepts Draft and returns Patches for its parent to review |
+1. Open lesson 2 and select **Text · scene direction**.
+2. In Details, replace its text with: “Describe the dark lighthouse and one sound from the water. Leave my next action to me.” Move focus out of the field to commit the edit.
+3. Follow the wire from Text to Compose, then from Compose to Generate Reply's Guidance input.
+4. Right-click Compose and choose **Run to here** for its output. Read Preview: it should contain your lighthouse instruction. This prepares advice without generating a chat reply.
+5. With Lattice enabled, Send “I arrive at North Harbor.” in SillyTavern.
+6. Inspect the finished reply at **Review / Publish**, then Apply or Reject.
+
+Try changing the direction to wind and distant bells, and run Compose again. The next Send uses the new instruction. A previous result becomes **Stale** when you change the instruction, because it was produced from the old wording.
+
+### Learn any tool from its question-mark button
+
+You do not need to memorize the node library. Select a node and click **? beside its name in Details**. Its guide explains the job, connections, settings/options, and a worked example.
+
+![The question-mark help button beside a selected node's name in Details](images/node-help-button.png)
+
+*This is the first place to look when a setting or pin is unfamiliar.*
+
+Expand **Example** in the guide. You can explore the small graph, then choose **Add example to current tab** to insert it into the graph you are editing. Check its connections and setup before running it; one Undo removes the insertion. The [node reference](node-reference.md) is available for precise formats and a complete list of tools.
 
 ## Discover and connect nodes
 
-The shelf groups tools into **Input, Shaping, Surface, Transpose, Derive, Introspection, Output, and Subgraphs**. Hover or click a family to see its nodes directly, then choose a node to add it. Transpose contains Style Transfer, Format Transfer and Terminology Map.
+The node shelf groups tools into **Input, Shaping, Surface, Transpose, Derive, Introspection, Output, and Subgraphs**. Click or hover over a family to see its tools, then choose one.
 
-![The Derive family menu showing JSON Decode directly alongside a connected structured guidance graph](images/node-shelf.png)
+![The Derive family menu with its available operations](images/node-shelf.png)
 
-*Each family opens one node menu with operation names, icons and short codes. Phase-incompatible choices are disabled.*
+*Browse a family when you know the kind of job. Disabled choices cannot be used in the current location or stage.*
 
 ### Search and drag from the shelf
 
-Choose **Graph → Add node…**, type a name such as **Text Rules**, then drag its result onto empty canvas space. A floating label follows the pointer; releasing creates the node at the drop position. Escape or releasing outside the canvas cancels the placement.
+Choose **Graph → Add node…**, double-click empty canvas, or right-click empty canvas to search. Search understands names, purposes, and aliases as well as installed subgraphs. Type **Text Rules**, for example, and drag the result to an empty place on the canvas.
 
-![Search the shelf and drag Text Rules onto the canvas](images/search-and-place.gif)
+![Searching for Text Rules, dropping it on the canvas, and completing its configuration](images/search-and-place.gif)
 
-![Text Rules being dragged from shelf search with its floating placement label](images/shelf-drag.png)
+*Drop chooses the position. When Configure node opens, check its settings and click Create node to finish.*
 
-*Search uses the same canonical choices as the family menus.*
+![A Text Rules search result with its floating placement label](images/shelf-drag.png)
 
-There is one entry per operation. Add **Reflect** once and choose Character, Recall or Scene in **Details → Mode**; add **JSON Decode** once and choose Parse or Check. Reroute's artifact kind and other operation variants also live in Details. The six Introspection nodes provide eighteen modes without eighteen shelf entries. The Subgraphs shelf lists the latest explicitly saved entry for each reusable tool; placed copies keep their saved contents.
+*The floating label shows what you are about to add. Escape or releasing outside the canvas cancels placement.*
 
-Choose **Graph → Add node…**, double-click empty graph space, or right-click empty graph space to search. Search includes node names, purposes, aliases, and installed subgraphs. Click outside the search panel or press Escape to close it.
+Some tools are ready to add directly; others need required settings first. For Text Rules, dropping opens **Configure Text Rules**. The node is not added until you choose **Create node**. Cancel keeps the graph unchanged. The same settings remain available in Details after creation.
 
-![Contextual node search over the graph editor with a search field and available node choices](images/node-search.png)
+![Configure Text Rules dialog before creating the node](images/node-creation.png)
 
-*Search lets you choose a specific operation without opening each family. Pin-origin searches can restrict choices to compatible artifacts.*
+*Choose the input and rule options, then Create node. Read the guide later from the selected node's ? button.*
 
-To make a connection, drag an **output pin on the right** onto a compatible **input pin on the left**. Alternatively, drag from a pin into empty graph space to create a connected node. Keep **Context sensitive** enabled to narrow the choices. If the new node has several compatible pins, select the intended pin.
+![Node search opened over the canvas](images/node-search.png)
 
-![Connecting Text and Data outputs with real pin-to-pin mouse gestures](images/connect-nodes.gif)
+*Click outside the chooser or press Escape to close it.*
 
-![Scene source connected to JSON Decode and Select Fields](images/connecting-nodes.png)
+A tool may have several modes in Details instead of several shelf entries. For example, **Reflect** offers Character, Recall, and Scene modes; **JSON Decode** offers Parse and Check. Open **?** to learn the selected mode before configuring it.
 
-*Drag right-side output pins onto compatible left-side input pins. The example converts JSON Text into Data, then selects the useful fields.*
+### Connect outputs to inputs
 
-| Artifact | How to think about it |
+Pins are the small connection points on a card. Drag an **output on the right** onto a compatible **input on the left**. A result may feed several nodes, but each input accepts one connection.
+
+![Connecting output and input pins with mouse gestures](images/connect-nodes.gif)
+
+*Drag from the result you have to the input that needs it.*
+
+![A source connected through JSON Decode to Select Fields](images/connecting-nodes.png)
+
+*JSON written as Text must pass through JSON Decode before Select Fields can use it as Data.*
+
+You can also drag a pin into empty space to search for a new connected node. Leave **Context sensitive** enabled to show suitable choices. If the new node has several compatible pins, choose the input you intend to use.
+
+Pins carry particular kinds of material. Lattice uses the term **artifact** for a result with its type and supporting information.
+
+| Type | Practical meaning |
 | --- | --- |
-| Context | Bounded story material with source identities |
-| Text | Plain written content |
-| Data | Structured values such as JSON fields, events, or state |
-| Guidance | Instructions intended to influence generation, with scope/currentness checks |
-| Draft | A reply tied to its source; suitable for revision |
-| Patches | Proposed changes to a source-bound Draft |
-| Candidate | A validated proposed result for diagnostic review |
+| **Context** | A set of story messages or other context with their source information. |
+| **Text** | Written words, such as an instruction, template, or note. |
+| **Data** | Structured values: fields, lists, records, events, or state. |
+| **Guidance** | Advice prepared for generation, with checks on its source and intended character. |
+| **Draft** | A reply linked to the original message, so permitted edits can be reviewed. |
+| **Findings** | Issues or observations from an inspection. |
+| **Patches** | Proposed edits to a particular Draft. |
+| **Candidate** | A checked proposed revision for inspection. Final publication still happens at Review / Publish. |
 
-Typed pins prevent accidental mismatches. A Text source containing JSON still needs JSON Decode before a Data consumer.
-
-Each input accepts one binding; an output can feed several consumers. Colors and labels identify artifact kinds, and validation rejects incompatible connections. A Draft carries source identity for a revision; Text and Data serve different purposes. Use JSON Decode to convert JSON Text to Data, and Compose to turn selected Data into a brief.
-
-In Harbor and Signal, **Context** is a filled circle, **Text** a ring, **Data** a square, **Guidance** a diamond, **Draft** a pentagon, **Findings** a triangle, **Patches** a hexagon and **Candidate** a plus. Text wires are solid, Data wires dashed and Guidance wires dotted; the other types use distinct patterns. Pin labels and wire type labels remain available, and example thumbnails use these same cues. Signal's matching selection, warning and error colors are intentional; custom text and background colors still receive contrast warnings.
+Colors, shapes, labels, and wire patterns help identify these types. Hover or select a wire to highlight both ends and see its type. A mismatch cannot be fixed just by giving a pin a similar name; use a conversion tool when the material genuinely needs conversion.
 
 ### Branch and rejoin material
 
-![Two Scene Context branches feeding a Context Join, followed by Response Plan and Guidance](images/context-assembly.png)
+One output can feed separate paths. In a context workflow, one path might preserve recent messages while another selects broader background. **Context Join** combines them in the order of its declared input rows and reports duplicate or conflicting source material.
 
-*An authored Context assembly graph. One branch selects broader context, another provides recent messages, and Context Join combines them before planning.*
+![Two context branches joining before a scene plan](images/context-assembly.png)
 
-Connections define dependency order; card positions are your visual organization. Context Join consumes its declared input slots in order, deduplicates identical source identities, and reports conflicts or reintroduced material. In this screenshot, the Response Plan has no Analysis binding yet, so its model-backed output is unavailable. The selected Context Join's **Run to here** has a zero-call bound.
+*Follow each incoming wire to see what it contributes. Left-to-right placement is for readability; wires decide which steps depend on which.*
+
+For a yes/no story choice, use Branch and Join as explained under [decisions](#decisions-branches-and-unresolved-answers). A skipped alternative is different from an unanswered question.
 
 ## Navigate and edit the graph
 
-Drag a card by its body to move it. Drag a rectangle on empty space to select intersecting cards, then move the selected set together. Middle-drag or Space + left-drag pans, including over cards. Wheel zoom stays anchored under the pointer. With the graph or a Node Guide example focused, press **[** to zoom out and **]** to zoom in around the camera's center. Brackets are ignored while typing or dragging.
+Drag a node's body to move it. Drag a rectangle in empty space to select nodes, then move the set together. **Shift-click** adds a node; **Ctrl/Cmd-click** toggles it; **Alt-click** removes it from the selection.
 
-Below 50% zoom, cards use an overview mode that hides small labels and extra controls and reduces shadows. Full detail returns at 60% zoom. Hover over a card, select it, or use Tab to focus it to reveal its details at any zoom. Card sizes and wire endpoints stay fixed; titles, ports, selection and execution indicators remain visible.
+Pan with **middle-drag** or **Space + left-drag**, including over nodes. The wheel zooms around the pointer. **[** and **]** zoom around the center of the focused graph. When zoomed far out, cards hide small controls to make the overall process easier to see. Hover, select, or focus a card to reveal its details.
 
-Use **View → Fit graph** or **Fit selection** to recover your position. Press **F** to fit and center the selected item or the combined selection in one action; with nothing selected, it fits the graph. F is ignored while typing or dragging. **View → Center selection** centers without changing zoom. Select/Pan is in Graph; zoom commands are in View. Keyboard shortcuts are listed at the end of this manual.
+Press **F** to fit the selection on screen, or to fit the whole graph when nothing is selected. **View → Center selection** moves the view without changing zoom. **View → Reset panel layout** restores the panel arrangement if you lose track of it.
 
-Choose **File → Rename workflow…**, or right-click a graph or subgraph tab and choose **Rename**, to edit its name directly in the tab. Enter or leaving the field commits the name; Escape cancels. A blank name keeps the existing name.
+### Edit, rename, and organize
 
-Use **Details** to show or hide the right panel. Drag its left-edge handle to adjust its width. Drag the divider between Preview and the graph to resize them; both handles also respond to arrow keys. **Collapse preview** provides more graph space. Reopening Preview restores the selected output.
+Use **Edit** for copy, cut, paste, duplicate, delete, undo, and redo. These graph actions apply outside text fields; a text field keeps ordinary text-editing shortcuts. Deleting selected nodes or wires happens immediately, and Undo restores them.
 
-Edits participate in undo/redo. Text fields keep normal browser editing shortcuts. JSON and line-list editors retain drafts until their **Save …** action validates them; the recovery draft does not commit unfinished editor text.
+Select a wire and press Delete to disconnect it. **Alt-click** a pin disconnects its bindings. **Ctrl-drag** a connected input moves its connection to another compatible input; Ctrl-drag an output moves its consumers to another compatible output. A cancelled or invalid move keeps the existing connections.
+
+Right-click a node for its editing and output actions. **Rename** changes the display name, which is useful for names such as “Scene brief.” Details continues to identify the original tool type. **Compact card** reduces the card's displayed size while retaining its pins. These presentation edits do not change what the node does.
+
+![A node's right-click menu with Rename and Compact card](images/node-actions.png)
+
+*Use a descriptive name for this instance, and compact it when you need more room. Right-clicking a selected node keeps a multiselection together.*
+
+Use **Graph → Group selection** to keep related nodes together; **Ungroup selection** separates them. Groups can be folded on the canvas. They organize the view. A [subgraph](#reuse-a-process-with-subgraphs) goes further by packaging a process with named inputs and outputs.
+
+Choose **File → Rename workflow…** to rename the document. Right-click a graph or subgraph tab and choose **Rename** to edit its name in place. Enter or leaving the field commits; Escape cancels. A blank name keeps the previous name.
+
+### Arrange panels and change the theme
+
+Use **View → Show Details**, **Show preview**, and **Show node shelf** to choose which panels are visible. The toolbar's **Details** button also toggles the right panel. Drag the left edge of Details to change its width, or the divider above the canvas to resize Preview. Their resize handles also respond to arrow keys.
+
+Choose **View → Theme and colours…** to select Ember, Lattice, Ash, Graphite, Slate, Obsidian, Harbor, or Signal, and to customize colors. Ember follows SillyTavern's panel and text colors. Harbor uses blue and amber; Signal provides high contrast grayscale. The picker shows the type-cue legend, including pin shapes and wire patterns.
+
+![Theme and colours picker with its type-cue legend](images/themes.png)
+
+*Choose colors that make your graph easy to read. Theme changes affect appearance; they do not change connections or results.*
 
 ### Frame a section with a comment
 
-Select the nodes you want to label, focus the graph, then press **C**, or use **Graph → Comment selection**. Set **Title**, **Notes**, and **Color** in Details. A comment organizes the canvas without becoming an execution step. **Move contents** controls whether dragging the frame moves its contained nodes. Resize the frame or use **Fit to contents**; Undo restores edits.
+Select a set of nodes and press **C**, or choose **Graph → Comment selection**. With nothing selected, C creates an empty comment. Give the frame a **Title**, **Notes**, and **Color** in Details.
 
-![Selected nodes are framed and the comment receives a descriptive title](images/frame-a-workflow.gif)
+![Creating a comment frame around selected nodes](images/frame-a-workflow.gif)
 
-![A comment frame labeling the scene-brief processing section](images/workflow-comments.png)
+*Frame a section and name its purpose, such as “Prepare the scene brief.”*
 
-See [connections and comments](connection-comments.md) for group movement, frame sizing, and connection editing.
+![A comment frame with a descriptive title around its processing nodes](images/workflow-comments.png)
+
+*Comments explain your graph without becoming an execution step.*
+
+Drag the header grip to move a comment and its lower-right handle to resize it. **Move contents** decides whether dragging the frame also moves its enclosed nodes. **Fit to contents** resizes the frame around those nodes. Deleting a comment removes the frame and leaves the nodes. Select both frame and nodes if you want to copy them together. See [connections and comments](connection-comments.md) for the finer movement rules.
 
 ## Configure operations in Details
 
-Select a node to edit its name and settings. The header retains its type, family and phase; secondary controls, model bindings, and ports expand when needed. Editing **Node name** gives it a local display name; restore the canonical name to clear that alias. **Compact card** reduces its visual footprint while retaining real pins. Use the node's right-click menu or **Shift+C** with its graph card focused. Presentation changes do not change execution.
-
-Right-click a node for grouped editing, preview, organization, and presentation actions. **Rename** focuses its alias, **Compact card** toggles its presentation, and **Fit selection** frames the current selection. Right-clicking within a multiselection keeps that selection; right-clicking another item makes it the action target. Menu shortcuts appear beside their commands. Use Up/Down or Home/End to navigate, Enter to choose, Right/Left to enter or leave an output submenu, and Escape to dismiss the menu while keeping your selection.
-
-Recall and Recall Shortcut nodes have contextual **Queue recall** and **Cancel recall** actions, including counted actions for a selection. Matching nodes share one request per memory set. A green recall-with-clock badge shows a queued request; amber shows a reservation or a result awaiting acceptance. Click the badge to open **Details → Memory recall**, where you can inspect its policy and matching nodes. **Workflow → Memory recall** provides selected/all-node commands and the grouped overview, including from a subgraph tab. Queues are runtime state: Queue and Cancel do not edit the document, add Undo entries, or start a generation. Automatic Recall keeps its authored conditions.
-
-Operation controls follow the node's current mode. A disabled primitive retains its existing validation behavior. A subgraph wrapper instead offers **Run this system**: turning it off skips the whole system and its outputs. Optional consumers can omit those outputs; required inputs must retain legal connections. Duplicate and Delete remain in the secondary commands and right-click menu.
-
-Text Rules, selected fields, Compose sections, Context Join slots, State values and phase durations use row editors. **Edit JSON** exposes the same draft for precise or unsupported shapes. Pattern terms/CSV save canonical {id,pattern,label?} rule records; regex expression rows preserve their syntax. **Save …** validates the complete candidate; unfinished JSON remains a draft across node and graph switching. Inherited values are explained when they differ from the saved setting.
-
-Nodes with one Text output have a bottom modifier tray. **Trim** and **Wrap** toggle quickly; the add menu also offers **Whitespace**, literal **Replace**, and **Unwrap fence**. Modifiers apply in order after the node produces its Text, before every downstream consumer. Each can be disabled, removed or reordered; disabling retains its settings. Settings save explicitly and all edits support graph undo. Active counts remain visible on full and compact cards. Typed Draft, Context, Data and host outputs keep their dedicated nodes.
-
-After a run, Preview retains the modified output, raw source and modifier trace when recording limits permit. Changing modifiers can show a **Local modifier preview · recorded source** without another model request. This diagnostic uses the retained source and does not refresh the run or grant Apply authority; rerun the graph to update downstream outputs. Large or incomplete recordings cannot provide a local preview.
-
-Mode, input/output type and other controls may change a node's pins. An edit that would make an existing wire incompatible is rejected without changing the node or its connections. Disconnect or replace the affected wire, then change the setting.
-
-### Familiar node settings
-
-Use the same friendly settings during configured creation and in Details. Pattern's **Rules → Terms / CSV** accepts `Elara` directly and shows one parsed entry. Enter `1, 2, 3`, one term per line, or `["1", "2", "3"]` for three string terms. Quote a phrase containing commas: `"red, blue", green` produces two entries. Choose **Plain text** when a single term should include commas or JSON-looking characters. A malformed list keeps the draft and shows an error until corrected.
-
-Rows retain their generated IDs when you edit text or reorder them. Use **Advanced JSON** for explicit IDs or supported advanced fields. Regex expression rows preserve commas, braces and backslashes. CSV import is available only for declared lists/tables; it does not reinterpret prose, templates or paths. Table import requires column mappings and an explicit Add/Replace choice, shows the parsed rows, and saves through the ordinary graph transaction.
-
-Schema controls expose their supported fields; typed values expose string, number, boolean, null, object and array. Paths use separate key/index segments, so a key containing a dot or comma remains one key. Optional defaults distinguish absence from an explicit null, false, zero or empty string. Invalid drafts survive format switches and rejected saves. **Save …** validates the candidate and changed pins, while Cancel leaves the saved node unchanged. Configuration saves make no model requests or workflow runs.
+Select one node, then open Details. Its main controls explain the common settings; expandable sections hold additional options. Some nodes offer **Workflow stage** to choose Preparation or Response. Reply-editing operations need the Response stage because the reply does not exist yet during Preparation.
 
 ### Open a node guide
 
-Select a node, then click **?** beside its name in Details. The guide explains what it does, how to wire it, and what each setting means. Expand **Example** to inspect a small graph in the current theme. **Add example to current tab** inserts a compatible example with one Undo step; check its bindings and any required setup before running it.
+Click **? beside the node name**. Read the purpose and wiring advice, then the **settings/options** explanations. Expand **Example** to inspect a small working graph in the current theme.
 
-![Compose guide showing usage instructions and its expanded example graph](images/node-guide.png)
+![A node guide with its instructions and expanded example graph](images/node-guide.png)
+
+*Use Add example to current tab to try the guide's graph as one undoable edit. If the button is unavailable, read the reason below it. This example needs an empty tab or an unused Guidance input.*
+
+The guide is the complete explanation for each tool. This manual explains the editor and common patterns, so you can work without reading the whole [node reference](node-reference.md) first.
+
+### Familiar node settings
+
+Prefer the normal controls for everyday editing. Lists and tables let you add, remove, and reorder rows. Structured values have controls for text, numbers, true/false, lists, and objects. Where a control has **Save …**, use it to validate and commit the whole edit.
+
+For example, Pattern's **Rules → Terms / CSV** accepts:
+
+| Entry | Meaning |
+| --- | --- |
+| `Elara` | One term. |
+| `1, 2, 3` | Three string terms. |
+| One term on each line | A list of terms. |
+| `"red, blue", green` | The phrase “red, blue” and a separate “green” term. |
+| **Plain text** mode | One term, including any commas or JSON-looking characters you typed. |
+
+The editor shows the parsed result. Correct an error before saving. Regex expression rows keep their commas and backslashes; CSV does not reinterpret prose, templates, or file paths. Where table import is offered, map its columns, choose **Add rows** or **Replace rows**, inspect the rows, and Save.
+
+**Edit JSON / Advanced JSON** is available for precise structured shapes. JSON is a text format for objects and lists; you usually do not need to write it by hand. An invalid JSON edit remains a draft until corrected. Drafts survive browsing to another node and returning, but unfinished editor text is not a committed workflow edit and is not included in the recovery draft. Save each settings editor before saving the workflow file.
+
+Paths select fields inside structured Data. A path with separate key/index rows keeps a key containing a dot or comma as one key. A missing value is different from an explicit `null`, `false`, `0`, or empty string. Consult the node's **?** example for its expected structure.
+
+Some settings change a node's pins, such as Text versus Draft input. If that would break a connected wire, Lattice rejects the change and keeps the previous node and wires. Disconnect the affected wire, change the setting, then reconnect it correctly.
+
+### Add simple Text modifiers
+
+Nodes with one Text output have a modifier tray at the bottom. **Trim** removes outer whitespace; **Wrap** adds configured text around the result. The add menu also provides **Whitespace**, literal **Replace**, and **Unwrap fence**.
+
+![A Text output modifier tray with ordered modifiers](images/text-modifiers.png)
+
+*Modifiers run in order on the Text output before downstream nodes receive it. Reorder, disable, or remove them to change the result.*
+
+Save the modifier settings explicitly. Disabling a modifier keeps its settings. After a recorded run, Preview may show the raw source and modifier trace. A **Local modifier preview · recorded source** lets you inspect a new modifier using retained text without another model request. It does not rerun downstream nodes; run the path again to update their results. A large or incomplete recording may not support this preview.
+
+Draft, Context, Data, and host results use their dedicated operations instead of this Text tray.
+
+### Context and model controls
+
+Your normal SillyTavern connection writes **Generate Reply**. Additional model nodes can follow it or use different saved connections for different jobs.
+
+![A scene-planning graph with context preparation and a planner](images/scene-planning-graph.png)
+
+*Context preparation chooses what the planner can see. A model-backed planner is an extra call beyond the main SillyTavern reply.*
+
+Each ordinary model node has a grey connection bar below its card. Click it to choose:
+
+- **Active SillyTavern model** — follows the connection and model you have configured in SillyTavern. New ordinary model nodes use this option.
+- **A saved Connection profile** — fixes this node to one of your local saved profiles, useful for a separate planner or editor.
+
+![The searchable model connection picker](images/profile-picker.png)
+
+*Search by profile name, API label, or model. The profiles pictured are demonstration names; use your own working connections.*
+
+You can make the same choice in **Details → Connection profile**. The selected profile supplies its default model. Open **Advanced model settings → Model mode → Override** only when you need this node to use another model identifier supported by that connection.
+
+![Response Plan output and advanced model controls with a missing connection message](images/model-details.png)
+
+*“Choose a connection” means this node still needs a profile. Choose one on the canvas, then check its model settings here. Changing a node's profile does not switch SillyTavern's main connection.*
+
+An unavailable saved profile stays marked unavailable until you choose a replacement. Imported workflows may need their fixed profiles assigned locally. Exported workflows do not include your credentials or local saved-profile IDs; **Active SillyTavern model** remains portable.
+
+**For Each → Helper model bindings** needs a separate check: a reusable helper can contain several model jobs, each with its own binding. A helper with no model calls needs none. Explicit settings inside a nested helper can take precedence over an outer setting; Details reports the effective choice.
+
+Model operations have output limits, and context tools have input budgets. **Smart Compactor** can select context without a model, or use a model to compress it. Preserve recent messages and exact protected wording where the story needs them. **Response Plan** has its own instructions and output limit. Review the recorded material rather than assuming the model saw the whole chat.
+
+Keep the workflow open, resolve setup issues, then enable Lattice and Send. For provider errors or connection setup, see [model setup and troubleshooting](native-workflows.md).
+
+## Run and inspect results
+
+Use **Send** for the full enabled workflow. Use **Run to here** to test a supported output and the steps it depends on. The button states the maximum number of extra requests for that path. A maximum is a limit, not a promise that all of those requests will occur.
+
+A path containing the main Generate Reply step needs a real Send; Run to here does not manufacture a completed SillyTavern reply. If a preview cannot run in the current context, its disabled control explains why.
+
+While work is active, a node has a bright ring and **Stop** is available in the workflow bar or Workflow menu. A failed node has a red ring; later nodes may be blocked because their input did not succeed. Click the bottom-left run meter or choose **Workflow → Run details…** to inspect the steps, errors, and actual request usage. Subgraph stages can be expanded there.
+
+![Run details showing completed steps and actual request usage](images/run-details.png)
+
+*Check what actually ran. This recorded path made zero extra requests.*
+
+### Read Preview
+
+Select a node to see its recorded output. If it has one output, the title identifies it directly; if it has several, choose the one you want. The result tabs show the retained parts of that output, such as its input, output, report, or Host result.
+
+**Readable** is the default. It shows the useful content in a form you can read:
+
+| Material | What to look for |
+| --- | --- |
+| Text or Guidance | The exact retained words. Check instructions, omissions, and length. |
+| Context | Ordered messages with visible boundaries and source/role labels. |
+| Draft or Candidate | The proposed reply wording. A retained Captured context section can be expanded separately. |
+| Data | Structured fields or JSON. Check values and whether something is missing. |
+| Pattern / Filter reports | Match counts, occurrences, selected lines/paragraphs, and any blocked changes. |
+| Host result | The final review, proposed changes, and acceptance/save receipts. |
+
+Choose **Source** to see the retained result record, including its metadata and wrapper fields. This is useful when you need an exact field or diagnostic detail. It shows what was recorded for that run, not a fresh read of the chat.
+
+![Readable and Source controls in Preview](images/preview-modes.png)
+
+*Readable is for reading the result. Source is for inspecting its recorded structure. Switching modes makes no request.*
+
+**Copy text**, **Copy message**, and **Copy source** copy the corresponding retained material. If a large recording was shortened or omitted, Preview says so. **Copy partial source** may contain an incomplete JSON fragment. Source view does not reveal omitted private material or recover context that was never retained.
+
+### Hold a result while inspecting another node
+
+Preview normally **follows selection**. Click **Pin output** to keep the current output visible while you select another node; click **Pinned output** again to resume following. The View menu offers the same controls.
+
+![Pinning one output while exploring other nodes](images/inspect-and-pin.gif)
+
+*Pin a result to compare it with another node's settings.*
+
+![Select Fields pinned in Preview while JSON Decode is selected](images/pinned-preview.png)
+
+*Details and Preview can deliberately show different nodes.*
+
+You can also select a node and press **T**, or use its **Target Node** context action, to target it in Preview. T on a different node moves the target; T on the target, or with no selection, clears it. A small icon marks the target. **Follow selection** clears targeting. Pinning and targeting change what you inspect; they do not run the workflow or freeze an old recording.
+
+![A recorded Guidance output with its status and Run to here control](images/guidance-preview.png)
+
+*Check the words before wiring them into Generate Reply. Current means the recording still matches the unchanged workflow.*
+
+Changing an operation setting, modifier, stage, or connection cancels active work and makes older results **Stale**. Camera movement, selection, aliases, compact cards, and graph-tab navigation do not. You may read a stale result, but you need a fresh run or Send before accepting a result based on changed settings.
+
+## Review a proposed reply edit
+
+Later workflows may revise the reply, append notes, or propose story-state changes. Review those together at **Review / Publish → Host result**.
+
+1. Send with the configured workflow enabled.
+2. Select Review / Publish, or choose **Workflow → Review host result**.
+3. Read the original and proposed reply, changes, findings, notes, and any staged story updates.
+4. Choose **Apply reviewed reply** or **Reject reply**.
+
+![The final reviewed reply with Apply and Reject controls](images/review-candidate.png)
+
+*Apply adds the reviewed version as a new swipe and accepts its attached changes. The original reply remains available.*
+
+Only the current result from the workflow's own Send can be applied. Running an intermediate patch tool or viewing a Candidate does not give it an Apply action. A reply must remain connected as a genuine **Draft** through to Review / Publish. Turning a plain Text string into a reply-looking shape cannot replace that source relationship.
+
+Changing the source swipe, chat, selected actor, story data, or workflow behavior can invalidate the result. Start a fresh Send when the inputs have changed. Preview and Run to here do not accept file, clock, outcome, or memory proposals. Reject and Stop do not settle pending changes that wait for acceptance either.
+
+### Check acceptance and saving separately
+
+An applied reply and a saved story update are separate results. Review's receipts tell you what was applied locally and which changes were confirmed saved. A notebook, clock, and outcome log can each have their own receipt; they are not one all-or-nothing disk save.
+
+If one target saved and another failed, read the partial result. Use a supported retry only where offered. Such a retry resumes unconfirmed saving without requesting the models again, adding another swipe, redrawing an outcome, or repeating already confirmed saves. A **save unconfirmed / unknown** result needs reconciliation before affected later writes; changing a transaction key to force a repeat can duplicate the event.
+
+See [reply review and save limits](native-workflows.md#review-a-reply-repair) for provider and host-save details.
+
+## Save, import, and share
+
+Save your workflow after useful changes. **Save settings** inside a node commits that editor; **Save workflow** writes the complete workflow design to a file. Apply accepts a story result. They serve different purposes.
+
+![File menu with open, save, import, export, and recovery actions](images/file-menu.png)
+
+*Use Save for your editable working document, and Export workflow JSON for a copy you want to share.*
+
+### Save a working document
+
+In a browser that supports direct file access, choose **File → Save workflow**. On the first save, choose a destination. **Save As…** chooses another destination. If a file changed outside Lattice, use Save As rather than overwriting those changes. A cancelled picker, denied permission, or failed write leaves the draft open and modified.
+
+Browsers without direct file access offer **Save As…** to download an editable JSON copy. Lattice cannot confirm that the browser completed the save, so the draft stays marked modified. Confirm the file in your browser's downloads. In a replacement prompt, Save As gives you the copy and keeps the current document open; repeat the opening action and choose **Don't Save** when you are ready to switch.
+
+An editable `lattice-document` retains local connection bindings, the full graph, saved subgraph contents, overrides, and supported workspace views. It excludes credentials and runtime recall queues.
+
+### Replace the open document deliberately
+
+New, Open, Open Recent, examples, and recovery can replace the current document. If it has committed changes, Lattice offers **Save**, **Don't Save**, or **Cancel**.
+
+![The prompt to save changed work before replacing the document](images/save-changes.png)
+
+*Save completes before replacement where direct saving is available. Don't Save continues; Cancel keeps the current canvas.*
+
+A cancelled file picker or invalid imported file also keeps your current document. **Modified** means committed authoring changes; panning, selection, tab navigation, and runtime recall queues do not mark the file modified.
+
+### Open, recover, import, or export
+
+| Action | Use it when |
+| --- | --- |
+| **New workflow** | You want a fresh Untitled workflow. |
+| **Open workflow…** | You want to replace the current document with a saved editable or portable JSON workflow. |
+| **Open Recent** | You want to reopen a previously accessed file in a supported browser. Permission may be requested again. |
+| **Open examples…** | You want a fresh editable lesson. |
+| **Recover previous workflows** | You want an earlier retained unified workflow as an unsaved draft. |
+| **Import into graph…** | You want to add a compatible fragment to the graph you are already editing. |
+| **Export workflow JSON…** | You want a portable `.workflow.json` copy to share. |
+| **Export archived workflows** | You need the originals of retired pre/post workflows for reference or rebuilding. |
+| **Close workspace** | You want to close the editor while retaining its current recovery draft and views. |
+
+The recovery draft is retained in SillyTavern settings across reloads. It helps recover committed work, but it does not save a file on disk or include unfinished settings-editor text. **Clear Recent** clears only the recent-file list; it does not delete your files. Recent files are local to the browser and site address you used.
+
+**Import into graph…** is additive. Review its stage requirements, model needs, final outputs, and maximum extra requests before accepting. It gives inserted nodes fresh identities and keeps their internal connections and relative arrangement. Insertion is undoable and makes no request.
+
+Portable Export includes the complete graph and the saved definitions needed by its subgraphs. It strips local saved-profile IDs; recipients choose their own fixed profiles. Nodes set to **Active SillyTavern model** continue to follow the recipient's configured connection. Both editable and portable files open through **Open workflow…**.
+
+Retired separate pre/post workflows remain archived originals. They cannot run, open as current documents, or import into current graphs. Export the archive to keep a recovery copy, then rebuild needed logic in a unified workflow with explicit Preparation and Response stages.
+
+## Develop your own writing system
+
+The remaining sections are for building beyond the starter. Begin with one story rule you can explain, preview, and verify. Use literal rules, templates, or field selection when those express the task; use a model when you need interpretation or new prose.
+
+| Goal | Starting pattern | What to check |
+| --- | --- | --- |
+| Give a scene a direction | Text → Compose Guidance → Generate Reply | Exact guidance and its budget. |
+| Plan from selected context | Scene Context → Smart Compactor → Response Plan | What context remained and what was omitted. |
+| Add public notes | Draft → Extract → Render Notes → Append | Which records are supported and which notes will appear. |
+| Clean repeated wording | Text Rules, or Pattern → Branch → Filter Text | Exact replacements or whole lines/paragraphs removed. |
+| Keep a campaign notebook | Read File → Extract/Format → Write to File | Proposed document changes and accepted save receipt. |
+| Run a story schedule | Story Clock → Advance Time → Clock Commit | Explicit minutes, due events, and pending remainder. |
+| Reuse a working sequence | Create subgraph → Add to Subgraphs → Add system | Named inputs/outputs and connections to Main. |
+
+[Story systems](story-systems.md) develops concrete wand, relationship, memory, and schedule ideas. The numbered examples provide complete setup. Use a separate chat for substantial experiments, and save a working version before changing it.
+
+### Choose the right source
+
+Start by asking what material the operation needs and whether it must stay current.
+
+| Source | What it supplies |
+| --- | --- |
+| **Text** | Words you author directly. No model call. |
+| **Prompt Source** | A SillyTavern prompt block; inspect raw and resolved text. |
+| **File Input** | A snapshot of a local `.txt`, `.md`, or `.json` file, embedded in the workflow. Replace the file in Details to refresh it. |
+| **Scene Context** | Selected story context with source and visibility information. Check its perspective and budget. |
+| **Generate Reply / Reply Snapshot** | The completed reply as a source-linked Draft in the appropriate response context. |
+| **Player Event Source** | The actual current player message, useful for rules before the reply is written. |
+| **Read File** | A current authorized Workflow Data document, plus the live reference needed to propose a write. |
+| **Memory / Actor Context** | The selected or authorized actor's stored material, with its privacy and participation checks. |
+
+File Input does not stay linked to an operating-system file and cannot authorize a live write. Workflow Data is stored with the story; a name such as `campaign-notes.md` identifies a scoped story document, not an arbitrary path on your computer.
 
 ### Workflow Data defaults and shared sources
 
-New **Story Clock**, **Read File** and **Outcome Commit** nodes are ready to connect without a separate document setup step. Story Clock selects **Chat clock**, starting on Day 1 at 00:00 with a 24-hour day. Read File selects empty plain-text **Chat notes**, suitable for the default Write to File append mode. Outcome Commit selects **Chat outcomes**, an empty JSON list. A unified run supplies only the referenced presets in its active user/chat. Saved sources and their content are retained.
+New **Story Clock**, **Read File**, and **Outcome Commit** nodes provide convenient starting sources:
 
-![Story Clock Details with its shared source, starting day/time, and day length](images/clock-settings.png)
+| Node | Default source |
+| --- | --- |
+| Story Clock | **Chat clock**, starting at Day 1, 00:00 with a 24-hour day. |
+| Read File | **Chat notes**, initially empty plain text. |
+| Outcome Commit | **Chat outcomes**, initially an empty JSON list. |
 
-*Starting values initialize a new source. They do not reset the saved timeline.*
+A unified run supplies the referenced defaults for the active user/chat and retains saved content. In Details, change **Starting values**, **Initial content**, or **Initial outcomes** to set the template for a new source. **Load initial values** loads an existing source's template for editing. **Save settings** updates that template; it does not reset saved time, notes, or outcomes.
 
-The node’s Details panel shows its current source and groups related settings together. **Starting values** exposes the clock’s starting day, time and hours per day. Read File and Outcome Commit expose **Initial content** and **Initial outcomes** instead. If an existing source’s initial values are not displayed, choose **Load initial values** before editing its template, then use **Save settings**. These settings change the initial template; they do not reset saved time or replace saved notes and outcomes.
+Open **Advanced** to choose a compatible source or use **+** beside it to create a separate named source. Notes support JSON, JSON Lines, CSV, Plain text, and Markdown. Clock and outcome sources require their JSON format. Choose **Public**, **Hidden**, or **Actor private** visibility; Actor private also requires the actor ID.
 
-Open **Advanced** to choose another compatible source or use **+** beside the source to create a named, separate one. **Format** offers JSON, JSON Lines, CSV, Plain text and Markdown for notes. Clock and outcomes sources keep their required JSON format; an existing saved document retains its stored format. **Visibility** uses Public, Hidden and Actor private buttons. Actor private reveals an actor ID field. Clock settings also include its initial Calendar and an optional Expected calendar check.
+![Workflow Data manager with authorized sources for the current story](images/workflow-data.png)
 
-Nodes using the same clock source share its saved timeline. Prefer one Story Clock output connected to the nodes that need that time, and one final Clock Commit for that source in an accepted run. Choose a separate clock source for an independent timeline; separate clocks do not synchronize automatically. Time advances through explicit workflow proposals and accepted clock commits.
+*Open Workflow → Configure → Workflow Data… to manage custom sources. Imported target names do not automatically grant access.*
 
-The default Chat clock is shared through Main and its static systems. Default Chat notes and Chat outcomes within a system resolve to separate stable sources for that workflow and instance path. Choose an explicit common target when sharing is intentional. Only active selected operations provision their defaults; a skipped system does not create its unused data. Keep one final clock writer for a shared timeline. Two staged writers for one target are rejected.
+For a custom source, give it a unique target ID, display name, format, visibility, and initial template. CSV requires declared columns. Updating a template leaves existing saved content intact. **Remove authorization** revokes access; it does not delete an operating-system file.
 
-**Workflow → Configure → Workflow Data…** remains the place to manage custom logical targets. ![Workflow Data manager for authorized logical sources in the active user and story](images/workflow-data.png)
+The default Chat clock is shared through Main and its systems. Default notes and outcomes inside each system have separate stable sources. Choose the same explicit source when you want systems to share a notebook or ledger. A skipped system does not create its unused defaults. Keep one final writer per shared target; two proposed writers for the same target are rejected.
 
-Imported examples that deliberately name custom targets still need an authorized compatible source; choose one in the node’s Advanced settings or manage the target through Workflow → Configure. Random Pick’s optional outcomes source can stay disabled when no saved outcomes are needed. Write to File uses the live reference from Read File, and Clock Commit uses the captured clock projection, so neither needs its own destination setup.
+Read File has Text, document Data, and reference outputs. Connect its **exact reference** to Write to File for the same target. Use Text append for plain-text/Markdown notes and structured mutations for JSON collections. **Format** checks and serializes records; **Project Document** previews the proposed updated content without saving it. Prose needs extraction before it becomes reliable structured records.
+
+Write to File stages the change. It becomes accepted only with the corresponding reviewed reply. See [Workflow Data setup and write modes](unified-workflows.md#authorize-workflow-data-and-preserve-its-structure) for nested collections, unique IDs, and field updates.
+
+### Story time and scheduled events
+
+Story time is measured in the fiction. It is separate from your real clock and from message count. A journey can advance several hours; a long conversation can advance a few minutes.
+
+![Story Clock settings with its shared source and starting day/time](images/clock-settings.png)
+
+*Starting values initialize a new source. They do not rewind a timeline that already has saved content.*
+
+A time workflow reads **Story Clock**, provides an explicit duration or destination to **Advance Time**, and stages the result through **Clock Commit**. Use forward whole story minutes. A vague phrase such as “later” needs a separate interpretation rule before it can advance time.
+
+**Time Trigger** finds schedules crossed between the previous and proposed time. Midnight is minute `0` of a day, 14:00 is `840`, and an eight-hour interval is `480` minutes with a declared origin. Crossing a scheduled time differs from merely asking whether it is currently 14:00.
+
+Advance Time can **interrupt** at the first due event, retaining the remaining travel/rest duration, or **catch up** through all due events within a finite limit. Inspect both occurrences and remainder. If the limit is exceeded, the projection holds rather than silently losing events.
+
+Connect one clock to the systems that share a timeline and use one final Clock Commit for that source. Separate clocks are independent. Apply accepts the clock proposal; preview, Reject, and Stop do not advance saved time. Lessons **23** and **24** walk through time advancement and schedules.
+
+### Recall memories deliberately
+
+Recall brings existing authorized records into the next matching generation. It does not invent a past event. Begin with lesson **18** for native memories or lesson **26** for manual queues and story triggers.
+
+A **Recall** node chooses the actor, memory set, target, filters, and budgets. Its records must come unchanged from a genuine authorized read, and any required presence/event evidence must be connected. Wire its private Guidance to Generate Reply for a preparation reminder, or to the authorized response operation that needs it. Simply placing Recall on the canvas does not make its words reach the reply.
+
+To queue it manually:
+
+1. Right-click Recall or its matching **Recall Shortcut** and choose **Queue recall**, or open **Details → Memory recall**.
+2. Check the badge: green means queued; amber means reserved or pending acceptance.
+3. Send the matching generation. Inspect the recall result and reviewed reply.
+4. Use **Cancel recall** to cancel a queued request you no longer want.
+
+![Memory recall controls with queue status and actions](images/recall-controls.png)
+
+*Click a recall badge to open its controls. Workflow → Memory recall provides selected/all-node commands and a grouped overview.*
+
+Matching Recall and Recall Shortcut nodes share a request per memory set. Queue and Cancel do not run a model, edit the document, or add Undo entries. Previewing Recall Shortcut does not queue it. Queues are temporary and are not saved with the workflow.
+
+Recall Shortcut also lets you choose a key, target (**Reply**, **Generated swipe**, or both), repetition (**Next matching generation**, **Once for each generation type**, or **Until cancelled**), and when the queue is consumed (**Successful completion** or **Accepted result**). With Accepted result, merely completing generation does not consume it; the matching review must be accepted. Shortcuts ignore typing and key repeats, reject duplicate keys, and expire when their document or scope changes.
+
+Recall can activate automatically from authored keyword, event, or character conditions instead. Cancellation removes a manual queue; it does not erase an authored automatic trigger. No matching record skips the reminder, while unresolved required evidence holds the path. See [Recall setup and policies](unified-workflows.md#queue-memories-manually-or-recall-them-automatically).
+
+### Decisions, branches, and unresolved answers
+
+Use **Condition** when a known field decides the path: “Does the destination exist?” or “Is trust at least 5?” It compares structured Data without a model call.
+
+Use **Decision** when interpreting prose needs a model. Give it explicit questions and choices or a scoring rubric. A yes/no question uses the type called **noul** in the controls: **yes**, **no**, or **unresolved**. Unresolved means the available evidence did not establish either answer.
+
+Extract the intended answer with **Select Fields**, then feed **Branch**. Branch sends its incoming material through **yes**, **no**, or **unresolved**. It expects a Boolean or explicit `accepted` value; it does not treat a score, a nonempty object, or confident prose as “yes.”
+
+To bring alternatives back together, connect them to optional matching inputs on **Join**. The unchosen branch is skipped and can be omitted. A required input that was skipped, or an unresolved input, holds the output. Declare an unresolved policy deliberately: keep the original reply, request more evidence, or stop with an issue, as appropriate for your story.
+
+**Confidence Gate** is for a numeric metric with authored acceptance/rejection thresholds and an unresolved middle range. Model-reported confidence is a model's estimate, not proof that an event happened. Lessons **9–11** teach conditional notes and decisions.
 
 ### Structured composition
 
-![A scene-brief pipeline with recorded output in Preview and Compose settings in Details](images/workspace-overview.png)
+**Compose** joins named sections or fills a template from Data. Choose Text for ordinary prose output, or Guidance when the result should influence Generate Reply.
 
-*Inspect a deterministic composition before wiring its Guidance into native generation.*
+![Compose settings with template mode, Guidance output, and section controls](images/compose-details.png)
 
-Compose has join/template modes, Text/Guidance output, named sections, a separator, and template placeholders.
+*Use section names and placeholders to make a brief from selected fields. Inspect the exact result before connecting it to generation.*
 
-In **Sections**, each row has **Kind → Text / Guidance**, **Required input** and **Skipped source → Use fallback text / Omit section**. Use Guidance for original system Guidance outputs. Leave a section optional and select Omit section when an inactive system should contribute nothing. Unconnected optional sections still use their Text fallback; unresolved required inputs hold instead of silently using it. Join and template composition keep the section order; an omitted template section is empty.
-
-**Token budget** is a cap on the whole rendered output, from 0 to 8192; 0 adds no Compose cap. Overflow holds without shortening the instructions. Generate Reply applies its final guidance budget too. Inspect the exact recorded result in Preview and its ordered contribution statuses before Send or Apply.
-
-Original private Guidance keeps its actor/currentness checks after merging. Formatting private Text/Data or changing a visibility label does not make it authorized native guidance. The Structured guidance example connects Select Fields to Compose's **Data** pin.
-
-![Compose details showing template mode, Guidance output, template placeholders, and section editing](images/compose-details.png)
-
-*This template maps structured fields into a writing brief. Sections can also receive connected Text or original Guidance inputs.*
-
-The screenshot's brief uses:
+For example, JSON Decode and Select Fields can supply direction, constraint, and tone to:
 
 ```text
 Direction: {{data:/direction}}
@@ -267,289 +593,229 @@ Constraint: {{data:/constraint}}
 Tone: {{data:/tone}}
 ```
 
-The captured composition supplies direction, constraint, and tone. To extend it, add another field to a JSON source, map it in Select Fields, then add its placeholder to the final Compose. Missing paths produce an issue rather than incomplete output. See [Compose](node-reference.md#compose) and [Select Fields](node-reference.md#select-fields) for exact formats.
+Add a field to the source, select it, and add its placeholder to Compose. A missing path produces an issue instead of silently incomplete instructions.
+
+Each section has **Kind → Text / Guidance**, **Required input**, and **Skipped source → Use fallback text / Omit section**. Use Guidance when receiving a system's original Guidance. To make a switchable system contribute nothing when disabled, keep its section optional and choose **Omit section**. An unconnected optional section still uses its fallback; a required unresolved input holds rather than using fallback.
+
+**Token budget** caps the complete rendered result, from 0 to 8192; 0 adds no Compose cap. Over-budget output holds instead of silently shortening the instructions. Generate Reply also has its final guidance budget. Inspect section contributions in Preview.
+
+Private Guidance retains its intended-actor and freshness checks when merged. Copying private Text/Data into a template or changing a visibility label does not give it permission to guide another character or appear in public notes.
 
 ### Deterministic editorial rules
 
-![Text Rules settings showing Draft input, replacement mode, literal rule rows, and the Save Rules action](images/text-rules-details.png)
+**Text Rules** makes literal or regex replacements without model calls. In Text mode it returns Text; in Draft mode it proposes Patches. A rule with no match makes no change.
 
-*Literal cleanup proposes `very very` → `very`. Save Rules validates the editor before the graph can use the change.*
+![Text Rules with a literal replacement and Save Rules](images/text-rules-details.png)
 
-Draft mode produces Patches for the reply-review pipeline. Text mode produces Text and can replace or extract material. Literal and regex rules make no model calls. A rule that has no match proposes no change.
+*Save Rules commits a replacement such as “very very” → “very.” Inspect the exact proposed edits before relying on them.*
+
+For counted detection and whole-unit removal, use **Pattern → Branch → Filter Text → Join**. Pattern reports occurrences; Branch makes one routing choice for the reply; Filter Text removes or keeps whole matching lines/paragraphs. Several hits in one paragraph select it once. Detection scope and editable scope are separate settings. The report must still refer to that exact Draft; rerun Pattern after revising it.
+
+Patch tools such as Text Rules, Validate Patches, Review Gate, and Apply Reply can provide useful intermediate inspections. Their Candidate previews are not the final publication action. A supported final Draft linked to the workflow's Send must reach **Review / Publish** for a reply you can accept. See the tool's **?** guide and [Pattern/Filter walkthrough](unified-workflows.md#detect-and-filter-a-reply) before building a cleanup path.
 
 ### Reference transformations
 
-New **Style Transfer**, **Format Transfer** and **Terminology Map** nodes use **Input type → Text** and return Text in either graph phase. Connect a Text source such as Compose, plus a reference: Text or Data for Style/Format Transfer, and a Data glossary for Terminology Map. Style/Format Transfer can also receive Context. They make at most one Prose request; Terminology Map makes none.
+**Style Transfer** changes prose using a style reference, **Format Transfer** uses a layout/example, and **Terminology Map** applies a glossary. Choose **Text** input when transforming ordinary written material. Style/Format Transfer can make one extra model request; Terminology Map makes none.
 
-To edit a completed reply, choose **Input type → Draft** in the Response stage, connect a source-bound Draft, and route Patches through validation for candidate diagnostics. Publication requires a final owned Draft ending in Review / Publish. Saved Transpose nodes that omit Input type retain this Draft form. Mode, Scope, Strength and Protected literals are independent: for dialogue characterization, choose **Style Transfer → Mode → Character voice** and **Scope → Dialogue** separately. Changing Mode preserves the current Scope. See [Transpose](node-reference.md#transpose) for the full controls.
+For reply-edit diagnostics, choose **Draft** input in Response and connect the genuine Draft. Those tools return Patches for validation and inspection. They do not publish a reply by themselves. Mode, Scope, Strength, and Protected literals are separate settings: for dialogue characterization, choose **Mode → Character voice** and **Scope → Dialogue** explicitly. Changing Mode preserves Scope.
 
-### Context and model controls
+### Keep events, interpretations, and private state distinct
 
-![Scene guidance graph with Scene Context, Smart Compactor, Response Plan, and Guidance](images/scene-planning-graph.png)
+A mention of a wand is not proof it was used; a proposed kiss is not an event that occurred. Event systems keep exact story evidence and declared actor/item identities, then use normalization and confirmation before updating ownership, progression, or outcome logs. **Current Holder** needs prior ownership and ordered confirmed events; it does not guess from the nearest name.
 
-*This synthetic scene-guidance fixture separates context preparation from the planning request and the final guidance budget.*
+Random Pick chooses from authored weights for a confirmed event and retains the draw on retries. Applying a result does not roll again. A fixed effect library needs no model call; recognizing the action or authoring a wild effect may use models. Lessons **19–22** and **27–28** show those paths.
 
-Smart Compactor lets you choose selection or model-backed compression, a target context budget, recent messages to preserve, and exact protected literals. Response Plan has operation instructions and a completion cap.
+For character-specific processing, keep each actor's context, memories, and private outputs on its own path. **Actor Context** and **Character Direction** require genuine authorization and participation where applicable. Only the selected native actor can receive its permitted private Guidance in the main reply. Private reflection is authored interpretation; it must not decide the player's unchosen action or become public notes through formatting.
 
-![Response Plan details showing instructions and model binding controls](images/model-details.png)
-
-*Model settings show the node's effective connection. Check Active SillyTavern model or choose a saved profile for a fixed connection before running a model-backed node.*
-
-![The scene planner’s searchable connection picker with illustrative local profiles](images/profile-picker.png)
-
-*Pick a fixed connection for a specific job, or follow the active SillyTavern model. These demonstration profile names are not bundled providers.*
-
-Each ordinary text-model node has a grey connection bar below its card and small model-only text above. Open the bar to search current saved profiles by name, API label and model, or choose **Active SillyTavern model** to follow the host's current connection. New ordinary text-model nodes use the active option; existing bindings remain intact. The list keeps the active option first, accepts multiple case-insensitive keywords, scrolls independently of the canvas, and supports arrows, Enter and Escape. Click outside to close it. An unavailable saved profile stays visibly unavailable until you choose another connection. Select a node to change the same **Connection profile** in Details. The node uses that profile's default model; choose **Model mode → Override** to enter a different model identifier for that operation. Scene guidance's Smart Compactor and Response Plan can use different profiles and models. Inspect the effective value and any issue below the controls. This does not globally activate a different SillyTavern connection. Changing a profile affects that node only and supports Undo and Redo. A pinned subgraph occurrence stores its connection override on the owning workflow wrapper, leaving its shared definition and sibling occurrences intact; library inspection remains read-only. See [model connections and supported routes](native-workflows.md).
-
-**For Each → Helper model bindings** configures the exact pinned helper’s ordinary text-model roles separately; explicit nested bindings retain precedence. **Fast Decision** instead uses its explicit typed connection in **its typed connection setup** and its node connection selector, with authored thresholds and opt-in fallback. The ordinary Active/Saved profile picker does not convert a chat model into a Jev/Laya typed endpoint.
-
-After configuration, keep the unified document open and select **Enable Lattice**, then Send normally.
-
-## Run and inspect results
-
-Use ordinary SillyTavern **Send** with the configured unified document open and Lattice enabled. Supported **Run to here** previews execute only selected dependencies and remain diagnostic. The toolbar becomes **Stop** while busy. The bottom-left meter records completion or failure; click it for node-level details, including expanded stages within subgraphs.
-
-![Run details showing a completed five-stage deterministic workflow and zero requests](images/run-details.png)
-
-*Request usage and node states belong to the actual run. A configured bound is the maximum, not evidence that a request occurred.*
-
-An active node receives a bright ring. Failed nodes have a red ring and dimmed contents; blocked descendants and other nodes have distinct statuses. Stop cancels the active run; a late response cannot revive it.
-
-### Read Preview
-
-**Readable** is the default presentation. Text, Guidance, Draft and Candidate show their exact retained wording with supported formatting. Context shows ordered messages with visible boundaries and retained role/identity labels. When a Draft actually retains context, its separate **Captured context** section starts collapsed. Empty captured messages and unavailable context remain distinct; automatic reply artifacts do not recover prior private host context. Generic Data displays its JSON value. Pattern shows per-rule counts, total occurrences and expandable occurrence rows; Filter shows selected units and any blocked/empty diagnostics.
-
-Choose **Source** to inspect the selected artifact's entire retained diagnostic envelope, including retained metadata and wrapper fields. It is privacy-projected and does not reveal private host tokens or reacquire current host data. Omitted records, JSON prefixes and display-truncated payloads retain explicit notices; **Copy partial source** does not promise valid complete JSON. **Copy text**, **Copy message** and **Copy source** copy the exact respective retained content. Preview Readable/Source is independent of settings' Advanced JSON.
-
-Changing modes, expanding retained content, copying and pinning only change inspection. They make no model request, scan Worker, source capture, new workflow run or host commit. **Run to here** and **Apply reviewed reply** remain separate explicit actions.
-
-Select a node to inspect its recorded output. A single-output node shows its target directly in the Preview title; a selector appears only when there are multiple choices. Review / Publish exposes the root Host result. The artifact tabs show the sections recorded for that target, including input/output data where available. **Following selection** updates Preview as you explore. Click **Pin output** to hold the current output while inspecting another node; click **Pinned output** again to resume following.
-
-![Inspect selected outputs, pin Select Fields, then return Preview to following selection](images/inspect-and-pin.gif)
-
-![Pinned Select Fields output remains visible while JSON Decode is selected in Details](images/pinned-preview.png)
-
-*Pinning separates what you inspect from what you configure.*
-
-The node context menu also offers **Pin preview** and **Run to here** for available outputs. Nodes with several outputs open a submenu so you can choose the port explicitly. Pinning holds the chosen output target as selection changes; it does not freeze a recorded result. Library inspection has no runtime output actions.
-
-Select a node and press **T**, or right-click it and choose **Target Node**, to keep its output in Preview while selecting other nodes. A small target icon marks its upper-right corner. Press **T** on another node to move the target, on the targeted node to clear it, or with nothing selected to clear the current target. With no selection and no target, T does nothing. **Follow selection** clears targeting; **Pin current output** switches to pinning. Targeting changes only the preview and does not run or edit the workflow.
-
-![Recorded Guidance artifact in Preview with output selection, pin/follow controls, status, and Run to here](images/guidance-preview.png)
-
-*The recorded artifact contains the composed direction, constraint, and tone. Current indicates it belongs to the unchanged workflow.*
-
-**Run to here** executes the chosen output's dependencies and displays their request bound. It is a diagnostic run. It does not publish guidance or authorize applying an intermediate revision.
-
-Changing an operation setting or a connection cancels active work and makes previous results **Stale**. Camera movement, selection, aliases, compact cards, and tab changes preserve run validity. Stale results can be inspected but cannot supply a fresh Apply action. Large recordings may explicitly truncate or omit diagnostic entries; application uses the retained full candidate rather than the visible excerpt.
-
-## Review a proposed reply edit
-
-A unified workflow records **Review / Publish · Host result** after its owned native Send and response processing.
-
-1. Configure the response processing and final Review / Publish Draft input.
-2. Keep the configured unified document open, select **Enable Lattice**, and Send normally.
-3. After completion, select **Review / Publish · Host result** in Preview.
-4. Compare the original, candidate, notes, findings and changes.
-5. Choose **Apply reviewed reply** or **Reject reply**.
-
-![Owned unified reply result with explicit Apply and Reject controls](images/review-candidate.png)
-
-*The root Review / Publish result owns application. Apply preserves the native original as a swipe and accepts only this result's staged effects.*
-
-Text Rules, Validate Patches, Review Gate, Apply Reply and subgraph outputs retain useful intermediate diagnostics. Run to here never creates Apply authority. Source edits, chat/actor/swipe changes, starting generation or changing workflow semantics can invalidate a result; use a fresh owned Send.
-
-Local application and durable saving are reported separately. A resolving host save wrapper does not positively acknowledge disk persistence. See [reply review limits](native-workflows.md#review-a-reply-repair).
-
-A system's Read File, Write to File, Story Clock, Clock Commit and Outcome Commit use Main's current authorized sources. Main's Apply accepts their proposals with the chosen owned result. Preview, Run to here, Reject and Stop settle none. File/clock/outcome saves report separate receipts; publishing a reply and saving several targets are not one atomic disk transaction. Repeated Apply does not redraw or request models again.
-
-Memory, State, Recall, Recall Shortcut, native sources and the complete native lifecycle can live inside static subgraphs. They use the enclosing workflow's live captures and acceptance rules. Recall queues distinguish each instance. For Each retains its restricted helper authority and requires an explicit State snapshot.
+Memory and State nodes can read or propose updates, but a proposal alone does not save it. Follow the explicit commit path and inspect the accepted receipt. **For Each** processes a bounded collection with a reusable helper; it cannot perform host generation, publication, or file/clock/outcome writes. Static systems can contain those operations, using Main's current sources and final review. The [unified guide](unified-workflows.md) covers these advanced permissions and [lessons 29–30](examples.md) demonstrate private perspectives and gradual relationships.
 
 ## Reuse a process with subgraphs
 
-A subgraph packages operations behind named, typed inputs/outputs. Nested subgraphs let you compose a larger process without placing every primitive in the parent editor.
-
-### Add a system to Main
-
-Choose **Workflow → Add system…** to compose a saved reusable body into the unified root. The command targets Main even while you are viewing an instance tab. Save your own wrapper with **Add to Subgraphs** first if it is not yet on the shelf.
-
-1. Choose **Saved system**. Bind each required typed input to a compatible source; optional inputs can remain **Unused**.
-2. Adjust exposed **JSON override** settings if needed. Empty fields use the saved value.
-3. For prompt influence, choose **Optional reply guidance → Guidance output** and **Main merge destination**. Use an existing Compose Guidance merge or **Create Compose Guidance → Generate Reply** when that generator input is empty. Occupied input pins are not replaced; choose a legal merge or free destination explicitly.
-4. Bind other used outputs to explicit compatible destinations. A state-only body can participate through its staged terminals without prompt text.
-5. Select **Preview connections**, inspect **Connection preview**, then **Add system**. Its editable body opens in a tab. One Undo removes the whole addition and its new connections.
-
-Connections determine execution and reply influence. Select the wrapper and turn **Details → Run this system** off to skip the whole body, including its reads, models, default data and effects. A disabled system's optional Guidance contribution can be omitted. Required consumers keep their ordinary skipped-input behavior. Closing the body tab hides the view; it does not disable its wired system.
-
-![Add system dialog with saved reusable bodies and typed connection choices](images/add-system.png)
-
-*Preview connections before adding the system. Required inputs need compatible sources.*
-
-![A selected system wrapper with Run this system in Details](images/system-settings.png)
-
-*Switch the wrapper off to skip its body. Closing a body tab only changes the view.*
+A **subgraph** is a group of operations packaged behind named inputs and outputs. Its parent shows one block; open that block to see the connected tools inside. A **system** is a reusable body connected into Main for a story job such as weather, a wand, or a relationship.
 
 ### Place and open a reusable tool
 
-Choose a saved definition from **Subgraphs → Library** to insert a copy into the current editable graph. The supplied [Literal cleanup subgraph JSON](../workflows/subgraphs/literal-cleanup.json) illustrates a Draft → Patches interface. Connect a compatible source-bound Draft and route its Patches into validation for diagnostic inspection.
+Choose a saved entry from **Subgraphs → Library** to place a copy in the current graph. Connect its typed inputs and outputs just as you would an ordinary node. The supplied [Literal cleanup subgraph](../workflows/subgraphs/literal-cleanup.json) illustrates a Draft → Patches tool for inspection.
 
-![Literal cleanup subgraph instance connected between Reply Snapshot and Validate Patches in a parent workflow](images/subgraph-instance.png)
+![A cleanup subgraph between a Draft source and patch validation](images/subgraph-instance.png)
 
-*The wrapper exposes Draft → Patches. Validation and candidate inspection remain visible in the parent; publication requires Review / Publish.*
+*The parent shows the tool's interface. Keep validation and final review clear outside it where appropriate.*
 
-Double-click the wrapper to open its body in a graph tab. The first tab remains Main, the root workflow. Breadcrumbs show where you are; each instance keeps its own camera, selection, and presentation, even if several use the same definition.
+Double-click a subgraph to open its body in a graph tab. **Main** remains the whole workflow. Breadcrumbs identify which instance you are viewing. Each opened instance remembers its own camera and selection.
 
-![Literal cleanup body in a second tab, with input boundary, Text Rules, output boundary, and read-only Details](images/subgraph-tab.png)
+![A saved cleanup body open in a second graph tab](images/subgraph-tab.png)
 
-*A pinned body opens read-only. You can inspect its ports, settings, and recorded execution without modifying the shared definition.*
+*A saved body can open read-only. Inspect its tools and connections, then return to Main through the tabs.*
 
-Closing a tab hides that view. Use **Graph view actions** to reopen it. Switching tabs does not stop a root run, and Stop still controls the active root run.
-
-![The broken-wand body open inside the combined story workflow](images/wand-system.png)
-
-*The parent’s small wrapper can contain a substantial process. Follow the body’s typed boundaries back to Main; the supplied example’s setup is in [Combined editable systems](combined-system-example.md).*
+Closing a body tab hides that view; it does not disable or remove the system. **Graph view actions** can reopen it. Switching tabs does not stop a run, and Stop still controls the active Main run.
 
 ### Edit one instance
 
-Right-click the wrapper and choose **Make editable copy** to open a private editable body. The copy preserves this instance's configured settings and model overrides, and edits in its body take effect. Model fields inherited from the parent workflow remain inherited. Edit its operations and interface in that tab. Sibling instances keep their pinned contents. **Unpack subgraph** replaces one wrapper level with its body nodes while preserving settings, bindings, and parent connections.
+Right-click the wrapper block and choose **Make editable copy** to give this instance a private body you can change. It keeps its configured settings and model overrides. Other instances keep their saved contents. Model settings inherited from the parent remain inherited unless you explicitly override them.
+
+**Unpack subgraph** replaces one wrapper level with the nodes inside it, preserving settings, bindings, and surrounding connections.
 
 ### Create and manage definitions
 
-To package your own sequence, select the desired nodes in an editable graph, right-click the selection, and choose **Create subgraph**. You can also right-click a group to package its members. The selected nodes move into a new editable graph tab, with typed input blocks on the left and output blocks on the right. Crossing connections are wired through those boundaries, and the parent graph receives a connected subgraph block in place of the selection. Shared inputs and output fanout are preserved. Creation is one undoable edit.
+To package your own process:
 
-![Select three processing nodes from a larger scene workflow and create a subgraph](images/create-subgraph.gif)
+1. Select the nodes you want to reuse. Leave surrounding nodes outside the selection if they should stay visible in Main.
+2. Right-click the selection and choose **Create subgraph**, or use the Graph menu.
+3. Lattice replaces the selection with a wrapper and opens the body in a new tab. Connections crossing the selection become named typed boundaries.
+4. Inspect the new interface and give its ports useful names.
 
-![JSON Decode, Select Fields, and Compose selected while native lifecycle nodes remain outside](images/selection-subgraph.png)
+![Selecting a processing sequence and creating a subgraph](images/create-subgraph.gif)
 
-*Shift-click adds nodes to the selection. Any ordinary workflow node can be included.*
+*Creation preserves the connections and is one undoable edit.*
 
-![New editable subgraph body with typed boundaries around the selected operations](images/created-subgraph.png)
+![JSON Decode, Select Fields, and Compose selected for packaging](images/selection-subgraph.png)
 
-![The parent graph reconnected through the new subgraph wrapper](images/subgraph-parent.png)
+*Select the sequence that serves one clear purpose.*
 
-*The body opens in a tab; Main keeps its surrounding nodes and crossing connections.*
+![The selected operations inside a new subgraph with input/output boundaries](images/created-subgraph.png)
 
-Click an input or output block to rename the port, change its artifact type, or mark it required in Details. Choose **Input** or **Output** from **Subgraphs → Interface** to add another boundary, then wire it to the interior nodes. These shelf choices are disabled outside an editable subgraph. New inputs are optional. Delete a boundary through the ordinary node Delete action; its pin and attached body and parent connections are removed together in one undoable edit. Disconnect incompatible connections before changing a port's type.
+*Input blocks on the left receive material; output blocks on the right return results to the parent.*
 
-![Subgraph input selected with its port settings and ordinary Delete action in Details](images/subgraph-interface.png)
+![Main reconnected through the new wrapper](images/subgraph-parent.png)
 
-Select any ordinary workflow nodes, including sources, Memory, Recall, On Send, Generate Reply and Review / Publish, to create a subgraph. The enclosing workflow keeps its host permissions and one native generation. Existing boundary blocks remain in their containing subgraph.
+*Return to Main to check that the surrounding flow still makes sense.*
 
-Right-click a wrapper and choose **Add to Subgraphs** to save it for reuse. Name it and choose **Save new subgraph** or explicitly update an existing shelf entry. Editing a body does not automatically save it. Updates affect future insertions; existing placed copies keep their exact contents. Right-click a saved entry in the shelf to **Delete** it or **Open saved definition** for inspection. Deleting a shelf entry preserves placed copies. **Export subgraph** on a wrapper saves a portable JSON copy.
+Select an input or output boundary and edit its name, artifact type, and **Required** setting in Details, then **Save port**. Add boundaries with **Subgraphs → Interface → Input / Output** inside an editable body. New inputs are optional. Disconnect incompatible wires before changing a type. Deleting a boundary removes its pin and attached body/parent connections together.
 
-![Compact Save subgraph dialog with a name and explicit new or update choice](images/subgraph-save.png)
+![Subgraph boundary settings in Details](images/subgraph-interface.png)
+
+*Port names appear on the wrapper. Use them to describe what the system expects and returns.*
+
+Right-click the wrapper and choose **Add to Subgraphs** to save it to the shelf. Name it, then choose **Save new subgraph** or explicitly update an existing entry.
+
+![Save subgraph dialog with new and update choices](images/subgraph-save.png)
+
+*Editing a body does not automatically update the library. Save when you want future insertions to use that version.*
+
+Existing placed copies keep their exact saved contents when a library entry is updated. Right-click a saved shelf entry to **Open saved definition** or **Delete** it; deletion leaves placed copies intact. **Export subgraph** on a wrapper saves a portable JSON copy.
+
+### Add a system to Main
+
+Use **Workflow → Add system…** when composing a saved story system into the whole workflow. Save your wrapper with Add to Subgraphs first if it is not on the shelf. Add system always targets Main, even if you are viewing a body tab.
+
+![Add system dialog with the saved body and typed connection choices](images/add-system.png)
+
+*Choose the system, its inputs, and where its outputs will go, then preview the connections.*
+
+1. Choose **Saved system**.
+2. Bind required inputs to compatible sources. Optional inputs may remain **Unused**.
+3. Adjust exposed **JSON override** settings if needed; empty fields use the saved values.
+4. For a system that guides the reply, choose its **Guidance output** and **Main merge destination**. Select an existing Compose Guidance merge, or **Create Compose Guidance → Generate Reply** when that generator input is empty.
+5. Bind other used outputs to compatible destinations. A system that only stages state changes can participate without prompt text.
+6. Choose **Preview connections**, inspect the result, then **Add system**. The body opens editable in a tab; one Undo removes the addition and its new connections.
+
+Existing occupied pins are not silently replaced. Choose a legal merge or a free destination. Connections decide participation and influence; a placed block with no useful output path is not automatically added to the reply.
+
+![A system's Run this system checkbox in Details](images/system-settings.png)
+
+*Turn Run this system off to skip the whole body, including its model calls, reads, defaults, and proposed effects.*
+
+Keep a disabled system's Guidance contribution optional and choose **Skipped source → Omit section** on Compose. A required consumer can still be blocked if its needed output was skipped. Disabling an ordinary primitive is not the same as the wrapper's whole-system skip; inspect its validation message.
+
+![Part of the broken-wand system: select an effect, prepare guidance, and stage the outcome](images/wand-system.png)
+
+*Random Pick sends the chosen effect to Format and Compose for its written instruction, and to Outcome Commit for an outcome proposal. The enclosing workflow accepts that proposal with the reviewed reply.*
+
+Static bodies can contain native lifecycle, file, clock, outcome, Memory, State, and Recall operations. They use the enclosing workflow's live sources and acceptance rules. Main still owns the one SillyTavern generation and final review; body tabs are views. See [combined editable systems](combined-system-example.md) for a complete composition.
 
 ## Organize connections with portals and reroutes
 
-**Reroute** is a compact typed node inserted by double-clicking a direct wire, or added from the Shaping family. Use it to lay out a connection or organize consumers of one output. New shelf nodes default to Text; choose **Artifact kind** in Details to change the type. If the new type would invalidate a connected wire, the edit is rejected atomically: the node and its wires keep their previous types until you resolve the connection.
+Use these when the graph becomes hard to read. They keep the dependencies while making the layout clearer.
 
-**Portals** use named references to existing output pins. Open **Details → Portals** to manage a source, its consumers, labels, and visible-wire restoration. They preserve dependencies and artifact types. A portal cannot bypass a subgraph boundary: expose an input or output to cross that boundary.
+### Reroutes
 
-Use aliases to describe the role of an operation in your process, such as “Scene brief,” while Details retains its canonical type. Compact cards, portals, reroutes, and subgraphs solve different readability problems; choose the smallest organization that keeps the process understandable.
+Double-click a direct wire to insert a typed **Reroute**, or add one from **Shaping**. Move it to guide the wire around other nodes. Shelf-added reroutes start as Text; select **Artifact kind** in Details for another type. If a type change would invalidate a wire, Lattice keeps the previous type and connections until you resolve it.
 
-## Save, import, and share
+### Portals
 
-![File menu with example opening, editable saving, import, and portable export](images/file-menu.png)
+A **portal** names an existing output so distant inputs can refer to it without a long visible wire. It carries the same result and preserves its type and dependency.
 
-The open document is an editable draft. Committed edits and workspace views are retained as a recovery draft in SillyTavern settings; this does not save the workflow file on disk. Unfinished JSON editor text stays a draft until its **Save …** action validates it. File saving, enabling Lattice, and running a model are separate actions.
+1. Open **Graph → Manage portals…**, or use the relevant wire/output context action.
+2. Choose an **Output**, enter a **New portal name**, and **Create portal**. A wire/output opened from its context can offer conversion directly.
+3. Select the portal, choose a **Compatible receiver**, then **Connect receiver**. If it already has a wire, replacing it requires the explicit replacement choice.
+4. Use **Jump to source** or a consumer's **Jump** to inspect either end.
 
-| Action | Result |
-| --- | --- |
-| File → New workflow | Guard modified work, then open an Untitled workflow |
-| File → Open workflow… | Validate the chosen JSON file, guard modified work, then replace the active document |
-| File → Open Recent | Reopen a previously accessed file; the browser may request permission again |
-| File → Open examples… | Open an independent editable example copy |
-| File → Recover previous workflows | Open a retained earlier unified workflow as an unsaved draft |
-| File → Save workflow | Write the editable document to its current file, or choose a location on its first save |
-| File → Save As… | Choose another file as the save destination where direct file access is supported; otherwise save an editable JSON copy |
-| File → Import into graph… | Review an additive insertion into the active graph |
-| File → Export workflow JSON… | Save a portable unified workflow copy with pinned definitions |
-| File → Export archived workflows… | Save a recovery JSON copy of retired pre/post roots, original bindings and active selection |
-| File → Close workspace | Close the editor while retaining the active recovery draft and workspace views |
-| Wrapper → Export subgraph | Save a portable copy of an individual reusable definition |
-| Wrapper → Add to Subgraphs; shelf entry → Delete | Save reusable definitions and remove shelf entries |
+![Manage portals with the named source and receiver controls](images/portals.png)
 
-Before New, Open, Open Recent, opening an example, or recovery replaces modified work, Lattice offers a save choice, **Don't Save**, or **Cancel**. With direct file access, **Save** must complete successfully before the document is replaced. **Don't Save** continues without writing the current file, and **Cancel** keeps the current canvas. A cancelled picker or failed validation also preserves the current document. **Modified** tracks committed authoring edits; camera movement, tab navigation and runtime recall queues do not dirty the file.
+*Use a name that describes the result, such as “Current scene brief.” Restore wire makes a consumer's connection visible again.*
 
-Direct file saving and Open Recent require a browser with supported file access. **Save** checks whether the file changed outside Lattice and asks you to use **Save As** rather than overwrite those changes. A denied permission, cancelled picker or failed write leaves the draft open and modified. **Clear Recent** removes only the recent-file list; it does not delete files. The list is local to this browser and origin.
+The manager also supports renaming and retargeting. Before deleting a portal with consumers, choose whether to **Restore visible wires** or **Disconnect consumers**. A portal cannot reach across a subgraph boundary; expose an input/output port for that crossing. In read-only bodies, available label changes may be local presentation labels rather than exported edits.
 
-Other browsers offer **Save As…** to save a JSON copy through the browser. Lattice cannot confirm that the browser finished saving the file to disk, so the draft stays modified. Choosing **Save As…** in a replacement prompt gives the browser the JSON copy and keeps the current document open. To switch documents after saving, repeat the action and choose **Don't Save**.
-
-An additive import requires matching stage contracts, assigns fresh node identities, and preserves internal connections and relative layout. Review role requirements, terminal changes, and request bounds before accepting the insertion. Import itself does not run or enable the workflow.
-
-Save and Save As retain local connection bindings and supported workspace views in an editable `lattice-document` file; credentials and runtime queues are excluded. Export saves a portable `.workflow.json` copy for sharing and strips local saved-profile IDs. Recipients rebind fixed connections before running. **Active SillyTavern model** remains portable in nodes, roles and occurrence overrides, following the recipient’s configured host connection and model. Both file formats open through **File → Open workflow…** and carry pinned definitions.
-
-Editable Save/Open retains the complete Main graph, definitions, overrides and open body tabs. Portable export retains composition and its pinned definition closure. Opening or closing tabs is navigation and does not change what executes. Unsupported versions, dangling connections, incompatible artifacts, or cycles produce validation issues.
-
-Retired pre/post roots remain in a cold archive and cannot open as current documents, execute, or import into current workflows. **File → Export archived workflows…** saves a copy of their originals for recovery. Rebuild needed logic in a new unified graph with explicit stages; archive recovery makes no requests and performs no automatic conversion.
-
-## Develop your own writing system
-
-Start from the material and result you need, then choose the operations between them. Keep a deterministic stage when a literal rule, field mapping, or template can express the task; use a model stage when the process needs interpretation or new prose.
-
-| Goal | Composition to explore | Inspect before trusting it |
-| --- | --- | --- |
-| Reusable scene brief | JSON source → JSON Decode → Select Fields → Compose → Guidance | Required fields, template output, final guidance budget |
-| Protected context preparation | Scene Context → Smart Compactor → Response Plan → Guidance | Preservation report, pins, planned direction, call caps |
-| Combined context branches | Context sources → optional selection → Context Join → Response Plan | Duplicate/conflicting identities and reintroduction reports |
-| Deterministic editorial cleanup | Reply Snapshot → Text Rules → Validate Patches → Review Gate → Apply Reply diagnostics | Exact replacements and source freshness |
-| Detect and filter keywords | Generate Reply → Pattern → Branch → Filter Text → Join → Review / Publish | Matched Boolean, occurrence counts, atomic deletion report and final Draft |
-| Shared editorial tool | Draft → cleanup subgraph → Patches, with review in the parent | Interface, editable body settings, pinned contents, parent review path |
-
-These are processing patterns to author within a unified root. Preparation guidance reaches Generate Reply through a wire; candidate patch pipelines remain diagnostics. Publishing a result requires an owned final Draft and Review / Publish.
-
-The current operations provide one owned native generation, auxiliary Model Call, bounded host context, text/data processing, planning, scoped actor memory, workflow data document mutations and reply review. Arbitrary tool execution, unrestricted filesystem access and image/audio workflows are not implied by the graph editor. Build with the [available node contracts](node-reference.md) and [unified workflow guide](unified-workflows.md).
+Use comments for explanations, groups for arranging nodes, reroutes for wire layout, portals for distant connections, and subgraphs for reusable processes. Start with whichever solves the specific readability problem.
 
 ## Troubleshoot a workflow
 
-Choose **Workflow → Validate workflow** before running an unfamiliar composition. Read the plain-language issues and use **Show node** where offered. Expand **Technical details** when you need the diagnostic code.
+Choose **Workflow → Validate workflow** before running an unfamiliar or substantially edited graph. Read the plain-language issue, choose **Show node** when available, and fix that node or connection. Expand **Technical details** when a diagnostic code helps you investigate or report the problem.
 
-![Workflow validation report for a complete unified starter](images/workflow-validation.png)
+![A validation issue explaining that a required input needs a connection](images/validation-issue.png)
 
-| What you see | What to check |
+*This starter is missing its final Draft connection. Connect Generate Reply to Review / Publish, then validate again.*
+
+![The validation report for a complete starter workflow](images/workflow-validation.png)
+
+*Validate again after fixing the issue. A clear report checks structure and setup; it does not test what a provider will return or whether the story wording is good.*
+
+| What you see | What to do |
 | --- | --- |
-| No integration after Send | Enable Lattice, keep the intended unified document active, and check its validation report |
-| Choose a connection | Select the model node and choose Active SillyTavern model or an available saved profile; inspect For Each helper bindings separately |
-| Incompatible input or missing terminal | Check artifact types, stage requirements, required pins, and the final Review / Publish Draft connection |
-| No recorded output | The step has not run, did not participate, or recording limits omitted it; select the intended target and inspect run details |
-| Stale result or disabled Apply | Semantic edits or changed host context invalidated the result; use a fresh owned Send before applying |
-| Missing Workflow Data | Authorize the named compatible target for the current user/chat/actor; imported target names are not automatic access grants |
-| A skipped system contributes unwanted fallback text | Set the optional Compose section’s Skipped source to Omit section |
-| Save failed or unconfirmed | Read the individual receipt in Preview; retry failed saves only where offered |
-| Lost track of the graph or panels | Press F to fit, or choose View → Reset panel layout |
-| A field edit did not reach the graph | Commit the field or use its Save action; unfinished JSON is still an editor draft |
+| Send ignores the workflow | Check Enable Lattice and the open document name, then validate. |
+| Run to here is disabled | Read its reason. The output may need a real Send, a completed reply, or missing setup. |
+| Choose a connection / unavailable profile | Select a working Active or saved profile on that model node; check For Each helper bindings separately. |
+| Incompatible input | Follow the wire and compare types. JSON Text needs decoding before a Data consumer. |
+| Missing required input / final review | Connect the required pins, confirm the stage, and ensure a genuine final Draft reaches Review / Publish. |
+| A system is skipped or blocks a consumer | Check Run this system, input optionality, and Compose's Skipped source setting. |
+| No recorded output | The step may not have run or participated. Select the right output and inspect Run details; recording limits may omit it. |
+| Stale result / Apply unavailable | Something changed after the result was produced. Make a fresh Send with the intended chat, actor, and workflow. |
+| Missing Workflow Data | Choose or authorize the compatible source for the current user/chat/actor. An imported name is not authorization. |
+| Recall does not appear in the reply | Check its queue/automatic condition, matching records, target, actor/presence, and wire into the operation that needs Guidance. |
+| Save failed or is unconfirmed | Read the individual receipt. Retry only where offered; an unknown result may need reconciliation. |
+| An edit did not take effect | Leave a normal field to commit it, or use its Save action. Invalid JSON is still a draft. |
+| You lost the graph or panel layout | Press F to fit, or use View → Reset panel layout. |
 
-For model/provider failures and host-save limits, use [Model setup and troubleshooting](native-workflows.md). For older installations, follow [migration and recovery](unified-workflows.md), keeping archived originals available.
+For a provider error, inspect the failing node's effective connection and model, its request limit, and the actual request report. [Model setup and troubleshooting](native-workflows.md) covers supported routes and host-save limits. For old workflow files, use [migration and recovery](unified-workflows.md) and keep an exported archive of their originals.
+
+When reporting an issue, include the Lattice version, what action failed, its plain-language error and Technical details, and a minimal portable workflow when useful. Inspect shared files/screenshots for story material before posting them.
 
 ## Keyboard and connection reference
 
+These shortcuts apply when the graph is focused, outside typing fields. Menus show the shortcuts beside their actions, and **Help → Keyboard shortcuts** provides an in-editor reference.
+
 | Gesture | Action |
 | --- | --- |
-| Empty-space drag | Rectangle-select intersecting cards |
-| Shift-click / Shift-rectangle | Add to selection |
-| Ctrl/Cmd-click | Toggle a card |
-| Ctrl/Cmd-rectangle | Add to selection |
-| Alt-click / Alt-rectangle | Remove from selection |
-| Middle-drag / Space + left-drag | Pan |
-| Wheel | Zoom around pointer |
-| [ / ] | Zoom out / in around the center of the focused graph or Node Guide example; ignored while typing or dragging |
-| Ctrl/Cmd+A | Select all cards |
-| C | Comment the selected nodes or add a comment in an editable graph |
-| F | Fit and center the selection, or fit the graph if nothing is selected; ignored while typing or dragging |
-| Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z | Undo / redo graph edits |
-| Ctrl/Cmd+C / X / V | Copy / cut / paste selection outside text editors |
-| F2 on selected node | Rename its presentation alias |
-| T | Target the selected node in Preview; press again to clear it, or select another node to move it; no selection clears the current target |
-| Shift+C on focused graph card | Toggle Compact card |
-| Click wire | Select a connection |
-| Shift/Ctrl-click wire | Extend connection selection |
-| Delete/Backspace | Immediately delete selected nodes or connections outside an editor; Undo restores them |
-| Alt-click wire / pin | Disconnect the wire / pin's attached bindings |
-| Ctrl-drag connected input | Move its binding to another compatible input |
-| Ctrl-drag output | Move its consumers to another compatible output |
-| Double-click direct wire | Insert a typed Reroute |
-| Right-click pin | Break bindings or navigate to a connected source |
-| Double-click subgraph | Open body in a graph tab |
-| Escape | Cancel an unfinished gesture or chooser |
+| Empty-space drag | Rectangle-select nodes. |
+| Shift-click / Shift-rectangle | Add to selection. |
+| Ctrl/Cmd-click | Toggle a node. |
+| Ctrl/Cmd-rectangle | Add to selection. |
+| Alt-click / Alt-rectangle | Remove from selection. |
+| Middle-drag / Space + left-drag | Pan. |
+| Wheel | Zoom around pointer. |
+| [ / ] | Zoom around the center of the focused graph or Node Guide example. |
+| F | Fit and center selection; fit graph if nothing is selected. |
+| Ctrl/Cmd+A | Select all. |
+| Ctrl/Cmd+Z / Ctrl/Cmd+Shift+Z | Undo / redo. |
+| Ctrl/Cmd+C / X / V | Copy / cut / paste. |
+| Ctrl/Cmd+D | Duplicate selection. |
+| Ctrl/Cmd+G / Ctrl/Cmd+Shift+G | Group / ungroup selection. |
+| C | Frame selected nodes with a comment, or add an empty comment. |
+| F2 | Rename the selected node's display name. |
+| Shift+C | Toggle Compact card on the focused graph card. |
+| R | Run to the selected node where the output supports a preview. |
+| T | Target the selected node in Preview; repeat to clear, or use another node to move the target. |
+| Click wire | Select a connection. |
+| Shift/Ctrl-click wire | Extend connection selection. |
+| Delete / Backspace | Delete selected nodes or connections; Undo restores them. |
+| Alt-click wire / pin | Disconnect the wire / pin's bindings. |
+| Ctrl-drag connected input | Move its binding to another compatible input. |
+| Ctrl-drag output | Move its consumers to another compatible output. |
+| Double-click direct wire | Insert a typed Reroute. |
+| Right-click pin | Break bindings or navigate to a connected source. |
+| Double-click subgraph | Open its body in a graph tab. |
+| Ctrl/Cmd+S | Save workflow, or Save As where direct saving is unavailable. |
+| Ctrl/Cmd+Shift+S | Save As in a browser with direct file access. |
+| Escape | Cancel an unfinished gesture or chooser. |
 
-Invalid or cancelled binding moves preserve the existing connections. Text inputs, search, and editable content retain normal keyboard editing behavior.
+Zoom/fit keys are ignored while typing or dragging. Invalid connection moves preserve the current wires. Context menus also support arrow keys, Enter, Home/End, and Escape; Right/Left enters or leaves output submenus.

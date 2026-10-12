@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { OPERATIONS } from '../src/workflow/catalog.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const documents = ['README.md', 'docs/README.md', 'docs/examples.md', 'docs/operators-manual.md', 'docs/node-reference.md', 'docs/lattice-workspace.md', 'docs/native-workflows.md', 'docs/development.md', 'docs/unified-workflows.md', 'docs/lattice-reference-library.md', 'docs/introspection-package.md', 'docs/story-systems.md', 'docs/media.md'];
+const documents = ['README.md', 'docs/README.md', 'docs/examples.md', 'docs/operators-manual.md', 'docs/node-reference.md', 'docs/lattice-workspace.md', 'docs/native-workflows.md', 'docs/development.md', 'docs/developer-guide.md', 'docs/unified-workflows.md', 'docs/lattice-reference-library.md', 'docs/introspection-package.md', 'docs/story-systems.md', 'docs/connection-comments.md', 'docs/media.md'];
 const texts = new Map(await Promise.all(documents.map(async path => [path, (await readFile(join(root, path), 'utf8')).replace(/\r\n?/g, '\n')])));
 const failures = [], images = new Set();
 let links = 0;
@@ -18,9 +18,13 @@ function anchors(text) {
     }));
 }
 for (const [path, text] of texts) {
-    if (/Silly\s*Canvas|ComfyTavern|\bfork\b/i.test(text)) failures.push(path + ': obsolete branding or interface reference');
-    for (const match of text.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/g)) {
-        const href = match[1];
+    if (/Silly\s*Canvas|ComfyTavern/i.test(text)) failures.push(path + ': obsolete branding or interface reference');
+    const references = [
+        ...[...text.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/g)].map(match => ({ href: match[1], image: match[0].startsWith('!') })),
+        ...[...text.matchAll(/<(?:img|a)\b[^>]*?\b(src|href)=["']([^"']+)["'][^>]*>/g)].map(match => ({ href: match[2], image: match[1] === 'src' })),
+    ];
+    for (const reference of references) {
+        const href = reference.href;
         if (/^https?:/.test(href)) continue;
         const [local, fragment] = href.split('#');
         const target = local ? resolve(root, dirname(path), decodeURIComponent(local)) : join(root, path);
@@ -29,14 +33,15 @@ for (const [path, text] of texts) {
         if (fragment && extname(target) === '.md') {
             if (!anchors((await readFile(target, 'utf8')).replace(/\r\n?/g, '\n')).has(fragment)) failures.push(path + ': missing anchor ' + href);
         }
-        if (match[0].startsWith('!')) {
+        if (reference.image || path === 'docs/media.md' && /\.(png|gif)$/i.test(local)) {
             if (!target.startsWith(join(root, 'docs', 'images'))) failures.push(path + ': screenshot outside current image set');
             images.add(target);
         }
     }
 }
-// The README introduces families; the node reference owns complete operation coverage.
-for (const guide of ['node-reference', 'unified-workflows']) if (!texts.get('README.md').includes('](docs/' + guide + '.md)')) failures.push('README missing guide ' + guide);
+// The README routes readers to the manual and developer guide. Detailed node
+// contracts remain in the reference; operators use the built-in ? guides.
+for (const guide of ['operators-manual', 'developer-guide']) if (!texts.get('README.md').includes('docs/' + guide + '.md')) failures.push('README missing guide ' + guide);
 const sharedHeadings = { Join: 'Join and Collect', Collect: 'Join and Collect', Append: 'Append and Combine', Combine: 'Append and Combine' };
 for (const operation of Object.values(OPERATIONS)) {
     const heading = sharedHeadings[operation.title] ?? operation.title;
