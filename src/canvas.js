@@ -207,7 +207,7 @@ export class Canvas {
     #drawNodeProfiles() { if (this.graph) this.layer.setNodeProfiles(this.#nodeProfileRows()); }
 
     #nodeProfileRows() {
-        if (!this.graph) return [];
+        if (!this.graph || !this.nodeProfiles.length) return [];
         const rect = this.host.getBoundingClientRect(), view = this.view, zoom = view.zoom || 1;
         const visibleBounds = { x: -view.x / zoom, y: -view.y / zoom, w: rect.width / zoom, h: rect.height / zoom };
         return this.nodeProfiles.flatMap(row => {
@@ -246,7 +246,7 @@ export class Canvas {
             this.host.style.backgroundPosition = at;
         }
         this.hooks.onView?.({ ...v, mode: this.mode });
-        if (drawProfiles) this.#drawNodeProfiles();
+        if (drawProfiles && this.nodeProfiles.length) this.#drawNodeProfiles();
     }
 
     toGraph(clientX, clientY) {

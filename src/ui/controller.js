@@ -574,6 +574,7 @@ function stillEditing(graph, epoch) { return isOpen() && current === graph && ui
 function mkBtn(icon, title, fn, cls = '') { const button = el('button', 'pc-btn menu_button ' + cls); button.type = 'button'; button.innerHTML = '<i class="fa-solid ' + icon + '"></i>'; button.title = title; button.addEventListener('click', fn); return button; }
 function build() {
     if (root) return;
+    let publishedCameraMode = null;
     workbench = createWorkbench({
         openExample: onOpenExample,
         refreshExamples: refreshExampleCatalog,
@@ -631,7 +632,10 @@ function build() {
             if (!restoringEditor && kind === 'node' && ['subgraph-input', 'subgraph-output'].includes(item?.type) && root.classList.contains('pc-details-hidden')) togglePane();
             updateSelectionCount();
         },
-        onView(camera) { workbench.update({ camera }); if (graphViews && !restoringEditor) { graphViews.updateView({ camera: { x: camera.x, y: camera.y, zoom: camera.zoom } }); persistGraphViews(false, true); } },
+        onView(camera) {
+            if (camera.mode !== publishedCameraMode) { publishedCameraMode = camera.mode; workbench.update({ camera }); }
+            if (graphViews && !restoringEditor) { graphViews.updateView({ camera: { x: camera.x, y: camera.y, zoom: camera.zoom } }); persistGraphViews(false, true); }
+        },
         onViewCommit: () => persistGraphViews(true),
         onOpen(node) { if (graphViews && node.type === 'subgraph') { const editor = graphViews.readEditor(); return editor.view.identity.kind === 'library' ? navigateGraphView('openLibrary', node.definition) : navigateGraphView('openInstance', [...(editor.view.identity.instancePath ?? []), node.id]); } showSettings({ kind: 'node', id: node.id }); },
         onToast: message => toast(message, 'error'), onReveal: showSettings,

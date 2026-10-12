@@ -1,0 +1,3539 @@
+{
+  "status": "complete",
+  "date": "2026-10-11T23:32:40.411Z",
+  "source": "F:\\git\\SillyCanvas\\.tmp\\performance-regression-2026-10-11\\current",
+  "reference": {
+    "kind": "snapshot-ref.txt",
+    "ref": "e740a6fd65594497668ff4e394c94ef04d82228e"
+  },
+  "bundleSha256": "8f6b05dbbc5e331ef9e91fd941e58fdc5de479981bf414a0cf632a4e636ed3a0",
+  "viewport": {
+    "width": 3840,
+    "height": 2160
+  },
+  "requestedDpr": 1,
+  "runtime": "v24.16.0",
+  "command": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "C:\\Users\\Keptin\\.codex\\worktrees\\high-resolution-performance\\SillyCanvas\\tools\\benchmark-viewport-performance.mjs",
+    "--source=F:/git/SillyCanvas/.tmp/performance-regression-2026-10-11/current",
+    "--output=docs/research/artifacts/high-resolution-2026-10-11/repeat-large-zoom-baseline",
+    "--sizes=500",
+    "--width=3840",
+    "--height=2160",
+    "--repeats=10",
+    "--motion-modes=zoom"
+  ],
+  "options": {
+    "sizes": [
+      500
+    ],
+    "motionModes": [
+      "zoom"
+    ],
+    "repeats": 10,
+    "frames": 45,
+    "eventsPerFrame": 6,
+    "warmupsPerCase": 1,
+    "disableCulling": false,
+    "cpuThrottlingRate": 1,
+    "reducedMotion": "reduce"
+  },
+  "hardware": {
+    "cpuModels": [
+      "AMD Ryzen 7 5800X 8-Core Processor             "
+    ],
+    "logicalCpus": 16,
+    "memoryBytes": 68626608128,
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "provenance": {
+    "files": [
+      {
+        "path": "dist/assets/pattern-worker-DYFOS1ZK.js",
+        "bytes": 1580,
+        "sha256": "8e3d5fd018c3b9cc98a725c1b001db3a6ff503f55a1f461958e9489fbe7b04fb"
+      },
+      {
+        "path": "dist/assets/text-rules-worker-CSfvTVmg.js",
+        "bytes": 2050,
+        "sha256": "16efba28630cb4d4b3e3caece86ccb9e499dc73487155c750dff1cca562647f1"
+      },
+      {
+        "path": "dist/lattice-ui.js",
+        "bytes": 1112031,
+        "sha256": "8f6b05dbbc5e331ef9e91fd941e58fdc5de479981bf414a0cf632a4e636ed3a0"
+      },
+      {
+        "path": "dist/lattice.css",
+        "bytes": 79442,
+        "sha256": "ad229d2826bd2222716f7bcab3c6013010a498a18379325e933f9b8429ffc8eb"
+      },
+      {
+        "path": "index.js",
+        "bytes": 8551,
+        "sha256": "d7f8af74aa96a1f2f4f4329f435e13edefef7631f27150a15cb98f845635b741"
+      },
+      {
+        "path": "manifest.json",
+        "bytes": 521,
+        "sha256": "861d0fa8f710ac025f3c2fe1d1ac9966f53bd5c4b2c2a57854e8cc7d9aab7e9c"
+      },
+      {
+        "path": "package-lock.json",
+        "bytes": 66645,
+        "sha256": "fb6caa1cdee705905b7980b1f0e9ec019cc7235fcaf18d133a69cd8a1431d8ca"
+      },
+      {
+        "path": "package.json",
+        "bytes": 1057,
+        "sha256": "437177402578862e55f37115458ba818a79f018723c5f1554aed86a817f7dbd3"
+      },
+      {
+        "path": "src/canvas.js",
+        "bytes": 82301,
+        "sha256": "d0943b9a37320b7e481a7bf679682316a65d3a96980855da948aac965e95b6eb"
+      },
+      {
+        "path": "src/state.js",
+        "bytes": 34819,
+        "sha256": "6eabda52d6789b1a2ce725785194343a8df6bfa1ed6ff2f80cae8f688312023c"
+      },
+      {
+        "path": "src/ui/controller.js",
+        "bytes": 181622,
+        "sha256": "4fd036f528de909447732efe33c37e3b00dcfcc3b268d766ca830b60954c5873"
+      },
+      {
+        "path": "src/ui/node-profile-preparation.js",
+        "bytes": 3684,
+        "sha256": "b27883a6fe21439dc614fb3831305b293ba23c70c0d6f2156625e652e565e06e"
+      },
+      {
+        "path": "src/ui/workspace-preparation.js",
+        "bytes": 50558,
+        "sha256": "f4ac66cdc8ce14dc2a270a16fa1852c1cd54f94937c0b8a5429a5f3b1f17b2b6"
+      },
+      {
+        "path": "src/canvas/camera.js",
+        "bytes": 1460,
+        "sha256": "5c040187806b20243209cb3d0c4da206cffeb48824f6950e152f05afcbc4477c"
+      },
+      {
+        "path": "src/canvas/comment-frames.js",
+        "bytes": 3763,
+        "sha256": "7e9b22577886fbb6a9acc08224a3c966becf9bacd9ae77ac2c792776c326a19c"
+      },
+      {
+        "path": "src/canvas/connection-route.js",
+        "bytes": 8123,
+        "sha256": "403e6dc39a6ba7d7f0d2f75e9bf22eaab7ff048c24f2e2cdfb6a423db7f2dbe0"
+      },
+      {
+        "path": "src/canvas/frame.js",
+        "bytes": 1299,
+        "sha256": "4648c3d13bf291ac54a5de89ec9544bce68d1ee7d42e07b07fffedf63bccccd4"
+      },
+      {
+        "path": "src/canvas/geometry.js",
+        "bytes": 1700,
+        "sha256": "053af63178f7a6ad9919f4a4944d407215d58f806b97e8ba4c7731f63828d3a3"
+      },
+      {
+        "path": "src/canvas/native-gestures.js",
+        "bytes": 20903,
+        "sha256": "9d8d5868cc7d90fad4ce1eeb32aec4942a78bd37f1338359e6a9e932ca68fea4"
+      },
+      {
+        "path": "src/canvas/pin-alignment.js",
+        "bytes": 3891,
+        "sha256": "6af011fd7d33a9adceea2a315f158e04a5da2b234febbef844af9721807a2742"
+      },
+      {
+        "path": "src/canvas/presentation.js",
+        "bytes": 4634,
+        "sha256": "ef75de7150b862a08cca1ce1ed306475b2cff4d1b4c95478f9bc340f2f050582"
+      },
+      {
+        "path": "src/canvas/retained-scene.js",
+        "bytes": 1993,
+        "sha256": "71b6dbb8d4b58676a7be4125bfc1b05519a0eef83b0f8c3dec53113f230b4e16"
+      },
+      {
+        "path": "src/canvas/selection.js",
+        "bytes": 666,
+        "sha256": "dec73a5ef85b030cfe3b9ea97990405c343906263ab43d883510dec07d13c1c4"
+      },
+      {
+        "path": "style.css",
+        "bytes": 57213,
+        "sha256": "55bc57b9034d66527f366fedfaee9b21d0f6f1535878d3690f096a1322da3244"
+      },
+      {
+        "path": "tests/browser/harness.html",
+        "bytes": 794,
+        "sha256": "d3fec09ac6706b6b0b5ade9c6ad0f20ca88726a9e99b1ed9b95cf05ea687a7d3"
+      },
+      {
+        "path": "tests/browser/harness.js",
+        "bytes": 4026,
+        "sha256": "34017331087014b91d5eadfd8810b04fa2511c310acb515c2595e116ed2d9eae"
+      },
+      {
+        "path": "tests/mock.js",
+        "bytes": 1491,
+        "sha256": "441c1cec27e39ee7451bca7ffa97e4f341059b1e9cbb9286764c232a65ff63e8"
+      },
+      {
+        "path": "ui/CanvasLayer.svelte",
+        "bytes": 5849,
+        "sha256": "184975aebb2a18c3f1db5a6e6dfe5c5a0d0785fce02b66d941ecd61f46d808eb"
+      },
+      {
+        "path": "ui/NodeCard.svelte",
+        "bytes": 4773,
+        "sha256": "8cb8b0e11181040f59c900737f4e664e93282de1bb263a77be59d960973db425"
+      },
+      {
+        "path": "ui/NodeProfilePicker.svelte",
+        "bytes": 15845,
+        "sha256": "f29ddb26344e24b03fa1c70d345339e983e037d253bd7e0641a71232857a61eb"
+      },
+      {
+        "path": "ui/entry.js",
+        "bytes": 2726,
+        "sha256": "46ca80e82c1b20bc65b34cc38213cb41c0e6e4598d43e8c5eff71d83a3d7cf83"
+      }
+    ],
+    "measurement": {
+      "path": "C:\\Users\\Keptin\\.codex\\worktrees\\high-resolution-performance\\SillyCanvas\\tools\\benchmark-viewport-performance.mjs",
+      "bytes": 26832,
+      "sha256": "95a9f241dd398552ed3fd8e2c1e5596f33ad4a902660a649c2e962b0ee3f1699"
+    },
+    "servedHarnessAdaptation": "Measure synthetic host save submissions before settings admission; forward legacy setGraph options; serve /scripts/user.js getCurrentUserHandle() returning default-user exactly as tools/capture-lattice-workspace.mjs."
+  },
+  "scope": "Mounted production controller and supplied dist/lattice-ui.js in the synthetic browser host. Enabled idle Compose cards and named Text chain; 10 cards use 5 columns and two rows, larger fixtures use a 10-column grid. Synthetic DOM mouse/wheel input, fixed 45 rAF frames with 6 events per frame; one warmup per case and plain timing samples only. Raw rAF intervals are paint-opportunity estimates, not INP. CDP duration deltas cover gesture down, live motion, release and two settling rAFs; save-boundary waiting and geometry/visibility checks occur afterward. Host save submission is not disk acknowledgment. Culling-disabled samples force card opacity to 1!important outside the timing window, then restore it. Provider calls and external requests are prohibited.",
+  "errors": [],
+  "blocked": [],
+  "httpErrors": [],
+  "rows": [
+    {
+      "size": 500,
+      "mode": "zoom",
+      "samples": [
+        {
+          "repeat": 0,
+          "downMs": 0,
+          "thresholdDelayMs": 0.20000004768371582,
+          "thresholdSyncMs": 0.19999992847442627,
+          "thresholdSettledMs": 19.299999952316284,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.514000000001033,
+            16.69999999999891,
+            50,
+            50,
+            16.700000000000728,
+            33.29999999999927,
+            16.700000000000728,
+            33.29999999999927,
+            33.400000000001455,
+            33.20000000000073,
+            16.69999999999709,
+            33.400000000001455,
+            16.700000000000728,
+            33.29999999999927,
+            16.700000000000728,
+            33.29999999999927,
+            33.400000000001455,
+            33.19999999999709,
+            16.700000000000728,
+            33.29999999999927,
+            16.700000000000728,
+            33.29999999999927,
+            16.700000000000728,
+            33.400000000001455,
+            16.599999999998545,
+            50,
+            16.700000000000728,
+            33.29999999999927,
+            16.700000000000728,
+            33.29999999999927,
+            50,
+            33.29999999999927,
+            16.700000000000728,
+            33.400000000001455,
+            33.20000000000073,
+            16.799999999999272,
+            33.20000000000073,
+            16.69999999999709,
+            33.400000000001455,
+            16.599999999998545,
+            33.30000000000291,
+            33.39999999999782,
+            33.29999999999927,
+            16.700000000000728
+          ],
+          "handlers": [
+            0.19999992847442627,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.19999992847442627,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.09999990463256836,
+            0,
+            0.20000004768371582,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.09999990463256836,
+            0.09999990463256836,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.10000002384185791
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 270.07599999999957,
+          "scriptMs": 38.44199999999998,
+          "layoutMs": 0,
+          "styleMs": 12.073,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 238.39999997615814,
+            "finalSubmissionAfterReleaseMs": 238.39999997615814,
+            "viewCommitAfterLastInputMs": 188.60000002384186,
+            "viewCommitSyncMs": 49.799999952316284,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        },
+        {
+          "repeat": 1,
+          "downMs": 0,
+          "thresholdDelayMs": 0.10000002384185791,
+          "thresholdSyncMs": 0.19999992847442627,
+          "thresholdSettledMs": 18.699999928474426,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.69999999999709,
+            16.600000000002183,
+            33.29999999999927,
+            50.099999999998545,
+            16.600000000002183,
+            33.29999999999927,
+            16.700000000000728,
+            33.29999999999927,
+            33.29999999999927,
+            33.400000000001455,
+            33.29999999999927,
+            33.29999999999927,
+            33.400000000001455,
+            33.29999999999927,
+            33.29999999999927,
+            66.70000000000073,
+            33.29999999999927,
+            33.29999999999927,
+            33.400000000001455,
+            33.400000000001455,
+            33.29999999999927,
+            33.29999999999927,
+            16.700000000000728,
+            33.29999999999927,
+            33.29999999999927,
+            33.400000000001455,
+            16.599999999998545,
+            50.10000000000218,
+            16.5,
+            33.39999999999782,
+            16.700000000000728,
+            33.400000000001455,
+            33.29999999999927,
+            33.29999999999927,
+            16.700000000000728,
+            33.29999999999927,
+            33.29999999999927,
+            33.400000000001455,
+            16.599999999998545,
+            33.29999999999927,
+            16.700000000000728,
+            33.400000000001455,
+            33.29999999999927,
+            33.29999999999927
+          ],
+          "handlers": [
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.10000002384185791,
+            0,
+            0,
+            0,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.19999992847442627,
+            0.19999992847442627,
+            0,
+            0.09999990463256836,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.09999990463256836,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.09999990463256836,
+            0
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 318.9360000000008,
+          "scriptMs": 38.305999999999955,
+          "layoutMs": 0,
+          "styleMs": 12.094999999999967,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 237.30000007152557,
+            "finalSubmissionAfterReleaseMs": 237.30000007152557,
+            "viewCommitAfterLastInputMs": 181.10000002384186,
+            "viewCommitSyncMs": 56.200000047683716,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        },
+        {
+          "repeat": 2,
+          "downMs": 0,
+          "thresholdDelayMs": 0.20000004768371582,
+          "thresholdSyncMs": 0.09999990463256836,
+          "thresholdSettledMs": 18.399999976158142,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.599999999998545,
+            16.700000000000728,
+            50,
+            50,
+            16.599999999998545,
+            33.400000000001455,
+            16.599999999998545,
+            33.400000000001455,
+            16.700000000000728,
+            33.29999999999927,
+            33.29999999999927,
+            33.400000000001455,
+            16.599999999998545,
+            33.400000000001455,
+            16.599999999998545,
+            33.400000000001455,
+            16.69999999999709,
+            33.30000000000291,
+            33.29999999999927,
+            33.29999999999927,
+            16.700000000000728,
+            33.39999999999782,
+            33.30000000000291,
+            33.29999999999927,
+            16.599999999998545,
+            33.400000000001455,
+            16.700000000000728,
+            33.19999999999709,
+            33.400000000001455,
+            33.400000000001455,
+            16.599999999998545,
+            33.29999999999927,
+            16.700000000000728,
+            33.400000000001455,
+            33.299999999995634,
+            50,
+            16.60000000000582,
+            50.099999999998545,
+            16.599999999998545,
+            50,
+            16.69999999999709,
+            33.30000000000291,
+            16.599999999998545,
+            33.400000000001455
+          ],
+          "handlers": [
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.19999992847442627,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.09999990463256836,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0,
+            0.19999992847442627,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.19999992847442627,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0,
+            0.10000002384185791,
+            0,
+            0.19999992847442627
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 287.99700000000075,
+          "scriptMs": 37.85699999999981,
+          "layoutMs": 0,
+          "styleMs": 12.068999999999996,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 238.30000007152557,
+            "finalSubmissionAfterReleaseMs": 238.30000007152557,
+            "viewCommitAfterLastInputMs": 189,
+            "viewCommitSyncMs": 49.300000071525574,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        },
+        {
+          "repeat": 3,
+          "downMs": 0,
+          "thresholdDelayMs": 0.19999992847442627,
+          "thresholdSyncMs": 0.10000002384185791,
+          "thresholdSettledMs": 18.90000009536743,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.599999999998545,
+            16.700000000004366,
+            50,
+            50,
+            16.599999999998545,
+            33.400000000001455,
+            33.299999999995634,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            16.69999999999709,
+            33.400000000001455,
+            16.599999999998545,
+            16.60000000000582,
+            50.099999999998545,
+            33.299999999995634,
+            16.60000000000582,
+            33.39999999999418,
+            33.400000000001455,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            16.599999999998545,
+            33.30000000000291,
+            16.69999999999709,
+            33.400000000001455,
+            33.299999999995634,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            33.30000000000291,
+            33.299999999995634,
+            16.700000000004366,
+            50.099999999998545,
+            16.69999999999709,
+            33.200000000004366,
+            33.299999999995634,
+            33.400000000001455,
+            16.599999999998545,
+            33.400000000001455,
+            16.69999999999709,
+            49.900000000001455
+          ],
+          "handlers": [
+            0.10000002384185791,
+            0.09999990463256836,
+            0,
+            0,
+            0.09999990463256836,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.09999990463256836,
+            0,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.19999992847442627,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.09999990463256836,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 285.21599999999836,
+          "scriptMs": 37.46900000000019,
+          "layoutMs": 0,
+          "styleMs": 11.839000000000045,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 236,
+            "finalSubmissionAfterReleaseMs": 236,
+            "viewCommitAfterLastInputMs": 184.89999997615814,
+            "viewCommitSyncMs": 51.10000002384186,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        },
+        {
+          "repeat": 4,
+          "downMs": 0,
+          "thresholdDelayMs": 0.10000002384185791,
+          "thresholdSyncMs": 0.10000002384185791,
+          "thresholdSettledMs": 18.600000023841858,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.700000000004366,
+            16.599999999998545,
+            50,
+            50,
+            16.69999999999709,
+            33.30000000000291,
+            16.599999999998545,
+            33.400000000001455,
+            16.69999999999709,
+            33.30000000000291,
+            33.400000000001455,
+            33.299999999995634,
+            33.30000000000291,
+            33.299999999995634,
+            33.400000000001455,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            33.299999999995634,
+            33.400000000001455,
+            16.599999999998545,
+            33.400000000001455,
+            16.599999999998545,
+            16.700000000004366,
+            50,
+            33.299999999995634,
+            16.700000000004366,
+            33.299999999995634,
+            33.30000000000291,
+            33.400000000001455,
+            16.69999999999709,
+            33.30000000000291,
+            33.299999999995634,
+            33.30000000000291,
+            16.69999999999709,
+            33.400000000001455,
+            16.599999999998545,
+            33.30000000000291,
+            16.69999999999709,
+            33.400000000001455,
+            33.30000000000291,
+            50,
+            33.299999999995634,
+            16.700000000004366
+          ],
+          "handlers": [
+            0.10000002384185791,
+            0,
+            0.20000004768371582,
+            0.09999990463256836,
+            0.19999992847442627,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.09999990463256836,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.20000004768371582,
+            0,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 272.3089999999999,
+          "scriptMs": 36.127000000000024,
+          "layoutMs": 0,
+          "styleMs": 11.747000000000064,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 230.5,
+            "finalSubmissionAfterReleaseMs": 230.5,
+            "viewCommitAfterLastInputMs": 180.79999995231628,
+            "viewCommitSyncMs": 49.700000047683716,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        },
+        {
+          "repeat": 5,
+          "downMs": 0,
+          "thresholdDelayMs": 0.09999990463256836,
+          "thresholdSyncMs": 0.20000004768371582,
+          "thresholdSettledMs": 19.700000047683716,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.599999999998545,
+            16.700000000004366,
+            49.89999999999418,
+            50.10000000000582,
+            16.599999999998545,
+            33.299999999995634,
+            33.400000000001455,
+            16.599999999998545,
+            33.30000000000291,
+            33.400000000001455,
+            16.69999999999709,
+            33.400000000001455,
+            16.599999999998545,
+            33.30000000000291,
+            33.299999999995634,
+            33.400000000001455,
+            33.30000000000291,
+            33.400000000001455,
+            16.599999999998545,
+            33.299999999995634,
+            16.700000000004366,
+            50,
+            16.69999999999709,
+            33.30000000000291,
+            16.599999999998545,
+            16.69999999999709,
+            50,
+            33.30000000000291,
+            16.80000000000291,
+            33.299999999995634,
+            33.30000000000291,
+            33.299999999995634,
+            16.700000000004366,
+            33.299999999995634,
+            33.30000000000291,
+            33.400000000001455,
+            16.69999999999709,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            50,
+            33.400000000001455,
+            33.19999999999709,
+            33.400000000001455
+          ],
+          "handlers": [
+            0.20000004768371582,
+            0.20000004768371582,
+            0.09999990463256836,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0,
+            0,
+            0,
+            0.10000002384185791,
+            0,
+            0,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 285.12800000000027,
+          "scriptMs": 37.694000000000116,
+          "layoutMs": 0,
+          "styleMs": 12.460999999999833,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 234.30000007152557,
+            "finalSubmissionAfterReleaseMs": 234.30000007152557,
+            "viewCommitAfterLastInputMs": 184.20000004768372,
+            "viewCommitSyncMs": 50.10000002384186,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        },
+        {
+          "repeat": 6,
+          "downMs": 0,
+          "thresholdDelayMs": 0.10000002384185791,
+          "thresholdSyncMs": 0.19999992847442627,
+          "thresholdSettledMs": 18.799999952316284,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.69999999999709,
+            16.599999999998545,
+            50,
+            50,
+            16.700000000004366,
+            33.299999999995634,
+            16.700000000004366,
+            33.299999999995634,
+            16.700000000004366,
+            33.299999999995634,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            33.400000000001455,
+            16.599999999998545,
+            33.299999999995634,
+            33.400000000001455,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            33.299999999995634,
+            33.400000000001455,
+            16.700000000004366,
+            33.19999999999709,
+            16.69999999999709,
+            33.30000000000291,
+            16.80000000000291,
+            33.299999999995634,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291,
+            33.400000000001455,
+            16.599999999998545,
+            33.299999999995634,
+            16.700000000004366,
+            33.400000000001455,
+            16.599999999998545,
+            33.400000000001455,
+            33.299999999995634,
+            33.30000000000291,
+            16.69999999999709,
+            33.30000000000291
+          ],
+          "handlers": [
+            0.19999992847442627,
+            0.20000004768371582,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.09999990463256836,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.09999990463256836,
+            0.19999992847442627,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.20000004768371582,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.20000004768371582,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.10000002384185791,
+            0,
+            0.10000002384185791
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 269.6189999999987,
+          "scriptMs": 35.982999999999876,
+          "layoutMs": 0,
+          "styleMs": 11.803000000000008,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 239.10000002384186,
+            "finalSubmissionAfterReleaseMs": 239.10000002384186,
+            "viewCommitAfterLastInputMs": 188.10000002384186,
+            "viewCommitSyncMs": 51,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        },
+        {
+          "repeat": 7,
+          "downMs": 0,
+          "thresholdDelayMs": 0.10000002384185791,
+          "thresholdSyncMs": 0.19999992847442627,
+          "thresholdSettledMs": 20,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.614000000001397,
+            16.69999999999709,
+            50,
+            50,
+            16.69999999999709,
+            33.30000000000291,
+            33.30000000000291,
+            33.39999999999418,
+            33.30000000000291,
+            33.39999999999418,
+            16.60000000000582,
+            33.30000000000291,
+            33.29999999998836,
+            33.30000000000291,
+            33.40000000000873,
+            33.29999999998836,
+            33.40000000000873,
+            33.30000000000291,
+            16.69999999999709,
+            49.89999999999418,
+            16.69999999999709,
+            50,
+            33.40000000000873,
+            33.30000000000291,
+            16.59999999999127,
+            50.10000000000582,
+            16.69999999999709,
+            49.89999999999418,
+            16.70000000001164,
+            50,
+            33.29999999998836,
+            33.30000000000291,
+            16.69999999999709,
+            33.40000000000873,
+            33.30000000000291,
+            33.39999999999418,
+            33.19999999999709,
+            50,
+            16.80000000000291,
+            33.19999999999709,
+            16.69999999999709,
+            33.30000000000291,
+            33.40000000000873,
+            33.29999999998836
+          ],
+          "handlers": [
+            0.19999992847442627,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.09999990463256836,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.20000004768371582,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.09999990463256836,
+            0.2999999523162842,
+            0.20000004768371582,
+            0.20000004768371582,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.19999992847442627,
+            0,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.10000002384185791
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 339.96799999999894,
+          "scriptMs": 41.43299999999961,
+          "layoutMs": 0,
+          "styleMs": 13.006000000000073,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 249.5,
+            "finalSubmissionAfterReleaseMs": 249.5,
+            "viewCommitAfterLastInputMs": 189.19999992847443,
+            "viewCommitSyncMs": 60.300000071525574,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        },
+        {
+          "repeat": 8,
+          "downMs": 0,
+          "thresholdDelayMs": 0.20000004768371582,
+          "thresholdSyncMs": 0.19999992847442627,
+          "thresholdSettledMs": 19.399999976158142,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.69999999999709,
+            16.60000000000582,
+            66.69999999999709,
+            50,
+            33.30000000000291,
+            33.29999999998836,
+            33.30000000000291,
+            33.40000000000873,
+            33.39999999999418,
+            33.30000000000291,
+            33.30000000000291,
+            33.39999999999418,
+            16.60000000000582,
+            33.29999999998836,
+            33.40000000000873,
+            50,
+            16.69999999999709,
+            50,
+            33.30000000000291,
+            33.30000000000291,
+            16.69999999999709,
+            50,
+            16.69999999999709,
+            49.89999999999418,
+            16.70000000001164,
+            50,
+            16.59999999999127,
+            50,
+            16.69999999999709,
+            50,
+            33.40000000000873,
+            33.30000000000291,
+            33.29999999998836,
+            50,
+            33.30000000000291,
+            33.40000000000873,
+            16.59999999999127,
+            16.69999999999709,
+            100,
+            33.40000000000873,
+            33.30000000000291,
+            33.29999999998836,
+            33.30000000000291,
+            33.40000000000873
+          ],
+          "handlers": [
+            0.19999992847442627,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.2999999523162842,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.19999992847442627,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.19999992847442627,
+            0.10000002384185791,
+            0,
+            0.09999990463256836,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.09999990463256836
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 335.4050000000086,
+          "scriptMs": 39.34800000000038,
+          "layoutMs": 0,
+          "styleMs": 12.805999999999873,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 230.90000009536743,
+            "finalSubmissionAfterReleaseMs": 230.90000009536743,
+            "viewCommitAfterLastInputMs": 181.80000007152557,
+            "viewCommitSyncMs": 49.10000002384186,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        },
+        {
+          "repeat": 9,
+          "downMs": 0,
+          "thresholdDelayMs": 0.10000002384185791,
+          "thresholdSyncMs": 0.10000002384185791,
+          "thresholdSettledMs": 18.700000047683716,
+          "releaseSyncMs": null,
+          "releaseSettledMs": null,
+          "savesDuringLiveMotion": 0,
+          "intervals": [
+            16.60000000000582,
+            16.59999999999127,
+            16.69999999999709,
+            33.40000000000873,
+            33.30000000000291,
+            33.39999999999418,
+            33.19999999999709,
+            16.69999999999709,
+            50,
+            16.70000000001164,
+            33.29999999998836,
+            33.30000000000291,
+            33.40000000000873,
+            33.39999999999418,
+            33.19999999999709,
+            33.40000000000873,
+            33.29999999998836,
+            16.70000000001164,
+            33.29999999998836,
+            16.70000000001164,
+            33.39999999999418,
+            33.19999999999709,
+            16.69999999999709,
+            33.30000000000291,
+            33.40000000000873,
+            16.59999999999127,
+            33.40000000000873,
+            16.59999999999127,
+            33.40000000000873,
+            33.29999999998836,
+            16.60000000000582,
+            33.39999999999418,
+            33.40000000000873,
+            16.59999999999127,
+            33.30000000000291,
+            33.30000000000291,
+            33.39999999999418,
+            16.60000000000582,
+            33.39999999999418,
+            16.60000000000582,
+            33.39999999999418,
+            33.30000000000291,
+            33.40000000000873,
+            16.59999999999127
+          ],
+          "handlers": [
+            0.10000002384185791,
+            0.19999992847442627,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582,
+            0,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.10000002384185791,
+            0,
+            0.20000004768371582,
+            0.09999990463256836,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.10000002384185791,
+            0.20000004768371582,
+            0.20000004768371582,
+            0,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.09999990463256836,
+            0.19999992847442627,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.10000002384185791,
+            0,
+            0.20000004768371582,
+            0.20000004768371582,
+            0,
+            0,
+            0.10000002384185791,
+            0.09999990463256836,
+            0,
+            0,
+            0.20000004768371582,
+            0.10000002384185791,
+            0.10000002384185791,
+            0.20000004768371582
+          ],
+          "allVisibleDuringPan": null,
+          "providerCalls": 0,
+          "taskMs": 289.0680000000003,
+          "scriptMs": 36.86100000000003,
+          "layoutMs": 0,
+          "styleMs": 11.724999999999985,
+          "layoutCount": 0,
+          "styleRecalcCount": 46,
+          "before": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 80,
+            "offscreen": 420,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 0,
+              "y": 0,
+              "zoom": 1
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "after": {
+            "cards": 500,
+            "wires": 499,
+            "visible": 90,
+            "offscreen": 410,
+            "fullyVisible": 80,
+            "markedOffscreen": 0,
+            "opacitySuppressed": 0,
+            "view": {
+              "x": 14.015145533070609,
+              "y": 0.4031429341154329,
+              "zoom": 0.9762857097579181
+            },
+            "host": {
+              "x": 9,
+              "y": 383,
+              "width": 3550,
+              "height": 1766
+            },
+            "extents": {
+              "left": 80,
+              "top": 100,
+              "right": 2906.53125,
+              "bottom": 10470
+            },
+            "geometry": {
+              "node": {
+                "x": 80,
+                "y": 100
+              },
+              "width": 126.53125,
+              "height": 80,
+              "pins": [
+                {
+                  "id": "data",
+                  "dir": "in",
+                  "local": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 12,
+                    "y": 40.09375
+                  },
+                  "graph": {
+                    "id": "data",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "data",
+                    "x": 92,
+                    "y": 140.09375
+                  }
+                },
+                {
+                  "id": "section.Text",
+                  "dir": "in",
+                  "local": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 12,
+                    "y": 64.09375
+                  },
+                  "graph": {
+                    "id": "section.Text",
+                    "direction": "in",
+                    "side": "left",
+                    "kind": "text",
+                    "x": 92,
+                    "y": 164.09375
+                  }
+                },
+                {
+                  "id": "out",
+                  "dir": "out",
+                  "local": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 114.53125,
+                    "y": 41.59375
+                  },
+                  "graph": {
+                    "id": "out",
+                    "direction": "out",
+                    "side": "right",
+                    "kind": "text",
+                    "x": 194.53125,
+                    "y": 141.59375
+                  }
+                }
+              ]
+            }
+          },
+          "retained": {
+            "n0Node": true,
+            "n0Pins": true,
+            "allNodes": true,
+            "n0CachedGeometry": true,
+            "n0GraphEndpoints": true
+          },
+          "saveBoundary": {
+            "calls": 1,
+            "finalSubmissionAfterLastInputMs": 232.69999992847443,
+            "finalSubmissionAfterReleaseMs": 232.69999992847443,
+            "viewCommitAfterLastInputMs": 180.79999995231628,
+            "viewCommitSyncMs": 51.89999997615814,
+            "commits": 1,
+            "kind": "synthetic host submission; no disk acknowledgment"
+          }
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "size": 500,
+      "mode": "zoom",
+      "repeats": 10,
+      "frameMedianMs": 33.29999999999927,
+      "frameP95Ms": 50,
+      "frameWorstMs": 100,
+      "framesOver20Ms": 292,
+      "framesOver25Ms": 292,
+      "handlerP95Ms": 0.20000004768371582,
+      "handlerWorstMs": 0.2999999523162842,
+      "taskMedianMs": 285.21599999999836,
+      "taskP95Ms": 339.96799999999894,
+      "scriptMedianMs": 37.694000000000116,
+      "scriptP95Ms": 41.43299999999961,
+      "layoutMedianMs": 0,
+      "layoutP95Ms": 0,
+      "styleMedianMs": 12.068999999999996,
+      "styleP95Ms": 13.006000000000073,
+      "downMedianMs": 0,
+      "downP95Ms": 0,
+      "thresholdSyncMedianMs": 0.19999992847442627,
+      "thresholdSyncP95Ms": 0.20000004768371582,
+      "releaseSyncMedianMs": null,
+      "releaseSyncP95Ms": null,
+      "releaseSettledMedianMs": null,
+      "releaseSettledP95Ms": null
+    }
+  ],
+  "browser": {
+    "version": "151.0.7922.34",
+    "executablePath": "C:\\Users\\Keptin\\AppData\\Local\\ms-playwright\\chromium-1234\\chrome-win64\\chrome.exe",
+    "playwrightVersion": "1.62.1",
+    "protocolVersion": "1.3",
+    "product": "HeadlessChrome/151.0.7922.34",
+    "revision": "@782af9cb30a53f54487e5d2e44738645a8ec457c",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+    "jsVersion": "15.1.206.8"
+  },
+  "gpu": {
+    "devices": [
+      {
+        "vendorId": 65535,
+        "deviceId": 65535,
+        "subSysId": 0,
+        "revision": 0,
+        "vendorString": "Google Inc. (Google)",
+        "deviceString": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver-5.0.0)",
+        "driverVendor": "SwANGLE",
+        "driverVersion": "5.0.0"
+      }
+    ],
+    "featureStatus": {
+      "2d_canvas": "unavailable_software",
+      "direct_rendering_display_compositor": "disabled_off_ok",
+      "gpu_compositing": "disabled_software",
+      "multiple_raster_threads": "enabled_on",
+      "opengl": "disabled_off",
+      "rasterization": "disabled_software",
+      "raw_draw": "disabled_off_ok",
+      "skia_graphite": "disabled_off",
+      "trees_in_viz": "disabled_off",
+      "video_decode": "disabled_software",
+      "video_encode": "disabled_software",
+      "webgl": "unavailable_software",
+      "webgpu": "unavailable_software",
+      "webnn": "unavailable_software"
+    },
+    "auxAttributes": {
+      "amdSwitchable": false,
+      "bgra8OverlaySupport": "NONE",
+      "canSupportThreadedTextureMailbox": false,
+      "directComposition": false,
+      "directMLFeatureLevel": "Not supported",
+      "directRenderingVersion": "",
+      "displayType": "ANGLE_SWIFTSHADER",
+      "dx12FeatureLevel": "Not supported",
+      "glExtensions": "GL_AMD_performance_monitor GL_ANGLE_base_vertex_base_instance_shader_builtin GL_ANGLE_blob_cache GL_ANGLE_client_arrays GL_ANGLE_clip_cull_distance GL_ANGLE_compressed_texture_etc GL_ANGLE_copy_texture_3d GL_ANGLE_depth_texture GL_ANGLE_framebuffer_blit GL_ANGLE_framebuffer_multisample GL_ANGLE_get_image GL_ANGLE_get_serialized_context_string GL_ANGLE_get_tex_level_parameter GL_ANGLE_instanced_arrays GL_ANGLE_memory_object_flags GL_ANGLE_memory_size GL_ANGLE_multi_draw GL_ANGLE_pack_reverse_row_order GL_ANGLE_polygon_mode GL_ANGLE_program_binary_readiness_query GL_ANGLE_program_cache_control GL_ANGLE_read_only_depth_stencil_feedback_loops GL_ANGLE_relaxed_vertex_attribute_type GL_ANGLE_renderability_validation GL_ANGLE_request_extension GL_ANGLE_rgbx_internal_format GL_ANGLE_robust_client_memory GL_ANGLE_robust_fragment_shader_output GL_ANGLE_robust_resource_initialization GL_ANGLE_shader_pixel_local_storage GL_ANGLE_shader_pixel_local_storage_coherent GL_ANGLE_stencil_texturing GL_ANGLE_texture_compression_dxt3 GL_ANGLE_texture_compression_dxt5 GL_ANGLE_texture_multisample GL_ANGLE_texture_usage GL_ANGLE_translated_shader_source GL_ANGLE_vulkan_image GL_ANGLE_yuv_internal_format GL_APPLE_clip_distance GL_ARM_rgba8 GL_ARM_shader_framebuffer_fetch GL_ARM_shader_framebuffer_fetch_depth_stencil GL_CHROMIUM_bind_generates_resource GL_CHROMIUM_bind_uniform_location GL_CHROMIUM_copy_compressed_texture GL_CHROMIUM_copy_texture GL_CHROMIUM_lose_context GL_EXT_EGL_image_array GL_EXT_EGL_image_external_wrap_modes GL_EXT_EGL_image_storage GL_EXT_base_instance GL_EXT_blend_minmax GL_EXT_buffer_storage GL_EXT_clear_texture GL_EXT_clip_control GL_EXT_clip_cull_distance GL_EXT_color_buffer_float GL_EXT_color_buffer_half_float GL_EXT_compressed_ETC1_RGB8_sub_texture GL_EXT_conservative_depth GL_EXT_copy_image GL_EXT_debug_label GL_EXT_debug_marker GL_EXT_depth_clamp GL_EXT_discard_framebuffer GL_EXT_disjoint_timer_query GL_EXT_draw_buffers GL_EXT_draw_buffers_indexed GL_EXT_draw_elements_base_vertex GL_EXT_float_blend GL_EXT_frag_depth GL_EXT_instanced_arrays GL_EXT_map_buffer_range GL_EXT_memory_object GL_EXT_occlusion_query_boolean GL_EXT_polygon_offset_clamp GL_EXT_read_format_bgra GL_EXT_robustness GL_EXT_sRGB GL_EXT_sRGB_write_control GL_EXT_semaphore GL_EXT_separate_shader_objects GL_EXT_shader_framebuffer_fetch GL_EXT_shader_framebuffer_fetch_non_coherent GL_EXT_shader_non_constant_global_initializers GL_EXT_shader_texture_lod GL_EXT_shadow_samplers GL_EXT_texture_border_clamp GL_EXT_texture_compression_bptc GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_rgtc GL_EXT_texture_compression_s3tc_srgb GL_EXT_texture_cube_map_array GL_EXT_texture_filter_anisotropic GL_EXT_texture_format_BGRA8888 GL_EXT_texture_lod_bias GL_EXT_texture_mirror_clamp_to_edge GL_EXT_texture_rg GL_EXT_texture_sRGB_R8 GL_EXT_texture_sRGB_RG8 GL_EXT_texture_sRGB_decode GL_EXT_texture_shadow_lod GL_EXT_texture_storage GL_EXT_texture_type_2_10_10_10_REV GL_EXT_unpack_subimage GL_KHR_blend_equation_advanced GL_KHR_debug GL_KHR_robust_buffer_access_behavior GL_KHR_robustness GL_KHR_texture_compression_astc_ldr GL_NV_fence GL_NV_framebuffer_blit GL_NV_pack_subimage GL_NV_pixel_buffer_object GL_NV_polygon_mode GL_NV_read_depth GL_NV_read_depth_stencil GL_NV_read_stencil GL_NV_shader_noperspective_interpolation GL_OES_EGL_image GL_OES_EGL_image_external GL_OES_EGL_image_external_essl3 GL_OES_EGL_sync GL_OES_compressed_EAC_R11_signed_texture GL_OES_compressed_EAC_R11_unsigned_texture GL_OES_compressed_EAC_RG11_signed_texture GL_OES_compressed_EAC_RG11_unsigned_texture GL_OES_compressed_ETC1_RGB8_texture GL_OES_compressed_ETC2_RGB8_texture GL_OES_compressed_ETC2_RGBA8_texture GL_OES_compressed_ETC2_punchthroughA_RGBA8_texture GL_OES_compressed_ETC2_punchthroughA_sRGB8_alpha_texture GL_OES_compressed_ETC2_sRGB8_alpha8_texture GL_OES_compressed_ETC2_sRGB8_texture GL_OES_compressed_paletted_texture GL_OES_copy_image GL_OES_depth24 GL_OES_depth32 GL_OES_depth_texture GL_OES_depth_texture_cube_map GL_OES_draw_buffers_indexed GL_OES_draw_elements_base_vertex GL_OES_element_index_uint GL_OES_fbo_render_mipmap GL_OES_get_program_binary GL_OES_mapbuffer GL_OES_packed_depth_stencil GL_OES_required_internalformat GL_OES_rgb8_rgba8 GL_OES_sample_shading GL_OES_sample_variables GL_OES_shader_multisample_interpolation GL_OES_standard_derivatives GL_OES_surfaceless_context GL_OES_texture_3D GL_OES_texture_border_clamp GL_OES_texture_cube_map_array GL_OES_texture_float GL_OES_texture_float_linear GL_OES_texture_half_float GL_OES_texture_half_float_linear GL_OES_texture_npot GL_OES_texture_stencil8 GL_OES_texture_storage_multisample_2d_array GL_OES_vertex_array_object GL_OES_vertex_half_float GL_OES_vertex_type_10_10_10_2 GL_OVR_multiview GL_OVR_multiview2 GL_QCOM_texture_lod_bias ",
+      "glImplementationParts": "(gl=egl-angle,angle=swiftshader)",
+      "glRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver-5.0.0)",
+      "glResetNotificationStrategy": 33362,
+      "glVendor": "Google Inc. (Google)",
+      "glVersion": "OpenGL ES 3.0 (ANGLE 2.1.28222 git hash: 6dab7c7e742b)",
+      "glWsExtensions": "EGL_EXT_create_context_robustness EGL_ANGLE_surface_orientation EGL_KHR_create_context EGL_KHR_image EGL_KHR_image_base EGL_EXT_image_gl_colorspace EGL_KHR_gl_colorspace EGL_KHR_gl_texture_2D_image EGL_KHR_gl_texture_cubemap_image EGL_KHR_gl_renderbuffer_image EGL_KHR_get_all_proc_addresses EGL_KHR_fence_sync EGL_KHR_wait_sync EGL_ANGLE_create_context_webgl_compatibility EGL_CHROMIUM_create_context_bind_generates_resource EGL_KHR_swap_buffers_with_damage EGL_EXT_pixel_format_float EGL_KHR_surfaceless_context EGL_ANGLE_display_texture_share_group EGL_ANGLE_display_semaphore_share_group EGL_ANGLE_create_context_client_arrays EGL_ANGLE_program_cache_control EGL_ANGLE_robust_resource_initialization EGL_ANGLE_create_context_extensions_enabled EGL_ANDROID_blob_cache EGL_ANDROID_recordable EGL_ANGLE_create_context_backwards_compatible EGL_KHR_no_config_context EGL_IMG_context_priority EGL_KHR_create_context_no_error EGL_KHR_reusable_sync EGL_EXT_buffer_age EGL_ANGLE_create_surface_swap_interval EGL_ANGLE_vulkan_image EGL_KHR_partial_update EGL_ANGLE_global_fence_sync EGL_ANGLE_memory_usage_report ",
+      "glWsVendor": "Google Inc. (Google)",
+      "glWsVersion": "1.5 (ANGLE 2.1.28222 git hash: 6dab7c7e742b)",
+      "inProcessGpu": false,
+      "initializationTime": 0.090325,
+      "isAsan": false,
+      "isClangCoverage": false,
+      "jpegDecodeAcceleratorSupported": false,
+      "maxMsaaSamples": "4",
+      "nv12OverlaySupport": "NONE",
+      "optimus": false,
+      "p010OverlaySupport": "NONE",
+      "passthroughCmdDecoder": true,
+      "pixelShaderVersion": "3.00",
+      "processCrashCount": 0,
+      "rgb10a2OverlaySupport": "NONE",
+      "sandboxed": false,
+      "skiaBackendType": "None",
+      "subpixelFontRendering": true,
+      "supportsD3dSharedImages": false,
+      "supportsDirectML": false,
+      "supportsDx12": false,
+      "supportsOverlays": false,
+      "supportsVulkan": false,
+      "targetCpuBits": 64,
+      "vertexShaderVersion": "3.00",
+      "visibilityCallbackCallCount": 0,
+      "vulkanVersion": "Not supported",
+      "yuy2OverlaySupport": "NONE"
+    }
+  },
+  "actualViewport": {
+    "width": 3840,
+    "height": 2160,
+    "dpr": 1
+  },
+  "providerCalls": 0
+}
