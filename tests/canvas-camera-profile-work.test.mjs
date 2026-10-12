@@ -10,7 +10,7 @@ test('camera motion with no profile badges does not measure the host or publish 
         f.canvas.layer.setNodeProfiles=rows=>{publications++;return publish(rows);};
         for(let i=0;i<12;i++){f.canvas.view.x+=2;f.canvas.applyTransform();}
         assert.equal(publications,0,'empty profile metadata must not trigger camera-frame publications');
-        assert.equal(reads,0,'a warmed camera path uses cached viewport and geometry');
+        assert.equal(reads,0,'empty profiles require no camera-path DOM measurements');
     } finally {await f.canvas.destroy();f.host.remove();}
 });
 

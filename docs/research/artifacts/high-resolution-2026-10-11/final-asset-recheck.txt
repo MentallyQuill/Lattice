@@ -1,0 +1,5 @@
+
+> lattice@0.27.0 check:assets
+> node tools/check-assets.mjs
+
+Assets verified: 695 versioned local imports; self-contained Svelte UI; one native domain module graph.

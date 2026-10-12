@@ -682,6 +682,3 @@
 
 .pc-recall-status-space { height:26px; pointer-events:none; }
 @media(pointer:coarse) { .pc-recall-status-space { height:46px; } }
-
-/* Retain layout, named pins and keyboard focus while skipping offscreen card paint. */
-.pc-nodes > .pc-node-native.pc-offscreen:not(:hover):not(:focus-within):not(.pc-selected):not(.pc-multi) { opacity: 0; }

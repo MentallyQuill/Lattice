@@ -1,0 +1,2 @@
+PASS canvas-camera-profile-work.test.mjs
+1/1 test files passed

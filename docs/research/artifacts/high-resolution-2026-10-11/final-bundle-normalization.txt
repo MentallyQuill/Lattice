@@ -1,0 +1,2 @@
+48 dependency-path comments normalized; byte-identical executable UI bundle verified.
+Restored bundle SHA-256: 8f6b05dbbc5e331ef9e91fd941e58fdc5de479981bf414a0cf632a4e636ed3a0

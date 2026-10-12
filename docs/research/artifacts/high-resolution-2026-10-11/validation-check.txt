@@ -1,0 +1,835 @@
+
+> lattice@0.27.0 check
+> npm run test && npm run check:types && npm run build && npm run check:assets && npm run test:browser
+
+
+> lattice@0.27.0 test
+> node tools/test-all.mjs
+
+PASS artifact-glyph.test.mjs
+PASS blankets.test.mjs
+PASS bump-version.test.mjs
+PASS camera.test.mjs
+PASS canvas-blueprint-comments.test.mjs
+PASS canvas-camera-profile-work.test.mjs
+PASS canvas-card-visibility-work.test.mjs
+PASS canvas-center-selection.test.mjs
+PASS canvas-controller-escape.test.mjs
+PASS canvas-event-bursts.test.mjs
+PASS canvas-group-presentation.test.mjs
+PASS canvas-lifecycle.test.mjs
+PASS canvas-native-camera-focus.test.mjs
+PASS canvas-native-gestures.test.mjs
+PASS canvas-native-integration.test.mjs
+PASS canvas-native-prepared.test.mjs
+PASS canvas-performance.test.mjs
+PASS canvas-pin-feedback.test.mjs
+PASS canvas-prepared-only.test.mjs
+PASS canvas-presentation-batch.test.mjs
+PASS canvas-recall-status.test.mjs
+PASS canvas-render-slots.test.mjs
+PASS canvas-retained-scene.test.mjs
+PASS canvas-zoom-shortcuts.test.mjs
+PASS canvas-zoom.test.mjs
+PASS comment-components.test.mjs
+PASS comment-edits.test.mjs
+PASS comment-frames.test.mjs
+PASS comment-history-effects.test.mjs
+PASS comment-presentation.test.mjs
+PASS connection-drag-preview.test.mjs
+PASS connection-route.test.mjs
+PASS document-controller.test.mjs
+PASS document-session.test.mjs
+PASS editor-latency-options.test.mjs
+PASS ember-theme.test.mjs
+PASS frame.test.mjs
+PASS groups.test.mjs
+PASS history.test.mjs
+PASS introspection-analysis.test.mjs
+PASS introspection-completion-errors.test.mjs
+PASS introspection-context-state.test.mjs
+PASS introspection-contracts.test.mjs
+PASS introspection-memory.test.mjs
+PASS introspection-native-catalog.test.mjs
+PASS introspection-native-host.test.mjs
+PASS introspection-native-runtime.test.mjs
+PASS introspection-native-ui.test.mjs
+PASS introspection-nodes.test.mjs
+PASS introspection-types.test.mjs
+PASS lattice-installed-imports.test.mjs
+PASS lattice-launcher.test.mjs
+PASS lattice-startup.test.mjs
+PASS native-canvas-fixture.test.mjs
+PASS native-story-state.test.mjs
+PASS node-profile-picker.test.mjs
+PASS notes.test.mjs
+PASS provider-test-guard.test.mjs
+PASS provider-unified-components.test.mjs
+PASS provider-unified-session.test.mjs
+PASS provider-unified-ui.test.mjs
+PASS recall-labels.test.mjs
+PASS recall-shortcuts.test.mjs
+PASS recall-ui-types.test.mjs
+PASS selection-gestures.test.mjs
+PASS smoke-unified-host.test.mjs
+PASS state-document-notification.test.mjs
+PASS state-fast-document-retirement.test.mjs
+PASS state-recovery-lifecycle.test.mjs
+PASS storage-configured-components.test.mjs
+PASS storage-configured-controller.test.mjs
+PASS storage-configured-ui.test.mjs
+PASS theme-accessibility-editor.test.mjs
+PASS theme-presets.test.mjs
+PASS theme-ui.test.mjs
+PASS themes.test.mjs
+PASS ui-add-system-dialog.test.mjs
+PASS ui-boundary-projection.test.mjs
+PASS ui-canvas-draw-projection.test.mjs
+PASS ui-comment-controller.test.mjs
+PASS ui-composition-managers.test.mjs
+PASS ui-context-menu-controller.test.mjs
+PASS ui-context-menu.test.mjs
+PASS ui-control-import-integration.test.mjs
+PASS ui-control-input-contracts.test.mjs
+PASS ui-control-table-import-components.test.mjs
+PASS ui-control-table-import.test.mjs
+PASS ui-coordinate-reconciliation.test.mjs
+PASS ui-decision-authoring.test.mjs
+PASS ui-decision-schedule-integration.test.mjs
+PASS ui-detail-binding-drafts.test.mjs
+PASS ui-detail-draft-revisions.test.mjs
+PASS ui-detail-panels.test.mjs
+PASS ui-details-commands.test.mjs
+PASS ui-details-drafts.test.mjs
+PASS ui-details-projection.test.mjs
+PASS ui-details-resize.test.mjs
+PASS ui-diagnostic-boundaries.test.mjs
+PASS ui-diagnostic-message.test.mjs
+PASS ui-diagnostic-preflight.test.mjs
+PASS ui-diagnostics.test.mjs
+PASS ui-document-components.test.mjs
+PASS ui-example-catalog.test.mjs
+PASS ui-examples.test.mjs
+PASS ui-file-commands.test.mjs
+PASS ui-file-input.test.mjs
+PASS ui-graph-tabs.test.mjs
+PASS ui-graph-view-session.test.mjs
+PASS ui-initial-workspace-camera.test.mjs
+PASS ui-instance-node-bindings.test.mjs
+PASS ui-interaction-persistence.test.mjs
+PASS ui-iteration-bindings.test.mjs
+PASS ui-json-value-authoring.test.mjs
+PASS ui-legacy-root-toolbar.test.mjs
+PASS ui-library-details.test.mjs
+PASS ui-native-group-presentation.test.mjs
+PASS ui-native-only-workspace.test.mjs
+PASS ui-native-search-catalog.test.mjs
+PASS ui-native-wire-bridge.test.mjs
+PASS ui-native-wire-components.test.mjs
+PASS ui-node-guide-content.test.mjs
+PASS ui-node-guide-preview.test.mjs
+PASS ui-node-guide-projection.test.mjs
+PASS ui-node-guide-touch.test.mjs
+PASS ui-node-palette-icons.test.mjs
+PASS ui-node-placement.test.mjs
+PASS ui-node-profile-metadata.test.mjs
+PASS ui-node-profile-preparation.test.mjs
+PASS ui-node-shelf.test.mjs
+PASS ui-pattern-preview-neutrality.test.mjs
+PASS ui-performance-authority.test.mjs
+PASS ui-portal-presentation.test.mjs
+PASS ui-preview-markdown.test.mjs
+PASS ui-preview-preferences.test.mjs
+PASS ui-preview-review-integration.test.mjs
+PASS ui-preview-tabs.test.mjs
+PASS ui-preview-target-badge.test.mjs
+PASS ui-projection-performance.test.mjs
+PASS ui-recall-addressed-components.test.mjs
+PASS ui-recall-commands.test.mjs
+PASS ui-recall-details.test.mjs
+PASS ui-recall-nested.test.mjs
+PASS ui-recall-overview.test.mjs
+PASS ui-recall-projection-performance.test.mjs
+PASS ui-recall-projection.test.mjs
+PASS ui-recorded-preview.test.mjs
+PASS ui-recovery-batching.test.mjs
+PASS ui-run-meter.test.mjs
+PASS ui-schedule-authoring.test.mjs
+PASS ui-schema-authoring.test.mjs
+PASS ui-schema-integration.test.mjs
+PASS ui-shelf-placement.test.mjs
+PASS ui-structured-controls-large.test.mjs
+PASS ui-structured-controls.test.mjs
+PASS ui-subgraph-controller.test.mjs
+PASS ui-subgraph-save.test.mjs
+PASS ui-subgraph-shelf-actions.test.mjs
+PASS ui-subgraph-view-state.test.mjs
+PASS ui-system-authoring-views.test.mjs
+PASS ui-view-state.test.mjs
+PASS ui-workflow-activation.test.mjs
+PASS ui-workflow-data-setup.test.mjs
+PASS ui-workspace-commands.test.mjs
+PASS ui-workspace-manager-projection.test.mjs
+PASS ui-workspace-menu-model.test.mjs
+PASS ui-workspace-menu-root.test.mjs
+PASS ui-workspace-preparation.test.mjs
+PASS ui-workspace-style.test.mjs
+PASS undo-ui.test.mjs
+PASS workflow-active-actor-freshness.test.mjs
+PASS workflow-active-document.test.mjs
+PASS workflow-active-model.test.mjs
+PASS workflow-artifact-privacy.test.mjs
+PASS workflow-authoring-current.test.mjs
+PASS workflow-binding-freshness.test.mjs
+PASS workflow-catalog-retirement.test.mjs
+PASS workflow-clipboard.test.mjs
+PASS workflow-collection-nodes.test.mjs
+PASS workflow-collection-projection.test.mjs
+PASS workflow-combined-systems.test.mjs
+PASS workflow-compactor.test.mjs
+PASS workflow-compose-guidance-contracts.test.mjs
+PASS workflow-compose.test.mjs
+PASS workflow-composition-edits.test.mjs
+PASS workflow-composition-insertion.test.mjs
+PASS workflow-composition.test.mjs
+PASS workflow-connection-edits.test.mjs
+PASS workflow-connections.test.mjs
+PASS workflow-consumed-memory-freshness.test.mjs
+PASS workflow-context-join.test.mjs
+PASS workflow-contracts.test.mjs
+PASS workflow-control-nodes.test.mjs
+PASS workflow-controller-dispatch.test.mjs
+PASS workflow-current-admission.test.mjs
+PASS workflow-current-send.test.mjs
+PASS workflow-data-components.test.mjs
+PASS workflow-data-defaults.test.mjs
+PASS workflow-decision.test.mjs
+PASS workflow-definition-display.test.mjs
+PASS workflow-definitions.test.mjs
+PASS workflow-detached-examples.test.mjs
+PASS workflow-dispatch.test.mjs
+PASS workflow-document-catalog.test.mjs
+PASS workflow-document-file.test.mjs
+PASS workflow-document-mutations.test.mjs
+PASS workflow-draft-revisions.test.mjs
+PASS workflow-editable-instance.test.mjs
+PASS workflow-engine-integration.test.mjs
+PASS workflow-event-clock.test.mjs
+PASS workflow-example-freshness.test.mjs
+PASS workflow-example-groups.test.mjs
+PASS workflow-example-pattern-filter.test.mjs
+PASS workflow-fast-retirement.test.mjs
+PASS workflow-file-access.test.mjs
+PASS workflow-file-nodes.test.mjs
+PASS workflow-file-store.test.mjs
+PASS workflow-filter-text.test.mjs
+PASS workflow-format-records.test.mjs
+PASS workflow-format-single-document.test.mjs
+PASS workflow-host-addressed.test.mjs
+PASS workflow-host.test.mjs
+PASS workflow-input-host.test.mjs
+PASS workflow-input-integration.test.mjs
+PASS workflow-input-nodes.test.mjs
+PASS workflow-insertion.test.mjs
+PASS workflow-instance-edits.test.mjs
+PASS workflow-iteration-bindings.test.mjs
+PASS workflow-iteration-helpers.test.mjs
+PASS workflow-iteration-runtime.test.mjs
+PASS workflow-json-data.test.mjs
+PASS workflow-json-decode.test.mjs
+PASS workflow-legacy-definition-identity.test.mjs
+PASS workflow-library-state.test.mjs
+PASS workflow-library-subgraphs.test.mjs
+PASS workflow-model-nodes.test.mjs
+PASS workflow-modifiers.test.mjs
+PASS workflow-native-actor-context.test.mjs
+PASS workflow-native-actor-host.test.mjs
+PASS workflow-native-draft-evidence.test.mjs
+PASS workflow-native-guidance-compose.test.mjs
+PASS workflow-native-outcomes.test.mjs
+PASS workflow-native-persistence.test.mjs
+PASS workflow-native-preflight.test.mjs
+PASS workflow-native-recall-nested.test.mjs
+PASS workflow-native-recall-provenance.test.mjs
+PASS workflow-native-recall.test.mjs
+PASS workflow-native-settlement-host.test.mjs
+PASS workflow-native-settlement-memory.test.mjs
+PASS workflow-native-settlement.test.mjs
+PASS workflow-native-stage-barrier.test.mjs
+PASS workflow-native-time.test.mjs
+PASS workflow-nested-shelf.test.mjs
+PASS workflow-node-bindings.test.mjs
+PASS workflow-node-guide-examples.test.mjs
+PASS workflow-node-guide-fixtures.test.mjs
+PASS workflow-node-guide-insertion.test.mjs
+PASS workflow-node-guide-lazy-examples.test.mjs
+PASS workflow-node-integration.test.mjs
+PASS workflow-owned-preparation.test.mjs
+PASS workflow-packages.test.mjs
+PASS workflow-parameter-bindings-portability.test.mjs
+PASS workflow-pattern-routing.test.mjs
+PASS workflow-pattern.test.mjs
+PASS workflow-permission-scans.test.mjs
+PASS workflow-phase-control-edits.test.mjs
+PASS workflow-player-source.test.mjs
+PASS workflow-ports.test.mjs
+PASS workflow-preparation-work-counts.test.mjs
+PASS workflow-prepared-planning.test.mjs
+PASS workflow-prepared-systems.test.mjs
+PASS workflow-primitive-nodes.test.mjs
+PASS workflow-private-terminal.test.mjs
+PASS workflow-progression-nodes.test.mjs
+PASS workflow-progression.test.mjs
+PASS workflow-project-document.test.mjs
+PASS workflow-projection.test.mjs
+PASS workflow-prompt-source.test.mjs
+PASS workflow-prose-cleanup.test.mjs
+PASS workflow-public-context.test.mjs
+PASS workflow-qualified-manager-edits.test.mjs
+PASS workflow-qualified-transactions.test.mjs
+PASS workflow-random-outcomes.test.mjs
+PASS workflow-recall-nodes.test.mjs
+PASS workflow-recall-queue-batch.test.mjs
+PASS workflow-recall-registration.test.mjs
+PASS workflow-recall-state.test.mjs
+PASS workflow-recording.test.mjs
+PASS workflow-reference-draft.test.mjs
+PASS workflow-reference-integration.test.mjs
+PASS workflow-reference-transfer.test.mjs
+PASS workflow-remastered-authoring.test.mjs
+PASS workflow-remastered-execution.test.mjs
+PASS workflow-remastered-layout.test.mjs
+PASS workflow-remastered-progression.test.mjs
+PASS workflow-repair.test.mjs
+PASS workflow-reroute-controls.test.mjs
+PASS workflow-retained-text.test.mjs
+PASS workflow-retirement.test.mjs
+PASS workflow-run-state.test.mjs
+PASS workflow-runtime-actor-hooks.test.mjs
+PASS workflow-runtime-addressed.test.mjs
+PASS workflow-runtime.test.mjs
+PASS workflow-scoped-examples.test.mjs
+PASS workflow-select-fields.test.mjs
+PASS workflow-semantic-json-data.test.mjs
+PASS workflow-session.test.mjs
+PASS workflow-slop-policies.test.mjs
+PASS workflow-staged-effects.test.mjs
+PASS workflow-state-transactions.test.mjs
+PASS workflow-story-events.test.mjs
+PASS workflow-story-flow-examples.test.mjs
+PASS workflow-story-time.test.mjs
+PASS workflow-subgraph-authoring.test.mjs
+PASS workflow-subgraph-eligibility.test.mjs
+PASS workflow-subgraph-generation.test.mjs
+PASS workflow-subgraph-owned-host.test.mjs
+PASS workflow-subgraph-shelf.test.mjs
+PASS workflow-system-authoring.test.mjs
+PASS workflow-system-subgraphs.test.mjs
+PASS workflow-terminology-map.test.mjs
+PASS workflow-text-rules.test.mjs
+PASS workflow-time-nodes.test.mjs
+PASS workflow-transactions.test.mjs
+PASS workflow-transpose-nodes.test.mjs
+PASS workflow-transpose-text.test.mjs
+PASS workflow-ui.test.mjs
+PASS workflow-unified-contracts.test.mjs
+PASS workflow-unified-examples.test.mjs
+PASS workflow-unified-host.test.mjs
+PASS workflow-unified-runtime.test.mjs
+PASS workflow-unified-settings.test.mjs
+PASS workflow-workspace-starters.test.mjs
+332/332 test files passed
+
+> lattice@0.27.0 check:types
+> svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: c:\Users\Keptin\.codex\worktrees\high-resolution-performance\SillyCanvas
+Getting Svelte diagnostics...
+
+svelte-check found 0 errors and 0 warnings
+
+> lattice@0.27.0 build
+> vite build
+
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 314 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/assets/pattern-worker-DYFOS1ZK.js         1.58 kB
+dist/assets/text-rules-worker-CSfvTVmg.js      2.05 kB
+dist/lattice.css                              79.44 kB │ gzip:  13.25 kB
+dist/lattice-ui.js                         1,115.19 kB │ gzip: 299.19 kB
+
+✓ built in 1.05s
+
+> lattice@0.27.0 check:assets
+> node tools/check-assets.mjs
+
+Assets verified: 695 versioned local imports; self-contained Svelte UI; one native domain module graph.
+
+> lattice@0.27.0 test:browser
+> playwright test
+
+[WebServer] (node:452008) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 453 tests using 1 worker
+
+(node:487112) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok   1 tests\browser\accessible-themes.spec.mjs:4:1 › the actual theme picker offers the eight approved themes and shows readable accessible pin cues (1.9s)
+  ok   2 tests\browser\accessible-themes.spec.mjs:24:1 › example thumbnails follow accessible palettes and shapes, then restore Ember without editing authored comment colors (2.9s)
+  ok   3 tests\browser\accessible-themes.spec.mjs:64:1 › Signal node search keeps family labels and keyboard selection neutral (1.4s)
+  ok   4 tests\browser\accessible-themes.spec.mjs:82:1 › Signal gives real compatible and invalid connection targets different visible border patterns (1.8s)
+  ok   5 tests\browser\accessible-themes.spec.mjs:115:1 › accessible themes keep shared pin shapes and add wire patterns, then restore Ember colors (1.5s)
+  ok   6 tests\browser\accessible-themes.spec.mjs:156:1 › Signal keeps pin actions neutral and distinguishes a failed selected card without hue (1.7s)
+  ok   7 tests\browser\artifact-pins.spec.mjs:64:1 › all eight themes and custom corner styles keep the approved seven glyphs and matched wire colors (2.8s)
+  ok   8 tests\browser\artifact-pins.spec.mjs:93:1 › wrapped labels, font changes and nonidentity zooms retain optical pin and wire alignment (3.4s)
+  ok   9 tests\browser\artifact-pins.spec.mjs:115:1 › wrapped lowercase and uppercase lines align against their own visible ink (1.4s)
+  ok  10 tests\browser\camera-publication.spec.mjs:3:1 › pan and zoom preserve the mounted Graph menu while saving the numeric camera (1.8s)
+  ok  11 tests\browser\camera.spec.mjs:2:1 › wheel camera work preserves geometry and never measures node endpoints (1.6s)
+  ok  12 tests\browser\camera.spec.mjs:28:1 › a mouse wheel notch animates with the graph point fixed under the pointer (1.6s)
+  ok  13 tests\browser\camera.spec.mjs:58:1 › system reduced motion keeps wheel zoom immediate (1.2s)
+  ok  14 tests\browser\canvas-native-bridge-integration.spec.mjs:42:1 › real native pointer capture connects both directions at nonidentity zoom without mutating detached draw (2.3s)
+  ok  15 tests\browser\canvas-native-bridge-integration.spec.mjs:58:1 › native empty drop survives browser capture release then Escape cancels the search (1.2s)
+  ok  16 tests\browser\canvas-native-bridge-integration.spec.mjs:70:1 › readonly native cards allow local position overlays and MMB camera focus without document touches (1.2s)
+  ok  17 tests\browser\canvas-native-bridge-integration.spec.mjs:117:5 › actual activated wrapper heading double click reaches the child tab through real event targets (1.4s)
+  ok  18 tests\browser\canvas-native-bridge-integration.spec.mjs:117:5 › actual activated wrapper body double click reaches the child tab through real event targets (1.4s)
+  ok  19 tests\browser\canvas-native-bridge-integration.spec.mjs:131:1 › actual activated wire click selects the visible cable and Delete removes that saved wire only (1.5s)
+  ok  20 tests\browser\canvas-native-bridge-integration.spec.mjs:144:1 › actual activated direct wire double click inserts a typed Reroute through the production controller (1.4s)
+  ok  21 tests\browser\canvas-native-bridge-integration.spec.mjs:162:1 › actual activated wire Alt click breaks only its saved connection (1.4s)
+  ok  22 tests\browser\canvas-native-bridge-integration.spec.mjs:171:1 › real native whole body drag keeps its threshold and finishes outside the host without generic capture (1.2s)
+  ok  23 tests\browser\canvas-native-bridge-integration.spec.mjs:180:1 › real unexpected native pin capture loss cancels the bridge and a fresh pin drag can connect (1.3s)
+  ok  24 tests\browser\clear-diagnostics.spec.mjs:16:34 › native preview explains how to start without a model request at 1440px (1.5s)
+  ok  25 tests\browser\clear-diagnostics.spec.mjs:16:34 › native preview explains how to start without a model request at 320px (1.5s)
+  ok  26 tests\browser\clear-diagnostics.spec.mjs:51:1 › source-free output still runs and replaces its neutral empty state with output (1.4s)
+  ok  27 tests\browser\comment-frames.spec.mjs:137:1 › C frames measured selection and typing C in its title keeps a single editable comment (1.6s)
+  ok  28 tests\browser\comment-frames.spec.mjs:163:1 › C with no selection creates an empty frame at the canvas cursor (1.3s)
+  ok  29 tests\browser\comment-frames.spec.mjs:176:1 › header drag moves current contained root nodes in one authored undo step (2.0s)
+  ok  30 tests\browser\comment-frames.spec.mjs:206:1 › header drag undo restores persisted local node coordinates while preserving its alias (1.6s)
+  ok  31 tests\browser\comment-frames.spec.mjs:232:1 › Move contents off moves only the frame (1.6s)
+  ok  32 tests\browser\comment-frames.spec.mjs:242:1 › a selected comment and collapsed group move together without unfolding in one undo step (1.6s)
+  ok  33 tests\browser\comment-frames.spec.mjs:264:1 › selected-node menu creates a frame whose resize, fit and delete leave its contents intact (1.8s)
+  ok  34 tests\browser\comment-frames.spec.mjs:291:1 › clipboard and downloaded workflow roundtrip preserve authored comment fields (2.2s)
+  ok  35 tests\browser\comment-frames.spec.mjs:345:1 › downloaded subgraphs retain comment fields when imported back into the library (1.8s)
+  ok  36 tests\browser\comment-frames.spec.mjs:376:5 › shared definition comments expose disabled controls and reject drag, C and Delete (1.6s)
+  ok  37 tests\browser\comment-frames.spec.mjs:376:5 › library definition comments expose disabled controls and reject drag, C and Delete (1.7s)
+  ok  38 tests\browser\comment-frames.spec.mjs:399:1 › direct splines keep horizontal pin leads and compact returns while cards receive clicks above wires (2.3s)
+  ok  39 tests\browser\compact-shelf.spec.mjs:16:1 › compact shelf and drawers keep the approved dimensions, bold labels and opaque contents (1.4s)
+  ok  40 tests\browser\compact-shelf.spec.mjs:70:33 › compact drawer stays reachable without clipping at 360px (1.3s)
+  ok  41 tests\browser\compact-shelf.spec.mjs:70:33 › compact drawer stays reachable without clipping at 736px (1.3s)
+  ok  42 tests\browser\connection-curves.spec.mjs:143:5 › native steep forward endpoint turns toward a target above never hook or overshoot (1.6s)
+  ok  43 tests\browser\connection-curves.spec.mjs:143:5 › native steep forward endpoint turns toward a target below never hook or overshoot (1.6s)
+  ok  44 tests\browser\connection-curves.spec.mjs:164:1 › native level backward wires keep a compact return at different horizontal separations (2.4s)
+  ok  45 tests\browser\connection-curves.spec.mjs:225:5 › native backward wire to a target far above follows a direct diagonal middle (1.6s)
+  ok  46 tests\browser\connection-curves.spec.mjs:225:5 › native backward wire to a target far below follows a direct diagonal middle (1.7s)
+  ok  47 tests\browser\consolidated-menus.spec.mjs:5:1 › opening a workspace menu cancels held Space pan before isolated key release (1.3s)
+  ok  48 tests\browser\consolidated-menus.spec.mjs:6:1 › six menus start closed, click arms hover, and dismissal disarms hover (1.8s)
+  ok  49 tests\browser\consolidated-menus.spec.mjs:20:1 › menu keys and paste cannot edit or move the selected background graph (1.3s)
+  ok  50 tests\browser\consolidated-menus.spec.mjs:29:1 › submenus preserve hover session, keyboard focus and action dismissal (1.5s)
+  ok  51 tests\browser\consolidated-menus.spec.mjs:44:1 › menu hit targets and column rails remain reachable in narrow viewports (1.4s)
+  ok  52 tests\browser\consolidated-menus.spec.mjs:57:1 › checkbox choices and root toggle both reset hover, and Tab resumes outside the menu (1.5s)
+  ok  53 tests\browser\consolidated-menus.spec.mjs:64:1 › coarse pointers provide 44 pixel targets and all menu roots remain reachable (1.4s)
+  ok  54 tests\browser\consolidated-menus.spec.mjs:71:1 › heading text gaps stay consistent and all six headings fit a narrow screen (1.3s)
+  ok  55 tests\browser\consolidated-menus.spec.mjs:88:1 › host keyboard styles cannot add badges or empty bars to any workspace dropdown (1.8s)
+  ok  56 tests\browser\consolidated-menus.spec.mjs:132:1 › dropdown icons use selective reference colors with readable theme and disabled states (11.9s)
+  ok  57 tests\browser\consolidated-menus.spec.mjs:200:1 › keyboard navigation scrolls focused rows inside a short popup viewport (1.3s)
+  ok  58 tests\browser\consolidated-menus.spec.mjs:213:1 › closed menubar permits history and paste accelerators after a selection command (1.7s)
+  ok  59 tests\browser\context-menu.spec.mjs:48:1 › right-clicking another node targets its Delete command and Undo restores it (1.5s)
+  ok  60 tests\browser\context-menu.spec.mjs:61:1 › right-click inside a multiselection keeps Copy, Cut and Delete scoped to that selection (1.9s)
+  ok  61 tests\browser\context-menu.spec.mjs:89:1 › right-click outside a multiselection replaces the selection before deleting (1.5s)
+  ok  62 tests\browser\context-menu.spec.mjs:102:1 › Rename focuses the alias editor and Compact card changes presentation without editing the workflow (1.6s)
+  ok  63 tests\browser\context-menu.spec.mjs:127:1 › Escape dismisses the menu while retaining the canvas selection and workspace (1.4s)
+  ok  64 tests\browser\context-menu.spec.mjs:139:1 › Pin preview follows the clicked Compose output and Run to here executes only its upstream nodes (1.6s)
+  ok  65 tests\browser\context-menu.spec.mjs:167:1 › multi-output Run to here directly runs the pinned output and advertises R (1.7s)
+  ok  66 tests\browser\context-menu.spec.mjs:201:1 › multi-output Run to here preserves an output chosen through the node context menu after unpinning (1.8s)
+  ok  67 tests\browser\context-menu.spec.mjs:225:1 › multi-output Run to here directly uses the primary output when no output is pinned (1.6s)
+  ok  68 tests\browser\context-menu.spec.mjs:243:1 › host keyboard styling cannot add shortcut badges or expand the context-menu rows (1.5s)
+  ok  69 tests\browser\context-menu.spec.mjs:284:1 › long subgraph menus fit a small viewport and keyboard navigation skips read-only commands (2.1s)
+  ok  70 tests\browser\details-overhaul.spec.mjs:14:1 › simplified inspector keeps modifier edits undoable and compact confined to graph commands (2.1s)
+  ok  71 tests\browser\details-overhaul.spec.mjs:50:1 › real JSON Decode schema saves as text and survives history (1.6s)
+  ok  72 tests\browser\details-overhaul.spec.mjs:68:5 › details layout is readable at 220px in lattice (1.4s)
+  ok  73 tests\browser\details-overhaul.spec.mjs:68:5 › details layout is readable at 258px in lattice (1.4s)
+  ok  74 tests\browser\details-overhaul.spec.mjs:68:5 › details layout is readable at 520px in lattice (1.4s)
+  ok  75 tests\browser\details-overhaul.spec.mjs:68:5 › details layout is readable at 220px in ash (1.4s)
+  ok  76 tests\browser\details-overhaul.spec.mjs:68:5 › details layout is readable at 258px in ash (1.4s)
+  ok  77 tests\browser\details-overhaul.spec.mjs:68:5 › details layout is readable at 520px in ash (1.4s)
+  ok  78 tests\browser\details-overhaul.spec.mjs:79:5 › narrow model details remain legible in lattice (1.5s)
+  ok  79 tests\browser\details-overhaul.spec.mjs:79:5 › narrow curve details remain legible in lattice (1.5s)
+  ok  80 tests\browser\details-overhaul.spec.mjs:79:5 › narrow readonly details remain legible in lattice (1.7s)
+  ok  81 tests\browser\details-overhaul.spec.mjs:79:5 › narrow model details remain legible in ash (1.6s)
+  ok  82 tests\browser\details-overhaul.spec.mjs:79:5 › narrow curve details remain legible in ash (1.7s)
+  ok  83 tests\browser\details-overhaul.spec.mjs:79:5 › narrow readonly details remain legible in ash (1.8s)
+  ok  84 tests\browser\details-overhaul.spec.mjs:121:1 › shared table import remains local and cancelling preserves the ordinary inspector and graph (2.0s)
+  ok  85 tests\browser\document-files.spec.mjs:34:1 › native Save As adopts a file; Save writes it; camera and close preserve the document (1.7s)
+  ok  86 tests\browser\document-files.spec.mjs:54:1 › Open and Recent reread disk, guard edits, reset history and clear only the list (2.1s)
+  ok  87 tests\browser\document-files.spec.mjs:74:1 › an external file edit blocks Save and preserves the active draft (1.5s)
+  ok  88 tests\browser\document-files.spec.mjs:83:1 › retired editable roots cannot replace a dirty unified document through Open or Recent (2.2s)
+  ok  89 tests\browser\ember-theme.spec.mjs:5:1 › approved Dark Lite Ember verifies fresh unified startup then preserves fill-only alpha and family colors (1.6s)
+  ok  90 tests\browser\ember-theme.spec.mjs:17:1 › Ember inherits a different live host theme without changing host colors or compounding labels (1.4s)
+  ok  91 tests\browser\ember-theme.spec.mjs:24:1 › Ember keeps orange selection and compact aliases while real JSON failure retains its error priority (1.8s)
+  ok  92 tests\browser\ember-theme.spec.mjs:40:1 › actual Run details and meter inherit alternate host roles while completion and failure retain semantic colors (1.8s)
+  ok  93 tests\browser\example-comment-fit.spec.mjs:3:1 › every lesson comment displays its complete instructions inside the saved rectangle (9.2s)
+  ok  94 tests\browser\example-comment-fit.spec.mjs:34:1 › lesson comment sizing fits paragraphs, blank lines and long tokens at different widths (1.8s)
+  ok  95 tests\browser\example-curriculum.spec.mjs:16:1 › curriculum search, difficulty and lesson details teach before independent opening (2.6s)
+  ok  96 tests\browser\example-curriculum.spec.mjs:50:1 › search supports empty results and an unavailable lesson retains readable instructions (2.6s)
+  ok  97 tests\browser\example-curriculum.spec.mjs:71:1 › independent opening from details closes without lifecycle errors (2.1s)
+  ok  98 tests\browser\example-curriculum.spec.mjs:81:1 › closing lesson details restores keyboard focus and suppresses background graph shortcuts (2.4s)
+  ok  99 tests\browser\example-layout.spec.mjs:9:1 › Fit graph keeps opened lesson nodes clear of the floating shelf in root and helper views (2.4s)
+  ok 100 tests\browser\example-layout.spec.mjs:24:1 › Fit graph includes every capstone node within the unobstructed canvas overview (6.6s)
+  ok 101 tests\browser\example-layout.spec.mjs:42:1 › every lesson and helper keeps rendered cards separate and long wires distinguishable (4.3s)
+  ok 102 tests\browser\examples.spec.mjs:21:1 › File examples follows native Open and Recent commands and opens the compact complete example picker (2.4s)
+  ok 103 tests\browser\examples.spec.mjs:45:1 › the File menu retains picker scroll, trap Tab, close on Escape and restore trigger focus (3.0s)
+  ok 104 tests\browser\examples.spec.mjs:69:1 › narrow picker has two columns and its last long-name tile opens by keyboard (2.9s)
+  ok 105 tests\browser\examples.spec.mjs:87:1 › each example tile activates an independently editable native primary workflow without host effects (44.0s)
+  ok 106 tests\browser\examples.spec.mjs:126:1 › reopening a tile guards the edited document and subgraphs remain inspectable (8.1s)
+  ok 107 tests\browser\examples.spec.mjs:174:1 › prior unified IDs remain independently installable while malformed packages and retired IDs preserve saved workflows (1.7s)
+  ok 108 tests\browser\examples.spec.mjs:193:1 › one malformed primary stays as a disabled diagnostic tile while other examples still open (3.7s)
+  ok 109 tests\browser\examples.spec.mjs:217:1 › catalog-wide loading failure preserves the workspace and Retry restores the examples (3.5s)
+  ok 110 tests\browser\file-menu.spec.mjs:29:1 › fallback Open uses the system JSON picker and replaces the current document (2.1s)
+  ok 111 tests\browser\file-menu.spec.mjs:40:1 › fallback Save As preserves local bindings and camera without declaring a disk save (1.7s)
+  ok 112 tests\browser\file-menu.spec.mjs:55:1 › portable export removes local connection references and Open accepts that package (1.8s)
+  ok 113 tests\browser\file-menu.spec.mjs:66:1 › New opens a blank unified canvas and preserves Enable Lattice (1.6s)
+  ok 114 tests\browser\file-menu.spec.mjs:76:1 › closing and reopening cancels an inline rename draft while retaining the current document (1.8s)
+  ok 115 tests\browser\file-menu.spec.mjs:84:1 › Cancel and Escape preserve edited content and camera through the shared New guard (2.2s)
+  ok 116 tests\browser\file-menu.spec.mjs:93:1 › guard Save As retains the edited document until an explicit Dont Save choice (2.0s)
+  ok 117 tests\browser\file-menu.spec.mjs:102:1 › Dont Save opens New without saving the old document (1.7s)
+  ok 118 tests\browser\file-menu.spec.mjs:108:1 › a failed guard save keeps current work and reports the failure (1.8s)
+  ok 119 tests\browser\file-menu.spec.mjs:115:1 › the document guard blocks canvas shortcuts and traps forward and backward focus (1.6s)
+  ok 120 tests\browser\file-menu.spec.mjs:126:1 › cancelled fallback pickers preserve the document and produce no import review (1.8s)
+  ok 121 tests\browser\file-menu.spec.mjs:136:1 › invalid and unreadable fallback selections report errors without replacing current work (2.2s)
+  ok 122 tests\browser\file-menu.spec.mjs:147:1 › delayed fallback Open loses authority after document activation or workspace close (2.0s)
+  ok 123 tests\browser\file-menu.spec.mjs:159:1 › File Close retains the same current document, workspace and camera (1.6s)
+  ok 124 tests\browser\file-menu.spec.mjs:167:1 › File exports archived workflows only when a portable archive is present (1.7s)
+  ok 125 tests\browser\focus-hotkey.spec.mjs:21:1 › F fits and centers the selected node while preserving selection and history (1.5s)
+  ok 126 tests\browser\focus-hotkey.spec.mjs:42:1 › F fits and centers the combined bounds of two or more selections (1.8s)
+  ok 127 tests\browser\focus-hotkey.spec.mjs:62:1 › F with no selection frames the graph using the same shelf-aware view as Fit graph (1.6s)
+  ok 128 tests\browser\focus-hotkey.spec.mjs:78:1 › View advertises F for fitting, period is unbound, and Center selection preserves zoom (1.8s)
+  ok 129 tests\browser\focus-hotkey.spec.mjs:105:1 › F leaves the camera alone while typing, with command modifiers, or when the canvas is closed (1.8s)
+  ok 130 tests\browser\focus-hotkey.spec.mjs:144:1 › F during a node drag preserves the camera and the next pointer movement (1.6s)
+  ok 131 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 1024px DPR 1 (1.5s)
+  ok 132 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 1024px DPR 1.25 (1.6s)
+  ok 133 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 1024px DPR 2 (1.6s)
+  ok 134 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 736px DPR 1 (1.6s)
+  ok 135 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 736px DPR 1.25 (1.7s)
+  ok 136 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 736px DPR 2 (1.7s)
+  ok 137 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 360px DPR 1 (1.6s)
+  ok 138 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 360px DPR 1.25 (1.6s)
+  ok 139 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 360px DPR 2 (1.7s)
+  ok 140 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 320px DPR 1 (1.6s)
+  ok 141 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 320px DPR 1.25 (1.6s)
+  ok 142 tests\browser\fresh-launch.spec.mjs:2:67 › settings-free host base CSS launch 320px DPR 2 (1.7s)
+  ok 143 tests\browser\group-drag.spec.mjs:33:1 › expanded group header moves saved members, frame and anchors at zoom as one undo step and Escape restores a drag (2.2s)
+  ok 144 tests\browser\import.spec.mjs:9:1 › current additive review is pure until acceptance and one Undo restores the authored document (1.6s)
+  ok 145 tests\browser\import.spec.mjs:18:66 › import review rejects changed body authority without another history step (1.6s)
+  ok 146 tests\browser\import.spec.mjs:18:66 › import review rejects changed read-only authority without another history step (1.7s)
+  ok 147 tests\browser\import.spec.mjs:18:66 › import review rejects changed session authority without another history step (1.5s)
+  ok 148 tests\browser\import.spec.mjs:18:66 › import review rejects changed path authority without another history step (1.5s)
+  ok 149 tests\browser\import.spec.mjs:18:66 › import review rejects changed root authority without another history step (1.5s)
+  ok 150 tests\browser\import.spec.mjs:34:1 › retired and unsupported files reject before review or mutation (1.7s)
+  ok 151 tests\browser\import.spec.mjs:41:1 › an import captured before a camera gesture preserves the current camera on acceptance (1.6s)
+  ok 152 tests\browser\input-sources.spec.mjs:39:38 › pre File Input stores an undoable portable UTF-8 snapshot and replaces it from Details (2.5s)
+  ok 153 tests\browser\input-sources.spec.mjs:39:38 › post File Input stores an undoable portable UTF-8 snapshot and replaces it from Details (2.2s)
+  ok 154 tests\browser\input-sources.spec.mjs:79:1 › failed file loads display an error and leave the saved snapshot intact (1.9s)
+  ok 155 tests\browser\input-sources.spec.mjs:93:1 › source Details preserves multiline Text and shows the prompt identifier only for a prompt entry (2.0s)
+  ok 156 tests\browser\input-sources.spec.mjs:108:43 › changing selection during a delayed file read leaves both nodes unchanged (2.0s)
+  ok 157 tests\browser\input-sources.spec.mjs:108:43 › returning to the original node during a delayed file read still expires the load (2.2s)
+  ok 158 tests\browser\interaction-polish.spec.mjs:10:44 › Delete deletes selected nodes immediately without a dialog and Undo restores one step (1.8s)
+  ok 159 tests\browser\interaction-polish.spec.mjs:10:44 › Backspace deletes selected nodes immediately without a dialog and Undo restores one step (1.7s)
+  ok 160 tests\browser\interaction-polish.spec.mjs:24:1 › node search starts with its input and closes on a toolbar or canvas pointer down (1.7s)
+  ok 161 tests\browser\interaction-polish.spec.mjs:42:1 › Details width commits with pointer and keyboard, persists after reopen, and leaves graph/history unchanged (1.8s)
+  ok 162 tests\browser\interaction-polish.spec.mjs:60:65 › Details Escape rolls back a draft width and permits a fresh drag (1.8s)
+  ok 163 tests\browser\interaction-polish.spec.mjs:60:65 › Details pointercancel rolls back a draft width and permits a fresh drag (1.7s)
+  ok 164 tests\browser\interaction-polish.spec.mjs:60:65 › Details blur rolls back a draft width and permits a fresh drag (1.8s)
+  ok 165 tests\browser\interaction-polish.spec.mjs:80:1 › a tall Preview leaves shelf rows full width with a themed vertical scrollbar and centered icons (1.5s)
+  ok 166 tests\browser\interaction-polish.spec.mjs:100:1 › hover and compatible connection targets highlight and a near-origin drag uses a single smooth cubic (1.7s)
+  ok 167 tests\browser\interaction-polish.spec.mjs:116:1 › the chat launcher uses the loaded Lattice logo in the left host controls (1.6s)
+  ok 168 tests\browser\introspection.spec.mjs:41:38 › pre production picker and Details create Introspection nodes, update pins and round-trip typed connections (3.5s)
+  ok 169 tests\browser\introspection.spec.mjs:41:38 › post production picker and Details create Introspection nodes, update pins and round-trip typed connections (3.6s)
+  ok 170 tests\browser\introspection.spec.mjs:94:1 › actual State Details saves fractional curve settings and JSON maps; Response Memory Commit keeps its staged proposal input (2.5s)
+  ok 171 tests\browser\lattice-visual.spec.mjs:18:44 › approved Lattice native surfaces and panel placement at 1024px (1.5s)
+  ok 172 tests\browser\lattice-visual.spec.mjs:18:44 › approved Lattice native surfaces and panel placement at 736px (1.5s)
+  ok 173 tests\browser\lattice-visual.spec.mjs:18:44 › approved Lattice native surfaces and panel placement at 360px (1.6s)
+  ok 174 tests\browser\lattice-visual.spec.mjs:18:44 › approved Lattice native surfaces and panel placement at 320px (1.5s)
+  ok 175 tests\browser\lattice-visual.spec.mjs:61:33 › Fit keeps the narrow graph reachable below its floating shelf at 320px (1.7s)
+  ok 176 tests\browser\lattice-visual.spec.mjs:61:33 › Fit keeps the narrow graph reachable below its floating shelf at 360px (1.8s)
+  ok 177 tests\browser\lattice-visual.spec.mjs:90:1 › approved floating shelf retains an aligned canonical node menu and quiet shortcodes (1.7s)
+  ok 178 tests\browser\lattice-visual.spec.mjs:133:1 › a selected failed native node keeps its red ring and dimmed interior (1.8s)
+  ok 179 tests\browser\nested-review.spec.mjs:45:5 › native nested review opens its addressed child and Apply reviewed reply uses the owned candidate (1.8s)
+  ok 180 tests\browser\nested-review.spec.mjs:45:5 › native nested review opens its addressed child and Reject reply uses the owned candidate (1.6s)
+  ok 181 tests\browser\node-connections.spec.mjs:49:1 › a pinned instance edits its own connection and profile model with Undo and Redo in the same tab (2.3s)
+  ok 182 tests\browser\node-details.spec.mjs:42:1 › invalid JSON is retained after switching roots and returning to the qualified node (1.9s)
+  ok 183 tests\browser\node-details.spec.mjs:63:1 › comment inspection preserves an invalid node draft for the mounted workspace lifetime (1.8s)
+  ok 184 tests\browser\node-details.spec.mjs:87:1 › invalid Pattern row entry blocks table import and retains the exact local source (1.6s)
+  ok 185 tests\browser\node-entry.spec.mjs:112:4 › Pattern plain entry uses the shared creation/details route and one Undo per save (1.8s)
+  ok 186 tests\browser\node-entry.spec.mjs:112:4 › Pattern CSV entry uses the shared creation/details route and one Undo per save (1.8s)
+  ok 187 tests\browser\node-entry.spec.mjs:112:4 › Pattern JSON entry uses the shared creation/details route and one Undo per save (1.8s)
+  ok 188 tests\browser\node-entry.spec.mjs:133:1 › mapped CSV Add rows previews exact cells, confirms a local candidate, then saves in one transaction (1.7s)
+  ok 189 tests\browser\node-entry.spec.mjs:151:1 › mapped TSV Replace rows keeps invalid source and located errors through creation form remount (1.8s)
+  ok 190 tests\browser\node-entry.spec.mjs:181:1 › invalid details import survives qualified selection changes and Cancel saves nothing (1.6s)
+  ok 191 tests\browser\node-entry.spec.mjs:198:1 › typed TSV fields retain literal path keys and exact null false zero empty and absent defaults (1.6s)
+  ok 192 tests\browser\node-entry.spec.mjs:214:1 › rejected changed-port Save retains confirmed slot rows and the saved wire (1.5s)
+  ok 193 tests\browser\node-entry.spec.mjs:227:1 › wire creation still rejects a selected pin removed by a reviewed slots import (1.7s)
+  ok 194 tests\browser\node-entry.spec.mjs:251:1 › Condition null and State curve durations retain their real dynamic friendly editors (2.6s)
+  ok 195 tests\browser\node-entry.spec.mjs:286:66 › smart-compactor opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 196 tests\browser\node-entry.spec.mjs:286:66 › pattern opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 197 tests\browser\node-entry.spec.mjs:286:66 › filter-text opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 198 tests\browser\node-entry.spec.mjs:286:66 › repair opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 199 tests\browser\node-entry.spec.mjs:286:66 › compose opens configuration with its source-kind stage and Cancel leaves no creation step (1.3s)
+  ok 200 tests\browser\node-entry.spec.mjs:286:66 › text-rules opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 201 tests\browser\node-entry.spec.mjs:286:66 › select-fields opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 202 tests\browser\node-entry.spec.mjs:286:66 › style-transfer opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 203 tests\browser\node-entry.spec.mjs:286:66 › format-transfer opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 204 tests\browser\node-entry.spec.mjs:286:66 › terminology-map opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 205 tests\browser\node-entry.spec.mjs:286:66 › context:focus opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 206 tests\browser\node-entry.spec.mjs:286:66 › state opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 207 tests\browser\node-entry.spec.mjs:286:66 › state:curve opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 208 tests\browser\node-entry.spec.mjs:286:66 › condition opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 209 tests\browser\node-entry.spec.mjs:286:66 › join opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 210 tests\browser\node-entry.spec.mjs:286:66 › collect opens configuration with its source-kind stage and Cancel leaves no creation step (1.3s)
+  ok 211 tests\browser\node-entry.spec.mjs:286:66 › confidence-gate opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 212 tests\browser\node-entry.spec.mjs:286:66 › revise-draft opens configuration with its source-kind stage and Cancel leaves no creation step (1.3s)
+  ok 213 tests\browser\node-entry.spec.mjs:286:66 › collection opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 214 tests\browser\node-entry.spec.mjs:286:66 › context-join opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 215 tests\browser\node-entry.spec.mjs:286:66 › style-transfer:reply-draft opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 216 tests\browser\node-entry.spec.mjs:286:66 › format-transfer:reply-draft opens configuration with its source-kind stage and Cancel leaves no creation step (1.5s)
+  ok 217 tests\browser\node-entry.spec.mjs:286:66 › terminology-map:reply-draft opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 218 tests\browser\node-entry.spec.mjs:286:66 › text-rules:draft opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 219 tests\browser\node-entry.spec.mjs:286:66 › compose:guidance opens configuration with its source-kind stage and Cancel leaves no creation step (1.4s)
+  ok 220 tests\browser\node-entry.spec.mjs:300:1 › unsaved Plain Pattern terms remain the import Add base after real selection remount (1.8s)
+  ok 221 tests\browser\node-entry.spec.mjs:312:2 › pattern restored Plain editor converts rows and subsequent JSON native Save retains explicit ID (1.9s)
+  ok 222 tests\browser\node-entry.spec.mjs:330:2 › pattern Configure form remount retains Plain CSV and invalid JSON then creates exact identity (1.9s)
+  ok 223 tests\browser\node-entry.spec.mjs:312:2 › extract restored Plain editor converts rows and subsequent JSON native Save retains explicit ID (1.9s)
+  ok 224 tests\browser\node-entry.spec.mjs:330:2 › extract Configure form remount retains Plain CSV and invalid JSON then creates exact identity (1.9s)
+  ok 225 tests\browser\node-guide-comments.spec.mjs:4:5 › comment guide initially fits its complete readable example at 1440px (1.5s)
+  ok 226 tests\browser\node-guide-comments.spec.mjs:4:5 › note guide initially fits its complete readable example at 1440px (1.5s)
+  ok 227 tests\browser\node-guide-comments.spec.mjs:4:5 › comment guide initially fits its complete readable example at 390px (1.5s)
+  ok 228 tests\browser\node-guide-comments.spec.mjs:4:5 › note guide initially fits its complete readable example at 390px (1.4s)
+  ok 229 tests\browser\node-guides.spec.mjs:10:1 › node guide uses the real card and lazy themed example with approved disclosure defaults (1.7s)
+  ok 230 tests\browser\node-guides.spec.mjs:45:1 › example preview stays readable on a narrow screen and follows theme changes (1.8s)
+  ok 231 tests\browser\node-guides.spec.mjs:68:1 › focused guide bracket hotkeys zoom its camera without changing the parent graph camera (1.5s)
+  ok 232 tests\browser\node-guides.spec.mjs:96:1 › file-backed examples include readable and copyable setup data (1.8s)
+  ok 233 tests\browser\node-guides.spec.mjs:119:1 › subgraph boundary guides remain available inside a nested view (2.0s)
+  ok 234 tests\browser\node-guides.spec.mjs:150:1 › closing the workspace expires guide previews and reopening starts with no guide (1.5s)
+  ok 235 tests\browser\node-guides.spec.mjs:162:1 › guides cover model, data, recall, structural and comment nodes without execution (4.6s)
+  ok 236 tests\browser\node-guides.spec.mjs:185:1 › adding the complete Compose example preserves existing content and takes one undo (1.7s)
+  ok 237 tests\browser\node-guides.spec.mjs:206:1 › guide insertion status refreshes across native busy and settled publications while typed drafts survive (1.9s)
+  ok 238 tests\browser\node-guides.spec.mjs:245:54 › guide lifetime expires on same-ID document replacement (1.6s)
+  ok 239 tests\browser\node-guides.spec.mjs:245:54 › guide lifetime expires on same-ID operation replacement (1.7s)
+  ok 240 tests\browser\node-guides.spec.mjs:298:1 › guide status observes explicit busy changes with retained frozen Details and revision (1.4s)
+  ok 241 tests\browser\node-guides.spec.mjs:314:1 › guide namespace expires retained example state when selection and revision IDs match (1.4s)
+  ok 242 tests\browser\node-lod.spec.mjs:10:1 › overview hides small details with hysteresis while preserving card and wire geometry (1.5s)
+  ok 243 tests\browser\node-lod.spec.mjs:34:1 › hover and node selection reveal details without changing the overview camera (1.5s)
+  ok 244 tests\browser\node-lod.spec.mjs:49:1 › keyboard users can focus an overview card to reveal its details (1.3s)
+  ok 245 tests\browser\node-lod.spec.mjs:65:1 › a newly admitted graph does not inherit the previous graph overview hysteresis (1.3s)
+  ok 246 tests\browser\node-lod.spec.mjs:77:1 › overview retains running and failed execution rings while simplifying idle card shadows (1.3s)
+  ok 247 tests\browser\node-lod.spec.mjs:91:1 › animated wheel zoom changes detail with the displayed scale without remeasuring or rebuilding (1.7s)
+  ok 248 tests\browser\node-lod.spec.mjs:125:1 › refreshing the same workflow retains its overview level inside the hysteresis band (1.3s)
+  ok 249 tests\browser\node-lod.spec.mjs:136:1 › overview keeps compact identity, groups, comments and keyboard access to result controls (1.5s)
+  ok 250 tests\browser\node-lod.spec.mjs:167:1 › switching library definitions resets detail even when both drawings have no graph id (2.0s)
+  ok 251 tests\browser\node-lod.spec.mjs:189:1 › focusing an offscreen card keeps camera coordinates aligned with its rendered position (2.1s)
+  ok 252 tests\browser\node-profile-dropdowns.spec.mjs:41:1 › an unselected node edits its own profile using keyword search and restores fixed and inherited bindings with Undo/Redo (1.6s)
+  ok 253 tests\browser\node-profile-dropdowns.spec.mjs:64:1 › public host events and menu opening refresh metadata while camera and selection bursts reuse cached labels (1.8s)
+  ok 254 tests\browser\node-profile-dropdowns.spec.mjs:82:1 › deep pinned profile edits isolate siblings and library inspection disables editing (1.9s)
+  ok 255 tests\browser\node-profile-dropdowns.spec.mjs:105:1 › new model nodes select the active host option and operation mode changes remove controls (1.6s)
+  ok 256 tests\browser\node-profile-dropdowns.spec.mjs:117:1 › profile popup stays bounded and scrolls independently under a nonidentity camera and narrow viewport (2.0s)
+  ok 257 tests\browser\node-profile-dropdowns.spec.mjs:140:1 › changing documents closes the popup and rejects its captured node action (1.6s)
+  ok 258 tests\browser\node-profile-dropdowns.spec.mjs:153:1 › text-completion settings updates refresh active labels while unchanged workspace saves avoid resolution (1.6s)
+  ok 259 tests\browser\node-profile-dropdowns.spec.mjs:172:1 › unified model nodes and configured model modes expose independent active profile controls (2.1s)
+  ok 260 tests\browser\node-profile-dropdowns.spec.mjs:221:1 › a rejected profile edit keeps its error and scrollable list inside a short canvas viewport (1.5s)
+  ok 261 tests\browser\node-profile-dropdowns.spec.mjs:243:1 › Details keeps connection selection on the node bar and resets root and qualified overrides directly (3.0s)
+  ok 262 tests\browser\node-profile-themes.spec.mjs:94:5 › node profile controls follow the actual Ember theme picker (1.7s)
+  ok 263 tests\browser\node-profile-themes.spec.mjs:94:5 › node profile controls follow the actual Lattice theme picker (1.9s)
+  ok 264 tests\browser\node-profile-themes.spec.mjs:94:5 › node profile controls follow the actual Ash theme picker (1.8s)
+  ok 265 tests\browser\node-profile-themes.spec.mjs:94:5 › node profile controls follow the actual Graphite theme picker (1.8s)
+  ok 266 tests\browser\node-profile-themes.spec.mjs:94:5 › node profile controls follow the actual Slate theme picker (1.8s)
+  ok 267 tests\browser\node-profile-themes.spec.mjs:94:5 › node profile controls follow the actual Obsidian theme picker (1.8s)
+  ok 268 tests\browser\node-profile-themes.spec.mjs:94:5 › node profile controls follow the actual Harbor theme picker (1.8s)
+  ok 269 tests\browser\node-profile-themes.spec.mjs:94:5 › node profile controls follow the actual Signal theme picker (1.8s)
+  ok 270 tests\browser\node-profile-themes.spec.mjs:113:1 › profile controls follow custom light colors and font without changing host styles (2.2s)
+  ok 271 tests\browser\node-profile-themes.spec.mjs:154:1 › profile popup hides canvas content under translucent SillyTavern panels and exposes themed keyboard focus (1.6s)
+  ok 272 tests\browser\offscreen-card-paint.spec.mjs:5:1 › offscreen paint suppression retains cards, pins and wires and reveals cards after pan or zoom (2.0s)
+  ok 273 tests\browser\offscreen-card-paint.spec.mjs:19:1 › keyboard focus can reveal an offscreen card and keeps the camera aligned (1.9s)
+  ok 274 tests\browser\offscreen-card-paint.spec.mjs:25:1 › selection and active native pin targets keep offscreen cards painted; pin menus suspend suppression (2.0s)
+  ok 275 tests\browser\offscreen-card-paint.spec.mjs:39:1 › coordinate edits and canvas resizing refresh paint decisions without camera-frame measurements (2.1s)
+  ok 276 tests\browser\offscreen-card-paint.spec.mjs:53:1 › profile editing keeps its offscreen owner painted without moving the camera (1.9s)
+  ok 277 tests\browser\offscreen-card-paint.spec.mjs:64:1 › envelope boundaries reveal cards before they enter view and scope replacement resets cached bounds (2.2s)
+  ok 278 tests\browser\offscreen-card-paint.spec.mjs:76:1 › offscreen card resizing retains layout measurements and admits newly overlapping paint (2.0s)
+  ok 279 tests\browser\parity.spec.mjs:3:1 › current multi-pin cards keep their named pins and keyed identity across view updates (1.3s)
+  ok 280 tests\browser\parity.spec.mjs:17:1 › copy and paste current selected fragments retain their internal named wire in one undo step (1.7s)
+  ok 281 tests\browser\parity.spec.mjs:27:1 › grouping current nodes is visual and its keyboard fold controls do not change execution (1.4s)
+  ok 282 tests\browser\performance-document-refresh.spec.mjs:3:1 › a real Details commit computes the document checkpoint once after recovery publication (1.6s)
+  ok 283 tests\browser\performance-document-refresh.spec.mjs:27:1 › a views observer raw mutation reaches the final current checkpoint and recovery (1.5s)
+  ok 284 tests\browser\performance-document-refresh.spec.mjs:42:1 › a same-ID activation inside a views observer refreshes the replacement immediately (1.6s)
+  ok 285 tests\browser\performance-document-refresh.spec.mjs:58:1 › source and saved observers remain immediate while matching views refresh is deferred (1.6s)
+  ok 286 tests\browser\performance-reconciliation.spec.mjs:3:1 › selection and Recall status reuse the prepared workflow inventory (1.5s)
+  ok 287 tests\browser\performance-reconciliation.spec.mjs:30:1 › connection reconciliation retains the selected Details and publishes only the replacement scene (1.3s)
+  ok 288 tests\browser\preview-fidelity.spec.mjs:23:34 › recorded preview keeps a useful artifact body and reachable chrome at 1024px (1.8s)
+  ok 289 tests\browser\preview-fidelity.spec.mjs:23:34 › recorded preview keeps a useful artifact body and reachable chrome at 320px (1.8s)
+  ok 290 tests\browser\preview-modes.spec.mjs:27:34 › Readable and Source preserve exact copies, controls and retained state at 1024px (2.8s)
+  ok 291 tests\browser\preview-modes.spec.mjs:27:34 › Readable and Source preserve exact copies, controls and retained state at 320px (2.9s)
+  ok 292 tests\browser\preview-modes.spec.mjs:70:1 › retained context renders three ordered messages and copies exact empty and Markdown bodies (1.5s)
+  ok 293 tests\browser\preview-modes.spec.mjs:89:34 › recorded Pattern and Filter reports preserve counts, exact removals and final output at 1024px (1.9s)
+  ok 294 tests\browser\preview-modes.spec.mjs:89:34 › recorded Pattern and Filter reports preserve counts, exact removals and final output at 320px (1.9s)
+  ok 295 tests\browser\readable-node-workflows.spec.mjs:122:1 › Pattern creation accepts a plain Elara term before its single creation transaction (1.6s)
+  ok 296 tests\browser\readable-node-workflows.spec.mjs:141:1 › plain Elara editing removes each repeated-hit paragraph once and reviews the joined Draft (1.9s)
+  ok 297 tests\browser\readable-node-workflows.spec.mjs:163:53 › 1, 2, 3 authors equivalent string rules and routes fourteen hits once with faithful previews (2.4s)
+  ok 298 tests\browser\readable-node-workflows.spec.mjs:163:53 › ["1", "2", "3"] authors equivalent string rules and routes fourteen hits once with faithful previews (2.4s)
+  ok 299 tests\browser\readable-node-workflows.spec.mjs:202:4 › no-hit bypass preserves the native source and holds publication when required (1.9s)
+  ok 300 tests\browser\readable-node-workflows.spec.mjs:202:4 › protected paragraph preserves the native source and holds publication when required (2.1s)
+  ok 301 tests\browser\readable-node-workflows.spec.mjs:202:4 › empty story body preserves the native source and holds publication when required (1.9s)
+  ok 302 tests\browser\readable-node-workflows.spec.mjs:229:1 › explicit Scene Context retains separate messages and copies its whole diagnostic envelope without another capture (1.8s)
+  ok 303 tests\browser\readable-node-workflows.spec.mjs:257:1 › a changed native reply invalidates the real review authority before publication (1.8s)
+  ok 304 tests\browser\recall-canvas.spec.mjs:11:1 › shared queued badges preserve card geometry, drafts, focus and authoring state (1.6s)
+  ok 305 tests\browser\recall-canvas.spec.mjs:19:1 › selected-node context queues one shared set and badge opens Details without toggling (1.6s)
+  ok 306 tests\browser\recall-canvas.spec.mjs:24:1 › compact overview badges retain minimum painted size and identical document replacement expires queues (1.8s)
+  ok 307 tests\browser\recall-canvas.spec.mjs:29:1 › Node submenu exposes scoped global controls and a single-heading grouped overview (1.8s)
+  ok 308 tests\browser\recall-canvas.spec.mjs:35:1 › focused Memory recall menu entries isolate graph keyboard commands (1.4s)
+  ok 309 tests\browser\recall-canvas.spec.mjs:38:1 › nested views retain root-wide recall controls and reveal each linked root node (2.0s)
+  ok 310 tests\browser\recall-canvas.spec.mjs:45:1 › pending badges use amber and state markers while preserving their cards (1.5s)
+  ok 311 tests\browser\recall-canvas.spec.mjs:48:1 › badge keyboard activation opens Details without changing the shared queue (1.6s)
+  ok 312 tests\browser\recall-canvas.spec.mjs:50:1 › stale menu captures report a recoverable error without partially queueing (1.6s)
+  ok 313 tests\browser\recall-nested.spec.mjs:17:1 › nested selected Recall queues, cancels and opens exact addressed shortcut details (2.2s)
+  ok 314 tests\browser\recall-nested.spec.mjs:26:1 › global Recall overview labels and reveals sibling instances with duplicate local IDs (2.3s)
+  ok 315 tests\browser\reference-tools.spec.mjs:39:1 › post canonical Transpose nodes and Details retain reference, scope and boolean controls (2.0s)
+  ok 316 tests\browser\reference-tools.spec.mjs:60:1 › canonical cleanup node retains category selection independently of mode and scope (1.6s)
+  ok 317 tests\browser\reference-tools.spec.mjs:72:1 › Repair Details shows scope and policy controls only for cleanup modes (1.5s)
+  ok 318 tests\browser\reference-tools.spec.mjs:86:38 › pre canonical Style and Format Transfer create Text ports and expose their Details controls (1.9s)
+  ok 319 tests\browser\reference-tools.spec.mjs:86:38 › post canonical Style and Format Transfer create Text ports and expose their Details controls (1.9s)
+  ok 320 tests\browser\reference-tools.spec.mjs:106:1 › pre Text Terminology Map feeds downstream Text Rules and produces guidance with zero external requests (1.4s)
+  ok 321 tests\browser\reference-tools.spec.mjs:144:1 › saved Terminology Map without inputKind retains Draft patches and diagnostic candidate behavior (1.5s)
+  ok 322 tests\browser\rendering.spec.mjs:29:1 › native wires meet real left input and right output pins at nonidentity zoom (1.3s)
+  ok 323 tests\browser\rendering.spec.mjs:58:1 › mixed native cards stay intrinsic and usable beneath the shelf at narrow widths (4.8s)
+  ok 324 tests\browser\rendering.spec.mjs:73:1 › native intrinsic geometry grows group frames and stays cached during camera frames (1.5s)
+  ok 325 tests\browser\rendering.spec.mjs:107:1 › native pin hover highlights only attached wires and body drops cancel linking (1.6s)
+  ok 326 tests\browser\rendering.spec.mjs:123:1 › native compact aliases preserve identity, real pins and the execution signature (1.6s)
+  ok 327 tests\browser\rendering.spec.mjs:150:1 › multi-drag keeps card and wire elements and reads no card heights (1.5s)
+  ok 328 tests\browser\rendering.spec.mjs:170:1 › ResizeObserver refreshes wire endpoints after a card grows (1.3s)
+  ok 329 tests\browser\rendering.spec.mjs:183:1 › graph projections and selection updates preserve mounted cards and ports (1.4s)
+  ok 330 tests\browser\run-here-hotkey.spec.mjs:38:1 › R runs the selected node even when another node is pinned in Preview (1.5s)
+  ok 331 tests\browser\run-here-hotkey.spec.mjs:59:1 › R in an open context menu runs the selected node and dismisses the menu (1.3s)
+  ok 332 tests\browser\run-here-hotkey.spec.mjs:77:1 › the former Ctrl Enter shortcut no longer runs the selected node (1.3s)
+  ok 333 tests\browser\run-here-hotkey.spec.mjs:89:1 › R does nothing without exactly one runnable selected node (1.4s)
+  ok 334 tests\browser\run-here-hotkey.spec.mjs:109:1 › R leaves text editors alone and ignores repeat and command modifiers (1.5s)
+  ok 335 tests\browser\run-here-hotkey.spec.mjs:139:1 › R and Run to here preserve an in-flight run (1.7s)
+  ok 336 tests\browser\selection.spec.mjs:2:1 › native body dragging uses eight screen pixels and preserves group membership and cancellation (1.4s)
+  ok 337 tests\browser\selection.spec.mjs:24:1 › Shift-drag preserves and moves the selected set with real mouse input (1.3s)
+  ok 338 tests\browser\selection.spec.mjs:69:1 › real drag rectangles replace, add, and remove selection in graph coordinates (1.7s)
+  ok 339 tests\browser\selection.spec.mjs:76:1 › Ctrl+A selects blocks, Escape clears selection, and shortcuts leave text controls alone (1.4s)
+  ok 340 tests\browser\selection.spec.mjs:88:1 › drag direction and a non-default camera do not change rectangle hit testing (1.8s)
+  ok 341 tests\browser\selection.spec.mjs:99:1 › selected blocks move together as one undo step and Escape restores an unfinished drag (1.6s)
+  ok 342 tests\browser\selection.spec.mjs:118:1 › Space and middle-button pan over selected blocks; blur cancels a gesture (1.4s)
+  ok 343 tests\browser\shelf-canonical.spec.mjs:38:1 › flat family shelf exposes one canonical node and Details changes its mode and artifact kind in either phase (4.3s)
+  ok 344 tests\browser\shelf-drag.spec.mjs:19:1 › shelf drag shows a grabbing cursor and drops once at the pointer through pan and zoom (1.6s)
+  ok 345 tests\browser\shelf-drag.spec.mjs:45:1 › holding on the shelf changes the cursor and release over the shelf cancels creation (1.6s)
+  ok 346 tests\browser\shelf-drag.spec.mjs:57:1 › Escape and dropping outside the canvas cancel shelf drags without closing the workspace (1.4s)
+  ok 347 tests\browser\shelf-placement.spec.mjs:30:1 › a shelf click centers the actual small card without moving the camera (1.3s)
+  ok 348 tests\browser\shelf-placement.spec.mjs:40:1 › a larger shelf card stays centered over an occupied center after pan and zoom with one-step undo and redo (1.5s)
+  ok 349 tests\browser\shelf-placement.spec.mjs:65:1 › a shelf click during pending zoom centers the card against the settled camera (1.4s)
+  ok 350 tests\browser\smoke.spec.mjs:2:1 › a settings-free launch opens the current disabled zero-request workflow (1.1s)
+  ok 351 tests\browser\subgraph-authoring.spec.mjs:42:1 › selection creates an editable tab with shared input, output fanout, preserved wires and one-step undo (1.8s)
+  ok 352 tests\browser\subgraph-authoring.spec.mjs:65:1 › boundary blocks rename real parent pins and add a typed input that can be wired with the mouse (2.5s)
+  ok 353 tests\browser\subgraph-authoring.spec.mjs:104:1 › empty subgraph bodies add input and output nodes from the shelf (1.6s)
+  ok 354 tests\browser\subgraph-authoring.spec.mjs:123:1 › ordinary Delete removes connected interface pins and Undo restores the complete graph (1.9s)
+  ok 355 tests\browser\subgraph-authoring.spec.mjs:141:1 › explicit shelf saves update future insertions while placed copies and deletion stay independent (3.0s)
+  ok 356 tests\browser\subgraph-authoring.spec.mjs:186:1 › extracting an existing subgraph preserves descendant tabs, presentation and camera through undo and redo (2.5s)
+  ok 357 tests\browser\subgraph-authoring.spec.mjs:231:1 › nested tabs first opened after extraction retain their presentation through undo and redo (2.2s)
+  ok 358 tests\browser\subgraph-authoring.spec.mjs:265:1 › effective wrapper contents survive editable body changes and explicit shelf saves from graph and library tabs (2.8s)
+  ok 359 tests\browser\subgraph-authoring.spec.mjs:327:1 › Create subgraph accepts Context Join, Smart Compactor, Response Plan and Generate Reply together (1.7s)
+  ok 360 tests\browser\subgraph-authoring.spec.mjs:365:1 › Create subgraph accepts the complete lifecycle and host sources (1.8s)
+  ok 361 tests\browser\target-node.spec.mjs:21:1 › T targets one node, holds its preview, moves the target, and toggles it off (1.6s)
+  ok 362 tests\browser\target-node.spec.mjs:42:1 › T with no selection clears the target and otherwise does nothing (1.6s)
+  ok 363 tests\browser\target-node.spec.mjs:66:1 › Target Node in the context menu and its T shortcut share the same toggle (1.7s)
+  ok 364 tests\browser\target-node.spec.mjs:84:1 › targeting and the existing Pin and Follow selection controls can replace each other (1.7s)
+  ok 365 tests\browser\target-node.spec.mjs:104:1 › T leaves text editors alone and ignores repeats, composition, and modified keys (1.6s)
+  ok 366 tests\browser\target-node.spec.mjs:130:1 › deleting a targeted node and opening another workflow clear targeting (1.8s)
+  ok 367 tests\browser\target-node.spec.mjs:145:1 › R still runs the selected node while Preview follows a different target (1.5s)
+  ok 368 tests\browser\target-node.spec.mjs:162:1 › targets belong to a specific subgraph instance when node IDs are shared (1.9s)
+  ok 369 tests\browser\unified-authoring.spec.mjs:11:1 › unified wand helper models can be bound through actual Details without changing the pinned helper (2.1s)
+  ok 370 tests\browser\unified-authoring.spec.mjs:21:1 › Story-2 document authorization and scoped Recall hotkeys work through shipped UI (2.4s)
+  ok 371 tests\browser\wire-presentation.spec.mjs:3:1 › wire type labels stay quiet until the connection is hovered or selected (1.4s)
+  ok 372 tests\browser\workbench.spec.mjs:11:1 › a first click after editing switches Details to the clicked current node (1.4s)
+  ok 373 tests\browser\workbench.spec.mjs:21:1 › camera menus retain the focused Details editor and unsaved JSON draft (1.5s)
+  ok 374 tests\browser\workbench.spec.mjs:34:1 › closing and reopening reuses one workbench and current prepared root (1.1s)
+  ok 375 tests\browser\workflow-data-creation.spec.mjs:47:1 › automatic data targets need no active chat or setup, with Read File prefilled creation (1.9s)
+  ok 376 tests\browser\workflow-data-creation.spec.mjs:63:1 › automatic reads added beside a response node retain its effective response stage (1.7s)
+  ok 377 tests\browser\workflow-data-details.spec.mjs:31:1 › actual clock settings preserve saved time while visibility, starting values and shared source bindings change (2.0s)
+  ok 378 tests\browser\workflow-data-details.spec.mjs:67:1 › privacy saves without loading existing initial values retain visible unconfirmed persistence feedback (1.5s)
+  ok 379 tests\browser\workflow-data-details.spec.mjs:82:1 › actual file settings offer five formats and three visibility buttons while outcomes retain JSON (1.5s)
+  ok 380 tests\browser\workflow-data-details.spec.mjs:90:1 › product Workflow Data controls have flat beveled edges and fit normal, light and narrow Details (1.9s)
+  ok 381 tests\browser\workflow-data-details.spec.mjs:115:1 › disabled sibling system Details seeds and edits only its addressed notes before the first run (2.1s)
+  ok 382 tests\browser\workflow-systems.spec.mjs:24:1 › Add system from pinned child previews an effective template merge, supports edit/skip/history and saves opened tabs (3.6s)
+  ok 383 tests\browser\workflow-systems.spec.mjs:79:1 › two successive Add system commands from child tabs place separate vacant Main wrappers (2.4s)
+  ok 384 tests\browser\workflows.spec.mjs:140:1 › editing canonical Pattern rules preserves counts and labels and rejects invalid drafts (1.8s)
+  ok 385 tests\browser\workflows.spec.mjs:195:1 › formation request summary follows inspect mode and additional reachable repair members (1.5s)
+  ok 386 tests\browser\workflows.spec.mjs:225:1 › independently bind model nodes in a unified workflow without arming it (3.0s)
+  ok 387 tests\browser\workflows.spec.mjs:277:1 › unified workflow keeps its AI De-slop primitives and preserves a focused editor (1.9s)
+  ok 388 tests\browser\workflows.spec.mjs:319:1 › examples and model details open without domain scans or provider requests (2.2s)
+  ok 389 tests\browser\workflows.spec.mjs:339:1 › current empty-canvas creation offers compatible operations (1.3s)
+  ok 390 tests\browser\workflows.spec.mjs:394:1 › a real reviewed run requires Apply and preserves the original swipe (1.8s)
+  ok 391 tests\browser\workflows.spec.mjs:406:1 › an external reply edit disables Apply and a rejected candidate preserves the original (1.6s)
+  ok 392 tests\browser\workflows.spec.mjs:420:1 › switching graph or closing cancels a delayed run and ignores its late result (2.0s)
+  ok 393 tests\browser\workflows.spec.mjs:444:1 › Run to here stays diagnostic and actual Send retains addressed request evidence (1.9s)
+  ok 394 tests\browser\workflows.spec.mjs:462:1 › document replacement expires automatic Send evidence and reopening permits a fresh owned Send (2.0s)
+  ok 395 tests\browser\workflows.spec.mjs:485:1 › Send indicator follows the enabled open unified document (1.4s)
+  ok 396 tests\browser\workflows.spec.mjs:498:1 › review controls and comparison stay usable in a narrow viewport (1.7s)
+  ok 397 tests\browser\workflows.spec.mjs:513:1 › named wire inspection describes artifact flow (1.4s)
+  ok 398 tests\browser\workflows.spec.mjs:543:1 › the native canvas provides a keyboard-accessible duplicate action (1.3s)
+  ok 399 tests\browser\workflows.spec.mjs:553:1 › native camera pan and zoom preserve the focused editor without domain work (2.2s)
+  ok 400 tests\browser\workflows.spec.mjs:592:1 › native presentation undo preserves reviewed authority while semantic undo and redo revoke it (1.9s)
+  ok 401 tests\browser\workflows.spec.mjs:622:1 › accepted semantic additive import cancels a root request and history cannot resurrect its late authority (1.9s)
+  ok 402 tests\browser\workflows.spec.mjs:656:1 › an imported native graph with omitted role records can bind its model node (1.8s)
+  ok 403 tests\browser\workflows.spec.mjs:670:1 › narrow workflow inspection and review remain opaque during selection feedback (2.0s)
+  ok 404 tests\browser\workflows.spec.mjs:703:1 › narrow toolbar exposes readable labeled pane and theme controls (1.6s)
+  ok 405 tests\browser\workspace-integration.spec.mjs:16:1 › real activated child tabs retain root identity, camera and readonly alias without document/history edits (2.1s)
+  ok 406 tests\browser\workspace-integration.spec.mjs:24:1 › local copy uses the real editable parent, then child body edits take one root history step (1.7s)
+  ok 407 tests\browser\workspace-integration.spec.mjs:31:1 › actual library inspection opens the exact nested pin and cannot gain runtime edit authority (1.5s)
+  ok 408 tests\browser\workspace-integration.spec.mjs:38:1 › readonly portal manager writes a scoped local label and retains the authored root document (1.5s)
+  ok 409 tests\browser\workspace-integration.spec.mjs:47:1 › production node search commits an actual root candidate as one undoable step (1.6s)
+  ok 410 tests\browser\workspace-integration.spec.mjs:66:1 › a genuine deferred root run survives child open close reopen and cached view operations (2.0s)
+  ok 411 tests\browser\workspace-integration.spec.mjs:94:1 › native canvas keeps a flat default and quiet meter while camera tools stay accessible in Graph menu (2.5s)
+  ok 412 tests\browser\workspace-integration.spec.mjs:119:1 › actual root selection survives view roundtrips with matching paint and one undoable Delete (2.1s)
+  ok 413 tests\browser\workspace-integration.spec.mjs:156:1 › owned child Edit and Cut use its saved scope and reject blocked or stale clipboard continuations (2.1s)
+  ok 414 tests\browser\workspace-integration.spec.mjs:186:1 › actual nested library Copy and Paste carries its exact closure into an unrelated root and guards a stale paste owner (2.3s)
+  ok 415 tests\browser\workspace-integration.spec.mjs:221:1 › actual direct and portal pin menus jump to the opposite prepared endpoints (1.6s)
+  ok 416 tests\browser\workspace-integration.spec.mjs:237:1 › native root and child frame joins align at fractional and high DPR with noninteractive foreground recess (2.8s)
+  ok 417 tests\browser\workspace-interactions.spec.mjs:18:1 › wrapped nested breadcrumbs reserve space above the node shelf at every workspace width (1.6s)
+  ok 418 tests\browser\workspace-interactions.spec.mjs:39:1 › workspace labels resist text highlighting while editors and recorded output remain selectable (1.5s)
+  ok 419 tests\browser\workspace-interactions.spec.mjs:67:1 › renaming an inactive subgraph tab updates its parent node and supports undo without switching views (1.8s)
+  ok 420 tests\browser\workspace-interactions.spec.mjs:89:1 › renaming the root graph from its inactive tab updates the workflow name and breadcrumb (1.6s)
+  ok 421 tests\browser\workspace-interactions.spec.mjs:110:1 › subgraph rename undo restores an existing parent node alias (2.2s)
+  ok 422 tests\browser\workspace-interactions.spec.mjs:141:1 › File menu inline rename cancels with Escape, ignores blank names, and supports root undo and redo (2.0s)
+  ok 423 tests\browser\workspace-interactions.spec.mjs:168:1 › root tab context actions stay above the floating canvas controls (1.5s)
+  ok 424 tests\browser\workspace-menu-panels.spec.mjs:9:1 › View remembers shelf visibility and Reset layout restores panels without changing the document (2.1s)
+  ok 425 tests\browser\workspace-menu-panels.spec.mjs:25:1 › Graph Rename reveals hidden Details and focuses the selected node name (1.4s)
+  ok 426 tests\browser\workspace-menu-panels.spec.mjs:37:1 › validation and Help show current data and documentation without running or editing the workflow (1.8s)
+  ok 427 tests\browser\workspace-menu-panels.spec.mjs:95:1 › View pins the selected output and Workflow diagnostics retain its exact source and target (1.5s)
+  ok 428 tests\browser\workspace.spec.mjs:25:120 › divider pointercancel rolls back with a selection and permits another drag (1.4s)
+  ok 429 tests\browser\workspace.spec.mjs:25:120 › divider lost capture rolls back with a selection and permits another drag (1.4s)
+  ok 430 tests\browser\workspace.spec.mjs:25:120 › divider blur rolls back with a selection and permits another drag (1.4s)
+  ok 431 tests\browser\workspace.spec.mjs:25:120 › divider unmount rolls back with a selection and permits another drag (1.5s)
+  ok 432 tests\browser\workspace.spec.mjs:25:120 › divider pointercancel rolls back with no selection and permits another drag (1.4s)
+  ok 433 tests\browser\workspace.spec.mjs:25:120 › divider lost capture rolls back with no selection and permits another drag (1.4s)
+  ok 434 tests\browser\workspace.spec.mjs:25:120 › divider blur rolls back with no selection and permits another drag (1.4s)
+  ok 435 tests\browser\workspace.spec.mjs:25:120 › divider unmount rolls back with no selection and permits another drag (1.4s)
+  ok 436 tests\browser\workspace.spec.mjs:48:39 › divider Escape rolls back with a selection and releases capture (1.4s)
+  ok 437 tests\browser\workspace.spec.mjs:48:39 › divider Escape rolls back with no selection and releases capture (1.4s)
+  ok 438 tests\browser\workspace.spec.mjs:72:59 › Edit menu supports group Copy (1.4s)
+  ok 439 tests\browser\workspace.spec.mjs:72:59 › Edit menu supports group Cut (1.3s)
+  ok 440 tests\browser\workspace.spec.mjs:72:59 › Edit menu supports group Delete selection (1.4s)
+  ok 441 tests\browser\workspace.spec.mjs:94:1 › Edit menu allows named wire deletion and current node edits (1.4s)
+  ok 442 tests\browser\workspace.spec.mjs:108:1 › Inspect selection reveals Details and the root tab has quote-orange keyboard focus (1.5s)
+  ok 443 tests\browser\workspace.spec.mjs:124:43 › Examples dialog suppresses background graph shortcuts with button focus (2.1s)
+  ok 444 tests\browser\workspace.spec.mjs:124:43 › Help dialog suppresses background graph shortcuts with button focus (1.4s)
+  ok 445 tests\browser\workspace.spec.mjs:140:1 › consolidated workspace menus support keyboard navigation, Escape and outside dismissal (1.9s)
+  ok 446 tests\browser\workspace.spec.mjs:161:1 › shelf stays outside the camera and canonical nodes align with their opening family (1.4s)
+  ok 447 tests\browser\workspace.spec.mjs:180:44 › workspace fits 1024px and loads its local brand font (1.1s)
+  ok 448 tests\browser\workspace.spec.mjs:180:44 › workspace fits 736px and loads its local brand font (1.1s)
+  ok 449 tests\browser\workspace.spec.mjs:180:44 › workspace fits 360px and loads its local brand font (1.1s)
+  ok 450 tests\browser\workspace.spec.mjs:180:44 › workspace fits 320px and loads its local brand font (1.1s)
+  ok 451 tests\browser\workspace.spec.mjs:200:1 › Run to here and Stop remain active while the preview divider resizes (3.1s)
+  ok 452 tests\browser\workspace.spec.mjs:263:1 › preview divider redistributes panes without changing the graph camera, selection or cards (1.5s)
+  ok 453 tests\browser\zoom-shortcuts.spec.mjs:3:1 › canvas bracket zoom matches View commands and leaves typing and menus alone (1.4s)
+
+  453 passed (14.6m)

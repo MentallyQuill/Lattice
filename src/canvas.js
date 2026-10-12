@@ -70,8 +70,6 @@ export class Canvas {
         this.nodeProfiles = [];
         this.nodeProfileVersion = 0;
         this.nodeElements = new Map();
-        this.cardPaintEntries = null; this.cardPaintBounds = null; this.cardPaintEnvelope = null;
-        this.suppressedCards = new Set(); this.cardPaintViewport = null;
         this.layoutKeys = new Map(); this.dirtyGeometry = new Set(); this.observerSizes = new Map();
         this.cardSlots = new Map(); this.groupSlots = new Map(); this.commentSlots = new Map();
         this.layoutEpoch = 0; this.geometryEpoch = 0; this.paintRevision = 0;
@@ -95,21 +93,8 @@ export class Canvas {
             if (flags & 2) this.#drawWires();
             if (flags & 8) this.#drawWirePreview();
             if (flags & 4) this.#renderDrag();
-            if (flags & 16) this.#updateCardVisibility();
         });
         const Resize = globalThis.ResizeObserver ?? window.ResizeObserver;
-        if (Resize) {
-            // Cache host dimensions, including pane resizing, outside the frame path.
-            this.hostResizeObserver = new Resize(entries => {
-                if (this.eventController.signal.aborted) return;
-                const size = entries.find(entry => entry.target === host)?.contentRect;
-                if (!size || !(size.width > 0 && size.height > 0)) { this.cardPaintViewport = null; this.cardPaintEnvelope = null; this.#updateCardVisibility(); return; }
-                if (this.cardPaintViewport?.w === size.width && this.cardPaintViewport?.h === size.height) return;
-                this.cardPaintViewport = {w:size.width,h:size.height}; this.cardPaintEnvelope = null;
-                this.#updateCardVisibility();
-            });
-            this.hostResizeObserver.observe(host);
-        }
         if (Resize) this.createResizeObserver = () => {
             const epoch = this.geometryEpoch;
             return new Resize(entries => {
@@ -126,7 +111,6 @@ export class Canvas {
                 this.dirtyGeometry.delete(id);
             }
             if (changed.size && this.graph) {
-                this.#invalidateCardVisibility();
                 this.#drawWires(changed, {groups:this.#groupCards(changed), nodeProfiles:this.#nodeProfileRows()});
             }
         });
@@ -157,7 +141,7 @@ export class Canvas {
     async destroy() {
         this.cancelGesture();
         this.frames.destroy();
-        this.resizeObserver?.disconnect(); this.hostResizeObserver?.disconnect(); this.layoutObserver?.disconnect();
+        this.resizeObserver?.disconnect(); this.layoutObserver?.disconnect();
         this.eventController.abort();
         await this.layer.destroy();
     }
@@ -261,7 +245,6 @@ export class Canvas {
             this.host.style.backgroundSize = `${s}px ${s}px`;
             this.host.style.backgroundPosition = at;
         }
-        this.#updateCardVisibility();
         this.hooks.onView?.({ ...v, mode: this.mode });
         if (drawProfiles && this.nodeProfiles.length) this.#drawNodeProfiles();
     }
@@ -370,81 +353,7 @@ export class Canvas {
         this.applyTransform(false); const scene = this.#drawNodes(admittedCards); this.#drawWires(null, scene);
     }
 
-    #invalidateCardVisibility() {
-        this.cardPaintEntries = null; this.cardPaintBounds = null; this.cardPaintEnvelope = null;
-    }
-
-    #setCardSuppressed(id, element, suppressed) {
-        if (suppressed) this.suppressedCards.add(id); else this.suppressedCards.delete(id);
-        // A structural publication can replace classes on a retained card.
-        if (element.classList.contains('pc-offscreen') !== suppressed) element.classList.toggle('pc-offscreen', suppressed);
-    }
-
-    #updateCardVisibility() {
-        if (!this.graph) return;
-        if (!this.cardPaintViewport) {
-            const rect = this.host.getBoundingClientRect();
-            if (rect.width > 0 && rect.height > 0) this.cardPaintViewport = {w:rect.width,h:rect.height};
-        }
-        const size = this.cardPaintViewport, view = this.view, zoom = view.zoom || 1;
-        const visible = size && {left:-view.x/zoom,top:-view.y/zoom,right:(size.w-view.x)/zoom,bottom:(size.h-view.y)/zoom};
-        const keep = this.#pickedIds(), gesture = this.nativeWireView?.gesture;
-        if (gesture?.kind !== 'idle') { if (gesture?.origin?.nodeId) keep.add(gesture.origin.nodeId); if (gesture?.target?.nodeId) keep.add(gesture.target.nodeId); }
-        if (this.hoverPin?.nodeId) keep.add(this.hoverPin.nodeId);
-        if (this.drag?.id) keep.add(this.drag.id);
-        for (const [id] of this.drag?.several ?? []) keep.add(id);
-        const focused = this.host.ownerDocument.activeElement?.closest?.('.pc-node-native[data-id], .pc-node-profile[data-id]');
-        if (focused && this.host.contains(focused)) keep.add(focused.dataset.id);
-        // A pin menu's owner is private to the bridge; retain cards while it is open.
-        const suspend = !visible || !!this.nativeWireView?.menu;
-        const contains = (outer,inner) => outer && inner && inner.left >= outer.left && inner.top >= outer.top && inner.right <= outer.right && inner.bottom <= outer.bottom;
-        const previous = this.cardPaintEnvelope;
-        if (previous && previous.suspend === suspend && samePaintMembers(previous.keep,keep) && (suspend || contains(previous.coverage,visible))) return;
-        if (!this.cardPaintEntries) {
-            this.cardPaintEntries = new Map();
-            for (const [id,element] of this.nodeElements) {
-                const node = this.graph.nodes[id];
-                if (node && element.classList.contains('pc-node-native')) this.cardPaintEntries.set(id,{element,node,w:this.geometry.width(id,NaN),h:this.geometry.get(id,NaN)});
-            }
-        }
-        if (!this.cardPaintBounds) {
-            const bounds = {left:Infinity,top:Infinity,right:-Infinity,bottom:-Infinity};
-            for (const {node,w,h} of this.cardPaintEntries.values()) { bounds.left=Math.min(bounds.left,node.x);bounds.top=Math.min(bounds.top,node.y);bounds.right=Math.max(bounds.right,node.x+w);bounds.bottom=Math.max(bounds.bottom,node.y+h); }
-            this.cardPaintBounds = bounds;
-        }
-        const expand = margin => ({left:visible.left-margin/zoom,top:visible.top-margin/zoom,right:visible.right+margin/zoom,bottom:visible.bottom+margin/zoom});
-        const padded = !suspend && expand(512);
-        const allVisible = suspend || contains(padded,this.cardPaintBounds);
-        // Hidden cards stay 256px beyond the viewport while this envelope is reused.
-        this.cardPaintEnvelope = {keep,suspend,padded,coverage:!suspend&&expand(256)};
-        if (allVisible) {
-            for (const id of [...this.suppressedCards]) { const entry=this.cardPaintEntries.get(id);if(entry)this.#setCardSuppressed(id,entry.element,false);else this.suppressedCards.delete(id); }
-            return;
-        }
-        for (const [id,{element,node,w,h}] of this.cardPaintEntries) {
-            const known = Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0 && !this.dirtyGeometry.has(id);
-            const outside = known && (node.x+w < padded.left || node.y+h < padded.top || node.x > padded.right || node.y > padded.bottom);
-            this.#setCardSuppressed(id,element,outside && !keep.has(id));
-        }
-        for (const id of this.suppressedCards) if (!this.cardPaintEntries.has(id)) this.suppressedCards.delete(id);
-    }
-
-    #updateMovedCardVisibility(ids) {
-        // Coordinate batches touch moved cards only; a drag never scans the scene.
-        this.cardPaintBounds = null;
-        const envelope = this.cardPaintEnvelope;
-        if (!envelope || !this.cardPaintEntries) { this.#updateCardVisibility(); return; }
-        for (const id of ids) {
-            const entry = this.cardPaintEntries.get(id); if (!entry) continue;
-            const {element,node,w,h} = entry, padded = envelope.padded;
-            const known = Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0 && !this.dirtyGeometry.has(id);
-            const outside = known && padded && (node.x+w < padded.left || node.y+h < padded.top || node.x > padded.right || node.y > padded.bottom);
-            this.#setCardSuppressed(id,element,!!outside && !envelope.suspend && !envelope.keep.has(id));
-        }
-    }
-
     #applyFocus() {
-        this.#updateCardVisibility();
         const pin = this.hoverPin;
         const gesture = this.nativeWireView?.gesture;
         const active = gesture && gesture.kind !== 'idle' ? gesture : null;
@@ -501,7 +410,6 @@ export class Canvas {
     }
 
     #drawNodes(admittedCards) {
-        this.#invalidateCardVisibility();
         const context = { graph: this.graph, selection: this.selection, multi: this.multi, hooks: this.hooks };
         // Classify the admitted scene once, including folded nodes whose metadata still drives group frames.
         const all = admittedCards ?? nodeCards(Object.values(this.graph.nodes).filter(n => !isCommentFrame(n)), context);
@@ -555,7 +463,6 @@ export class Canvas {
         if (!this.graph) return;
         for (const id of ids) if (this.graph.nodes[id] || id.startsWith('group:')) this.dirtyGeometry.add(id);
         this.#measureCards('.pc-node[data-id], .pc-node-group');
-        this.cardPaintViewport = null; this.#invalidateCardVisibility();
         this.#drawWires(new Set(ids), {groups:this.#groupCards(ids), nodeProfiles:this.#nodeProfileRows()});
     }
 
@@ -949,7 +856,6 @@ export class Canvas {
     #renderPositions(ids, groups = []) {
         const positions = ids.map(id => this.graph.nodes[id]).filter(Boolean).map(n => ({id:n.id, x:n.x, y:n.y, ...(isCommentFrame(n) ? {w:this.widthOf(n),h:this.heightOf(n)} : {})}));
         this.#drawWires(new Set(ids), {groups:this.#groupCards([...ids, ...groups]),nodeProfiles:this.#nodeProfileRows()}, positions);
-        this.#updateMovedCardVisibility(ids);
     }
 
     #crossedDragThreshold(e) {
@@ -966,7 +872,6 @@ export class Canvas {
         const focusKey = value => { const g=value?.gesture; return JSON.stringify([g?.kind==='idle' ? null : g?.origin, g?.target, g?.feedback?.compatible]); };
         this.previewFocusChanged = this.previewFocusChanged || focusKey(view) !== focusKey(this.nativeWireView);
         this.nativeWireView = view;
-        this.#updateCardVisibility();
         for (const request of requests ?? []) {
             if (request.type === 'capture-pointer' && !this.nativeCaptures.has(request.pointerId)) {
                 this.nativeCaptures.add(request.pointerId);
@@ -1024,8 +929,6 @@ export class Canvas {
         const on = (target, type, handler, options = {}) => target.addEventListener(type, handler, { ...options, signal: this.eventController.signal });
         const inEditor = (e) => e.target?.closest?.('input, textarea, select, [contenteditable="true"]');
         const typing = (e) => inEditor(e) || document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]');
-        on(host, 'focusin', () => this.#updateCardVisibility());
-        on(host, 'focusout', () => this.frames.schedule(16));
         on(host, 'scroll', () => {
             // Keyboard focus can scroll an overflow-hidden host to an offscreen
             // card. Adopt that movement into the camera so hit testing and the
@@ -1079,7 +982,7 @@ export class Canvas {
         on(window, 'mouseup', e => {
             if (inNodeProfile(e) && (this.drag || this.pan || this.marquee)) this.cancelGesture('profile-surface');
         }, { capture: true });
-        on(window, 'resize', () => { this.cardPaintViewport = null; this.cardPaintEnvelope = null; this.cancelGesture(); this.#drawNodeProfiles(); this.#updateCardVisibility(); });
+        on(window, 'resize', () => { this.cancelGesture(); this.#drawNodeProfiles(); });
         on(host, 'pointercancel', e => { if (!inNodeProfile(e)) this.cancelGesture('pointercancel'); });
         on(host, 'lostpointercapture', e => {
             if (inNodeProfile(e)) return;
