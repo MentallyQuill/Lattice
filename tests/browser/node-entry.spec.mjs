@@ -105,6 +105,21 @@ async function importDraft(scope, label, text, columns, action = 'replace', deli
 async function undo(page) { await page.getByRole('button', { name: 'Undo', exact: true }).click(); }
 async function redo(page) { await page.getByRole('button', { name: 'Redo', exact: true }).click(); }
 
+test('successful node creation closes its dialog without an asynchronous panel error', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await setup(page);
+    const dialog = await startCreation(page, 'text-rules', 'Text Rules');
+    await dialog.getByRole('button', { name: 'Create node', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    const created = Object.values((await saved(page)).nodes);
+    expect(created).toHaveLength(1);
+    expect(created[0].operation).toBe('text-rules');
+    await page.evaluate(() => window.canvasHarness.settle());
+    expect(errors).toEqual([]);
+    await noWork(page);
+});
+
 for (const entry of [
     { name: 'plain', text: 'though', format: 'auto', expected: [{ id: 'pattern-1', pattern: 'though' }] },
     { name: 'CSV', text: '"red, blue", green', format: 'csv', expected: [{ id: 'pattern-1', pattern: 'red, blue' }, { id: 'pattern-2', pattern: 'green' }] },

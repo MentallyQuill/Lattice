@@ -24699,7 +24699,7 @@ function GD(e, t) {
 		}
 		let e = _;
 		_r().then(() => {
-			t.view.key === e && s?.querySelector("select,textarea,input")?.focus({ preventScroll: !0 });
+			t.view?.key === e && s?.querySelector("select,textarea,input")?.focus({ preventScroll: !0 });
 		});
 	}), Ri(() => {
 		let e = document.activeElement;
@@ -24934,11 +24934,11 @@ function GD(e, t) {
 		R(h, !0), R(g, "");
 		try {
 			let e = await t.actions.apply(i, r, U(f));
-			i === t.view.key && o === v && !e?.ok && R(g, (e?.error ? e.error.code + ": " + e.error.message : void 0) ?? "The node could not be prepared.", !0);
+			i === t.view?.key && o === v && !e?.ok && R(g, (e?.error ? e.error.code + ": " + e.error.message : void 0) ?? "The node could not be prepared.", !0);
 		} catch {
-			i === t.view.key && o === v && R(g, "The node could not be prepared.");
+			i === t.view?.key && o === v && R(g, "The node could not be prepared.");
 		} finally {
-			i === t.view.key && o === v && R(h, !1);
+			i === t.view?.key && o === v && R(h, !1);
 		}
 	}
 	function se(e) {
