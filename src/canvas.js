@@ -4,7 +4,7 @@ import { selectionMode, rectangle, intersects, combineSelection } from './canvas
 import { createGeometryCache, indexIncidentWires } from './canvas/geometry.js?v=0.27.0';
 import { nodeCards, preparedCardFor } from './canvas/presentation.js?v=0.27.0';
 import { buildConnectionRoute, buildDragConnectionRoute } from './canvas/connection-route.js?v=0.27.0';
-import { alignCardPins } from './canvas/pin-alignment.js?v=0.27.0';
+import { alignCardsPins } from './canvas/pin-alignment.js?v=0.27.0';
 import { isCommentFrame, containedCommentNodes } from './canvas/comment-frames.js?v=0.27.0';
 import { retainSlots, cardLayoutKey } from './canvas/retained-scene.js?v=0.27.0';
 import { mountCanvas } from '../dist/lattice-ui.js?v=0.27.0';
@@ -99,7 +99,8 @@ export class Canvas {
             const epoch = this.geometryEpoch;
             return new Resize(entries => {
             if (epoch !== this.geometryEpoch || this.eventController.signal.aborted) return;
-            const changed = new Set();
+            if (!this.#isVisible()) return;
+            const pending = [];
             for (const entry of entries) {
                 const id = entry.target.dataset.id ?? 'group:' + entry.target.dataset.group;
                 if (this.nodeElements.get(id) !== entry.target || !this.host.contains(entry.target)) continue;
@@ -107,32 +108,46 @@ export class Canvas {
                 const previous = this.observerSizes.get(id);
                 if (size && previous && size.every((value, index) => Math.abs(value - previous[index]) < .6) && !this.dirtyGeometry.has(id)) continue;
                 if (size) this.observerSizes.set(id, size);
-                if (this.#measureCard(entry.target, id)) changed.add(id);
-                this.dirtyGeometry.delete(id);
+                pending.push([entry.target, id]);
             }
+            const changed = this.#measureEntries(pending);
             if (changed.size && this.graph) {
                 this.#drawWires(changed, {groups:this.#groupCards(changed), nodeProfiles:this.#nodeProfileRows()});
             }
         });
         };
         this.resizeObserver = this.createResizeObserver?.();
+        this.environmentSignature = this.#environmentSignature();
         const layoutChanged = () => {
             if (!this.graph || this.eventController.signal.aborted) return;
-            this.invalidateGeometry(Object.keys(this.graph.nodes), 'environment');
+            const signature = this.#environmentSignature();
+            if (signature !== this.environmentSignature) {
+                this.environmentSignature = signature;
+                this.invalidateGeometry([...Object.keys(this.graph.nodes), ...Object.keys(this.graph.groups ?? {}).map(id => 'group:' + id)], 'environment');
+            } else if (this.dirtyGeometry.size && this.#isVisible()) {
+                this.invalidateGeometry([...this.dirtyGeometry], 'show');
+            }
         };
         const Mutation = host.ownerDocument.defaultView.MutationObserver;
         if (Mutation) {
             this.layoutObserver = new Mutation(layoutChanged);
             const root = host.closest('.pc-root');
-            for (const element of [host.ownerDocument.documentElement, root].filter(Boolean)) this.layoutObserver.observe(element, {attributes:true, attributeFilter:['style','class','data-pc-theme']});
+            for (const element of [host.ownerDocument.documentElement, root].filter(Boolean)) this.layoutObserver.observe(element, {attributes:true});
+            // Visibility can change without a resize. Watch only the host's ancestor chain
+            // so revealing a hidden container drains pending geometry, without subtree work.
+            for (let element = host.parentElement; element && element !== host.ownerDocument.documentElement; element = element.parentElement) {
+                if (element !== root) this.layoutObserver.observe(element, {attributes:true, attributeFilter:['style','class','hidden']});
+            }
         }
         const pointerMedia = window.matchMedia?.('(pointer: coarse)');
         pointerMedia?.addEventListener?.('change', layoutChanged, {signal:this.eventController.signal});
+        window.addEventListener('resize', layoutChanged, {signal:this.eventController.signal});
         this.#bind();
         const fonts = host.ownerDocument.fonts;
         const refreshFontGeometry = () => {
             if (!this.graph || this.eventController.signal.aborted) return;
-            this.invalidateGeometry(Object.keys(this.graph.nodes), 'fonts');
+            this.layoutEpoch++;
+            this.invalidateGeometry([...Object.keys(this.graph.nodes), ...Object.keys(this.graph.groups ?? {}).map(id => 'group:' + id)], 'fonts');
         };
         fonts?.addEventListener?.('loadingdone', refreshFontGeometry, { signal: this.eventController.signal });
         fonts?.ready?.then(refreshFontGeometry);
@@ -165,6 +180,10 @@ export class Canvas {
         const detailScopeKey = options.viewKey ?? legacyScopeKey;
         if (detailScopeKey !== this.detailScopeKey) {
             this.trace = null; this.layer.setVisualStatus({}); this.hoverPin = null; this.hoverWire = null;
+        }
+        // Geometry authority qualifies detached layout only; interactions always use the fresh view key.
+        const geometryScopeKey = options.geometryKey ?? detailScopeKey;
+        if (geometryScopeKey !== this.geometryScopeKey) {
             this.geometry.clear(); this.wireViews.clear(); this.publishedWireClasses.clear(); this.layoutKeys.clear(); this.dirtyGeometry.clear();
             this.cardSlots.clear(); this.groupSlots.clear(); this.commentSlots.clear();
             this.geometryEpoch++; this.resizeObserver?.disconnect();
@@ -175,6 +194,7 @@ export class Canvas {
         if (graph.id !== this.graph?.id || lodScopeKey !== this.lodScopeKey) delete this.host.dataset.pcDetail;
         this.lodScopeKey = lodScopeKey;
         this.detailScopeKey = detailScopeKey;
+        this.geometryScopeKey = geometryScopeKey;
         this.legacyScopeKey = legacyScopeKey;
         this.nodeProfiles = []; this.nodeProfileVersion++;
         this.graph = graph; this.selection = null; this.multi.clear();
@@ -388,9 +408,19 @@ export class Canvas {
         }
     }
 
+    #environmentSignature() {
+        const describe = element => element && [
+            [...element.classList].filter(name => name !== 'pc-open').sort(),
+            [...element.style].sort().map(name => [name, element.style.getPropertyValue(name), element.style.getPropertyPriority(name)]),
+            [...element.attributes].filter(attribute => attribute.name.startsWith('data-pc-')).map(attribute => [attribute.name, attribute.value]).sort(),
+        ];
+        return JSON.stringify([describe(this.host.ownerDocument.documentElement), describe(this.host.closest('.pc-root')),
+            window.devicePixelRatio, window.innerWidth, window.innerHeight, window.matchMedia?.('(pointer: coarse)').matches ?? false]);
+    }
+
     #layoutEnvironment() {
         const style = getComputedStyle(this.host);
-        return [this.layoutEpoch, style.font, style.fontSize, style.fontFamily, style.lineHeight,
+        return [this.layoutEpoch, this.environmentSignature, style.font, style.fontSize, style.fontFamily, style.lineHeight,
             this.host.ownerDocument.documentElement.getAttribute('data-pc-theme'),
             window.matchMedia?.('(pointer: coarse)').matches ?? false];
     }
@@ -414,6 +444,7 @@ export class Canvas {
         // Classify the admitted scene once, including folded nodes whose metadata still drives group frames.
         const all = admittedCards ?? nodeCards(Object.values(this.graph.nodes).filter(n => !isCommentFrame(n)), context);
         this.preparedCards = new Map(all.map(card => [card.id, card]));
+        this.environmentSignature = this.#environmentSignature();
         const environment = this.#layoutEnvironment();
         for (const card of all) {
             const key = cardLayoutKey(card, environment);
@@ -430,8 +461,7 @@ export class Canvas {
             update: (id, patch) => { if (current(id) && this.#canEdit()) this.hooks.onCommentPatch?.(capture, id, patch); },
             command: (id, command) => { if (current(id) && this.#canEdit()) this.hooks.onCommentCommand?.(capture, id, command); },
         }});
-        this.#measureCards('.pc-node[data-id]');
-        this.#measureCards('.pc-node-group');
+        this.#measureCards('.pc-node[data-id], .pc-node-group');
         const keep = new Set([...Object.keys(this.graph.nodes), ...Object.keys(this.graph.groups ?? {}).map(id => 'group:' + id)]);
         for (const [id, element] of this.nodeElements) if (!this.host.contains(element)) {
             this.resizeObserver?.unobserve(element); this.nodeElements.delete(id); this.observerSizes.delete(id);
@@ -443,6 +473,7 @@ export class Canvas {
     }
 
     #measureCards(selector) {
+        const pending = [];
         for (const el of this.nodeLayer.querySelectorAll(selector)) {
             const id = el.dataset.id ?? 'group:' + el.dataset.group;
             const previous = this.nodeElements.get(id);
@@ -451,17 +482,46 @@ export class Canvas {
                 this.nodeElements.set(id, el); this.dirtyGeometry.add(id); this.resizeObserver?.observe(el);
             }
             if (this.dirtyGeometry.has(id)) {
-                this.#measureCard(el, id); this.dirtyGeometry.delete(id);
-                const style = getComputedStyle(el);
-                this.observerSizes.set(id, [el.clientWidth - (parseFloat(style.paddingLeft)||0) - (parseFloat(style.paddingRight)||0), el.clientHeight - (parseFloat(style.paddingTop)||0) - (parseFloat(style.paddingBottom)||0)]);
+                pending.push([el, id]);
             }
         }
+        this.#measureEntries(pending);
+    }
+
+    #isVisible() {
+        const root = this.host.closest('.pc-root');
+        if (root && !root.classList.contains('pc-open')) return false;
+        if (!this.host.isConnected) return false;
+        if (this.host.checkVisibility) return this.host.checkVisibility({checkVisibilityCSS:true});
+        for (let element = this.host; element; element = element.parentElement) {
+            const style = getComputedStyle(element);
+            if (element.hidden || style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+        }
+        return true;
+    }
+
+    #measureEntries(entries) {
+        const changed = new Set();
+        if (!entries.length || !this.#isVisible()) return changed;
+        alignCardsPins(entries.filter(([el]) => el.classList.contains('pc-node-native')).map(([el]) => el), this.view.zoom || 1);
+        for (const [el, id] of entries) {
+            if (this.#measureCard(el, id)) changed.add(id);
+            this.dirtyGeometry.delete(id);
+            const style = getComputedStyle(el);
+            this.observerSizes.set(id, [el.clientWidth - (parseFloat(style.paddingLeft)||0) - (parseFloat(style.paddingRight)||0), el.clientHeight - (parseFloat(style.paddingTop)||0) - (parseFloat(style.paddingBottom)||0)]);
+        }
+        return changed;
     }
 
     /** Explicit layout changes invalidate hidden members too; remount measures their latest contract. */
     invalidateGeometry(ids = Object.keys(this.graph?.nodes ?? {}), reason = 'layout') {
         if (!this.graph) return;
-        for (const id of ids) if (this.graph.nodes[id] || id.startsWith('group:')) this.dirtyGeometry.add(id);
+        const environment = this.#layoutEnvironment();
+        for (const id of ids) if (this.graph.nodes[id] || id.startsWith('group:')) {
+            this.dirtyGeometry.add(id);
+            const card = this.preparedCards?.get(id);
+            if (card) this.layoutKeys.set(id, cardLayoutKey(card, environment));
+        }
         this.#measureCards('.pc-node[data-id], .pc-node-group');
         this.#drawWires(new Set(ids), {groups:this.#groupCards(ids), nodeProfiles:this.#nodeProfileRows()});
     }
@@ -492,7 +552,6 @@ export class Canvas {
     #measureCard(el, id) {
         if (!el.classList.contains('pc-node-native')) return this.geometry.update(id, el.offsetHeight);
         const zoom = this.view.zoom || 1;
-        alignCardPins(el, zoom);
         const box = el.getBoundingClientRect();
         const pins = [...el.querySelectorAll('.pc-port')].map(port => {
             const dot = port.getBoundingClientRect();

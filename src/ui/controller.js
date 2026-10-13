@@ -70,6 +70,8 @@ let graphEditAdapter = null;
 let pendingImport = null;
 let graphViews = null, workspacePrepared = null, editorDraw = null, rootRunEpoch = 0, workspaceRevision = 0;
 let documentTransition = false, libraryRevision = 0, restoringEditor = false, canvasTraceRows = null;
+// Opening installs fresh editor authority before one final surface publication.
+let openingWorkspace = false;
 let viewSaveTimer = null, pinnedPreview = null, targetedPreview = null, selectedPreview = null, nativeWireBridge = null, nativeCatalog = null, positionEdit = null;
 let nativeGroupPresenter = null, detachedClip = null, workspaceIssue = '';
 let pendingSubgraphSave = null, pendingAddSystem = null;
@@ -152,7 +154,7 @@ let workflowState = { result: null, busy: false, status: '', applyIssue: '' };
 const workflowSession = createWorkflowSession({ runtime: () => workflowRuntime.getNativeWorkflowController?.(), rootCurrent: () => current, runEpoch: () => rootRunEpoch, documentToken: () => documentSession.capture(), active: isOpen, changed: state => {
     const authorityChanged = state.result !== workflowState.result || state.reviewHandles !== workflowState.reviewHandles;
     workflowState = state;
-    if (isOpen() && !documentTransition) { if (authorityChanged) refreshWorkflowPreparation(); updateWorkflowProjection(); }
+    if (isOpen() && !documentTransition) { if (authorityChanged) refreshWorkflowPreparation(); if (!openingWorkspace) updateWorkflowProjection(); }
 } });
 const receiveAutomaticWorkflow = () => workflowSession.receiveAutomatic(workflowRuntime.getNativeWorkflowController?.()?.lastAutomaticResult?.());
 function storySetup() {
@@ -280,7 +282,7 @@ function activateEditorDraw() {
     const editor = graphViews.readEditor();
     editorDraw = projectEditorDraw(editor, { canvasOnly: true }); canvasTraceRows=null;
     replaceNativeBridge();
-    canvas.setGraph(editorDraw, { viewKey: graphViews.readEditContext().activationId + ':' + editor.view.key });
+    canvas.setGraph(editorDraw, { viewKey: graphViews.readEditContext().activationId + ':' + editor.view.key, geometryKey: editor.view.key });
     const selection = editor.view.selection.primary;
     const primary=selection && editorDraw[selection.kind === 'node' ? 'nodes' : selection.kind === 'wire' ? 'wires' : 'groups']?.[selection.id] ? selection : null;
     const multi=editor.view.selection.multi.filter(id=>editorDraw.nodes[id]);
@@ -295,7 +297,7 @@ function activateEditorDraw() {
     graphViews.updateView({ selection: { primary: restoredPrimary, multi: restoredMulti }, inspector: { ...editor.view.inspector, item: restoredPrimary } });
     root.classList.toggle('pc-details-hidden',!editor.view.inspector.open);syncPaneToggles();
     workbench.update({ graphViews: graphViews.project().graphViews, readOnly: editor.readOnly });
-    updateWorkflowProjection(); paintHistory();
+    if (!openingWorkspace) { updateWorkflowProjection(); paintHistory(); }
 }
 function refreshWorkspaceDocument(change = null) {
     if (!isWorkflowGraph(current) || !prepareWorkspaceDocument(change)) return;
@@ -517,11 +519,15 @@ function defaultNodeSpot() {
 export function isOpen() { return !!root && root.classList.contains('pc-open'); }
 export function open() {
     const wasOpen = isOpen();
-    build(); root.classList.add('pc-open'); document.addEventListener('pc-native-result', receiveAutomaticWorkflow);
-    safe(() => applyTheme()); current = activeWorkflow(); ensureDocumentCommands();
-    setCanvasGraph({ cancelRun: wasOpen }); renderAll();
-    workflowActivityUnsubscribe?.();
-    workflowActivityUnsubscribe = workflowRuntime.getNativeWorkflowController?.()?.subscribeActivity?.(() => { if (isOpen() && graphViews && !documentTransition) updateWorkflowProjection(); }) ?? null;
+    openingWorkspace = true;
+    try {
+        build(); root.classList.add('pc-open'); document.addEventListener('pc-native-result', receiveAutomaticWorkflow);
+        safe(() => applyTheme()); current = activeWorkflow(); ensureDocumentCommands();
+        setCanvasGraph({ cancelRun: wasOpen });
+        workflowActivityUnsubscribe?.();
+        workflowActivityUnsubscribe = workflowRuntime.getNativeWorkflowController?.()?.subscribeActivity?.(() => { if (isOpen() && graphViews && !documentTransition && !openingWorkspace) updateWorkflowProjection(); }) ?? null;
+    } finally { openingWorkspace = false; }
+    renderAll({ canvasReady: true });
 }
 export function close() {
     workflowActivityUnsubscribe?.(); workflowActivityUnsubscribe = null;
@@ -621,7 +627,7 @@ function build() {
     root.classList.toggle('pc-details-hidden', typeof panes.inspector === 'boolean' ? !panes.inspector : window.innerWidth < 860); syncPaneToggles();
     document.addEventListener('pc-recall-state', () => { if(isOpen())refreshRecallOverview(); });
     document.addEventListener('pc-state', () => { if(isOpen())refreshRecallOverview(); });
-    document.addEventListener('pc-theme', () => { if (canvas && isOpen()) { updateWorkflowProjection(); canvas.render(); } });
+    document.addEventListener('pc-theme', () => { if (canvas && isOpen() && !openingWorkspace) { updateWorkflowProjection(); canvas.render(); } });
     canvas = new Canvas(workbench.parts.canvasHost, {
         lodKey: () => graphViews ? documentSession.draftNamespace() + ':' + graphViews.readEditor().view.key : undefined,
         onSelect(item, kind) {
@@ -698,7 +704,6 @@ function build() {
         }
         if (['Delete', 'Backspace'].includes(event.key)) { event.preventDefault(); canvas.deleteSelection(); }
     });
-    refreshExampleCatalog();
 }
 function refreshExampleCatalog() {
     try {
@@ -890,13 +895,13 @@ function openRecallDetails(nodeId,scope='selected') {
 }
 function showSettings(selection) { if (root.classList.contains('pc-details-hidden')) togglePane(); canvas.select(selection); const inspector = workbench.parts.inspector; inspector.scrollTop = 0; inspector.classList.add('pc-flash'); requestAnimationFrame(revealNarrowDetails); setTimeout(() => inspector.classList.remove('pc-flash'), 400); }
 function touch() { touchGraph(current); refreshWorkspaceDocument(); }
-function renderAll() {
+function renderAll({ canvasReady = false } = {}) {
     H.track(current);
     updateWorkflowProjection();
     paintHistory();
     renderDocumentState();
-    renderStatus();
-    canvas.render();
+    renderStatus({ project: false });
+    if (!canvasReady) canvas.render();
     updateSelectionCount();
 }
 
@@ -986,7 +991,7 @@ function renderDocumentState() {
     workbench.update({ document: ensureDocumentCommands().view(), graphId: current?.id ?? '', enabled: !!settings().enabled, hasArchivedWorkflows: Object.keys(settings().archivedWorkflows?.graphs ?? {}).length > 0 || Object.keys(settings().archivedWorkflows?.definitions ?? {}).length > 0 });
 }
 
-function renderStatus() { safe(() => document.dispatchEvent(new CustomEvent('pc-state'))); workbench.update({ enabled: !!settings().enabled }); refreshRecallOverview(); if (graphViews) updateWorkflowProjection(); }
+function renderStatus({ project = true } = {}) { safe(() => document.dispatchEvent(new CustomEvent('pc-state'))); workbench.update({ enabled: !!settings().enabled }); if (project) { if (graphViews) updateWorkflowProjection(); else refreshRecallOverview(); } }
 async function onNewGraph() {
     canvas?.cancelGesture();
     return ensureDocumentCommands().newDocument();

@@ -33,7 +33,7 @@ function controllerFunction(name, env) {
     env.pendingCommentPresentation ??= new WeakMap();
     env.pendingSubgraphPresentation ??= new WeakMap();
     env.pendingSystemPresentation ??= new WeakMap(); env.restoreSystemViews ??= restoreSystemViews;
-    env.documentTransition ??= false; env.workflowState ??= { busy: false }; env.workflowRuntime ??= {};
+    env.documentTransition ??= false; env.openingWorkspace ??= false; env.workflowState ??= { busy: false }; env.workflowRuntime ??= {};
     env.targetedPreview ??= null;
     env.isCommentFrame ??= isCommentFrame;
     env.operationFor ??= operationFor;
