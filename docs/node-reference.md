@@ -489,6 +489,10 @@ These four nodes belong to a native-unified workflow and may live at its root or
 
 **Native boundary; zero auxiliary calls.** Inputs: required activation Data and optional Guidance. Outputs: completed source-bound Draft and generation metadata Data. It uses SillyTavern's main connection, with **Guidance token budget** (default 768, range 1–8,192) for LATTICE's contribution. One boundary belongs in a unified root; an auxiliary model connection does not replace this owner. Native generation starts through ordinary Send. Its completed Draft is the source for response branches.
 
+**Details → Injection role** chooses **System**, **User** or **Assistant** for the connected Guidance. **Injection position** chooses **Before main prompt**, **After main prompt** or **In chat**. In chat reveals **Injection depth** (0–10,000): 0 places guidance nearest the newest message; larger values place it farther back. Switching position retains the saved depth. Defaults are **System · In chat · Depth 0**, including workflows saved before these controls existed.
+
+These settings apply to the complete connected Guidance, including a Compose merge. Guidance-producing nodes supply content; Generate Reply controls its native prompt placement.
+
 ### Review / Publish
 
 **Response terminal; zero calls.** Input: final Draft. Produces the root Candidate/Host result for Preview's explicit **Apply reviewed candidate** or **Reject candidate**. A full selected result and fresh native source are required. Apply creates a new swipe preserving the original and settles the chosen root's staged effects; this node does not automatically publish when it executes. See [acceptance and persistence](unified-workflows.md#keep-acceptance-and-saving-distinct).

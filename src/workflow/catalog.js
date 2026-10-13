@@ -221,6 +221,11 @@ export function semanticControlsForNode(node, operation = operationFor(node)) {
         if (Array.isArray(controls.sections)) controls.sections = controls.sections.map(section => { const normalized = { ...section }; if (normalized.kind === 'text') delete normalized.kind; if (normalized.required === false) delete normalized.required; if (normalized.onSkipped === 'fallback') delete normalized.onSkipped; return normalized; });
     }
     // Additive editor controls must preserve existing version-1 semantic pins.
+    if (node.operation === 'generate-reply') {
+        if (controls.injectionRole === 'system') delete controls.injectionRole;
+        if (controls.injectionPosition === 'in-chat') delete controls.injectionPosition;
+        if (controls.injectionDepth === 0) delete controls.injectionDepth;
+    }
     if (node.operation === 'for-each') {
         if (!Object.keys(controls.roleOverrides ?? {}).length) delete controls.roleOverrides;
         else controls.roleOverrides = Object.fromEntries(Object.entries(controls.roleOverrides).map(([role,binding]) => [role,{...(Object.hasOwn(binding,'model') ? {model:binding.model} : {}),...(binding.profileId === ACTIVE_PROFILE_ID ? {profileId:ACTIVE_PROFILE_ID} : {})}]));

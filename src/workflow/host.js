@@ -30,6 +30,9 @@ const retentionInspectors=new WeakMap();
 export const inspectWorkflowRetentionForReview=controller=>retentionInspectors.get(controller)?.();
 
 const PREFIX = 'lattice:guidance:';
+// Public SillyTavern extension prompt position and role enum values.
+const GUIDANCE_POSITIONS = { 'before-prompt': 2, 'in-prompt': 0, 'in-chat': 1 };
+const GUIDANCE_ROLES = { system: 0, user: 1, assistant: 2 };
 const fail = (code,message) => ({ok:false,error:{code,message}});
 const identity = c => ({chatId:c.getCurrentChatId?.() ?? c.chatId ?? null,characterId:c.characterId ?? null,groupId:c.groupId ?? null});
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
@@ -692,7 +695,7 @@ export function createNativeWorkflowController(ports) {
                 if(run.invalidMemoryEvidence)return fail('STALE_MEMORY_EVIDENCE','Selected memory evidence is no longer current.');
                 prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);
                 authority=authorizedGuidance();if(!authority.ok)return rejectPreparation(authority);
-                try {const c=context(),key=PREFIX+addressKey(operationPorts.address);keys.add(key);if(typeof c.setExtensionPrompt!=='function')throw new Error();c.setExtensionPrompt(key,guidance.text,1,0,false,0);if(c.extensionPrompts && c.extensionPrompts[key]?.value!==guidance.text)throw new Error();}
+                try {const c=context(),key=PREFIX+addressKey(operationPorts.address);keys.add(key);if(typeof c.setExtensionPrompt!=='function')throw new Error();c.setExtensionPrompt(key,guidance.text,GUIDANCE_POSITIONS[node.injectionPosition??'in-chat'],node.injectionDepth??0,false,GUIDANCE_ROLES[node.injectionRole??'system']);if(c.extensionPrompts && c.extensionPrompts[key]?.value!==guidance.text)throw new Error();}
                 catch {clear();return fail('GUIDANCE_UNAVAILABLE','Native guidance could not be installed.');}
                 authority=authorizedGuidance();if(!authority.ok)return rejectPreparation(authority);
                 prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);

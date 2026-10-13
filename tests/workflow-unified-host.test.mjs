@@ -58,6 +58,48 @@ function addReply(f, { normalized = true, text = 'Native reply.' } = {}) {
 }
 async function settled(f) { for (let tries = 0; tries < 30 && !f.results.length; tries++) await nextTurn(); assert.equal(f.results.length, 1, 'Owned continuation must settle promptly'); return f.results[0]; }
 
+test('Generate Reply refuses invalid injection controls before installing guidance', async () => {
+    for (const controls of [
+        { injectionRole: 'developer' }, { injectionRole: null },
+        { injectionPosition: 'anywhere' }, { injectionPosition: null },
+        { injectionDepth: -1 }, { injectionDepth: 10001 }, { injectionDepth: 1.5 },
+        { injectionDepth: '4' }, { injectionDepth: null },
+    ]) {
+        const node = { id: 'generate', type: 'workflow', operation: 'generate-reply', ...controls };
+        assert.equal(lifecycle.describeLifecycleNode(node, { phase: 'pre' }).ok, false, JSON.stringify(controls));
+        const graph = unifiedGraph({ guidance: true, revise: false });
+        Object.assign(graph.nodes.generate, controls);
+        const f = nativeFixture(graph);
+        try {
+            const result = await f.start();
+            assert.equal(result.ok, false, JSON.stringify(controls));
+            assert.ok(Object.values(f.c.extensionPrompts).every(prompt => !prompt.value));
+            assert.equal(f.requests(), 0);
+        } finally { f.controller.dispose(); }
+    }
+});
+
+test('Generate Reply installs guidance using its configured role, position and depth', async () => {
+    for (const [controls, expected] of [
+        [{}, [1, 0, false, 0]],
+        [{ injectionRole: 'user', injectionPosition: 'in-chat', injectionDepth: 4 }, [1, 4, false, 1]],
+        [{ injectionRole: 'assistant', injectionPosition: 'before-prompt', injectionDepth: 7 }, [2, 7, false, 2]],
+        [{ injectionRole: 'system', injectionPosition: 'in-prompt', injectionDepth: 5 }, [0, 5, false, 0]],
+    ]) {
+        const graph = unifiedGraph({ guidance: true, revise: false });
+        Object.assign(graph.nodes.generate, controls);
+        const f = nativeFixture(graph), installed = [];
+        const setter = f.c.setExtensionPrompt;
+        f.c.setExtensionPrompt = (key, value, ...settings) => { if (value) installed.push(settings); setter(key, value); };
+        try {
+            const ready = await f.start();
+            assert.equal(ready.ok, true, JSON.stringify(ready.error));
+            assert.deepEqual(installed, [expected]);
+            assert.equal(f.requests(), 0);
+        } finally { f.controller.dispose(); }
+    }
+});
+
 test('unified Send releases preparation then resumes the same run after Received and End in either order', async () => {
     for (const order of ['received-first', 'ended-first']) {
         const f = nativeFixture(unifiedGraph({ guidance: true }));

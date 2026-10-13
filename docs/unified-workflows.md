@@ -58,6 +58,8 @@ Connect On Send’s activation to Generate Reply’s required activation input. 
 
 A unified workflow has one native generation boundary. Generate Reply uses the main SillyTavern connection, with no second profile selector. Its guidance budget limits the advice Lattice supplies. Quiet/background, impersonation, unsupported media/tool continuations, and overlapping generations do not supply interchangeable Drafts.
 
+Select **Generate Reply → Details** to set **Injection role** (System, User or Assistant) and **Injection position** (Before main prompt, After main prompt or In chat). **In chat** also exposes **Injection depth**: 0 places guidance nearest the newest message, with larger values farther back. The default is **System · In chat · Depth 0**. The settings apply to all connected guidance after any Compose merge and persist with the workflow; switching position retains its saved chat depth.
+
 Connections decide dependencies. A Preparation label alone does not put text into the main prompt: connect it to guidance or another required preparation input. A response branch must reach a selected terminal or consumed output to run. Canvas position does not determine order. Cycles, incompatible types, invalid pins, and unsupported helper nodes fail validation.
 
 Tools that support both stages expose **Stage → Preparation / Response**. A skipped optional branch can be omitted by Join. An unresolved required branch holds its dependents; uncertainty is not automatically false.

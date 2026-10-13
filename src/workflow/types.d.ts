@@ -19,7 +19,7 @@ export interface PortDescriptor {
     /** Inputs accept one binding; outputs may fan out to many consumers. */
     cardinality: 'one';
 }
-export type ControlDescriptor = ({ label?: string; editor?: 'text' | 'json'; exposable?: boolean; maxLength?: number; multiline?: boolean; hidden?: boolean; visibleWhen?: { key: string; value: string | boolean | number }; help?: string } & (
+export type ControlDescriptor = ({ label?: string; valueLabels?: Record<string, string>; editor?: 'text' | 'json'; exposable?: boolean; maxLength?: number; multiline?: boolean; hidden?: boolean; visibleWhen?: { key: string; value: string | boolean | number }; help?: string } & (
     | { type: 'integer'; min: number; max: number; default: number }
     | { type: 'number'; min: number; max: number; step?: number | 'any'; default: number }
     | { type: 'enum'; values: string[]; default: string }
@@ -51,6 +51,10 @@ export interface NativeNode extends Binding {
     /** Explicit Text Transpose runs in either phase; omitted preserves legacy post Draft mode. */
     inputKind?: 'text' | 'draft';
     phase?: WorkflowPhase;
+    /** Native Generate Reply guidance placement; omitted preserves System at chat depth 0. */
+    injectionRole?: 'system' | 'user' | 'assistant';
+    injectionPosition?: 'before-prompt' | 'in-prompt' | 'in-chat';
+    injectionDepth?: number;
     [key: string]: unknown;
 }
 export interface DirectWire {

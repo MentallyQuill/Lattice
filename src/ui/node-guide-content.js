@@ -176,7 +176,7 @@ const content = {
         'Connect Activation to Generate Reply to establish the workflow’s generation path.'),
     'generate-reply': entry('Generate Reply · SillyTavern', 'Generate the workflow’s one native reply through the selected SillyTavern connection.',
         'Connect On Send’s Activation and optional Preparation Guidance.',
-        'Set the guidance budget and use the host’s selected model and generation settings.',
+        'Set the guidance budget, injection role, position and chat depth in Details. The default is System in chat at depth 0.',
         'Connect Draft through any Response processing and finish at Review / Publish.'),
     'review-publish': entry('Review / Publish', 'Prepare the owned final Draft and staged effects for explicit review and application.',
         'Connect the final owned Draft in Response, either in Main or inside a static subgraph.',
@@ -585,6 +585,9 @@ const controls = {
     },
     'generate-reply': {
         budgetTokens: 'Maximum tokens of optional Guidance supplied to this native generation. The reply itself uses SillyTavern’s generation settings.',
+        injectionRole: 'Supply the connected Guidance as a System, User or Assistant message. This role applies to the combined guidance supplied to the native reply.',
+        injectionPosition: 'Place Guidance before the main prompt, after the main prompt or within the chat at the chosen depth.',
+        injectionDepth: 'Chat placement only: 0 places Guidance nearest the newest message; higher values place it farther back in chat. Switching position retains the saved depth.',
     },
     format: {
         inputMode: 'Records accepts structured Data. JSON text accepts raw JSON Text and parses it before validation and serialization.',
