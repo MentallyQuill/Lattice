@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { installMock } from './mock.js';
 const lifecycle = new EventTarget();
 globalThis.addEventListener = lifecycle.addEventListener.bind(lifecycle);
-const S = await import('../src/state.js?v=0.27.2');
-const { starterGraph } = await import('../src/workflow/starters.js?v=0.27.2');
+const S = await import('../src/state.js?v=0.27.3');
+const { starterGraph } = await import('../src/workflow/starters.js?v=0.27.3');
 
 function setup(save = () => {}) {
     const host = installMock(); host.saveSettingsDebounced = save;

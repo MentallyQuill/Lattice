@@ -6,9 +6,9 @@ import { join, resolve, relative, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { compiled } from './helpers/svelte-compile.mjs';
-import { runWorkflowForHost } from '../src/workflow/runtime.js?v=0.27.2';
-import { projectRecordedPreview } from '../src/ui/recorded-preview.js?v=0.27.2';
-import { getPatternReportBinding } from '../src/workflow/operations/pattern-engine.js?v=0.27.2';
+import { runWorkflowForHost } from '../src/workflow/runtime.js?v=0.27.3';
+import { projectRecordedPreview } from '../src/ui/recorded-preview.js?v=0.27.3';
+import { getPatternReportBinding } from '../src/workflow/operations/pattern-engine.js?v=0.27.3';
 import { routingGraph, hostHarness, fourteen, retained, unit, target } from './helpers/pattern-routing-fixtures.mjs';
 
 const dom = new JSDOM('<!doctype html><body></body>', { pretendToBeVisual: true });

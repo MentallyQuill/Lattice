@@ -1,8 +1,8 @@
-import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.2';
-import { validateOccurrences } from './event-data.js?v=0.27.2';
-import { own, plain, freeze } from '../record-data.js?v=0.27.2';
-import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.2';
-import { validateRecallScope, validateRecallQueueProposal } from '../recall-state.js?v=0.27.2';
+import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.3';
+import { validateOccurrences } from './event-data.js?v=0.27.3';
+import { own, plain, freeze } from '../record-data.js?v=0.27.3';
+import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.3';
+import { validateRecallScope, validateRecallQueueProposal } from '../recall-state.js?v=0.27.3';
 const fail=(code,message)=>({ok:false,error:{code,message}}),id=value=>typeof value==='string'&&!!value.trim()&&value.length<=256;
 const eventId=value=>typeof value==='string'&&!!value.trim()&&value.length<=2048;
 const exact=(value,keys,required=keys)=>plain(value)&&Object.keys(value).every(key=>keys.includes(key))&&required.every(key=>Object.hasOwn(value,key));

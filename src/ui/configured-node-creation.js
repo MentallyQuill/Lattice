@@ -1,11 +1,11 @@
-import {parseControlInput} from './control-input-contracts.js?v=0.27.2';
-import {prepareIterationBindings} from './iteration-bindings.js?v=0.27.2';
-import {projectNodeControls} from './node-control-projection.js?v=0.27.2';
-import {OPERATIONS,operationDefaults,describeOperation,phaseForNode} from '../workflow/catalog.js?v=0.27.2';
-import {cloneDefinitionData,definitionRefKey} from '../workflow/definition-data.js?v=0.27.2';
-import {inspectDefinitionGraph} from '../workflow/graph-validation.js?v=0.27.2';
-import {freeze} from '../workflow/record-data.js?v=0.27.2';
-import {workflowDataPresetFor} from '../workflow/workflow-data-defaults.js?v=0.27.2';
+import {parseControlInput} from './control-input-contracts.js?v=0.27.3';
+import {prepareIterationBindings} from './iteration-bindings.js?v=0.27.3';
+import {projectNodeControls} from './node-control-projection.js?v=0.27.3';
+import {OPERATIONS,operationDefaults,describeOperation,phaseForNode} from '../workflow/catalog.js?v=0.27.3';
+import {cloneDefinitionData,definitionRefKey} from '../workflow/definition-data.js?v=0.27.3';
+import {prepareDefinitionRegistry,inspectPreparedDefinition} from '../workflow/graph-validation.js?v=0.27.3';
+import {freeze} from '../workflow/record-data.js?v=0.27.3';
+import {workflowDataPresetFor} from '../workflow/workflow-data-defaults.js?v=0.27.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const pin=(id,kind,direction,required=false,label=id)=>({id,label,kind,direction,required,cardinality:'one'});
 const input=(id,kind='data',required=true,label=id)=>pin(id,kind,'input',required,label),output=(id,kind='data',label=id)=>pin(id,kind,'output',false,label);
@@ -45,7 +45,8 @@ export function configuredCreationStage(operation,mode,effectivePhase,inDefiniti
  return {phase:containerStage??(['pre','post'].includes(declared)?declared:effectivePhase==='post'?'post':'pre'),phaseLocked:!!containerStage||['pre','post'].includes(declared)};
 }
 export function iterationHelperChoices(root,profiles=[]){
- const choices=[];for(const [key,definition] of Object.entries(root?.definitions??{})){const checked=inspectDefinitionGraph(definition,root.definitions);if(!checked.ok)continue;const ports=checked.data.interface;if(!ports.some(port=>port.id==='item'&&port.direction==='input'&&port.kind==='data'&&port.required===true)||!ports.some(port=>port.id==='result'&&port.direction==='output'&&port.kind==='data')||ports.some(port=>port.kind!=='data'||!['item','result','projectedState','nextState'].includes(port.id)||['item','projectedState'].includes(port.id)!==(port.direction==='input')))continue;choices.push({key,label:definition.name,ref:checked.data.ref,stateful:ports.some(port=>port.id==='projectedState'&&port.direction==='input')&&ports.some(port=>port.id==='nextState'&&port.direction==='output'),bindings:prepareIterationBindings({helper:checked.data.ref,roleOverrides:{}},root.definitions,profiles,root.roles??{})});}return freeze(choices);
+ const registry=prepareDefinitionRegistry(root?.definitions??{});if(!registry.ok)return freeze([]);
+ const definitions=registry.data.snapshots,choices=[];for(const [key,definition] of Object.entries(definitions)){const checked=inspectPreparedDefinition(registry.data,{id:definition.id,version:definition.version,semanticHash:definition.semanticHash});if(!checked.ok)continue;const ports=checked.data.interface;if(!ports.some(port=>port.id==='item'&&port.direction==='input'&&port.kind==='data'&&port.required===true)||!ports.some(port=>port.id==='result'&&port.direction==='output'&&port.kind==='data')||ports.some(port=>port.kind!=='data'||!['item','result','projectedState','nextState'].includes(port.id)||['item','projectedState'].includes(port.id)!==(port.direction==='input')))continue;choices.push({key,label:checked.data.definition.name,ref:checked.data.ref,stateful:ports.some(port=>port.id==='projectedState'&&port.direction==='input')&&ports.some(port=>port.id==='nextState'&&port.direction==='output'),bindings:prepareIterationBindings({helper:checked.data.ref,roleOverrides:{}},definitions,profiles,root.roles??{})});}return freeze(choices);
 }
 export function validateConfiguredNodeControls(operation,text,options){
  try{if(typeof text!=='string'||text.length>200000)return fail('INVALID_CONFIGURATION','Controls must be a bounded JSON object.');const raw=JSON.parse(text),checked=cloneDefinitionData(raw,{operation}),base=OPERATIONS[operation];if(!checked.ok||!base||!raw||Array.isArray(raw)||typeof raw!=='object'||Object.keys(raw).some(key=>!base.controls.includes(key)))return fail('INVALID_CONFIGURATION','Use only declared node controls in the JSON object.');

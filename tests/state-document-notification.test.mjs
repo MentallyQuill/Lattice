@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { installMock } from './mock.js';
-import * as S from '../src/state.js?v=0.27.2';
-import { starterGraph } from '../src/workflow/starters.js?v=0.27.2';
-import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.27.2';
-import { captureGraphEditContext } from '../src/workflow/transactions.js?v=0.27.2';
+import * as S from '../src/state.js?v=0.27.3';
+import { starterGraph } from '../src/workflow/starters.js?v=0.27.3';
+import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.27.3';
+import { captureGraphEditContext } from '../src/workflow/transactions.js?v=0.27.3';
 
 function fixture() {
     const host = installMock(), root = starterGraph('unified-basic'); root.name = 'Notification baseline'; S.activateWorkflow(root, { clean: true });

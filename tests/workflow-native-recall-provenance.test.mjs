@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {createNativeRecallController} from '../src/workflow/native-recall.js?v=0.27.2';
-import {runWorkflowForHost,workflowSignature} from '../src/workflow/runtime.js?v=0.27.2';
-import {operationDefaults} from '../src/workflow/catalog.js?v=0.27.2';
+import {createNativeRecallController} from '../src/workflow/native-recall.js?v=0.27.3';
+import {runWorkflowForHost,workflowSignature} from '../src/workflow/runtime.js?v=0.27.3';
+import {operationDefaults} from '../src/workflow/catalog.js?v=0.27.3';
 const node=(id,operation,settings={})=>({id,type:'workflow',...operationDefaults(operation),...settings});
 const scope={userId:'u',chatId:'c',workflowId:'w',actorId:'a'};
 function graph(){return {id:'w',schema:3,runtime:2,mode:'native-unified',nodes:{send:node('send','on-send'),generate:node('generate','generate-reply'),review:node('review','review-publish'),hotkey:node('hotkey','hotkey-arm',{actorId:'a',memorySetId:'m'})},wires:{activation:{id:'activation',route:'wire',from:'send',fromPort:'activation',to:'generate',toPort:'activation'},draft:{id:'draft',route:'wire',from:'generate',fromPort:'draft',to:'review',toPort:'draft'}},definitions:{},portals:{}};}
@@ -31,7 +31,7 @@ test('runtime cancellation after awaited private provenance capture records no l
  const controller=new AbortController();let generated=0;const result=await runWorkflowForHost(runtimeGraph(),{runId:'proof-cancel',signal:controller.signal,countTokens:async()=>({tokens:1})},{executeHostOperation:async node=>{if(node.operation==='on-send')return {ok:true,outputs:{activation:{kind:'data',value:{}}}};generated++;return {ok:true,outputs:{draft:{kind:'draft',text:'Native',source:{token:'owned',originalText:'Native'}}}};},retainRecallProvenance:async payload=>{if(payload.node.operation==='json-decode'){await Promise.resolve();controller.abort();}return {ok:true,data:{retained:true}};}});assert.equal(result.ok,false);assert.equal(result.error.code,'ABORTED');assert.equal(result.recording.status,'cancelled');assert.equal(generated,0);
 });
 test('Prompted Memory holder authority requires an exact ordered Current Holder producer on actual source evidence',async()=>{
- const {executeEvent}=await import('../src/workflow/operations/event-nodes.js?v=0.27.2');const {executeCollection}=await import('../src/workflow/operations/collection-nodes.js?v=0.27.2');const {executePrimitive}=await import('../src/workflow/operations/nodes.js?v=0.27.2');const f=fixture();assert.equal(typeof f.service.authorizeHolderEvent,'function');
+ const {executeEvent}=await import('../src/workflow/operations/event-nodes.js?v=0.27.3');const {executeCollection}=await import('../src/workflow/operations/collection-nodes.js?v=0.27.3');const {executePrimitive}=await import('../src/workflow/operations/nodes.js?v=0.27.3');const f=fixture();assert.equal(typeof f.service.authorizeHolderEvent,'function');
  const source={...f.source,text:'Sword glows.',visibility:'public'},sourceArtifact={kind:'data',value:source},sourceResult={ok:true,artifact:sourceArtifact};f.service.capture(f.run,sourceResult,{kind:'source',source,text:source.text,fresh:()=>true});retain(f,'player-event-source',{},sourceArtifact,sourceResult);
  const entities={kind:'data',value:{actorIds:['a','b'],itemIds:['sword']}},mentionNode=node('mention','item-mention-trigger',{actorId:'a',itemId:'sword',aliases:['Sword'],watch:'scene-context'});const mention=await executeEvent(mentionNode,{source:sourceArtifact,entities},{phase:'pre'});assert.equal(mention.ok,true);retain(f,'item-mention-trigger',{source:sourceArtifact,entities},mention.outputs.out,mention,{actorId:'a',itemId:'sword',aliases:['Sword'],watch:'scene-context'});
  const holder=await executeEvent(node('holder','current-holder'),{events:mention.outputs.out,holders:{kind:'data',value:{sword:'a'}}},{phase:'pre'});assert.equal(holder.ok,true);assert.equal(f.service.retain(f.run,{node:node('holder','current-holder'),address:{workflowId:'w',instancePath:[],nodeId:'holder'},inputs:{events:mention.outputs.out,holders:{kind:'data',value:{sword:'a'}}},artifact:holder.outputs.events,portId:'events',rawResult:holder}).ok,true);
@@ -41,7 +41,7 @@ test('Prompted Memory holder authority requires an exact ordered Current Holder 
 });
 
 test('For Each and Collection cannot carry invented, reassigned or rewritten occurrence identity from an authenticated parent',async()=>{
- const {executeEvent}=await import('../src/workflow/operations/event-nodes.js?v=0.27.2');const {executeControl}=await import('../src/workflow/operations/control-nodes.js?v=0.27.2');const {executeCollection}=await import('../src/workflow/operations/collection-nodes.js?v=0.27.2');const {normalizeOccurrences,confirmOccurrences}=await import('../src/workflow/operations/event-data.js?v=0.27.2');
+ const {executeEvent}=await import('../src/workflow/operations/event-nodes.js?v=0.27.3');const {executeControl}=await import('../src/workflow/operations/control-nodes.js?v=0.27.3');const {executeCollection}=await import('../src/workflow/operations/collection-nodes.js?v=0.27.3');const {normalizeOccurrences,confirmOccurrences}=await import('../src/workflow/operations/event-data.js?v=0.27.3');
  const f=fixture(),source={...f.source,text:'A waits.',visibility:'public'},input={kind:'data',value:source},raw={ok:true,artifact:input},entities={kind:'data',value:{actorIds:['a','b'],itemIds:[]}};f.service.capture(f.run,raw,{kind:'source',source,text:source.text,fresh:()=>true});retain(f,'player-event-source',{},input,raw);
  const candidate={eventType:'scene-action',actorId:'a',position:{start:0,end:8},semantics:'actual'},candidates={kind:'data',value:[candidate]},normalized=await executeEvent(node('normalize','event-normalize'),{source:input,entities,candidates},{phase:'pre'});assert.equal(normalized.ok,true);retain(f,'event-normalize',{source:input,entities,candidates},normalized.artifact,normalized);
  const foreign=normalizeOccurrences(source,[{...candidate,actorId:'b'}],entities.value);assert.equal(foreign.ok,true);const confirmed=confirmOccurrences(foreign.data.events,foreign.data.events.map(event=>({eventId:event.eventId,accepted:true})));assert.equal(confirmed.ok,true);const helper={id:'h',version:1,semanticHash:'sha256:'+'a'.repeat(64)},settings={helper,limit:2,requestBoundPerIteration:0};
@@ -54,7 +54,7 @@ test('For Each and Collection cannot carry invented, reassigned or rewritten occ
 });
 
 async function canonicalMemoryHost(mode){
- const {createNativeWorkflowController}=await import('../src/workflow/host.js?v=0.27.2');const {makeRecord}=await import('../src/workflow/introspection/contracts.js?v=0.27.2');const episodes=[{id:'e1',text:'Actual native memory',classification:'observation',sourceRefs:[]},{id:'e2',text:'Second native memory',classification:'interpretation',sourceRefs:[]}],stored=makeRecord('actor-state',{scope:{chatId:'c',actorId:'character:0'},store:{id:'native-chat',version:0}},{episodes},[]);assert.equal(stored.ok,true);
+ const {createNativeWorkflowController}=await import('../src/workflow/host.js?v=0.27.3');const {makeRecord}=await import('../src/workflow/introspection/contracts.js?v=0.27.3');const episodes=[{id:'e1',text:'Actual native memory',classification:'observation',sourceRefs:[]},{id:'e2',text:'Second native memory',classification:'interpretation',sourceRefs:[]}],stored=makeRecord('actor-state',{scope:{chatId:'c',actorId:'character:0'},store:{id:'native-chat',version:0}},{episodes},[]);assert.equal(stored.ok,true);
  const g=graph();g.nodes.hotkey.actorId='character:0';g.nodes.scene=node('scene','scene-context',{includeCharacter:false,visibilityMode:'public'});g.nodes.prompt=node('prompt','text',{text:'Actual actors from context.source and narrative'});g.nodes.cast=node('cast','model-call',{outputKind:'data'});g.nodes.presence=node('presence','scene-presence',{actorId:'character:0'});g.nodes.memory=node('memory','memory',{view:'episodes'});g.nodes.recall=node('recall','recall',{actorId:'character:0',memorySetId:'m'});
  const fields=['schemaVersion','recordType','scope','store','sourceRefs','payload'].map(name=>({name,path:[name]}));
  const replacement=(name,value)=>Object.assign(fields.find(field=>field.name===name),{path:['missing'],required:false,default:value});
@@ -83,7 +83,7 @@ test('unchanged canonical Memory projection and exact episode subsets remain use
 
 
 test('selected real Branch output preserves exact source/presence proof and rejects opposite, rewritten or claimed clones',async()=>{
- const {executeControl}=await import('../src/workflow/operations/control-nodes.js?v=0.27.2');
+ const {executeControl}=await import('../src/workflow/operations/control-nodes.js?v=0.27.3');
  const f=fixture(),source={kind:'context',messages:[],source:f.source,visibility:{kind:'public'}},root={ok:true,artifact:source};f.service.capture(f.run,root,{kind:'source',source:f.source,text:'A waits.',fresh:()=>true});retain(f,'scene-context',{},source,root);
  const cast={kind:'data',value:{sceneId:'c',sourceId:'native-scene',revision:'r',actors:[{actorId:'a',status:'present',evidence:'A waits.'}]}},presence={kind:'data',value:{schemaVersion:1,recordType:'scene-presence',sceneId:'c',sourceId:'native-scene',revision:'r',actorId:'a',status:'present',evidence:'A waits.'},visibility:{kind:'public'}};
  retain(f,'model-call',{context:source},cast,{ok:true,artifact:cast,reports:[{code:'MODEL_CALL',actualCalls:1}]});retain(f,'scene-presence',{in:cast},presence);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const revisions = await import('../src/workflow/draft-revisions.js?v=0.27.2').catch(() => ({}));
+const revisions = await import('../src/workflow/draft-revisions.js?v=0.27.3').catch(() => ({}));
 const root = text => ({ kind: 'draft', text, source: { chatId: 'story', messageIndex: 4, swipeId: 0, originalText: text, token: 'native-token' } });
 const must = result => { assert.equal(result.ok, true, JSON.stringify(result.error)); return result.data; };
 
@@ -28,7 +28,7 @@ test('narrow revisions cannot widen their parent permissions or remove protected
 });
 test('legacy patch repair and reference alignment target the current revision while preserving root original', async () => {
     const { scanDraft, repairDraft, validatePatches } = await import('../src/workflow/repair.js');
-    const reference = await import('../src/workflow/operations/reference-draft.js?v=0.27.2');
+    const reference = await import('../src/workflow/operations/reference-draft.js?v=0.27.3');
     const first = must(revisions.createDraftRevision(root('Native cold prose.'), 'First warm prose.', { nodeId: 'first', scope: 'whole' })).draft;
     const scanned = scanDraft(first, { scope: 'whole', rules: ['warm'] });
     assert.equal(scanned.ok, true, JSON.stringify(scanned.error));
@@ -48,7 +48,7 @@ test('legacy patch repair and reference alignment target the current revision wh
     assert.equal(validatePatches(aligned.artifact).artifact.original, 'Native cold prose.');
 });
 test('prose cleanup preserves revision authority while adding findings and checked patches', async () => {
-    const { cleanupDraft } = await import('../src/workflow/operations/prose-cleanup.js?v=0.27.2');
+    const { cleanupDraft } = await import('../src/workflow/operations/prose-cleanup.js?v=0.27.3');
     const { validatePatches } = await import('../src/workflow/repair.js');
     const first = must(revisions.createDraftRevision(root('Original.'), 'She let out a breath she did not know she was holding.', { nodeId: 'first', scope: 'whole' })).draft;
     const result = await cleanupDraft(first, { mode: 'inspect', scope: 'whole' });
@@ -126,7 +126,7 @@ test('story-body views exclude presentation and keep a stable body revision acro
     assert.equal(revisions.readDraftBody({ ...assembled, text: 'Forged' }).ok, false);
 });
 test('same-text annotations preserve private disclosure restrictions before public append', async () => {
-    const models = await import('../src/workflow/operations/model-nodes.js?v=0.27.2');
+    const models = await import('../src/workflow/operations/model-nodes.js?v=0.27.3');
     const privateRoot = { ...root('Private prose.'), visibility: { kind: 'actor-private', actorId: 'mara' } };
     const first = must(revisions.createDraftRevision(privateRoot, 'Private revision.', { nodeId: 'one', scope: 'whole' })).draft;
     for (const altered of [{ ...first, visibility: { kind: 'public' } }, { ...first, visibility: undefined }, { ...first, visibility: { kind: 'actor-private', actorId: 'laya' } }]) {
@@ -142,7 +142,7 @@ test('same-text annotations preserve private disclosure restrictions before publ
 });
 
 test('narration scope parses only the registered body while preserving unmatched quotes in notes', async () => {
-    const { scanDraft, validatePatches } = await import('../src/workflow/repair.js?v=0.27.2');
+    const { scanDraft, validatePatches } = await import('../src/workflow/repair.js?v=0.27.3');
     const first = must(revisions.createDraftRevision(root('Native.'), 'First.', { nodeId: 'one', scope: 'narration' })).draft;
     const note = 'A note contains an unmatched " quote.';
     const assembled = must(revisions.appendDraftSections(first, [{ id: 'notes', text: note }], { nodeId: 'append' })).draft;
@@ -160,7 +160,7 @@ test('narration scope parses only the registered body while preserving unmatched
 });
 
 test('successor scans may add narrowing exemptions while preserving previous exemptions and case policy', async () => {
-    const { scanDraft } = await import('../src/workflow/repair.js?v=0.27.2');
+    const { scanDraft } = await import('../src/workflow/repair.js?v=0.27.3');
     const text = 'KEEP cold and Warm.';
     const native = { ...root(text), scope: 'whole', exemptions: ['KEEP'], caseSensitive: false, spans: [{ index: 0, start: 4, end: text.length, text: text.slice(4) }] };
     const first = must(revisions.createDraftRevision(native, text, { nodeId: 'one', scope: 'authorized' })).draft;

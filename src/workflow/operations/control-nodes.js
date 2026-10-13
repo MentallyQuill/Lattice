@@ -1,6 +1,6 @@
-import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.2';
-import { cloneJsonValue, readJsonPath } from './json-data.js?v=0.27.2';
-import { own, plain, freeze } from '../record-data.js?v=0.27.2';
+import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.3';
+import { cloneJsonValue, readJsonPath } from './json-data.js?v=0.27.3';
+import { own, plain, freeze } from '../record-data.js?v=0.27.3';
 
 const kinds = ['context', 'draft', 'patches', 'candidate', 'guidance', 'text', 'data'];
 const fail = (code, message) => ({ ok: false, error: { code, message } });

@@ -5,9 +5,9 @@
  * palette button in the canvas header. Colours change live as you pick them.
  */
 
-import { safe } from './state.js?v=0.27.2';
-import * as T from './theme.js?v=0.27.2';
-import { ARTIFACT_KINDS, ARTIFACT_PIN_NAMES, createArtifactGlyph } from './ui/artifact-glyph.js?v=0.27.2';
+import { safe } from './state.js?v=0.27.3';
+import * as T from './theme.js?v=0.27.3';
+import { ARTIFACT_KINDS, ARTIFACT_PIN_NAMES, createArtifactGlyph } from './ui/artifact-glyph.js?v=0.27.3';
 
 const make = (tag, cls, text) => {
     const n = document.createElement(tag);

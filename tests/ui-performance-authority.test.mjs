@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import * as H from '../src/history.js?v=0.27.2';
+import * as H from '../src/history.js?v=0.27.3';
 import {createWorkflowDocumentSession} from '../src/ui/document-session.js';
 
 const graph = () => ({id:'same-id',name:'Draft',schema:3,runtime:2,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'before'}},wires:{}});

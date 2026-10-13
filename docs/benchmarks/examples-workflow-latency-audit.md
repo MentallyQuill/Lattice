@@ -1,7 +1,7 @@
 # Examples and workflow loading latency audit
 
-Date: 2026-10-13  
-Audited release: Lattice 0.27.2, Git HEAD 69c07fecd8b2b79ae086b79507f537df9a3bbdc5  
+Date: 2026-10-13
+Audited release: Lattice 0.27.2, Git HEAD 69c07fecd8b2b79ae086b79507f537df9a3bbdc5
 Environment: Windows, Ryzen 7 5800X, headless Chromium 151.0.7922.34, 1440 × 1000, device scale 1.
 
 ## Findings and recommended order
@@ -16,7 +16,7 @@ The reported delay is reproducible. The largest opportunities are:
 
 These are measured CPU/preparation costs. Network caching and canvas layout optimization are lower priorities for the paths exercised here.
 
-No production runtime code was changed. Experiments substituted source responses only inside disposable browser contexts.
+This document records the pre-implementation audit. Its diagnostic experiments substituted source responses only inside disposable browser contexts. The approved implementation and measured results are recorded separately in [Workflow loading performance results](workflow-loading-performance-results.md).
 
 ## Measured baseline
 
@@ -237,17 +237,17 @@ Saved raw measurements under benchmark-results/examples-latency:
 - experiments.json: 101 controlled cache/render/activation samples
 - iteration-helpers.json: 9 combined-document helper samples
 
-These are local ignored benchmark artifacts. The committed audit/tool can reproduce the investigation. The corrected reusable tool writes to benchmark-results/workflow-loading-benchmark:
+These are historical local ignored benchmark artifacts. The source-substitution experiments below informed the approved implementation. The current reusable tool measures the production path without those experimental substitutions and writes to benchmark-results/workflow-loading-benchmark:
 
     npm run build
     node tools/benchmark-workflow-loading.mjs
     node tools/benchmark-workflow-loading.mjs --general
-    node tools/benchmark-workflow-loading.mjs --experiments
-    node tools/benchmark-workflow-loading.mjs --helpers
+    node tools/benchmark-workflow-loading.mjs --profile
+    node tools/benchmark-workflow-loading.mjs --general --profile
 
-Add --quick for shorter verification.
+Add --quick for shorter verification, or --throttled for a normal plus artificial 4× CPU sensitivity run.
 
-Verification completed: current UI build passed; 20 existing catalog/document-controller tests passed; all four original measurement runs completed without page errors or provider calls; saved tool syntax and --experiments --quick passed with 17 samples, explicit cold/warm/context labels, scene-count assertions and corrected long-task interval matching.
+Historical audit verification: UI build passed; 20 existing catalog/document-controller tests passed; all four original measurement runs completed without page errors or provider calls; the historical experimental tool syntax and --experiments --quick passed with 17 samples, explicit cold/warm/context labels, scene-count assertions and corrected long-task interval matching.
 
 Limits:
 

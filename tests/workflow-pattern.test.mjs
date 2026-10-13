@@ -23,8 +23,8 @@ test('Pattern counts this invocation independently and passes the exact Draft', 
     assert.equal(input.spans, undefined);
 });
 test('Pattern runs once and routes its unchanged Draft through Branch and Join with live report identity', async () => {
-    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.2');
-    const { getPatternReportBinding: liveBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.2');
+    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.3');
+    const { getPatternReportBinding: liveBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.3');
     const node = (id, operation, extra = {}) => ({ id, type: 'workflow', operation, phase: 'post', ...extra });
     const wire = (id, from, fromPort, to, toPort) => ({ id, route: 'wire', from, fromPort, to, toPort });
     const graph = { id: 'pattern-routing', schema: 3, runtime: 2, mode: 'native-unified', roles: {}, nodes: {
@@ -61,7 +61,7 @@ test('ANY and ALL combine rule hit coverage with the minimum total occurrences',
     }
 });
 test('Assembled presentation is excluded and bound public evidence is deeply immutable', async () => {
-    const { appendDraftSections } = await import('../src/workflow/draft-revisions.js?v=0.27.2');
+    const { appendDraftSections } = await import('../src/workflow/draft-revisions.js?v=0.27.3');
     const assembled = appendDraftSections(draft('cold story'), [{ id: 'tail', text: 'cold presentation' }], { nodeId: 'append' });
     assert.equal(assembled.ok, true);
     const input = assembled.data.draft, result = await scanPatternDraft(input, settings(['cold']));
@@ -185,7 +185,7 @@ test('Inspection preserves existing exact permission and live ancestry validatio
         const result = await scanPatternDraft(invalid, settings(['a']));
         assert.equal(result.ok, false); assert.equal(result.error.code, 'INVALID_SPANS'); assert.equal(result.outputs, undefined);
     }
-    const { createDraftRevision } = await import('../src/workflow/draft-revisions.js?v=0.27.2');
+    const { createDraftRevision } = await import('../src/workflow/draft-revisions.js?v=0.27.3');
     const revision = createDraftRevision(draft('abc'), 'abd', { nodeId: 'edit', scope: 'whole' }); assert.equal(revision.ok, true);
     const copied = await scanPatternDraft(structuredClone(revision.data.draft), settings(['a']));
     assert.equal(copied.error.code, 'INVALID_ANCESTRY'); assert.equal(copied.outputs, undefined);
@@ -205,7 +205,7 @@ test('Unmatched quote scopes emit unresolved decisions with null counts', async 
     assert.equal(whole.outputs.matches.value.diagnostics[0].code, 'UNMATCHED_QUOTES');
 });
 test('Malformed quote Drafts with upstream empty permissions remain inspectable and scoped unresolved', async () => {
-    const { scanDraft } = await import('../src/workflow/repair.js?v=0.27.2');
+    const { scanDraft } = await import('../src/workflow/repair.js?v=0.27.3');
     const upstream = scanDraft(draft('cold "cold'), { scope: 'dialogue', rules: ['cold'] });
     assert.equal(upstream.ok, true); assert.deepEqual(upstream.artifact.spans, []);
     const input = upstream.artifact;

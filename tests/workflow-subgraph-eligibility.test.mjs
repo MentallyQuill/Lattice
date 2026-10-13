@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { operationFor } from '../src/workflow/catalog.js?v=0.27.2';
-import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definition-data.js?v=0.27.2';
-import { validateDefinition } from '../src/workflow/definitions.js?v=0.27.2';
-import { prepareCreateFromSelection, prepareUnpack } from '../src/workflow/composition.js?v=0.27.2';
-import { compileIterationHelper } from '../src/workflow/iteration-helpers.js?v=0.27.2';
-import { isScopedSystemOperation } from '../src/workflow/system-capabilities.js?v=0.27.2';
-import { prepareNativeSearchCatalog, resolveNativeSearchChoice } from '../src/ui/native-search-catalog.js?v=0.27.2';
+import { operationFor } from '../src/workflow/catalog.js?v=0.27.3';
+import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definition-data.js?v=0.27.3';
+import { validateDefinition } from '../src/workflow/definitions.js?v=0.27.3';
+import { prepareCreateFromSelection, prepareUnpack } from '../src/workflow/composition.js?v=0.27.3';
+import { compileIterationHelper } from '../src/workflow/iteration-helpers.js?v=0.27.3';
+import { isScopedSystemOperation } from '../src/workflow/system-capabilities.js?v=0.27.3';
+import { prepareNativeSearchCatalog, resolveNativeSearchChoice } from '../src/ui/native-search-catalog.js?v=0.27.3';
 
 const cases = [
     ['scene-context', {}], ['reply-snapshot', {}], ['guidance', {}], ['apply-reply', {}],

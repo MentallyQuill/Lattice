@@ -4,10 +4,10 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { JSDOM } from 'jsdom';
-import { OPERATIONS } from '../src/workflow/catalog.js?v=0.27.2';
+import { OPERATIONS } from '../src/workflow/catalog.js?v=0.27.3';
 import { PALETTE_GROUPS, paletteForOperation } from '../src/ui/node-palette.js';
-import { prepareWorkspaceViews, projectEditorDraw } from '../src/ui/workspace-preparation.js?v=0.27.2';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.2';
+import { prepareWorkspaceViews, projectEditorDraw } from '../src/ui/workspace-preparation.js?v=0.27.3';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.3';
 import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 import { compiled } from './helpers/svelte-compile.mjs';
 

@@ -1,5 +1,5 @@
-import { prepareReferenceDraft, alignReferenceCandidate } from './reference-draft.js?v=0.27.2';
-import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.2';
+import { prepareReferenceDraft, alignReferenceCandidate } from './reference-draft.js?v=0.27.3';
+import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.3';
 
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 function ownRecord(input) {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const lifecycle = await import('../src/workflow/operations/lifecycle-nodes.js?v=0.27.2').catch(() => ({}));
-const revisions = await import('../src/workflow/draft-revisions.js?v=0.27.2');
+const lifecycle = await import('../src/workflow/operations/lifecycle-nodes.js?v=0.27.3').catch(() => ({}));
+const revisions = await import('../src/workflow/draft-revisions.js?v=0.27.3');
 
 test('native lifecycle descriptors expose activation and distinct reply metadata ports', () => {
     assert.equal(typeof lifecycle.describeLifecycleNode, 'function');
@@ -29,7 +29,7 @@ test('Review/Publish converts only a checked Draft lineage into a root-source ca
     assert.equal((await lifecycle.executeLifecycleNode({ id: 'publish', operation: 'review-publish' }, { draft: native }, { phase: 'post', root: true, rootMode: 'native-unified' })).ok, true);
 });
 
-const { createNativeWorkflowController } = await import('../src/workflow/host.js?v=0.27.2');
+const { createNativeWorkflowController } = await import('../src/workflow/host.js?v=0.27.3');
 const nextTurn = () => new Promise(resolve => setTimeout(resolve, 10));
 function unifiedGraph({ guidance = false, revise = true } = {}) {
     const nodes = { send: { id: 'send', type: 'workflow', operation: 'on-send' }, generate: { id: 'generate', type: 'workflow', operation: 'generate-reply' }, review: { id: 'review', type: 'workflow', operation: 'review-publish' } };

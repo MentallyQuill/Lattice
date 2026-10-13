@@ -1,4 +1,4 @@
-import { applyStateProposal, createActorState, fail, freeze, makeRecord, ownData, parseRecord, validateEvidence } from './contracts.js?v=0.27.2';
+import { applyStateProposal, createActorState, fail, freeze, makeRecord, ownData, parseRecord, validateEvidence } from './contracts.js?v=0.27.3';
 
 const good = data => ({ ok: true, data });
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);

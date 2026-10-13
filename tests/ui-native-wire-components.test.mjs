@@ -6,7 +6,7 @@ import { join, resolve, relative, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { compile } from 'svelte/compiler';
 import { JSDOM } from 'jsdom';
-import { prepareNativeSearchCatalog, filterNativeSearchChoices } from '../src/ui/native-search-catalog.js?v=0.27.2';
+import { prepareNativeSearchCatalog, filterNativeSearchChoices } from '../src/ui/native-search-catalog.js?v=0.27.3';
 const dom = new JSDOM('<!doctype html><body></body>', { pretendToBeVisual: true });
 globalThis.window = dom.window; globalThis.document = dom.window.document;
 for (const key of ['Node', 'Element', 'Text', 'Comment', 'Document', 'HTMLElement', 'HTMLButtonElement', 'HTMLInputElement', 'HTMLMediaElement', 'MutationObserver']) Object.defineProperty(globalThis, key, { configurable: true, value: dom.window[key] });

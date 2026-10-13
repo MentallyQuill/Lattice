@@ -1,7 +1,7 @@
-import {nativeVisibility} from './introspection/host-memory.js?v=0.27.2';
-import {artifactVisibility,validVisibilityMetadata} from './artifact-privacy.js?v=0.27.2';
-import {cloneJsonValue} from './operations/json-data.js?v=0.27.2';
-import {plain,freeze} from './record-data.js?v=0.27.2';
+import {nativeVisibility} from './introspection/host-memory.js?v=0.27.3';
+import {artifactVisibility,validVisibilityMetadata} from './artifact-privacy.js?v=0.27.3';
+import {cloneJsonValue} from './operations/json-data.js?v=0.27.3';
+import {plain,freeze} from './record-data.js?v=0.27.3';
 const good=data=>({ok:true,data});
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const id=value=>typeof value==='string'&&!!value.trim()&&value.length<=256;

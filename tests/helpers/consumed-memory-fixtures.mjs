@@ -1,14 +1,14 @@
 import {executeIntrospection} from '../../src/workflow/introspection/nodes.js';
 import assert from 'node:assert/strict';
 import { Worker as ThreadWorker } from 'node:worker_threads';
-import { operationDefaults } from '../../src/workflow/catalog.js?v=0.27.2';
+import { operationDefaults } from '../../src/workflow/catalog.js?v=0.27.3';
 import { withNativeBoundary } from './workflow-fixtures.mjs';
 import { parseWorkflow } from '../../src/workflow/packages.js';
 import { createNativeWorkflowController } from '../../src/workflow/host.js';
 import { createNativeMemoryAdapter } from '../../src/workflow/introspection/host-memory.js';
 import { makeRecord } from '../../src/workflow/introspection/contracts.js';
 // Match host.js's module URL: binding authentication is held in its WeakMap.
-import { bindingStatus } from '../../src/workflow/connections.js?v=0.27.2';
+import { bindingStatus } from '../../src/workflow/connections.js?v=0.27.3';
 
 export function accepted(result) { assert.equal(result.ok,true,JSON.stringify(result.error));return result; }
 // Minimal unified fixtures for consumed evidence and identity-only memory lookup.

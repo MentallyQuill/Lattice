@@ -1,10 +1,10 @@
-import { own } from './record-data.js?v=0.27.2';
-import { isNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.27.2';
-import { createStagedEffects } from './staged-effects.js?v=0.27.2';
-import { createFileStore, createChatDocumentBackend } from './file-store.js?v=0.27.2';
-import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.27.2';
-import { cloneJsonValue } from './operations/json-data.js?v=0.27.2';
-import { validateOccurrences } from './operations/event-data.js?v=0.27.2';
+import { own } from './record-data.js?v=0.27.3';
+import { isNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.27.3';
+import { createStagedEffects } from './staged-effects.js?v=0.27.3';
+import { createFileStore, createChatDocumentBackend } from './file-store.js?v=0.27.3';
+import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.27.3';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.3';
+import { validateOccurrences } from './operations/event-data.js?v=0.27.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 function trustedConfig(raw,allowed) {
     try {if(!raw||typeof raw!=='object'||![Object.prototype,null].includes(Object.getPrototypeOf(raw)))return {};const descriptors=Object.getOwnPropertyDescriptors(raw);if(Reflect.ownKeys(raw).some(key=>typeof key!=='string'||!allowed.includes(key)||!descriptors[key].enumerable||!Object.hasOwn(descriptors[key],'value')))return {};return Object.fromEntries(Object.entries(descriptors).map(([key,property])=>[key,property.value]));}catch{return {};}

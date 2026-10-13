@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { installMock } from './mock.js';
-import * as state from '../src/state.js?v=0.27.2';
-import { callCount, sendWorkflowState } from '../src/run.js?v=0.27.2';
-import { runWorkflow, workflowSignature } from '../src/workflow/runtime.js?v=0.27.2';
-import { graphSemanticSignature } from '../src/workflow/ports.js?v=0.27.2';
+import * as state from '../src/state.js?v=0.27.3';
+import { callCount, sendWorkflowState } from '../src/run.js?v=0.27.3';
+import { runWorkflow, workflowSignature } from '../src/workflow/runtime.js?v=0.27.3';
+import { graphSemanticSignature } from '../src/workflow/ports.js?v=0.27.3';
 import { fixtureGraph as starterGraph } from './helpers/workflow-fixtures.mjs';
-import { exportWorkflow } from '../src/workflow/packages.js?v=0.27.2';
-import { isWorkflowGraph } from '../src/workflow/contracts.js?v=0.27.2';
+import { exportWorkflow } from '../src/workflow/packages.js?v=0.27.3';
+import { isWorkflowGraph } from '../src/workflow/contracts.js?v=0.27.3';
 
 const context = installMock();
 let loreScans = 0, snapshots = 0, getterReads = 0;

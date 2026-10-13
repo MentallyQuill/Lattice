@@ -4,7 +4,7 @@ import {test} from 'node:test';
 import {registerHooks} from 'node:module';
 import {actorHostFixture as fixture,mara,elias} from './helpers/native-actor-host-fixture.mjs';
 import {recallHostFixture as recallFixture} from './helpers/native-recall-host-fixture.mjs';
-import {operationDefaults} from '../src/workflow/catalog.js?v=0.27.2';
+import {operationDefaults} from '../src/workflow/catalog.js?v=0.27.3';
 function addCompose(f, nested = false) {
     const node = (id, settings) => f.graph.nodes[id] = { id, type: 'workflow', ...operationDefaults('compose'), outputKind: 'guidance', ...settings };
     const wire = (id, from, fromPort, to, toPort) => f.graph.wires[id] = { id, route: 'wire', from, fromPort, to, toPort };

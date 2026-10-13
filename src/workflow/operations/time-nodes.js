@@ -1,7 +1,7 @@
-import { advanceStoryClock, enumerateScheduledOccurrences, resolveTimeAdvance } from '../story-time.js?v=0.27.2';
-import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.2';
-import { freeze } from '../record-data.js?v=0.27.2';
-import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.27.2';
+import { advanceStoryClock, enumerateScheduledOccurrences, resolveTimeAdvance } from '../story-time.js?v=0.27.3';
+import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.3';
+import { freeze } from '../record-data.js?v=0.27.3';
+import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.27.3';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value));

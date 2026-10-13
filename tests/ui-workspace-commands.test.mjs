@@ -17,7 +17,7 @@ import { captureRelocatedSubgraphViews } from '../src/ui/subgraph-view-state.js'
 import { prepareCommentEdit } from '../src/workflow/comment-edits.js';
 import { makeClip, makeDefinitionClip, readClip, prepareClipPaste } from '../src/workflow/clipboard.js';
 import { prepareQualifiedScopeEdit } from '../src/workflow/definition-library.js';
-import * as H from '../src/history.js?v=0.27.2';
+import * as H from '../src/history.js?v=0.27.3';
 import { definitionRefKey } from '../src/workflow/definition-data.js';
 import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');

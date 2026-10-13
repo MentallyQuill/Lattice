@@ -1,8 +1,8 @@
-import { resolveComposeContributions } from './compose-guidance.js?v=0.27.2';
-import { composeText } from './operations/compose.js?v=0.27.2';
-import { describePrimitive } from './operations/nodes.js?v=0.27.2';
-import { artifactVisibility } from './artifact-privacy.js?v=0.27.2';
-import { own } from './record-data.js?v=0.27.2';
+import { resolveComposeContributions } from './compose-guidance.js?v=0.27.3';
+import { composeText } from './operations/compose.js?v=0.27.3';
+import { describePrimitive } from './operations/nodes.js?v=0.27.3';
+import { artifactVisibility } from './artifact-privacy.js?v=0.27.3';
+import { own } from './record-data.js?v=0.27.3';
 
 const failure = () => ({ ok: false, error: { code: 'ACTOR_GUIDANCE_UNVERIFIED', message: 'Use exact retained current-actor guidance with unmodified Compose rendering.' } });
 /** One native run owns exact aggregates. No proof fields enter artifacts or recordings. */

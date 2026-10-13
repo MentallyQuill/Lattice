@@ -1,6 +1,6 @@
 import { describeRandom } from '../src/workflow/operations/random-outcomes.js';
 import { describeCollection } from '../src/workflow/operations/collection-nodes.js';
-import { appendDraftSections } from '../src/workflow/draft-revisions.js?v=0.27.2';
+import { appendDraftSections } from '../src/workflow/draft-revisions.js?v=0.27.3';
 import { applyProgressionEvents } from '../src/workflow/progression.js';
 import { executeEvent, describeEvent } from '../src/workflow/operations/event-nodes.js';
 import assert from 'node:assert/strict';

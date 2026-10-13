@@ -78,10 +78,13 @@ async function withPreview(check) {
     const kinds = ['context', 'text', 'data', 'guidance', 'draft', 'patches', 'candidate'];
     const ports = kinds.map((kind, index) => ({ id: kind, port: kind, dir: 'in', kind, label: `${kind} input`, optional: false, x: 10, y: 32 + index * 18 }));
     const example = {
-        id: 'typed-cues', number: 1, title: 'Typed preview', goal: 'Inspect named pin cues', issue: '',
+        id: 'typed-cues', number: 1, title: 'Typed preview', goal: 'Inspect named pin cues', searchText: 'typed preview inspect named pin cues', issue: '',
         thumbnail: {
             bounds: { x: 0, y: 0, w: 260, h: 200 }, comments: [], wires: [],
-            nodes: [{ id: 'node', x: 0, y: 0, w: 260, h: 200, title: 'All types', className: 'pc-node-native', iconPath: 'M 2,2 L 8,8', body: null, ports }],
+            nodes: [
+                { id: 'node', x: 0, y: 0, w: 260, h: 200, title: 'All types', className: 'pc-node-native', iconPath: 'M 2,2 L 8,8', body: null, compact: false, ports },
+                { id: 'identity', x: 180, y: 0, w: 80, h: 32, title: 'Identity', className: 'pc-node-native pc-node-compact', iconPath: 'M 3,3 L 9,9', body: null, compact: true, ports: [] },
+            ],
         },
     };
     let instance;
@@ -90,7 +93,7 @@ async function withPreview(check) {
         instance = mount(component, { target: host, props: { examples: [example], scroll() {}, open() {} } });
         flushSync();
         await tick();
-        await check(host, ports);
+        await check(host, ports, { flushSync, tick });
     } finally {
         if (instance) await unmount(instance);
         host.remove();
@@ -100,7 +103,7 @@ async function withPreview(check) {
     }
 }
 
-test('example thumbnails offer distinct cue geometry at each named pin position', async () => {
+test('example overview thumbnails retain typed cue geometry without mounting small labels or ordinary icons', async () => {
     await withPreview((host, ports) => {
         const cues = [...host.querySelectorAll('.pc-example-pin-cue')];
         assert.equal(cues.length, 7, 'Every named type has the shared pin shape in its thumbnail');
@@ -109,10 +112,34 @@ test('example thumbnails offer distinct cue geometry at each named pin position'
             const cue = host.querySelector(`.pc-example-pin-cue[data-kind="${pin.kind}"]`);
             assert.equal(Number(cue.getAttribute('x')) + 9, pin.x, 'Cue geometry remains at its authored pin position');
             assert.equal(Number(cue.getAttribute('y')) + 9, pin.y);
-            assert.ok(host.textContent.includes(pin.label), `${pin.kind} keeps its visible label`);
+            assert.equal(typeof pin.label, 'string', `${pin.kind} retains its route label in the thumbnail DTO`);
         }
+        assert.equal(host.querySelectorAll('.pc-example-pin-label').length, 0, 'Overview thumbnails omit tiny pin label elements');
+        assert.equal(host.querySelectorAll('g[data-id="node"] .pc-example-icon').length, 0, 'Ordinary overview cards omit their icon elements');
+        assert.equal(host.querySelectorAll('g[data-id="identity"] .pc-example-icon').length, 1, 'Compact identity cards retain their icon');
         assert.equal(host.querySelectorAll('.pc-example-pin-dot').length, 0, 'All themes use one shared glyph instead of a circle fallback');
     });
+});
+
+test('example thumbnail shells mount overview details only near the scroll viewport', async () => {
+    const original = globalThis.IntersectionObserver, observers = [];
+    globalThis.IntersectionObserver = class {
+        constructor(callback, options) { this.callback = callback; this.options = options; this.nodes = new Set(); observers.push(this); }
+        observe(node) { this.nodes.add(node); }
+        unobserve(node) { this.nodes.delete(node); }
+        disconnect() { this.nodes.clear(); }
+    };
+    try {
+        await withPreview(async (host, _ports, client) => {
+            const svg = host.querySelector('.pc-example-preview'), observer = observers.find(item => item.nodes.has(svg));
+            assert.ok(svg && observer);
+            assert.equal(svg.querySelectorAll('.pc-example-card').length, 0, 'Offscreen shells do not retain detailed thumbnail DOM');
+            observer.callback([{ target: svg, isIntersecting: true }]); client.flushSync(); await client.tick();
+            assert.equal(svg.querySelectorAll('.pc-example-card').length, 2);
+            observer.callback([{ target: svg, isIntersecting: false }]); client.flushSync(); await client.tick();
+            assert.equal(svg.querySelectorAll('.pc-example-card').length, 0);
+        });
+    } finally { globalThis.IntersectionObserver = original; }
 });
 
 test('example pin colors consume typed theme tokens with their ordinary color fallbacks', async () => {

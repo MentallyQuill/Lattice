@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readNodeProfileMetadata, prepareNodeProfileOptions } from '../src/ui/node-profile-preparation.js?v=0.27.2';
+import { readNodeProfileMetadata, prepareNodeProfileOptions } from '../src/ui/node-profile-preparation.js?v=0.27.3';
 test('fixed text-completion metadata detects its host model even when execution evidence is unsupported', () => {
     const context = { mainApi: 'textgenerationwebui', textCompletionSettings: { type: 'infermaticai', infermaticai_model: 'detectable-text-model' }, CONNECT_API_MAP: { infermaticai: { selected: 'textgenerationwebui', type: 'infermaticai', label: 'Infermatic' } } };
     const metadata = readNodeProfileMetadata(context, [{ id: 'text', name: 'Text model', api: 'infermaticai', model: '', 'api-url': 'private-url' }]);

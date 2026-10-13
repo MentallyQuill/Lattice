@@ -1,5 +1,5 @@
-import { createActorState, makeRecord, parseRecord, ownData, inspectCapabilities, sameIdentity, validateEvidence, applyStateProposal } from './contracts.js?v=0.27.2';
-import { parseRuntimeContext, freezeContextData, canonicalContextData } from '../operations/context-data.js?v=0.27.2';
+import { createActorState, makeRecord, parseRecord, ownData, inspectCapabilities, sameIdentity, validateEvidence, applyStateProposal } from './contracts.js?v=0.27.3';
+import { parseRuntimeContext, freezeContextData, canonicalContextData } from '../operations/context-data.js?v=0.27.3';
 
 const failure = (code, message) => freezeContextData({ ok: false, error: { code, message } });
 const success = (artifact, mode, modelRole, requests = 1) => freezeContextData({ ok: true, artifact, reports: [{ code: 'INTROSPECTION_ANALYSIS', mode, modelRole, requests }] });

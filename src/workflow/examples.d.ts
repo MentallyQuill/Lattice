@@ -28,4 +28,5 @@ export interface WorkflowExampleResult extends Omit<WorkflowExample, 'graph'> {
 }
 export function listWorkflowExamples(): WorkflowExample[];
 export function listWorkflowExampleResults(): WorkflowExampleResult[];
+export function workflowExampleCatalogRevision(): string | null;
 export function installWorkflowExample(id: string): Result<InstalledWorkflowExample>;

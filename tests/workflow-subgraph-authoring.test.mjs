@@ -6,7 +6,7 @@ import { makeLocalCopy } from '../src/workflow/definition-library.js';
 import { validateGraphStructure } from '../src/workflow/contracts.js';
 import { graphSemanticSignature, graphDocumentSignature } from '../src/workflow/ports.js';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js';
-import * as history from '../src/history.js?v=0.27.2';
+import * as history from '../src/history.js?v=0.27.3';
 const api = await import('../src/workflow/subgraph-authoring.js').catch(() => ({}));
 const ref = value => ({ id: value.id, version: value.version, semanticHash: value.semanticHash });
 const at = (graph, path) => { let scope = graph, definition; for (const id of path) { definition = graph.definitions[definitionRefKey(scope.nodes[id].definition)]; scope = definition.body; } return { definition, scope }; };

@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {CONTROL_OPERATIONS,describeControl} from '../src/workflow/operations/control-nodes.js?v=0.27.2';
+import {CONTROL_OPERATIONS,describeControl} from '../src/workflow/operations/control-nodes.js?v=0.27.3';
 const helper={id:'helper',version:1,semanticHash:'sha256:'+'a'.repeat(64)};
 const each=extra=>({id:'each',type:'workflow',operation:'for-each',helper,...extra});
 test('For Each declares bounded role overrides using the existing binding shape',()=>{
  assert.deepEqual(CONTROL_OPERATIONS['for-each'].defaults.roleOverrides,{});
  assert.equal(describeControl(each({roleOverrides:{decision:{profileId:'chosen',model:null}}})).ok,true);
  for(const roleOverrides of [[],{decision:{endpoint:'secret'}},{decision:{model:7}},{'':{profileId:'p'}},{decision:{profileId:' '.repeat(2)}},Object.fromEntries(Array.from({length:65},(_,i)=>['role'+i,{profileId:'p'}]))])assert.equal(describeControl(each({roleOverrides})).ok,false,JSON.stringify(roleOverrides));
-});import {computeDefinitionIdentity,definitionRefKey,nodeBindingOverrideKey} from '../src/workflow/definition-data.js?v=0.27.2';
-import {runWorkflow} from '../src/workflow/runtime.js?v=0.27.2';
-import {resolveBinding,requestModel} from '../src/workflow/connections.js?v=0.27.2';
+});import {computeDefinitionIdentity,definitionRefKey,nodeBindingOverrideKey} from '../src/workflow/definition-data.js?v=0.27.3';
+import {runWorkflow} from '../src/workflow/runtime.js?v=0.27.3';
+import {resolveBinding,requestModel} from '../src/workflow/connections.js?v=0.27.3';
 const edge=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});
 const node=(id,operation,extra={})=>({id,type:'workflow',operation,...extra});
 function fixture(roleOverrides={decision:{profileId:'chosen',model:null}}){
@@ -28,8 +28,8 @@ test('actual imported null-role helper request captures selected profile and its
  const result=await runWorkflow(f.root,{target:f.target,resolveBinding:(n,g)=>{const result=resolveBinding(n,g,host.context);if(result.ok)bindings.push(result.data);return result;},countTokens:async()=>({tokens:1}),request:options=>requestModel(options,host.context)});
  assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.actualCalls,1);assert.deepEqual(host.requests.map(r=>[r.profileId,r.payload.model]),[['chosen','profile-default']]);assert.equal(bindings[0].profileId,'chosen');assert.equal(bindings[0].model,'profile-default');assert.deepEqual(f.def,before);assert.deepEqual(f.root.nodes.each.helper,f.ref);
 });
-import {semanticControlsForNode} from '../src/workflow/catalog.js?v=0.27.2';
-import {exportWorkflow} from '../src/workflow/packages.js?v=0.27.2';
+import {semanticControlsForNode} from '../src/workflow/catalog.js?v=0.27.3';
+import {exportWorkflow} from '../src/workflow/packages.js?v=0.27.3';
 test('empty helper overrides preserve additive defaults and local profiles do not enter semantic identity or portable exports',()=>{
  const f=fixture();
  assert.equal(Object.hasOwn(semanticControlsForNode(each({})), 'roleOverrides'),false);
@@ -48,9 +48,9 @@ test('outer helper role overrides reach nested imported null-role helpers while 
   assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.actualCalls,1);assert.deepEqual(host.requests.map(r=>[r.profileId,r.payload.model]),Object.keys(nestedOverrides).length?[['ambient','ambient-model']]:[['chosen','profile-default']]);
  }
 });
-import {prepareWorkspaceViews,projectWorkspacePanels} from '../src/ui/workspace-preparation.js?v=0.27.2';
-import {projectPreparedWorkflow} from '../src/ui/workflow-surface.js?v=0.27.2';
-import {createGraphViewSession} from '../src/ui/graph-view-session.js?v=0.27.2';
+import {prepareWorkspaceViews,projectWorkspacePanels} from '../src/ui/workspace-preparation.js?v=0.27.3';
+import {projectPreparedWorkflow} from '../src/ui/workflow-surface.js?v=0.27.3';
+import {createGraphViewSession} from '../src/ui/graph-view-session.js?v=0.27.3';
 function panel(f,options={}){
  const prepared=prepareWorkspaceViews(f.root,{profiles:[{id:'chosen',name:'Chosen connection'},{id:'ambient',name:'Ambient connection'}],...options});assert.equal(prepared.ok,true,JSON.stringify(prepared.error));
  const session=createGraphViewSession({root:f.root,activationId:'helper-bindings',...prepared.data}).data;
@@ -77,10 +77,10 @@ test('qualified For Each captures helper bindings from its actual instance param
  assert.equal(result.ok,true,JSON.stringify(result.error));assert.deepEqual(host.requests.map(r=>[r.profileId,r.payload.model]),[['chosen','profile-default']]);
 });
 import {readFile} from 'node:fs/promises';
-import {prepareIterationBindingOverride,inspectIterationTextRoles} from '../src/ui/iteration-bindings.js?v=0.27.2';
-import {prepareQualifiedScopeEdit} from '../src/workflow/definition-library.js?v=0.27.2';
-import {captureGraphEditContext,commitPreparedGraph} from '../src/workflow/transactions.js?v=0.27.2';
-import * as history from '../src/history.js?v=0.27.2';
+import {prepareIterationBindingOverride,inspectIterationTextRoles} from '../src/ui/iteration-bindings.js?v=0.27.3';
+import {prepareQualifiedScopeEdit} from '../src/workflow/definition-library.js?v=0.27.3';
+import {captureGraphEditContext,commitPreparedGraph} from '../src/workflow/transactions.js?v=0.27.3';
+import * as history from '../src/history.js?v=0.27.3';
 const controllerSource=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');
 const actionStart=controllerSource.indexOf('function editIterationHelperBinding('),actionEnd=controllerSource.indexOf('\nconst commentDetailsActions',actionStart);assert.ok(actionStart>=0&&actionEnd>actionStart);
 const actionFactory=Function('detailCapture','commitCaptured','prepareScopeMutation','prepareIterationBindingOverride',controllerSource.slice(actionStart,actionEnd)+';return editIterationHelperBinding;');
@@ -103,14 +103,14 @@ test('friendly effective helper binding reports explicit nested wrapper preceden
  const identity=computeDefinitionIdentity(raw),def={...identity.data.materializedDefinition,semanticHash:identity.data.semanticHash},ref={id:def.id,version:1,semanticHash:def.semanticHash};f.root.definitions[definitionRefKey(ref)]=def;f.root.nodes.each.helper=ref;
  const row=panel(f).helperBindings.roles[0];assert.equal(row.profile.value,'chosen');assert.match(row.effective,/Ambient connection/);assert.doesNotMatch(row.effective,/Chosen connection/);assert.match(row.caveat,/nested/);
 });
-import {validIterationRoleOverrides} from '../src/workflow/operations/control-nodes.js?v=0.27.2';
+import {validIterationRoleOverrides} from '../src/workflow/operations/control-nodes.js?v=0.27.3';
 test('helper binding validation rejects accessor selectors without invoking callbacks',()=>{
  let reads=0;const bindings={decision:{get profileId(){reads++;return 'chosen';}}};assert.equal(validIterationRoleOverrides(bindings),false);assert.equal(reads,0);
 });
-import {UNIFIED_WORKFLOW_EXAMPLE_DATA} from '../src/workflow/unified-example-data.js?v=0.27.2';
-import {parseWorkflow} from '../src/workflow/packages.js?v=0.27.2';
-import {normalizeOccurrences,confirmOccurrences,resolveItemHolders} from '../src/workflow/operations/event-data.js?v=0.27.2';
-import {selectRandomOutcomes} from '../src/workflow/operations/random-outcomes.js?v=0.27.2';
+import {UNIFIED_WORKFLOW_EXAMPLE_DATA} from '../src/workflow/unified-example-data.js?v=0.27.3';
+import {parseWorkflow} from '../src/workflow/packages.js?v=0.27.3';
+import {normalizeOccurrences,confirmOccurrences,resolveItemHolders} from '../src/workflow/operations/event-data.js?v=0.27.3';
+import {selectRandomOutcomes} from '../src/workflow/operations/random-outcomes.js?v=0.27.3';
 test('published broken-wand confirmation and wild helpers accept local profile choices with unchanged imported pins',async()=>{
  const imported=parseWorkflow(JSON.stringify(UNIFIED_WORKFLOW_EXAMPLE_DATA.find(entry=>entry.id==='unified-broken-wand').packages[0]));assert.equal(imported.ok,true,JSON.stringify(imported.error));const graph=imported.data,definitions=structuredClone(graph.definitions),before=structuredClone(definitions);
  const source={sourceId:'action-42',revision:'r1',sceneId:'scene-42',watch:'player-message',text:'Mara casts the broken wand.',visibility:'public'},normalized=normalizeOccurrences(source,[{eventType:'item-used',actorId:'mara',itemId:'broken-wand',position:{start:0,end:source.text.length},semantics:'actual'}],{actorIds:['mara'],itemIds:['broken-wand']});assert.equal(normalized.ok,true);
@@ -123,7 +123,7 @@ test('published broken-wand confirmation and wild helpers accept local profile c
   const result=await runWorkflow(root,{target:{workflowId:root.id,instancePath:[],nodeId:'each',portId:'out'},resolveBinding:(n,g)=>resolveBinding(n,g,host.context),countTokens:async()=>({tokens:1}),request:options=>requestModel(options,host.context)});assert.equal(result.ok,true,nodeId+JSON.stringify(result.error));assert.deepEqual(host.requests.map(r=>[r.profileId,r.payload.model]),expected);assert.deepEqual(definitions,before);
  }
 });
-import {prepareLibraryViews} from '../src/ui/workspace-preparation.js?v=0.27.2';
+import {prepareLibraryViews} from '../src/ui/workspace-preparation.js?v=0.27.3';
 test('readonly library For Each inspection retains a complete helper binding DTO',()=>{
  const f=fixture(),raw={id:'library-each',version:1,name:'Library For Each',interface:f.def.interface,parameters:[],body:{schema:3,runtime:2,mode:'native-unified',nodes:{entry:{id:'entry',type:'subgraph-input',interfacePortId:'item'},exit:{id:'exit',type:'subgraph-output',interfacePortId:'result'},each:node('each','for-each',{helper:f.ref,limit:2,requestBoundPerIteration:1})},wires:{a:edge('a','entry','out','each','in'),b:edge('b','each','out','exit','in')}}};const identity=computeDefinitionIdentity(raw),def={...identity.data.materializedDefinition,semanticHash:identity.data.semanticHash},ref={id:def.id,version:1,semanticHash:def.semanticHash};f.root.definitions[definitionRefKey(ref)]=def;
  const library=prepareLibraryViews('root',f.root.definitions);assert.equal(library.ok,true,JSON.stringify(library.error));const prepared=library.data.preparedViews.find(view=>definitionRefKey(view.definitionRef)===definitionRefKey(ref)),editor={readOnly:true,prepared,view:{identity:prepared.identity,key:'library',selection:{primary:{kind:'node',id:'each'}},nodePresentation:{}}};

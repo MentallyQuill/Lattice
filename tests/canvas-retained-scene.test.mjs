@@ -163,8 +163,8 @@ test('same-graph drag replacement skips the outgoing full render and restores co
 });
 
 test('active native wire replacement cancels and releases capture without outgoing scene rendering', async () => {
-    const {createNativeWireBridge}=await import('../src/ui/native-wire-bridge.js?v=0.27.2');
-    const {prepareNativeSearchCatalog}=await import('../src/ui/native-search-catalog.js?v=0.27.2');
+    const {createNativeWireBridge}=await import('../src/ui/native-wire-bridge.js?v=0.27.3');
+    const {prepareNativeSearchCatalog}=await import('../src/ui/native-search-catalog.js?v=0.27.3');
     let bridge; const {canvas,graph,host}=fixture({nativeBridge:()=>bridge,nativeScope:()=>({workflowId:'wire-cancel-root',instancePath:[]})});
     bridge=createNativeWireBridge({adapter:{capture:()=>({ok:true,data:{}}),isCurrent:()=>true},catalog:prepareNativeSearchCatalog({schema:3,runtime:2,mode:'native-unified',workflowId:'wire-cancel-root',viewPath:[],inDefinition:false}).data,onUpdate:(view,requests)=>canvas.updateNativeWire(view,requests)});
     const pin=host.querySelector('.pc-port[data-node="a"][data-dir="out"]');

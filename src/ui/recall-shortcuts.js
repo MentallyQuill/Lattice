@@ -1,4 +1,4 @@
-import {validateRecallQueueProposal,validateRecallScope} from '../workflow/recall-state.js?v=0.27.2';
+import {validateRecallQueueProposal,validateRecallScope} from '../workflow/recall-state.js?v=0.27.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const editable=element=>['INPUT','TEXTAREA','SELECT'].includes(element?.tagName)||element?.isContentEditable===true||element?.getAttribute?.('role')==='textbox';
 const isolated=element=>!!element?.closest?.('[role="menu"], .pc-workspace-overlay');

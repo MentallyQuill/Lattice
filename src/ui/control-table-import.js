@@ -1,8 +1,8 @@
-import { parseDelimitedInput } from './delimited-input.js?v=0.27.2';
-import { allocateControlRowId, readControlRows, writeControlRows } from './control-input-adapters.js?v=0.27.2';
-import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.2';
-import { decodeJson } from '../workflow/operations/json-decode.js?v=0.27.2';
-import { validateJsonPath } from './json-value-authoring.js?v=0.27.2';
+import { parseDelimitedInput } from './delimited-input.js?v=0.27.3';
+import { allocateControlRowId, readControlRows, writeControlRows } from './control-input-adapters.js?v=0.27.3';
+import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.3';
+import { decodeJson } from '../workflow/operations/json-decode.js?v=0.27.3';
+import { validateJsonPath } from './json-value-authoring.js?v=0.27.3';
 const fail = (message, row, cell, code = 'INVALID_CONTROL_TABLE') => ({ok:false,error:{code,message,...(row === undefined ? {} : {row,cell})}});
 const families = {
     'pattern.rules': {fields:['pattern','label','id'],required:['pattern'],prefix:'pattern',identity:'pattern'},

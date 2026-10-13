@@ -7,7 +7,7 @@ import { ACTIVE_PROFILE_ID } from '../src/workflow/model-profiles.js';
 import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definitions.js';
 import { makeLocalCopy } from '../src/workflow/definition-library.js';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js';
-import * as history from '../src/history.js?v=0.27.2';
+import * as history from '../src/history.js?v=0.27.3';
 import { graphPoint as toGraph } from '../src/canvas/camera.js';
 import { createGeometryCache } from '../src/canvas/geometry.js';
 const api = await import('../src/workflow/connection-edits.js').catch(() => ({}));

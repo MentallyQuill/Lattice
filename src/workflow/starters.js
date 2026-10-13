@@ -1,4 +1,4 @@
-import { operationDefaults } from './catalog.js?v=0.27.2';
+import { operationDefaults } from './catalog.js?v=0.27.3';
 
 export const STARTERS = [
     { id: 'unified-basic', version: 1, title: 'Unified story workflow', purpose: 'Prepare, generate a native reply, and review the final Draft in one workflow.', phase: 'unified', roles: [], callBound: 0, operations: ['on-send', 'generate-reply', 'review-publish'] },

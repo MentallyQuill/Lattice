@@ -1,14 +1,14 @@
-import {semanticJsonCommandOptions} from './semantic-json-data.js?v=0.27.2';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, describeExposedParameter, nodeBindingOverrideKey, validateDefinition } from './definitions.js?v=0.27.2';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.2';
-import { inspectGraphArtifacts, prepareGraphArtifacts } from './graph-artifacts.js?v=0.27.2';
-import { cloneWorkflowDocument } from './document.js?v=0.27.2';
-import { ARTIFACT_KINDS, describeOperation, operationFor } from './catalog.js?v=0.27.2';
-import { applyDeclaredNodeControlChange, graphDocumentSignature } from './ports.js?v=0.27.2';
-import { selectSubgraphClosure } from './packages.js?v=0.27.2';
-import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.2';
-import { compositionIds, definitionChain, ownershipEntries, ownsDefinitionPath, samePath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.27.2';
-import { inspectExpandedGraph } from './graph-validation.js?v=0.27.2';
+import {semanticJsonCommandOptions} from './semantic-json-data.js?v=0.27.3';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, describeExposedParameter, nodeBindingOverrideKey, validateDefinition } from './definitions.js?v=0.27.3';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.3';
+import { inspectGraphArtifacts, prepareGraphArtifacts } from './graph-artifacts.js?v=0.27.3';
+import { cloneWorkflowDocument } from './document.js?v=0.27.3';
+import { ARTIFACT_KINDS, describeOperation, operationFor } from './catalog.js?v=0.27.3';
+import { applyDeclaredNodeControlChange, graphDocumentSignature } from './ports.js?v=0.27.3';
+import { selectSubgraphClosure } from './packages.js?v=0.27.3';
+import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.3';
+import { compositionIds, definitionChain, ownershipEntries, ownsDefinitionPath, samePath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.27.3';
+import { inspectExpandedGraph } from './graph-validation.js?v=0.27.3';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

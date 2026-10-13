@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.2';
+import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.3';
 import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js';
 import { createGraphViewSession } from '../src/ui/graph-view-session.js';
 import { createConfiguredNodeSession, configuredCreationStage, nodeNeedsConfiguration } from '../src/ui/configured-node-creation.js';
 import { phaseForNode, portsForNode } from '../src/workflow/catalog.js';
 import { graphPoint } from '../src/canvas/camera.js';
-import * as history from '../src/history.js?v=0.27.2';
+import * as history from '../src/history.js?v=0.27.3';
 const api = await import('../src/ui/native-wire-bridge.js').catch(() => ({}));
 let rootSequence = 0;
 const fixture = () => ({ id: 'bridge-root-' + ++rootSequence, schema: 3, runtime: 2, mode: 'native-unified', nodes: {

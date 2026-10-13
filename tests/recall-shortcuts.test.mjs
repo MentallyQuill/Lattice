@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-const module=await import('../src/ui/recall-shortcuts.js?v=0.27.2').catch(()=>({}));
+const module=await import('../src/ui/recall-shortcuts.js?v=0.27.3').catch(()=>({}));
 function document(){const listeners=new Map();return {activeElement:null,addEventListener(type,handler){listeners.set(type,handler);},removeEventListener(type,handler){if(listeners.get(type)===handler)listeners.delete(type);},press(extra={}){let prevented=false;listeners.get('keydown')?.({code:'KeyM',ctrlKey:true,shiftKey:true,altKey:false,metaKey:false,repeat:false,isComposing:false,defaultPrevented:false,target:{tagName:'DIV'},composedPath:()=>[],preventDefault(){prevented=true;},...extra});return prevented;},listeners};}
 const request=onPress=>({scope:{userId:'default-user',chatId:'Story-2',workflowId:'workflow',actorId:'character:mara.png'},nodeId:'arm',hotkey:{code:'KeyM',ctrl:true,shift:true,alt:false,meta:false},onPress});
 

@@ -1,9 +1,9 @@
 <script lang="ts">
     import DiagnosticMessage from './DiagnosticMessage.svelte';
-    import { onMount, tick } from 'svelte';
+    import { onDestroy, onMount, tick } from 'svelte';
     import type { WorkflowExampleTile } from './types';
     import ArtifactPin from './ArtifactPin.svelte';
-    let { examples = [], issue = '', retry, scrollTop = 0, scroll, open }: { examples?: readonly WorkflowExampleTile[]; issue?: string; retry?: () => boolean | void; scrollTop?: number; scroll: (top: number) => void; open: (id: string) => boolean | Promise<boolean> } = $props();
+    let { examples = [], issue = '', loading = false, retry, scrollTop = 0, scroll, open }: { examples?: readonly WorkflowExampleTile[]; issue?: string; loading?: boolean; retry?: () => boolean | void | Promise<boolean | void>; scrollTop?: number; scroll: (top: number) => void; open: (id: string) => boolean | Promise<boolean> } = $props();
     let grid: HTMLDivElement;
     let detailHeading = $state<HTMLHeadingElement>();
     let searchInput = $state<HTMLInputElement>();
@@ -11,15 +11,36 @@
     let query = $state('');
     let difficulty = $state('');
     let selectedId = $state('');
+    let visiblePreviews = $state(new Set<string>());
+    let previewObserver: IntersectionObserver | null = null;
+    const previewIds = new WeakMap<Element, string>();
     const difficulties = ['Foundations', 'Composition', 'Advanced', 'Capstone'];
     let filtered = $derived(examples.filter(example => {
         if (difficulty && example.lesson?.difficulty !== difficulty) return false;
         const terms = query.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean);
-        const text = [example.number, example.title, example.goal, JSON.stringify(example.lesson ?? {}), ...(example.thumbnail?.nodes.map(node => node.title) ?? [])].join(' ').toLocaleLowerCase();
-        return terms.every(term => text.includes(term));
+        return terms.every(term => example.searchText.includes(term));
     }));
     let selected = $derived(examples.find(example => example.id === selectedId));
     onMount(() => { grid.scrollTop = scrollTop; });
+    onDestroy(() => previewObserver?.disconnect());
+    function setPreviewVisible(id: string, visible: boolean) {
+        if (visiblePreviews.has(id) === visible) return;
+        const next = new Set(visiblePreviews);
+        if (visible) next.add(id); else next.delete(id);
+        visiblePreviews = next;
+    }
+    function previewVisibility(node: SVGSVGElement, id: string) {
+        if (!globalThis.IntersectionObserver) { setPreviewVisible(id, true); return; }
+        previewIds.set(node, id);
+        previewObserver ??= new IntersectionObserver(entries => {
+            for (const entry of entries) {
+                const previewId = previewIds.get(entry.target);
+                if (previewId) setPreviewVisible(previewId, entry.isIntersecting);
+            }
+        }, { root: grid, rootMargin: '144px 0px' });
+        previewObserver.observe(node);
+        return { destroy() { previewObserver?.unobserve(node); previewIds.delete(node); setPreviewVisible(id, false); } };
+    }
     async function details(id: string) {
         selectedId = selectedId === id ? '' : id;
         if (selectedId) {
@@ -47,7 +68,7 @@
     <label>Difficulty<select aria-label="Difficulty" bind:value={difficulty}><option value="">All difficulties</option>{#each difficulties as band}<option value={band}>{band}</option>{/each}</select></label>
     <span class="pc-examples-count" role="status">{filtered.length} of {examples.length} lessons</span>
 </div>
-<div class="pc-examples-grid" bind:this={grid} onscroll={(event) => scroll(event.currentTarget.scrollTop)} aria-busy={!!opening}>
+<div class="pc-examples-grid" bind:this={grid} onscroll={(event) => scroll(event.currentTarget.scrollTop)} aria-busy={loading || !!opening}>
     {#if selected}
         <section class="pc-example-details" aria-label={`Lesson ${selected.number} details`}>
             <header><h3 bind:this={detailHeading} tabindex="-1">{selected.number}. {selected.title}</h3><button type="button" class="pc-btn menu_button" aria-label="Close lesson details" onclick={() => closeDetails(selected.id)}>Close</button></header>
@@ -66,13 +87,15 @@
             <button type="button" class="pc-btn menu_button" disabled={!!opening || !selected.thumbnail} onclick={() => choose(selected.id)}>Open independent copy</button>
         </section>
     {/if}
-    {#if !filtered.length && !issue}<p class="pc-examples-empty">{query.trim() || difficulty ? 'No lessons match your search and difficulty. Clear a filter to see more lessons.' : 'No lessons are available yet. Reload examples to check again.'}</p>{/if}
+    {#if loading && !examples.length}<p class="pc-examples-empty" role="status">Loading examples…</p>{/if}
+    {#if !filtered.length && !issue && !loading}<p class="pc-examples-empty">{query.trim() || difficulty ? 'No lessons match your search and difficulty. Clear a filter to see more lessons.' : 'No lessons are available yet. Reload examples to check again.'}</p>{/if}
     {#each filtered as example (example.id)}
         {@const preview = example.thumbnail}
         <article class="pc-example-entry">
         <button type="button" class="pc-example-tile" class:pc-example-unavailable={!preview} aria-label={example.title} aria-describedby={example.issue ? `pc-example-issue-${example.number}` : undefined} title={example.goal} disabled={!!opening || !preview} onclick={() => choose(example.id)}>
             {#if preview}
-            <svg class="pc-example-preview" viewBox={`${preview.bounds.x} ${preview.bounds.y} ${preview.bounds.w} ${preview.bounds.h}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+            <svg class="pc-example-preview" use:previewVisibility={example.id} viewBox={`${preview.bounds.x} ${preview.bounds.y} ${preview.bounds.w} ${preview.bounds.h}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+                {#if visiblePreviews.has(example.id)}
                 {#each preview.groups as group (group.id)}
                     <g class="pc-example-group" data-id={group.id}>
                         <rect x={group.x} y={group.y} width={group.w} height={group.h} rx="6" />
@@ -89,14 +112,14 @@
                 {#each preview.nodes as node (node.id)}
                     <g class={node.className} data-id={node.id}>
                         <rect class="pc-example-card" x={node.x} y={node.y} width={node.w} height={node.h} rx="4" />
-                        <svg x={node.x + 8} y={node.y + 7} width="16" height="16" viewBox="0 0 24 24"><path class="pc-example-icon" d={node.iconPath} /></svg>
-                        <text class="pc-example-node-title" x={node.x + 28} y={node.y + 20} textLength={node.title.length * 6 > node.w - 36 ? node.w - 36 : undefined} lengthAdjust="spacingAndGlyphs">{node.title}</text>
+                        {#if node.compact}<svg x={node.x + 8} y={node.y + 7} width="16" height="16" viewBox="0 0 24 24"><path class="pc-example-icon" d={node.iconPath} /></svg>{/if}
+                        <text class="pc-example-node-title" x={node.x + (node.compact ? 28 : 8)} y={node.y + 20} textLength={node.title.length * 6 > node.w - (node.compact ? 36 : 16) ? node.w - (node.compact ? 36 : 16) : undefined} lengthAdjust="spacingAndGlyphs">{node.title}</text>
                         {#each node.ports as pin (pin.id)}
                             <ArtifactPin kind={pin.kind} className="pc-example-pin-cue" x={pin.x - 9} y={pin.y - 9} />
-                            <text class="pc-example-pin-label" x={pin.x + (pin.dir === 'in' ? 9 : -9)} y={pin.y + 4} text-anchor={pin.dir === 'in' ? 'start' : 'end'}>{pin.label}</text>
                         {/each}
                     </g>
                 {/each}
+                {/if}
             </svg>
             {:else}<span class="pc-example-unavailable-preview"><strong>Unavailable</strong><span>Open Lesson details for this example.</span></span>{/if}
             <span class="pc-example-title">{example.number}. {example.title}</span>
@@ -151,7 +174,6 @@
     .pc-example-card { fill: var(--pc-block); stroke: var(--pc-border); stroke-width: 1.5; }
     .pc-example-preview text { fill: var(--pc-text); font: 12px system-ui, 'Segoe UI', sans-serif; }
     .pc-example-preview .pc-example-node-title { font-weight: 500; }
-    .pc-example-preview .pc-example-pin-label { fill: var(--pc-muted); font-size: 10px; }
     .pc-example-icon { fill: none; stroke: var(--pc-muted); stroke-width: 1.5; }
     .pc-example-group rect { fill: color-mix(in srgb, var(--pc-block) 20%, transparent); stroke: var(--pc-muted); stroke-width: 2; stroke-dasharray: 8 5; }
     .pc-example-group text { fill: var(--pc-muted); }

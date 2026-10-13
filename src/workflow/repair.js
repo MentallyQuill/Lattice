@@ -1,4 +1,4 @@
-import { snapshotDraft, retainDraftAuthority, readDraftBody } from './draft-revisions.js?v=0.27.2';
+import { snapshotDraft, retainDraftAuthority, readDraftBody } from './draft-revisions.js?v=0.27.3';
 const MAX_TEXT = 100000, MAX_SPANS = 256;
 const success = artifact => ({ ok: true, artifact, reports: [], calls: [], trace: [] });
 const failure = (code, message, node, artifact) => ({ ok: false, error: { code, message, ...(node?.id ? { nodeId: node.id } : {}) }, ...(artifact ? { artifact } : {}), reports: [], calls: [], trace: [] });

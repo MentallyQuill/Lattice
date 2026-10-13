@@ -33,11 +33,11 @@ export interface WorkflowDocumentView {
     recovery: { id: string; name: string; issue?: string }[];
 }
 export interface WorkflowExamplePin extends Port { x: number; y: number }
-export interface WorkflowExampleNode { id: string; x: number; y: number; w: number; h: number; title: string; className: string; iconPath: string; body: string | null; ports: WorkflowExamplePin[] }
+export interface WorkflowExampleNode { id: string; x: number; y: number; w: number; h: number; title: string; className: string; iconPath: string; body: string | null; compact: boolean; ports: WorkflowExamplePin[] }
 export interface WorkflowExampleWire { id: string; d: string; kind: string; from: { nodeId: string; portId: string }; to: { nodeId: string; portId: string } }
 export interface WorkflowExampleComment { id: string; x: number; y: number; w: number; h: number; title: string; content: string; color: string }
 export interface WorkflowExampleThumbnail { bounds: { x: number; y: number; w: number; h: number }; nodes: WorkflowExampleNode[]; wires: WorkflowExampleWire[]; comments: WorkflowExampleComment[]; groups: { id: string; title: string; x: number; y: number; w: number; h: number }[] }
-export interface WorkflowExampleTile { id: string; number: number; title: string; goal: string; lesson?: WorkflowExampleLesson; thumbnail: WorkflowExampleThumbnail | null; issue: string }
+export interface WorkflowExampleTile { id: string; number: number; title: string; goal: string; lesson?: WorkflowExampleLesson; searchText: string; thumbnail: WorkflowExampleThumbnail | null; issue: string }
 export interface WorkbenchView {
     menuContextKey?: string; guideInsertionBusy?: boolean;
     hasArchivedWorkflows?: boolean;
@@ -74,8 +74,10 @@ export interface WorkbenchActions {
     documentPrompt?: DocumentPromptActions;
     recall?: RecallActions;
     storyDocuments?: StoryDocumentsActions; configureNode?: ConfigureNodeActions;
-    openExample?: (id: string) => boolean | Promise<boolean>;
-    refreshExamples?: () => boolean | void;
+    captureExampleContext?: () => unknown;
+    exampleContextCurrent?: (context: unknown) => boolean;
+    openExample?: (id: string, context?: unknown) => boolean | Promise<boolean>;
+    refreshExamples?: (context?: unknown) => boolean | void | Promise<boolean | void>;
 }
 
 

@@ -215,9 +215,9 @@ test('retired root modes fail execution admission before any source or model eff
 
 
 test('runtime Reroute and Data Branch/Join retain exact Matches values for a direct Filter', async () => {
-    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.2');
+    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.3');
     const f = await import('./helpers/pattern-routing-fixtures.mjs');
-    const { getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.2');
+    const { getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.3');
     const root = f.routingGraph();
     root.nodes.reportRoute = f.node('reportRoute', 'reroute', { artifactKind: 'data' });
     root.nodes.reportBranch = f.node('reportBranch', 'branch', { artifactKind: 'data' });

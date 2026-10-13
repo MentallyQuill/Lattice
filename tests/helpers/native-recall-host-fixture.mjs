@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {createNativeWorkflowController} from '../../src/workflow/host.js?v=0.27.2';
-import {createChatDocumentCatalog} from '../../src/workflow/document-catalog.js?v=0.27.2';
-import {operationDefaults} from '../../src/workflow/catalog.js?v=0.27.2';
+import {createNativeWorkflowController} from '../../src/workflow/host.js?v=0.27.3';
+import {createChatDocumentCatalog} from '../../src/workflow/document-catalog.js?v=0.27.3';
+import {operationDefaults} from '../../src/workflow/catalog.js?v=0.27.3';
 export const recallPause=()=>new Promise(resolve=>setTimeout(resolve,10));
 export function recallGraph(options={}) {
  const nodes={},wires={};const node=(id,operation,settings={})=>nodes[id]={id,type:'workflow',...operationDefaults(operation),...settings};

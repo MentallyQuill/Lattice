@@ -140,9 +140,9 @@ test('the public complete execution gate resolves only current named-pin documen
 
 
 test('nested static Pattern instances with duplicate local IDs keep separate live evidence and exact Draft authority', async () => {
-    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.2');
-    const { getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.2');
-    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.2');
+    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.3');
+    const { getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.3');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.3');
     const f = await import('./helpers/pattern-routing-fixtures.mjs'), wrappers = f.patternWrappers();
     const root = f.rootGraph({
         sourceA: f.node('sourceA', 'reply-snapshot'), sourceB: f.node('sourceB', 'reply-snapshot'),

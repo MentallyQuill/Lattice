@@ -1,9 +1,9 @@
-import { ownJsonData } from './semantic-json-data.js?v=0.27.2';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.2';
-import { cloneWorkflowDocument } from './document.js?v=0.27.2';
-import { operationFor, describeOperation, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.27.2';
-import { INTROSPECTION_NATIVE_OPERATIONS, introspectionDefaults } from './introspection/native.js?v=0.27.2';
-export { portsForNode } from './catalog.js?v=0.27.2';
+import { ownJsonData } from './semantic-json-data.js?v=0.27.3';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.3';
+import { cloneWorkflowDocument } from './document.js?v=0.27.3';
+import { operationFor, describeOperation, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.27.3';
+import { INTROSPECTION_NATIVE_OPERATIONS, introspectionDefaults } from './introspection/native.js?v=0.27.3';
+export { portsForNode } from './catalog.js?v=0.27.3';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const endpoint = value => value && typeof value === 'object' && !Array.isArray(value) && typeof value.nodeId === 'string' && typeof value.portId === 'string';

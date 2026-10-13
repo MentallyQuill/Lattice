@@ -47,7 +47,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -349,7 +352,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -601,7 +607,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -876,7 +885,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -1144,7 +1156,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -1335,7 +1350,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -1526,7 +1544,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -1767,7 +1788,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -1985,7 +2009,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -2237,7 +2264,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -2492,7 +2522,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -3513,7 +3546,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -3784,7 +3820,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -4055,7 +4094,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -4327,7 +4369,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -5349,7 +5394,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -6548,7 +6596,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -7456,7 +7507,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -8616,7 +8670,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -9152,7 +9209,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -9882,7 +9942,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -10943,7 +11006,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -11644,7 +11710,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -12139,7 +12208,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -12913,7 +12985,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -13407,7 +13482,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -14665,7 +14743,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -15272,7 +15353,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -15536,7 +15620,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -17055,7 +17142,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -19096,7 +19186,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -19471,7 +19564,10 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",

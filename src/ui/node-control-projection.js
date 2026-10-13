@@ -1,7 +1,7 @@
-import { OPERATIONS, operationFor } from '../workflow/catalog.js?v=0.27.2';
-import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.27.2';
-import { recallControlLabel } from '../workflow/recall-labels.js?v=0.27.2';
-import { resolveControlInputSpec, formatControlInput } from './control-input-contracts.js?v=0.27.2';
+import { OPERATIONS, operationFor } from '../workflow/catalog.js?v=0.27.3';
+import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.27.3';
+import { recallControlLabel } from '../workflow/recall-labels.js?v=0.27.3';
+import { resolveControlInputSpec, formatControlInput } from './control-input-contracts.js?v=0.27.3';
 /** Shared detached authoring fields; no graph, host, or execution authority. */
 export function projectNodeControls(operation, controls = {}, { phase, readOnly = false }) {
  const base = OPERATIONS[operation]; if (!base) return [];

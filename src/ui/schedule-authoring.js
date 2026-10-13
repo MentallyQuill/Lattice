@@ -1,6 +1,6 @@
-import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.2';
-import { validateStorySchedules } from '../workflow/story-time.js?v=0.27.2';
-import { describeTimeNode } from '../workflow/operations/time-nodes.js?v=0.27.2';
+import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.3';
+import { validateStorySchedules } from '../workflow/story-time.js?v=0.27.3';
+import { describeTimeNode } from '../workflow/operations/time-nodes.js?v=0.27.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const integer=value=>Number.isSafeInteger(value) && value>=0;
 export function durationToMinutes(quantity, unit, dayLengthMinutes) {

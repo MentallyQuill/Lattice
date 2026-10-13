@@ -70,6 +70,7 @@
     let overlayAnchor: HTMLElement | null = null;
     let overlayEpoch = 0;
     let examplesScroll = $state(0);
+    let examplesLoading = $state(false);
     let shelf: { openSearch(): void };
     function persist() { try { localStorage.setItem(storageKey, JSON.stringify({ height: previewHeight, collapsed, shelfOpen })); } catch { /* Private storage may be disabled. */ } }
     function resizeStart() { actions.resizeStart?.(); }
@@ -93,14 +94,49 @@
         else if (command === 'reset-layout') { resizeStart(); previewHeight = 240; collapsed = false; shelfOpen = true; commitDetails(258); if (!view.inspectorOpen) actions.command('inspector'); persist(); }
         else if (command === 'add-node') { shelfOpen = true; persist(); await tick(); shelf.openSearch(); }
         else if (['follow-preview','pin-preview','run-preview'].includes(command)) previewCommand(command);
-        else { overlayAnchor = document.activeElement as HTMLElement; if (command === 'examples') actions.refreshExamples?.(); if (command === 'story-documents') actions.storyDocuments?.refresh?.(); if (command === 'memory-recall') actions.recall?.refresh?.(); const epoch = ++overlayEpoch; overlay = command; await tick(); if (epoch === overlayEpoch && overlay === command) dialog?.querySelector<HTMLButtonElement>('button')?.focus(); }
+        else {
+            overlayAnchor = document.activeElement as HTMLElement;
+            if (command === 'story-documents') actions.storyDocuments?.refresh?.();
+            if (command === 'memory-recall') actions.recall?.refresh?.();
+            const epoch = ++overlayEpoch, exampleContext = command === 'examples' ? actions.captureExampleContext?.() : undefined;
+            overlay = command; examplesLoading = command === 'examples';
+            await tick();
+            if (epoch === overlayEpoch && overlay === command && (command !== 'examples' || actions.exampleContextCurrent?.(exampleContext) !== false)) dialog?.querySelector<HTMLButtonElement>('button')?.focus();
+            if (command === 'examples') await refreshExamplesAfterPaint(epoch, exampleContext);
+        }
     }
-    function closeOverlay() { overlayEpoch++; overlay = ''; overlayAnchor?.focus({ preventScroll: true }); }
+    function afterPaint() {
+        return new Promise<void>(resolve => {
+            const frame = globalThis.requestAnimationFrame ?? ((callback: FrameRequestCallback) => globalThis.setTimeout(callback, 0));
+            frame(() => globalThis.setTimeout(resolve, 0));
+        });
+    }
+    function staleExampleContext(epoch: number, context?: unknown) {
+        if (actions.exampleContextCurrent?.(context) !== false) return false;
+        if (epoch === overlayEpoch && overlay === 'examples') { overlayEpoch++; examplesLoading = false; overlay = ''; }
+        return true;
+    }
+    async function refreshExamplesAfterPaint(epoch: number, context?: unknown) {
+        await afterPaint();
+        if (epoch !== overlayEpoch || overlay !== 'examples' || staleExampleContext(epoch, context)) return false;
+        try { return await actions.refreshExamples?.(context) ?? false; }
+        catch { return false; }
+        finally { if (epoch === overlayEpoch && overlay === 'examples') examplesLoading = false; }
+    }
+    async function retryExamples() {
+        if (examplesLoading || overlay !== 'examples') return false;
+        const epoch = overlayEpoch, context = actions.captureExampleContext?.(); examplesLoading = true;
+        await tick();
+        return refreshExamplesAfterPaint(epoch, context);
+    }
+    function closeOverlay() { overlayEpoch++; examplesLoading = false; overlay = ''; overlayAnchor?.focus({ preventScroll: true }); }
     function openNodeGuide() { guideSelection = currentGuideSelection; void local('node-guide'); }
     async function openExample(id: string) {
-        const epoch = overlayEpoch;
+        const epoch = overlayEpoch, context = actions.captureExampleContext?.();
+        await afterPaint();
+        if (epoch !== overlayEpoch || overlay !== 'examples' || staleExampleContext(epoch, context)) return false;
         try {
-            const opened = await actions.openExample?.(id);
+            const opened = await actions.openExample?.(id, context);
             if (opened === true && epoch === overlayEpoch && overlay === 'examples') closeOverlay();
             return opened === true;
         } catch { return false; }
@@ -169,10 +205,10 @@
     </div>
     {#if overlay}
         <div class="pc-workspace-overlay">
-            <div class="pc-workspace-dialog" class:pc-examples-dialog={overlay === 'examples'} class:pc-node-guide-dialog={overlay === 'node-guide'} role="dialog" tabindex="-1" aria-modal="true" aria-label={dialogTitle} bind:this={dialog} onkeydown={overlayKeys} onpaste={(event) => event.stopPropagation()}>
+            <div class="pc-workspace-dialog" class:pc-examples-dialog={overlay === 'examples'} class:pc-node-guide-dialog={overlay === 'node-guide'} role="dialog" tabindex="-1" aria-modal="true" aria-label={dialogTitle} aria-busy={overlay === 'examples' ? examplesLoading : undefined} bind:this={dialog} onkeydown={overlayKeys} onpaste={(event) => event.stopPropagation()}>
                 <header><h2>{dialogTitle}</h2><button type="button" class="pc-btn menu_button" aria-label={overlay==='memory-recall'?'Close':'Close panel'} onclick={closeOverlay}>{overlay==='memory-recall'?'Close':'×'}</button></header>
                 {#if overlay === 'node-guide' && nodeGuide}{#key currentGuideSelection}<NodeGuide guide={nodeGuide} actions={actions.nodeGuide} contextKey={guideStatusContextKey} close={closeOverlay} />{/key}{:else}
-                {#if overlay === 'examples'}<ExamplesBrowser examples={view.examples} issue={view.examplesIssue} retry={actions.refreshExamples} scrollTop={examplesScroll} scroll={top => examplesScroll = top} open={openExample} />{:else if overlay === 'memory-recall'}<RecallOverview view={view.recall ?? null} actions={{...actions.recall!,reveal:(nodeId)=>{closeOverlay();actions.recall?.reveal(nodeId);}}} />{:else if overlay === 'story-documents'}<StoryDocuments view={view.storyDocuments ?? { key: '', revision: '', scope: { userId: '', chatId: '' }, documents: [], issue: 'Workflow Data setup is unavailable.' }} actions={actions.storyDocuments} close={closeOverlay} />{:else if overlay === 'run-details'}<RunDetails view={view.runDetails ?? null} actions={actions.runDetails} />{:else if overlay !== 'help'}<WorkspaceReport panel={overlay} workflow={rootWorkflow} version={manifest.version} {referenceUrl} {guideUrl} />{:else}<p>Browse node families on the floating shelf. Middle mouse pans the graph; the wheel zooms around the pointer. Use the dividers or their arrow keys to resize Preview and Details. View controls panel visibility; View › Reset panel layout restores the default layout.</p><p>Open examples from File to start a workflow document. A unified workflow's preparation stage feeds Generate Reply, and its response stage reshapes the captured Draft before Review and Publish. Choose each model node's connection with the bar under it. Details contains advanced model overrides and inheritance settings. Enable Lattice runs the open document for Send in SillyTavern. Run to here tests supported nodes; Workflow › Stop workflow cancels the current run. Retired pre and post workflows remain available only for archived export.</p><p>File › New workflow, Open workflow, Open Recent and Open examples replace the open document after offering Save, Don't Save or Cancel for unsaved changes. Save writes the current file; Save As chooses a destination. Save As creates a JSON copy when direct file saving is unavailable. Export workflow JSON makes a portable sharing copy without local connections. Import into graph reviews a compatible fragment before one undoable insertion. Recover previous workflows opens unified documents preserved from earlier settings. File › Export archived workflows preserves retired originals for reference. Recovery drafts remain available in SillyTavern, while the filename and document status describe the current file.</p><p>Select nodes and right-click Create Subgraph to open their connected body in a new tab. Double-click a subgraph to open it. Add Input and Output nodes from the Subgraphs shelf inside an editable subgraph, then name and configure their ports in Details.</p><p>Right-click a subgraph block and choose Add to Subgraphs to save it for reuse. Right-click a saved shelf entry to delete it. Saving updates the shelf only when you choose to save; existing placed copies stay unchanged. Portals connect pins through named references. Preview artifact tabs show results for the selected node; Run to here checks the request bound before running. Apply reviews the fresh result against the full root workflow.</p><p><a href={guideUrl} target="_blank" rel="noreferrer">Open the project guide</a> · <a href={referenceUrl} target="_blank" rel="noreferrer">Node reference</a></p>{/if}
+                {#if overlay === 'examples'}<ExamplesBrowser examples={view.examples} issue={view.examplesIssue} loading={examplesLoading} retry={retryExamples} scrollTop={examplesScroll} scroll={top => examplesScroll = top} open={openExample} />{:else if overlay === 'memory-recall'}<RecallOverview view={view.recall ?? null} actions={{...actions.recall!,reveal:(nodeId)=>{closeOverlay();actions.recall?.reveal(nodeId);}}} />{:else if overlay === 'story-documents'}<StoryDocuments view={view.storyDocuments ?? { key: '', revision: '', scope: { userId: '', chatId: '' }, documents: [], issue: 'Workflow Data setup is unavailable.' }} actions={actions.storyDocuments} close={closeOverlay} />{:else if overlay === 'run-details'}<RunDetails view={view.runDetails ?? null} actions={actions.runDetails} />{:else if overlay !== 'help'}<WorkspaceReport panel={overlay} workflow={rootWorkflow} version={manifest.version} {referenceUrl} {guideUrl} />{:else}<p>Browse node families on the floating shelf. Middle mouse pans the graph; the wheel zooms around the pointer. Use the dividers or their arrow keys to resize Preview and Details. View controls panel visibility; View › Reset panel layout restores the default layout.</p><p>Open examples from File to start a workflow document. A unified workflow's preparation stage feeds Generate Reply, and its response stage reshapes the captured Draft before Review and Publish. Choose each model node's connection with the bar under it. Details contains advanced model overrides and inheritance settings. Enable Lattice runs the open document for Send in SillyTavern. Run to here tests supported nodes; Workflow › Stop workflow cancels the current run. Retired pre and post workflows remain available only for archived export.</p><p>File › New workflow, Open workflow, Open Recent and Open examples replace the open document after offering Save, Don't Save or Cancel for unsaved changes. Save writes the current file; Save As chooses a destination. Save As creates a JSON copy when direct file saving is unavailable. Export workflow JSON makes a portable sharing copy without local connections. Import into graph reviews a compatible fragment before one undoable insertion. Recover previous workflows opens unified documents preserved from earlier settings. File › Export archived workflows preserves retired originals for reference. Recovery drafts remain available in SillyTavern, while the filename and document status describe the current file.</p><p>Select nodes and right-click Create Subgraph to open their connected body in a new tab. Double-click a subgraph to open it. Add Input and Output nodes from the Subgraphs shelf inside an editable subgraph, then name and configure their ports in Details.</p><p>Right-click a subgraph block and choose Add to Subgraphs to save it for reuse. Right-click a saved shelf entry to delete it. Saving updates the shelf only when you choose to save; existing placed copies stay unchanged. Portals connect pins through named references. Preview artifact tabs show results for the selected node; Run to here checks the request bound before running. Apply reviews the fresh result against the full root workflow.</p><p><a href={guideUrl} target="_blank" rel="noreferrer">Open the project guide</a> · <a href={referenceUrl} target="_blank" rel="noreferrer">Node reference</a></p>{/if}
                 {/if}
             </div>
         </div>

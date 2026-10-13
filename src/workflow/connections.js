@@ -1,4 +1,4 @@
-import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME, activeModelMetadata } from './model-profiles.js?v=0.27.2';
+import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME, activeModelMetadata } from './model-profiles.js?v=0.27.3';
 const fail = (code, message) => ({ok:false,error:{code,message}});
 const resolved = new WeakMap();
 const fingerprint = () => globalThis.crypto.randomUUID();

@@ -1,10 +1,10 @@
-import { artifactVisibility } from './artifact-privacy.js?v=0.27.2';
-import { cloneJsonValue } from './operations/json-data.js?v=0.27.2';
-import { advanceStoryClock } from './story-time.js?v=0.27.2';
-import { validateOccurrences, normalizeOccurrences }  from './operations/event-data.js?v=0.27.2';
-import { selectRandomOutcomes, validateRandomOutcome } from './operations/random-outcomes.js?v=0.27.2';
-import { validateNativeFileEvidence } from './native-settlement.js?v=0.27.2';
-import { freeze, plain } from './record-data.js?v=0.27.2';
+import { artifactVisibility } from './artifact-privacy.js?v=0.27.3';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.3';
+import { advanceStoryClock } from './story-time.js?v=0.27.3';
+import { validateOccurrences, normalizeOccurrences }  from './operations/event-data.js?v=0.27.3';
+import { selectRandomOutcomes, validateRandomOutcome } from './operations/random-outcomes.js?v=0.27.3';
+import { validateNativeFileEvidence } from './native-settlement.js?v=0.27.3';
+import { freeze, plain } from './record-data.js?v=0.27.3';
 const good=data=>({ok:true,...(data===undefined?{}:{data})}),fail=(code,message)=>({ok:false,error:{code,message}});
 const permits=(source,destination)=>source.kind==='public'||destination.kind==='hidden'||source.kind==='actor-private'&&destination.kind==='actor-private'&&source.actorId===destination.actorId;
 const id=value=>typeof value==='string'&&!!value.trim()&&value.length<=256;

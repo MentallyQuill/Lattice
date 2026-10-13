@@ -1,6 +1,6 @@
-import { preserveArtifactPrivacy } from '../artifact-privacy.js?v=0.27.2';
-import { cloneJsonValue } from './json-data.js?v=0.27.2';
-import { validateDecisionQuestions, runDecision } from '../decision.js?v=0.27.2';
+import { preserveArtifactPrivacy } from '../artifact-privacy.js?v=0.27.3';
+import { cloneJsonValue } from './json-data.js?v=0.27.3';
+import { validateDecisionQuestions, runDecision } from '../decision.js?v=0.27.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&[Object.prototype,null].includes(Object.getPrototypeOf(value));
 const own=(value,key,fallback)=>{const property=Object.getOwnPropertyDescriptor(value,key);if(!property)return fallback;if(!property.enumerable||!Object.hasOwn(property,'value'))throw new Error('Own data required.');return property.value;};

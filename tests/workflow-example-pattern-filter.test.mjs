@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile, readdir } from 'node:fs/promises';
-import { parseWorkflow } from '../src/workflow/packages.js?v=0.27.2';
-import { validateWorkflow } from '../src/workflow/contracts.js?v=0.27.2';
-import { runWorkflowForHost } from '../src/workflow/runtime.js?v=0.27.2';
+import { parseWorkflow } from '../src/workflow/packages.js?v=0.27.3';
+import { validateWorkflow } from '../src/workflow/contracts.js?v=0.27.3';
+import { runWorkflowForHost } from '../src/workflow/runtime.js?v=0.27.3';
 import { hostHarness, fourteen, retained } from './helpers/pattern-routing-fixtures.mjs';
 async function operations(directory) {
  const result = [];
@@ -40,7 +40,7 @@ test('synthetic Pattern lesson validates and routes fourteen hits through one pa
 });
 
 test('Literal Cleanup exposes a zero-call Draft routing system with current canonical records', async () => {
- const { createLibrarySubgraph } = await import('../src/workflow/library/subgraphs.js?v=0.27.2');
+ const { createLibrarySubgraph } = await import('../src/workflow/library/subgraphs.js?v=0.27.3');
  const created = createLibrarySubgraph('literal-cleanup'); assert.equal(created.ok,true,JSON.stringify(created.error));
  const d=created.data.definition; assert.equal(d.interface[1].kind,'draft');
  assert.ok(Object.values(d.body.nodes).some(node=>node.operation==='filter-text'));

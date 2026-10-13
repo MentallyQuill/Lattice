@@ -1,6 +1,6 @@
-import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.2';
-import { decodeJson } from './json-decode.js?v=0.27.2';
-import { formatRecords } from './format-records.js?v=0.27.2';
+import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.3';
+import { decodeJson } from './json-decode.js?v=0.27.3';
+import { formatRecords } from './format-records.js?v=0.27.3';
 
 const equal = (a,b) => {
     if (a === b) return true;

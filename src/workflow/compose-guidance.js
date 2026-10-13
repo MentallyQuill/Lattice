@@ -1,4 +1,4 @@
-import { plain, dense, own } from './record-data.js?v=0.27.2';
+import { plain, dense, own } from './record-data.js?v=0.27.3';
 
 const field = (value, key, fallback) => Object.hasOwn(value, key) ? own(value, key) : fallback;
 const failure = (code, message) => ({ ok: false, error: { code, message } });

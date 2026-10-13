@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import * as planning from '../src/workflow/resolve.js?v=0.27.2';
-import * as validation from '../src/workflow/graph-validation.js?v=0.27.2';
-import * as transactions from '../src/workflow/transactions.js?v=0.27.2';
-import { prepareGraphCandidate } from '../src/workflow/prepared-graph-edit.js?v=0.27.2';
+import * as planning from '../src/workflow/resolve.js?v=0.27.3';
+import * as validation from '../src/workflow/graph-validation.js?v=0.27.3';
+import * as transactions from '../src/workflow/transactions.js?v=0.27.3';
+import { prepareGraphCandidate } from '../src/workflow/prepared-graph-edit.js?v=0.27.3';
 import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
-import * as history from '../src/history.js?v=0.27.2';
+import * as history from '../src/history.js?v=0.27.3';
 const context = root => transactions.captureGraphEditContext(root, () => ({sessionId:'owned',viewPath:[],readOnly:false})).data;
 test('planner memoizes only actual inventory targets, including completeness failures, without getters', () => {
  const root=siblingWorkflow(), planner=planning.prepareWorkflowPlanner(root).data;
@@ -73,7 +73,7 @@ test('checked candidate tokens cannot survive cloning, tampering or an interveni
 });
 
 test('historical composition reads the captured authored source even before its first projection', async () => {
- const {prepareCompositionViews}=await import('../src/workflow/composition-views.js?v=0.27.2');
+ const {prepareCompositionViews}=await import('../src/workflow/composition-views.js?v=0.27.3');
  const root=structuredClone(siblingWorkflow()), planner=planning.prepareWorkflowPlanner(root).data;
  root.nodes.source.title='new title';
  const views=prepareCompositionViews(root,planner);
@@ -91,7 +91,7 @@ test('committed candidate artifacts are reusable only with matching admitted con
 });
 
 test('checked graph artifact payload cannot be rewritten and nonenumerable mutations cannot hit its cache', async () => {
- const {prepareGraphArtifacts,inspectGraphArtifacts}=await import('../src/workflow/graph-artifacts.js?v=0.27.2');
+ const {prepareGraphArtifacts,inspectGraphArtifacts}=await import('../src/workflow/graph-artifacts.js?v=0.27.3');
  const root=structuredClone(siblingWorkflow()),prepared=prepareGraphArtifacts(root);
  assert.equal(prepared.ok,true);assert.equal(prepareGraphArtifacts(root).data,prepared.data);
  assert.ok(Object.isFrozen(inspectGraphArtifacts(prepared.data)));
@@ -100,7 +100,7 @@ test('checked graph artifact payload cannot be rewritten and nonenumerable mutat
 });
 
 test('individually checked definitions still require aggregate conflict checks', async () => {
- const {computeDefinitionIdentity,definitionRefKey}=await import('../src/workflow/definitions.js?v=0.27.2');
+ const {computeDefinitionIdentity,definitionRefKey}=await import('../src/workflow/definitions.js?v=0.27.3');
  const first=validation.prepareDefinitionRegistry(siblingWorkflow().definitions).data;
  const original=Object.values(first.snapshots)[0],draft=structuredClone(original);
  draft.body.nodes.work.instructions='different content';delete draft.semanticHash;
@@ -145,7 +145,7 @@ test('history observers cannot authorize the original candidate after mutating i
 });
 
 test('verified committed artifacts become the next raw preparation cache entry without expansion clones', async () => {
- const {prepareGraphArtifacts,graphArtifactsFor}=await import('../src/workflow/graph-artifacts.js?v=0.27.2');
+ const {prepareGraphArtifacts,graphArtifactsFor}=await import('../src/workflow/graph-artifacts.js?v=0.27.3');
  const root=siblingWorkflow(),before=prepareGraphArtifacts(root).data,candidate=structuredClone(root);candidate.nodes.source.x=42;
  const summary=transactions.commitPreparedGraph(root,{...prepareGraphCandidate(root,candidate).data,context:context(root)}).data;
  const change=transactions.committedGraphChange(root,summary);assert.notEqual(change.artifacts,before);
@@ -156,7 +156,7 @@ test('verified committed artifacts become the next raw preparation cache entry w
 });
 
 test('artifact adoption rejects changed content, raw getters and forged tokens without poisoning cache', async () => {
- const {prepareGraphArtifacts,graphArtifactsFor}=await import('../src/workflow/graph-artifacts.js?v=0.27.2');
+ const {prepareGraphArtifacts,graphArtifactsFor}=await import('../src/workflow/graph-artifacts.js?v=0.27.3');
  const root=siblingWorkflow(),token=prepareGraphArtifacts(root).data,other=structuredClone(root);other.nodes.source.x=52;
  const foreign=prepareGraphArtifacts(other).data;
  assert.equal(graphArtifactsFor(root,foreign).ok,false);
@@ -170,8 +170,8 @@ test('artifact adoption rejects changed content, raw getters and forged tokens w
 });
 
 test('checked document clones still reject forged, stale, unbounded and accessor-bearing raw roots', async()=>{
- const {prepareGraphArtifacts}=await import('../src/workflow/graph-artifacts.js?v=0.27.2');
- const {cloneWorkflowDocument}=await import('../src/workflow/document.js?v=0.27.2');
+ const {prepareGraphArtifacts}=await import('../src/workflow/graph-artifacts.js?v=0.27.3');
+ const {cloneWorkflowDocument}=await import('../src/workflow/document.js?v=0.27.3');
  const root=siblingWorkflow(),checkedArtifacts=prepareGraphArtifacts(root).data;
  assert.equal(cloneWorkflowDocument(root,{checkedArtifacts:structuredClone(checkedArtifacts)}).ok,false);
  root.nodes.source.x=51;assert.equal(cloneWorkflowDocument(root,{checkedArtifacts}).ok,false);
@@ -183,8 +183,8 @@ test('checked document clones still reject forged, stale, unbounded and accessor
 });
 
 test('warm source artifacts preserve factory mutation preconditions and raw clone compatibility', async()=>{
- const {prepareGraphArtifacts}=await import('../src/workflow/graph-artifacts.js?v=0.27.2');
- const {prepareNativeConnectionEdit}=await import('../src/workflow/connection-edits.js?v=0.27.2');
+ const {prepareGraphArtifacts}=await import('../src/workflow/graph-artifacts.js?v=0.27.3');
+ const {prepareNativeConnectionEdit}=await import('../src/workflow/connection-edits.js?v=0.27.3');
  const root=siblingWorkflow(),captured=context(root),before=structuredClone(root);
  assert.equal(prepareGraphArtifacts(root).ok,true);let calls=0;
  const prepared=prepareNativeConnectionEdit(root,{kind:'create',operation:'text',graphPoint:{x:2,y:3}},{idFactory(){calls++;root.nodes.source.title='factory mutation';return 'factory-created';}});

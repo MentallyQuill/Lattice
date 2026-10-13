@@ -1,4 +1,4 @@
-import { freeze } from '../record-data.js?v=0.27.2';
+import { freeze } from '../record-data.js?v=0.27.3';
 /** Source operations emit saved Text; host Prompt Source dispatch lives in the runtime. */
 const registration = (id, title, defaults, controlDescriptors, extra = {}) => ({
     id, title, family: 'Input', phase: 'both', operationVersion: 1,

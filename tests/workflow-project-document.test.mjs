@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {executeFileNode,describeFileNode} from '../src/workflow/operations/file-nodes.js?v=0.27.2';
+import {executeFileNode,describeFileNode} from '../src/workflow/operations/file-nodes.js?v=0.27.3';
 const node=extra=>({type:'workflow',operation:'project-document',operationVersion:1,...extra});
 const text=text=>({kind:'text',text});const data=value=>({kind:'data',value});
 const original='[{"id":"sword","level":1,"souls":[{"id":"old"}]}]';

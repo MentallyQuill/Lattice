@@ -39,7 +39,10 @@
         "profileId": null,
         "model": null,
         "modelRole": null,
-        "budgetTokens": 768
+        "budgetTokens": 768,
+        "injectionRole": "system",
+        "injectionPosition": "in-chat",
+        "injectionDepth": 0
       },
       "pattern": {
         "id": "pattern",

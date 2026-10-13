@@ -294,9 +294,9 @@ test('terminal failure and cancellation persist closed active requests and wrapp
 
 
 test('retained Pattern reports and JSON imports remain descriptive copies without live Filter admission', async () => {
-    const { scanPatternDraft, getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.2');
-    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.2');
-    const { executePrimitive } = await import('../src/workflow/operations/nodes.js?v=0.27.2');
+    const { scanPatternDraft, getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.3');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.3');
+    const { executePrimitive } = await import('../src/workflow/operations/nodes.js?v=0.27.3');
     const f = await import('./helpers/pattern-routing-fixtures.mjs'), input = f.draft(f.fourteen);
     const scan = await scanPatternDraft(input, f.settings()); assert.equal(scan.ok, true);
     const report = scan.outputs.matches, recorder = api.createRunRecorder({ runId: 'run' });

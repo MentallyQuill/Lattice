@@ -1,4 +1,4 @@
-import { getNodeGuide, describeGuideControl } from './node-guide-content.js?v=0.27.2';
+import { getNodeGuide, describeGuideControl } from './node-guide-content.js?v=0.27.3';
 
 /** A guide is a display projection of the selected node, never an editor. */
 export function projectNodeGuide(details) {

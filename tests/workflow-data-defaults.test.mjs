@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v=0.27.2';
-import { operationDefaults } from '../src/workflow/catalog.js?v=0.27.2';
-import { executeTimeNode } from '../src/workflow/operations/time-nodes.js?v=0.27.2';
-import { executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.27.2';
-import { ensureWorkflowDataDefaults, workflowDataKind, workflowDataPresetFor } from '../src/workflow/workflow-data-defaults.js?v=0.27.2';
+import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v=0.27.3';
+import { operationDefaults } from '../src/workflow/catalog.js?v=0.27.3';
+import { executeTimeNode } from '../src/workflow/operations/time-nodes.js?v=0.27.3';
+import { executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.27.3';
+import { ensureWorkflowDataDefaults, workflowDataKind, workflowDataPresetFor } from '../src/workflow/workflow-data-defaults.js?v=0.27.3';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
-import { normalizeOccurrences, confirmOccurrences, resolveItemHolders } from '../src/workflow/operations/event-data.js?v=0.27.2';
-import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definition-data.js?v=0.27.2';
+import { normalizeOccurrences, confirmOccurrences, resolveItemHolders } from '../src/workflow/operations/event-data.js?v=0.27.3';
+import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definition-data.js?v=0.27.3';
 
 function fixture() {
     let userId = 'user', live = { chatId: 'chat', chat: [{ mes: 'A turn', is_user: true }], chatMetadata: { keep: true } };

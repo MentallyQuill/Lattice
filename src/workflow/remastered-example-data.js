@@ -94,7 +94,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -254,7 +257,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -480,7 +486,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -696,7 +705,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -950,7 +962,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -1173,7 +1188,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -1455,7 +1473,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -1716,7 +1737,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -1997,7 +2021,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -2413,7 +2440,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -2885,7 +2915,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -3327,7 +3360,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -3737,7 +3773,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -4324,7 +4363,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -4755,7 +4797,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -5059,7 +5104,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -5284,7 +5332,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -5739,7 +5790,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -6333,7 +6387,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -7117,7 +7174,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -7854,7 +7914,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -8163,7 +8226,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -9257,7 +9323,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -9619,7 +9688,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -10249,7 +10321,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -11532,7 +11607,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -11992,7 +12070,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -13662,7 +13743,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -14983,7 +15067,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",
@@ -17663,7 +17750,10 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "model": null,
               "modelRole": null,
               "alias": "Generate Reply · SillyTavern",
-              "budgetTokens": 768
+              "budgetTokens": 768,
+              "injectionRole": "system",
+              "injectionPosition": "in-chat",
+              "injectionDepth": 0
             },
             "review": {
               "id": "review",

@@ -1,7 +1,7 @@
-import { preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.2';
-import { cloneJsonValue, readJsonPath } from './json-data.js?v=0.27.2';
-import { resolveThresholds } from '../progression.js?v=0.27.2';
-import { own, plain, freeze } from '../record-data.js?v=0.27.2';
+import { preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.3';
+import { cloneJsonValue, readJsonPath } from './json-data.js?v=0.27.3';
+import { resolveThresholds } from '../progression.js?v=0.27.3';
+import { own, plain, freeze } from '../record-data.js?v=0.27.3';
 
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const canonical=value=>Array.isArray(value)?'['+value.map(canonical).join(',')+']':plain(value)?'{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}':JSON.stringify(value);

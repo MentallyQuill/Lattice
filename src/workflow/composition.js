@@ -1,13 +1,13 @@
-import { safeWorkflowData } from './contracts.js?v=0.27.2';
-import { cloneWorkflowDocument } from './document.js?v=0.27.2';
-import { portsForNode } from './catalog.js?v=0.27.2';
-import { cloneDefinitionData } from './definitions.js?v=0.27.2';
-import { prepareQualifiedScopeEdit } from './definition-library.js?v=0.27.2';
-import { safeId } from './composition-edit.js?v=0.27.2';
-import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.2';
-export { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.2';
-export { prepareCreateFromSelection, prepareUnpack } from './composition-transform.js?v=0.27.2';
-export { prepareCompositionViews } from './composition-views.js?v=0.27.2';
+import { safeWorkflowData } from './contracts.js?v=0.27.3';
+import { cloneWorkflowDocument } from './document.js?v=0.27.3';
+import { portsForNode } from './catalog.js?v=0.27.3';
+import { cloneDefinitionData } from './definitions.js?v=0.27.3';
+import { prepareQualifiedScopeEdit } from './definition-library.js?v=0.27.3';
+import { safeId } from './composition-edit.js?v=0.27.3';
+import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.3';
+export { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.3';
+export { prepareCreateFromSelection, prepareUnpack } from './composition-transform.js?v=0.27.3';
+export { prepareCompositionViews } from './composition-views.js?v=0.27.3';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

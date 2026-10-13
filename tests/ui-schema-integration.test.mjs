@@ -18,7 +18,7 @@ import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-
 import {activeModelMetadata} from '../src/workflow/model-profiles.js';
 import {safe} from '../src/state.js';
 import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js';
-import * as H from '../src/history.js?v=0.27.2';
+import * as H from '../src/history.js?v=0.27.3';
 const operations=['json-decode','extract','model-call','format','read-file','write-file','project-document'];
 const scope={schema:3,runtime:2,mode:'native-unified',workflowId:'schema-work',viewPath:[],inDefinition:false};
 const graph=()=>({id:'schema-work',schema:3,runtime:2,mode:'native-unified',roles:{},nodes:{},wires:{},definitions:{},portals:{}});

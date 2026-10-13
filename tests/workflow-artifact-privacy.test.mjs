@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { executeControl } from '../src/workflow/operations/control-nodes.js?v=0.27.2';
-import { executeCollection } from '../src/workflow/operations/collection-nodes.js?v=0.27.2';
-import { executeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.27.2';
-import { executeEvent } from '../src/workflow/operations/event-nodes.js?v=0.27.2';
+import { executeControl } from '../src/workflow/operations/control-nodes.js?v=0.27.3';
+import { executeCollection } from '../src/workflow/operations/collection-nodes.js?v=0.27.3';
+import { executeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.27.3';
+import { executeEvent } from '../src/workflow/operations/event-nodes.js?v=0.27.3';
 const actor={kind:'actor-private',actorId:'mara'};
 const operation=(operation,extra={})=>({id:operation,type:'workflow',operation,operationVersion:1,...extra});
 test('collection reducers and conditions retain the scope of erased source fields through model output and public assembly',async()=>{const count=executeCollection(operation('collection',{mode:'count'}),{in:{kind:'data',value:[{feeling:'PRIVATE'}],visibility:actor}});assert.equal(count.ok,true,JSON.stringify(count.error));assert.deepEqual(count.artifact.visibility,actor);const condition=await executeControl(operation('condition',{operator:'at-least',value:1}),{in:count.artifact},{phase:'post'});assert.equal(condition.ok,true,JSON.stringify(condition.error));assert.deepEqual(condition.outputs.out.visibility,actor);let calls=0;const text=await executeModelNode(operation('model-call',{inputKind:'data',outputKind:'text'}),{prompt:{kind:'text',text:'Write private reflection.'},data:condition.outputs.out},{phase:'post',request:async()=>{calls++;return {ok:true,data:{text:'PRIVATE feeling.',finish:'stop'}};}});assert.equal(text.ok,true,JSON.stringify(text.error));assert.deepEqual(text.artifact.visibility,actor);const result=await executeModelNode(operation('append',{sectionId:'notes'}),{draft:{kind:'draft',text:'Public story.',source:{token:'draft',originalText:'Public story.'}},section:text.artifact},{phase:'post'});assert.equal(result.ok,false);assert.equal(result.error.code,'PRIVATE_MATERIAL');assert.equal(calls,1);});

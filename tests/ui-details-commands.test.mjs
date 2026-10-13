@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { prepareQualifiedScopeEdit } from '../src/workflow/definition-library.js?v=0.27.2';
-import { portsForNode } from '../src/workflow/catalog.js?v=0.27.2';
-import { validateNodeModifiers } from '../src/workflow/modifiers.js?v=0.27.2';
+import { prepareQualifiedScopeEdit } from '../src/workflow/definition-library.js?v=0.27.3';
+import { portsForNode } from '../src/workflow/catalog.js?v=0.27.3';
+import { validateNodeModifiers } from '../src/workflow/modifiers.js?v=0.27.3';
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function actual(name, env) {
     const start = source.indexOf('function ' + name + '(');

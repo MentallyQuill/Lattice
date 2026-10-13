@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { starterGraph } from '../src/workflow/starters.js?v=0.27.2';
-import { prepareWorkspaceViews } from '../src/ui/workspace-preparation.js?v=0.27.2';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.2';
-import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.27.2';
-import { captureGraphEditContext,commitPreparedGraph } from '../src/workflow/transactions.js?v=0.27.2';
-import * as H from '../src/history.js?v=0.27.2';
+import { starterGraph } from '../src/workflow/starters.js?v=0.27.3';
+import { prepareWorkspaceViews } from '../src/ui/workspace-preparation.js?v=0.27.3';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.3';
+import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.27.3';
+import { captureGraphEditContext,commitPreparedGraph } from '../src/workflow/transactions.js?v=0.27.3';
+import * as H from '../src/history.js?v=0.27.3';
 function fixture(){const root=starterGraph('unified-basic');H.reset(root);const preparation=prepareWorkspaceViews(root).data;const session=createGraphViewSession({root,activationId:'coordinates',...preparation}).data;return{root,session};}
 function commit(f,edit){const context=captureGraphEditContext(f.root,()=>f.session.readEditContext()).data,candidate=structuredClone(f.root);edit(candidate);return commitPreparedGraph(f.root,{...prepareGraphCandidate(f.root,candidate).data,context});}
 test('verified coordinate reconciliation preserves authored content and patches positions without full cache admission',()=>{
@@ -25,7 +25,7 @@ test('foreign summaries, content edits and current raw mutation cannot authorize
 });
 
 test('actual completed move reconciles once, preserves the planner and publishes one immediate recovery',async()=>{
- const {readFile}=await import('node:fs/promises'),{installMock}=await import('./mock.js'),S=await import('../src/state.js?v=0.27.2'),{projectEditorDraw}=await import('../src/ui/workspace-preparation.js?v=0.27.2'),{prepareQualifiedScopeEdit}=await import('../src/workflow/definition-library.js?v=0.27.2'),{committedGraphChange}=await import('../src/workflow/transactions.js?v=0.27.2');
+ const {readFile}=await import('node:fs/promises'),{installMock}=await import('./mock.js'),S=await import('../src/state.js?v=0.27.3'),{projectEditorDraw}=await import('../src/ui/workspace-preparation.js?v=0.27.3'),{prepareQualifiedScopeEdit}=await import('../src/workflow/definition-library.js?v=0.27.3'),{committedGraphChange}=await import('../src/workflow/transactions.js?v=0.27.3');
  const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');const extract=(name,env)=>{const start=source.indexOf('function '+name+'('),line=source.indexOf('\n',start),end=source.slice(start,line).trim().endsWith('}')?line:source.indexOf('\n}',start)+2;return Function('env','with(env){'+source.slice(start,end)+';return '+name+';}')(env);};
  const host=installMock();let saves=0;host.saveSettingsDebounced=()=>saves++;const owner=S.settings(),f=fixture();S.activateWorkflow(f.root);saves=0;const id=Object.keys(f.root.nodes)[0];f.session.updateView({nodePresentation:{[id]:{alias:'Kept',x:1,y:2}},selection:{primary:{kind:'node',id},multi:[]}});
  const planner={},draw=projectEditorDraw(f.session.readEditor());let patches=0,projections=0,encodes=0,recovery=owner.recoveryDraft;
@@ -38,7 +38,7 @@ test('actual completed move reconciles once, preserves the planner and publishes
 });
 
 test('actual controller overlay retains selected authored Details across unrelated publications',async()=>{
- const {readFile}=await import('node:fs/promises'),{projectPreparedWorkflow}=await import('../src/ui/workflow-surface.js?v=0.27.2'),{projectWorkspacePanels}=await import('../src/ui/workspace-preparation.js?v=0.27.2'),{readNodePresentation}=await import('../src/ui/node-palette.js?v=0.27.2');
+ const {readFile}=await import('node:fs/promises'),{projectPreparedWorkflow}=await import('../src/ui/workflow-surface.js?v=0.27.3'),{projectWorkspacePanels}=await import('../src/ui/workspace-preparation.js?v=0.27.3'),{readNodePresentation}=await import('../src/ui/node-palette.js?v=0.27.3');
  const f=fixture(),id=Object.keys(f.root.nodes).find(id=>f.root.nodes[id].type==='workflow'),preparation=prepareWorkspaceViews(f.root).data;f.session.updateView({selection:{primary:{kind:'node',id},multi:[]}});
  const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8'),start=source.indexOf('function workflowView('),end=source.indexOf('\n}',start)+2;
  const env={workspacePrepared:preparation,current:f.root,graphViews:f.session,selectedKind:'node',selected:f.root.nodes[id],workflowState:{},selectedPreview:null,pinnedPreview:null,targetedPreview:null,projectPreparedWorkflow,readNodePresentation,samePreviewTerminal:()=>false,workflowNodePresentations:new WeakMap()};

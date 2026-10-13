@@ -1,4 +1,4 @@
-import { literalCoverage } from './pattern-matching.js?v=0.27.2';
+import { literalCoverage } from './pattern-matching.js?v=0.27.3';
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 /** Worker-only regex entry. The caller executes this behind a terminable Worker. */
 export function runPatternRegex({ text, settings, regions, upstreamExemptions, upstreamCaseSensitive }) {

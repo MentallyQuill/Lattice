@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { starterGraph } from '../src/workflow/starters.js?v=0.27.2';
-import { prepareWorkflowPlanner } from '../src/workflow/resolve.js?v=0.27.2';
+import { starterGraph } from '../src/workflow/starters.js?v=0.27.3';
+import { prepareWorkflowPlanner } from '../src/workflow/resolve.js?v=0.27.3';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
-import { prepareWorkflowProjection, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.2';
-import { prepareWorkspaceViews, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.27.2';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.2';
-import { previewDiagnostics } from '../src/ui/preview-diagnostics.js?v=0.27.2';
-import { presentDiagnostic } from '../src/ui/diagnostics.js?v=0.27.2';
+import { prepareWorkflowProjection, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.3';
+import { prepareWorkspaceViews, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.27.3';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.3';
+import { previewDiagnostics } from '../src/ui/preview-diagnostics.js?v=0.27.3';
+import { presentDiagnostic } from '../src/ui/diagnostics.js?v=0.27.3';
 
 test('planner identifies only selected dependency paths that need SillyTavern generation', () => {
     const graph = starterGraph('unified-basic');

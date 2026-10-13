@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.27.2';
-import {prepareGraphArtifacts,graphArtifactsFor,inspectGraphArtifacts} from '../src/workflow/graph-artifacts.js?v=0.27.2';
-import {prepareWorkflowPlanner,preparedWorkflowExpansion,resolveWorkflow} from '../src/workflow/resolve.js?v=0.27.2';
-import {prepareNativeNodeEdit} from '../src/workflow/definition-library.js?v=0.27.2';
-import {captureGraphEditContext,commitPreparedGraph,committedGraphChange} from '../src/workflow/transactions.js?v=0.27.2';
-import {describeOperation} from '../src/workflow/catalog.js?v=0.27.2';
+import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.27.3';
+import {prepareGraphArtifacts,graphArtifactsFor,inspectGraphArtifacts} from '../src/workflow/graph-artifacts.js?v=0.27.3';
+import {prepareWorkflowPlanner,preparedWorkflowExpansion,resolveWorkflow} from '../src/workflow/resolve.js?v=0.27.3';
+import {prepareNativeNodeEdit} from '../src/workflow/definition-library.js?v=0.27.3';
+import {captureGraphEditContext,commitPreparedGraph,committedGraphChange} from '../src/workflow/transactions.js?v=0.27.3';
+import {describeOperation} from '../src/workflow/catalog.js?v=0.27.3';
 
 function fixture(){
  const identity=computeDefinitionIdentity({id:'unfinished-system',version:1,name:'System',parameters:[],interface:[{id:'result',label:'Result',kind:'guidance',direction:'output',required:false,cardinality:'one',boundaryNodeId:'exit'}],body:{schema:3,runtime:2,mode:'native-unified',nodes:{exit:{id:'exit',type:'subgraph-output',interfacePortId:'result'}},wires:{}}});
@@ -45,7 +45,7 @@ test('typed Compose budget edits retain integer controls and reject stale checke
 });
 
 test('memoized native generation eligibility is target-local and historical',async()=>{
- const {starterGraph}=await import('../src/workflow/starters.js?v=0.27.2');
+ const {starterGraph}=await import('../src/workflow/starters.js?v=0.27.3');
  const root=starterGraph('unified-basic');root.nodes.independent={id:'independent',type:'workflow',operation:'text',text:'Independent'};
  const planner=prepareWorkflowPlanner(root).data;
  const native={workflowId:root.id,instancePath:[],nodeId:'generate-reply',portId:'draft'},local={workflowId:root.id,instancePath:[],nodeId:'independent',portId:'out'};

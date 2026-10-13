@@ -1,62 +1,62 @@
-import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.27.2';
-import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.2';
-import { prepareAddSystem, projectSystemAuthoring } from '../workflow/system-authoring.js?v=0.27.2';
-import { vacantSystemPoint, preflightSystemViews, captureSystemPresentation, refreshSystemPresentation, restoreSystemViews } from './system-authoring-views.js?v=0.27.2';
-import {createRecallCommands} from './recall-commands.js?v=0.27.2';
-import { diagnosticText, presentDiagnostic } from './diagnostics.js?v=0.27.2';
-import {projectRecallView} from './recall-projection.js?v=0.27.2';
-import { prepareIterationBindingOverride } from './iteration-bindings.js?v=0.27.2';
-import { createStoryDocumentSetup } from './story-document-setup.js?v=0.27.2';
-import { createWorkflowDataSetup } from './workflow-data-setup.js?v=0.27.2';
-import { workflowDataPresetFor } from '../workflow/workflow-data-defaults.js?v=0.27.2';
-import { createConfiguredNodeSession, configuredCreationStage, nodeNeedsConfiguration, iterationHelperChoices } from './configured-node-creation.js?v=0.27.2';
-import { resolveBinding } from '../workflow/connections.js?v=0.27.2';
-import { activeModelMetadata } from '../workflow/model-profiles.js?v=0.27.2';
-import { readNodeProfileMetadata, nodeProfileMetadataKey } from './node-profile-preparation.js?v=0.27.2';
-import * as workflowRuntime from '../run.js?v=0.27.2';
-import { workflowSignature } from '../workflow/runtime.js?v=0.27.2';
-import { installWorkflowExample } from '../workflow/examples.js?v=0.27.2';
-import { projectWorkflowExamples } from './example-catalog.js?v=0.27.2';
-import { OPERATIONS, operationFor, portsForNode } from '../workflow/catalog.js?v=0.27.2';
-import { validateNodeModifiers } from '../workflow/modifiers.js?v=0.27.2';
-import { isWorkflowGraph } from '../workflow/contracts.js?v=0.27.2';
-import { parseWorkflowInsertionFile, prepareWorkflowInsertion } from '../workflow/insertion.js?v=0.27.2';
-import { captureGraphEditContext, committedGraphChange } from '../workflow/transactions.js?v=0.27.2';
-import { viewIdentityKey } from './view-state.js?v=0.27.2';
-import { createGraphViewSession } from './graph-view-session.js?v=0.27.2';
-import { prepareNativeNodeEdit, prepareQualifiedScopeEdit, makeLocalCopy, materializeInstanceDefinition, prepareOwnedDefinitionMetadataEdit } from '../workflow/definition-library.js?v=0.27.2';
-import { prepareSubgraphNodeDeletion } from '../workflow/subgraph-authoring.js?v=0.27.2';
-import { prepareNativeConnectionEdit } from '../workflow/connection-edits.js?v=0.27.2';
-import { checkedCandidateArtifacts } from '../workflow/checked-candidate.js?v=0.27.2';
-import { prepareCommentEdit } from '../workflow/comment-edits.js?v=0.27.2';
-import { createCommentFrame, containedCommentNodes, fitCommentFrame, isCommentFrame } from '../canvas/comment-frames.js?v=0.27.2';
-import { captureCommentPresentation, applyCommentPresentation, applyCommentGroupPresentation } from './comment-presentation.js?v=0.27.2';
-import { captureRelocatedSubgraphViews, refreshRelocatedSubgraphViews, restoreSubgraphViews } from './subgraph-view-state.js?v=0.27.2';
-import { preparePortalRename, prepareCreateFromSelection, prepareUnpack, prepareQualifiedPortalEdit } from '../workflow/composition.js?v=0.27.2';
-import { prepareGraphCandidate } from '../workflow/prepared-graph-edit.js?v=0.27.2';
-import { definitionRefKey } from '../workflow/definition-data.js?v=0.27.2';
-import { exportSubgraph } from '../workflow/packages.js?v=0.27.2';
-import { makeClip, makeDefinitionClip, readClip, prepareClipPaste } from '../workflow/clipboard.js?v=0.27.2';
-import { getNodeGuideExample } from '../workflow/node-guide-examples.js?v=0.27.2';
-import { prepareNodeGuideInsertion } from '../workflow/node-guide-insertion.js?v=0.27.2';
-import { prepareNodeGuideScene } from './node-guide-scene.js?v=0.27.2';
-import { prepareNativeSearchCatalog, resolveNativeSearchChoice } from './native-search-catalog.js?v=0.27.2';
-import { createNativeWireBridge } from './native-wire-bridge.js?v=0.27.2';
-import { readNodePresentation } from './node-palette.js?v=0.27.2';
-import { showContextMenu } from './context-menu.js?v=0.27.2';
-import { createWorkflowDocumentController } from './document-controller.js?v=0.27.2';
-import { createWorkflowFileAccess } from './workflow-file-access.js?v=0.27.2';
-import { readTextFile } from './file-input.js?v=0.27.2';
-import { prepareWorkspaceViews, prepareNodePlacementCard, prepareLibraryViews, projectEditorDraw, initialWorkspaceCamera, projectWorkspacePanels, projectNodeProfiles } from './workspace-preparation.js?v=0.27.2';
-import { prepareWorkflowProjection, projectPreparedWorkflow, createWorkflowSession } from './workflow-surface.js?v=0.27.2';
-import { ctx, safe, settings, save, activeWorkflow, activateWorkflow, documentSession, activeWorkspaceViews, setActiveWorkspaceViews, recoveredWorkflows, retainRecoveryWorkflows, onWorkflowActivated, onRecoveryIssue, blankGraph, touchGraph, commitGraphEdit, stepGraphHistory, exportGraph, exportArchivedWorkflows, onGraphTouched, groupMembers } from '../state.js?v=0.27.2';
-import { applyTheme } from '../theme.js?v=0.27.2';
-import { renderThemeEditor } from '../theme-editor.js?v=0.27.2';
-import * as H from '../history.js?v=0.27.2';
-import * as L from '../library.js?v=0.27.2';
-import { Canvas } from '../canvas.js?v=0.27.2';
-import { createWorkbench } from './workbench.js?v=0.27.2';
-import { measureNodeCard } from '../../dist/lattice-ui.js?v=0.27.2';
+import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.27.3';
+import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.3';
+import { prepareAddSystem, projectSystemAuthoring } from '../workflow/system-authoring.js?v=0.27.3';
+import { vacantSystemPoint, preflightSystemViews, captureSystemPresentation, refreshSystemPresentation, restoreSystemViews } from './system-authoring-views.js?v=0.27.3';
+import {createRecallCommands} from './recall-commands.js?v=0.27.3';
+import { diagnosticText, presentDiagnostic } from './diagnostics.js?v=0.27.3';
+import {projectRecallView} from './recall-projection.js?v=0.27.3';
+import { prepareIterationBindingOverride } from './iteration-bindings.js?v=0.27.3';
+import { createStoryDocumentSetup } from './story-document-setup.js?v=0.27.3';
+import { createWorkflowDataSetup } from './workflow-data-setup.js?v=0.27.3';
+import { workflowDataPresetFor } from '../workflow/workflow-data-defaults.js?v=0.27.3';
+import { createConfiguredNodeSession, configuredCreationStage, nodeNeedsConfiguration, iterationHelperChoices } from './configured-node-creation.js?v=0.27.3';
+import { resolveBinding } from '../workflow/connections.js?v=0.27.3';
+import { activeModelMetadata } from '../workflow/model-profiles.js?v=0.27.3';
+import { readNodeProfileMetadata, nodeProfileMetadataKey } from './node-profile-preparation.js?v=0.27.3';
+import * as workflowRuntime from '../run.js?v=0.27.3';
+import { workflowSignature } from '../workflow/runtime.js?v=0.27.3';
+import { installWorkflowExample } from '../workflow/examples.js?v=0.27.3';
+import { projectWorkflowExamples } from './example-catalog.js?v=0.27.3';
+import { OPERATIONS, operationFor, portsForNode } from '../workflow/catalog.js?v=0.27.3';
+import { validateNodeModifiers } from '../workflow/modifiers.js?v=0.27.3';
+import { isWorkflowGraph } from '../workflow/contracts.js?v=0.27.3';
+import { parseWorkflowInsertionFile, prepareWorkflowInsertion } from '../workflow/insertion.js?v=0.27.3';
+import { captureGraphEditContext, committedGraphChange } from '../workflow/transactions.js?v=0.27.3';
+import { viewIdentityKey } from './view-state.js?v=0.27.3';
+import { createGraphViewSession } from './graph-view-session.js?v=0.27.3';
+import { prepareNativeNodeEdit, prepareQualifiedScopeEdit, makeLocalCopy, materializeInstanceDefinition, prepareOwnedDefinitionMetadataEdit } from '../workflow/definition-library.js?v=0.27.3';
+import { prepareSubgraphNodeDeletion } from '../workflow/subgraph-authoring.js?v=0.27.3';
+import { prepareNativeConnectionEdit } from '../workflow/connection-edits.js?v=0.27.3';
+import { checkedCandidateArtifacts } from '../workflow/checked-candidate.js?v=0.27.3';
+import { prepareCommentEdit } from '../workflow/comment-edits.js?v=0.27.3';
+import { createCommentFrame, containedCommentNodes, fitCommentFrame, isCommentFrame } from '../canvas/comment-frames.js?v=0.27.3';
+import { captureCommentPresentation, applyCommentPresentation, applyCommentGroupPresentation } from './comment-presentation.js?v=0.27.3';
+import { captureRelocatedSubgraphViews, refreshRelocatedSubgraphViews, restoreSubgraphViews } from './subgraph-view-state.js?v=0.27.3';
+import { preparePortalRename, prepareCreateFromSelection, prepareUnpack, prepareQualifiedPortalEdit } from '../workflow/composition.js?v=0.27.3';
+import { prepareGraphCandidate } from '../workflow/prepared-graph-edit.js?v=0.27.3';
+import { definitionRefKey } from '../workflow/definition-data.js?v=0.27.3';
+import { exportSubgraph } from '../workflow/packages.js?v=0.27.3';
+import { makeClip, makeDefinitionClip, readClip, prepareClipPaste } from '../workflow/clipboard.js?v=0.27.3';
+import { getNodeGuideExample } from '../workflow/node-guide-examples.js?v=0.27.3';
+import { prepareNodeGuideInsertion } from '../workflow/node-guide-insertion.js?v=0.27.3';
+import { prepareNodeGuideScene } from './node-guide-scene.js?v=0.27.3';
+import { prepareNativeSearchCatalog, resolveNativeSearchChoice } from './native-search-catalog.js?v=0.27.3';
+import { createNativeWireBridge } from './native-wire-bridge.js?v=0.27.3';
+import { readNodePresentation } from './node-palette.js?v=0.27.3';
+import { showContextMenu } from './context-menu.js?v=0.27.3';
+import { createWorkflowDocumentController } from './document-controller.js?v=0.27.3';
+import { createWorkflowFileAccess } from './workflow-file-access.js?v=0.27.3';
+import { readTextFile } from './file-input.js?v=0.27.3';
+import { prepareWorkspaceViews, prepareNodePlacementCard, prepareLibraryViews, projectEditorDraw, initialWorkspaceCamera, projectWorkspacePanels, projectNodeProfiles } from './workspace-preparation.js?v=0.27.3';
+import { prepareWorkflowProjection, projectPreparedWorkflow, createWorkflowSession } from './workflow-surface.js?v=0.27.3';
+import { ctx, safe, settings, save, activeWorkflow, activateWorkflow, documentSession, activeWorkspaceViews, setActiveWorkspaceViews, recoveredWorkflows, retainRecoveryWorkflows, onWorkflowActivated, onRecoveryIssue, blankGraph, touchGraph, commitGraphEdit, stepGraphHistory, exportGraph, exportArchivedWorkflows, onGraphTouched, groupMembers } from '../state.js?v=0.27.3';
+import { applyTheme } from '../theme.js?v=0.27.3';
+import { renderThemeEditor } from '../theme-editor.js?v=0.27.3';
+import * as H from '../history.js?v=0.27.3';
+import * as L from '../library.js?v=0.27.3';
+import { Canvas } from '../canvas.js?v=0.27.3';
+import { createWorkbench } from './workbench.js?v=0.27.3';
+import { measureNodeCard } from '../../dist/lattice-ui.js?v=0.27.3';
 
 let workbench = null;
 let root = null;
@@ -84,7 +84,7 @@ let documentRenderReconciliation = null;
 let workflowFiles = null, documentCommands = null, fileStorageIssue = '';
 let storyDocumentSetup = null, nodeWorkflowDataSetup = null, pendingConfiguredNode = null;
 const nodeDocumentCaptures = new Map(), nodeCreationScopes = new WeakMap();
-const editorCaptures = new WeakMap(), workflowNodePresentations = new WeakMap();
+const editorCaptures = new WeakMap(), exampleContexts = new WeakMap(), workflowNodePresentations = new WeakMap();
 const commentCaptures = new WeakMap(), commentPresentationEffects = new WeakMap(), pendingCommentPresentation = new WeakMap();
 const subgraphPresentationEffects = new WeakMap(), pendingSubgraphPresentation = new WeakMap();
 // Qualified editor context and cached tabs share the existing root workflow runner.
@@ -582,6 +582,8 @@ function build() {
     if (root) return;
     let publishedCameraMode = null;
     workbench = createWorkbench({
+        captureExampleContext,
+        exampleContextCurrent,
         openExample: onOpenExample,
         refreshExamples: refreshExampleCatalog,
         setEnabled(enabled) { settings().enabled = enabled; save(); renderStatus(); },
@@ -608,7 +610,7 @@ function build() {
     root = workbench.root; hookHistory();
     onWorkflowActivated(({ graph }) => {
         documentTransition = true; workflowSession.syncDocument(); documentTransition = false;
-        if (isOpen()) { current = graph; setCanvasGraph(); renderAll(); }
+        if (isOpen()) { current = graph; setCanvasGraph(); renderAll({ canvasReady: true }); }
     });
     documentSession.subscribe(event => {
         const pending = documentRenderReconciliation;
@@ -705,7 +707,8 @@ function build() {
         if (['Delete', 'Backspace'].includes(event.key)) { event.preventDefault(); canvas.deleteSelection(); }
     });
 }
-function refreshExampleCatalog() {
+function refreshExampleCatalog(context) {
+    if (!exampleContextCurrent(context)) return false;
     try {
         workbench.update({ examples: projectWorkflowExamples(), examplesIssue: '' });
         return true;
@@ -1164,7 +1167,18 @@ function acceptImportReview() {
     renderAll(); flashHistoryNote(`Imported ${ids.length} nodes`);
 }
 
-async function onOpenExample(id) {
+function captureExampleContext() {
+    const editor = captureEditor(true);
+    const token = Object.freeze({});
+    exampleContexts.set(token, { root: current, epoch: uiEpoch, editor: editor.ok ? editor.data : null, document: documentSession.capture() });
+    return token;
+}
+function exampleContextCurrent(token) {
+    const captured = exampleContexts.get(token);
+    return !!captured && isOpen() && captured.root === current && captured.epoch === uiEpoch && documentSession.stillCurrent(captured.document) && (!captured.editor || editorCurrent(captured.editor));
+}
+async function onOpenExample(id, context) {
+    if (!exampleContextCurrent(context)) return false;
     const result = await ensureDocumentCommands().example(id);
     if (!result.ok) return false;
     const graph = current, epoch = uiEpoch;

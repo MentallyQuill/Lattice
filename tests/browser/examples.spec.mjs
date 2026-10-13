@@ -8,7 +8,9 @@ async function load(page) {
 async function openExamples(page, menu = 'File') {
     await page.getByRole('menuitem', { name: menu, exact: true }).click();
     await page.getByRole('menuitem', { name: 'Open examples…', exact: true }).click({ timeout: 2500 });
-    return page.getByRole('dialog', { name: 'Examples', exact: true });
+    const dialog = page.getByRole('dialog', { name: 'Examples', exact: true });
+    await expect(dialog).toHaveAttribute('aria-busy', 'false');
+    return dialog;
 }
 
 async function finishExampleChoice(page) {
@@ -37,6 +39,16 @@ test('File examples follows native Open and Recent commands and opens the compac
     const previews = dialog.locator('.pc-example-preview');
     await expect(previews).toHaveCount(exampleCount);
     expect(await previews.first().evaluate(element => element.getBoundingClientRect().height)).toBe(72);
+    await expect(previews.first().locator('.pc-example-card').first()).toBeAttached();
+    await expect(dialog.locator('.pc-example-pin-label')).toHaveCount(0);
+    await expect(dialog.locator('g[data-id]:not(.pc-node-compact) > svg > .pc-example-icon')).toHaveCount(0);
+    const mountedCards = await dialog.locator('.pc-example-card').count();
+    const totalCards = await page.evaluate(async () => {
+        const h = window.canvasHarness, { projectWorkflowExamples } = await import('/src/ui/example-catalog.js?v=' + h.version);
+        return projectWorkflowExamples().reduce((count, tile) => count + (tile.thumbnail?.nodes.length ?? 0), 0);
+    });
+    expect(mountedCards).toBeGreaterThan(0);
+    expect(mountedCards).toBeLessThan(totalCards);
     expect(await dialog.locator('.pc-examples-grid').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(3);
     await dialog.screenshot({ path: testInfo.outputPath('examples-picker-desktop.png') });
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
@@ -64,6 +76,39 @@ test('the File menu retains picker scroll, trap Tab, close on Escape and restore
     expect(await dialog.locator('.pc-examples-grid').evaluate(element => element.scrollTop)).toBe(scrollTop);
     await dialog.getByRole('button', { name: 'Close panel', exact: true }).click();
     await expect(page.getByRole('menuitem', { name: 'File', exact: true })).toBeFocused();
+});
+
+test('a deferred example choice cannot outlive closing the editor before it is reopened', async ({ page }) => {
+    await load(page);
+    const dialog = await openExamples(page);
+    const originalId = await page.evaluate(() => window.canvasHarness.S.activeWorkflow().id);
+    await dialog.locator('.pc-example-tile').first().evaluate(tile => {
+        tile.click();
+        window.canvasHarness.UI.close();
+    });
+    await page.waitForTimeout(1000);
+    expect(await page.evaluate(() => window.canvasHarness.S.activeWorkflow().id)).toBe(originalId);
+    expect(await page.evaluate(() => window.canvasHarness.UI.isOpen())).toBe(false);
+    await page.evaluate(() => window.canvasHarness.UI.open());
+    expect(await page.evaluate(() => window.canvasHarness.UI.isOpen())).toBe(true);
+    await expect(dialog).toBeHidden();
+});
+
+test('a deferred example choice cannot replace a newly activated document', async ({ page }) => {
+    await load(page);
+    const dialog = await openExamples(page);
+    const replacementId = await dialog.locator('.pc-example-tile').first().evaluate(tile => {
+        const h = window.canvasHarness, replacement = structuredClone(h.S.activeWorkflow());
+        replacement.id = 'example-authority-replacement';
+        replacement.name = 'Externally activated while choosing an example';
+        tile.click();
+        h.S.activateWorkflow(replacement, { clean: true });
+        return replacement.id;
+    });
+    await page.waitForTimeout(1000);
+    expect(await page.evaluate(() => window.canvasHarness.S.activeWorkflow().id)).toBe(replacementId);
+    expect(await page.evaluate(() => window.canvasHarness.S.activeWorkflow().name)).toBe('Externally activated while choosing an example');
+    await expect(dialog).toBeHidden();
 });
 
 test('narrow picker has two columns and its last long-name tile opens by keyboard', async ({ page }, testInfo) => {

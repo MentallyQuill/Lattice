@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {createNativeWorkflowController} from '../src/workflow/host.js?v=0.27.2';
-import {starterGraph} from '../src/workflow/starters.js?v=0.27.2';
-import {workflowSignature} from '../src/workflow/runtime.js?v=0.27.2';
-import {createWorkflowSession,prepareWorkflowProjection,projectPreparedWorkflow} from '../src/ui/workflow-surface.js?v=0.27.2';
+import {createNativeWorkflowController} from '../src/workflow/host.js?v=0.27.3';
+import {starterGraph} from '../src/workflow/starters.js?v=0.27.3';
+import {workflowSignature} from '../src/workflow/runtime.js?v=0.27.3';
+import {createWorkflowSession,prepareWorkflowProjection,projectPreparedWorkflow} from '../src/ui/workflow-surface.js?v=0.27.3';
 
 function fixture() {
  const root=starterGraph('unified-basic'),listeners=new Map();let busy=false,result,targetCalls=0;
