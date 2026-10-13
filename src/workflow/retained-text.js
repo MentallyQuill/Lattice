@@ -1,5 +1,5 @@
-import { own, dense, freeze } from './record-data.js?v=0.27.1';
-import { applyTextModifiers } from './modifiers.js?v=0.27.1';
+import { own, dense, freeze } from './record-data.js?v=0.27.2';
+import { applyTextModifiers } from './modifiers.js?v=0.27.2';
 
 /** Recognize diagnostic Text and recompute its canonical metadata without formatting or live authority. */
 export function recognizeRecordedText(raw) {

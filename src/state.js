@@ -1,14 +1,14 @@
 /** Current Lattice documents and settings. SillyTavern owns its normal prompt. */
-import { starterGraph } from './workflow/starters.js?v=0.27.1';
-import { exportWorkflow, parseWorkflow } from './workflow/packages.js?v=0.27.1';
-import { safeWorkflowData } from './workflow/contracts.js?v=0.27.1';
-import { cloneWorkflowDocument } from './workflow/document.js?v=0.27.1';
-import { serializeWorkflowDocument } from './workflow/document-file.js?v=0.27.1';
-import { createWorkflowDocumentSession } from './ui/document-session.js?v=0.27.1';
-import { commitPreparedGraph, graphEditSignature, committedGraphChange } from './workflow/transactions.js?v=0.27.1';
-import * as graphHistory from './history.js?v=0.27.1';
-import { definitionRefKey } from './workflow/definition-data.js?v=0.27.1';
-import { containsRetiredModelCall, cloneArchivedWorkflow, retiredLibraryKeys, recoveryLibraryKeys, portableArchivedWorkflow, portableArchivedDefinition } from './workflow/retired-workflows.js?v=0.27.1';
+import { starterGraph } from './workflow/starters.js?v=0.27.2';
+import { exportWorkflow, parseWorkflow } from './workflow/packages.js?v=0.27.2';
+import { safeWorkflowData } from './workflow/contracts.js?v=0.27.2';
+import { cloneWorkflowDocument } from './workflow/document.js?v=0.27.2';
+import { serializeWorkflowDocument } from './workflow/document-file.js?v=0.27.2';
+import { createWorkflowDocumentSession } from './ui/document-session.js?v=0.27.2';
+import { commitPreparedGraph, graphEditSignature, committedGraphChange } from './workflow/transactions.js?v=0.27.2';
+import * as graphHistory from './history.js?v=0.27.2';
+import { definitionRefKey } from './workflow/definition-data.js?v=0.27.2';
+import { containsRetiredModelCall, cloneArchivedWorkflow, retiredLibraryKeys, recoveryLibraryKeys, portableArchivedWorkflow, portableArchivedDefinition } from './workflow/retired-workflows.js?v=0.27.2';
 
 export const MODULE = 'lattice';
 export const ctx = () => globalThis.SillyTavern.getContext();

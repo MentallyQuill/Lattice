@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { nodeCard } from '../src/canvas/presentation.js?v=0.27.1';
+import { nodeCard } from '../src/canvas/presentation.js?v=0.27.2';
 
 const node = { id: 'source', type: 'workflow', operation: 'scene-context', x: 10, y: 20 };
 const context = graph => ({ graph, multi: new Set(), hooks: {}, labels: {}, icons: {}, preview() { throw new Error('No domain preview during drawing'); } });

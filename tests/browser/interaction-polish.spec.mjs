@@ -57,6 +57,43 @@ test('Details width commits with pointer and keyboard, persists after reopen, an
     await expect(divider).toBeHidden();
 });
 
+test('Details dragging retains settled canvas geometry while its pane follows the pointer', async ({ page }) => {
+    await setup(page);
+    await page.evaluate(async () => {
+        const h = window.canvasHarness; await h.reset(60, 10); h.canvas.select({ kind: 'node', id: 'n0' });
+        await h.view({ x: 150, y: 40, zoom: 1 });
+        // Drain the preceding selection/camera save before counting this gesture.
+        await new Promise(resolve => setTimeout(resolve, 220));
+        const c = h.canvas, card = c.nodeLayer.querySelector('.pc-node[data-id="n0"]'), path = c.svg.querySelector('.pc-wire-native');
+        const probe = window.detailsResizeProbe = { geometry: 0, invalidations: 0, commits: 0, card, port: card.querySelector('.pc-port'), path,
+            route: path.getAttribute('d'), camera: { ...c.view }, selection: { ...c.selection }, graph: JSON.stringify(h.graph), history: JSON.stringify(h.H.peek(h.graph)) };
+        const measure = c.geometry.measure.bind(c.geometry), invalidate = c.invalidateGeometry.bind(c);
+        c.geometry.measure = (...args) => { probe.geometry++; return measure(...args); };
+        c.invalidateGeometry = (...args) => { probe.invalidations++; return invalidate(...args); };
+        probe.unsubscribe = h.S.documentSession.subscribe(event => { if (event.type === 'views') probe.commits++; });
+    });
+    const divider = page.getByRole('separator', { name: 'Resize Details', exact: true }), details = page.locator('.pc-inspector');
+    const initial = (await details.boundingBox()).width, at = await center(divider);
+    await page.mouse.move(at.x, at.y); await page.mouse.down();
+    for (let step = 1; step <= 6; step++) {
+        await page.mouse.move(at.x - step * 12, at.y);
+        await page.evaluate(() => window.canvasHarness.settle());
+    }
+    expect((await details.boundingBox()).width).toBeCloseTo(initial + 72, 0);
+    expect(await page.evaluate(() => {
+        const { geometry, invalidations, commits } = window.detailsResizeProbe; return { geometry, invalidations, commits };
+    })).toEqual({ geometry: 0, invalidations: 0, commits: 0 });
+    await page.mouse.up();
+    await expect.poll(() => page.evaluate(() => window.detailsResizeProbe.commits)).toBe(1);
+    expect(await page.evaluate(() => window.canvasHarness.S.activeWorkspaceViews().views.find(view => view.identity.kind === 'root').inspector.width)).toBeCloseTo(initial + 72, 0);
+    expect(await page.evaluate(() => {
+        const h = window.canvasHarness, c = h.canvas, p = window.detailsResizeProbe; p.unsubscribe();
+        return { card: c.nodeLayer.querySelector('.pc-node[data-id="n0"]') === p.card, port: p.card.contains(p.port), path: c.svg.contains(p.path),
+            route: p.path.getAttribute('d') === p.route, camera: JSON.stringify(c.view) === JSON.stringify(p.camera), selection: JSON.stringify(c.selection) === JSON.stringify(p.selection),
+            graph: JSON.stringify(h.graph) === p.graph, history: JSON.stringify(h.H.peek(h.graph)) === p.history, geometry: p.geometry, invalidations: p.invalidations };
+    })).toEqual({ card: true, port: true, path: true, route: true, camera: true, selection: true, graph: true, history: true, geometry: 0, invalidations: 0 });
+});
+
 for (const interruption of ['Escape', 'pointercancel', 'blur']) test(`Details ${interruption} rolls back a draft width and permits a fresh drag`, async ({ page }) => {
     await setup(page);
     const divider = page.getByRole('separator', { name: 'Resize Details', exact: true }), details = page.locator('.pc-inspector');
@@ -85,14 +122,17 @@ test('a tall Preview leaves shelf rows full width with a themed vertical scrollb
         const style = getComputedStyle(element), row = element.querySelector('.pc-family-row'), r = row.getBoundingClientRect();
         const icon = row.querySelector('svg').getBoundingClientRect(), text = row.querySelector('span').getBoundingClientRect();
         const next = row.nextElementSibling.getBoundingClientRect();
+        const probe = document.createElement('span'); element.append(probe);
+        const resolve = role => { probe.style.color = `var(--pc-scrollbar-${role})`; return getComputedStyle(probe).color; };
+        const scrollbarTokens = resolve('thumb') + ' ' + resolve('track'); probe.remove();
         return { scrollWidth: element.scrollWidth, clientWidth: element.clientWidth, scrollHeight: element.scrollHeight, clientHeight: element.clientHeight,
-            overflowX: style.overflowX, scrollbarWidth: style.scrollbarWidth, scrollbarColor: style.scrollbarColor,
+            overflowX: style.overflowX, scrollbarWidth: style.scrollbarWidth, scrollbarColor: style.scrollbarColor, scrollbarTokens,
             rowWidth: r.width, rowHeight: r.height, rowPitch: next.y - r.y, fontSize: getComputedStyle(row).fontSize, iconWidth: icon.width, iconHeight: icon.height,
             iconCenter: icon.y + icon.height / 2 - r.y, textCenter: text.y + text.height / 2 - r.y };
     });
     expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth);
     expect(dimensions.scrollHeight).toBeGreaterThan(dimensions.clientHeight);
-    expect(dimensions).toMatchObject({ overflowX: 'hidden', scrollbarWidth: 'thin', scrollbarColor: 'rgb(85, 85, 85) rgba(0, 0, 0, 0)', fontSize: '11.2px' });
+    expect(dimensions).toMatchObject({ overflowX: 'hidden', scrollbarWidth: 'thin', scrollbarColor: dimensions.scrollbarTokens, fontSize: '11.2px' });
     for (const [key, expected] of Object.entries({ rowWidth: 102.4, rowHeight: 33.6, rowPitch: 36, iconWidth: 19.2, iconHeight: 19.2 })) expect(dimensions[key]).toBeCloseTo(expected, 1);
     expect(dimensions.iconCenter).toBeCloseTo(16.8, 1); expect(dimensions.textCenter).toBeCloseTo(16.8, 1);
 });

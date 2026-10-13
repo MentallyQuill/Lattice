@@ -12,7 +12,7 @@ let lore = 0, snapshots = 0, tokens = 0;
 context.getWorldInfoPrompt = async () => { lore++; return {}; };
 context.getCharacterCardFields = () => { snapshots++; return {}; };
 context.getTokenCountAsync = async () => { tokens++; return 1; };
-const state = await import('../src/state.js?v=0.27.1');
+const state = await import('../src/state.js?v=0.27.2');
 const { fixtureGraph: starterGraph } = await import('./helpers/workflow-fixtures.mjs');
 const { cloneWorkflowDocument } = await import('../src/workflow/document.js');
 const UI = await import('../src/ui.js');

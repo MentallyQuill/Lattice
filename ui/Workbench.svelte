@@ -135,10 +135,11 @@
         observer.observe(stage); observer.observe(body); measure(); return () => observer.disconnect();
     });
 </script>
-<div class="pc-root pc-native-workspace" class:pc-native-flat={view.nativeFlatCanvas} role="dialog" aria-modal="true" aria-label="Lattice" data-pc-workbench="svelte" style:--pc-details-width={`${detailsWidth}px`} bind:this={root}>
+<div class="pc-root pc-native-workspace" class:pc-native-flat={view.nativeFlatCanvas} role="dialog" aria-modal="true" aria-label="Lattice" data-pc-workbench="svelte" bind:this={root}>
     <Toolbar state={view} {actions} {local} panels={{previewOpen: !collapsed, shelfOpen}} bind:this={toolbar} />
+    <!-- Pane sizing stays local so dragging does not invalidate Canvas's intrinsic pin geometry. -->
     <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users need to scroll the stacked canvas and Details panels.) -->
-    <div class="pc-body" role="region" aria-label="Workspace panels" tabindex="0" bind:this={body}>
+    <div class="pc-body" role="region" aria-label="Workspace panels" tabindex="0" style:--pc-details-width={`${detailsWidth}px`} bind:this={body}>
         <div class="pc-stage" bind:this={stage}>
             <section class="pc-preview-pane" class:pc-preview-collapsed={collapsed} aria-label="Output preview" style:--pc-preview-height={`${Math.min(previewHeight, maxHeight)}px`}>
                 <header class="pc-preview-pane-head"><strong>Preview</strong><button type="button" class="pc-btn menu_button" aria-label={collapsed ? 'Expand preview' : 'Collapse preview'} title={collapsed ? 'Expand preview' : 'Collapse preview'} aria-expanded={!collapsed} onclick={() => collapse(!collapsed)}>{collapsed ? '▾' : '▴'}</button></header>

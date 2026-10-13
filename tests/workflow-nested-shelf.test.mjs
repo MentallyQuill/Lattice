@@ -4,7 +4,7 @@ import { installMock } from './mock.js';
 import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definitions.js';
 import { createRevision, installDefinition } from '../src/workflow/definition-library.js';
 import * as packages from '../src/workflow/packages.js';
-import * as library from '../src/library.js?v=0.27.1';
+import * as library from '../src/library.js?v=0.27.2';
 
 const finalize = draft => {
     const identity = computeDefinitionIdentity(draft);

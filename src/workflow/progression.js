@@ -1,4 +1,4 @@
-import { cloneJsonValue } from './operations/json-data.js?v=0.27.1';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.2';
 
 const failure = (code,message) => ({ok:false,error:{code,message}});
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

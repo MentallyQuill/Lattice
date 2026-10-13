@@ -1,4 +1,4 @@
-@import url('./dist/lattice.css?v=0.27.1');
+@import url('./dist/lattice.css?v=0.27.2');
 
 /* Current Lattice workspace. Explicit themes may replace these color roles. */
 :root {
@@ -34,7 +34,33 @@
     font-family: var(--pc-font, inherit);
     -webkit-user-select: none;
     user-select: none;
+    color-scheme: dark;
+    --pc-scrollbar-thumb: color-mix(in srgb, var(--pc-muted) 65%, var(--pc-panel-solid));
+    --pc-scrollbar-track: var(--pc-panel-solid);
+    --pc-scrollbar-hover: var(--pc-muted);
+    scrollbar-width: thin;
+    scrollbar-color: var(--pc-scrollbar-thumb) var(--pc-scrollbar-track);
 }
+
+/* Theme all workspace scroll containers, including native fields, without touching the host. */
+:root[data-pc-light="1"] .pc-root { color-scheme: light; }
+.pc-root * { color-scheme: inherit; scrollbar-width: thin; scrollbar-color: var(--pc-scrollbar-thumb) var(--pc-scrollbar-track); text-shadow: none; }
+.pc-root::-webkit-scrollbar, .pc-root *::-webkit-scrollbar { width: 8px; height: 8px; }
+.pc-root::-webkit-scrollbar-track, .pc-root *::-webkit-scrollbar-track,
+.pc-root::-webkit-scrollbar-corner, .pc-root *::-webkit-scrollbar-corner { background: var(--pc-scrollbar-track); }
+.pc-root::-webkit-scrollbar-thumb, .pc-root *::-webkit-scrollbar-thumb { background: var(--pc-scrollbar-thumb); border: 2px solid var(--pc-scrollbar-track); border-radius: var(--pc-r); }
+.pc-root::-webkit-scrollbar-thumb:hover, .pc-root *::-webkit-scrollbar-thumb:hover { background: var(--pc-scrollbar-hover); }
+/* Host bevels and gradients never become ordinary workspace control chrome. */
+:root .pc-root :is(button, input, textarea, select) { background-image: none; filter: none; text-shadow: none; }
+:root .pc-root :is(button, input, textarea, select):not(:focus):not(:focus-visible):not(.pc-th-preset.pc-on) { box-shadow: none; }
+:root .pc-root select { appearance: auto; }
+:root .pc-root input:is([type="checkbox"], [type="radio"]):not(.pc-enable-input) { appearance: auto; accent-color: var(--pc-accent); }
+:root .pc-root input:is([type="checkbox"], [type="radio"]):not(.pc-enable-input)::before { content: none; }
+:root .pc-root :is(input, textarea)::placeholder { color: var(--pc-muted) !important; opacity: .8; }
+.pc-root fieldset { min-width: 0; border: 1px solid var(--pc-border); border-radius: var(--pc-r); background: transparent; }
+.pc-root hr { border: 0; border-top: 1px solid var(--pc-border); box-shadow: none; background: transparent; background-image: none; opacity: 1; }
+:root .pc-root code { background: var(--pc-field); color: var(--pc-text); border: 1px solid var(--pc-border); border-radius: var(--pc-r-sm); font-family: var(--monoFontFamily, ui-monospace, monospace); line-height: inherit; text-shadow: none; box-shadow: none; }
+:root .pc-root pre code { background: transparent; border: 0; border-radius: 0; }
 
 .pc-root :is(input, textarea, [contenteditable]:not([contenteditable="false"]), pre, .pc-detail-error, .pc-preview-note, .pc-preview-error, .pc-run-error, .pc-native-diagnostic) {
     -webkit-user-select: text;
@@ -360,7 +386,7 @@
 
 
 /* Workspace geometry is independent of theme shape preferences. */
-.pc-root { --pc-r: 4px; --pc-r-sm: 2px; --pc-recess: inset 1px 1px 0 #0009, inset -1px -1px 0 #ffffff09, 0 2px 0 #0004; }
+.pc-root { --pc-r: 4px; --pc-r-sm: 2px; --pc-recess: none; }
 .pc-root .pc-header { display: block; padding: 0; background: var(--pc-panel-solid); }
 .pc-menubar { display: flex; align-items: center; flex-wrap: wrap; min-height: 45px; gap: 1px; padding: 7px 12px; border-bottom: 1px solid var(--pc-border); background: var(--pc-panel-solid); color: var(--pc-text); }
 .pc-root .pc-brand { display: inline-flex; align-items: center; gap: 4px; margin-right: 14px; color: #fff; font: 600 20px/1 'Bricolage Grotesque', sans-serif; letter-spacing: .015em; }
@@ -375,19 +401,21 @@
 .pc-root-workflow-status { font-size: .82em; color: var(--pc-muted); margin-right: auto; }
 .pc-root .pc-root-stop { color: var(--pc-accent); border-color: var(--pc-accent); }
 :root .pc-root .pc-surface-actions button.pc-pane-toggle { justify-content: center; flex: 0 0 34px; width: 34px; height: 34px; padding: 7px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); color: var(--pc-text); box-shadow: none; }
-:root .pc-root .pc-surface-actions button.pc-pane-toggle:is(:hover, .pc-on) { background: var(--pc-control); color: var(--pc-text); border-color: var(--pc-accent); }
+:root .pc-root .pc-surface-actions button.pc-pane-toggle[aria-pressed="true"],
+:root .pc-root .pc-surface-actions button.pc-pane-toggle[aria-pressed="true"]:hover { background: var(--pc-accent); color: var(--pc-on-accent); border-color: var(--pc-accent); }
+:root .pc-root .pc-surface-actions button.pc-pane-toggle[aria-pressed="false"]:hover { background: var(--pc-control); color: var(--pc-text); border-color: var(--pc-border); }
 .pc-pane-toggle svg { display: block; width: 18px; height: 18px; pointer-events: none; }
 .pc-root button.pc-btn:focus-visible { outline-color: var(--pc-accent); }
-:root .pc-root .pc-node { border-radius: 4px; box-shadow: inset 0 1px 0 #ffffff09, inset 0 -1px 0 #0004; }
-:root .pc-root .pc-node.pc-selected { border-color: var(--pc-accent); box-shadow: inset 0 1px 0 #ffffff09, inset 0 -1px 0 #0004, 0 0 0 2px var(--pc-accent); }
+:root .pc-root .pc-node { border-radius: 4px; box-shadow: 0 1px 2px #00000050; }
+:root .pc-root .pc-node.pc-selected { border-color: var(--pc-accent); box-shadow: 0 1px 2px #00000050, 0 0 0 2px var(--pc-accent); }
 /* Execution state keeps priority over selection without changing card geometry. */
 :root .pc-root .pc-node-native.pc-trace-running {
     border-color: var(--pc-flow);
-    box-shadow: inset 0 1px 0 #ffffff09, inset 0 -1px 0 #0004, 0 0 0 2px var(--pc-flow), 0 0 9px color-mix(in srgb, var(--pc-flow) 28%, transparent);
+    box-shadow: 0 1px 2px #00000050, 0 0 0 2px var(--pc-flow), 0 0 9px color-mix(in srgb, var(--pc-flow) 28%, transparent);
 }
 :root .pc-root .pc-node-native.pc-trace-failed {
     border-color: var(--pc-error);
-    box-shadow: inset 0 1px 0 #ffffff09, inset 0 -1px 0 #0004, 0 0 0 2px var(--pc-error);
+    box-shadow: 0 1px 2px #00000050, 0 0 0 2px var(--pc-error);
 }
 .pc-node-native.pc-trace-failed > :is(.pc-native-heading, .pc-native-pins, .pc-native-alias, .pc-host-result) {
     opacity: .55;
@@ -397,15 +425,15 @@
     border-color: var(--pc-muted);
     border-style: dashed;
     opacity: .55;
-    box-shadow: inset 0 1px 0 #ffffff09, inset 0 -1px 0 #0004;
+    box-shadow: 0 1px 2px #00000050;
 }
 :root .pc-root .pc-node-native.pc-trace-cancelled {
     border-color: var(--pc-warn);
     border-style: dashed;
     opacity: .7;
-    box-shadow: inset 0 1px 0 #ffffff09, inset 0 -1px 0 #0004;
+    box-shadow: 0 1px 2px #00000050;
 }
-.pc-workspace-menu-panel { position: fixed; z-index: 40; box-sizing: border-box; width: max-content; max-width: calc(100vw - 8px); min-width: min(290px, calc(100vw - 8px)); max-height: calc(100dvh - 8px); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 5px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-panel-solid); box-shadow: inset 0 1px 0 #ffffff0c, 0 8px 20px #0005; }
+.pc-workspace-menu-panel { position: fixed; z-index: 40; box-sizing: border-box; width: max-content; max-width: calc(100vw - 8px); min-width: min(290px, calc(100vw - 8px)); max-height: calc(100dvh - 8px); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 5px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-panel-solid); box-shadow: 0 8px 20px #0005; }
 .pc-root .pc-flat-menu { flex: 0 0 auto; min-width: 44px; min-height: 34px; white-space: nowrap; }
 .pc-workspace-menu-panel button { display: grid; grid-template-columns: 18px 14px minmax(0, 1fr) 84px 12px; align-items: center; column-gap: 5px; box-sizing: border-box; width: 100%; min-height: 34px; text-align: left; white-space: normal; }
 .pc-workspace-menu-icon, .pc-workspace-menu-state, .pc-workspace-menu-caret { display: inline-flex; align-items: center; justify-content: center; width: 100%; color: var(--pc-muted); }
@@ -451,7 +479,7 @@
 .pc-pane-divider:hover::after, .pc-pane-divider:focus-visible::after { background: var(--pc-accent); }
 .pc-pane-divider:focus-visible { outline: 1px solid var(--pc-accent); outline-offset: -1px; }
 .pc-graph-tabs { flex: 0 0 32px; display: flex; align-items: stretch; position: relative; z-index: 2; padding: 0 4px; background: transparent; }
-.pc-root .pc-graph-tab, :root[data-pc-own="1"] .pc-root .pc-graph-tab { box-sizing: border-box; position: relative; margin-bottom: 0; border: 1px solid var(--pc-border); border-bottom: 0; border-radius: 4px 4px 0 0; background: var(--pc-panel-solid); box-shadow: inset 1px 1px 0 #ffffff09; padding: 7px 18px; font: inherit; font-size: 12px; color: var(--pc-text); }
+.pc-root .pc-graph-tab, :root[data-pc-own="1"] .pc-root .pc-graph-tab { box-sizing: border-box; position: relative; margin-bottom: 0; border: 1px solid var(--pc-border); border-bottom: 0; border-radius: 4px 4px 0 0; background: var(--pc-panel-solid); box-shadow: none; padding: 7px 18px; font: inherit; font-size: 12px; color: var(--pc-text); }
 .pc-root .pc-graph-tab[aria-selected="true"], :root[data-pc-own="1"] .pc-root .pc-graph-tab[aria-selected="true"] { margin-bottom: -1px; }
 /* Mask the frame's top border inside the tab; its sides end at the join. */
 .pc-graph-tab::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--pc-panel-solid); border: 0; }
@@ -460,14 +488,14 @@
 .pc-canvas-host { border-radius: 4px; }
 /* Shelf and drawers use 80% of their original geometry and share a translucent surface. */
 .pc-node-shelf, .pc-shelf-menu { --pc-shelf-edge: color-mix(in srgb, var(--pc-text) 12%, var(--pc-panel-solid)); --pc-shelf-surface: color-mix(in srgb, var(--pc-control) 90%, transparent); }
-.pc-node-shelf { position: absolute; top: 13px; left: 13px; display: flex; flex-direction: column; gap: 2.4px; width: 110.4px; max-height: calc(100% - 62px); overflow-x: hidden; overflow-y: auto; z-index: 6; scrollbar-width: thin; scrollbar-color: #555 transparent; }
+.pc-node-shelf { position: absolute; top: 13px; left: 13px; display: flex; flex-direction: column; gap: 2.4px; width: 110.4px; max-height: calc(100% - 62px); overflow-x: hidden; overflow-y: auto; z-index: 6; scrollbar-width: thin; scrollbar-color: var(--pc-scrollbar-thumb) var(--pc-scrollbar-track); }
 .pc-root .pc-family-row, :root[data-pc-own="1"] .pc-root .pc-family-row,
 .pc-root .pc-shelf-menu button, :root[data-pc-own="1"] .pc-root .pc-shelf-menu button { display: flex; flex: 0 0 33.6px; align-items: center; gap: 7.2px; min-height: 33.6px; height: 33.6px; margin: 0; padding: 4px 4.8px; text-align: left; font: inherit; font-size: 11.2px; font-weight: 700; line-height: 1; border: 0; border-radius: 3.2px; cursor: pointer; }
 .pc-root .pc-family-row, :root[data-pc-own="1"] .pc-root .pc-family-row { width: 102.4px; padding: 3.2px 4px; border: 1px solid color-mix(in srgb, var(--pc-text) 4%, var(--pc-control)); color: var(--pc-family); background: var(--pc-shelf-surface); box-shadow: none; }
 .pc-family-row span { letter-spacing: -.2px; }
 .pc-node-shelf::-webkit-scrollbar { width: 4.8px; height: 0; }
-.pc-node-shelf::-webkit-scrollbar-thumb { background: #555; border-radius: 2.4px; }
-.pc-node-shelf::-webkit-scrollbar-track { background: transparent; }
+.pc-root .pc-node-shelf::-webkit-scrollbar-thumb { background: var(--pc-scrollbar-thumb); border: 0; border-radius: 2.4px; }
+.pc-node-shelf::-webkit-scrollbar-track { background: var(--pc-scrollbar-track); }
 .pc-family-row svg, .pc-shelf-menu svg { width: 19.2px; height: 19.2px; flex: 0 0 19.2px; }
 .pc-family-row svg { color: var(--pc-family); }
 .pc-root .pc-family-row:hover:enabled, :root[data-pc-own="1"] .pc-root .pc-family-row:hover:enabled { background: color-mix(in srgb, var(--pc-text) 7%, var(--pc-shelf-surface)); border-color: var(--pc-shelf-edge); }
@@ -483,13 +511,17 @@
 :root[data-pc-own="1"] .pc-root .pc-family-menu button[aria-expanded="true"], :root[data-pc-own="1"] .pc-root .pc-family-menu button[aria-expanded="true"]:is(:hover, :focus-visible):enabled { background: color-mix(in srgb, var(--pc-text) 12%, transparent); }
 .pc-shelf-menu svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .pc-subfamily-name { flex: 1; min-width: 0; font-size: 9.6px; }
-.pc-shelf-menu .pc-sub-chevron { width: 14.4px; height: 14.4px; flex-basis: 14.4px; color: #858585; }
+.pc-shelf-menu .pc-sub-chevron { width: 14.4px; height: 14.4px; flex-basis: 14.4px; color: var(--pc-muted); }
+.pc-root .pc-shelf-group { color: var(--pc-muted); }
 .pc-catalog-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc-leaf-menu small { color: var(--pc-muted); font: 500 9.6px/1 ui-monospace, monospace; margin-left: auto; }
 .pc-root .pc-leaf-menu input { width: 100%; margin-bottom: 3.2px; padding: 4.8px; font-size: 11.2px; }
 .pc-shelf-replaced { visibility: hidden; pointer-events: none; }
 .pc-workspace-overlay { position: absolute; inset: 0; z-index: 25; display: flex; align-items: center; justify-content: center; padding: 12px; background: #0007; }
-.pc-workspace-dialog { background: var(--pc-panel-solid); border: 1px solid var(--pc-border); border-radius: 4px; width: 440px; max-width: 100%; max-height: calc(100% - 24px); overflow: auto; padding: 14px; box-shadow: var(--pc-recess), 0 8px 28px #0005; }
+.pc-workspace-dialog { background: var(--pc-panel-solid); border: 1px solid var(--pc-border); border-radius: 4px; width: 440px; max-width: 100%; max-height: calc(100% - 24px); overflow: auto; padding: 14px; box-shadow: none; }
+/* Compiled Workbench rules provide geometry; shared theme chrome stays flat. */
+:root .pc-root.pc-native-workspace :is(.pc-preview-pane, .pc-canvas-area) { box-shadow: none; }
+:root .pc-root.pc-native-workspace :is(.pc-preview-pane, .pc-canvas-area)::after { content: none; box-shadow: none; }
 .pc-workspace-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .pc-workspace-dialog h2 { font-size: 16px; margin: 0 0 12px; }
 .pc-workspace-dialog label { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
@@ -549,8 +581,8 @@
 .pc-root.pc-details-hidden .pc-inspector { display: none; }
 .pc-root .pc-inspector.pc-flash { animation: pc-flash .4s ease; }
 @keyframes pc-flash { from { background: color-mix(in srgb, var(--pc-flow) 18%, var(--pc-panel)); } to { background: var(--pc-panel); } }
-.pc-root .pc-context-menu { --pc-menu-bg: #202120; --pc-menu-fg: #deded9; --pc-menu-muted: #91988a; --pc-menu-rule: #30332d; --pc-menu-hover: #34372f; --pc-menu-blue: #75b9ce; --pc-menu-red: #db6f68; --pc-menu-green: #adb895; position: fixed; z-index: 31510; box-sizing: border-box; width: 296px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; padding: 6px; border-radius: 7px; border: 1px solid var(--pc-menu-rule); background: var(--pc-menu-bg); color: var(--pc-menu-fg); box-shadow: 0 8px 20px #0002; font: 400 14px/1.4 system-ui, sans-serif; user-select: none; }
-:root[data-pc-light="1"] .pc-root .pc-context-menu { --pc-menu-bg: #f5f5f1; --pc-menu-fg: #31332d; --pc-menu-muted: #72776a; --pc-menu-rule: #dedfd8; --pc-menu-hover: #e4e6dc; --pc-menu-blue: #277995; --pc-menu-red: #aa3a3a; --pc-menu-green: #62714e; }
+.pc-root .pc-context-menu { --pc-menu-bg: var(--pc-panel-solid); --pc-menu-fg: var(--pc-text); --pc-menu-muted: var(--pc-muted); --pc-menu-rule: var(--pc-border); --pc-menu-hover: var(--pc-control); --pc-menu-blue: #75b9ce; --pc-menu-red: #db6f68; --pc-menu-green: #adb895; position: fixed; z-index: 31510; box-sizing: border-box; width: 296px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; padding: 6px; border-radius: var(--pc-r); border: 1px solid var(--pc-menu-rule); background: var(--pc-menu-bg); color: var(--pc-menu-fg); box-shadow: 0 8px 20px #0002; font: 400 14px/1.4 system-ui, sans-serif; user-select: none; }
+:root[data-pc-light="1"] .pc-root .pc-context-menu { --pc-menu-blue: #277995; --pc-menu-red: #aa3a3a; --pc-menu-green: #62714e; }
 .pc-root .pc-context-menu .pc-context-item { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 10px; box-sizing: border-box; min-height: 32px; width: 100%; margin: 0; padding: 5px 8px; border: 0; border-radius: 3px; background: transparent; color: inherit; box-shadow: none; font: inherit; text-align: left; cursor: pointer; }
 .pc-root .pc-context-menu .pc-context-item:hover:enabled, .pc-root .pc-context-menu .pc-context-item:focus-visible { background: var(--pc-menu-hover); }
 .pc-root .pc-context-menu .pc-context-item:focus-visible { outline: 2px solid var(--pc-menu-blue); outline-offset: -2px; }
@@ -569,6 +601,8 @@
 @media (pointer: coarse) { .pc-root .pc-context-menu .pc-context-item { min-height: 44px; } }
 .pc-workflow-bar { background: var(--pc-panel-solid); border-bottom: 1px solid var(--pc-border); font-size: 12px; }
 .pc-brand img { filter: brightness(0) invert(1); }
+:root[data-pc-light="1"] .pc-root .pc-brand { color: var(--pc-text); }
+:root[data-pc-light="1"] .pc-root .pc-brand img { filter: brightness(0); }
 .pc-root .pc-canvas-host { width: 100%; height: 100%; }
 .pc-root .pc-node-native.pc-off > :is(.pc-native-heading,.pc-native-pins,.pc-native-alias,.pc-host-result) { opacity: .55; filter: grayscale(1); }
 @media (max-width: 860px) {

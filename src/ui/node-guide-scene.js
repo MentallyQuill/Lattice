@@ -1,7 +1,7 @@
-import { prepareWorkspaceViews, prepareLibraryViews } from './workspace-preparation.js?v=0.27.1';
-import { definitionRefKey } from '../workflow/definition-data.js?v=0.27.1';
-import { nodeCards } from '../canvas/presentation.js?v=0.27.1';
-import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.1';
+import { prepareWorkspaceViews, prepareLibraryViews } from './workspace-preparation.js?v=0.27.2';
+import { definitionRefKey } from '../workflow/definition-data.js?v=0.27.2';
+import { nodeCards } from '../canvas/presentation.js?v=0.27.2';
+import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.2';
 
 /** Prepare only detached display data; opening a guide never executes a graph. */
 export function prepareNodeGuideScene(graph, { instancePath = [], definitionKey } = {}) {

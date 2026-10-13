@@ -1,7 +1,7 @@
-import { inspectExpandedGraph } from './graph-validation.js?v=0.27.1';
-import { preparedWorkflowExpansion, preparedWorkflowSource } from './resolve.js?v=0.27.1';
-import { freeze } from './record-data.js?v=0.27.1';
-import { definitionChain, ownsDefinitionPath, samePath } from './composition-edit.js?v=0.27.1';
+import { inspectExpandedGraph } from './graph-validation.js?v=0.27.2';
+import { preparedWorkflowExpansion, preparedWorkflowSource } from './resolve.js?v=0.27.2';
+import { freeze } from './record-data.js?v=0.27.2';
+import { definitionChain, ownsDefinitionPath, samePath } from './composition-edit.js?v=0.27.2';
 const preparedViews = new WeakMap();
 
 /** Prepare only after content changes. Navigation/camera/selection read this cached DTO.

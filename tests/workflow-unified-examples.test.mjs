@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFileSync,readdirSync} from 'node:fs';
 import {UNIFIED_WORKFLOW_EXAMPLE_DATA as entries} from '../src/workflow/unified-example-data.js';
-import {parseWorkflow,exportWorkflow} from '../src/workflow/packages.js?v=0.27.1';
-import {validateWorkflow} from '../src/workflow/contracts.js?v=0.27.1';
-import {validateDefinition} from '../src/workflow/definitions.js?v=0.27.1';
+import {parseWorkflow,exportWorkflow} from '../src/workflow/packages.js?v=0.27.2';
+import {validateWorkflow} from '../src/workflow/contracts.js?v=0.27.2';
+import {validateDefinition} from '../src/workflow/definitions.js?v=0.27.2';
 import {unifiedRecipeHost} from './helpers/unified-recipe-host.mjs';
 const recipe=id=>structuredClone(entries.find(e=>e.id==='unified-'+id).packages[0].graph);
 const response=text=>({ok:true,data:{text:typeof text==='string'?text:JSON.stringify(text),finish:'stop'}});
@@ -51,7 +51,7 @@ test('directed relationship recipe keeps feelings private, uses story minutes an
 });
 
 test('public example catalog installs detached unified copies with exact helpers and leaves assignment explicit',async()=>{
- const api=await import('../src/workflow/examples.js?v=0.27.1');const examples=api.listWorkflowExamples();assert.equal(examples.length,30);assert.ok(examples.every(e=>e.graph.mode==='native-unified')); // Earlier unified IDs remain hidden and independently installable below.
+ const api=await import('../src/workflow/examples.js?v=0.27.2');const examples=api.listWorkflowExamples();assert.equal(examples.length,30);assert.ok(examples.every(e=>e.graph.mode==='native-unified')); // Earlier unified IDs remain hidden and independently installable below.
  for(const entry of entries){const settings={graphs:{},nativeBindings:{workflowGraphId:null},enabled:false};const first=api.installWorkflowExample(entry.id,settings),second=api.installWorkflowExample(entry.id,settings);assert.equal(first.ok,true,JSON.stringify(first.error));assert.equal(second.ok,true,JSON.stringify(second.error));assert.equal(first.data.companions.length,0);assert.equal(first.data.graph.mode,'native-unified');assert.notEqual(first.data.graph.id,second.data.graph.id);assert.notEqual(Object.keys(first.data.graph.nodes)[0],Object.keys(second.data.graph.nodes)[0]);assert.equal(settings.nativeBindings.workflowGraphId,null);assert.equal(settings.enabled,false);for(const graph of [first.data.graph,second.data.graph])assert.equal(validateWorkflow(graph).ok,true);}
 });
 test('broken wand recipe resolves the actual player use before generation, including a separate wild author branch',async()=>{

@@ -5,11 +5,11 @@ import { definitionRefKey, nodeBindingOverrideKey } from '../src/workflow/defini
 import { inspectExpandedGraph } from '../src/workflow/graph-validation.js';
 import { definitionChain, ownsDefinitionPath } from '../src/workflow/composition-edit.js';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js';
-import * as H from '../src/history.js?v=0.27.1';
+import * as H from '../src/history.js?v=0.27.2';
 import { effectiveInstanceWorkflow } from './fixtures/workflow-effective-instance.mjs';
 import { computeDefinitionIdentity } from '../src/workflow/definitions.js';
 import { installMock } from './mock.js';
-import * as L from '../src/library.js?v=0.27.1';
+import * as L from '../src/library.js?v=0.27.2';
 import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 
 const must = result => { assert.equal(result.ok, true, JSON.stringify(result)); return result.data; };

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {unifiedRecipeHost} from './helpers/unified-recipe-host.mjs';
-import {operationFor,portsForNode} from '../src/workflow/catalog.js?v=0.27.1';
+import {operationFor,portsForNode} from '../src/workflow/catalog.js?v=0.27.2';
 const n=(id,operation,extra={})=>({id,type:'workflow',operation,...extra}),w=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});
 function graph(){return {id:'player-source',schema:3,runtime:2,mode:'native-unified',nodes:{source:n('source','player-event-source'),guide:n('guide','compose',{outputKind:'guidance',mode:'template',template:'Respond to the actual player action: {{data:}}'}),send:n('send','on-send'),generate:n('generate','generate-reply'),review:n('review','review-publish')},wires:{a:w('a','source','out','guide','data'),b:w('b','guide','out','generate','guidance'),c:w('c','send','activation','generate','activation'),d:w('d','generate','draft','review','draft')}};}
 const target={workflowId:'player-source',instancePath:[],nodeId:'source',portId:'out'};

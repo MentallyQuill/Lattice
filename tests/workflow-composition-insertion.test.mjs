@@ -6,9 +6,9 @@ import { makeLocalCopy } from '../src/workflow/definition-library.js';
 import { exportWorkflow, parseWorkflow } from '../src/workflow/packages.js';
 import { graphSemanticSignature, graphDocumentSignature } from '../src/workflow/ports.js';
 import { installMock } from './mock.js';
-import { captureGraphEditContext } from '../src/workflow/transactions.js?v=0.27.1';
-import * as S from '../src/state.js?v=0.27.1';
-import * as H from '../src/history.js?v=0.27.1';
+import { captureGraphEditContext } from '../src/workflow/transactions.js?v=0.27.2';
+import * as S from '../src/state.js?v=0.27.2';
+import * as H from '../src/history.js?v=0.27.2';
 
 const finalize = draft => { const value = computeDefinitionIdentity(draft); assert.equal(value.ok, true); return { ...structuredClone(value.data.materializedDefinition), semanticHash: value.data.semanticHash }; };
 const ref = definition => ({ id: definition.id, version: definition.version, semanticHash: definition.semanticHash });

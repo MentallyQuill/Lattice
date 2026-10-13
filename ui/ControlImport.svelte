@@ -117,5 +117,5 @@
     .import-help { font-size: .85em; opacity: .8; }
     .import-review { overflow: auto; max-height: 20rem; }
     table { border-collapse: collapse; width: 100%; font-size: .9em; }
-    th, td { text-align: left; vertical-align: top; border: 1px solid var(--lattice-border, #777); padding: .35rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+    th, td { text-align: left; vertical-align: top; border: 1px solid var(--pc-border); padding: .35rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 </style>

@@ -3,7 +3,7 @@ import test from 'node:test';
 import { installMock } from './mock.js';
 installMock();
 const surface=await import('../src/ui/workflow-surface.js');
-const { prepareWorkflowPlanner }=await import('../src/workflow/resolve.js?v=0.27.1');
+const { prepareWorkflowPlanner }=await import('../src/workflow/resolve.js?v=0.27.2');
 const { fixtureGraph: starterGraph } = await import('./helpers/workflow-fixtures.mjs');
 const { cloneWorkflowDocument }=await import('../src/workflow/document.js');
 const {runWorkflow:executeWorkflow}=await import('../src/workflow/runtime.js');
@@ -160,7 +160,7 @@ function countRootExpansions(root, run) {
     finally { globalThis.structuredClone = clone; }
 }
 test('workflow projection shares one checked expansion and reuses current admitted content', async () => {
-    const { prepareGraphArtifacts } = await import('../src/workflow/graph-artifacts.js?v=0.27.1');
+    const { prepareGraphArtifacts } = await import('../src/workflow/graph-artifacts.js?v=0.27.2');
     const root = graph3('structured-guidance');
     const first = countRootExpansions(root, () => surface.prepareWorkflowProjection(root));
     assert.equal(surface.projectPreparedWorkflow(first.result).nodes.some(node => node.id === 'compose-json'), true);

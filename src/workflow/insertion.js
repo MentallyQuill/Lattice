@@ -1,15 +1,15 @@
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.1';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.1';
-import { cloneWorkflowDocument } from './document.js?v=0.27.1';
-import { operationFor } from './catalog.js?v=0.27.1';
-import { graphDocumentSignature, graphSemanticSignature } from './ports.js?v=0.27.1';
-import { parseWorkflow } from './packages.js?v=0.27.1';
-import { inspectExpandedGraph } from './graph-validation.js?v=0.27.1';
-import { definitionRefKey, nodeBindingOverrideKey } from './definition-data.js?v=0.27.1';
-import { definitionChain, ownsDefinitionPath, pathStartsWith } from './composition-edit.js?v=0.27.1';
-import { prepareLocalDefinitionEdit } from './definition-library.js?v=0.27.1';
-import { prepareImportedDefinitionPins } from './definition-insertion.js?v=0.27.1';
-import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.1';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.2';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.2';
+import { cloneWorkflowDocument } from './document.js?v=0.27.2';
+import { operationFor } from './catalog.js?v=0.27.2';
+import { graphDocumentSignature, graphSemanticSignature } from './ports.js?v=0.27.2';
+import { parseWorkflow } from './packages.js?v=0.27.2';
+import { inspectExpandedGraph } from './graph-validation.js?v=0.27.2';
+import { definitionRefKey, nodeBindingOverrideKey } from './definition-data.js?v=0.27.2';
+import { definitionChain, ownsDefinitionPath, pathStartsWith } from './composition-edit.js?v=0.27.2';
+import { prepareLocalDefinitionEdit } from './definition-library.js?v=0.27.2';
+import { prepareImportedDefinitionPins } from './definition-insertion.js?v=0.27.2';
+import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.2';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 

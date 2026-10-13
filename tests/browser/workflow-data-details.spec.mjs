@@ -95,7 +95,7 @@ test('product Workflow Data controls have flat beveled edges and fit normal, lig
   const selected=buttons.find(button=>button.name===name);expect(selected.pressed).toBe('true');
   for(const button of buttons.filter(button=>button.name!==name)){expect(button.pressed).toBe('false');expect(selected.fill).not.toBe(button.fill);}
  }
- const details=page.locator('.pc-workspace-details');await page.evaluate(async()=>{const h=window.canvasHarness;document.querySelector('.pc-native-workspace').style.setProperty('--pc-details-width','340px');await h.settle();});
+ const details=page.locator('.pc-workspace-details');await page.evaluate(async()=>{const h=window.canvasHarness;document.querySelector('.pc-body').style.setProperty('--pc-details-width','340px');await h.settle();});
  await details.screenshot({path:resolve('.tmp/workflow-data-ui.png'),animations:'disabled'});await advanced(page);
  await visibleSelection('Public');await visibility.getByRole('button',{name:'Hidden',exact:true}).click();await visibleSelection('Hidden');
  await visibility.getByRole('button',{name:'Public',exact:true}).click();await page.mouse.move(0,0);await visibleSelection('Public');
@@ -104,7 +104,7 @@ test('product Workflow Data controls have flat beveled edges and fit normal, lig
  expect(treatment.length).toBeGreaterThan(8);for(const control of treatment)expect(control).toEqual({radius:'4px',clip:'none',shadow:'none',image:'none'});
  expect(await data(page).locator('.pc-wd-number input').evaluateAll(elements=>elements.map(element=>getComputedStyle(element).borderTopWidth))).toEqual(['0px','0px','0px']);
  await page.evaluate(async()=>{const h=window.canvasHarness;await(await import('/src/theme.js?v='+h.version)).setPreset('ash');await h.settle();});await visibleSelection('Public');await details.screenshot({path:resolve('.tmp/workflow-data-ui-light.png'),animations:'disabled'});
- await page.evaluate(async()=>{const h=window.canvasHarness;await(await import('/src/theme.js?v='+h.version)).setPreset('lattice');document.querySelector('.pc-native-workspace').style.setProperty('--pc-details-width','220px');await h.settle();});
+ await page.evaluate(async()=>{const h=window.canvasHarness;await(await import('/src/theme.js?v='+h.version)).setPreset('lattice');document.querySelector('.pc-body').style.setProperty('--pc-details-width','220px');await h.settle();});
  await visibleSelection('Public');
  expect(await details.evaluate(element=>element.scrollWidth-element.clientWidth)).toBeLessThanOrEqual(1);
  const overflow=await data(page).locator('button,input,select,textarea').evaluateAll(elements=>{const box=document.querySelector('.pc-workspace-details').getBoundingClientRect();return elements.filter(element=>element.getClientRects().length).filter(element=>{const rect=element.getBoundingClientRect();return rect.left<box.left-1||rect.right>box.right+1;}).map(element=>element.getAttribute('aria-label')??element.textContent);});expect(overflow).toEqual([]);

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureGraph as starterGraph } from './helpers/workflow-fixtures.mjs';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.1';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.1';
-import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js?v=0.27.1';
-import * as api from '../src/ui/workspace-preparation.js?v=0.27.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.2';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.2';
+import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js?v=0.27.2';
+import * as api from '../src/ui/workspace-preparation.js?v=0.27.2';
 const activeId = 'lattice:active-sillytavern';
 const profiles = [{ id: 'saved', name: 'Reasoning connection', api: 'openai', apiLabel: 'OpenAI', model: 'profile-model', endpoint: 'private-url', provider: 'private-route', secret: 'private-key' }];
 function fixture(root, options = {}) {
@@ -67,7 +67,7 @@ test('model-free operation mode hides its control and readonly library nodes use
 });
 
 test('imported wand helpers can select Active with no saved profiles and library views retain the choice',async()=>{
- const {installWorkflowExample}=await import('../src/workflow/examples.js?v=0.27.1');
+ const {installWorkflowExample}=await import('../src/workflow/examples.js?v=0.27.2');
  const installed=installWorkflowExample('unified-broken-wand',{graphs:{},nativeBindings:{workflowGraphId:null},enabled:false});
  assert.equal(installed.ok,true,JSON.stringify(installed));
  const root=installed.data.graph, prepared=api.prepareWorkspaceViews(root,{profiles:[],activeModel:{apiLabel:'Host API',model:'host-model'}});

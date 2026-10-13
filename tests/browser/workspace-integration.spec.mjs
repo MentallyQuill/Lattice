@@ -234,7 +234,7 @@ test('actual direct and portal pin menus jump to the opposite prepared endpoints
     await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
 });
 
-test('native root and child frame joins align at fractional and high DPR with noninteractive foreground recess', async ({ browser }) => {
+test('native root and child flat frame joins align at fractional and high DPR', async ({ browser }) => {
     for (const deviceScaleFactor of [1.25, 2]) {
         const context = await browser.newContext({ viewport: { width: 1024, height: 900 }, deviceScaleFactor }), page = await context.newPage();
         try {
@@ -242,9 +242,15 @@ test('native root and child frame joins align at fractional and high DPR with no
             const check = async () => {
                 const graph = await page.locator('.pc-canvas-area').boundingBox(), first = await graphTab(page, { name: 'Actual workspace integration', exact: true }).boundingBox();
                 expect(first.x).toBeCloseTo(graph.x, 4);
-                const paint = await page.locator('.pc-canvas-area').evaluate(element => { const edge = getComputedStyle(element, '::after'), preview = getComputedStyle(document.querySelector('.pc-preview-pane'), '::after'); return { content: edge.content, shadow: edge.boxShadow, pointer: edge.pointerEvents, z: edge.zIndex, left: edge.left, previewShadow: preview.boxShadow }; });
-                expect(paint.content).toBe('""'); expect(paint.pointer).toBe('none'); expect(paint.z).toBe('4'); expect(paint.left).toBe('1px');
-                expect(paint.shadow).toContain('2px 2px 3px'); expect(paint.shadow).toContain('-1px -1px 0px'); expect(paint.previewShadow).toBe(paint.shadow);
+                const paint = await page.locator('.pc-canvas-area').evaluate(element => {
+                    const edge = getComputedStyle(element, '::after'), previewElement = document.querySelector('.pc-preview-pane'), preview = getComputedStyle(previewElement, '::after');
+                    return { content: edge.content, shadow: edge.boxShadow, pointer: edge.pointerEvents, z: edge.zIndex, left: edge.left,
+                        previewContent: preview.content, previewShadow: preview.boxShadow,
+                        surfaces: [element, previewElement, document.querySelector('.pc-inspector')].map(surface => getComputedStyle(surface).boxShadow) };
+                });
+                expect(paint.content).toBe('none'); expect(paint.pointer).toBe('none'); expect(paint.z).toBe('4'); expect(paint.left).toBe('1px');
+                expect(paint.shadow).toBe('none'); expect(paint.previewContent).toBe('none'); expect(paint.previewShadow).toBe('none');
+                expect(paint.surfaces).toEqual(['none', 'none', 'none']);
             };
             await check(); await page.locator('.pc-node-native[data-id="first/path"] .pc-native-heading').dblclick();
             await expect(graphTab(page, { name: /Plan/ })).toHaveAttribute('aria-selected', 'true'); await check();

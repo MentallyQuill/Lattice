@@ -74,18 +74,18 @@ test('Workbench clamps Details to leave a useful canvas and cancels a draft when
     try {
         const leaf = await compiled('Workbench', directory);
         instance = mount(leaf.component, { target: host, props: { actions: { setEnabled() {}, command() {}, mode() {}, zoom() {}, fitSelection() {}, resizeDetails: width => committed.push(width) } } }); flushSync(); await tick();
-        const body = host.querySelector('.pc-body'), root = instance.getParts().root;
+        const body = host.querySelector('.pc-body');
         Object.defineProperty(body, 'clientWidth', { configurable: true, value: 690 });
         instance.update({ graphId: 'first', detailsWidth: 480 }); window.dispatchEvent(new dom.window.Event('resize')); flushSync(); await tick();
         let handle = host.querySelector('[aria-label="Resize Details"]'); assert.ok(handle, 'Details resize handle is mounted in the shell');
-        assert.equal(handle.getAttribute('aria-valuemax'), '322'); assert.equal(handle.getAttribute('aria-valuenow'), '322'); assert.equal(root.style.getPropertyValue('--pc-details-width'), '322px');
+        assert.equal(handle.getAttribute('aria-valuemax'), '322'); assert.equal(handle.getAttribute('aria-valuenow'), '322'); assert.equal(body.style.getPropertyValue('--pc-details-width'), '322px');
         key(handle, 'End'); assert.deepEqual(committed, [322]);
         instance.update({ detailsWidth: 260 }); flushSync();
         const captures = new Set(); handle.setPointerCapture = id => captures.add(id); handle.hasPointerCapture = id => captures.has(id); handle.releasePointerCapture = id => captures.delete(id);
-        pointer(handle, 'pointerdown'); pointer(handle, 'pointermove', { clientX: 480 }); assert.equal(root.style.getPropertyValue('--pc-details-width'), '280px');
+        pointer(handle, 'pointerdown'); pointer(handle, 'pointermove', { clientX: 480 }); assert.equal(body.style.getPropertyValue('--pc-details-width'), '280px');
         Object.defineProperty(body, 'clientWidth', { configurable: true, value: 1100 }); window.dispatchEvent(new dom.window.Event('resize'));
         instance.update({ graphId: 'second', detailsWidth: 350 }); flushSync(); await tick(); flushSync();
-        assert.equal(root.style.getPropertyValue('--pc-details-width'), '350px'); assert.equal(captures.size, 0); assert.deepEqual(committed, [322]);
+        assert.equal(body.style.getPropertyValue('--pc-details-width'), '350px'); assert.equal(captures.size, 0); assert.deepEqual(committed, [322]);
     } finally {
         if (instance) await unmount(instance); host.remove();
         const scope = relative(resolve(tmpdir()), resolve(directory)); assert.ok(scope && scope.startsWith('lattice-details-resize-') && !scope.startsWith('..') && !isAbsolute(scope)); await rm(directory, { recursive: true, force: true });

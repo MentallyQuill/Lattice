@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const models = await import('../src/workflow/operations/model-nodes.js?v=0.27.1').catch(() => ({}));
-const revisions = await import('../src/workflow/draft-revisions.js?v=0.27.1');
+const models = await import('../src/workflow/operations/model-nodes.js?v=0.27.2').catch(() => ({}));
+const revisions = await import('../src/workflow/draft-revisions.js?v=0.27.2');
 const root = text => ({ kind: 'draft', text, source: { originalText: text, chatId: 'story', token: 'native-token' } });
 const node = (operation, settings = {}) => ({ id: operation + '-node', operation, ...settings });
 const must = result => { assert.equal(result.ok, true, JSON.stringify(result.error)); return result; };

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.27.1';
-import {runWorkflow,runWorkflowForHost} from '../src/workflow/runtime.js?v=0.27.1';
+import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.27.2';
+import {runWorkflow,runWorkflowForHost} from '../src/workflow/runtime.js?v=0.27.2';
 const edge=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});
 const node=(id,operation,extra={})=>({id,type:'workflow',operation,...extra});
 function fixture(operation='decision',items='[{"item":1},{"item":2}]',extra={}) {

@@ -48,14 +48,14 @@
 {/if}
 
 <style>
-    .pc-pin-menu { position: fixed; z-index: 12; width: 284px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; box-sizing: border-box; padding: 6px; background: #202120; color: #deded9; border: 1px solid #3a3c35; border-radius: 4px; box-shadow: inset 1px 1px 0 #ffffff08, inset -1px -1px 0 #00000045, 0 8px 20px #0002; font: 400 14px/1.4 system-ui, sans-serif; }
+    .pc-pin-menu { position: fixed; z-index: 12; width: 284px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; box-sizing: border-box; padding: 6px; background: var(--pc-panel-solid); color: var(--pc-text); border: 1px solid var(--pc-border); border-radius: var(--pc-r); box-shadow: 0 8px 20px #0002; font: 400 14px/1.4 var(--pc-font, system-ui, sans-serif); }
     .pc-menu-head { display: flex; align-items: center; gap: 8px; padding: 5px 8px; }
-    h2 { min-width: 0; margin: 0 auto 0 0; font-size: 12px; font-weight: 400; overflow-wrap: anywhere; color: #a1a59b; }
+    h2 { min-width: 0; margin: 0 auto 0 0; font-size: 12px; font-weight: 400; overflow-wrap: anywhere; color: var(--pc-muted); }
     button { box-sizing: border-box; padding: 6px 9px; border: 0; border-radius: 2px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
-    button:hover:enabled { background: #353632; }
+    button:hover:enabled { background: var(--pc-control); }
     button:disabled { opacity: .55; cursor: default; }
-    button:focus-visible { outline: 2px solid var(--SmartThemeQuoteColor, #e18a24); outline-offset: 1px; }
-    .pc-menu-head button { flex: none; box-shadow: inset 1px 1px 0 #ffffff06, inset -1px -1px 0 #00000035; }
+    button:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
+    .pc-menu-head button { flex: none; box-shadow: none; }
     .pc-pin-action { display: block; width: 100%; text-align: left; min-height: 31px; overflow-wrap: anywhere; }
-    .pc-kind, .pc-empty { padding: 0 8px; margin: 4px 0 6px; color: #a1a59b; font-size: 12px; }
+    .pc-kind, .pc-empty { padding: 0 8px; margin: 4px 0 6px; color: var(--pc-muted); font-size: 12px; }
 </style>

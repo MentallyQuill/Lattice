@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';import {test} from 'node:test';
-import {executeEvent,describeEvent} from '../src/workflow/operations/event-nodes.js?v=0.27.1';
-import {normalizeOccurrences,confirmOccurrences} from '../src/workflow/operations/event-data.js?v=0.27.1';
+import {executeEvent,describeEvent} from '../src/workflow/operations/event-nodes.js?v=0.27.2';
+import {normalizeOccurrences,confirmOccurrences} from '../src/workflow/operations/event-data.js?v=0.27.2';
 const source={sourceId:'scene',revision:'r1',sceneId:'one',watch:'draft',text:'Mara helped Elias.',visibility:'public'};
 const normalized=normalizeOccurrences(source,[{eventType:'scene-action',actorId:'mara',objectId:'elias',position:{start:0,end:18},semantics:'actual'}],{actorIds:['mara','elias'],itemIds:[]});
 const events=confirmOccurrences(normalized.data.events,[{eventId:normalized.data.events[0].eventId,accepted:true}]).data.events;

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as filter from '../src/workflow/operations/filter-text.js';
-import { scanPatternDraft } from '../src/workflow/operations/pattern-engine.js?v=0.27.1';
-import { appendDraftSections, readDraftBody, snapshotDraft } from '../src/workflow/draft-revisions.js?v=0.27.1';
+import { scanPatternDraft } from '../src/workflow/operations/pattern-engine.js?v=0.27.2';
+import { appendDraftSections, readDraftBody, snapshotDraft } from '../src/workflow/draft-revisions.js?v=0.27.2';
 
 const draft = text => ({ kind: 'draft', text, source: { originalText: text } });
 const controls = extra => ({ action: 'remove', unit: 'paragraph', scope: 'whole', protectedLiterals: [], ...extra });
@@ -158,7 +158,7 @@ test('invalid controls are rejected as settings rather than inferred', async () 
 
 
 test('runtime dispatch preserves the live Matches identity through reroute and executes zero requests', async () => {
-    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.1');
+    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.2');
     const node = (id, operation, extra = {}) => ({ id, type: 'workflow', operation, phase: 'post', ...extra });
     const wire = (id, from, fromPort, to, toPort) => ({ id, route: 'wire', from, fromPort, to, toPort });
     const graph = { id: 'filter-routing', schema: 3, runtime: 2, mode: 'native-unified', roles: {}, nodes: {

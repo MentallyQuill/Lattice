@@ -1,8 +1,8 @@
-import { preserveArtifactPrivacy, validVisibilityMetadata, artifactVisibility } from '../artifact-privacy.js?v=0.27.1';
-import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.1';
-import { validateOccurrences } from './event-data.js?v=0.27.1';
-import { own, plain, freeze, safeUsage } from '../record-data.js?v=0.27.1';
-import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.27.1';
+import { preserveArtifactPrivacy, validVisibilityMetadata, artifactVisibility } from '../artifact-privacy.js?v=0.27.2';
+import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.27.2';
+import { validateOccurrences } from './event-data.js?v=0.27.2';
+import { own, plain, freeze, safeUsage } from '../record-data.js?v=0.27.2';
+import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.27.2';
 
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const exact=(value,keys)=>plain(value)&&Object.keys(value).every(key=>keys.includes(key));

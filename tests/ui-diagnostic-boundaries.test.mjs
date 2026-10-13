@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { presentDiagnostic, diagnosticText } from '../src/ui/diagnostics.js?v=0.27.1';
-import { createWorkflowDocumentController } from '../src/ui/document-controller.js?v=0.27.1';
-import { createWorkflowDocumentSession } from '../src/ui/document-session.js?v=0.27.1';
+import { presentDiagnostic, diagnosticText } from '../src/ui/diagnostics.js?v=0.27.2';
+import { createWorkflowDocumentController } from '../src/ui/document-controller.js?v=0.27.2';
+import { createWorkflowDocumentSession } from '../src/ui/document-session.js?v=0.27.2';
 import { JSDOM } from 'jsdom';
-import { showContextMenu } from '../src/ui/context-menu.js?v=0.27.1';
-import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.27.1';
-import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.1';
+import { showContextMenu } from '../src/ui/context-menu.js?v=0.27.2';
+import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.27.2';
+import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.2';
 
 const controllerSource = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 const runSource = await readFile(new URL('../src/run.js', import.meta.url), 'utf8');

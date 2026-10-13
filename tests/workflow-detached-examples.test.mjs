@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { installWorkflowExample, listWorkflowExamples } from '../src/workflow/examples.js?v=0.27.1';
-import { validateWorkflow } from '../src/workflow/contracts.js?v=0.27.1';
+import { installWorkflowExample, listWorkflowExamples } from '../src/workflow/examples.js?v=0.27.2';
+import { validateWorkflow } from '../src/workflow/contracts.js?v=0.27.2';
 
 test('opening an example prepares independent unified documents without a registry', () => {
     const first = installWorkflowExample('lesson-01'), second = installWorkflowExample('lesson-01');

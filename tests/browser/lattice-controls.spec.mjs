@@ -10,7 +10,7 @@ async function openWorkspace(page) {
     });
 }
 
-test('panel icon buttons follow panel visibility and accent only their outlines', async ({ page }) => {
+test('panel icon buttons use solid theme accent while visible and neutral chrome while hidden', async ({ page }) => {
     await openWorkspace(page);
     const preview = page.getByRole('button', { name: 'Toggle Preview Panel', exact: true });
     const details = page.getByRole('button', { name: 'Toggle Details Panel', exact: true });
@@ -28,19 +28,30 @@ test('panel icon buttons follow panel visibility and accent only their outlines'
             const css = getComputedStyle(element);
             return { color: css.color, background: css.backgroundColor, border: css.borderTopColor };
         });
-        const accent = await page.locator('.pc-graph-tab[aria-selected="true"]').evaluate(element => getComputedStyle(element).color);
-        expect(enabled.border).toBe(accent);
+        const roles = await button.evaluate(element => {
+            const probe = document.createElement('span'); element.append(probe);
+            const resolve = role => { probe.style.color = `var(--pc-${role})`; return getComputedStyle(probe).color; };
+            const result = Object.fromEntries(['accent', 'on-accent', 'text', 'control', 'border'].map(role => [role, resolve(role)]));
+            probe.remove(); return result;
+        });
+        expect(enabled).toEqual({ color: roles['on-accent'], background: roles.accent, border: roles.accent });
+        await button.hover();
+        await expect(button).toHaveCSS('background-color', roles.accent);
         await button.click();
         await page.mouse.move(0, 0);
         await expect(button).toHaveAttribute('aria-pressed', 'false');
         await expect(page.locator(panel)).toBeHidden();
+        await expect(button).toHaveCSS('background-color', roles.control);
+        await expect(button).toHaveCSS('color', roles.text);
+        await expect(button).toHaveCSS('border-top-color', roles.border);
         const disabled = await button.evaluate(element => {
             const css = getComputedStyle(element);
             return { color: css.color, background: css.backgroundColor, border: css.borderTopColor };
         });
-        expect(disabled.color).toBe(enabled.color);
-        expect(disabled.background).toBe(enabled.background);
-        expect(disabled.border).not.toBe(enabled.border);
+        expect(disabled).toEqual({ color: roles.text, background: roles.control, border: roles.border });
+        await button.hover();
+        await expect(button).toHaveCSS('background-color', roles.control);
+        await expect(button).toHaveCSS('border-top-color', roles.border);
         await button.click();
         await expect(page.locator(panel)).toBeVisible();
     }

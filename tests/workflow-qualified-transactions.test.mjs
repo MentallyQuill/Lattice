@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definitions.js';
 import { makeLocalCopy, prepareLocalDefinitionEdit } from '../src/workflow/definition-library.js';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js';
-import * as H from '../src/history.js?v=0.27.1';
+import * as H from '../src/history.js?v=0.27.2';
 const ref = d => ({ id: d.id, version: d.version, semanticHash: d.semanticHash });
 let id = 0;
 function fixture() {

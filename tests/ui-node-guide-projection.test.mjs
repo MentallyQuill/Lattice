@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureGraph } from './helpers/workflow-fixtures.mjs';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.1';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.1';
-import { prepareWorkspaceViews, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.27.1';
-import { projectNodeGuide, projectCommentGuide } from '../src/ui/node-guide.js?v=0.27.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.2';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.2';
+import { prepareWorkspaceViews, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.27.2';
+import { projectNodeGuide, projectCommentGuide } from '../src/ui/node-guide.js?v=0.27.2';
 
 test('Details carries a detached current node card for its guide, including dynamic ports', () => {
     const root = fixtureGraph('structured-guidance');

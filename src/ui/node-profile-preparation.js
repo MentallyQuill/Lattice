@@ -1,4 +1,4 @@
-import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME, activeModelMetadata } from '../workflow/model-profiles.js?v=0.27.1';
+import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME, activeModelMetadata } from '../workflow/model-profiles.js?v=0.27.2';
 const profileName = value => typeof value === 'string' ? value : '';
 const text = value => typeof value === 'string' ? value.slice(0, 256) : '';
 /** Public display metadata only; never a saved profile, endpoint or request binding. */

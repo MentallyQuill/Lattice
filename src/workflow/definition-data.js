@@ -1,8 +1,8 @@
-import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.1';
-import { cloneJsonValue } from './operations/json-data.js?v=0.27.1';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.1';
-import { validateNodeModifiers } from './modifiers.js?v=0.27.1';
-import { ARTIFACT_KINDS, operationFor, portsForNode, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.27.1';
+import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.2';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.2';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.2';
+import { validateNodeModifiers } from './modifiers.js?v=0.27.2';
+import { ARTIFACT_KINDS, operationFor, portsForNode, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.27.2';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

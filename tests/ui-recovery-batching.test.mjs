@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { installMock } from './mock.js';
-import * as S from '../src/state.js?v=0.27.1';
-import { starterGraph } from '../src/workflow/starters.js?v=0.27.1';
-import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.27.1';
-import { captureGraphEditContext } from '../src/workflow/transactions.js?v=0.27.1';
-import { createViewState } from '../src/ui/view-state.js?v=0.27.1';
+import * as S from '../src/state.js?v=0.27.2';
+import { starterGraph } from '../src/workflow/starters.js?v=0.27.2';
+import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.27.2';
+import { captureGraphEditContext } from '../src/workflow/transactions.js?v=0.27.2';
+import { createViewState } from '../src/ui/view-state.js?v=0.27.2';
 
 test('accepted edit and reconciled presentation produce one immediate recovery envelope', () => {
     const host=installMock(); let writes=0, saves=0; host.saveSettingsDebounced=()=>saves++;

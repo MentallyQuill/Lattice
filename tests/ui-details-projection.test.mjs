@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureGraph as starterGraph } from './helpers/workflow-fixtures.mjs';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.1';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.1';
-import { prepareWorkspaceViews, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.27.1';
-import { computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from '../src/workflow/definitions.js?v=0.27.1';
-import { prepareNativeNodeEdit } from '../src/workflow/definition-library.js?v=0.27.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.2';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.2';
+import { prepareWorkspaceViews, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.27.2';
+import { computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from '../src/workflow/definitions.js?v=0.27.2';
+import { prepareNativeNodeEdit } from '../src/workflow/definition-library.js?v=0.27.2';
 
 function details(root, id) {
     const prepared = prepareWorkspaceViews(root);

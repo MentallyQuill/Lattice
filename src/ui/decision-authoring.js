@@ -1,5 +1,5 @@
-import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.1';
-import { validateDecisionQuestions } from '../workflow/decision.js?v=0.27.1';
+import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.2';
+import { validateDecisionQuestions } from '../workflow/decision.js?v=0.27.2';
 const fail = message => ({ok:false,error:{code:'INVALID_QUESTIONS',message}});
 /** Rows are complete snapshots; currentValue is contextual only. Absence never inherits a previous criterion. */
 export function compileQuestionRows(rows, currentValue) {

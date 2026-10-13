@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { operationDefaults } from '../src/workflow/catalog.js?v=0.27.1';
-import { prepareCreateFromSelection, prepareUnpack } from '../src/workflow/composition.js?v=0.27.1';
-import { resolveWorkflow } from '../src/workflow/resolve.js?v=0.27.1';
-import { runWorkflow } from '../src/workflow/runtime.js?v=0.27.1';
-import { exportWorkflow, parseWorkflow } from '../src/workflow/packages.js?v=0.27.1';
+import { operationDefaults } from '../src/workflow/catalog.js?v=0.27.2';
+import { prepareCreateFromSelection, prepareUnpack } from '../src/workflow/composition.js?v=0.27.2';
+import { resolveWorkflow } from '../src/workflow/resolve.js?v=0.27.2';
+import { runWorkflow } from '../src/workflow/runtime.js?v=0.27.2';
+import { exportWorkflow, parseWorkflow } from '../src/workflow/packages.js?v=0.27.2';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
 import { actorHostFixture } from './helpers/native-actor-host-fixture.mjs';
 const n = (id, operation, controls = {}) => ({ ...operationDefaults(operation, controls.mode ? { mode: controls.mode } : {}), id, type: 'workflow', operation, operationVersion: 1, ...controls });

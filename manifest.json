@@ -4,10 +4,10 @@
     "generate_interceptor": "latticeGenerationInterceptor",
     "requires": [],
     "optional": [],
-    "js": "index.js?v=0.27.1",
+    "js": "index.js?v=0.27.2",
     "css": "style.css",
     "author": "Dulgadurbit",
-    "version": "0.27.1",
+    "version": "0.27.2",
     "homePage": "https://github.com/MentallyQuill/Lattice",
     "auto_update": false,
     "description": "Build named-pin workflows for optional scene guidance and reviewed reply repairs in SillyTavern, with per-node model connections."

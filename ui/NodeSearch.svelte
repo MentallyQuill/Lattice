@@ -85,20 +85,20 @@
 {/if}
 
 <style>
-    .pc-node-search { position: fixed; z-index: 12; width: 284px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; box-sizing: border-box; padding: 9px; background: #222321; color: #deded9; border: 1px solid #41433b; border-radius: 4px; box-shadow: inset 1px 1px 0 #ffffff08, inset -1px -1px 0 #00000045, 0 8px 28px #0005; font: 400 14px/1.4 system-ui, sans-serif; }
+    .pc-node-search { position: fixed; z-index: 12; width: 284px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; box-sizing: border-box; padding: 9px; background: var(--pc-panel-solid); color: var(--pc-text); border: 1px solid var(--pc-border); border-radius: var(--pc-r); box-shadow: 0 8px 28px #0005; font: 400 14px/1.4 var(--pc-font, system-ui, sans-serif); }
     button, input { font: inherit; color: inherit; box-sizing: border-box; border-radius: 2px; }
     button { background: transparent; border: 0; padding: 6px 9px; cursor: pointer; }
-    button:hover:enabled, button[aria-selected="true"]:enabled { background: #353632; }
+    button:hover:enabled, button[aria-selected="true"]:enabled { background: var(--pc-control); }
     button:disabled { opacity: .55; cursor: default; }
-    button:focus-visible, input:focus-visible { outline: 2px solid var(--SmartThemeQuoteColor, #e18a24); outline-offset: 1px; }
+    button:focus-visible, input:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
     .pc-search-field { display: block; margin: 0; font-size: 12px; }
-    input[type="search"] { width: 100%; min-width: 0; background: #1d1e1d; border: 1px solid #3a3c35; padding: 7px 8px; box-shadow: inset 1px 1px 0 #ffffff06, inset -1px -1px 0 #00000035; }
+    input[type="search"] { width: 100%; min-width: 0; background: var(--pc-field); border: 1px solid var(--pc-border); padding: 7px 8px; box-shadow: none; }
     .pc-context-check { display: flex; align-items: center; gap: 7px; margin-top: 9px; min-height: 24px; font-size: 12px; }
-    input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--SmartThemeQuoteColor, #e18a24); }
-    .pc-search-context { display: block; margin: 6px 0 0; font-size: 12px; color: #a1a59b; }
+    input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--pc-accent); }
+    .pc-search-context { display: block; margin: 6px 0 0; font-size: 12px; color: var(--pc-muted); }
     .pc-search-results { margin-top: 8px; max-height: 300px; overflow: auto; }
     .pc-search-result { width: 100%; text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 31px; font-size: 13px; padding: 5px 7px; }
     .pc-search-result > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-    .pc-family { flex: none; font-size: 11px; color: #a1a59b; }
-    .pc-empty, .pc-feedback { margin: 10px 0 0; font-size: 12px; color: #a1a59b; }
+    .pc-family { flex: none; font-size: 11px; color: var(--pc-muted); }
+    .pc-empty, .pc-feedback { margin: 10px 0 0; font-size: 12px; color: var(--pc-muted); }
 </style>

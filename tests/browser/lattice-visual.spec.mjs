@@ -38,7 +38,7 @@ for (const width of [1024, 736, 360, 320]) test(`approved Lattice native surface
     expect(actual.font).toBe(true);
     expect(actual.overflow).toBe(false);
     expect(actual.graph.radius).toBe('4px');
-    expect(actual.graph.shadow).toContain('inset');
+    for (const surface of [actual.graph, actual.preview, actual.details]) expect(surface.shadow).toBe('none');
     expect(actual.graph.border).toBe(actual.accent);
     expect(actual.preview.background).toBe(actual.panel.background);
     expect(actual.canvas.background).toBe('rgb(15, 15, 15)');

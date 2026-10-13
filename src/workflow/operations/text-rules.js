@@ -1,4 +1,4 @@
-import { prepareReferenceDraft, createReferencePatches } from './reference-draft.js?v=0.27.1';
+import { prepareReferenceDraft, createReferencePatches } from './reference-draft.js?v=0.27.2';
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 function defaultWorkerFactory() {
     // Preserve Vite's statically recognized Worker expression in bundled development/production.

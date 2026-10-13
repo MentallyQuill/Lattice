@@ -54,14 +54,14 @@ assert.equal(root.dataset.pcShape, 'soft');
 assert.match(box.querySelector('.pc-th-look summary').textContent, /4 changed/);
 T.setStyle('shape', null);
 
-// A custom light surface still flips text on colour pills to white.
+// A custom light surface keeps colour-pill text readable over the accent.
 T.setColor('panel', '#fff4f8');
 T.setColor('block', '#ffffff');
 T.setColor('text', '#3d2230');
 T.setColor('muted', '#70505d');
 E.renderThemeEditor(box);
 assert.equal(root.dataset.pcLight, '1');
-assert.equal(prop('on-accent'), '#ffffff');
+assert.ok(T.contrast(T.parseColor(prop('on-accent')), T.parseColor(prop('flow'))) >= 4.5);
 
 // customise: pick a colour, see it live, get a look-alike warning, reset it
 [...box.querySelectorAll('.pc-th-preset')].find(b => b.textContent.includes('Lattice')).click();

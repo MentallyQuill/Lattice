@@ -1,7 +1,7 @@
 /** Lattice workspace themes and explicit user overrides. */
 
-import { settings, save, safe } from './state.js?v=0.27.1';
-import { ARTIFACT_KINDS, ARTIFACT_PIN_COLORS } from './ui/artifact-glyph.js?v=0.27.1';
+import { settings, save, safe } from './state.js?v=0.27.2';
+import { ARTIFACT_KINDS, ARTIFACT_PIN_COLORS } from './ui/artifact-glyph.js?v=0.27.2';
 
 /** The roles, in the order the editor lists them. */
 export const ROLES = [
@@ -297,7 +297,6 @@ export function applyTheme() {
     // Menus and popovers need a solid background. When the panel colour comes
     // from SillyTavern it is often see-through, so use what it looks like.
     if (!colors.panel) root.setProperty('--pc-panel-solid', toHex(panel));
-    root.setProperty('--pc-on-accent', light ? '#ffffff' : '#1a1a1e');
     doc.documentElement.dataset.pcLight = light ? '1' : '0';
 
     // Keep the recall status green readable on custom and host-derived surfaces.
@@ -326,6 +325,21 @@ export function applyTheme() {
         if (quote && parseColor(quote)) root.setProperty('--pc-flow', quote);
     }
     root.setProperty('--pc-accent', root.getPropertyValue('--pc-flow') || 'var(--SmartThemeQuoteColor, #e18a24)');
+    // Filled controls need ink that contrasts with the effective accent,
+    // including a host quote color or a contrast-adjusted custom selection.
+    const accent = over(parseColor(root.getPropertyValue('--pc-flow')) ?? parseColor(colors.flow) ?? parseColor(PRESETS[preset].colors.flow), panel);
+    const darkInk = parseColor('#1a1a1e'), lightInk = parseColor('#ffffff');
+    const ink = contrast(darkInk, accent) >= contrast(lightInk, accent) ? darkInk : lightInk;
+    root.setProperty('--pc-on-accent', toHex(fitContrast(ink, accent, 4.5)));
+    // Run rows use fields/controls, not card fills. Fit their small meaning text
+    // against those surfaces so even gray-text light host themes stay readable.
+    const hostSurface = token => parseColor(safe(() => getComputedStyle(doc.documentElement).getPropertyValue('--' + token).trim())) ?? parseColor('rgba(30, 30, 30, 0.9)');
+    const runField = preset === 'ember' ? over(hostSurface('SmartThemeUserMesBlurTintColor'), panel) : over({ ...menuText, a: .05 }, block);
+    const runControl = preset === 'ember' ? over(hostSurface('SmartThemeBotMesBlurTintColor'), panel) : over({ ...menuText, a: .07 }, block);
+    for (const [role, color] of Object.entries({ success: '#a4c2ad', error: colors.error, warning: colors.warn, flow: toHex(accent) })) {
+        const base = preset === 'signal' ? menuText : parseColor(color) ?? parseColor(PRESETS[preset].colors[role === 'warning' ? 'warn' : 'error']);
+        root.setProperty('--pc-run-' + role + '-text', toHex(fitContrast(base, [panel, runField, runControl], 4.5)));
+    }
     // Notify the workspace after explicit theme changes.
     safe(() => doc.dispatchEvent(new CustomEvent('pc-theme')));
 }

@@ -1,5 +1,5 @@
-import { compileQuestionRows } from './decision-authoring.js?v=0.27.1';
-import { parseControlInput } from './control-input-contracts.js?v=0.27.1';
+import { compileQuestionRows } from './decision-authoring.js?v=0.27.2';
+import { parseControlInput } from './control-input-contracts.js?v=0.27.2';
 const fail = () => ({ok:false,error:{code:'NONREPRESENTABLE_CONTROL_ROWS',message:'This shape needs Advanced JSON; authored values are retained.'}});
 const phases = ['onset','peak','plateau','decline','aftermath'];
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

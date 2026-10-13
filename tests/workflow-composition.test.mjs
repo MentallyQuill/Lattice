@@ -294,9 +294,9 @@ console.log('workflow-composition: named portals, pinned expansion, targets, por
 
 // A pinned static boundary passes the same live value; an iteration seed cannot mount its Draft interface.
 {
-    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.1');
-    const { getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.1');
-    const { compileIterationHelper } = await import('../src/workflow/iteration-helpers.js?v=0.27.1');
+    const { runWorkflowForHost } = await import('../src/workflow/runtime.js?v=0.27.2');
+    const { getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.2');
+    const { compileIterationHelper } = await import('../src/workflow/iteration-helpers.js?v=0.27.2');
     const f = await import('./helpers/pattern-routing-fixtures.mjs'), wrappers = f.patternWrappers();
     const g = f.rootGraph({ source: f.node('source', 'reply-snapshot'), detector: f.instance('detector', wrappers.inner), filter: f.node('filter', 'filter-text', { scope: 'whole' }) }, [f.wire('a', 'source', 'out', 'detector', 'draft'), f.wire('b', 'detector', 'out', 'filter', 'in'), f.wire('c', 'detector', 'matches', 'filter', 'matches')], wrappers.definitions);
     const outputs = [];

@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { createWorkflowDocumentController } from '../src/ui/document-controller.js';
 import { createWorkflowDocumentSession } from '../src/ui/document-session.js';
 import { installWorkflowExample } from '../src/workflow/examples.js';
-import { diagnosticText, presentDiagnostic } from '../src/ui/diagnostics.js?v=0.27.1';
+import { diagnosticText, presentDiagnostic } from '../src/ui/diagnostics.js?v=0.27.2';
 const graph = id => ({ id, name: id, schema: 3, runtime: 2, mode: 'native-unified', nodes: {}, wires: {}, groups: {}, roles: {}, portals: {}, definitions: {} });
 async function controllerFunction(name, env) {
     const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8'); let start = source.indexOf('function ' + name + '(');

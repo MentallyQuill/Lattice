@@ -129,22 +129,22 @@
     .pc-node-profile * { box-sizing:border-box; }
     .node-model-meta { position:absolute; bottom:8px; left:0; width:100%; color:var(--pc-muted); font-size:11px; overflow-wrap:anywhere; }
     .profile-picker { position:absolute; width:100%; pointer-events:auto; }
-    .profile-bar { display:flex; align-items:center; gap:7px; width:100%; padding:8px; margin:0; border:1px solid var(--pc-border); border-radius:var(--pc-r); background:var(--pc-control); color:var(--pc-text); font:inherit; font-size:12px; min-height:35px; text-align:left; cursor:pointer; appearance:none; filter:none; text-shadow:none; box-shadow:inset 0 1px 0 color-mix(in srgb,var(--pc-text) 4%,transparent),inset 0 -1px 0 color-mix(in srgb,var(--pc-canvas) 25%,transparent); }
+    .profile-bar { display:flex; align-items:center; gap:7px; width:100%; padding:8px; margin:0; border:1px solid var(--pc-border); border-radius:var(--pc-r); background:var(--pc-control); color:var(--pc-text); font:inherit; font-size:12px; min-height:35px; text-align:left; cursor:pointer; appearance:none; filter:none; text-shadow:none; box-shadow:none; }
     .profile-bar:hover:enabled { background:color-mix(in srgb,var(--pc-text) 7%,var(--pc-control)); } .profile-bar:disabled { cursor:default; }
     .profile-bar:focus-visible { outline:2px solid var(--pc-accent); outline-offset:2px; }
     svg { fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
     .profile-bar svg { width:14px; height:14px; flex:0 0 14px; }
     .profile-value { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
     /* Popovers obscure the canvas even when SillyTavern's panel token is translucent. */
-    .profile-menu { --profile-panel:rgb(from var(--pc-panel-solid) r g b / 1); position:absolute; display:flex; flex-direction:column; background:var(--pc-panel-solid); background:var(--profile-panel); border:1px solid var(--pc-border); border-radius:var(--pc-r); box-shadow:inset 0 1px 0 color-mix(in srgb,var(--pc-text) 4%,transparent),0 12px 32px #0006; overflow:hidden; z-index:3; }
+    .profile-menu { --profile-panel:rgb(from var(--pc-panel-solid) r g b / 1); position:absolute; display:flex; flex-direction:column; background:var(--pc-panel-solid); background:var(--profile-panel); border:1px solid var(--pc-border); border-radius:var(--pc-r); box-shadow:0 12px 32px #0006; overflow:hidden; z-index:3; }
     .profile-search { display:flex; flex-shrink:0; align-items:center; gap:8px; padding:11px 12px; border-bottom:1px solid var(--pc-border); background:var(--pc-field); }
     .profile-search:focus-within { box-shadow:inset 0 -2px 0 var(--pc-accent); }
     .profile-search svg { width:16px; height:16px; flex:0 0 16px; color:var(--pc-muted); }
     .profile-search input, :global(:root[data-pc-own="1"] .pc-root) .profile-search input { width:100%; min-width:0; padding:3px 0; margin:0; border:0; border-radius:0; background:transparent; color:var(--pc-text); font:inherit; appearance:none; filter:none; text-shadow:none; box-shadow:none; }
     .profile-search input::placeholder { color:var(--pc-muted); opacity:1; }
     .profile-search input:focus, :global(:root[data-pc-own="1"] .pc-root) .profile-search input:focus { outline:none; box-shadow:none; }
-    .profile-options { min-height:0; flex:1 1 auto; max-height:244px; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:auto; scrollbar-color:var(--pc-muted) var(--profile-panel); padding:4px; }
-    .profile-options::-webkit-scrollbar { width:10px; } .profile-options::-webkit-scrollbar-track { background:var(--profile-panel); } .profile-options::-webkit-scrollbar-thumb { background:var(--pc-muted); border:2px solid var(--profile-panel); border-radius:var(--pc-r); }
+    .profile-options { min-height:0; flex:1 1 auto; max-height:244px; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:auto; scrollbar-color:var(--pc-scrollbar-thumb) var(--pc-scrollbar-track); padding:4px; }
+    .profile-options::-webkit-scrollbar { width:10px; } .profile-options::-webkit-scrollbar-track { background:var(--pc-scrollbar-track); } .profile-options::-webkit-scrollbar-thumb { background:var(--pc-scrollbar-thumb); border:2px solid var(--pc-scrollbar-track); border-radius:var(--pc-r); }
     .profile-option { display:flex; align-items:flex-start; gap:7px; padding:9px 8px; margin:0; width:100%; border:0; border-radius:var(--pc-r); background:transparent; color:var(--pc-text); text-align:left; font:inherit; font-size:13px; line-height:1.35; cursor:pointer; appearance:none; filter:none; text-shadow:none; box-shadow:none; }
     .profile-option:hover:enabled,.profile-option.is-active { background:color-mix(in srgb,var(--pc-text) 7%,var(--profile-panel)); } .profile-option[aria-selected="true"] { background:color-mix(in srgb,var(--pc-accent) 14%,var(--profile-panel)); }
     .profile-option.is-active,.profile-option:focus-visible { outline:2px solid var(--pc-accent); outline-offset:-2px; }

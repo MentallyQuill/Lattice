@@ -36,8 +36,8 @@
 <div class="pc-details-divider" role="separator" aria-label="Resize Details" aria-orientation="vertical" aria-valuemin={min} aria-valuemax={Math.round(max)} aria-valuenow={Math.round(width)} tabindex="0" bind:this={handle} onpointerdown={down} onpointermove={move} onpointerup={(event) => finish(false, event.pointerId)} onpointercancel={(event) => finish(true, event.pointerId)} onlostpointercapture={(event) => finish(true, event.pointerId)} onkeydown={key}></div>
 <style>
     .pc-details-divider { position: relative; flex: 0 0 8px; width: 8px; align-self: stretch; cursor: ew-resize; touch-action: none; }
-    .pc-details-divider::after { content: ''; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: var(--pc-border); opacity: .5; }
-    .pc-details-divider:hover::after, .pc-details-divider:focus-visible::after { background: var(--pc-accent); opacity: 1; }
+    .pc-details-divider::after { content: ''; position: absolute; top: 50%; left: 3px; width: 2px; height: 38px; transform: translateY(-50%); background: var(--pc-muted); }
+    .pc-details-divider:hover::after, .pc-details-divider:focus-visible::after { background: var(--pc-accent); }
     .pc-details-divider:focus-visible { outline: 1px solid var(--pc-accent); outline-offset: -1px; }
     @media (max-width: 860px) { .pc-details-divider { display: none; } }
 </style>

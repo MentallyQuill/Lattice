@@ -1,8 +1,8 @@
-import { ownData, inspectCapabilities, fail, freeze, parseRecord, makeRecord } from './contracts.js?v=0.27.1';
-import { reflect, internalize, express } from './analysis.js?v=0.27.1';
-import { shapeContext, advanceState } from './context-state.js?v=0.27.1';
-import { parseRuntimeContext } from '../operations/context-data.js?v=0.27.1';
-import { PROGRESSION_STATE_MODES, describeProgressionState, executeProgressionState } from '../operations/progression-nodes.js?v=0.27.1';
+import { ownData, inspectCapabilities, fail, freeze, parseRecord, makeRecord } from './contracts.js?v=0.27.2';
+import { reflect, internalize, express } from './analysis.js?v=0.27.2';
+import { shapeContext, advanceState } from './context-state.js?v=0.27.2';
+import { parseRuntimeContext } from '../operations/context-data.js?v=0.27.2';
+import { PROGRESSION_STATE_MODES, describeProgressionState, executeProgressionState } from '../operations/progression-nodes.js?v=0.27.2';
 
 const MODES = { reflect: ['character','recall','scene'], internalize: ['experience','pattern','recovery'], express: ['behavior','attention','inner-voice'], context: ['assemble','perspective','focus'], memory: ['read','recall','commit'], state: ['value','curve','track',...PROGRESSION_STATE_MODES] };
 const COMMON = ['mode'];

@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { installMock } from './mock.js';
 installMock();
-const S = await import('../src/state.js?v=0.27.1');
-const { installStarter } = await import('../src/workflow/starters.js?v=0.27.1');
-const { prepareWorkflowProjection, projectPreparedWorkflow } = await import('../src/ui/workflow-surface.js?v=0.27.1');
-const { prepareWorkspaceViews } = await import('../src/ui/workspace-preparation.js?v=0.27.1');
+const S = await import('../src/state.js?v=0.27.2');
+const { installStarter } = await import('../src/workflow/starters.js?v=0.27.2');
+const { prepareWorkflowProjection, projectPreparedWorkflow } = await import('../src/ui/workflow-surface.js?v=0.27.2');
+const { prepareWorkspaceViews } = await import('../src/ui/workspace-preparation.js?v=0.27.2');
 const project = (root, options) => projectPreparedWorkflow(prepareWorkflowProjection(root, options));
 test('preparing the current starter leaves Lattice disabled and the active document unchanged', () => {
     const before = S.activeWorkflow();

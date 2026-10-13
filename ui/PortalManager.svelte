@@ -77,11 +77,11 @@
 </section>
 
 <style>
-    .pc-manager { box-sizing: border-box; width: 390px; max-width: 100%; padding: 14px; border: 1px solid #41433b; border-radius: 4px; background: var(--pc-manager-background, #222321); color: #d3d3d3; box-shadow: inset 0 1px #ffffff08, inset 0 -1px #0005, 0 8px 28px #0005; font-size: 12px; }
+    .pc-manager { box-sizing: border-box; width: 390px; max-width: 100%; padding: 14px; border: 1px solid var(--pc-border); border-radius: var(--pc-r); background: var(--pc-manager-background, var(--pc-panel-solid)); color: var(--pc-text); box-shadow: 0 8px 28px #0005; font-size: 12px; }
     header { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; } h2 { margin: 0 auto 0 0; font-size: 14px; font-weight: 600; }
-    label { display: block; margin-top: 10px; } input:not([type='checkbox']), select { display: block; box-sizing: border-box; width: 100%; margin-top: 5px; padding: 6px 8px; border: 1px solid #43453e; border-radius: 2px; background: #1a1b19; color: #dededb; font: inherit; box-shadow: inset 0 1px 3px #0005; }
-    details { margin-top: 8px; padding: 9px 0 10px; border-top: 1px solid #41433b; } summary { color: #aab0a6; cursor: pointer; } .pc-check { display: flex; align-items: center; gap: 6px; } input[type='checkbox'] { accent-color: var(--SmartThemeQuoteColor, #e18a24); } .pc-consumer { margin-top: 10px; } .pc-consumer .pc-actions { margin-top: 5px; }
-    .pc-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; } button { padding: 5px 8px; border: 1px solid #45473f; border-radius: 2px; background: #353632; color: #d3d3d3; font: inherit; cursor: pointer; box-shadow: inset 0 1px #ffffff08, 0 1px #0004; }
-    button:hover:not(:disabled) { background: #40413b; } :is(button,input,select,summary):focus-visible { outline: 2px solid var(--SmartThemeQuoteColor, #e18a24); outline-offset: 1px; } :disabled { opacity: .5; cursor: default; }
-    .pc-note { margin: 10px 0 0; color: #989d96; overflow-wrap: anywhere; } .pc-error { color: #e58d94; overflow-wrap: anywhere; }
+    label { display: block; margin-top: 10px; } input:not([type='checkbox']), select { display: block; box-sizing: border-box; width: 100%; margin-top: 5px; padding: 6px 8px; border: 1px solid var(--pc-border); border-radius: var(--pc-r-sm); background: var(--pc-field); color: var(--pc-text); font: inherit; box-shadow: none; }
+    details { margin-top: 8px; padding: 9px 0 10px; border-top: 1px solid var(--pc-border); } summary { color: var(--pc-muted); cursor: pointer; } .pc-check { display: flex; align-items: center; gap: 6px; } input[type='checkbox'] { accent-color: var(--pc-accent); } .pc-consumer { margin-top: 10px; } .pc-consumer .pc-actions { margin-top: 5px; }
+    .pc-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; } button { padding: 5px 8px; border: 1px solid var(--pc-border); border-radius: var(--pc-r-sm); background: var(--pc-control); color: var(--pc-text); font: inherit; cursor: pointer; box-shadow: none; }
+    button:hover:not(:disabled) { background: color-mix(in srgb, var(--pc-text) 7%, var(--pc-control)); } :is(button,input,select,summary):focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; } :disabled { opacity: .5; cursor: default; }
+    .pc-note { margin: 10px 0 0; color: var(--pc-muted); overflow-wrap: anywhere; } .pc-error { color: var(--pc-error); overflow-wrap: anywhere; }
 </style>

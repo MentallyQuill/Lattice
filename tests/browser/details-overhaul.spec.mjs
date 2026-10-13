@@ -67,7 +67,7 @@ test('real JSON Decode schema saves as text and survives history',async({page})=
 for(const theme of ['lattice','ash']) for(const width of [220,258,520]) {
     test(`details layout is readable at ${width}px in ${theme}`,async({page},testInfo)=>{
         await setup(page);
-        await page.evaluate(async({theme,width})=>{const h=window.canvasHarness,t=await import('/src/theme.js?v='+h.version);t.setPreset(theme);await h.settle();document.querySelector('.pc-native-workspace').style.setProperty('--pc-details-width',width+'px');},{theme,width});
+        await page.evaluate(async({theme,width})=>{const h=window.canvasHarness,t=await import('/src/theme.js?v='+h.version);t.setPreset(theme);await h.settle();document.querySelector('.pc-body').style.setProperty('--pc-details-width',width+'px');},{theme,width});
         const panel=page.locator('.pc-workspace-details');
         expect(await panel.evaluate(e=>e.scrollWidth-e.clientWidth)).toBeLessThanOrEqual(1);
         await expect(page.getByRole('button',{name:'Add section',exact:true})).toBeVisible();
@@ -91,7 +91,7 @@ for(const theme of ['lattice','ash']) for(const state of ['model','curve','reado
                 const graph=effectiveInstanceWorkflow();graph.mode='native-unified';await h.activate(graph);
             }
             const t=await import('/src/theme.js?v='+h.version); t.setPreset(theme); await h.settle();
-            document.querySelector('.pc-native-workspace').style.setProperty('--pc-details-width','220px');
+            document.querySelector('.pc-body').style.setProperty('--pc-details-width','220px');
         },{state,theme});
         if(state==='readonly') {
             await page.locator('.pc-node[data-id="one"] .pc-native-heading').dblclick();

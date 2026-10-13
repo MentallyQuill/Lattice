@@ -48,7 +48,7 @@ async function paint(page) {
             searchIcon: getComputedStyle(root.querySelector('.profile-search svg')).color,
             scrollbarThumb: getComputedStyle(root.querySelector('.profile-options'), '::-webkit-scrollbar-thumb').backgroundColor,
             scrollbarTrack: getComputedStyle(root.querySelector('.profile-options'), '::-webkit-scrollbar-track').backgroundColor,
-            roles: Object.fromEntries(['text', 'muted', 'border', 'control', 'field', 'accent', 'error'].map(key => [key, resolve('var(--pc-' + key + ')')])),
+            roles: Object.fromEntries(['text', 'muted', 'border', 'control', 'field', 'accent', 'error', 'scrollbar-thumb', 'scrollbar-track'].map(key => [key, resolve('var(--pc-' + key + ')')])),
             panel: resolve('rgb(from var(--pc-panel-solid) r g b / 1)'),
             selectedBackground: resolve('color-mix(in srgb, var(--pc-accent) 14%, rgb(from var(--pc-panel-solid) r g b / 1))'),
             font: getComputedStyle(root.closest('.pc-root')).fontFamily,
@@ -66,8 +66,8 @@ function assertPaint(result) {
     assertColor(result.input.color, result.roles.text, 'profile search text');
     assertColor(result.placeholder, result.roles.muted, 'profile search placeholder');
     assertColor(result.searchIcon, result.roles.muted, 'profile search icon');
-    assertColor(result.scrollbarThumb, result.roles.muted, 'profile scrollbar thumb');
-    assertColor(result.scrollbarTrack, result.panel, 'profile scrollbar track');
+    assertColor(result.scrollbarThumb, result.roles['scrollbar-thumb'], 'profile scrollbar uses shared thumb');
+    assertColor(result.scrollbarTrack, result.roles['scrollbar-track'], 'profile scrollbar uses shared track');
     assertColor(result.model.color, result.roles.muted, 'model text');
     assertColor(result.metadata.color, result.roles.muted, 'profile metadata');
     assertColor(result.selected.color, result.roles.text, 'selected profile text');

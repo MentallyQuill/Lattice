@@ -1,9 +1,9 @@
 // Test-only operation layouts. Production creation supports only unified-basic.
-import { operationDefaults } from '../../src/workflow/catalog.js?v=0.27.1';
-import { starterGraph } from '../../src/workflow/starters.js?v=0.27.1';
-import { createLibrarySubgraph } from '../../src/workflow/library/subgraphs.js?v=0.27.1';
-import { parseSubgraph } from '../../src/workflow/packages.js?v=0.27.1';
-import { definitionRefKey } from '../../src/workflow/definitions.js?v=0.27.1';
+import { operationDefaults } from '../../src/workflow/catalog.js?v=0.27.2';
+import { starterGraph } from '../../src/workflow/starters.js?v=0.27.2';
+import { createLibrarySubgraph } from '../../src/workflow/library/subgraphs.js?v=0.27.2';
+import { parseSubgraph } from '../../src/workflow/packages.js?v=0.27.2';
+import { definitionRefKey } from '../../src/workflow/definitions.js?v=0.27.2';
 const root = id => ({ id:'fixture-'+id, name:id, schema:3,runtime:2,mode:'native-unified',roles:{},nodes:{},wires:{},portals:{},definitions:{},groups:{},view:{x:0,y:0,zoom:1} });
 const add = (graph,id,operation,phase,controls={}) => graph.nodes[id] = {...operationDefaults(operation,controls.mode?{mode:controls.mode}:{}),profileId:null,...controls,id,type:'workflow',operationVersion:1,enabled:true,phase,x:100+Object.keys(graph.nodes).length*310,y:140,w:260};
 const wire = (graph,id,from,to,fromPort='out',toPort='in') => graph.wires[id] = {id,route:'wire',from,fromPort,to,toPort};

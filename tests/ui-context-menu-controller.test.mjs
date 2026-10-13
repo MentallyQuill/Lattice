@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { prepareWorkspaceViews, projectEditorDraw } from '../src/ui/workspace-preparation.js?v=0.27.1';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.1';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.1';
+import { prepareWorkspaceViews, projectEditorDraw } from '../src/ui/workspace-preparation.js?v=0.27.2';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.2';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.2';
 import { siblingWorkflow, twoOutputWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
-import { diagnosticText } from '../src/ui/diagnostics.js?v=0.27.1';
-import { isCommentFrame } from '../src/canvas/comment-frames.js?v=0.27.1';
+import { diagnosticText } from '../src/ui/diagnostics.js?v=0.27.2';
+import { isCommentFrame } from '../src/canvas/comment-frames.js?v=0.27.2';
 
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function actual(name, env) {

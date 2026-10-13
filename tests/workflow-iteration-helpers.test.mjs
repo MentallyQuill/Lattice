@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {executeControl} from '../src/workflow/operations/control-nodes.js?v=0.27.1';
+import {executeControl} from '../src/workflow/operations/control-nodes.js?v=0.27.2';
 const data=value=>({kind:'data',value}),helper={id:'privacy-helper',version:1,semanticHash:'sha256:'+'a'.repeat(64)};
 const node={type:'workflow',operation:'for-each',helper,mode:'projected-state',limit:3,requestBoundPerIteration:0};
 
@@ -24,9 +24,9 @@ test('For Each rejects invalid helper envelope visibility without publishing par
  assert.equal(result.ok,false);assert.equal(result.error.code,'INVALID_ITERATION_RESULT');assert.equal(result.outputs,undefined);
 });
 
-import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.27.1';
-import {executePrimitive} from '../src/workflow/operations/nodes.js?v=0.27.1';
-const compiler=await import('../src/workflow/iteration-helpers.js?v=0.27.1').catch(()=>({}));
+import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.27.2';
+import {executePrimitive} from '../src/workflow/operations/nodes.js?v=0.27.2';
+const compiler=await import('../src/workflow/iteration-helpers.js?v=0.27.2').catch(()=>({}));
 const address={workflowId:'root',instancePath:[],nodeId:'each'};
 const edge=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});
 function definition({id='identity',stateful=false,mode='native-unified',nodes={},wires={},roles={}}={}) {
@@ -117,8 +117,8 @@ test('cancel after awaited child execution and unsafe failures never publish or 
  const failed=await compiler.executeCompiledIteration(compiled.data.token,invocation(fixture),{executeUnit:()=>({ok:false,error:{code:'SECRET-CREDENTIAL',message:'Bearer secret-key',details:{password:'secret-key'}}})});assert.equal(failed.ok,false);assert.equal(JSON.stringify(failed).includes('secret'),false);assert.equal(failed.artifact,undefined);
 });
 
-import {executeModelNode} from '../src/workflow/operations/model-nodes.js?v=0.27.1';
-import {executeDecision} from '../src/workflow/operations/decision-nodes.js?v=0.27.1';
+import {executeModelNode} from '../src/workflow/operations/model-nodes.js?v=0.27.2';
+import {executeDecision} from '../src/workflow/operations/decision-nodes.js?v=0.27.2';
 const requestHelper=(id='mixed')=>definition({id,nodes:{decide:{id:'decide',type:'workflow',operation:'decision',questions:{event:{type:'noul',instructions:'An event?'}}},compose:{id:'compose',type:'workflow',operation:'compose',mode:'template',template:'{{data:}}'},model:{id:'model',type:'workflow',operation:'model-call',outputKind:'data'}},wires:{a:edge('a','entry','out','decide','in'),b:edge('b','decide','out','compose','data'),c:edge('c','compose','out','model','prompt'),d:edge('d','model','out','exit','in')}});
 function requestExecutor(seen,provider){return async(unit,inputs,local)=>{
  if(unit.node.operation==='for-each')return executeControl(unit.node,inputs,local);

@@ -213,7 +213,7 @@ test('blank changed parents still fail the native patch gate through reconstruct
 });
 
 test('exact deletions consume reference permissions without relaxing ordinary blank patch gates', async () => {
-    const revisions = await import('../src/workflow/draft-revisions.js?v=0.27.1');
+    const revisions = await import('../src/workflow/draft-revisions.js?v=0.27.2');
     const text = 'A|Elara|B';
     const parent = { ...rawDraft(text), spans: [{ index: 0, start: 2, end: 7, text: 'Elara' }] };
     const prepared = must(helper.prepareReferenceDraft(parent, { scope: 'whole' }));

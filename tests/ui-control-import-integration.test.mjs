@@ -19,7 +19,7 @@ import { prepareNodeProfileOptions, readNodeProfileMetadata } from '../src/ui/no
 import { activeModelMetadata } from '../src/workflow/model-profiles.js';
 import { workflowDataPresetFor } from '../src/workflow/workflow-data-defaults.js';
 import { safe } from '../src/state.js';
-import * as H from '../src/history.js?v=0.27.1';
+import * as H from '../src/history.js?v=0.27.2';
 
 const operations = ['decision', 'advance-time', 'time-trigger'];
 const scope = { schema: 3, runtime: 2, mode: 'native-unified', workflowId: 'n6-integration', viewPath: [], inDefinition: false };

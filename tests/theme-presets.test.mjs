@@ -12,6 +12,57 @@ const T = await import(`../src/theme.js?v=${version}`);
 const root = document.documentElement;
 const value = key => root.style.getPropertyValue('--pc-' + key);
 
+test('filled accent controls choose readable ink from the accent rather than the panel', () => {
+    for (const [panel, accent, dark] of [
+        ['#f5f5f1', '#e18a24', true],
+        ['#171717', '#142547', false],
+        ['#171717', '#f5e5b0', true],
+    ]) {
+        T.setPreset('ember');
+        T.setColor('panel', panel);
+        T.setColor('block', panel);
+        T.setColor('flow', accent);
+        assert.equal(T.parseColor(value('on-accent')).r < 128, dark, `Readable ink over ${accent} on ${panel}`);
+        const paintedAccent = T.parseColor(value('flow'));
+        assert.ok(T.contrast(T.parseColor(value('on-accent')), paintedAccent) >= 4.5, `${value('on-accent')} over painted ${value('flow')}`);
+    }
+    T.setPreset('ember');
+});
+
+test('filled accent controls follow inherited host quote colors in Ember and Lattice', () => {
+    try {
+        for (const preset of ['ember', 'lattice']) for (const [accent, ink] of [
+            ['#142547', '#ffffff'], ['#f5e5b0', '#1a1a1e'],
+        ]) {
+            root.style.setProperty('--SmartThemeQuoteColor', accent);
+            T.setPreset(preset);
+            assert.equal(value('on-accent'), ink, `${preset} inherited ${accent}`);
+            assert.ok(T.contrast(T.parseColor(value('on-accent')), T.parseColor(accent)) >= 4.5);
+        }
+    } finally {
+        root.style.removeProperty('--SmartThemeQuoteColor');
+        T.setPreset('ember');
+    }
+});
+
+test('run status text fits real light panel and control surfaces even with medium-gray host text', () => {
+    const tokens = { SmartThemeBlurTintColor: '#ffffff', SmartThemeBodyColor: '#666666', SmartThemeEmColor: '#666666', SmartThemeUserMesBlurTintColor: '#eeeeee', SmartThemeBotMesBlurTintColor: '#eeeeee' };
+    try {
+        for (const [token, color] of Object.entries(tokens)) root.style.setProperty('--' + token, color);
+        T.setPreset('ember');
+        for (const role of ['success', 'error', 'warning', 'flow']) {
+            const color = T.parseColor(value('run-' + role + '-text'));
+            assert.ok(color, `${role} run text has a theme color`);
+            for (const surface of ['#ffffff', '#eeeeee']) assert.ok(T.contrast(color, T.parseColor(surface)) >= 4.5, `${role} text on ${surface}`);
+        }
+        const success = T.parseColor(value('run-success-text'));
+        assert.ok(success.g > success.r && success.g > success.b, 'Completed retains its green hue');
+    } finally {
+        for (const token of Object.keys(tokens)) root.style.removeProperty('--' + token);
+        T.setPreset('ember');
+    }
+});
+
 for (const [preset, role] of [['ember', 'error'], ['signal', 'text']]) {
     test(`malformed saved ${preset} ${role} color keeps menu presentation available`, () => {
         T.setPreset(preset);

@@ -1,10 +1,10 @@
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from './definitions.js?v=0.27.1';
-import { cloneWorkflowDocument } from './document.js?v=0.27.1';
-import { validateGraphStructure } from './contracts.js?v=0.27.1';
-import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.1';
-import { definitionChain, ownershipEntries, ownsDefinitionPath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.27.1';
-import { reconcileOwners } from './definition-library.js?v=0.27.1';
-import { operationFor } from './catalog.js?v=0.27.1';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from './definitions.js?v=0.27.2';
+import { cloneWorkflowDocument } from './document.js?v=0.27.2';
+import { validateGraphStructure } from './contracts.js?v=0.27.2';
+import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.2';
+import { definitionChain, ownershipEntries, ownsDefinitionPath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.27.2';
+import { reconcileOwners } from './definition-library.js?v=0.27.2';
+import { operationFor } from './catalog.js?v=0.27.2';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fixture, mouse, dom } from './canvas-fixture.mjs';
-import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.27.1';
-import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.1';
+import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.27.2';
+import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.2';
 
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function controllerKeydown(env) {

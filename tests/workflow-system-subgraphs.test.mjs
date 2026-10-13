@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definition-data.js?v=0.27.1';
-import { resolveWorkflow } from '../src/workflow/resolve.js?v=0.27.1';
+import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definition-data.js?v=0.27.2';
+import { resolveWorkflow } from '../src/workflow/resolve.js?v=0.27.2';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
 
 function system(nodes, wires = {}, interfacePorts = [], id = 'system') {
@@ -99,9 +99,9 @@ test('a disabled incomplete output boundary supplies skipped state to optional a
     graph.nodes.one.enabled = true;
     assert.equal(resolveWorkflow(graph, { target: { workflowId: 'main', instancePath: [], nodeId: 'compose', portId: 'out' } }).error.code, 'MISSING_INPUT');
 });
-import { runWorkflow } from '../src/workflow/runtime.js?v=0.27.1';
-import { validateGraphStructure } from '../src/workflow/contracts.js?v=0.27.1';
-import { isScopedSystemOperation, resolveSystemNode } from '../src/workflow/system-capabilities.js?v=0.27.1';
+import { runWorkflow } from '../src/workflow/runtime.js?v=0.27.2';
+import { validateGraphStructure } from '../src/workflow/contracts.js?v=0.27.2';
+import { isScopedSystemOperation, resolveSystemNode } from '../src/workflow/system-capabilities.js?v=0.27.2';
 
 test('static eligibility uses trusted operation types while portable fields grant no execution authority', async () => {
     for (const operation of ['on-send', 'review-publish', 'scene-context', 'reply-snapshot', 'recall', 'hotkey-arm', 'memory']) {
@@ -151,9 +151,9 @@ test('shared explicit destinations fail before publication, and nested preview/r
         assert.equal(host.saves(), 0); assert.equal(host.c.chatMetadata.latticeDocuments, undefined); host.controller.dispose();
     }
 });
-import { normalizeOccurrences, confirmOccurrences, resolveItemHolders } from '../src/workflow/operations/event-data.js?v=0.27.1';
-import { compileIterationHelper } from '../src/workflow/iteration-helpers.js?v=0.27.1';
-import { prepareNativeSearchCatalog, resolveNativeSearchChoice } from '../src/ui/native-search-catalog.js?v=0.27.1';
+import { normalizeOccurrences, confirmOccurrences, resolveItemHolders } from '../src/workflow/operations/event-data.js?v=0.27.2';
+import { compileIterationHelper } from '../src/workflow/iteration-helpers.js?v=0.27.2';
+import { prepareNativeSearchCatalog, resolveNativeSearchChoice } from '../src/ui/native-search-catalog.js?v=0.27.2';
 
 function nestedStateGraph(kind) {
     const graph = statefulMain(); delete graph.nodes.two;

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createNativeMemoryAdapter } from '../src/workflow/introspection/host-memory.js?v=0.27.1';
-import { makeRecord } from '../src/workflow/introspection/contracts.js?v=0.27.1';
-import { advanceState } from '../src/workflow/introspection/context-state.js?v=0.27.1';
+import { createNativeMemoryAdapter } from '../src/workflow/introspection/host-memory.js?v=0.27.2';
+import { makeRecord } from '../src/workflow/introspection/contracts.js?v=0.27.2';
+import { advanceState } from '../src/workflow/introspection/context-state.js?v=0.27.2';
 async function fixture() {
     let writes=0;
     const c={chatId:'story',characterId:0,groupId:null,characters:[{avatar:'mara.png'}],chatMetadata:{},chat:[{mes:'I draw the sword.',is_user:true},{mes:'The sword killed Orr.',is_user:false,swipe_id:0,swipes:['The sword killed Orr.'],swipe_info:[{gen_started:1,gen_finished:2}],gen_started:1,gen_finished:2}]};
