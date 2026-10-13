@@ -7,7 +7,7 @@ import { prepareDefinitionRegistry, inspectPreparedDefinition } from '../workflo
 import { projectRunRows } from '../workflow/run-state.js?v=0.27.2';
 import { definitionRefKey, nodeBindingOverrideKey } from '../workflow/definition-data.js?v=0.27.2';
 import { inspectGraphArtifacts } from '../workflow/graph-artifacts.js?v=0.27.2';
-import { prepareWorkflowPlanner } from '../workflow/resolve.js?v=0.27.2';
+import { prepareWorkflowPlanner, preparedWorkflowSource } from '../workflow/resolve.js?v=0.27.2';
 import { prepareCompositionViews } from '../workflow/composition-views.js?v=0.27.2';
 import { prepareWorkflowProjection, projectPreparedWorkflow } from './workflow-surface.js?v=0.27.2';
 import { ARTIFACT_KINDS, OPERATIONS, operationFor, portsForNode, phaseForNode } from '../workflow/catalog.js?v=0.27.2';
@@ -45,6 +45,7 @@ export function prepareWorkspaceViews(root, options = {}) {
     const composition = prepareCompositionViews(root, planner); if (!composition.ok) return composition;
     const workflow = prepareWorkflowProjection(root, { ...options, ...(planner ? { planner } : {}) });
     const helperProfiles = prepareNodeProfileOptions(options.profiles ?? [], options.activeModel).map(option => ({ id: option.value, name: option.label }));
+    const helperChoices = iterationHelperChoices(root, helperProfiles);
     const navigation = [], preparedViews = composition.data.views.map(view => {
         const identity = view.instancePath.length ? { kind: 'instance', workflowId: root.id, instancePath: [...view.instancePath] } : rootIdentity(root);
         const wrapper = view.instancePath.length ? definitionChain(root, view.instancePath).at(-1) : null;
@@ -56,7 +57,7 @@ export function prepareWorkspaceViews(root, options = {}) {
         const drawBase = prepareEditorDrawBase(view, root.definitions, nodeId => primitivePhases.get(addressKey({ workflowId: root.id, instancePath: view.instancePath, nodeId })));
         // Saved primitive null means inheritance; only an explicit enclosing
         // instance null map blocks it. Cache that source distinction with the view.
-        drawBase.iterationHelpers = iterationHelperChoices(root, helperProfiles); drawBase.iterationBindings = {}; drawBase.bindingBlocks = {}; drawBase.instanceBindingSources = {}; drawBase.profileDefaultModels = {}; drawBase.instanceBindingValues = {};
+        drawBase.iterationHelpers = freeze(structuredClone(helperChoices)); drawBase.iterationBindings = {}; drawBase.bindingBlocks = {}; drawBase.instanceBindingSources = {}; drawBase.profileDefaultModels = {}; drawBase.instanceBindingValues = {};
         const chain = view.instancePath.length ? definitionChain(root, view.instancePath) : [];
         let helperRoles=structuredClone(root.roles??{});
         for(const owner of chain){
@@ -83,6 +84,17 @@ export function prepareWorkspaceViews(root, options = {}) {
     const idleRunRows=projectRunRows({plan:{workflowId:root.id,hierarchy:inventory.hierarchy},nodes:inventory.primitives.map(unit=>({...unit,included:unit.enabled!==false,status:'not-run',attempts:0,durationMs:null,request:null}))});
     const previewChoices = preparedViews.flatMap(view => previewChoicesFor(view, projectPreparedWorkflow(workflow, { viewPath: view.identity.instancePath ?? [] }).targets));
     return { ok: true, data: { navigation, preparedViews, workflow, planner, idleRunRows, previewChoices, reviewTerminals: projectPreparedWorkflow(workflow).reviewTerminals ?? [] } };
+}
+/** Checked root drawing geometry only; examples never prepare workspace panels, helpers or run rows. */
+export function prepareWorkflowThumbnail(root, options = {}) {
+    const prepared = prepareWorkflowPlanner(root, options?.artifacts); if (!prepared.ok) return prepared;
+    const planner = prepared.data, composition = prepareCompositionViews(root, planner); if (!composition.ok) return composition;
+    const view = composition.data.views.find(view => !view.instancePath.length);
+    if (!view) return { ok: false, error: { code: 'MALFORMED_WORKFLOW', message: 'Expected an admitted root workflow view.' } };
+    const source = preparedWorkflowSource(root, planner);
+    if (!source) return { ok: false, error: { code: 'INVALID_PREPARED_PLANNER', message: 'Use the prepared planner belonging to this exact workflow.' } };
+    const primitivePhases = new Map(planner.inventory.primitives.map(unit => [addressKey(unit.address), unit.phase]));
+    return { ok: true, data: prepareEditorDrawBase(view, source.definitions, nodeId => primitivePhases.get(addressKey({ workflowId: source.id, instancePath: [], nodeId }))) };
 }
 /** Checked single-card measurement data, never a full-root commit candidate. */
 export function prepareNodePlacement(root, { nodeId, viewPath = [], artifacts } = {}) {

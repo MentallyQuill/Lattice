@@ -1,5 +1,5 @@
-import { listWorkflowExampleResults } from '../workflow/examples.js?v=0.27.2';
-import { prepareWorkspaceViews } from './workspace-preparation.js?v=0.27.2';
+import { listWorkflowExampleResults, workflowExampleCatalogRevision } from '../workflow/examples.js?v=0.27.2';
+import { prepareWorkflowThumbnail } from './workspace-preparation.js?v=0.27.2';
 import { nodeCards } from '../canvas/presentation.js?v=0.27.2';
 import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.2';
 import { buildConnectionRoute } from '../canvas/connection-route.js?v=0.27.2';
@@ -17,24 +17,28 @@ const freeze = value => {
 
 /** Native preparation only: no host context, runtime, model binding, or execution. */
 export function projectWorkflowExamples() {
+    const sourceRevision = workflowExampleCatalogRevision();
+    const revision = sourceRevision === null ? null : `${PRESENTATION_REVISION}:${sourceRevision}`;
+    if (revision !== null && revision === cacheKey) return cachedTiles;
     const examples = listWorkflowExampleResults();
-    const key = JSON.stringify([PRESENTATION_REVISION, examples]);
-    if (key === cacheKey) return cachedTiles;
     const tiles = examples.map(example => {
+        const searchable = [example.number, example.title, example.goal, JSON.stringify(example.lesson ?? {})];
         const tile = { id: example.id, number: example.number, title: example.title, goal: example.goal, lesson: example.lesson };
-        if (!example.result.ok) return { ...tile, thumbnail: null, issue: diagnosticText(example.result.error, { action: 'open this example' }) };
-        try { return { ...tile, thumbnail: projectThumbnail(example.result.data), issue: '' }; }
-        catch (error) { return { ...tile, thumbnail: null, issue: diagnosticText(error, { action: 'preview this example' }) }; }
+        const withSearch = thumbnail => ({ ...tile, searchText: [...searchable, ...(thumbnail?.nodes.map(node => node.title) ?? [])].join(' ').toLocaleLowerCase() });
+        if (!example.result.ok) return { ...withSearch(null), thumbnail: null, issue: diagnosticText(example.result.error, { action: 'open this example' }) };
+        try { const thumbnail = projectThumbnail(example.result.data); return { ...withSearch(thumbnail), thumbnail, issue: '' }; }
+        catch (error) { return { ...withSearch(null), thumbnail: null, issue: diagnosticText(error, { action: 'preview this example' }) }; }
     });
     // Theme colors stay live CSS roles in the SVG; cached geometry serves every theme.
-    cachedTiles = freeze(tiles); cacheKey = key;
-    return cachedTiles;
+    const projected = freeze(tiles);
+    if (revision !== null) { cachedTiles = projected; cacheKey = revision; }
+    return projected;
 }
 
 function projectThumbnail(graph) {
-    const prepared = prepareWorkspaceViews(graph);
+    const prepared = prepareWorkflowThumbnail(graph);
     if (!prepared.ok) throw new Error(`Cannot preview example ${graph.name}: ${prepared.error?.message || 'Invalid workflow'}`);
-    const drawing = prepared.data.preparedViews.find(view => view.identity.kind === 'root').drawBase;
+    const drawing = prepared.data;
     const comments = Object.values(drawing.nodes).filter(isCommentFrame).map(node => ({
         id: node.id, x: node.x, y: node.y, w: node.w, h: node.h,
         title: node.title || 'Comment', content: node.content || '', color: node.color || '#637d89',
@@ -45,7 +49,7 @@ function projectThumbnail(graph) {
         const h = 32 + rows * 24 + (card.hostResult ? 28 : 0) + (card.type === 'note' ? 42 : 0);
         return {
             id: card.id, x: card.x, y: card.y, w: card.w, h, title: card.title,
-            className: card.className, iconPath: card.iconPath, body: card.body,
+            className: card.className, iconPath: card.iconPath, body: card.body, compact: card.compact,
             ports: card.ports.map(port => ({ ...port, x: card.x + (port.side === 'left' ? 12 : card.w - 12), y: card.y + 28 + (port.row - 0.5) * 24 })),
         };
     });

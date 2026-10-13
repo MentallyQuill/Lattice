@@ -103,7 +103,7 @@ function boot() {
             previous = next; paintSendbar();
         });
         onWorkflowActivated(() => {
-            previous = snapshot(); UI.refreshIfOpen(); paintSendbar();
+            previous = snapshot(); paintSendbar();
         });
         applyTheme();
         for (const name of ['CHAT_CHANGED', 'MESSAGE_RECEIVED', 'MESSAGE_SENT', 'MESSAGE_DELETED', 'MESSAGE_SWIPED', 'MESSAGE_EDITED']) {

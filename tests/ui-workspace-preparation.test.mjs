@@ -13,6 +13,36 @@ import { readNodePresentation } from '../src/ui/node-palette.js?v=0.27.2';
 import { definitionRefKey } from '../src/workflow/definition-data.js?v=0.27.2';
 const api = await import('../src/ui/workspace-preparation.js?v=0.27.2');
 
+test('workflow thumbnails reuse root editor geometry without preparing workspace-only data', async () => {
+    assert.equal(typeof api.prepareWorkflowThumbnail, 'function');
+    const { siblingWorkflow } = await import('./fixtures/workflow-prepared-fixture.mjs');
+    const root = siblingWorkflow();
+    let bindings = 0;
+    const workspace = api.prepareWorkspaceViews(root, { resolveBinding: () => { bindings++; return { ok: true, data: {} }; } });
+    assert.equal(workspace.ok, true, JSON.stringify(workspace));
+    const beforeThumbnail = bindings;
+    const thumbnail = api.prepareWorkflowThumbnail(root, { resolveBinding: () => { bindings++; return { ok: true, data: {} }; } });
+    assert.equal(thumbnail.ok, true, JSON.stringify(thumbnail));
+    const editorRoot=structuredClone(workspace.data.preparedViews.find(view => view.identity.kind === 'root').drawBase);
+    for (const key of ['iterationHelpers', 'iterationBindings', 'bindingBlocks', 'instanceBindingSources', 'profileDefaultModels', 'instanceBindingValues']) delete editorRoot[key];
+    assert.deepEqual(thumbnail.data, editorRoot);
+    assert.equal(bindings, beforeThumbnail, 'thumbnail preparation never resolves host bindings');
+    for (const key of ['iterationHelpers', 'iterationBindings', 'bindingBlocks', 'instanceBindingSources', 'profileDefaultModels', 'instanceBindingValues']) assert.equal(Object.hasOwn(thumbnail.data, key), false, key);
+});
+
+test('workflow thumbnails reject malformed roots and stale checked artifacts explicitly', async () => {
+    assert.equal(typeof api.prepareWorkflowThumbnail, 'function');
+    const { prepareGraphArtifacts } = await import('../src/workflow/graph-artifacts.js?v=0.27.2');
+    const root = starterGraph('structured-guidance'), artifacts = prepareGraphArtifacts(root).data;
+    const checked = api.prepareWorkflowThumbnail(root, { artifacts });
+    assert.equal(checked.ok, true, JSON.stringify(checked));
+    const changed = structuredClone(root); Object.values(changed.nodes)[0].operation = 'missing-operation';
+    const stale = api.prepareWorkflowThumbnail(changed, { artifacts });
+    assert.equal(stale.ok, false); assert.equal(stale.error.code, 'INVALID_GRAPH_ARTIFACTS');
+    const malformed = api.prepareWorkflowThumbnail({ ...root, nodes: null });
+    assert.equal(malformed.ok, false); assert.equal(malformed.error.code, 'MALFORMED_WORKFLOW');
+});
+
 test('copied explicit null blockers project as blocked and choosing inheritance restores the parent role', async () => {
     const { effectiveInstanceWorkflow } = await import('./fixtures/workflow-effective-instance.mjs');
     const { makeLocalCopy, prepareNativeNodeEdit } = await import('../src/workflow/definition-library.js?v=0.27.2');

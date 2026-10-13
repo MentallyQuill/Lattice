@@ -84,7 +84,7 @@ let documentRenderReconciliation = null;
 let workflowFiles = null, documentCommands = null, fileStorageIssue = '';
 let storyDocumentSetup = null, nodeWorkflowDataSetup = null, pendingConfiguredNode = null;
 const nodeDocumentCaptures = new Map(), nodeCreationScopes = new WeakMap();
-const editorCaptures = new WeakMap(), workflowNodePresentations = new WeakMap();
+const editorCaptures = new WeakMap(), exampleContexts = new WeakMap(), workflowNodePresentations = new WeakMap();
 const commentCaptures = new WeakMap(), commentPresentationEffects = new WeakMap(), pendingCommentPresentation = new WeakMap();
 const subgraphPresentationEffects = new WeakMap(), pendingSubgraphPresentation = new WeakMap();
 // Qualified editor context and cached tabs share the existing root workflow runner.
@@ -582,6 +582,8 @@ function build() {
     if (root) return;
     let publishedCameraMode = null;
     workbench = createWorkbench({
+        captureExampleContext,
+        exampleContextCurrent,
         openExample: onOpenExample,
         refreshExamples: refreshExampleCatalog,
         setEnabled(enabled) { settings().enabled = enabled; save(); renderStatus(); },
@@ -608,7 +610,7 @@ function build() {
     root = workbench.root; hookHistory();
     onWorkflowActivated(({ graph }) => {
         documentTransition = true; workflowSession.syncDocument(); documentTransition = false;
-        if (isOpen()) { current = graph; setCanvasGraph(); renderAll(); }
+        if (isOpen()) { current = graph; setCanvasGraph(); renderAll({ canvasReady: true }); }
     });
     documentSession.subscribe(event => {
         const pending = documentRenderReconciliation;
@@ -705,7 +707,8 @@ function build() {
         if (['Delete', 'Backspace'].includes(event.key)) { event.preventDefault(); canvas.deleteSelection(); }
     });
 }
-function refreshExampleCatalog() {
+function refreshExampleCatalog(context) {
+    if (!exampleContextCurrent(context)) return false;
     try {
         workbench.update({ examples: projectWorkflowExamples(), examplesIssue: '' });
         return true;
@@ -1164,7 +1167,18 @@ function acceptImportReview() {
     renderAll(); flashHistoryNote(`Imported ${ids.length} nodes`);
 }
 
-async function onOpenExample(id) {
+function captureExampleContext() {
+    const editor = captureEditor(true);
+    const token = Object.freeze({});
+    exampleContexts.set(token, { root: current, epoch: uiEpoch, editor: editor.ok ? editor.data : null, document: documentSession.capture() });
+    return token;
+}
+function exampleContextCurrent(token) {
+    const captured = exampleContexts.get(token);
+    return !!captured && isOpen() && captured.root === current && captured.epoch === uiEpoch && documentSession.stillCurrent(captured.document) && (!captured.editor || editorCurrent(captured.editor));
+}
+async function onOpenExample(id, context) {
+    if (!exampleContextCurrent(context)) return false;
     const result = await ensureDocumentCommands().example(id);
     if (!result.ok) return false;
     const graph = current, epoch = uiEpoch;

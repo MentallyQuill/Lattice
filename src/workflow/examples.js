@@ -8,19 +8,82 @@ const ALL_WORKFLOW_EXAMPLES = [...REMASTERED_WORKFLOW_EXAMPLE_DATA, ...UNIFIED_W
 const lessonMetadata = lesson => lesson ? structuredClone(lesson) : undefined;
 let sequence = 0;
 const fail = (code, message) => ({ ok: false, error: { code, message } });
-function admitExamplePackages(entry) {
-    try {
-        if (!Array.isArray(entry.packages) || !entry.packages.length) return fail('MALFORMED_EXAMPLE', 'That workflow example has no primary package.');
-        const graphs = [];
-        for (const envelope of entry.packages) {
-            const parsed = parseWorkflow(JSON.stringify(envelope));
-            if (!parsed.ok) return parsed;
-            const validation = validateWorkflow(parsed.data);
-            if (!validation.ok) return validation;
-            graphs.push(parsed.data);
+const admissionCache = new WeakMap();
+const deepFreeze = value => {
+    if (value && (typeof value === 'object' || typeof value === 'function') && !Object.isFrozen(value)) {
+        for (const descriptor of Object.values(Object.getOwnPropertyDescriptors(value))) if ('value' in descriptor) deepFreeze(descriptor.value);
+        Object.freeze(value);
+    }
+    return value;
+};
+const MAX_REVISION_VALUES = 200_000;
+const MAX_REVISION_LENGTH = 2_000_000;
+function sourceRevision(source) {
+    let values = 0, sourceCharacters = 0;
+    const active = new WeakSet();
+    const visit = value => {
+        if (++values > MAX_REVISION_VALUES) return false;
+        if (value === null || typeof value === 'boolean') return true;
+        if (typeof value === 'number') return Number.isFinite(value);
+        if (typeof value === 'string') {
+            sourceCharacters += value.length;
+            return sourceCharacters <= MAX_REVISION_LENGTH;
         }
-        return { ok: true, data: graphs };
-    } catch { return fail('MALFORMED_EXAMPLE', 'That workflow example contains malformed local package data.'); }
+        if (typeof value !== 'object' || active.has(value)) return false;
+        const array = Array.isArray(value), prototype = Object.getPrototypeOf(value);
+        if (array ? prototype !== Array.prototype : prototype !== Object.prototype && prototype !== null) return false;
+        const inheritedToJSON = Object.getOwnPropertyDescriptor(prototype ?? {}, 'toJSON');
+        if (inheritedToJSON) return false;
+        const descriptors = Object.getOwnPropertyDescriptors(value), keys = Reflect.ownKeys(descriptors);
+        if (keys.some(key => typeof key === 'symbol')) return false;
+        active.add(value);
+        if (array) {
+            const length = descriptors.length;
+            if (!length || !('value' in length) || !Number.isSafeInteger(length.value) || length.value < 0) { active.delete(value); return false; }
+            const itemKeys = keys.filter(key => key !== 'length');
+            if (itemKeys.length !== length.value || itemKeys.some((key, index) => key !== String(index))) { active.delete(value); return false; }
+        }
+        for (const key of keys) {
+            if (array && key === 'length') continue;
+            const descriptor = descriptors[key];
+            sourceCharacters += key.length;
+            if (!descriptor.enumerable || !('value' in descriptor) || sourceCharacters > MAX_REVISION_LENGTH || !visit(descriptor.value)) {
+                active.delete(value);
+                return false;
+            }
+        }
+        active.delete(value);
+        return true;
+    };
+    try {
+        if (!visit(source)) return null;
+        const serialized = JSON.stringify(source);
+        return typeof serialized === 'string' && serialized.length <= MAX_REVISION_LENGTH ? serialized : null;
+    } catch { return null; }
+}
+const detachedResult = admitted => admitted.ok
+    ? { ok: true, data: structuredClone(admitted.data) }
+    : { ok: false, error: structuredClone(admitted.error) };
+function admitExamplePackages(entry) {
+    const revision = sourceRevision(entry), cached = admissionCache.get(entry);
+    if (revision !== null && cached?.revision === revision) return cached.result;
+    if (revision === null) admissionCache.delete(entry);
+    let result;
+    try {
+        if (!Array.isArray(entry.packages) || !entry.packages.length) result = fail('MALFORMED_EXAMPLE', 'That workflow example has no primary package.');
+        const graphs = [];
+        if (!result) for (const envelope of entry.packages) {
+            const parsed = parseWorkflow(JSON.stringify(envelope));
+            if (!parsed.ok) { result = parsed; break; }
+            const validation = validateWorkflow(parsed.data);
+            if (!validation.ok) { result = validation; break; }
+            graphs.push(deepFreeze(parsed.data));
+        }
+        result ??= { ok: true, data: deepFreeze(graphs) };
+    } catch { result = fail('MALFORMED_EXAMPLE', 'That workflow example contains malformed local package data.'); }
+    result = deepFreeze(result);
+    if (revision !== null) admissionCache.set(entry, { revision, result });
+    return result;
 }
 function independentCopy(source) {
     const cloned = cloneWorkflowDocument(source);
@@ -58,10 +121,10 @@ function independentCopy(source) {
 
 /** Read independent primary graph data from the local portable example catalog. */
 export function listWorkflowExamples() {
-    return REMASTERED_WORKFLOW_EXAMPLE_DATA.map(({ id, number, title, goal, lesson, packages }) => {
-        const parsed = parseWorkflow(JSON.stringify(packages[0]));
-        if (!parsed.ok) throw new Error(`${title}: ${parsed.error.message}`);
-        return { id, number, title, goal, lesson: lessonMetadata(lesson), graph: parsed.data };
+    return REMASTERED_WORKFLOW_EXAMPLE_DATA.map(entry => {
+        const { id, number, title, goal, lesson } = entry, admitted = admitExamplePackages(entry);
+        if (!admitted.ok) throw new Error(`${title}: ${admitted.error.message}`);
+        return { id, number, title, goal, lesson: lessonMetadata(lesson), graph: structuredClone(admitted.data[0]) };
     });
 }
 
@@ -72,8 +135,14 @@ export function listWorkflowExamples() {
 export function listWorkflowExampleResults() {
     return REMASTERED_WORKFLOW_EXAMPLE_DATA.map(entry => {
         const { id, number, title, goal } = entry, admitted = admitExamplePackages(entry);
-        return { id, number, title, goal, lesson: lessonMetadata(entry.lesson), result: admitted.ok ? { ok: true, data: admitted.data[0] } : admitted };
+        const result = detachedResult(admitted);
+        return { id, number, title, goal, lesson: lessonMetadata(entry.lesson), result: result.ok ? { ok: true, data: result.data[0] } : result };
     });
+}
+
+/** Exact bounded revision for plain value-only JSON sources; unsafe shapes are uncacheable. */
+export function workflowExampleCatalogRevision() {
+    return sourceRevision(REMASTERED_WORKFLOW_EXAMPLE_DATA);
 }
 
 /** Prepare detached local roots. Saving, activation and running belong to the caller.
@@ -84,7 +153,7 @@ export function installWorkflowExample(id) {
     const entry = ALL_WORKFLOW_EXAMPLES.find(entry => entry.id === id);
     if (!entry) return fail('UNKNOWN_EXAMPLE', 'That workflow example is unavailable.');
     const admitted = admitExamplePackages(entry);
-    if (!admitted.ok) return admitted;
+    if (!admitted.ok) return detachedResult(admitted);
     const prepared = [];
     for (const graph of admitted.data) {
         const result = independentCopy(graph);

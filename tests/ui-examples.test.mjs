@@ -19,14 +19,16 @@ function fixture() {
     }; return { session, original, notices, companions, activations, prompts, env, controller: createWorkflowDocumentController(env) };
 }
 test('catalog failure leaves the workspace available and a retry restores its tiles', async () => {
-    const updates = [], notices = [], tiles = [{ id: 'lesson-01', title: '1. Follow a reply from Send to Review' }]; let fail = true;
+    const updates = [], notices = [], tiles = [{ id: 'lesson-01', title: '1. Follow a reply from Send to Review' }], authority = {}; let fail = true;
     const env = { projectWorkflowExamples() { if (fail) throw new Error('Broken catalog: private example contents'); return tiles; }, workbench: { update: value => updates.push(value) }, diagnosticText, presentDiagnostic, safe: fn => fn(),
-        globalThis: { toastr: { error: message => notices.push({ message, type: 'error' }) } } };
+        exampleContextCurrent: value => value === authority, globalThis: { toastr: { error: message => notices.push({ message, type: 'error' }) } } };
     env.toast = await controllerFunction('toast', env);
-    const refresh = await controllerFunction('refreshExampleCatalog', env); assert.equal(refresh(), false);
+    const refresh = await controllerFunction('refreshExampleCatalog', env);
+    assert.equal(refresh({}), false); assert.deepEqual(updates, [], 'A stale deferred refresh does no catalog or UI work');
+    assert.equal(refresh(authority), false);
     assert.match(updates.at(-1).examplesIssue, /Lattice could not complete this action/); assert.doesNotMatch(updates.at(-1).examplesIssue, /Broken catalog|private example contents/);
     assert.equal(notices.at(-1).type, 'error'); assert.match(notices.at(-1).message, /Lattice could not complete this action/); assert.doesNotMatch(notices.at(-1).message, /Broken catalog|private example contents/);
-    fail = false; assert.equal(refresh(), true); assert.deepEqual(updates.at(-1), { examples: tiles, examplesIssue: '' });
+    fail = false; assert.equal(refresh(authority), true); assert.deepEqual(updates.at(-1), { examples: tiles, examplesIssue: '' });
 });
 test('bundled example opens a detached unsaved document and keeps native recents separate', async () => {
     const f = fixture(), before = structuredClone(f.original); assert.equal((await f.controller.example('lesson-01')).ok, true);
@@ -53,9 +55,35 @@ test('stale example results cannot install their primary document or retain comp
 });
 test('example fitting remains attached to the opened root when a child tab is entered before layout settles', async () => {
     for (const enterChild of [false, true]) {
-        const f = fixture(), frames = []; let fitted = 0, kind = 'root';
-        const env = { current: f.original, uiEpoch: 1, ensureDocumentCommands: () => f.controller, requestAnimationFrame: callback => frames.push(callback), stillEditing: (value, epoch) => env.current === value && env.uiEpoch === epoch, graphViews: { readEditor: () => ({ view: { identity: { kind } } }) }, canvas: { fit() { fitted++; } } };
+        const f = fixture(), frames = [], authority = {}; let fitted = 0, kind = 'root';
+        const env = { current: f.original, uiEpoch: 1, exampleContextCurrent: value => value === authority, ensureDocumentCommands: () => f.controller, requestAnimationFrame: callback => frames.push(callback), stillEditing: (value, epoch) => env.current === value && env.uiEpoch === epoch, graphViews: { readEditor: () => ({ view: { identity: { kind } } }) }, canvas: { fit() { fitted++; } } };
         f.env.activate = (value, options) => { f.session.activate(value, options); env.current = value; env.uiEpoch++; };
-        assert.equal(await (await controllerFunction('onOpenExample', env))('lesson-01'), true); if (enterChild) kind = 'instance'; while (frames.length) frames.shift()(); assert.equal(fitted, enterChild ? 0 : 1);
+        assert.equal(await (await controllerFunction('onOpenExample', env))('lesson-01', authority), true); if (enterChild) kind = 'instance'; while (frames.length) frames.shift()(); assert.equal(fitted, enterChild ? 0 : 1);
     }
+});
+
+test('stale example authority is rejected before document replacement starts', async () => {
+    let replacements = 0;
+    const open = await controllerFunction('onOpenExample', {
+        exampleContextCurrent: () => false,
+        ensureDocumentCommands() { replacements++; return { example: async () => ({ ok: true }) }; },
+    });
+    assert.equal(await open('lesson-01', {}), false);
+    assert.equal(replacements, 0);
+});
+
+test('example authority combines private workspace, editor and document lifetimes', async () => {
+    const exampleContexts = new WeakMap(), root = graph('authority-root'), editor = {}, document = {};
+    const env = {
+        exampleContexts, current: root, uiEpoch: 7,
+        captureEditor: () => ({ ok: true, data: editor }),
+        documentSession: { capture: () => document, stillCurrent: token => token === document },
+        isOpen: () => true, editorCurrent: token => token === editor,
+    };
+    const capture = await controllerFunction('captureExampleContext', env), current = await controllerFunction('exampleContextCurrent', env);
+    const authority = capture();
+    assert.equal(Object.isFrozen(authority), true);
+    assert.equal(current(authority), true);
+    env.uiEpoch++;
+    assert.equal(current(authority), false, 'Closing, reopening, or changing the workspace invalidates the authority');
 });

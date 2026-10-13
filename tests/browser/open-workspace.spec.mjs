@@ -3,7 +3,8 @@ import { test, expect } from '@playwright/test';
 // Observe the actual modules delivered to the browser; production exports stay unchanged.
 async function observeOpening(page) {
     await page.addInitScript(() => {
-        window.openWork = { examples: 0, projections: 0, renders: 0, scenes: 0 };
+        window.showOpenFilePicker = undefined;
+        window.openWork = { examples: 0, preparations: 0, projections: 0, renders: 0, scenes: 0 };
     });
     await page.route('**/src/ui/example-catalog.js?*', async route => {
         const response = await route.fetch();
@@ -16,6 +17,9 @@ async function observeOpening(page) {
     await page.route('**/src/ui/controller.js?*', async route => {
         const response = await route.fetch();
         const body = (await response.text()).replace(
+            'function prepareWorkspaceDocument(change = null) {',
+            'function prepareWorkspaceDocument(change = null) {\n    window.openWork.preparations++;',
+        ).replace(
             'function updateWorkflowProjection() {',
             'function updateWorkflowProjection() {\n    window.openWork.projections++;',
         ) + `
@@ -45,6 +49,38 @@ test('ordinary cold and warm opening defer example preparation until the Example
     await expect(dialog.locator('.pc-example-tile')).toHaveCount(30);
     expect(await page.evaluate(() => window.openWork.examples)).toBe(1);
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
+});
+
+test('opening a real example prepares and publishes the activated workflow once', async ({ page }) => {
+    await observeOpening(page);
+    await page.getByRole('menuitem', { name: 'File', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Open examples…', exact: true }).click();
+    await page.evaluate(() => { Object.assign(window.openWork, { preparations: 0, renders: 0, scenes: 0 }); });
+    await page.getByRole('button', { name: 'Follow a reply from Send to Review', exact: true }).click();
+    const guard = page.getByRole('dialog', { name: 'Save workflow changes?', exact: true });
+    if (await guard.isVisible()) await guard.getByRole('button', { name: "Don't Save", exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Examples', exact: true })).toHaveCount(0);
+    expect(await page.evaluate(() => ({ preparations: window.openWork.preparations, renders: window.openWork.renders, scenes: window.openWork.scenes }))).toEqual({ preparations: 1, renders: 0, scenes: 1 });
+});
+
+test('File Open prepares and publishes the activated workflow once', async ({ page }) => {
+    await observeOpening(page);
+    const file = await page.evaluate(() => {
+        const h = window.canvasHarness, value = JSON.parse(h.S.exportGraph(h.graph));
+        value.graph.name = 'Single activation file';
+        return value;
+    });
+    await page.evaluate(() => { Object.assign(window.openWork, { preparations: 0, renders: 0, scenes: 0 }); });
+    const [chooser] = await Promise.all([
+        page.waitForEvent('filechooser'),
+        page.getByRole('menuitem', { name: 'File', exact: true }).click().then(() => page.getByRole('menuitem', { name: 'Open workflow…', exact: true }).click()),
+    ]);
+    await chooser.setFiles({ name: 'single-activation.workflow.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
+    const guard = page.getByRole('dialog', { name: 'Save workflow changes?', exact: true });
+    await expect.poll(async () => await guard.isVisible() || await page.evaluate(() => window.canvasHarness.graph.name === 'Single activation file')).toBe(true);
+    if (await guard.isVisible()) await guard.getByRole('button', { name: "Don't Save", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.canvasHarness.graph.name)).toBe('Single activation file');
+    expect(await page.evaluate(() => ({ preparations: window.openWork.preparations, renders: window.openWork.renders, scenes: window.openWork.scenes }))).toEqual({ preparations: 1, renders: 0, scenes: 1 });
 });
 
 test('reopening admits closed authored edits and same-ID replacements with fresh write authority', async ({ page }) => {
