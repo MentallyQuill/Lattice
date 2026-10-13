@@ -102,9 +102,9 @@ test('Condition compares object content independently of JSON property order',as
 
 
 test('Branch, Join and privacy-inherited report envelopes retain live Matches.value identity', async () => {
-    const { scanPatternDraft, getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
-    const { preserveArtifactPrivacy } = await import('../src/workflow/artifact-privacy.js?v=0.27.0');
-    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.0');
+    const { scanPatternDraft, getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.1');
+    const { preserveArtifactPrivacy } = await import('../src/workflow/artifact-privacy.js?v=0.27.1');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.1');
     const { settings, slots } = await import('./helpers/pattern-routing-fixtures.mjs');
     const input = { kind: 'draft', text: 'First.\n\n1 3\n\nLast.', source: { originalText: 'First.\n\n1 3\n\nLast.' } };
     const scanned = await scanPatternDraft(input, settings()); assert.equal(scanned.ok, true);
@@ -125,8 +125,8 @@ test('Branch, Join and privacy-inherited report envelopes retain live Matches.va
 });
 
 test('Collect and For Each descriptive copies cannot recover live Filter evidence or Draft authority', async () => {
-    const { scanPatternDraft, getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
-    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.0');
+    const { scanPatternDraft, getPatternReportBinding } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.1');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.1');
     const { settings, slots } = await import('./helpers/pattern-routing-fixtures.mjs');
     const input = { kind: 'draft', text: 'First.\n1\nLast.', source: { originalText: 'First.\n1\nLast.' } };
     const scan = await scanPatternDraft(input, settings()), report = scan.outputs.matches;

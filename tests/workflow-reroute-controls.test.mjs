@@ -4,7 +4,7 @@ import { ARTIFACT_KINDS, describeOperation, operationFor, operationDefaults } fr
 import { prepareNodeControlChange } from '../src/workflow/ports.js';
 import { prepareNativeNodeEdit, makeLocalCopy } from '../src/workflow/definition-library.js';
 import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definitions.js';
-import * as history from '../src/history.js?v=0.27.0';
+import * as history from '../src/history.js?v=0.27.1';
 
 const must = result => { assert.equal(result.ok, true, JSON.stringify(result.error)); return result.data; };
 let sequence = 0;

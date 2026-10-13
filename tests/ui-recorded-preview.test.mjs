@@ -318,8 +318,8 @@ test('report display bounds label partial retained evidence, preserve counts and
 
 
 test('actual synthetic Pattern-to-Filter capture projects typed reports beside exact final Draft output', async () => {
-    const { scanPatternDraft } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.0');
-    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.0');
+    const { scanPatternDraft } = await import('../src/workflow/operations/pattern-engine.js?v=0.27.1');
+    const { filterPatternDraft } = await import('../src/workflow/operations/filter-text.js?v=0.27.1');
     const body = 'First.\r\n\r\n' + '1 '.repeat(12) + '3 3\r\n\r\nLast.';
     const draft = { kind: 'draft', text: body, source: { originalText: body, token: 'PRIVATE_AUTHORITY' } };
     const scanned = await scanPatternDraft(draft, { ...patternReport().settings, rules: patternReport().rules.map(({ count, ...rule }) => rule), exemptions: [], protectedLiterals: [], timeoutMs: 1000 });

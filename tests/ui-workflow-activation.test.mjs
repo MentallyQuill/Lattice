@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { installMock } from './mock.js';
-import { starterGraph } from '../src/workflow/starters.js?v=0.27.0';
-import { prepareWorkflowProjection, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.0';
-import { createWorkflowDocumentController } from '../src/ui/document-controller.js?v=0.27.0';
-import { serializeWorkflowDocument } from '../src/workflow/document-file.js?v=0.27.0';
+import { starterGraph } from '../src/workflow/starters.js?v=0.27.1';
+import { prepareWorkflowProjection, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.1';
+import { createWorkflowDocumentController } from '../src/ui/document-controller.js?v=0.27.1';
+import { serializeWorkflowDocument } from '../src/workflow/document-file.js?v=0.27.1';
 installMock();
-const S = await import('../src/state.js?v=0.27.0');
+const S = await import('../src/state.js?v=0.27.1');
 const ok = data => ({ ok: true, data });
 function fixture() {
     const original = S.createGraph('Current graph');

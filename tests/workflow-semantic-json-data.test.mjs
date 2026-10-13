@@ -4,7 +4,7 @@ import {ownJsonData} from '../src/workflow/semantic-json-data.js';
 import {safeWorkflowData,validateGraphStructure} from '../src/workflow/contracts.js';
 import {cloneDefinitionData,computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js';
 import {captureGraphEditContext,commitPreparedGraph} from '../src/workflow/transactions.js';
-import * as H from '../src/history.js?v=0.27.0';
+import * as H from '../src/history.js?v=0.27.1';
 import {prepareNodeControlChange} from '../src/workflow/ports.js';
 import {prepareNativeNodeEdit,prepareQualifiedScopeEdit,prepareLocalDefinitionEdit,makeLocalCopy} from '../src/workflow/definition-library.js';
 import {prepareImportedDefinitionPins} from '../src/workflow/definition-insertion.js';

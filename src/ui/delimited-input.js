@@ -1,4 +1,4 @@
-import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.0';
+import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.1';
 /** Tokenize explicit CSV/TSV without inferring field meaning. */
 export function parseDelimitedInput(text, delimiter) {
     const rows = [], row = [];

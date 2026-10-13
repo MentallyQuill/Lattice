@@ -112,7 +112,7 @@ test('Inspect selection reveals Details and the root tab has quote-orange keyboa
     await page.getByRole('menubar', { name: 'Workspace menus' }).getByRole('menuitem', { name: 'Graph', exact: true }).click();
     await page.getByRole('menuitem', { name: 'Details for selection', exact: true }).click();
     await expect(page.locator('.pc-inspector')).toBeVisible();
-    await page.getByRole('button', { name: 'Toggle inspector', exact: true }).click();
+    await page.getByRole('button', { name: 'Toggle Details Panel', exact: true }).click();
     await page.getByRole('menubar', { name: 'Workspace menus' }).getByRole('menuitem', { name: 'Graph', exact: true }).click();
     await page.getByRole('menuitem', { name: 'Details for selection', exact: true }).click();
     await expect(page.locator('.pc-inspector')).toBeVisible();

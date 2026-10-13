@@ -21,7 +21,7 @@ async function activateNative(page, variant = 'standard') {
     }, variant);
 
     expect(await page.evaluate(id => { const h = window.canvasHarness; return h.graph === h.S.activeWorkflow() && h.canvas.graph !== h.graph && h.canvas.graph.id === id && !!h.canvas.graph.nativeCards; }, id)).toBe(true);
-    for (const name of ['Toggle inspector']) {
+    for (const name of ['Toggle Details Panel']) {
         const toggle = page.getByRole('button', { name, exact: true }); if (await toggle.getAttribute('aria-pressed') === 'true') await toggle.click();
     }
     await page.evaluate(() => window.canvasHarness.settle()); return id;
@@ -124,7 +124,7 @@ test('native compact aliases preserve identity, real pins and the execution sign
     await activateNative(page);
     await page.evaluate(() => window.canvasHarness.view({ x: 120, y: 20, zoom: .65 }));
     await page.locator('.pc-node-native[data-id="smart-compactor"] .pc-native-heading').click();
-    const inspector = page.getByRole('button', { name: 'Toggle inspector', exact: true });
+    const inspector = page.getByRole('button', { name: 'Toggle Details Panel', exact: true });
     if (await inspector.getAttribute('aria-pressed') !== 'true') await inspector.click();
     const id = await page.evaluate(async () => {
         const h = window.canvasHarness, node = Object.values(h.graph.nodes).find(n => n.operation === 'smart-compactor');

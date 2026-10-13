@@ -1,4 +1,4 @@
-import { prepareReferenceDraft, createReferencePatches } from './reference-draft.js?v=0.27.0';
+import { prepareReferenceDraft, createReferencePatches } from './reference-draft.js?v=0.27.1';
 
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 const word = codePoint => codePoint !== undefined && /[\p{L}\p{M}\p{N}\p{Pc}]/u.test(String.fromCodePoint(codePoint));

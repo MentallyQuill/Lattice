@@ -5,8 +5,8 @@ import { computeDefinitionIdentity, definitionRefKey, validateDefinition } from 
 import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js';
 import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js';
-import * as history from '../src/history.js?v=0.27.0';
-const api = await import('../src/ui/native-search-catalog.js?v=0.27.0').catch(() => ({}));
+import * as history from '../src/history.js?v=0.27.1';
+const api = await import('../src/ui/native-search-catalog.js?v=0.27.1').catch(() => ({}));
 const scope = (mode = 'native-unified', extra = {}) => ({ schema: 3, runtime: 2, mode, workflowId: 'root', viewPath: [], inDefinition: false, ...extra });
 function catalog(input = scope(), options) {
     assert.equal(typeof api.prepareNativeSearchCatalog, 'function');

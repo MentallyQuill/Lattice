@@ -1,7 +1,7 @@
-import { retainDraftAuthority } from '../draft-revisions.js?v=0.27.0';
-import { SLOP_POLICY_DATA } from '../library/slop-policy-data.js?v=0.27.0';
-import { selectSlopPolicies } from '../library/slop-policies.js?v=0.27.0';
-import { prepareReferenceDraft, alignReferenceCandidate } from './reference-draft.js?v=0.27.0';
+import { retainDraftAuthority } from '../draft-revisions.js?v=0.27.1';
+import { SLOP_POLICY_DATA } from '../library/slop-policy-data.js?v=0.27.1';
+import { selectSlopPolicies } from '../library/slop-policies.js?v=0.27.1';
+import { prepareReferenceDraft, alignReferenceCandidate } from './reference-draft.js?v=0.27.1';
 
 export const CLEANUP_MODES = Object.freeze(['inspect', 'contextual', 'strict']);
 const failure = (code, message) => ({ ok: false, error: { code, message } });

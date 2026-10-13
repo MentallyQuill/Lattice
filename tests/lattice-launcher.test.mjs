@@ -9,13 +9,13 @@ function actual(name, env) {
     assert.ok(start >= 0);
     return Function('env', 'with(env){' + source.slice(start, end < 0 ? undefined : end) + ';return ' + name + ';}')(env);
 }
-function fixture(left = true) {
+function fixture(left = true, automatic = false) {
     const dom = new JSDOM('<form id="send_form">' + (left ? '<div id="leftSendForm"><div id="options_button"></div></div>' : '') + '<textarea id="send_textarea"></textarea><div id="rightSendForm"><div id="send_but"></div></div></form>');
     const saved = { enabled: false, ui: {} }; let opens = 0, updates = 0;
     const env = { document: dom.window.document, settings: () => saved, isEnabled: () => saved.enabled,
         UI: { open() { opens++; } }, updateState() { updates++; env.paintSendbar(); }, safe: fn => fn(),
         logoUrl: new URL('../assets/lattice-logo.svg', import.meta.url).href,
-        sendWorkflowState: () => ({ automatic: false, offText: 'Workflows off', enabledText: 'Lattice enabled', enableLabel: 'Enable Lattice' }) };
+        sendWorkflowState: () => ({ automatic, offText: 'Workflows off', enabledText: 'Lattice enabled', enableLabel: 'Enable Lattice' }) };
     env.paintSendbar = actual('paintSendbar', env);
     return { dom, saved, env, mount: actual('addSendbarButton', env), opens: () => opens, updates: () => updates };
 }
@@ -37,6 +37,39 @@ test('chat launcher uses the Lattice logo on the left without submitting or gene
     button.dispatchEvent(new f.dom.window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
     assert.equal(f.saved.enabled, true); assert.equal(f.updates(), 1); assert.equal(submits, 0);
 });
+
+for (const automatic of [true, false]) {
+    const workflow = automatic ? 'an automatic workflow' : 'no automatic workflow';
+    test(`launcher reflects shared enabled state with ${workflow}`, () => {
+        const f = fixture(true, automatic); f.mount();
+        const button = f.env.document.getElementById('pc-sendbar');
+        assert.equal(button.classList.contains('pc-sendbar-on'), false);
+        f.saved.enabled = true; f.env.paintSendbar();
+        assert.equal(button.classList.contains('pc-sendbar-on'), true);
+        assert.equal(button.classList.contains('pc-sendbar-nograph'), !automatic);
+        assert.match(button.title, /^Lattice enabled\n/);
+        f.saved.enabled = false; f.env.paintSendbar();
+        assert.equal(button.classList.contains('pc-sendbar-on'), false);
+        assert.equal(button.classList.contains('pc-sendbar-nograph'), false);
+        assert.match(button.title, /^Workflows off\n/);
+    });
+
+    test(`right-click toggles launcher enabled feedback with ${workflow}`, () => {
+        const f = fixture(true, automatic); f.mount();
+        const button = f.env.document.getElementById('pc-sendbar');
+        const contextmenu = () => button.dispatchEvent(new f.dom.window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+        assert.equal(contextmenu(), false);
+        assert.equal(f.saved.enabled, true);
+        assert.equal(button.classList.contains('pc-sendbar-on'), true);
+        assert.equal(button.classList.contains('pc-sendbar-nograph'), !automatic);
+        assert.equal(contextmenu(), false);
+        assert.equal(f.saved.enabled, false);
+        assert.equal(button.classList.contains('pc-sendbar-on'), false);
+        assert.equal(button.classList.contains('pc-sendbar-nograph'), false);
+        assert.equal(f.updates(), 2);
+        assert.equal(f.opens(), 0);
+    });
+}
 
 test('launcher waits for the left control group and remounts without duplicating buttons', () => {
     const f = fixture(false); assert.equal(f.mount(), false);

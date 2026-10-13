@@ -1,9 +1,9 @@
 /** Validated reusable Lattice subgraphs; persistence never edits placed snapshots. */
-import { settings, save } from './state.js?v=0.27.0';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey } from './workflow/definitions.js?v=0.27.0';
-import { selectSubgraphClosure } from './workflow/packages.js?v=0.27.0';
-import { validateGraphStructure } from './workflow/contracts.js?v=0.27.0';
-import { installDefinition, createRevision, removeLibraryEntry } from './workflow/definition-library.js?v=0.27.0';
+import { settings, save } from './state.js?v=0.27.1';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey } from './workflow/definitions.js?v=0.27.1';
+import { selectSubgraphClosure } from './workflow/packages.js?v=0.27.1';
+import { validateGraphStructure } from './workflow/contracts.js?v=0.27.1';
+import { installDefinition, createRevision, removeLibraryEntry } from './workflow/definition-library.js?v=0.27.1';
 const subgraphCaches = new WeakMap();
 const libraryFailure = (code, message) => Object.freeze({ ok: false, error: Object.freeze({ code, message }) });
 const record = value => value && typeof value === 'object' && !Array.isArray(value);

@@ -1,5 +1,5 @@
-import { cloneDefinitionData, definitionRefKey } from './definition-data.js?v=0.27.0';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.0';
+import { cloneDefinitionData, definitionRefKey } from './definition-data.js?v=0.27.1';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.1';
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const fail = () => ({ ok: false, error: { code: 'RETIRED_WORKFLOW_DATA', message: 'Expected a bounded plain recovery workflow.' } });
 const retiredNodes = nodes => record(nodes) && Object.values(nodes).some(node => node?.type === 'workflow' && node.operation === 'fast-decision');

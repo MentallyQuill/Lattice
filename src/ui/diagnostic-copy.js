@@ -1,7 +1,7 @@
-import { stateCopy, knownTextCopy } from './diagnostic-states.js?v=0.27.0';
-import { modelCopy, modelVariants } from './diagnostic-model.js?v=0.27.0';
-import { resourceCopy } from './diagnostic-resources.js?v=0.27.0';
-import { workflowCopy } from './diagnostic-workflow.js?v=0.27.0';
+import { stateCopy, knownTextCopy } from './diagnostic-states.js?v=0.27.1';
+import { modelCopy, modelVariants } from './diagnostic-model.js?v=0.27.1';
+import { resourceCopy } from './diagnostic-resources.js?v=0.27.1';
+import { workflowCopy } from './diagnostic-workflow.js?v=0.27.1';
 
 // Only catalog-owned copy reaches a diagnostic surface. Unknown source text is
 // intentionally omitted, including in the technical disclosure.

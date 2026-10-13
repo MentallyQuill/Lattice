@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from '../src/workflow/remastered-example-data.js?v=0.27.0';
+import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from '../src/workflow/remastered-example-data.js?v=0.27.1';
 
 test('opening one guide admits only its requested example, then returns detached cached copies', async () => {
     const envelopes = REMASTERED_WORKFLOW_EXAMPLE_DATA.flatMap(entry => entry.packages);

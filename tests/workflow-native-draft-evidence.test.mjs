@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {createDraftRevision,appendDraftSections} from '../src/workflow/draft-revisions.js?v=0.27.0';
-import {sourceFromDraft,normalizeOccurrences,confirmOccurrences} from '../src/workflow/operations/event-data.js?v=0.27.0';
-import {validateNativeFileEvidence} from '../src/workflow/native-settlement.js?v=0.27.0';
-const module=await import('../src/workflow/native-draft-evidence.js?v=0.27.0').catch(()=>({}));
+import {createDraftRevision,appendDraftSections} from '../src/workflow/draft-revisions.js?v=0.27.1';
+import {sourceFromDraft,normalizeOccurrences,confirmOccurrences} from '../src/workflow/operations/event-data.js?v=0.27.1';
+import {validateNativeFileEvidence} from '../src/workflow/native-settlement.js?v=0.27.1';
+const module=await import('../src/workflow/native-draft-evidence.js?v=0.27.1').catch(()=>({}));
 const original={kind:'draft',text:'The sword killed Orr.',source:{token:'native-original',originalText:'The sword killed Orr.'}};
 const revised=()=>createDraftRevision(original,'At dusk, the sword killed Orr.',{nodeId:'polish',scope:'whole'}).data.draft;
 function capture(draft,registry){const scope={sourceId:'current-native',revision:'root',sceneId:'scene-2',visibility:'public'};const source=sourceFromDraft(draft,scope);assert.equal(source.ok,true);const artifact={kind:'data',value:source.data.source};const retained=registry.retain({draft,scope:{kind:'data',value:scope},source:artifact});return {retained,source:retained.ok?retained.data.source.value:artifact.value};}
@@ -37,7 +37,7 @@ test('source scope or text cannot be substituted after the authentic Draft is re
  const proof=registry(),draft=revised(),scope={sourceId:'current-native',revision:'root',sceneId:'scene-2',visibility:'public'},source=sourceFromDraft(draft,scope).data.source;
  assert.equal(proof.retain({draft,scope:{kind:'data',value:scope},source:{kind:'data',value:{...source,text:'Forged scene.'}}}).ok,false);
 });
-import {runWorkflowForHost} from '../src/workflow/runtime.js?v=0.27.0';
+import {runWorkflowForHost} from '../src/workflow/runtime.js?v=0.27.1';
 function runtimeGraph(){const n=(id,operation,more={})=>({id,type:'workflow',operation,...more}),w=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});return {id:'evidence-runtime',schema:3,runtime:2,mode:'native-unified',nodes:{reply:n('reply','reply-snapshot'),revise:n('revise','revise-draft',{scope:'whole',instructions:'Polish prose.'}),scope:n('scope','text',{text:JSON.stringify({sourceId:'current-native',revision:'root',sceneId:'scene-2',visibility:'public'})}),decode:n('decode','json-decode'),source:n('source','draft-event-source')},wires:{a:w('a','reply','out','revise','draft'),b:w('b','revise','out','source','in'),c:w('c','scope','out','decode','in'),d:w('d','decode','out','source','scope')}};}
 test('actual runtime retains private re-extraction proof after a real model revision',async()=>{
  const proof=registry();let calls=0,retains=0;

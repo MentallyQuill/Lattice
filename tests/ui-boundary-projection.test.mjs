@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
-import { makeLocalCopy } from '../src/workflow/definition-library.js?v=0.27.0';
-import { prepareWorkspaceViews, prepareLibraryViews, projectEditorDraw, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.27.0';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.0';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.0';
-import { nodeCard } from '../src/canvas/presentation.js?v=0.27.0';
+import { makeLocalCopy } from '../src/workflow/definition-library.js?v=0.27.1';
+import { prepareWorkspaceViews, prepareLibraryViews, projectEditorDraw, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.27.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.1';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.1';
+import { nodeCard } from '../src/canvas/presentation.js?v=0.27.1';
 
 test('boundary cards and details expose the declared port identity and semantic label for owned and pinned bodies', () => {
     const local = makeLocalCopy(siblingWorkflow(), { instancePath: ['first/path'], id: 'private-plan' }); assert.equal(local.ok, true, JSON.stringify(local));

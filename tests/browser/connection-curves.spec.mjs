@@ -12,7 +12,7 @@ async function arrangeBackwardWire(page, targetAbove) {
         h.UI.refreshIfOpen();
         await h.settle();
     }, targetAbove);
-    for (const name of ['Toggle inspector']) {
+    for (const name of ['Toggle Details Panel']) {
         const toggle = page.getByRole('button', { name, exact: true });
         if (await toggle.getAttribute('aria-pressed') === 'true') await toggle.click();
     }

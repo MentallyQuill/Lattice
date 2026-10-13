@@ -1,9 +1,9 @@
-import { boundary, literalHits, literalCoverage } from './pattern-matching.js?v=0.27.0';
-import { snapshotDraft, readDraftBody } from '../draft-revisions.js?v=0.27.0';
-import { cloneJsonValue } from './json-data.js?v=0.27.0';
-import { validatePatternSettings } from './pattern-nodes.js?v=0.27.0';
-import { freeze } from '../record-data.js?v=0.27.0';
-import { artifactVisibility } from '../artifact-privacy.js?v=0.27.0';
+import { boundary, literalHits, literalCoverage } from './pattern-matching.js?v=0.27.1';
+import { snapshotDraft, readDraftBody } from '../draft-revisions.js?v=0.27.1';
+import { cloneJsonValue } from './json-data.js?v=0.27.1';
+import { validatePatternSettings } from './pattern-nodes.js?v=0.27.1';
+import { freeze } from '../record-data.js?v=0.27.1';
+import { artifactVisibility } from '../artifact-privacy.js?v=0.27.1';
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 const bindings = new WeakMap();
 const word = point => point !== undefined && /[\p{L}\p{N}\p{M}_]/u.test(point);

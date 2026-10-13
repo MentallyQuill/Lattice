@@ -120,7 +120,7 @@ test('ordinary Guidance forwards a real merge route, while an orphan native gene
 });
 
 test('atomic Add system transaction undoes the complete closure, rejects stale documents and section-limit failures',async()=>{
- const {captureGraphEditContext,commitPreparedGraph}=await import('../src/workflow/transactions.js');const H=await import('../src/history.js?v=0.27.0');const graph=root(),before=structuredClone(graph);H.track(graph);const context=captureGraphEditContext(graph,()=>({sessionId:'root',viewPath:[],readOnly:false}));const prepared=api.prepareAddSystem(graph,command(helper()));assert.equal(commitPreparedGraph(graph,{...prepared.data,context:context.data}).ok,true);assert.ok(H.undo(graph));assert.deepEqual(graph,before);assert.ok(H.redo(graph));assert.deepEqual(graph,prepared.data.candidate);
+ const {captureGraphEditContext,commitPreparedGraph}=await import('../src/workflow/transactions.js');const H=await import('../src/history.js?v=0.27.1');const graph=root(),before=structuredClone(graph);H.track(graph);const context=captureGraphEditContext(graph,()=>({sessionId:'root',viewPath:[],readOnly:false}));const prepared=api.prepareAddSystem(graph,command(helper()));assert.equal(commitPreparedGraph(graph,{...prepared.data,context:context.data}).ok,true);assert.ok(H.undo(graph));assert.deepEqual(graph,before);assert.ok(H.redo(graph));assert.deepEqual(graph,prepared.data.candidate);
  const staleRoot=root(),staleContext=captureGraphEditContext(staleRoot,()=>({sessionId:'root',viewPath:[],readOnly:false})),stale=api.prepareAddSystem(staleRoot,command(helper()));staleRoot.description='Changed while preview open';const changed=structuredClone(staleRoot);assert.equal(commitPreparedGraph(staleRoot,{...stale.data,context:staleContext.data}).error.code,'STALE_DOCUMENT');assert.deepEqual(staleRoot,changed);
  const full=root();full.nodes.merge=node('merge','compose',{outputKind:'guidance',sections:Array.from({length:64},(_,i)=>({name:'section'+i,text:''}))});full.wires.guidance=wire('guidance','merge','out','generate','guidance');const fullBefore=structuredClone(full);assert.equal(api.prepareAddSystem(full,command(helper(),{guidance:{outputPortId:'guidance',destination:{kind:'existing-compose',nodeId:'merge'}}})).ok,false);assert.deepEqual(full,fullBefore);
 });
@@ -181,8 +181,8 @@ test('Add system rejects root metadata and bound-node getters before evaluating 
 });
 
 test('admitted Add system inspection preserves immutable artifacts and exact live-root commit ownership',async()=>{
- const {prepareGraphArtifacts,inspectGraphArtifacts}=await import('../src/workflow/graph-artifacts.js?v=0.27.0');
- const {captureGraphEditContext,commitPreparedGraph}=await import('../src/workflow/transactions.js?v=0.27.0');
+ const {prepareGraphArtifacts,inspectGraphArtifacts}=await import('../src/workflow/graph-artifacts.js?v=0.27.1');
+ const {captureGraphEditContext,commitPreparedGraph}=await import('../src/workflow/transactions.js?v=0.27.1');
  const graph=root(),token=prepareGraphArtifacts(graph).data,owned=inspectGraphArtifacts(token),before=JSON.stringify(owned.snapshot);
  const current=()=>({sessionId:'add-system-admission',viewPath:[],readOnly:false});
  const captured=captureGraphEditContext(graph,current).data,edit=api.prepareAddSystem(graph,command(helper()));assert.equal(edit.ok,true,JSON.stringify(edit));

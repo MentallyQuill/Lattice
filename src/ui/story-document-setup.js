@@ -1,5 +1,5 @@
-import { advanceStoryClock } from '../workflow/story-time.js?v=0.27.0';
-import {freeze} from '../workflow/record-data.js?v=0.27.0';
+import { advanceStoryClock } from '../workflow/story-time.js?v=0.27.1';
+import {freeze} from '../workflow/record-data.js?v=0.27.1';
 const fail=(code,message)=>({ok:false,error:{code,message}}),stale=()=>fail('STALE_DOCUMENT_SETUP','The user, chat or Workflow Data catalog changed. Refresh setup before applying this edit.');
 const sameScope=(a,b)=>a?.userId===b?.userId&&a?.chatId===b?.chatId;
 const summaries=lease=>lease.documents.map(({content,...summary})=>summary);

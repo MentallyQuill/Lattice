@@ -1,5 +1,5 @@
-import { parseWorkflowDocument, serializeWorkflowDocument } from '../workflow/document-file.js?v=0.27.0';
-import { diagnosticText, presentDiagnostic } from './diagnostics.js?v=0.27.0';
+import { parseWorkflowDocument, serializeWorkflowDocument } from '../workflow/document-file.js?v=0.27.1';
+import { diagnosticText, presentDiagnostic } from './diagnostics.js?v=0.27.1';
 
 const cancelled = () => ({ok:false,cancelled:true});
 const failure = message => ({ok:false,error:{message}});

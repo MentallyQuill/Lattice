@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as preparation from '../src/ui/workspace-preparation.js?v=0.27.0';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.0';
-import { nodeCard } from '../src/canvas/presentation.js?v=0.27.0';
-import { makeLocalCopy } from '../src/workflow/definition-library.js?v=0.27.0';
+import * as preparation from '../src/ui/workspace-preparation.js?v=0.27.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.1';
+import { nodeCard } from '../src/canvas/presentation.js?v=0.27.1';
+import { makeLocalCopy } from '../src/workflow/definition-library.js?v=0.27.1';
 import { fixtureGraph } from './helpers/workflow-fixtures.mjs';
 import { siblingWorkflow, nestedWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 

@@ -1,5 +1,5 @@
-import {createNativeWorkflowController} from '../../src/workflow/host.js?v=0.27.0';
-import {createChatDocumentCatalog} from '../../src/workflow/document-catalog.js?v=0.27.0';
+import {createNativeWorkflowController} from '../../src/workflow/host.js?v=0.27.1';
+import {createChatDocumentCatalog} from '../../src/workflow/document-catalog.js?v=0.27.1';
 export function unifiedRecipeHost(graph,{request,documents=[],random=()=>0.9,playerText='I continue.',configureContext=()=>{},ports={}}={}){
  const listeners=new Map(),results=[],binding={profileId:'recipe-test',model:'test-model'};let busy=false,saves=0,calls=0;
  const c={chatId:'Story-2',characterId:0,groupId:null,characters:[{avatar:'mara.png',data:{name:'Mara'}}],chat:[{mes:playerText,is_user:true,extra:{}}],chatMetadata:{},extensionPrompts:{},eventTypes:Object.fromEntries(['GENERATION_STARTED','GENERATION_STOPPED','GENERATION_ENDED','MESSAGE_RECEIVED','MESSAGE_SENT','CHAT_CHANGED','MESSAGE_EDITED','MESSAGE_UPDATED','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_SWIPE_DELETED'].map(name=>[name,name]))};

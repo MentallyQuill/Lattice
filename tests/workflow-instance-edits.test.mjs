@@ -8,7 +8,7 @@ import { portsForNode } from '../src/workflow/catalog.js';
 import { makeLocalCopy } from '../src/workflow/definition-library.js';
 import { exportSubgraph, parseSubgraph, selectSubgraphClosure } from '../src/workflow/packages.js';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js';
-import * as history from '../src/history.js?v=0.27.0';
+import * as history from '../src/history.js?v=0.27.1';
 import { prepareImportedDefinitionPins } from '../src/workflow/definition-insertion.js';
 
 const ref = value => ({ id: value.id, version: value.version, semanticHash: value.semanticHash });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as presentation from '../src/canvas/presentation.js?v=0.27.0';
+import * as presentation from '../src/canvas/presentation.js?v=0.27.1';
 
 const cardsFor = presentation.nodeCards;
 function fixture(count = 250) {

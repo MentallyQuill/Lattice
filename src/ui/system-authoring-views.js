@@ -1,6 +1,6 @@
-import { portsForNode } from '../workflow/catalog.js?v=0.27.0';
-import { createGraphViewSession } from './graph-view-session.js?v=0.27.0';
-import { viewIdentityKey } from './view-state.js?v=0.27.0';
+import { portsForNode } from '../workflow/catalog.js?v=0.27.1';
+import { createGraphViewSession } from './graph-view-session.js?v=0.27.1';
+import { viewIdentityKey } from './view-state.js?v=0.27.1';
 const fail = message => ({ ok: false, error: { code: 'VIEW_DATA', message } });
 const subtree = (view, id) => view.identity.kind === 'instance' && view.identity.instancePath[0] === id;
 const touched = (serialized, id) => serialized.views.filter(v => v.identity.kind === 'root' || subtree(v, id)).map(v => structuredClone(v));

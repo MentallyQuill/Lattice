@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createDraftRevision, appendDraftSections } from '../src/workflow/draft-revisions.js?v=0.27.0';
-const settlement = await import('../src/workflow/native-settlement.js?v=0.27.0').catch(() => ({}));
+import { createDraftRevision, appendDraftSections } from '../src/workflow/draft-revisions.js?v=0.27.1';
+const settlement = await import('../src/workflow/native-settlement.js?v=0.27.1').catch(() => ({}));
 const original = { kind: 'draft', text: 'The sword killed Orr.', source: { originalText: 'The sword killed Orr.', token: 'owned-source' } };
 function fixture() {
     const calls = [], released = [];
@@ -39,7 +39,7 @@ test('failed preflight keeps native text unpublished; stale/cancelled settlement
     f.stale(); assert.equal((await f.bundle.accept(original)).ok, false); f.bundle.release(); assert.equal(f.released.length, 1);
 });
 test('canonical file occurrence evidence must be confirmed and preserved in final story body',async()=>{
-    const {normalizeOccurrences,confirmOccurrences}=await import('../src/workflow/operations/event-data.js?v=0.27.0');
+    const {normalizeOccurrences,confirmOccurrences}=await import('../src/workflow/operations/event-data.js?v=0.27.1');
     const candidates=normalizeOccurrences({sourceId:'native',revision:'r1',sceneId:'story',watch:'draft',text:original.text,visibility:'public'},[{eventType:'scene-action',actorId:'mara',position:{start:0,end:original.text.length},semantics:'actual'}],{actorIds:['mara'],itemIds:[]});assert.equal(candidates.ok,true);
     const confirmed=confirmOccurrences(candidates.data.events,candidates.data.events.map(event=>({eventId:event.eventId,accepted:true}))).data.events;
     assert.equal(settlement.validateNativeFileEvidence(confirmed,original.text+' Ash fell.',original.text).ok,true);

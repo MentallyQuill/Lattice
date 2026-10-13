@@ -6,10 +6,10 @@ import { join, resolve, relative, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { compiled } from './helpers/svelte-compile.mjs';
-import { starterGraph } from '../src/workflow/starters.js?v=0.27.0';
-import { cloneWorkflowDocument } from '../src/workflow/document.js?v=0.27.0';
-import { prepareWorkspaceViews } from '../src/ui/workspace-preparation.js?v=0.27.0';
-import { projectPreparedWorkflow, createWorkflowSession } from '../src/ui/workflow-surface.js?v=0.27.0';
+import { starterGraph } from '../src/workflow/starters.js?v=0.27.1';
+import { cloneWorkflowDocument } from '../src/workflow/document.js?v=0.27.1';
+import { prepareWorkspaceViews } from '../src/ui/workspace-preparation.js?v=0.27.1';
+import { projectPreparedWorkflow, createWorkflowSession } from '../src/ui/workflow-surface.js?v=0.27.1';
 
 const dom = new JSDOM('<!doctype html><body></body>', { pretendToBeVisual: true });
 globalThis.window = dom.window; globalThis.document = dom.window.document;

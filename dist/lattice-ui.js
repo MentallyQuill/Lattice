@@ -2664,7 +2664,7 @@ function _a(e, t) {
 }
 Ar(["click", "change"]);
 //#endregion
-//#region src/ui/diagnostic-states.js?v=0.27.0
+//#region src/ui/diagnostic-states.js?v=0.27.1
 var va = (e, t, n) => ({
 	id: e,
 	severity: "info",
@@ -2984,7 +2984,7 @@ var za = [
 ];
 for (let [e, t] of za) for (let n of e.split(" ")) Ra[n] = t;
 //#endregion
-//#region src/ui/diagnostic-workflow.js?v=0.27.0
+//#region src/ui/diagnostic-workflow.js?v=0.27.1
 var Ba = (e, t, n) => ({
 	id: e,
 	severity: "error",
@@ -3073,7 +3073,7 @@ for (let e of [
 	"EFFECT_PREVIEW_LIMIT"
 ]) Ga[e] = Ba("workflow-limit", "Workflow exceeds a size limit", "This workflow or its data exceeds a supported size limit. Simplify the selected workflow or reduce its input data.");
 //#endregion
-//#region src/ui/diagnostic-copy.js?v=0.27.0
+//#region src/ui/diagnostic-copy.js?v=0.27.1
 var Ka = Object.freeze({
 	id: "unknown",
 	severity: "error",
@@ -4198,7 +4198,7 @@ Ar([
 ]);
 //#endregion
 //#region ui/Toolbar.svelte
-var Jo = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-btn menu_button pc-root-stop\" title=\"Stop the workflow\">■ Stop</button>"), Yo = /* @__PURE__ */ G("<header class=\"pc-header\" data-pc-ui=\"svelte\"><div class=\"pc-menubar\"><div class=\"pc-brand\"><img width=\"30\" height=\"30\" alt=\"\"/><span>LATTICE</span></div> <!> <button type=\"button\" class=\"pc-btn menu_button pc-close\" title=\"Close\" aria-label=\"Close canvas\">×</button></div> <div class=\"pc-workflow-bar\"><div class=\"pc-document-heading\"><strong class=\"pc-document-name\"> </strong><span class=\"pc-document-status\" role=\"status\" aria-label=\"Document status\"> <!><!></span></div> <div class=\"pc-header-actions pc-history\"><button type=\"button\" aria-label=\"Undo\">↶</button> <button type=\"button\" aria-label=\"Redo\">↷</button> <span> </span></div> <!> <span class=\"pc-root-workflow-status\" role=\"status\" aria-label=\"Workflow status\"> </span> <div class=\"pc-header-actions pc-surface-actions\"><button type=\"button\" title=\"Show or hide the inspector\" aria-label=\"Toggle inspector\">Details</button></div> <label class=\"pc-enable\"><input class=\"pc-enable-input\" type=\"checkbox\"/><span>Enable Lattice</span></label></div></header>");
+var Jo = /* @__PURE__ */ G("<button type=\"button\" class=\"pc-btn menu_button pc-root-stop\" title=\"Stop the workflow\">■ Stop</button>"), Yo = /* @__PURE__ */ G("<header class=\"pc-header\" data-pc-ui=\"svelte\"><div class=\"pc-menubar\"><div class=\"pc-brand\"><img width=\"30\" height=\"30\" alt=\"\"/><span>LATTICE</span></div> <!> <button type=\"button\" class=\"pc-btn menu_button pc-close\" title=\"Close\" aria-label=\"Close canvas\">×</button></div> <div class=\"pc-workflow-bar\"><div class=\"pc-document-heading\"><strong class=\"pc-document-name\"> </strong><span class=\"pc-document-status\" role=\"status\" aria-label=\"Document status\"> <!><!></span></div> <div class=\"pc-header-actions pc-history\"><button type=\"button\" aria-label=\"Undo\">↶</button> <button type=\"button\" aria-label=\"Redo\">↷</button> <span> </span></div> <!> <span class=\"pc-root-workflow-status\" role=\"status\" aria-label=\"Workflow status\"> </span> <div class=\"pc-header-actions pc-surface-actions\"><button type=\"button\" title=\"Toggle Preview Panel\" aria-label=\"Toggle Preview Panel\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"></rect><path d=\"M3 10h18\"></path></svg></button> <button type=\"button\" title=\"Toggle Details Panel\" aria-label=\"Toggle Details Panel\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"></rect><path d=\"M15 4v16\"></path></svg></button></div> <label><span class=\"pc-enable-logo\" aria-hidden=\"true\"></span> <span class=\"pc-enable-caption\">Enable Lattice</span> <input class=\"pc-enable-input\" type=\"checkbox\" role=\"switch\" aria-label=\"Enable Lattice\"/> <span class=\"pc-enable-state\" aria-hidden=\"true\"> </span></label></div></header>");
 function Xo(e, t) {
 	We(t, !0);
 	let n = /* @__PURE__ */ I(() => t.state.rootWorkflow ?? t.state.workflow), r = /* @__PURE__ */ I(() => t.state.document?.dirty ? "Modified" : t.state.document?.busy || t.state.document?.status ? "" : t.state.document ? "Saved" : "Unsaved"), i, a, o;
@@ -4255,12 +4255,16 @@ function Xo(e, t) {
 	});
 	var M = V(A, 2), N = z(M, !0);
 	F(M);
-	var P = V(M, 2), ee = z(P);
-	Ii(ee, (e) => o = e, () => o), F(P);
-	var te = V(P, 2), ne = z(te);
-	return X(ne), Ii(ne, (e) => a = e, () => a), Ne(), F(te), F(h), F(l), Ii(l, (e) => i = e, () => i), H(() => {
-		Q(f, "src", t.actions.logoUrl), Q(_, "title", t.state.document?.name ?? "Untitled"), q(v, t.state.document?.name ?? "Untitled"), q(b, U(r)), _i(E, 1, `pc-btn menu_button pc-undo${t.state.history.undo ? "" : " pc-disabled"}`), E.disabled = !t.state.history.undo, Q(E, "title", t.state.history.undoTitle), _i(D, 1, `pc-btn menu_button pc-redo${t.state.history.redo ? "" : " pc-disabled"}`), D.disabled = !t.state.history.redo, Q(D, "title", t.state.history.redoTitle), _i(O, 1, `pc-history-note${t.state.history.showNote ? " pc-show" : ""}`), q(k, t.state.history.note), q(N, U(n) ? `${U(n).phase} · ≤ ${U(n).callBound} requests${U(n).status ? " · " + U(n).status : ""}` : "Workflow unavailable"), _i(ee, 1, `pc-btn menu_button pc-pane-toggle${t.state.inspectorOpen ? " pc-on" : ""}`), Q(ee, "aria-pressed", t.state.inspectorOpen), Oi(ne, t.state.enabled);
-	}), W("click", m, () => t.actions.command("close")), W("click", E, () => t.actions.command("undo")), W("click", D, () => t.actions.command("redo")), W("click", ee, () => t.actions.command("inspector")), W("change", ne, (e) => t.actions.setEnabled(e.currentTarget.checked)), K(e, l), Ge(c);
+	var P = V(M, 2), ee = z(P), te = V(ee, 2);
+	Ii(te, (e) => o = e, () => o), F(P);
+	var ne = V(P, 2);
+	let re;
+	var ie = z(ne), ae = V(ie, 4);
+	X(ae), Ii(ae, (e) => a = e, () => a);
+	var oe = V(ae, 2), se = z(oe, !0);
+	return F(oe), F(ne), F(h), F(l), Ii(l, (e) => i = e, () => i), H(() => {
+		Q(f, "src", t.actions.logoUrl), Q(_, "title", t.state.document?.name ?? "Untitled"), q(v, t.state.document?.name ?? "Untitled"), q(b, U(r)), _i(E, 1, `pc-btn menu_button pc-undo${t.state.history.undo ? "" : " pc-disabled"}`), E.disabled = !t.state.history.undo, Q(E, "title", t.state.history.undoTitle), _i(D, 1, `pc-btn menu_button pc-redo${t.state.history.redo ? "" : " pc-disabled"}`), D.disabled = !t.state.history.redo, Q(D, "title", t.state.history.redoTitle), _i(O, 1, `pc-history-note${t.state.history.showNote ? " pc-show" : ""}`), q(k, t.state.history.note), q(N, U(n) ? `${U(n).phase} · ≤ ${U(n).callBound} requests${U(n).status ? " · " + U(n).status : ""}` : "Workflow unavailable"), _i(ee, 1, `pc-btn menu_button pc-pane-toggle${t.panels?.previewOpen ? " pc-on" : ""}`), Q(ee, "aria-pressed", !!t.panels?.previewOpen), _i(te, 1, `pc-btn menu_button pc-pane-toggle${t.state.inspectorOpen ? " pc-on" : ""}`), Q(te, "aria-pressed", t.state.inspectorOpen), re = _i(ne, 1, "pc-enable", null, re, { "pc-on": t.state.enabled }), yi(ie, `--pc-enable-logo: url("${t.actions.logoUrl}")`), Oi(ae, t.state.enabled), q(se, t.state.enabled ? "On" : "Off");
+	}), W("click", m, () => t.actions.command("close")), W("click", E, () => t.actions.command("undo")), W("click", D, () => t.actions.command("redo")), W("click", ee, () => t.local("toggle-preview")), W("click", te, () => t.actions.command("inspector")), W("change", ae, (e) => t.actions.setEnabled(e.currentTarget.checked)), K(e, l), Ge(c);
 }
 Ar(["click", "change"]);
 //#endregion
@@ -4606,7 +4610,7 @@ function hs(e, t) {
 }
 Ar(["click"]);
 //#endregion
-//#region src/workflow/operations/json-data.js?v=0.27.0
+//#region src/workflow/operations/json-data.js?v=0.27.1
 function gs(e) {
 	if (typeof e != "object" || !e) return JSON.stringify(e);
 	if (Array.isArray(e)) {
@@ -4737,7 +4741,7 @@ function Ss(e) {
 }
 Object.freeze({ kind: "public" }), Object.freeze({ kind: "hidden" });
 //#endregion
-//#region src/workflow/recall-state.js?v=0.27.0
+//#region src/workflow/recall-state.js?v=0.27.1
 var Cs = (e, t) => ({
 	ok: !1,
 	error: {
@@ -4801,7 +4805,7 @@ function As(e) {
 	});
 }
 //#endregion
-//#region src/workflow/operations/recall-nodes.js?v=0.27.0
+//#region src/workflow/operations/recall-nodes.js?v=0.27.1
 var js = (e, t) => ({
 	ok: !1,
 	error: {
@@ -4998,7 +5002,7 @@ function Vs(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/lifecycle-nodes.js?v=0.27.0
+//#region src/workflow/operations/lifecycle-nodes.js?v=0.27.1
 var Hs = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5074,7 +5078,7 @@ function Ks(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/json-decode.js?v=0.27.0
+//#region src/workflow/operations/json-decode.js?v=0.27.1
 var qs = (e) => String(e).replaceAll("~", "~0").replaceAll("/", "~1"), Js = (e, t) => t === "object" ? typeof e == "object" && !!e && !Array.isArray(e) : t === "array" ? Array.isArray(e) : t === "null" ? e === null : t === "integer" ? Number.isInteger(e) : typeof e === t, Ys = (e) => typeof e == "object" && !!e && !Array.isArray(e), Xs = /* @__PURE__ */ new Set([
 	"type",
 	"enum",
@@ -5260,7 +5264,7 @@ function tc(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/select-fields.js?v=0.27.0
+//#region src/workflow/operations/select-fields.js?v=0.27.1
 var nc = () => ({
 	ok: !1,
 	error: {
@@ -5343,7 +5347,7 @@ function ic(e, t) {
 	} : a;
 }
 //#endregion
-//#region src/workflow/story-time.js?v=0.27.0
+//#region src/workflow/story-time.js?v=0.27.1
 var ac = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5475,7 +5479,7 @@ function hc(e) {
 	};
 }
 //#endregion
-//#region src/workflow/workflow-data-defaults.js?v=0.27.0
+//#region src/workflow/workflow-data-defaults.js?v=0.27.1
 var gc = {
 	schemaVersion: 1,
 	clockId: "lattice-default-clock",
@@ -5523,7 +5527,7 @@ function vc(e) {
 	}) : null;
 }
 //#endregion
-//#region src/workflow/operations/file-nodes.js?v=0.27.0
+//#region src/workflow/operations/file-nodes.js?v=0.27.1
 var yc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5789,7 +5793,7 @@ Object.freeze({
 	EFFECT_CAPABILITY_FAILED: "The trusted host could not stage the prepared file intent."
 });
 //#endregion
-//#region src/workflow/operations/time-nodes.js?v=0.27.0
+//#region src/workflow/operations/time-nodes.js?v=0.27.1
 var Nc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6043,7 +6047,7 @@ function Uc(e, t = {}) {
 }
 Object.getOwnPropertyDescriptor(AbortSignal.prototype, "aborted").get;
 //#endregion
-//#region src/workflow/operations/context-data.js?v=0.27.0
+//#region src/workflow/operations/context-data.js?v=0.27.1
 function Wc(e) {
 	let t = 0, n = 0, r = /* @__PURE__ */ new Set(), i = (e, a) => {
 		if (++t > 2e4 || a > 40) return "limit";
@@ -6096,7 +6100,7 @@ function Gc(e) {
 	return e;
 }
 //#endregion
-//#region src/workflow/operations/event-nodes.js?v=0.27.0
+//#region src/workflow/operations/event-nodes.js?v=0.27.1
 var Kc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6387,7 +6391,7 @@ function $c(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/random-outcomes.js?v=0.27.0
+//#region src/workflow/operations/random-outcomes.js?v=0.27.1
 var el = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6563,7 +6567,7 @@ function sl(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/progression.js?v=0.27.0
+//#region src/workflow/progression.js?v=0.27.1
 var cl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6602,7 +6606,7 @@ function dl(e, t, n) {
 	}
 }
 //#endregion
-//#region src/workflow/operations/collection-nodes.js?v=0.27.0
+//#region src/workflow/operations/collection-nodes.js?v=0.27.1
 var fl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6795,7 +6799,7 @@ function Sl(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/compose.js?v=0.27.0
+//#region src/workflow/operations/compose.js?v=0.27.1
 var Cl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6906,7 +6910,7 @@ function Tl(e = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/nodes.js?v=0.27.0
+//#region src/workflow/operations/nodes.js?v=0.27.1
 var El = (e, t, n) => ({
 	key: e,
 	label: t,
@@ -7137,7 +7141,7 @@ function zl(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/context-join.js?v=0.27.0
+//#region src/workflow/operations/context-join.js?v=0.27.1
 var Bl = [{
 	id: "context-1",
 	label: "Context 1"
@@ -7223,7 +7227,7 @@ function Wl(e, t) {
 	});
 }
 //#endregion
-//#region src/workflow/operations/transpose-nodes.js?v=0.27.0
+//#region src/workflow/operations/transpose-nodes.js?v=0.27.1
 var Gl = (e, t, n, r, i = !1) => ({
 	id: e,
 	label: t,
@@ -7420,7 +7424,7 @@ function ou(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/library/slop-policy-data.js?v=0.27.0
+//#region src/workflow/library/slop-policy-data.js?v=0.27.1
 var su = {
 	source: {
 		title: "Core banned AI slop and clichés",
@@ -9124,7 +9128,7 @@ function cu(e) {
 }
 cu(su);
 //#endregion
-//#region src/workflow/operations/prose-cleanup.js?v=0.27.0
+//#region src/workflow/operations/prose-cleanup.js?v=0.27.1
 var lu = Object.freeze([
 	"inspect",
 	"contextual",
@@ -9280,7 +9284,7 @@ Object.freeze({
 	ABORTED: "The operation was stopped; discard its late response."
 });
 //#endregion
-//#region src/workflow/operations/progression-nodes.js?v=0.27.0
+//#region src/workflow/operations/progression-nodes.js?v=0.27.1
 var xu = (e, t) => ({
 	ok: !1,
 	error: {
@@ -9314,7 +9318,7 @@ function Eu(e) {
 	});
 }
 //#endregion
-//#region src/workflow/introspection/nodes.js?v=0.27.0
+//#region src/workflow/introspection/nodes.js?v=0.27.1
 var Du = {
 	reflect: [
 		"character",
@@ -9578,7 +9582,7 @@ function Bu(e, t = {}) {
 	return !r.ok || !Pu(r.data) || Object.keys(r.data).some((e) => e !== "phase") || r.data.phase !== void 0 && !["pre", "post"].includes(r.data.phase) ? hu("INVALID_SETTINGS", "Unsupported execution phase.") : n.data.node.operation === "memory" && n.data.settings.mode === "commit" && r.data.phase === "pre" ? hu("INVALID_PHASE", "Memory Commit settles only after a successful root run.") : Ru(n.data, r.data.phase);
 }
 //#endregion
-//#region src/workflow/introspection/native.js?v=0.27.0
+//#region src/workflow/introspection/native.js?v=0.27.1
 var Vu = (e, t) => ({
 	ok: !1,
 	error: {
@@ -9869,7 +9873,7 @@ function ad(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/control-nodes.js?v=0.27.0
+//#region src/workflow/operations/control-nodes.js?v=0.27.1
 var od = [
 	"context",
 	"draft",
@@ -10117,7 +10121,7 @@ function hd(e, t = {}) {
 	}
 }
 //#endregion
-//#region src/workflow/decision.js?v=0.27.0
+//#region src/workflow/decision.js?v=0.27.1
 var gd = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10152,7 +10156,7 @@ function bd(e) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/decision-nodes.js?v=0.27.0
+//#region src/workflow/operations/decision-nodes.js?v=0.27.1
 var xd = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10265,7 +10269,7 @@ function Dd(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/model-nodes.js?v=0.27.0
+//#region src/workflow/operations/model-nodes.js?v=0.27.1
 var Od = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10502,7 +10506,7 @@ function Ld(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/pattern-nodes.js?v=0.27.0
+//#region src/workflow/operations/pattern-nodes.js?v=0.27.1
 var Rd = () => ({
 	ok: !1,
 	error: {
@@ -10672,7 +10676,7 @@ function Wd(e) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/filter-text.js?v=0.27.0
+//#region src/workflow/operations/filter-text.js?v=0.27.1
 var Gd = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10790,7 +10794,7 @@ function Zd(e) {
 	};
 }
 //#endregion
-//#region src/workflow/catalog.js?v=0.27.0
+//#region src/workflow/catalog.js?v=0.27.1
 var Qd = [
 	"context",
 	"draft",
@@ -11133,7 +11137,7 @@ function df(e, { phase: t, mode: n } = {}) {
 	}
 }
 //#endregion
-//#region src/workflow/recall-labels.js?v=0.27.0
+//#region src/workflow/recall-labels.js?v=0.27.1
 var ff = {
 	activation: {
 		armed: "Manual queue",
@@ -11160,7 +11164,7 @@ var ff = {
 	}
 }, pf = (e, t) => Object.hasOwn(ff[e], t) ? ff[e][t] : "Unavailable", mf = (e, t) => Object.hasOwn(ff, e) ? pf(e, t) : null;
 //#endregion
-//#region src/ui/schedule-authoring.js?v=0.27.0
+//#region src/ui/schedule-authoring.js?v=0.27.1
 function hf(e) {
 	let t = pc(e);
 	return t.ok ? {
@@ -11182,7 +11186,7 @@ function gf(e) {
 	} : n;
 }
 //#endregion
-//#region src/ui/delimited-input.js?v=0.27.0
+//#region src/ui/delimited-input.js?v=0.27.1
 function _f(e, t) {
 	let n = [], r = [], i = (e) => ({
 		ok: !1,
@@ -11215,7 +11219,7 @@ function _f(e, t) {
 	} : l;
 }
 //#endregion
-//#region src/ui/control-input-contracts.js?v=0.27.0
+//#region src/ui/control-input-contracts.js?v=0.27.1
 var vf = (e, t, n = {}) => ({
 	ok: !1,
 	error: {
@@ -11659,7 +11663,7 @@ function Rf(e, t = "auto") {
 	};
 }
 //#endregion
-//#region src/ui/decision-authoring.js?v=0.27.0
+//#region src/ui/decision-authoring.js?v=0.27.1
 var zf = (e) => ({
 	ok: !1,
 	error: {
@@ -12177,7 +12181,7 @@ function up(e) {
 	}
 }
 //#endregion
-//#region src/ui/control-input-adapters.js?v=0.27.0
+//#region src/ui/control-input-adapters.js?v=0.27.1
 var dp = () => ({
 	ok: !1,
 	error: {
@@ -12340,7 +12344,7 @@ function yp(e, t, n) {
 	}
 }
 //#endregion
-//#region src/ui/json-value-authoring.js?v=0.27.0
+//#region src/ui/json-value-authoring.js?v=0.27.1
 var bp = (e, t) => ({
 	ok: !1,
 	error: {
@@ -17592,7 +17596,7 @@ function M_(e, t) {
 	}, [() => r() ? `Comment: ${r().title}` : n() ? `${n().label} node: ${n().ports.map((e) => e.label).join(", ")}` : "Node preview"]), K(e, l), Ge();
 }
 //#endregion
-//#region src/canvas/connection-route.js?v=0.27.0
+//#region src/canvas/connection-route.js?v=0.27.1
 var N_ = 25, P_ = 12, F_ = 6, I_ = (e) => `${e.x},${e.y}`, L_ = (e, t, n = 0) => ({
 	x: e.x + t,
 	y: e.y + n
@@ -18113,7 +18117,7 @@ function sv(e, t) {
 }
 Ar(["click"]);
 //#endregion
-//#region src/ui/node-guide-content.js?v=0.27.0
+//#region src/ui/node-guide-content.js?v=0.27.1
 var $ = (e, t, ...n) => ({
 	title: e,
 	summary: t,
@@ -24406,7 +24410,7 @@ function cD(e) {
 	}) : null;
 }
 //#endregion
-//#region src/workflow/semantic-json-data.js?v=0.27.0
+//#region src/workflow/semantic-json-data.js?v=0.27.1
 var lD = /* @__PURE__ */ new Set([
 	"condition",
 	"select-fields",
@@ -24556,7 +24560,7 @@ function wD(e, t, n) {
 	};
 }
 //#endregion
-//#region src/workflow/modifiers.js?v=0.27.0
+//#region src/workflow/modifiers.js?v=0.27.1
 var TD = (e) => (e && typeof e == "object" && (Object.values(e).forEach(TD), Object.freeze(e)), e), ED = (e, t, n) => ({
 	key: e,
 	label: t,
@@ -26644,10 +26648,10 @@ var bk = {
 	generate_interceptor: "latticeGenerationInterceptor",
 	requires: [],
 	optional: [],
-	js: "index.js?v=0.27.0",
+	js: "index.js?v=0.27.1",
 	css: "style.css",
 	author: "Dulgadurbit",
-	version: "0.27.0",
+	version: "0.27.1",
 	homePage: "https://github.com/MentallyQuill/Lattice",
 	auto_update: !1,
 	description: "Build named-pin workflows for optional scene guidance and reviewed reply repairs in SillyTavern, with per-node model connections."

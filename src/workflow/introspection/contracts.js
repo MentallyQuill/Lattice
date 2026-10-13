@@ -1,5 +1,5 @@
-import { validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.0';
-import { cloneJsonValue } from '../operations/json-data.js?v=0.27.0';
+import { validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.1';
+import { cloneJsonValue } from '../operations/json-data.js?v=0.27.1';
 
 export const COLLECTIONS = Object.freeze(['traits', 'beliefs', 'goals', 'relationships', 'conflicts', 'conditions', 'episodes']);
 const WRITABLE = COLLECTIONS.filter(key => key !== 'traits');

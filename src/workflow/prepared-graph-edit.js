@@ -1,5 +1,5 @@
-import { prepareCheckedCandidate } from './checked-candidate.js?v=0.27.0';
-import { graphSemanticSignature, graphDocumentSignature } from './ports.js?v=0.27.0';
+import { prepareCheckedCandidate } from './checked-candidate.js?v=0.27.1';
+import { graphSemanticSignature, graphDocumentSignature } from './ports.js?v=0.27.1';
 
 /** Pure dual-precondition boundary shared by composition and immutable definition revisions. */
 export function prepareGraphCandidate(original, candidate, addedEdgeIds = [], removedEdgeIds = [], sourceRoot = original) {

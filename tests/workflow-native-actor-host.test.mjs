@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {registerHooks} from 'node:module';
 import {actorHostFixture as fixture,mara,elias} from './helpers/native-actor-host-fixture.mjs';
-import {operationDefaults} from '../src/workflow/catalog.js?v=0.27.0';
+import {operationDefaults} from '../src/workflow/catalog.js?v=0.27.1';
 test('actual native Character Direction scopes a separate system prompt to the participating selected actor',async()=>{
  const f=fixture(),ready=await f.start();assert.equal(ready.ok,true,JSON.stringify(ready.error));assert.equal(f.requests.length,2);const direction=JSON.stringify(f.requests[1].messages);assert.ok(direction.includes('PRIVATE SEA'));assert.equal(direction.includes('PRIVATE FIRE'),false);assert.ok(f.requests[1].messages[0].content.includes('Mara alone'));assert.ok(Object.values(f.c.extensionPrompts).some(p=>p.value==='Mara considers the sea.'));const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal((await f.controller.apply(result.reviewHandles[0])).ok,true);f.controller.dispose();
 });
@@ -32,7 +32,7 @@ function addMemoryFlow(f){
 }
 test('actual native Prompted Memory triggers on the ordered current holder and reads only authorized existing memories',async()=>{
  const f=fixture('direction',{replyText:'Mara and Elias kiss beside Sword.',modelOutput:material=>material.mode==='recall'?{kind:'recalled',memoryId:'mara-e1',reflection:'Mara recalls the sea.'}:undefined});addMemoryFlow(f);
- const {makeRecord}=await import('../src/workflow/introspection/contracts.js?v=0.27.0');const records={};for(const [actorId,id,text]of [[mara,'mara-e1','PRIVATE SEA episode'],[elias,'elias-e1','PRIVATE FIRE episode']]){const result=makeRecord('actor-state',{scope:{chatId:'Story-2',actorId},store:{id:'native-chat',version:0}},{episodes:[{id,text,classification:'observation',sourceRefs:[]}]},[]);assert.equal(result.ok,true);records[actorId]={state:result.data,receipts:[]};}f.c.chatMetadata.latticeIntrospection={'native-chat':records};
+ const {makeRecord}=await import('../src/workflow/introspection/contracts.js?v=0.27.1');const records={};for(const [actorId,id,text]of [[mara,'mara-e1','PRIVATE SEA episode'],[elias,'elias-e1','PRIVATE FIRE episode']]){const result=makeRecord('actor-state',{scope:{chatId:'Story-2',actorId},store:{id:'native-chat',version:0}},{episodes:[{id,text,classification:'observation',sourceRefs:[]}]},[]);assert.equal(result.ok,true);records[actorId]={state:result.data,receipts:[]};}f.c.chatMetadata.latticeIntrospection={'native-chat':records};
  const ready=await f.start();assert.equal(ready.ok,true,JSON.stringify(ready.error));assert.equal(f.requests.length,0);const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(f.requests.length,2);const memory=JSON.parse(f.requests[1].messages.at(-1).content);assert.equal(memory.event.holderId,mara);assert.equal(memory.memories[0].memoryId,'mara-e1');assert.ok(JSON.stringify(memory).includes('PRIVATE SEA'));assert.equal(JSON.stringify(memory).includes('PRIVATE FIRE'),false);assert.equal((await f.controller.apply(result.reviewHandles[0])).ok,true);assert.deepEqual(f.c.chatMetadata.latticeIntrospection['native-chat'],records);f.controller.dispose();
 });
 

@@ -1,5 +1,5 @@
-import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.0';
-import { validateGraphStructure } from './contracts.js?v=0.27.0';
+import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.1';
+import { validateGraphStructure } from './contracts.js?v=0.27.1';
 
 /** Detach a current document and supply its absent optional authoring containers.
  * A supplied private artifact must match this admitted authored content exactly.

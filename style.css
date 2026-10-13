@@ -1,4 +1,4 @@
-@import url('./dist/lattice.css?v=0.27.0');
+@import url('./dist/lattice.css?v=0.27.1');
 
 /* Current Lattice workspace. Explicit themes may replace these color roles. */
 :root {
@@ -374,7 +374,9 @@
 .pc-document-status { color: var(--pc-muted); font-size: .9em; overflow-wrap: anywhere; }
 .pc-root-workflow-status { font-size: .82em; color: var(--pc-muted); margin-right: auto; }
 .pc-root .pc-root-stop { color: var(--pc-accent); border-color: var(--pc-accent); }
-:root[data-pc-own="1"] .pc-root .pc-pane-toggle.pc-on { color: var(--pc-accent); border-color: var(--pc-accent); background: color-mix(in srgb, var(--pc-accent) 12%, var(--pc-block)); }
+:root .pc-root .pc-surface-actions button.pc-pane-toggle { justify-content: center; flex: 0 0 34px; width: 34px; height: 34px; padding: 7px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); color: var(--pc-text); box-shadow: none; }
+:root .pc-root .pc-surface-actions button.pc-pane-toggle:is(:hover, .pc-on) { background: var(--pc-control); color: var(--pc-text); border-color: var(--pc-accent); }
+.pc-pane-toggle svg { display: block; width: 18px; height: 18px; pointer-events: none; }
 .pc-root button.pc-btn:focus-visible { outline-color: var(--pc-accent); }
 :root .pc-root .pc-node { border-radius: 4px; box-shadow: inset 0 1px 0 #ffffff09, inset 0 -1px 0 #0004; }
 :root .pc-root .pc-node.pc-selected { border-color: var(--pc-accent); box-shadow: inset 0 1px 0 #ffffff09, inset 0 -1px 0 #0004, 0 0 0 2px var(--pc-accent); }
@@ -528,8 +530,19 @@
 .pc-root .pc-header-actions { display: flex; align-items: center; gap: 4px; }
 .pc-root .pc-btn { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; white-space: nowrap; }
 .pc-root .pc-close { margin-left: auto; }
-.pc-root .pc-enable { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 10px; border: 1px solid var(--pc-border); border-radius: 2px; background: var(--pc-control); }
-.pc-root .pc-enable-input { width: 16px; min-width: 16px; height: 16px; accent-color: var(--pc-accent); }
+.pc-root .pc-enable { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; cursor: pointer; padding: 4px 8px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); box-shadow: none; white-space: nowrap; }
+.pc-root .pc-enable.pc-on { border-color: var(--pc-accent); }
+.pc-enable-logo { display: block; flex: 0 0 20px; width: 20px; height: 20px; background: var(--pc-muted); mask: var(--pc-enable-logo) center / contain no-repeat; }
+.pc-enable.pc-on .pc-enable-logo { background: var(--pc-accent); }
+.pc-enable-caption { font-size: 10px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+.pc-enable-state { min-width: 20px; color: var(--pc-muted); font-size: 10px; font-weight: 650; text-transform: uppercase; }
+.pc-enable.pc-on .pc-enable-state { color: var(--pc-accent); }
+.pc-root .pc-enable-input { appearance: none; position: relative; display: block; flex: 0 0 44px; width: 44px; min-width: 44px; height: 24px; margin: 0; padding: 0; border: 1px solid transparent; border-radius: 4px; background: color-mix(in srgb, var(--pc-text) 28%, var(--pc-panel-solid)); box-shadow: none; outline: none; transform: none; filter: none; cursor: pointer; }
+.pc-root .pc-enable-input::before { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 16px; border: 0; border-radius: 4px; background: var(--pc-panel-solid); box-shadow: none; clip-path: none; transform: translateX(0); transition: transform 120ms ease; }
+.pc-root .pc-enable-input:checked { background: var(--pc-accent); border-color: var(--pc-accent); }
+.pc-root .pc-enable-input:checked::before { transform: translateX(18px); }
+.pc-root .pc-enable-input:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .pc-root .pc-enable-input::before { transition: none; } }
 .pc-root .pc-node-title { flex: 1 1 auto; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc-root .pc-node-head { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--pc-border); }
 .pc-root .pc-node-body { padding: 7px 9px; font-size: 12px; line-height: 1.4; color: var(--pc-muted); max-height: 120px; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -602,7 +615,8 @@
 /* Center the painted mass of the rotated, layered logo within the host control. */
 #pc-sendbar.pc-chat-launcher .pc-chat-launcher-icon { display: block; flex: 0 0 30px; width: 30px; height: 30px; background: currentColor; mask: var(--pc-launcher-logo) center / contain no-repeat; transform: translate(-2px, -2px); pointer-events: none; }
 #pc-sendbar.pc-chat-launcher:hover { opacity: 1; filter: brightness(1.2); background: color-mix(in srgb, var(--SmartThemeBodyColor, #dcdcd2) 7%, transparent); }
-#pc-sendbar.pc-chat-launcher:focus-visible { outline: 2px solid var(--SmartThemeQuoteColor, #e18a24); outline-offset: 1px; }
+#pc-sendbar.pc-chat-launcher.pc-sendbar-on { color: var(--pc-accent); opacity: 1; }
+#pc-sendbar.pc-chat-launcher:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
 
 /* Colorblind-friendly themes retain type names and add matching pin/wire cues. */
 :root[data-pc-accessible="1"] .pc-root { --pc-raised: var(--pc-block); }

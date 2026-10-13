@@ -1,8 +1,8 @@
-import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.0';
-import { deferredNodeDescription, nodeNeedsConfiguration } from './configured-node-creation.js?v=0.27.0';
-import { ARTIFACT_KINDS, FAMILIES, OPERATIONS, describeOperation, operationDefaults } from '../workflow/catalog.js?v=0.27.0';
-import { cloneDefinitionData, definitionRefKey } from '../workflow/definitions.js?v=0.27.0';
-import { selectSubgraphClosure } from '../workflow/packages.js?v=0.27.0';
+import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.1';
+import { deferredNodeDescription, nodeNeedsConfiguration } from './configured-node-creation.js?v=0.27.1';
+import { ARTIFACT_KINDS, FAMILIES, OPERATIONS, describeOperation, operationDefaults } from '../workflow/catalog.js?v=0.27.1';
+import { cloneDefinitionData, definitionRefKey } from '../workflow/definitions.js?v=0.27.1';
+import { selectSubgraphClosure } from '../workflow/packages.js?v=0.27.1';
 
 const registries = new WeakMap();
 const choiceViews = new WeakMap();

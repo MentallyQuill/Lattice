@@ -1,6 +1,6 @@
-import { cloneJsonValue } from './json-data.js?v=0.27.0';
-import { own, plain } from '../record-data.js?v=0.27.0';
-import { createDraftRevision, snapshotDraft, toFinalCandidate } from '../draft-revisions.js?v=0.27.0';
+import { cloneJsonValue } from './json-data.js?v=0.27.1';
+import { own, plain } from '../record-data.js?v=0.27.1';
+import { createDraftRevision, snapshotDraft, toFinalCandidate } from '../draft-revisions.js?v=0.27.1';
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const port = (id, kind, direction, required = false) => ({ id, label: id === 'draft' ? 'Draft' : id === 'metadata' ? 'Generation metadata' : id === 'activation' ? 'Send activation' : 'Guidance', kind, direction, required, cardinality: 'one' });
 const descriptor = (id, title, phase, input, output, extra = {}) => ({ id, title, family: id==='review-publish'?'Output':'Input', phase, input, output, minimumSchema: 3, controls: [], defaults: {}, controlDescriptors: {}, modelRole: null, requestBound: 0, terminal: false, dynamicPorts: true, rootOnly: true, modes: ['native-unified'], ...extra });

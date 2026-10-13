@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { prepareCreateFromSelection, prepareUnpack } from '../src/workflow/composition.js?v=0.27.0';
-import { definitionRefKey } from '../src/workflow/definition-data.js?v=0.27.0';
-import { resolveWorkflow } from '../src/workflow/resolve.js?v=0.27.0';
-import { exportWorkflow, parseWorkflow } from '../src/workflow/packages.js?v=0.27.0';
-import { expandRecordAddress } from '../src/workflow/record-data.js?v=0.27.0';
+import { prepareCreateFromSelection, prepareUnpack } from '../src/workflow/composition.js?v=0.27.1';
+import { definitionRefKey } from '../src/workflow/definition-data.js?v=0.27.1';
+import { resolveWorkflow } from '../src/workflow/resolve.js?v=0.27.1';
+import { exportWorkflow, parseWorkflow } from '../src/workflow/packages.js?v=0.27.1';
+import { expandRecordAddress } from '../src/workflow/record-data.js?v=0.27.1';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
 
 const node = (id, operation, controls = {}) => ({ id, type: 'workflow', operation, operationVersion: 1, ...controls });
@@ -65,7 +65,7 @@ test('the pictured selection wraps preparation and Generate Reply with its owned
 });
 
 test('nested Generate Reply remains unavailable to public runners and manual previews', async () => {
-    const { runWorkflow } = await import('../src/workflow/runtime.js?v=0.27.0');
+    const { runWorkflow } = await import('../src/workflow/runtime.js?v=0.27.1');
     const prepared = extract(generationGraph());
     assert.equal(prepared.ok, true, JSON.stringify(prepared.error));
     const root = prepared.data.candidate, target = { workflowId: root.id, instancePath: ['generation'], nodeId: 'generate', portId: 'metadata' };
@@ -142,7 +142,7 @@ test('unpacking Generate Reply with unconnected optional guidance keeps a runnab
 });
 
 test('unpacking a disabled generation subgraph preserves disabled nodes and response output stages', async () => {
-    const { inspectExpandedGraph } = await import('../src/workflow/graph-validation.js?v=0.27.0');
+    const { inspectExpandedGraph } = await import('../src/workflow/graph-validation.js?v=0.27.1');
     const prepared = extract(generationGraph());
     assert.equal(prepared.ok, true, JSON.stringify(prepared.error));
     prepared.data.candidate.nodes.generation.enabled = false;
@@ -202,7 +202,7 @@ test('unpacking nested generation preserves an optional ancestor guidance connec
 });
 
 test('unpacking an optional guidance input preserves portal fanout and the external publisher', async () => {
-    const { computeDefinitionIdentity } = await import('../src/workflow/definition-data.js?v=0.27.0');
+    const { computeDefinitionIdentity } = await import('../src/workflow/definition-data.js?v=0.27.1');
     const prepared = extract(generationGraph(), ['generate']);
     assert.equal(prepared.ok, true, JSON.stringify(prepared.error));
     const root = prepared.data.candidate, oldRef = root.nodes.generation.definition;
@@ -255,7 +255,7 @@ test('unpacking preserves an independent wrapper output connected to its own opt
 });
 
 test('unpacking preserves a disabled optional input boundary', async () => {
-    const { computeDefinitionIdentity } = await import('../src/workflow/definition-data.js?v=0.27.0');
+    const { computeDefinitionIdentity } = await import('../src/workflow/definition-data.js?v=0.27.1');
     const prepared = extract(generationGraph(), ['generate']);
     assert.equal(prepared.ok, true, JSON.stringify(prepared.error));
     const root = prepared.data.candidate, oldRef = root.nodes.generation.definition;

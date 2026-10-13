@@ -1,11 +1,11 @@
-import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.0';
-import { cloneJsonValue } from './operations/json-data.js?v=0.27.0';
-import { freeze } from './record-data.js?v=0.27.0';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.0';
-import { validateNodeModifiers } from './modifiers.js?v=0.27.0';
-import { ARTIFACT_KINDS, operationFor, describeOperation, portsForNode, phaseForNode } from './catalog.js?v=0.27.0';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, describeExposedParameter, nodeBindingOverrideKey, artifactAddressKey } from './definition-data.js?v=0.27.0';
-import { samePath, safeId } from './composition-edit.js?v=0.27.0';
+import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.1';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.1';
+import { freeze } from './record-data.js?v=0.27.1';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.1';
+import { validateNodeModifiers } from './modifiers.js?v=0.27.1';
+import { ARTIFACT_KINDS, operationFor, describeOperation, portsForNode, phaseForNode } from './catalog.js?v=0.27.1';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, describeExposedParameter, nodeBindingOverrideKey, artifactAddressKey } from './definition-data.js?v=0.27.1';
+import { samePath, safeId } from './composition-edit.js?v=0.27.1';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const idText = value => typeof value === 'string' && value.length > 0;

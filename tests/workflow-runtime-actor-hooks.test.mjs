@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {runWorkflowForHost} from '../src/workflow/runtime.js?v=0.27.0';
-import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.27.0';
+import {runWorkflowForHost} from '../src/workflow/runtime.js?v=0.27.1';
+import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.27.1';
 const n=(id,operation,extra={})=>({id,type:'workflow',operation,...extra}),w=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});
 function graph(){return {id:'scope-runtime',schema:3,runtime:2,mode:'native-unified',nodes:{source:n('source','text',{text:'{"secret":"private"}'}),decode:n('decode','json-decode'),decision:n('decision','decision',{questions:{present:{type:'noul',instructions:'Is it present?'}}})},wires:{a:w('a','source','out','decode','in'),b:w('b','decode','out','decision','in')}};}
 const target={workflowId:'scope-runtime',instancePath:[],nodeId:'decision',portId:'out'};

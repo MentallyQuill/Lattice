@@ -6,7 +6,7 @@ import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 import { effectiveInstanceWorkflow } from './fixtures/workflow-effective-instance.mjs';
 import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definitions.js';
 import { materializeInstanceDefinition } from '../src/workflow/definition-library.js';
-import * as library from '../src/library.js?v=0.27.0';
+import * as library from '../src/library.js?v=0.27.1';
 
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function actual(name, env) {

@@ -1,5 +1,5 @@
-import { cloneJsonValue } from './json-data.js?v=0.27.0';
-import { own, plain, freeze } from '../record-data.js?v=0.27.0';
+import { cloneJsonValue } from './json-data.js?v=0.27.1';
+import { own, plain, freeze } from '../record-data.js?v=0.27.1';
 const failure = () => ({ ok: false, error: { code: 'INVALID_PATTERN_SETTINGS', message: 'Use bounded canonical Pattern rules, literal lists, scope, policy and execution limits.' } });
 export const PATTERN_DEFAULTS = freeze({ mode: 'whole-word', scope: 'whole', caseSensitive: false, rules: [], exemptions: [], protectedLiterals: [], matchPolicy: 'any', minOccurrences: 1, regexFlags: '', timeoutMs: 1000 });
 const enumeration = (key, values) => ({ type: 'enum', values, default: PATTERN_DEFAULTS[key] });

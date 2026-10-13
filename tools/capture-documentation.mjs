@@ -125,7 +125,7 @@ try {
             return graph.id;
         }, kind);
         await page.evaluate(async () => { await window.canvasHarness.settle(); window.canvasHarness.canvas.fit(); await window.canvasHarness.settle(); await document.fonts.ready; });
-        if (await page.getByRole('button', { name: 'Toggle inspector' }).getAttribute('aria-pressed') !== 'true') await page.getByRole('button', { name: 'Toggle inspector' }).click();
+        if (await page.getByRole('button', { name: 'Toggle Details Panel' }).getAttribute('aria-pressed') !== 'true') await page.getByRole('button', { name: 'Toggle Details Panel' }).click();
         await page.evaluate(() => window.canvasHarness.settle());
         await fit();
         return id;

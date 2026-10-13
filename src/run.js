@@ -1,14 +1,14 @@
 /** Current Lattice host facade. SillyTavern owns native reply generation. */
-import { ctx, safe, settings, activeWorkflow, onWorkflowActivated, documentSession} from './state.js?v=0.27.0';
-import { validateWorkflow } from './workflow/contracts.js?v=0.27.0';
-import { createNativeWorkflowController } from './workflow/host.js?v=0.27.0';
-import { bindingStatus } from './workflow/connections.js?v=0.27.0';
-import { createChatDocumentCatalog } from './workflow/document-catalog.js?v=0.27.0';
-import { createRecallShortcutRegistry } from './ui/recall-shortcuts.js?v=0.27.0';
-import { createNativePersistenceVerifier } from './workflow/native-persistence.js?v=0.27.0';
-import { diagnosticText, presentDiagnostic } from './ui/diagnostics.js?v=0.27.0';
-export { runWorkflow, workflowSignature } from './workflow/runtime.js?v=0.27.0';
-export { createNativeWorkflowController, snapshotContext, snapshotReply } from './workflow/host.js?v=0.27.0';
+import { ctx, safe, settings, activeWorkflow, onWorkflowActivated, documentSession} from './state.js?v=0.27.1';
+import { validateWorkflow } from './workflow/contracts.js?v=0.27.1';
+import { createNativeWorkflowController } from './workflow/host.js?v=0.27.1';
+import { bindingStatus } from './workflow/connections.js?v=0.27.1';
+import { createChatDocumentCatalog } from './workflow/document-catalog.js?v=0.27.1';
+import { createRecallShortcutRegistry } from './ui/recall-shortcuts.js?v=0.27.1';
+import { createNativePersistenceVerifier } from './workflow/native-persistence.js?v=0.27.1';
+import { diagnosticText, presentDiagnostic } from './ui/diagnostics.js?v=0.27.1';
+export { runWorkflow, workflowSignature } from './workflow/runtime.js?v=0.27.1';
+export { createNativeWorkflowController, snapshotContext, snapshotReply } from './workflow/host.js?v=0.27.1';
 
 let controller, helpers, userHelpers, nativeUserReader, initialization, documentCatalog, persistenceVerifier, recallShortcuts, recallEvents;
 const currentUser = () => userHelpers?.getCurrentUserHandle?.();

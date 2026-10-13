@@ -145,7 +145,7 @@ test('same-id retired activation rejects without changing document authority, hi
     const state = host.state;
     state.settings();
     const graph = state.activeWorkflow(), token = state.documentSession.capture();
-    const history = await import('../src/history.js?v=0.27.0');
+    const history = await import('../src/history.js?v=0.27.1');
     graph.name = 'Edited active document';history.noteChange(graph);history.flush(graph);
     const undo = history.peek(graph), before = structuredClone(host.context.extensionSettings.lattice);
     let activations = 0;const unsubscribe = state.onWorkflowActivated(() => { activations++; });

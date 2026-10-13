@@ -1,10 +1,10 @@
-import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.0';
-import { own } from './record-data.js?v=0.27.0';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.0';
-import { OPERATIONS, operationFor, phaseForNode } from './catalog.js?v=0.27.0';
-import { introspectionDefaults } from './introspection/native.js?v=0.27.0';
-import { parseWorkflow } from './packages.js?v=0.27.0';
-import { createViewState } from '../ui/view-state.js?v=0.27.0';
+import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.1';
+import { own } from './record-data.js?v=0.27.1';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.1';
+import { OPERATIONS, operationFor, phaseForNode } from './catalog.js?v=0.27.1';
+import { introspectionDefaults } from './introspection/native.js?v=0.27.1';
+import { parseWorkflow } from './packages.js?v=0.27.1';
+import { createViewState } from '../ui/view-state.js?v=0.27.1';
 
 const LIMIT = 2000000;
 const fail = (code, message) => ({ ok: false, error: { code, message } });

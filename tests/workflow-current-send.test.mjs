@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { registerHooks } from 'node:module';
 import { installMock } from './mock.js';
-import * as S from '../src/state.js?v=0.27.0';
-import { starterGraph } from '../src/workflow/starters.js?v=0.27.0';
+import * as S from '../src/state.js?v=0.27.1';
+import { starterGraph } from '../src/workflow/starters.js?v=0.27.1';
 const moduleUrl = source => 'data:text/javascript,' + encodeURIComponent(source);
 const hooks = registerHooks({ resolve(specifier, context, next) {
     if (specifier === '/script.js') return { url: moduleUrl('export const isGenerating=()=>false;export const syncMesToSwipe=()=>true;export const syncSwipeToMes=()=>true;'), shortCircuit: true };
@@ -23,7 +23,7 @@ test('production Send follows the current unified document and Enable Lattice', 
     c.eventTypes = { GENERATION_STARTED: 'GENERATION_STARTED' };
     c.eventSource = { on(name, fn) { listeners.set(name, [...listeners.get(name) ?? [], fn]); }, removeListener(name, fn) { listeners.set(name, (listeners.get(name) ?? []).filter(value => value !== fn)); }, async emit(name, ...args) { for (const fn of listeners.get(name) ?? []) await fn(...args); } };
     c.chatId = 'current-file-send'; c.setExtensionPrompt = (key, value) => { c.extensionPrompts[key] = { value }; };
-    const facade = await import('../src/run.js?v=0.27.0');
+    const facade = await import('../src/run.js?v=0.27.1');
     await facade.initializeNativeWorkflowController();
     const controller = facade.getNativeWorkflowController();
     try {

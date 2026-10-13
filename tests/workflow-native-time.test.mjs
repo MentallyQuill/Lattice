@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createNativeWorkflowController } from '../src/workflow/host.js?v=0.27.0';
-import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v=0.27.0';
-import { operationDefaults } from '../src/workflow/catalog.js?v=0.27.0';
+import { createNativeWorkflowController } from '../src/workflow/host.js?v=0.27.1';
+import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v=0.27.1';
+import { operationDefaults } from '../src/workflow/catalog.js?v=0.27.1';
 const nextTurn = () => new Promise(resolve => setTimeout(resolve, 10));
 function unifiedGraph({ guidance = false, revise = true } = {}) {
     const nodes = { send: { id: 'send', type: 'workflow', operation: 'on-send' }, generate: { id: 'generate', type: 'workflow', operation: 'generate-reply' }, review: { id: 'review', type: 'workflow', operation: 'review-publish' } };

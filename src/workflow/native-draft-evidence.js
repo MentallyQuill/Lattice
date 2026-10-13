@@ -1,8 +1,8 @@
-import {snapshotDraft,readDraftBody} from './draft-revisions.js?v=0.27.0';
-import {sourceFromDraft,validateOccurrences} from './operations/event-data.js?v=0.27.0';
-import {cloneJsonValue} from './operations/json-data.js?v=0.27.0';
-import {artifactVisibility} from './artifact-privacy.js?v=0.27.0';
-import {own,plain,freeze} from './record-data.js?v=0.27.0';
+import {snapshotDraft,readDraftBody} from './draft-revisions.js?v=0.27.1';
+import {sourceFromDraft,validateOccurrences} from './operations/event-data.js?v=0.27.1';
+import {cloneJsonValue} from './operations/json-data.js?v=0.27.1';
+import {artifactVisibility} from './artifact-privacy.js?v=0.27.1';
+import {own,plain,freeze} from './record-data.js?v=0.27.1';
 const fail=(code,message)=>({ok:false,error:{code,message}}),good=data=>({ok:true,...(data===undefined?{}:{data})});
 const registries=new WeakSet();
 const canonical=value=>Array.isArray(value)?'['+value.map(canonical).join(',')+']':plain(value)?'{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonical(value[key])).join(',')+'}':JSON.stringify(value);

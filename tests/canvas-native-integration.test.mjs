@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { fixture, mouse, dom } from './canvas-fixture.mjs';
-import { nodeCard } from '../src/canvas/presentation.js?v=0.27.0';
-import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.27.0';
-import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.0';
+import { nodeCard } from '../src/canvas/presentation.js?v=0.27.1';
+import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.27.1';
+import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.1';
 import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js';
 

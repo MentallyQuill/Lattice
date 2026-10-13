@@ -4,7 +4,7 @@ import { fixtureGraph as starterGraph } from './helpers/workflow-fixtures.mjs';
 import { prepareWorkflowInsertion } from '../src/workflow/insertion.js';
 import { prepareDisconnection } from '../src/workflow/ports.js';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js';
-import * as H from '../src/history.js?v=0.27.0';
+import * as H from '../src/history.js?v=0.27.1';
 
 let nextRoot = 0;
 test('document changes during async file reading cannot be accepted by preparing afterward', () => {

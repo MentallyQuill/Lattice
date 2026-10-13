@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { runWorkflowForHost } from '../src/workflow/runtime.js?v=0.27.0';
-import { readDraftBody } from '../src/workflow/draft-revisions.js?v=0.27.0';
+import { runWorkflowForHost } from '../src/workflow/runtime.js?v=0.27.1';
+import { readDraftBody } from '../src/workflow/draft-revisions.js?v=0.27.1';
 const native={kind:'draft',text:'Accepted narrative body.',source:{token:'native-token',originalText:'Accepted narrative body.'}};
 const node=(id,operation,settings={})=>({id,type:'workflow',operation,...settings});
 const wire=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});

@@ -1,7 +1,7 @@
-import { transitionNativeGesture } from '../canvas/native-gestures.js?v=0.27.0';
-import { cloneDefinitionData } from '../workflow/definitions.js?v=0.27.0';
-import { isNativeSearchCatalog, filterNativeSearchChoices, matchNativeSearchPorts, resolveNativeSearchChoice } from './native-search-catalog.js?v=0.27.0';
-import { diagnosticText } from './diagnostics.js?v=0.27.0';
+import { transitionNativeGesture } from '../canvas/native-gestures.js?v=0.27.1';
+import { cloneDefinitionData } from '../workflow/definitions.js?v=0.27.1';
+import { isNativeSearchCatalog, filterNativeSearchChoices, matchNativeSearchPorts, resolveNativeSearchChoice } from './native-search-catalog.js?v=0.27.1';
+import { diagnosticText } from './diagnostics.js?v=0.27.1';
 
 const freshCancellation = new Set(['escape', 'pointercancel', 'blur', 'view-change', 'dismiss-search', 'cancel']);
 const endpoint = pin => ({ nodeId: pin.nodeId, portId: pin.portId });

@@ -1,11 +1,11 @@
-import { OPERATIONS, operationDefaults, operationFor, phaseForNode } from './catalog.js?v=0.27.0';
-import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.27.0';
-import { exportWorkflow, parseWorkflow } from './packages.js?v=0.27.0';
-import { validateWorkflow } from './contracts.js?v=0.27.0';
-import { inspectExpandedGraph } from './graph-validation.js?v=0.27.0';
-import { starterGraph } from './starters.js?v=0.27.0';
-import { getNodeGuideFixtures } from './node-guide-fixtures.js?v=0.27.0';
-import { definitionRefKey } from './definition-data.js?v=0.27.0';
+import { OPERATIONS, operationDefaults, operationFor, phaseForNode } from './catalog.js?v=0.27.1';
+import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.27.1';
+import { exportWorkflow, parseWorkflow } from './packages.js?v=0.27.1';
+import { validateWorkflow } from './contracts.js?v=0.27.1';
+import { inspectExpandedGraph } from './graph-validation.js?v=0.27.1';
+import { starterGraph } from './starters.js?v=0.27.1';
+import { getNodeGuideFixtures } from './node-guide-fixtures.js?v=0.27.1';
+import { definitionRefKey } from './definition-data.js?v=0.27.1';
 
 const HOST_REQUIREMENT = 'Use a practice SillyTavern chat and your usual working model connection. Enable Lattice before Send; Review / Publish lets you accept or reject the proposed reply.';
 let examples, lessons;

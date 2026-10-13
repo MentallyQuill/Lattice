@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {starterGraph} from '../src/workflow/starters.js?v=0.27.0';
+import {starterGraph} from '../src/workflow/starters.js?v=0.27.1';
 import {unifiedRecipeHost} from './helpers/unified-recipe-host.mjs';
 
 test('manual native preflight spends no auxiliary requests and leaves ordinary Send usable',async()=>{

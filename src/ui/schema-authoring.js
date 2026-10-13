@@ -1,6 +1,6 @@
-import { validateJsonSchema } from '../workflow/operations/json-decode.js?v=0.27.0';
+import { validateJsonSchema } from '../workflow/operations/json-decode.js?v=0.27.1';
 export { validateJsonSchema };
-import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.0';
+import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.27.1';
 const fail = () => ({ ok: false, error: { code: 'INVALID_SCHEMA_PATH', message: 'Choose an existing schema node using exact property keys or items.' } });
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 // Admission has already checked every descriptor, value and schema budget.

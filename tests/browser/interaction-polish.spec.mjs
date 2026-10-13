@@ -32,7 +32,7 @@ test('node search starts with its input and closes on a toolbar or canvas pointe
         expect(await popup.evaluate(element => element.firstElementChild.querySelector('input')?.type)).toBe('search');
         await expect(popup.getByRole('button', { name: 'Close', exact: true })).toHaveCount(0);
         expect(await popup.innerText()).not.toMatch(/Add Node|Search nodes and Subgraphs/);
-        if (outside === 'toolbar') await page.getByRole('button', { name: 'Toggle inspector', exact: true }).click();
+        if (outside === 'toolbar') await page.getByRole('button', { name: 'Toggle Details Panel', exact: true }).click();
         else await page.mouse.click(b.x + b.width - 20, b.y + b.height - 20);
         await expect(popup).toHaveCount(0);
         expect(await page.evaluate(() => window.canvasHarness.canvas.hasContentGesture())).toBe(false);
@@ -48,8 +48,8 @@ test('Details width commits with pointer and keyboard, persists after reopen, an
     await expect.poll(async () => (await details.boundingBox()).width).toBeCloseTo(initial + 70, 0);
     await divider.focus(); await page.keyboard.press('ArrowLeft');
     await expect.poll(async () => (await details.boundingBox()).width).toBeCloseTo(initial + 82, 0);
-    await page.getByRole('button', { name: 'Toggle inspector', exact: true }).click();
-    await page.getByRole('button', { name: 'Toggle inspector', exact: true }).click();
+    await page.getByRole('button', { name: 'Toggle Details Panel', exact: true }).click();
+    await page.getByRole('button', { name: 'Toggle Details Panel', exact: true }).click();
     await expect.poll(async () => (await details.boundingBox()).width).toBeCloseTo(initial + 82, 0);
     expect(await page.evaluate(() => JSON.stringify(window.canvasHarness.graph))).toBe(before);
     await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();

@@ -17,7 +17,7 @@ async function allTypes(page, wrapped = false) {
         Object.values(graph.nodes).forEach((node, index) => Object.assign(node, { x: 30 + index % 4 * 265, y: 25 + Math.floor(index / 4) * 135 }));
         await h.activate(graph); await h.view({ x: 0, y: 0, zoom: 1 });
     }, wrapped);
-    for (const name of ['Toggle inspector']) {
+    for (const name of ['Toggle Details Panel']) {
         const toggle = page.getByRole('button', { name, exact: true });
         if (await toggle.getAttribute('aria-pressed') === 'true') await toggle.click();
     }

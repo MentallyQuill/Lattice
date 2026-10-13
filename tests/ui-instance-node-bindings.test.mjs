@@ -2,15 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { siblingWorkflow, nestedWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
-import { prepareWorkspaceViews } from '../src/ui/workspace-preparation.js?v=0.27.0';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.0';
-import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.27.0';
-import { prepareNativeNodeEdit } from '../src/workflow/definition-library.js?v=0.27.0';
-import { nodeBindingOverrideKey } from '../src/workflow/definition-data.js?v=0.27.0';
-import * as history from '../src/history.js?v=0.27.0';
+import { prepareWorkspaceViews } from '../src/ui/workspace-preparation.js?v=0.27.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.1';
+import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.27.1';
+import { prepareNativeNodeEdit } from '../src/workflow/definition-library.js?v=0.27.1';
+import { nodeBindingOverrideKey } from '../src/workflow/definition-data.js?v=0.27.1';
+import * as history from '../src/history.js?v=0.27.1';
 import { installMock } from './mock.js';
 installMock();
-const { stepGraphHistory } = await import('../src/state.js?v=0.27.0');
+const { stepGraphHistory } = await import('../src/state.js?v=0.27.1');
 
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function actual(name, env) {

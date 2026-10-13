@@ -10,7 +10,7 @@ import { fixtureLibraryWorkflow as createLibraryWorkflow } from './helpers/workf
 import { makeLocalCopy } from '../src/workflow/definition-library.js';
 import { serializeWorkflowDocument, parseWorkflowDocument } from '../src/workflow/document-file.js';
 import { exportWorkflow, parseWorkflow } from '../src/workflow/packages.js';
-import { presentDiagnostic } from '../src/ui/diagnostics.js?v=0.27.0';
+import { presentDiagnostic } from '../src/ui/diagnostics.js?v=0.27.1';
 
 const accepted = result => { assert.equal(result.ok, true, JSON.stringify(result.error)); return result.data; };
 const graph = id => ({ id, name: id, schema: 3, runtime: 2, mode: 'native-unified', nodes: {}, wires: {}, groups: {}, roles: {}, portals: {}, definitions: {} });

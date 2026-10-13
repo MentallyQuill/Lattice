@@ -59,7 +59,7 @@ async function inspectOperation(page, operation) {
     const card = page.locator(`.pc-node-native[data-id="${id}"]`);
     if (!await card.count()) await openFormation(page);
     await card.locator('.pc-native-heading').click();
-    const toggle = page.getByRole('button', { name: 'Toggle inspector', exact: true });
+    const toggle = page.getByRole('button', { name: 'Toggle Details Panel', exact: true });
     if (await toggle.getAttribute('aria-pressed') !== 'true') await toggle.click();
     await expect(details(page)).toBeVisible(); return details(page);
 }
@@ -700,13 +700,16 @@ test('narrow workflow inspection and review remain opaque during selection feedb
 });
 
 
-test('narrow toolbar exposes readable labeled pane and theme controls', async ({ page }) => {
+test('narrow toolbar exposes accessible pane icons and theme controls', async ({ page }) => {
     await reviewFixture(page);
     await page.setViewportSize({ width: 760, height: 1000 });
     for (const theme of ['obsidian', 'ash']) {
         await page.evaluate(async theme => (await import('/src/theme.js?v=' + window.canvasHarness.version)).setPreset(theme), theme);
         await expect(page.locator('.pc-details-heading').getByRole('button', { name: 'Subgraphs', exact: true })).toHaveCount(0);
-        await expect(page.getByRole('button', { name: 'Toggle inspector', exact: true }).getByText('Details', { exact: true })).toBeVisible();
+        const detailsToggle = page.getByRole('button', { name: 'Toggle Details Panel', exact: true });
+        await expect(detailsToggle).toBeVisible();
+        await expect(detailsToggle).toHaveAttribute('title', 'Toggle Details Panel');
+        await expect(detailsToggle.locator('svg')).toBeVisible();
         await page.getByRole('menubar', { name: 'Workspace menus' }).getByRole('menuitem', { name: 'View', exact: true }).click();
         await expect(page.getByRole('menuitem', { name: 'Theme and colours…', exact: true })).toBeVisible();
         await page.keyboard.press('Escape');
@@ -721,7 +724,7 @@ test('narrow toolbar exposes readable labeled pane and theme controls', async ({
     await expect(page.getByRole('region', { name: 'Manage subgraphs', exact: true })).toHaveCount(0);
     await expect(shelf.getByRole('menuitem', { name: /Manage subgraphs/i })).toHaveCount(0);
     await page.keyboard.press('Escape');
-    const detailsToggle = page.getByRole('button', { name: 'Toggle inspector', exact: true }), previous = await detailsToggle.getAttribute('aria-pressed');
+    const detailsToggle = page.getByRole('button', { name: 'Toggle Details Panel', exact: true }), previous = await detailsToggle.getAttribute('aria-pressed');
     await detailsToggle.focus(); await page.keyboard.press('Enter');
     await expect(detailsToggle).toHaveAttribute('aria-pressed', previous === 'true' ? 'false' : 'true');
 });

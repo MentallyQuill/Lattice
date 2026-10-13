@@ -42,7 +42,7 @@ for (const width of [1440, 320]) test(`native preview explains how to start with
     await preview.locator('.pc-preview-sections').evaluate(element => { element.scrollTop = 0; });
     await preview.screenshot({ path: testInfo.outputPath(`clear-preview-${width}.png`) });
 
-    await page.getByRole('checkbox', { name: 'Enable Lattice', exact: true }).check();
+    await page.getByRole('switch', { name: 'Enable Lattice', exact: true }).check();
     await expect(diagnostic.locator('p').first()).toHaveText('Send a message in SillyTavern to run this workflow.');
     await expect(run).toBeDisabled();
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);

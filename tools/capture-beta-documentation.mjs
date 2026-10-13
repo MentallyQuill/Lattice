@@ -185,7 +185,7 @@ async function load(kind = 'structured') {
 async function editingView() {
     const collapse = page.getByRole('button', { name: 'Collapse preview', exact: true });
     if (await collapse.isVisible()) await collapse.click();
-    const inspector = page.getByRole('button', { name: 'Toggle inspector', exact: true });
+    const inspector = page.getByRole('button', { name: 'Toggle Details Panel', exact: true });
     if (await inspector.getAttribute('aria-pressed') === 'true') await inspector.click();
     await fit(.95);
 }

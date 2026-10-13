@@ -24,8 +24,18 @@
         {#if workflow?.ownedBusy || workflow?.busy}<button type="button" class="pc-btn menu_button pc-root-stop" title="Stop the workflow" onclick={() => actions.command('stop-workflow')}>■ Stop</button>{/if}
         <span class="pc-root-workflow-status" role="status" aria-label="Workflow status">{workflow ? `${workflow.phase} · ≤ ${workflow.callBound} requests${workflow.status ? ' · ' + workflow.status : ''}` : 'Workflow unavailable'}</span>
         <div class="pc-header-actions pc-surface-actions">
-            <button type="button" class={`pc-btn menu_button pc-pane-toggle${state.inspectorOpen ? ' pc-on' : ''}`} title="Show or hide the inspector" aria-label="Toggle inspector" aria-pressed={state.inspectorOpen} bind:this={inspBtn} onclick={() => actions.command('inspector')}>Details</button>
+            <button type="button" class={`pc-btn menu_button pc-pane-toggle${panels?.previewOpen ? ' pc-on' : ''}`} title="Toggle Preview Panel" aria-label="Toggle Preview Panel" aria-pressed={!!panels?.previewOpen} onclick={() => local('toggle-preview')}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 10h18" /></svg>
+            </button>
+            <button type="button" class={`pc-btn menu_button pc-pane-toggle${state.inspectorOpen ? ' pc-on' : ''}`} title="Toggle Details Panel" aria-label="Toggle Details Panel" aria-pressed={state.inspectorOpen} bind:this={inspBtn} onclick={() => actions.command('inspector')}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M15 4v16" /></svg>
+            </button>
         </div>
-        <label class="pc-enable"><input class="pc-enable-input" type="checkbox" checked={state.enabled} bind:this={enabledControl} onchange={(event) => actions.setEnabled(event.currentTarget.checked)} /><span>Enable Lattice</span></label>
+        <label class="pc-enable" class:pc-on={state.enabled}>
+            <span class="pc-enable-logo" style={`--pc-enable-logo: url("${actions.logoUrl}")`} aria-hidden="true"></span>
+            <span class="pc-enable-caption">Enable Lattice</span>
+            <input class="pc-enable-input" type="checkbox" role="switch" aria-label="Enable Lattice" checked={state.enabled} bind:this={enabledControl} onchange={(event) => actions.setEnabled(event.currentTarget.checked)} />
+            <span class="pc-enable-state" aria-hidden="true">{state.enabled ? 'On' : 'Off'}</span>
+        </label>
     </div>
 </header>

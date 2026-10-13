@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.27.0';
-import {prepareNativeSearchCatalog,resolveNativeSearchChoice,matchNativeSearchPorts} from '../src/ui/native-search-catalog.js?v=0.27.0';
-import {describeOperation,operationDefaults} from '../src/workflow/catalog.js?v=0.27.0';
-const setup=await import('../src/ui/story-document-setup.js?v=0.27.0').catch(()=>({}));
-const config=await import('../src/ui/configured-node-creation.js?v=0.27.0').catch(()=>({}));
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.27.1';
+import {prepareNativeSearchCatalog,resolveNativeSearchChoice,matchNativeSearchPorts} from '../src/ui/native-search-catalog.js?v=0.27.1';
+import {describeOperation,operationDefaults} from '../src/workflow/catalog.js?v=0.27.1';
+const setup=await import('../src/ui/story-document-setup.js?v=0.27.1').catch(()=>({}));
+const config=await import('../src/ui/configured-node-creation.js?v=0.27.1').catch(()=>({}));
 const scope={schema:3,runtime:2,mode:'native-unified',workflowId:'root',viewPath:[],inDefinition:false};
 const definition={targetId:'souls.json',name:'Sword souls',format:'json',content:'[]',visibility:{kind:'public'}};
 function storageFixture(saveMetadata){let user='default-user';const context={chatId:'story',chat:[],chatMetadata:{}};const catalog=createChatDocumentCatalog({getContext:()=>context,getUserId:()=>user,saveMetadata:saveMetadata??(()=>undefined)});return {context,catalog,user:value=>user=value};}
@@ -17,7 +17,7 @@ test('required-configuration nodes remain discoverable without valid placeholder
 });
 
 test('document-backed nodes can be created from search with usable automatic defaults and no setup catalog',async()=>{
- const {prepareNativeConnectionEdit}=await import('../src/workflow/connection-edits.js?v=0.27.0');
+ const {prepareNativeConnectionEdit}=await import('../src/workflow/connection-edits.js?v=0.27.1');
  const graph={id:'automatic-data',schema:3,runtime:2,mode:'native-unified',nodes:{},wires:{},definitions:{},portals:{}},prepared=prepareNativeSearchCatalog(scope);
  for(const [operation,key,targetId] of [['read-file','targetId','lattice-default-notes'],['story-clock','clockId','lattice-default-clock'],['commit-outcomes','targetId','lattice-default-outcomes']]){
   assert.equal(config.nodeNeedsConfiguration(operation),operation==='read-file',operation+' preserves its intended creation route');
@@ -90,7 +90,7 @@ test('configured document creation rechecks its captured catalog authorization b
 });
 
 test('configured creation resolves a real strict graph candidate only after valid controls',async()=>{
- const {prepareNativeConnectionEdit}=await import('../src/workflow/connection-edits.js?v=0.27.0');
+ const {prepareNativeConnectionEdit}=await import('../src/workflow/connection-edits.js?v=0.27.1');
  const graph={id:'configured',schema:3,runtime:2,mode:'native-unified',nodes:{},wires:{},definitions:{},portals:{}},before=structuredClone(graph),capture={};
  const session=config.createConfiguredNodeSession({isCurrent:()=>true,prepare:(token,command)=>prepareNativeConnectionEdit(graph,{...command,graphPoint:{x:20,y:30}})});
  const opened=session.open(capture,{kind:'create',operation:'read-file',requiresConfiguration:true},{phase:'post',targets:[{targetId:'souls.json',format:'json'}],helpers:[]});
@@ -99,7 +99,7 @@ test('configured creation resolves a real strict graph candidate only after vali
 });
 
 test('story clock template uses the real engine contract and no ambient time',async()=>{
- assert.equal(typeof setup.createStoryClockTemplate,'function');const made=setup.createStoryClockTemplate('time.json','fantasy-calendar',840);assert.equal(made.ok,true);const clock=JSON.parse(made.data.text);assert.equal(clock.clockId,'time.json');assert.equal(clock.absoluteMinute,840);assert.equal(clock.schemaVersion,1);assert.equal(clock.revision,1);const {advanceStoryClock}=await import('../src/workflow/story-time.js?v=0.27.0');assert.equal(advanceStoryClock(clock,{kind:'duration',minutes:480}).ok,true);assert.equal(setup.createStoryClockTemplate('','calendar',0).ok,false);assert.equal(setup.createStoryClockTemplate('time','calendar',-1).ok,false);
+ assert.equal(typeof setup.createStoryClockTemplate,'function');const made=setup.createStoryClockTemplate('time.json','fantasy-calendar',840);assert.equal(made.ok,true);const clock=JSON.parse(made.data.text);assert.equal(clock.clockId,'time.json');assert.equal(clock.absoluteMinute,840);assert.equal(clock.schemaVersion,1);assert.equal(clock.revision,1);const {advanceStoryClock}=await import('../src/workflow/story-time.js?v=0.27.1');assert.equal(advanceStoryClock(clock,{kind:'duration',minutes:480}).ok,true);assert.equal(setup.createStoryClockTemplate('','calendar',0).ok,false);assert.equal(setup.createStoryClockTemplate('time','calendar',-1).ok,false);
 });
 
 test('Recall deferred ports match their configured activation in root and static bodies',()=>{
@@ -109,7 +109,7 @@ test('Recall deferred ports match their configured activation in root and static
 });
 
 test('For Each setup exposes only exact pinned Data item/result helpers and rejects edited references',async()=>{
- const {computeDefinitionIdentity}=await import('../src/workflow/definitions.js?v=0.27.0');const {definitionRefKey}=await import('../src/workflow/definition-data.js?v=0.27.0');
+ const {computeDefinitionIdentity}=await import('../src/workflow/definitions.js?v=0.27.1');const {definitionRefKey}=await import('../src/workflow/definition-data.js?v=0.27.1');
  const draft={id:'item-helper',version:1,name:'Identity',interface:[{id:'item',label:'Item',direction:'input',kind:'data',required:true,cardinality:'one',boundaryNodeId:'input'},{id:'result',label:'Result',direction:'output',kind:'data',required:false,cardinality:'one',boundaryNodeId:'output'}],parameters:[],body:{schema:3,runtime:2,mode:'native-unified',nodes:{input:{id:'input',type:'subgraph-input',interfacePortId:'item'},output:{id:'output',type:'subgraph-output',interfacePortId:'result'}},wires:{same:{id:'same',route:'wire',from:'input',fromPort:'out',to:'output',toPort:'in'}}}};
  const make=value=>{const checked=computeDefinitionIdentity(value);assert.equal(checked.ok,true,JSON.stringify(checked));return {...checked.data.materializedDefinition,semanticHash:checked.data.semanticHash};};const definition=make(draft),optional=make({...draft,id:'optional',interface:draft.interface.map(port=>({...port,required:false}))});
  const definitions=Object.fromEntries([definition,optional].map(def=>[definitionRefKey(def),def])),choices=config.iterationHelperChoices({definitions});assert.equal(choices.length,1);assert.equal(choices[0].ref.id,'item-helper');const options={phase:'post',targets:[],helpers:choices};

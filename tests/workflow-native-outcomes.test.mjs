@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createNativeWorkflowController } from '../src/workflow/host.js?v=0.27.0';
-import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v=0.27.0';
-import { operationDefaults } from '../src/workflow/catalog.js?v=0.27.0';
+import { createNativeWorkflowController } from '../src/workflow/host.js?v=0.27.1';
+import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v=0.27.1';
+import { operationDefaults } from '../src/workflow/catalog.js?v=0.27.1';
 const nextTurn = () => new Promise(resolve => setTimeout(resolve, 10));
 function unifiedGraph({ guidance = false, revise = true } = {}) {
     const nodes = { send: { id: 'send', type: 'workflow', operation: 'on-send' }, generate: { id: 'generate', type: 'workflow', operation: 'generate-reply' }, review: { id: 'review', type: 'workflow', operation: 'review-publish' } };
@@ -32,7 +32,7 @@ function addReply(f, { normalized = true, text = 'Native reply.' } = {}) {
 async function settled(f) { for (let tries = 0; tries < 30 && !f.results.length; tries++) await nextTurn(); assert.equal(f.results.length, 1, 'Owned continuation must settle promptly'); return f.results[0]; }
 
 
-import {normalizeOccurrences,confirmOccurrences,resolveItemHolders} from '../src/workflow/operations/event-data.js?v=0.27.0';
+import {normalizeOccurrences,confirmOccurrences,resolveItemHolders} from '../src/workflow/operations/event-data.js?v=0.27.1';
 const playerText='Mara uses her broken wand.';
 function playerEvents(){const source={sourceId:'player-turn',revision:'1',sceneId:'story',watch:'player-message',text:playerText,visibility:'public'};const candidates=normalizeOccurrences(source,[{eventType:'item-used',actorId:'mara',itemId:'wand',position:{start:0,end:playerText.length},semantics:'actual'}],{actorIds:['mara'],itemIds:['wand']}).data.events;return resolveItemHolders({wand:'mara'},confirmOccurrences(candidates,[{eventId:candidates[0].eventId,accepted:true}]).data.events).data.events;}
 function outcomeGraph(wild=false){const g=unifiedGraph({revise:false});const node=(id,operation,extra={})=>g.nodes[id]={id,type:'workflow',...operationDefaults(operation),...extra};const wire=(id,from,fromPort,to,toPort)=>g.wires[id]={id,route:'wire',from,fromPort,to,toPort};function data(id,value){node(id+'text','text',{text:JSON.stringify(value)});node(id,'json-decode');wire(id+'parse',id+'text','out',id,'in');}

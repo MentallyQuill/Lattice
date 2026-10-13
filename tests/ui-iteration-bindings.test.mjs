@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join,resolve,relative,isAbsolute} from 'node:path';
 import {compiled} from './helpers/svelte-compile.mjs';
 import {presentDiagnostic} from '../src/ui/diagnostics.js';
-import {prepareIterationBindings} from '../src/ui/iteration-bindings.js?v=0.27.0';
+import {prepareIterationBindings} from '../src/ui/iteration-bindings.js?v=0.27.1';
 import {JSDOM} from 'jsdom';
 const dom=new JSDOM('<!doctype html><body></body>',{pretendToBeVisual:true});globalThis.window=dom.window;globalThis.document=dom.window.document;
 for(const key of ['Node','Element','Text','Comment','Document','HTMLElement','HTMLMediaElement','HTMLButtonElement','HTMLInputElement','HTMLSelectElement','MutationObserver'])Object.defineProperty(globalThis,key,{configurable:true,value:dom.window[key]});
