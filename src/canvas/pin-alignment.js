@@ -28,45 +28,55 @@ function edgeLineText(label, fromEnd) {
     return text;
 }
 
-export function alignCardPins(card, zoom = 1) {
-    const doc = card.ownerDocument, view = doc.defaultView;
+/** Batch every probe write before baseline reads, then clean up before pin writes. */
+export function alignCardsPins(cards, zoom = 1) {
     const scale = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
-    for (const row of card.querySelectorAll('.pc-native-row')) {
-        const label = row.querySelector('.pc-native-pin-label'), pin = row.querySelector('.pc-port');
-        if (!label || !pin) continue;
-        const bounds = row.getBoundingClientRect(), labelBox = label.getBoundingClientRect();
-        // Hidden compact labels and DOM-only tests have no visible ink to align.
-        if (!bounds.height || !labelBox.height || view.getComputedStyle(label).display === 'none') {
-            pin.style.setProperty('--pc-pin-y', '0px');
-            continue;
+    const rows = [];
+    for (const card of cards) {
+        const doc = card.ownerDocument, view = doc.defaultView;
+        for (const row of card.querySelectorAll('.pc-native-row')) {
+            const label = row.querySelector('.pc-native-pin-label'), pin = row.querySelector('.pc-port');
+            if (!label || !pin) continue;
+            const bounds = row.getBoundingClientRect(), labelBox = label.getBoundingClientRect();
+            const style = view.getComputedStyle(label);
+            const item = { label, pin, bounds, style, offset: '0px' };
+            rows.push(item);
+            if (!bounds.height || !labelBox.height || style.display === 'none') continue;
+            if (!contexts.has(doc)) {
+                let context = null;
+                try { context = doc.createElement('canvas').getContext('2d'); } catch { /* Retain the line-box center without Canvas. */ }
+                contexts.set(doc, context);
+            }
+            item.context = contexts.get(doc);
+            if (!item.context) continue;
+            item.first = doc.createElement('span'); item.last = doc.createElement('span');
+            for (const probe of [item.first, item.last]) {
+                probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+                probe.setAttribute('aria-hidden', 'true');
+            }
         }
-        if (!contexts.has(doc)) {
-            let context = null;
-            try { context = doc.createElement('canvas').getContext('2d'); } catch { /* Canvas unavailable: retain the line-box center. */ }
-            contexts.set(doc, context);
+    }
+    try {
+        for (const item of rows) if (item.first) { item.label.prepend(item.first); item.label.append(item.last); }
+        for (const item of rows) if (item.first) {
+            const firstBaseline = item.first.getBoundingClientRect().top, lastBaseline = item.last.getBoundingClientRect().top;
+            const wrapped = Math.abs(lastBaseline - firstBaseline) > .01;
+            const { context, style, label, bounds } = item;
+            context.font = style.font || `${style.fontSize} ${style.fontFamily}`;
+            const firstMetrics = context.measureText(wrapped ? edgeLineText(label, false) : label.textContent ?? '');
+            const lastMetrics = wrapped ? context.measureText(edgeLineText(label, true)) : firstMetrics;
+            const ascent = firstMetrics.actualBoundingBoxAscent, descent = lastMetrics.actualBoundingBoxDescent;
+            if (!Number.isFinite(ascent) || !Number.isFinite(descent)) { item.offset = null; continue; }
+            // Only the top and bottom rendered lines define the visible ink edges.
+            const center = (firstBaseline + lastBaseline + (descent - ascent) * scale) / 2;
+            item.offset = `${(center - bounds.top - bounds.height / 2) / scale}px`;
         }
-        const context = contexts.get(doc);
-        if (!context) { pin.style.setProperty('--pc-pin-y', '0px'); continue; }
-        const style = view.getComputedStyle(label);
-        context.font = style.font || `${style.fontSize} ${style.fontFamily}`;
-        const probe = doc.createElement('span');
-        probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
-        probe.setAttribute('aria-hidden', 'true');
-        label.prepend(probe);
-        const firstBaseline = probe.getBoundingClientRect().top;
-        probe.remove();
-        label.append(probe);
-        const lastBaseline = probe.getBoundingClientRect().top;
-        probe.remove();
-        const wrapped = Math.abs(lastBaseline - firstBaseline) > .01;
-        const firstMetrics = context.measureText(wrapped ? edgeLineText(label, false) : label.textContent ?? '');
-        const lastMetrics = wrapped ? context.measureText(edgeLineText(label, true)) : firstMetrics;
-        const ascent = firstMetrics.actualBoundingBoxAscent, descent = lastMetrics.actualBoundingBoxDescent;
-        if (!Number.isFinite(ascent) || !Number.isFinite(descent)) continue;
-        // Only lettering on the top and bottom rendered lines defines the
-        // visible block edges; capitals on another line cannot raise its top.
-        const center = (firstBaseline + lastBaseline + (descent - ascent) * scale) / 2;
-        const offset = (center - bounds.top - bounds.height / 2) / scale;
-        pin.style.setProperty('--pc-pin-y', `${offset}px`);
+    } finally {
+        for (const item of rows) if (item.first) { item.first.remove(); item.last.remove(); }
+    }
+    for (const item of rows) if (item.offset !== null && item.pin.style.getPropertyValue('--pc-pin-y') !== item.offset) {
+        item.pin.style.setProperty('--pc-pin-y', item.offset);
     }
 }
+
+export function alignCardPins(card, zoom = 1) { alignCardsPins([card], zoom); }
