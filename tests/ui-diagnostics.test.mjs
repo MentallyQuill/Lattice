@@ -3,6 +3,11 @@ import assert from 'node:assert/strict';
 import { formatRecordedArtifact } from '../src/workflow/recording.js';
 
 const api = await import('../src/ui/diagnostics.js').catch(() => ({}));
+test('native history capacity and unverified saves point to the explicit Workflow Data actions',()=>{
+ for(const code of ['CLOCK_LEDGER_FULL','FILE_RECEIPT_LIMIT']){const view=api.presentDiagnostic({code,message:'PRIVATE HOST DETAIL'});assert.match(view.message,/Workflow Data.*Preview history checkpoint/);assert.equal(JSON.stringify(view).includes('PRIVATE HOST DETAIL'),false);}
+ const held=api.presentDiagnostic({code:'PERSISTENCE_UNKNOWN',message:'PRIVATE CHECKPOINT DETAIL'});assert.match(held.message,/Inspect saved history/);assert.equal(JSON.stringify(held).includes('PRIVATE CHECKPOINT DETAIL'),false);
+ const corrupt=api.presentDiagnostic({code:'INVALID_DOCUMENT_HISTORY',message:'secret old action'});assert.match(corrupt.message,/history.*invalid/i);assert.equal(JSON.stringify(corrupt).includes('secret old action'),false);
+});
 
 test('unknown exceptions do not disclose private text or invent a remedy', () => {
     assert.equal(typeof api.presentDiagnostic, 'function');

@@ -164,7 +164,7 @@
         "definition": {
           "id": "combined-weather",
           "version": 2,
-          "semanticHash": "sha256:6e669a5cebd4ea40bc79266ba66e1726add898cf666af9648668f6b45852702c"
+          "semanticHash": "sha256:ea566b6a076b949fb6fcf02721c388ea284589ef9e7cf9f84ec5f94650fb3e74"
         },
         "parameterOverrides": {},
         "roleOverrides": {},
@@ -181,7 +181,7 @@
         "definition": {
           "id": "combined-relationship",
           "version": 2,
-          "semanticHash": "sha256:0103676c3426a3ef93f5c2a2332155fccabf7a98c4c7256ec6e889fa1539ceb0"
+          "semanticHash": "sha256:404822e2502b16aaad61fecd7c53ec3fd0e18db0579dcf08a1c3ce1cb9dd9eb5"
         },
         "parameterOverrides": {},
         "roleOverrides": {},
@@ -861,7 +861,7 @@
               "x": 1300,
               "y": 480,
               "w": 300,
-              "h": 168,
+              "h": 196,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -897,7 +897,7 @@
               "title": "Current Holder",
               "enabled": true,
               "x": 2100,
-              "y": 288,
+              "y": 336,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -913,7 +913,7 @@
               "title": "Collection",
               "enabled": true,
               "x": 2500,
-              "y": 264,
+              "y": 360,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -942,7 +942,7 @@
               "title": "Collection",
               "enabled": true,
               "x": 2900,
-              "y": 504,
+              "y": 408,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -969,7 +969,7 @@
               "title": "Condition",
               "enabled": true,
               "x": 3300,
-              "y": 1008,
+              "y": 240,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -988,7 +988,7 @@
               "title": "Branch",
               "enabled": true,
               "x": 3700,
-              "y": 240,
+              "y": 264,
               "w": 300,
               "h": 168,
               "profileId": null,
@@ -1005,9 +1005,9 @@
               "title": "Read File",
               "enabled": true,
               "x": 3300,
-              "y": 312,
+              "y": 444,
               "w": 300,
-              "h": 168,
+              "h": 196,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -1045,9 +1045,9 @@
               "title": "Read File",
               "enabled": true,
               "x": 3300,
-              "y": 676,
+              "y": 696,
               "w": 300,
-              "h": 168,
+              "h": 196,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -1366,10 +1366,10 @@
           "portals": {}
         }
       },
-      "[\"combined-weather\",2,\"sha256:6e669a5cebd4ea40bc79266ba66e1726add898cf666af9648668f6b45852702c\"]": {
+      "[\"combined-weather\",2,\"sha256:ea566b6a076b949fb6fcf02721c388ea284589ef9e7cf9f84ec5f94650fb3e74\"]": {
         "id": "combined-weather",
         "version": 2,
-        "semanticHash": "sha256:6e669a5cebd4ea40bc79266ba66e1726add898cf666af9648668f6b45852702c",
+        "semanticHash": "sha256:ea566b6a076b949fb6fcf02721c388ea284589ef9e7cf9f84ec5f94650fb3e74",
         "name": "Eight-hour rain",
         "interface": [
           {
@@ -1388,7 +1388,7 @@
             "kind": "guidance",
             "required": false,
             "cardinality": "one",
-            "boundaryNodeId": "boundary-output-15"
+            "boundaryNodeId": "boundary-output-18"
           }
         ],
         "parameters": [],
@@ -1632,8 +1632,8 @@
               "h": 140,
               "interfacePortId": "input-1"
             },
-            "boundary-output-15": {
-              "id": "boundary-output-15",
+            "boundary-output-18": {
+              "id": "boundary-output-18",
               "type": "subgraph-output",
               "x": 3700,
               "y": 240,
@@ -1651,8 +1651,8 @@
               "to": "weather-duration",
               "toPort": "in"
             },
-            "edge-80": {
-              "id": "edge-80",
+            "edge-83": {
+              "id": "edge-83",
               "route": "wire",
               "from": "boundary-input-5",
               "fromPort": "out",
@@ -1667,8 +1667,8 @@
               "to": "weather-advance",
               "toPort": "proposal"
             },
-            "edge-81": {
-              "id": "edge-81",
+            "edge-84": {
+              "id": "edge-84",
               "route": "wire",
               "from": "boundary-input-5",
               "fromPort": "out",
@@ -1747,12 +1747,12 @@
               "to": "weather-commit-clock",
               "toPort": "occurrences"
             },
-            "edge-82": {
-              "id": "edge-82",
+            "edge-85": {
+              "id": "edge-85",
               "route": "wire",
               "from": "weather-guidance",
               "fromPort": "out",
-              "to": "boundary-output-15",
+              "to": "boundary-output-18",
               "toPort": "in"
             }
           },
@@ -1761,10 +1761,10 @@
           "portals": {}
         }
       },
-      "[\"combined-relationship\",2,\"sha256:0103676c3426a3ef93f5c2a2332155fccabf7a98c4c7256ec6e889fa1539ceb0\"]": {
+      "[\"combined-relationship\",2,\"sha256:404822e2502b16aaad61fecd7c53ec3fd0e18db0579dcf08a1c3ce1cb9dd9eb5\"]": {
         "id": "combined-relationship",
         "version": 2,
-        "semanticHash": "sha256:0103676c3426a3ef93f5c2a2332155fccabf7a98c4c7256ec6e889fa1539ceb0",
+        "semanticHash": "sha256:404822e2502b16aaad61fecd7c53ec3fd0e18db0579dcf08a1c3ce1cb9dd9eb5",
         "name": "Rowan toward Iris",
         "interface": [
           {
@@ -1956,7 +1956,7 @@
               "x": 1300,
               "y": 1128,
               "w": 300,
-              "h": 168,
+              "h": 196,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -2208,8 +2208,8 @@
               "to": "relationship-candidates",
               "toPort": "data"
             },
-            "edge-94": {
-              "id": "edge-94",
+            "edge-97": {
+              "id": "edge-97",
               "route": "wire",
               "from": "boundary-input-10",
               "fromPort": "out",
@@ -2280,8 +2280,8 @@
               "to": "relationship-decay",
               "toPort": "rules"
             },
-            "edge-95": {
-              "id": "edge-95",
+            "edge-98": {
+              "id": "edge-98",
               "route": "wire",
               "from": "boundary-input-11",
               "fromPort": "out",
@@ -2304,8 +2304,8 @@
               "to": "relationship-interaction-events",
               "toPort": "events"
             },
-            "edge-96": {
-              "id": "edge-96",
+            "edge-99": {
+              "id": "edge-99",
               "route": "wire",
               "from": "boundary-input-11",
               "fromPort": "out",

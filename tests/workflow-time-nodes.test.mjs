@@ -5,6 +5,10 @@ import { describeTimeNode, executeTimeNode, TIME_OPERATIONS } from '../src/workf
 const clock = (minute = 820, extra = {}) => ({ schemaVersion: 1, clockId: 'story-2-clock', calendarId: 'campaign-days', revision: 7, dayLengthMinutes: 1440, absoluteMinute: minute, ...extra });
 const artifact = value => ({ kind: 'data', value });
 const success = result => { assert.equal(result.ok, true, JSON.stringify(result)); return result; };
+test('Clock Commit preserves bounded native history capacity diagnostics',async()=>{
+ const result=await executeTimeNode({operation:'commit-clock'},{projection:artifact({status:'proposed'})},{root:true,stageStoryClock:async()=>({ok:false,error:{code:'CLOCK_LEDGER_FULL',message:'PRIVATE HOST DETAIL'}})});
+ assert.equal(result.error.code,'CLOCK_LEDGER_FULL');assert.match(result.error.message,/Workflow Data/);assert.equal(JSON.stringify(result).includes('PRIVATE HOST DETAIL'),false);
+});
 
 test('Story Clock is a both-phase root source and returns a detached persisted clock', async () => {
     const node = { operation: 'story-clock', clockId: 'story-2-clock' };

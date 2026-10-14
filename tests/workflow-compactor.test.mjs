@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {compactContext} from '../src/workflow/compactor.js';
+import {compactContext,formatContext} from '../src/workflow/compactor.js';
 const countTokens=async text=>({tokens:text.length,method:'characters-fixture'});
 const smallContext={kind:'context',messages:[{id:'a',role:'user',text:'Hello',source:{index:0}},{id:'b',role:'assistant',text:'Hi',source:{index:1}}]};
 const result=await compactContext(smallContext,{targetTokens:1200,keepRecent:2,method:'compress'},{countTokens});
@@ -124,4 +124,11 @@ assert.deepEqual(failedReport?.summarizedMessageIds,[]);
 assert.deepEqual(failedReport?.inputOmittedMessageIds,[]);
 assert.equal(failedReport?.originalRetained,true);
 assert.deepEqual(overflow.artifact.messages.map(message=>message.text),history.messages.map(message=>message.text));
+let budgetRequest;
+const budgeted=await compactContext(history,{id:'budget',targetTokens:140,keepRecent:1,pins:['AAA'],method:'compress',maxTokens:1024},{...compressionPorts,request:async request=>{budgetRequest=request;return {ok:true,data:{text:'Summary',finish:'stop'}};}});
+const reservedTokens=formatContext({messages:[history.messages[0],{id:'budget:summary',role:'system',text:''},history.messages[3]]}).length;
+assert.equal(budgeted.ok,true);
+assert.match(budgetRequest.messages[0].content,new RegExp('at most '+(140-reservedTokens)+' tokens'));
+assert.equal(budgetRequest.maxTokens,1024);
+assert.deepEqual(budgeted.reports.find(report=>report.code==='COMPRESSION_BUDGET'),{code:'COMPRESSION_BUDGET',targetTokens:140,reservedTokens,summaryTokens:140-reservedTokens,completionLimit:1024});
 console.log('compactor: ok');

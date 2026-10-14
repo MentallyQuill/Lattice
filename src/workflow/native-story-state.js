@@ -42,10 +42,15 @@ export function createNativeStoryState(raw) {
         const clock=advanceStoryClock(value,{kind:'duration',minutes:0});if(!clock.ok||value.schemaVersion!==1||!Number.isSafeInteger(value.revision)||value.revision<1||value.clockId!==clockId)return fail('INVALID_CLOCK','The accepted clock requires matching identity, schema 1 and positive revision.');
         const records=value.acceptedTimeAdvances??[];
         if(!Array.isArray(records)||records.length>32||records.some(record=>!plain(record)||!id(record.turnId)||!id(record.projectionKey)||!plain(record.previousClock))||new Set(records.map(record=>record.turnId)).size!==records.length)return fail('INVALID_CLOCK_LEDGER','The accepted time advance ledger is invalid or exceeds 32 retained turns.');
-        const replay=records.find(record=>record.turnId===config.turnId),exposed=replay?replay.previousClock:value;
+        let replay=records.find(record=>record.turnId===config.turnId),archiveVisibility={kind:'public'};
+        if(!replay&&typeof config.files.lookupHistory==='function'){
+            const archived=await config.files.lookupHistory(clockId,{turnId:config.turnId});if(!current().ok)return current();if(!archived.ok)return archived;
+            replay=archived.data.clockTurn;archiveVisibility=archived.data.visibility;
+        }
+        const exposed=replay?replay.previousClock:value;
         const tested=advanceStoryClock(exposed,{kind:'duration',minutes:0});if(!tested.ok||exposed.clockId!==value.clockId||exposed.calendarId!==value.calendarId||!Number.isSafeInteger(exposed.revision)||exposed.revision<1)return fail('INVALID_CLOCK_LEDGER','A retained preturn clock must share the accepted clock identity.');
         const visibility=config.files.visibility(clockId);if(!visibility.ok)return visibility;if(!current().ok)return current();
-        const marked=freeze({...tested.data.previousClock,visibility:visibility.data});
+        const marked=freeze({...tested.data.previousClock,visibility:artifactVisibility({visibility:visibility.data,archive:{visibility:archiveVisibility}})});
         captures.set(clockId,{...read.data,latest:value,records,replay,exposed:marked});return good(marked);
     }
     function registerClock(value,clockId){const available=current();if(!available.ok)return available;const capture=captures.get(clockId);const checked=cloneJsonValue(value);if(!capture||!Object.isFrozen(value)||!checked.ok||canonical(checked.data.value)!==canonical(capture.exposed))return fail('CLOCK_CAPTURE_REQUIRED','Clock authority requires this exact captured accepted source.');clockValues.set(value,capture);return good();}
@@ -99,6 +104,14 @@ export function createNativeStoryState(raw) {
         if(config.playerSource){const captured=playerSource();if(!captured.ok)return captured;const rebased=[];for(const event of selectedEvents){if(event.source.watch!=='player-message'){rebased.push(event);continue;}const normalized=normalizeOccurrences(captured.data,[{eventType:event.eventType,actorId:event.actorId,...(event.itemId?{itemId:event.itemId}:{}),...(event.objectId?{objectId:event.objectId}:{}),position:event.position,semantics:event.semantics}],{actorIds:[...new Set([event.actorId,event.objectId].filter(Boolean))],itemIds:[event.itemId].filter(Boolean)});if(!normalized.ok)return normalized;const next=normalized.data.events[0];if(next.evidence.text!==event.evidence.text)return fail('STATE_EVIDENCE_CHANGED','The native player source must preserve the original exact quote.');rebased.push({...next,status:'confirmed',confirmation:{accepted:true},...(event.holderId?{holderId:event.holderId}:{})});}selectedEvents=rebased;}
         let durable=[],ledgerVisibility={kind:'public'};
         if(ledgerId){const mark=config.files.visibility(ledgerId);if(!current().ok)return current();if(!mark.ok)return mark;ledgerVisibility=mark.data;const read=await config.files.store.read(ledgerId);if(!current().ok)return current();if(!read.ok)return read;if(read.data.snapshot.format!=='json')return fail('INVALID_OUTCOME_LEDGER','Outcome ledgers require JSON arrays.');try {durable=JSON.parse(read.data.snapshot.content);}catch{return fail('INVALID_OUTCOME_LEDGER','The outcome ledger is invalid JSON.');}if(!Array.isArray(durable)||durable.length>256)return fail('INVALID_OUTCOME_LEDGER','The accepted outcome ledger must be a bounded JSON array.');for(const raw of durable){const checked=await validateRandomOutcome(raw);if(!current().ok)return current();if(!checked.ok||checked.data.outcome.acceptance!=='accepted')return fail('INVALID_OUTCOME_LEDGER','The accepted outcome ledger contains invalid or unaccepted outcomes.');}}
+        if(ledgerId&&typeof config.files.lookupHistory==='function'){
+            const archived=await config.files.lookupHistory(ledgerId,{outcomes:{eventIds:selectedEvents.map(event=>event.eventId),libraryId:library.libraryId,rerollId:rerollId??null}});
+            if(!current().ok)return current();if(!archived.ok)return archived;
+            ledgerVisibility=artifactVisibility({visibility:ledgerVisibility,archive:{visibility:archived.data.visibility}});
+            for(const raw of archived.data.outcomes){const checked=await validateRandomOutcome(raw);if(!current().ok)return current();if(!checked.ok||checked.data.outcome.acceptance!=='accepted')return fail('INVALID_OUTCOME_LEDGER','Archived outcomes must retain their original accepted draw.');
+                const previous=durable.find(value=>value.outcomeId===raw.outcomeId);if(previous&&canonical(previous)!==canonical(raw))return fail('OUTCOME_CONFLICT','Active and archived accepted outcomes conflict.');if(!previous)durable.push(checked.data.outcome);
+            }
+        }
         const supplied=cloneJsonValue(saved);if(!supplied.ok||!Array.isArray(supplied.data.value))return fail('UNTRUSTED_SAVED_OUTCOME','Saved outcomes require the retained cache or an authorized ledger.');
         const prior=[...durable,...[...cache.entries.values()].filter(entry=>entry.turnId===config.turnId).map(entry=>entry.outcome)].filter((value,index,array)=>array.findIndex(other=>other.outcomeId===value.outcomeId)===index);
         if(supplied.data.value.some(value=>!prior.some(known=>canonical(known)===canonical(value))))return fail('UNTRUSTED_SAVED_OUTCOME','Imported outcomes cannot authorize a native draw. Select its authorized ledger.');
@@ -120,10 +133,20 @@ export function createNativeStoryState(raw) {
     }
     async function stageOutcomes(targetId,rawOutcomes,address){
         const available=current();if(!available.ok)return available;const admitted=cloneJsonValue(rawOutcomes);if(!admitted.ok)return fail('OUTCOME_LIMIT','Outcome Commit requires bounded own outcome data.');const values=Array.isArray(admitted.data.value)?admitted.data.value:[admitted.data.value];if(values.length>64)return fail('OUTCOME_LIMIT','Commit a bounded nonempty set of resolved outcomes.');
-        const outcomes=[];for(const value of values){const known=knownOutcomes.get(value?.outcomeId);if(!known||canonical(value)!==canonical(known.outcome)||value.status!=='resolved'||!source(value.event).ok)return fail('OUTCOME_PROJECTION_UNAUTHORIZED','Outcome Commit requires the retained resolved draw and unchanged event.');outcomes.push({...value,acceptance:'accepted'});}
+        let outcomes=[];for(const value of values){const known=knownOutcomes.get(value?.outcomeId);if(!known||canonical(value)!==canonical(known.outcome)||value.status!=='resolved'||!source(value.event).ok)return fail('OUTCOME_PROJECTION_UNAUTHORIZED','Outcome Commit requires the retained resolved draw and unchanged event.');outcomes.push({...value,acceptance:'accepted'});}
         const visibility=config.files.visibility(targetId);if(!current().ok)return current();if(!visibility.ok)return visibility;if(!permits(artifactVisibility({outcomes,provenance:values.map(value=>({visibility:knownOutcomes.get(value.outcomeId).visibility}))}),visibility.data))return fail('PRIVATE_DESTINATION','Outcome Commit must preserve the occurrence disclosure scope.');
         if(!values.length)return good(freeze({kind:'outcomes',status:'empty',targetId,outcomeIds:[]}));
         const read=await config.files.store.read(targetId);if(!current().ok)return current();if(!read.ok)return read;if(read.data.snapshot.format!=='json')return fail('INVALID_OUTCOME_LEDGER','Outcome Commit requires an authorized JSON array document.');
+        if(typeof config.files.lookupHistory==='function'){
+            const remaining=[];
+            for(const outcome of outcomes){
+                const archived=await config.files.lookupHistory(targetId,{outcomes:{eventIds:[outcome.event.eventId],libraryId:outcome.library.libraryId,rerollId:outcome.rerollId??null}});if(!current().ok)return current();if(!archived.ok)return archived;
+                if(!permits(archived.data.visibility,visibility.data))return fail('PRIVATE_DESTINATION','Outcome Commit must retain archived disclosure restrictions.');
+                const previous=archived.data.outcomes[0];if(previous&&canonical(previous)!==canonical(outcome))return fail('OUTCOME_CONFLICT','The retired accepted outcome differs from this proposed result.');if(!previous)remaining.push(outcome);
+            }
+            outcomes=remaining;
+            if(!outcomes.length)return good(freeze({kind:'outcomes',status:'unchanged',targetId,outcomeIds:values.map(value=>value.outcomeId)}));
+        }
         const evidence=outcomes.map(value=>value.event),intentId=await hash([scope,'outcomes',targetId,outcomes,...(address?.instancePath?.length?[[address.workflowId,address.instancePath,address.nodeId]]:[])]);if(!current().ok)return current();
         const prepared=await config.files.store.prepare(read.data.fileRef,{operation:'add-unique',collectionPath:'',missingPath:'error',key:'outcomeId',records:outcomes},{intentId,evidence});if(!current().ok)return current();if(!prepared.ok)return prepared;
         const staged=config.files.stage(prepared.data,evidence);if(!current().ok)return current();return staged.ok?good(freeze({kind:'outcomes',status:'staged',targetId,outcomeIds:outcomes.map(value=>value.outcomeId),intentId})):staged;

@@ -214,13 +214,13 @@ export function capstones() {
         const candidates = eventCandidates(r, 'player', { phase: 'pre', instructions: 'At most three scene-action candidates for a genuinely completed supportive interaction by Rowan toward Iris. Exact quote and canonical actor/object IDs are required.' }), confirmed = confirmEach(r, candidates, { phase: 'pre' });
         r.add('scene', 'scene-context', { visibilityMode: 'public', includeCharacter: false });
         const presence = cast(r, 'scene', { context: true })[actor], live = present(r, presence, 'rowan');
-        const state = liveJson(r, 'relationship-state', 'rowan-relationship', { actorScope: 'selected', actorId: '' });
+        r.add('relationship-state-file', 'read-file', { targetId: 'rowan-relationship', actorScope: 'selected', actorId: '' }, 'authorized live state');
         r.add('clock', 'story-clock', { clockId: 'story-clock', calendarId: 'campaign-days' });
         r.data('decay-rules', [['trust', 10080], ['desire', 40320], ['tension', 10080], ['excitement', 480]].map(([dimension, minutes]) => ({
             decayId: dimension + '-eases', revision: 1, targetKey: 'rowan-toward-iris-' + dimension, subjectId: actor, objectId: partner, baseline: 0, unitsPerMinute: 1 / minutes, min: 0, max: 10, initialMinute: 0
         })));
         r.add('decay', 'state', { mode: 'time-decay' });
-        r.connect(state, 'out', 'decay', 'state');
+        r.connect('relationship-state-file', 'value', 'decay', 'state');
         r.connect('decay-rules', 'out', 'decay', 'rules');
         r.connect('clock', 'out', 'decay', 'clock');
         r.data('relationship-rules', {

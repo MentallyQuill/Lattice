@@ -64,7 +64,7 @@ function resolve(rawNode,rawOptions={}){
         if(['write-file','project-document'].includes(node.operation)&&(['add-unique','upsert','update-fields'].includes(settings.mode)&&!id(settings.key)||settings.mode==='update-fields'&&(!settings.fields.length||settings.fields.some(field=>!id(field))||new Set(settings.fields).size!==settings.fields.length)))return fail('INVALID_SETTINGS','Keyed updates require an identity field and selected unique fields.');
         let ports;
         if(node.operation==='format')ports=[port('in','Records / raw JSON',settings.inputMode==='records'?'data':'text','input',true),port('records','Validated records','data','output'),port('text','Serialized text','text','output'),port('report','Format report','data','output')];
-        else if(node.operation==='read-file')ports=[port('text','Contents','text','output'),port('document','Parsed document','data','output'),port('reference','Live file reference','data','output')];
+        else if(node.operation==='read-file')ports=[port('text','Contents','text','output'),port('document','Parsed document','data','output'),port('value','Parsed value','data','output'),port('reference','Live file reference','data','output')];
         else if(node.operation==='project-document')ports=[port('source','Original document','text','input',true),port(['append','replace'].includes(settings.mode)?'text':'records',['append','replace'].includes(settings.mode)?'Text':'Records',['append','replace'].includes(settings.mode)?'text':'data','input',true),port('text','Projected document text','text','output'),port('data','Projected document data','data','output'),port('receipt','Projection receipt','data','output')];
         else ports=[port('reference','Live file reference','data','input',true),port(['append','replace'].includes(settings.mode)?'text':'records',['append','replace'].includes(settings.mode)?'Text':'Records',['append','replace'].includes(settings.mode)?'text':'data','input',true),port('evidence','Canonical source evidence','data','input'),port('projection','Projected document','data','output'),port('receipt','Staging receipt','data','output')];
         if(settings.actorScope==='presence')ports.unshift(port('presence','Confirmed live actor presence','data','input',true));
@@ -120,7 +120,12 @@ const capabilityErrorMessages=Object.freeze({
     FILE_EVIDENCE_FAILED:'The canonical source evidence could not be verified.',
     FILE_FINGERPRINT_FAILED:'The prepared file intent could not be fingerprinted.',
     FILE_ACCEPTANCE_REQUIRED:'File settlement requires an accepted root workflow.',
-    FILE_RECEIPT_LIMIT:'The selected target reached its retained receipt limit.',
+    FILE_RECEIPT_LIMIT:'Save receipts are full. Preview a history checkpoint in Workflow Data before continuing.',
+    DOCUMENT_HISTORY_CHANGED:'The document history changed; read and review a fresh projection.',
+    DOCUMENT_HISTORY_LIMIT:'The native history archive reached its bounded capacity.',
+    DOCUMENT_HISTORY_MISSING:'A required native history page is missing.',
+    INVALID_DOCUMENT_HISTORY:'The native history archive is invalid; preserve it before reconciliation.',
+    HISTORY_LOOKUP_REQUIRED:'This document requires its checked native history lookup.',
     FILE_DOCUMENT_LIMIT:'The projected document exceeds supported storage bounds.',
     PERSISTENCE_UNKNOWN:'The previous file write has an unknown outcome; reconcile the selected target before retrying.',
     INVALID_FILE_CONFIG:'The trusted storage configuration is unavailable.',
@@ -245,7 +250,8 @@ export async function executeFileNode(node,namedInputs,execution={}){
         const finalScope=await actorScope(fileRef);if(!finalScope.ok)return finalScope;
         if(settings.actorScope==='presence'&&fileVisibility.kind==='actor-private'&&fileVisibility.actorId!==settings.actorId)return fail('ACTOR_FILE_SCOPE_MISMATCH','The private document belongs to a different actor.');
         fileVisibility=visibilityOf({visibility:fileVisibility,inputs});
-        const produced=output({text:{kind:'text',text:snapshot.content,visibility:fileVisibility},document:{kind:'data',value:{targetId:snapshot.targetId,revision:snapshot.revision,format:snapshot.format,...(value===undefined?{}:{value})},visibility:fileVisibility},reference:{kind:'data',value:fileRef,visibility:fileVisibility}},[{code:'FILE_READ',actualCalls:0,targetId:snapshot.targetId,revision:snapshot.revision}]);
+        const produced=output({text:{kind:'text',text:snapshot.content,visibility:fileVisibility},document:{kind:'data',value:{targetId:snapshot.targetId,revision:snapshot.revision,format:snapshot.format,...(value===undefined?{}:{value})},visibility:fileVisibility},...(value===undefined?{}:{value:{kind:'data',value,visibility:fileVisibility}}),reference:{kind:'data',value:fileRef,visibility:fileVisibility}},[{code:'FILE_READ',actualCalls:0,targetId:snapshot.targetId,revision:snapshot.revision}]);
+        if(produced.ok && value===undefined)produced.outputStates={value:{status:'skipped',reason:{code:'FILE_VALUE_UNAVAILABLE',message:'Plain text and Markdown documents have no parsed structured value.'}}};
         if(produced.ok)references.set(fileRef,{snapshot:freeze(snapshot),visibility:freeze(fileVisibility),actorId:settings.actorScope==='presence'?settings.actorId:fileRef.scope.actorId??(fileVisibility.kind==='actor-private'?fileVisibility.actorId:undefined)});
         return produced;
     }

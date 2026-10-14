@@ -3,7 +3,7 @@ export const ADVANCED_TEACHING = {
     18: {
         goal: 'Teach Rowan to draw on existing private memories, then propose a memory update from the reply you accept. You will follow memory into portrayal and inspect the proposed update before it is saved.',
         learn: [
-            'Memory Read supplies the selected actor’s stored state; Memory Recall searches that actor’s existing episodes, or remembered scenes.',
+            'Memory Read supplies the selected actor’s stored state; Memory Recall searches that actor’s existing episodes, or remembered scenes. A connected Text Query replaces its saved query.',
             'Reflect interprets those records. Express turns the interpretation into portrayal hints; neither makes an interpretation a fact.',
             'Internalize proposes changes from native event evidence. Memory Commit saves the proposal only when the reply is accepted.'
         ],
@@ -13,13 +13,13 @@ export const ADVANCED_TEACHING = {
         ],
         steps: [
             'Build on lesson 17’s proposed-save pattern. Establish Rowan as participating in the current scene, then send: “Rowan returns to the lighthouse and studies the dark lantern.”',
-            'Compare Memory Read’s state with Memory Recall’s episodes. The default query is current scene and the limit is four. Check which recorded scenes actually reached Reflect.',
+            'Follow Text · episode search into Memory Recall.query. Its lighthouse text overrides the saved current scene query; the limit is four. Compare Memory Read’s state with the recalled episodes and check which recorded scenes actually reached Reflect.',
             'Follow Reflect into Express and Collect, then into Character Direction. Look for a restrained Rowan reaction that draws on the supplied memories while leaving the player’s response open.',
             'After generation, inspect the post-generation Memory Read events and Internalize.out. The proposed changes should cite the native event records they came from, including the completed reply’s exact evidence.',
             'Compare the memory store before and after Apply. Reject a second test: its proposed episode should never become a stored memory.'
         ],
         checkpoints: ['Internalize.out shows proposed private changes backed by the supplied native events. Rowan’s stored memory stays unchanged until Apply.'],
-        experiments: [{ change: 'Change Memory Recall query to lighthouse and reduce limit from 4 to 1.', expect: 'Reflect receives only the matching permitted episode returned by that search; inspect its input rather than expecting a particular sentence in the reply.' }],
+        experiments: [{ change: 'Edit Text · episode search from lighthouse to another phrase in an accepted Rowan episode and reduce Memory Recall limit from 4 to 1.', expect: 'Reflect receives only the matching permitted episode returned by the connected Text search; changing the saved query has no effect while the Query wire is connected. Inspect its input rather than expecting a particular sentence in the reply.' }],
         cases: [
             { when: 'There are no eligible native event records.', expect: 'Internalize stops and reports the missing evidence. Imported prose cannot fill that gap.' },
             { when: 'The reply is rejected.', expect: 'The proposed update is discarded and the stored actor memory remains unchanged.' }
@@ -111,7 +111,7 @@ export const ADVANCED_TEACHING = {
         goal: 'Let a mentioned item remind its actual holder of an existing memory. You will connect item ownership and scene participation to a private recall, then stage a separate output record for Rowan.',
         learn: [
             'Item Mention Trigger watches the newly generated reply after generation. A mention starts a reminder, not an item-use consequence.',
-            'Prompted Memory selects from authorized native actor episodes. Its default mode recall and allowCreate false prevent it from inventing a missing memory.',
+            'Prompted Memory selects from authorized native actor episodes. Its default mode recall and allowCreate false prevent invention; a checked model no-match skips the reminder and save path.',
             'The output is a private remembered-event record for later use; this workflow does not feed that reminder back into the reply just generated.'
         ],
         requirements: [
@@ -128,7 +128,8 @@ export const ADVANCED_TEACHING = {
         experiments: [{ change: 'With explicit authoring permission, change Prompted Memory mode to recall-or-create and allowCreate to true in this disposable story.', expect: 'If no existing memory fits, a newly invented recollection may be proposed and labelled accordingly. Saving the output record does not silently add a native episode.' }],
         cases: [
             { when: 'No matching mention, Rowan is absent, or another actor holds the item.', expect: 'No Rowan reminder record is staged.' },
-            { when: 'No permitted episode exists in default recall mode.', expect: 'The run stops instead of creating a memory. Changing mode alone does not grant creation permission.' },
+            { when: 'The model returns an explicit no-match result for the authorized memories.', expect: 'Prompted Memory.out and the connected save path skip, so the ordinary reply remains reviewable and no reminder is staged.' },
+            { when: 'No authorized native memories are available in default recall mode.', expect: 'Recall stays unresolved before making a request. Changing mode alone does not grant creation permission.' },
             { when: 'The reply is rejected.', expect: 'The private output file remains unchanged.' }
         ],
         callBudget: 'Up to two extra model requests: the post-generation participation check and Prompted Memory when its prerequisites match. There is also one ordinary SillyTavern reply.'
@@ -193,6 +194,7 @@ export const ADVANCED_TEACHING = {
         goal: 'Award experience for completed objectives and report the levels crossed by the full award. You will project a reusable State rule, prevent duplicate rewards and save the result only with the accepted reply.',
         learn: [
             'State stores values and a ledger of processed occurrence IDs. The ledger prevents the same objective occurrence from earning another reward.',
+            'Read File’s Parsed value feeds the state directly; its separate live Reference authorizes the proposed save.',
             'A progression rule describes an authored change: here, add 20 to experience for each confirmed objective, within 0–1000.',
             'Collection threshold compares the original value with the final projected value and reports every threshold crossed.'
         ],
@@ -203,7 +205,7 @@ export const ADVANCED_TEACHING = {
         steps: [
             'Combine lesson 19’s confirmed actions with lesson 17’s proposed file save. Establish an objective such as delivering the harbor chart, then Send a request for the scene where Rowan completes that delivery.',
             'Inspect the generated reply and confirmed events. A plan to deliver the chart is insufficient. Follow the completed action through Event Normalize’s progression mode into State.',
-            'Read State.receipt for each processed occurrence. With one new confirmed objective, the fixture projects experience from 80 to 100 and adds its occurrence ID to the ledger.',
+            'Follow Read File.value directly into State.state and the original-experience lookup. Read State.receipt for each processed occurrence. With one new confirmed objective, the fixture projects experience from 80 to 100 and adds its occurrence ID to the ledger.',
             'Inspect Select Fields.out for the original and final experience values, then Collection.out for the thresholds [100,300,600]. The public notes should report crossing 100.',
             'Apply and inspect player-progression: both the experience value and ledger should be saved. Reject a fresh test to confirm that neither changes.'
         ],
@@ -344,6 +346,7 @@ export const ADVANCED_TEACHING = {
         goal: 'Make Rowan’s feelings toward Iris change gradually through confirmed support and story time. You will inspect private values and pacing limits, then use the proposed state to guide portrayal.',
         learn: [
             'Directional state describes Rowan toward Iris, separately from Iris toward Rowan. Values guide portrayal, never consent or player decisions.',
+            'Read File’s Parsed value supplies private state directly to decay, while its separate live Reference authorizes the save.',
             'Cooldowns require story time between rewards; scene/day caps limit gains, and diminishing factors reduce repeated rewards.',
             'Time decay moves values toward zero using accepted Story Clock minutes, rather than messages or wall time.'
         ],
@@ -353,7 +356,7 @@ export const ADVANCED_TEACHING = {
         ],
         steps: [
             'Combine lessons 25, 23 and 21: State, time and Character Direction. Establish both actors’ participation, then send: “Rowan finishes repairing Iris’s lantern and hands it back to her.”',
-            'Inspect the confirmed interaction. Decay runs first; progression then proposes trust +1, desire +0.1, tension −0.25 and excitement +0.5, subject to pacing.',
+            'Follow Read File.value directly into the decay State.state input, preserving Rowan’s private visibility. Inspect the confirmed interaction. Decay runs first; progression then proposes trust +1, desire +0.1, tension −0.25 and excitement +0.5, subject to pacing.',
             'Read State.receipt for changes and reasons. Cooldowns are trust/desire 1440 minutes, tension 720, excitement 120. For trust/desire/excitement, positive scene caps are 1/0.1/0.5 and day caps 1/0.2/1. Diminishing factors are 1, 0.5 and 0.25.',
             'Inspect Character Direction’s values and Rowan’s reply for gradual reactions that leave player choice open. Apply saves values and pacing records; Reject preserves the previous file.',
             'Accept time using lesson 23, then test without support. Per point, trust/tension ease over 10080 minutes, desire 40320, excitement 480. The first run starts decay at initialMinute 0; the fixture’s minute 780 already eases some tension.'

@@ -7,6 +7,18 @@ const settings = (extra = {}) => ({ kind: 'style', scope: 'whole', ...extra });
 const must = result => { assert.equal(result.ok, true, JSON.stringify(result.error)); return result.data; };
 const ports = (extra = {}) => ({ binding: { profileId: 'SECRET_BINDING' }, countTokens: async () => ({ tokens: 10 }), request: async () => ({ ok: true, data: { text: 'new prose', finish: 'stop', usage: { totalTokens: 20 } } }), ...extra });
 
+test('Format Transfer rejects a completed candidate that drops required content', async () => {
+    const result = await transfer.transferDraft(draft('Title Body'), { kind:'data', value:{requiredContent:['Title']} }, {kind:'format',scope:'whole'}, ports({request:async()=>({ok:true,data:{text:'Body',finish:'stop'}})}));
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'MISSING_TEMPLATE_CONTENT');
+    assert.match(result.error.message,/Title/);
+});
+
+test('Style Transfer does not claim verification of format-only required literals',async()=>{
+    const result=must(await transfer.transferDraft(draft('Title Body'),{kind:'data',value:{requiredContent:['Title']}},settings(),ports({request:async()=>({ok:true,data:{text:'Body',finish:'stop'}})})));
+    assert.doesNotMatch(result.report.find(report=>report.code==='REFERENCE_TRANSFER').message,/required literals were validated/);
+});
+
 test('one raw prose style request returns real validated Patches and preserves opaque binding', async () => {
     let calls = 0;
     const binding = new Proxy({}, { get() { throw new Error('opaque'); }, ownKeys() { throw new Error('opaque'); } });
@@ -51,7 +63,7 @@ test('Text/Data reference material is bounded and missing declared template cont
         must(await transfer.transferDraft(draft(), reference, { kind: 'format', scope: 'whole' }, ports({ request: async request => {
             assert.match(request.messages[0].content, /material/); assert.match(request.messages[0].content, /never.*instructions/);
             assert.match(request.messages[0].content, /retain the original/); assert.match(request.messages[0].content, /story facts/);
-            return { ok: true, data: { text: 'new prose', finish: 'stop' } };
+            return { ok: true, data: { text: 'old new prose', finish: 'stop' } };
         } })));
     }
     let calls = 0, reads = 0;

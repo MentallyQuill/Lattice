@@ -4,6 +4,8 @@ import { runWorkflow, runWorkflowForHost } from '../src/workflow/runtime.js';
 import { operationDefaults } from '../src/workflow/catalog.js';
 import { prepareNodeControlChange } from '../src/workflow/ports.js';
 import { state } from './fixtures/introspection.mjs';
+import { createActorState,makeRecord } from '../src/workflow/introspection/contracts.js';
+import { createMemoryService,createInMemoryBackend } from '../src/workflow/introspection/memory.js';
 
 const node = (id, operation, controls = {}) => ({ id, type: 'workflow', phase: 'post', x: 40, y: 60, ...operationDefaults(operation, controls.mode ? { mode: controls.mode } : {}), ...controls });
 const graph = () => ({ id: 'native-introspection', name: 'Consequence recovery', schema: 3, runtime: 2, mode: 'native-unified', roles: {},
@@ -48,4 +50,19 @@ test('default State Value reads the actor snapshot; an explicit values map creat
     const update = await runWorkflow(authored, ports);
     assert.equal(update.ok, true, JSON.stringify(update.error));
     assert.ok(update.recording.artifacts.some(artifact => artifact.origin.direction === 'output' && artifact.value?.value?.recordType === 'state-proposal' && artifact.value.value.payload.values.anger === 0.6));
+});
+test('native Memory Recall accepts a Text wire through its typed descriptor and scoped service',async()=>{
+    const initial=createActorState({chatId:'chat-1',actorId:'npc-1'},{id:'store-1',version:0},{episodes:[
+        {id:'lighthouse',text:'A storm at the lighthouse.',classification:'interpretation',sourceRefs:[]},
+        {id:'garden',text:'A quiet walk in the garden.',classification:'interpretation',sourceRefs:[]},
+    ]}).data;
+    const memory=createMemoryService(createInMemoryBackend(initial,makeRecord('events',initial.value,{events:[]},[]).data));
+    const authored={...graph(),nodes:{query:node('query','text',{text:'lighthouse'}),memory:node('memory','memory',{mode:'recall',query:'garden'})},wires:{query:{id:'query',route:'wire',from:'query',fromPort:'out',to:'memory',toPort:'query'}}};
+    const result=await runWorkflow(authored,{target:{workflowId:authored.id,instancePath:[],nodeId:'memory',portId:'out'},memory});
+    assert.equal(result.ok,true,JSON.stringify(result.error));
+    const output=result.recording.artifacts.find(artifact=>artifact.origin.direction==='output'&&artifact.value?.value?.recordType==='episodes')?.value;
+    assert.ok(output,'The wired query produces a scoped episodes artifact.');
+    assert.deepEqual(output.value.payload.episodes.map(episode=>episode.id),['lighthouse']);
+    assert.deepEqual(output.value.scope,{chatId:'chat-1',actorId:'npc-1'});
+    assert.equal(result.actualCalls,0);
 });

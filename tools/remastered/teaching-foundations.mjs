@@ -166,12 +166,12 @@ export const FOUNDATION_TEACHING = {
         goal: 'Use exact item mentions to add an expandable notes section to a reply.',
         learn: [
             'Reply Snapshot provides a fixed view of reply text. During Send it reads the original reply just generated, before later edits.',
-            'Literal Extract finds the exact words you configure. Render Notes formats the matches, and Append adds that section to the draft.',
+            'Literal Extract matches authored text with case sensitivity and Substring or Word boundaries. Render Notes formats the matches, and Append adds that section to the draft.',
             'An item mention is an observation; it does not mean someone has picked up or owns the item.',
         ],
         requirements: ['No extra model connection is needed: this Extract box uses literal matching, rather than asking a model to identify items.'],
         steps: [
-            'Select Extract · literal observed items. In Details, check Mode is literal and inspect Literal patterns. The starting patterns match lantern and map exactly.',
+            'Select Extract · literal observed items. In Details, check Mode is literal and inspect Literal patterns. The starting patterns are lantern and map; Case sensitive starts enabled and Match starts Substring, so lanterns also contains a match.',
             'Follow Reply Snapshot.out into Extract.source. Separately, follow Generate Reply.draft into Append.draft: the snapshot supplies observations while the new draft receives the notes.',
             'Send “Describe a lantern and a map on the harbor table. Use those exact words.” When it finishes, preview Reply Snapshot.out to check which words actually appeared.',
             'Preview Extract.out. For each match, check the quoted word and its position in the reply. A missing word produces no matching item record.',
@@ -181,7 +181,7 @@ export const FOUNDATION_TEACHING = {
             'Extract returns matching item records with their exact quotes and positions; a mention makes no ownership claim.',
             'Append’s output contains the new draft with the formatted item notes added.',
         ],
-        experiments: [{ change: 'Add {"id":"rope","literal":"rope","label":"Rope"} to Literal patterns, choose Save Literal patterns, and try a reply containing rope.', expect: 'Rope appears only when that exact text is found. Adding a pattern does not add an item to the story or inventory.' }],
+        experiments: [{ change: 'Set Match to Word, disable Case sensitive, and try a reply containing Lantern and lanterns.', expect: 'Lantern matches and retains its original spelling and position; lanterns does not match because Word requires a complete word.' }, { change: 'Add {"id":"rope","literal":"rope","label":"Rope"} to Literal patterns, choose Save Literal patterns, and try a reply containing rope.', expect: 'Rope appears only when text matches the current case and boundary settings. Adding a pattern does not add an item to the story or inventory.' }],
         cases: [
             { when: 'None of the configured words appears.', expect: 'There are no invented item records; the ordinary draft remains usable.' },
             { when: 'You use Run to here on Reply Snapshot without a new Send.', expect: 'The diagnostic preview reads the latest existing completed assistant reply. It does not generate a fresh reply or publish notes.' },

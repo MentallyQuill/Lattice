@@ -1,4 +1,5 @@
 import type { JsonValue, Result } from './operations/json-data';
+import type { RetiredProgressionIdentities } from './document-history';
 
 export interface ProgressionValue {
     key: string;
@@ -86,6 +87,7 @@ export interface UnmatchedProgressionReceipt {
 }
 export type ProgressionReceipt = AppliedProgressionReceipt | DuplicateProgressionReceipt | UnmatchedProgressionReceipt;
 export interface ProgressionState {
+    historyCheckpoint?:{targetId:string;epoch:number};
     values: ProgressionValue[];
     ledger: AppliedProgressionReceipt[];
     budgets?: {scene: Record<string,number>; day: Record<string,number>};
@@ -143,8 +145,10 @@ export interface TimeDecayProjection {
     actualCalls: 0;
 }
 /** Validate confirmed events and authored rules, then return a detached staged projection. */
-export function applyProgressionEvents(state: unknown, events: unknown, rules: unknown): Result<ProgressionProjection>;
+export interface ProgressionHistory extends RetiredProgressionIdentities { targetId:string;epoch:number;visibility?:import('./artifact-privacy').ArtifactVisibility; }
+export function queryProgressionHistory(state:unknown,events:unknown,rules:unknown):Result<import('./document-history').ProgressionHistoryQuery>;
+export function applyProgressionEvents(state: unknown, events: unknown, rules: unknown, history?:ProgressionHistory): Result<ProgressionProjection>;
 /** Enumerate inclusive-endpoint crossings; this reports bands, not irreversible awards. */
 export function resolveThresholds(before: unknown, after: unknown, thresholds: unknown): Result<ThresholdProjection>;
 /** Advance explicit time-based recovery separately from the legacy message-step Curve. */
-export function projectTimeDecay(state: unknown, destination: unknown, rules: unknown): Result<TimeDecayProjection>;
+export function projectTimeDecay(state: unknown, destination: unknown, rules: unknown, history?:ProgressionHistory): Result<TimeDecayProjection>;

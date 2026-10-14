@@ -17,6 +17,14 @@ const candidates = [
     { eventType: 'item-used', actorId: 'elias', itemId: 'broken-wand-01', position: span('Elias casts the broken wand at the chest.'), semantics: 'actual' },
     { eventType: 'item-used', actorId: 'mara', itemId: 'broken-wand-01', position: span("They remember yesterday's cast."), semantics: 'recalled' },
 ];
+const promptedMemoryInputs=()=>{
+    const normalized=normalizeOccurrences(source,candidates.slice(0,1),entities);
+    const confirmed=confirmOccurrences(normalized.data.events,[{eventId:normalized.data.events[0].eventId,accepted:true}]);
+    const event=resolveItemHolders({'broken-wand-01':'mara'},confirmed.data.events).data.events[0];
+    const presence={kind:'data',value:{schemaVersion:1,recordType:'scene-presence',sceneId:'scene-42',sourceId:'player-42',revision:'r1',actorId:'mara',status:'present'}};
+    return {presence,event:{kind:'data',value:event}};
+};
+const authorizedMemoryContext=()=>({ok:true,data:{scope:{actorId:'mara',sceneId:'scene-42'},visibility:'actor-private',context:{},memories:[{memoryId:'harbor',actorId:'mara',visibility:'actor-private',text:'She watched gulls at the harbor.'}]}});
 test('two confirmed wand casts retain distinct occurrences and holders across a transfer', () => {
     const normalized = normalizeOccurrences(source, candidates, entities);
     assert.equal(normalized.ok, true, JSON.stringify(normalized.error));
@@ -133,6 +141,116 @@ test('Prompted Memory targets the resolved holder and retains existing private m
     assert.equal(result.artifact.value.actorId,'mara');
     assert.equal(result.artifact.value.visibility,'actor-private');
     assert.equal(result.artifact.value.acceptance,'pending');
+});
+test('Prompted Memory skips an authorized recall when existing memories do not match the item', async () => {
+    const inputs=promptedMemoryInputs();
+    let calls=0;
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara',mode:'recall',prompt:'What does the wand remind her of?'},inputs,{
+        actorContext:async()=>authorizedMemoryContext(),
+        request:async()=>{calls++;return {ok:true,data:{text:'{"kind":"no-match"}',finish:'stop'}};},
+    });
+    assert.equal(result.ok,true,JSON.stringify(result.error));
+    assert.equal(result.outputStates.out.status,'skipped');
+    assert.equal(result.outputStates.out.reason.code,'MEMORY_NO_MATCH');
+    assert.ok(result.outputStates.out.reason.message.length<=4096);
+    assert.equal(result.artifact,undefined);
+    assert.deepEqual(result.reports,[{operation:'prompted-memory',actualCalls:1,actorId:'mara',code:'MEMORY_NO_MATCH'}]);
+    assert.equal(calls,1);
+});
+test('Prompted Memory rejects no-match with an extra memoryId field',async()=>{
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},promptedMemoryInputs(),{
+        actorContext:async()=>authorizedMemoryContext(),
+        request:async()=>({ok:true,data:{text:JSON.stringify({kind:'no-match',memoryId:'harbor'}),finish:'stop'}}),
+    });
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'INVALID_MEMORY_RESPONSE');
+    assert.equal(result.outputStates,undefined);
+});
+test('Prompted Memory rejects no-match with an extra text field',async()=>{
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},promptedMemoryInputs(),{
+        actorContext:async()=>authorizedMemoryContext(),
+        request:async()=>({ok:true,data:{text:JSON.stringify({kind:'no-match',text:'harbor'}),finish:'stop'}}),
+    });
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'INVALID_MEMORY_RESPONSE');
+    assert.equal(result.outputStates,undefined);
+});
+test('Prompted Memory rejects no-match with an extra reflection field',async()=>{
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},promptedMemoryInputs(),{
+        actorContext:async()=>authorizedMemoryContext(),
+        request:async()=>({ok:true,data:{text:JSON.stringify({kind:'no-match',reflection:'harbor'}),finish:'stop'}}),
+    });
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'INVALID_MEMORY_RESPONSE');
+    assert.equal(result.outputStates,undefined);
+});
+test('Prompted Memory rejects no-match with an extra direction field',async()=>{
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},promptedMemoryInputs(),{
+        actorContext:async()=>authorizedMemoryContext(),
+        request:async()=>({ok:true,data:{text:JSON.stringify({kind:'no-match',direction:'harbor'}),finish:'stop'}}),
+    });
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'INVALID_MEMORY_RESPONSE');
+    assert.equal(result.outputStates,undefined);
+});
+test('Prompted Memory keeps unresolved actor participation distinct from no-match',async()=>{
+    const inputs=promptedMemoryInputs();inputs.presence.value.status='unresolved';
+    let reads=0,calls=0;
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},inputs,{actorContext:async()=>{reads++;return authorizedMemoryContext();},request:async()=>{calls++;return {ok:true,data:{text:'{"kind":"no-match"}',finish:'stop'}};}});
+    assert.equal(result.ok,true,JSON.stringify(result.error));
+    assert.equal(result.outputStates.out.status,'unresolved');
+    assert.equal(result.outputStates.out.reason.code,'PRESENCE_UNRESOLVED');
+    assert.equal(reads,0);assert.equal(calls,0);
+});
+test('Prompted Memory requires the confirmed holder before a no-match response can be requested',async()=>{
+    const inputs=promptedMemoryInputs();inputs.event.value={...inputs.event.value,holderId:'elias'};
+    let reads=0,calls=0;
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},inputs,{actorContext:async()=>{reads++;return authorizedMemoryContext();},request:async()=>{calls++;return {ok:true,data:{text:'{"kind":"no-match"}',finish:'stop'}};}});
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'MEMORY_HOLDER_MISMATCH');
+    assert.equal(reads,0);assert.equal(calls,0);
+});
+test('Prompted Memory rejects another actor context before accepting no-match',async()=>{
+    let calls=0;
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},promptedMemoryInputs(),{actorContext:async()=>({...authorizedMemoryContext(),data:{...authorizedMemoryContext().data,scope:{actorId:'elias',sceneId:'scene-42'}}}),request:async()=>{calls++;return {ok:true,data:{text:'{"kind":"no-match"}',finish:'stop'}};}});
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'ACTOR_SCOPE_MISMATCH');
+    assert.equal(calls,0);
+});
+test('Prompted Memory keeps unavailable authorized memory distinct from an inferred no-match',async()=>{
+    let calls=0;
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},promptedMemoryInputs(),{actorContext:async()=>({ok:true,data:{...authorizedMemoryContext().data,memories:[]}}),request:async()=>{calls++;return {ok:true,data:{text:'{"kind":"no-match"}',finish:'stop'}};}});
+    assert.equal(result.ok,true,JSON.stringify(result.error));
+    assert.equal(result.outputStates.out.status,'unresolved');
+    assert.equal(result.outputStates.out.reason.code,'MEMORY_UNAVAILABLE');
+    assert.equal(calls,0);
+});
+test('Prompted Memory rejects evidence changed during actor capture before requesting no-match',async()=>{
+    const inputs=promptedMemoryInputs();let calls=0;
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},inputs,{actorContext:async()=>{inputs.presence.value.revision='r2';return authorizedMemoryContext();},request:async()=>{calls++;return {ok:true,data:{text:'{"kind":"no-match"}',finish:'stop'}};}});
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'STALE_INPUT');
+    assert.equal(result.outputStates,undefined);
+    assert.equal(calls,0);
+});
+test('Prompted Memory rejects evidence changed while a no-match model response is pending',async()=>{
+    const inputs=promptedMemoryInputs();
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},inputs,{actorContext:async()=>authorizedMemoryContext(),request:async()=>{inputs.presence.value.revision='r2';return {ok:true,data:{text:'{"kind":"no-match"}',finish:'stop'}};}});
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'STALE_INPUT');
+    assert.equal(result.outputStates,undefined);
+});
+test('Prompted Memory keeps failed model transport distinct from no-match',async()=>{
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},promptedMemoryInputs(),{actorContext:async()=>authorizedMemoryContext(),request:async()=>({ok:false,error:{code:'HTTP_ERROR',message:'Unavailable provider.'}})});
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'HTTP_ERROR');
+    assert.equal(result.outputStates,undefined);
+});
+test('Prompted Memory rejects an incomplete no-match model response',async()=>{
+    const result=await executeEvent({operation:'prompted-memory',actorId:'mara'},promptedMemoryInputs(),{actorContext:async()=>authorizedMemoryContext(),request:async()=>({ok:true,data:{text:'{"kind":"no-match"}',finish:'length'}})});
+    assert.equal(result.ok,false);
+    assert.equal(result.error.code,'TRUNCATED_OUTPUT');
+    assert.equal(result.outputStates,undefined);
 });
 test('private actor scope mismatches fail before a model request', async () => {
     const scene = {sceneId:'scene-42',sourceId:'draft-42',revision:'r1',actors:[{actorId:'mara',status:'present'}]};

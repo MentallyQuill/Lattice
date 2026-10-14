@@ -22,6 +22,14 @@ const variants = [
     ['STALE_SOURCE', /memory/i, { id: 'memory-source-changed', severity: 'error', title: 'Memory evidence changed', message: 'The memory evidence changed after it was read. Inspect the current memory and its source before preparing another change.' }],
 ];
 const extraCopy = {
+    CLOCK_LEDGER_FULL: {id:'clock-history-full',severity:'warning',title:'Clock history is full',message:'Open Workflow Data, select the clock and choose Preview history checkpoint before continuing.'},
+    FILE_RECEIPT_LIMIT: {id:'save-history-full',severity:'warning',title:'Save history is full',message:'Open Workflow Data, select the document and choose Preview history checkpoint before continuing.'},
+    PERSISTENCE_UNKNOWN: {id:'native-save-held',severity:'warning',title:'The previous save is unverified',message:'Further writes are held until the previous save is verified. For a history checkpoint, open Workflow Data and choose Inspect saved history.'},
+    DOCUMENT_HISTORY_CHANGED: {id:'document-history-changed',severity:'error',title:'Document history changed',message:'Read the document again and prepare a fresh workflow result or checkpoint preview. Preserve its existing history marker.'},
+    DOCUMENT_HISTORY_LIMIT: {id:'document-history-full',severity:'warning',title:'Saved history reached its capacity',message:'The native history archive reached its supported capacity. Preserve the saved history before reconciling this document.'},
+    DOCUMENT_HISTORY_MISSING: {id:'document-history-missing',severity:'error',title:'Saved history is missing',message:'A required saved history page is missing. Restore the document’s complete history before continuing.'},
+    INVALID_DOCUMENT_HISTORY: {id:'document-history-invalid',severity:'error',title:'Saved history is invalid',message:'The document history is invalid. Preserve it and restore a complete valid history before continuing.'},
+    HISTORY_LOOKUP_REQUIRED: {id:'native-history-required',severity:'error',title:'Native history is required',message:'Run this checkpointed document in its authorized native chat so its archived actions can be checked.'},
     INVALID_CONTROL_JSON: {id:'control-json',severity:'error',title:'Check the JSON entry',message:'Enter valid JSON before saving. Finish the current entry or choose a supported input format.'},
     APPLY_UNVERIFIED: { id: 'apply-unverified', severity: 'warning', title: 'Reply application is not confirmed', message: 'Reply application could not be confirmed. Check the current reply and save status before making another write.' },
     ACCEPTED_SAVE_UNVERIFIED: { id: 'accepted-save-unverified', severity: 'warning', title: 'Saving is not confirmed', message: 'The accepted reply remains. The save outcome could not be confirmed. Check the stored data before making another write.' },

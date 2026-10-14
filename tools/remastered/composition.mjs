@@ -137,8 +137,8 @@ export function composition() {
         r.add('recent', 'scene-context', { visibilityMode: 'public', includeCharacter: false, recentMessages: 3 });
         r.add('wider', 'scene-context', { visibilityMode: 'public', includeCharacter: false, recentMessages: 12 });
         r.add('join-context', 'context-join');
-        r.connect('recent', 'out', 'join-context', 'context-1');
-        r.connect('wider', 'out', 'join-context', 'context-2');
+        r.connect('wider', 'out', 'join-context', 'context-1');
+        r.connect('recent', 'out', 'join-context', 'context-2');
         r.add('compact', 'smart-compactor', {
             targetTokens: 700, method: 'select', keepRecent: 2, pins: ['lantern'], purpose: 'Keep the immediate public obstacle and protected lantern reference.'
         });

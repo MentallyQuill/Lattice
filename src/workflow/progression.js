@@ -112,11 +112,29 @@ function pacing(event,rule,table,state,raw) {
 }
 
 /** Project authored event-driven numeric updates; this has no persistence or model authority. */
-export function applyProgressionEvents(rawState,rawEvents,rawRules) {
+function retiredHistory(state,raw){
+    if(!has(state,'historyCheckpoint'))return {knownIdentityKeys:[],eventIdentities:[]};
+    const marker=state.historyCheckpoint;
+    if(!record(marker)||Object.keys(marker).length!==2||!id(marker.targetId)||!Number.isSafeInteger(marker.epoch)||marker.epoch<1)reject('The history checkpoint marker is malformed.');
+    if(raw===undefined)throw {code:'HISTORY_LOOKUP_REQUIRED',message:'Checkpointed state requires its authorized archived identity lookup.'};
+    const history=checked(raw,'INVALID_PROGRESSION_HISTORY');
+    if(!record(history)||history.targetId!==marker.targetId||history.epoch!==marker.epoch||!Array.isArray(history.knownIdentityKeys)||history.knownIdentityKeys.some(key=>typeof key!=='string'||key.length>4096)||!Array.isArray(history.eventIdentities)||history.eventIdentities.some(item=>!record(item)||!id(item.eventId)||typeof item.eventIdentity!=='string'||item.eventIdentity.length>4096))throw {code:'INVALID_PROGRESSION_HISTORY',message:'Retired identities must match the checked state target and epoch.'};
+    return history;
+}
+export function queryProgressionHistory(rawState,rawEvents,rawRules){
+    try{
+        const {events,table}=admit(rawState,rawEvents,rawRules),identityKeys=[];
+        for(const event of events){eventIdentityFor(event);for(const rule of table.rules.filter(rule=>rule.eventType===event.eventType&&(!has(rule,'subjectId')||rule.subjectId===event.subjectId)&&(!has(rule,'objectId')||rule.objectId===event.objectId)))identityKeys.push(identityFor(event,rule,table));}
+        return {ok:true,data:checked({eventIds:[...new Set(events.map(event=>event.eventId))],identityKeys:[...new Set(identityKeys)]},'PROGRESSION_LIMIT')};
+    }catch(error){return failure(error.code??'INVALID_PROGRESSION',error.message??'History query could not be derived.');}
+}
+export function applyProgressionEvents(rawState,rawEvents,rawRules,rawHistory) {
     try {
         const {state,events,table,initialized}=admit(rawState,rawEvents,rawRules), ledger=state.ledger, receipts=[];
-        const known=new Map(ledger.map(item=>[item.identityKey,item]));
+        const retired=retiredHistory(state,rawHistory),known=new Map(retired.knownIdentityKeys.map(key=>[key,null]));
+        for(const item of ledger)known.set(item.identityKey,item);
         const byEvent=new Map();let lastProgressionMinute=-1;
+        for(const item of retired.eventIdentities){if(byEvent.has(item.eventId)&&byEvent.get(item.eventId)!==item.eventIdentity)throw {code:'EVENT_ID_CONFLICT',message:'Archived occurrence IDs refer to incompatible facts.'};byEvent.set(item.eventId,item.eventIdentity);}
         for(const item of ledger) {
             if(byEvent.has(item.eventId)&&byEvent.get(item.eventId)!==item.eventIdentity)throw {code:'EVENT_ID_CONFLICT',message:'The stored occurrence ID refers to incompatible facts.'};
             byEvent.set(item.eventId,item.eventIdentity);
@@ -195,9 +213,10 @@ export function resolveThresholds(rawBefore,rawAfter,rawThresholds) {
 }
 
 /** Explicit elapsed-time recovery is separate from legacy message-step Curve behavior. */
-export function projectTimeDecay(rawState,destination,rawRules) {
+export function projectTimeDecay(rawState,destination,rawRules,rawHistory) {
     try {
         const state=checked(rawState,'INVALID_TIME_DECAY'), rules=checked(rawRules,'INVALID_TIME_DECAY');
+        retiredHistory(state,rawHistory);
         if(!record(state)||!Array.isArray(state.values)||state.values.length>256||state.values.some(item=>!record(item)||!id(item.key)||!number(item.value))||!unique(state.values,'key')||!minute(destination))return failure('INVALID_TIME_DECAY','Use bounded authored values and an established nonnegative story minute.');
         if(!Array.isArray(rules)||rules.length>256||!unique(rules,'decayId')||!unique(rules,'targetKey'))return failure('INVALID_TIME_DECAY','Choose one explicit recovery rule per value.');
         const hadDecayTimes=has(state,'decayTimes');

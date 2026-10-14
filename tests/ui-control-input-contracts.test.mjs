@@ -2,6 +2,14 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as contracts from '../src/ui/control-input-contracts.js';
 const termSpec = { id: 'smart-compactor.pins', version: 1, editor: 'list', formats: ['auto', 'plain', 'csv', 'json', 'rows'], storage: 'json-value', limits: { maxItems: 128, maxStringLength: 4096, maxBytes: 262144 } };
+test('Collection Value uses the typed JSON editor and retains numeric authoring',()=>{
+    const spec=contracts.resolveControlInputSpec({operation:'collection',key:'value',controls:{mode:'filter'},descriptor:{type:'json-value',default:'',maxLength:4096,editor:'json'}});
+    assert.equal(spec.editor,'value');
+    assert.equal(spec.storage,'json-value');
+    const parsed=contracts.parseControlInput(spec,{format:'rows',value:10});
+    assert.equal(parsed.ok,true,JSON.stringify(parsed.error));
+    assert.equal(parsed.data.value,10);
+});
 test('though becomes one string term', () => {
     assert.deepEqual(contracts.parseControlInput(termSpec, { format: 'auto', text: 'though' }).data.value, ['though']);
 });

@@ -142,6 +142,8 @@
         "instructions": "Extract explicitly observed physical items with exact quotes. Mentions do not establish ownership.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "suggestions": {

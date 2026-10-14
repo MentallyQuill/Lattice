@@ -2,7 +2,7 @@ import type { NativeNode, OperationDescription, OperationDescriptor, OperationRe
 import type { JsonValue, Result } from './json-data';
 export type CollectionMode = 'lookup' | 'filter' | 'count' | 'sum' | 'threshold' | 'merge' | 'rule-lookup' | 'project' | 'flatten';
 export interface CollectionSettings {
-    mode?: CollectionMode; collectionPath?: string[]; fieldPath?: string[]; value?: string;
+    mode?: CollectionMode; collectionPath?: string[]; fieldPath?: string[]; value?: JsonValue;
     operator?: 'equals' | 'not-equals' | 'at-least' | 'at-most' | 'contains' | 'exists';
     missingPolicy?: 'hold' | 'exclude' | 'include'; thresholds?: string;
     mergePolicy?: 'keep-all' | 'add-unique'; identityPath?: string[];

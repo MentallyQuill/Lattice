@@ -6,6 +6,12 @@ export type ModelRequest = (options: {
     messages: readonly { role: 'system' | 'user'; content: string }[]; maxTokens: number; binding?: unknown; signal?: AbortSignal;
 }) => Promise<Result<{ text: string; finish: string; usage?: JsonValue }>>;
 export interface ModelNodeExecution { phase?: WorkflowPhase; request?: ModelRequest; binding?: unknown; signal?: AbortSignal; }
+export interface ExtractNodeSettings {
+    inputKind?: 'draft' | 'text'; mode?: 'model' | 'literal'; instructions?: string; schema?: string;
+    patterns?: { id: string; literal: string; label: string }[];
+    /** Existing saved nodes use case-sensitive substring matching. */
+    caseSensitive?: boolean; match?: 'substring' | 'word'; maxTokens?: number;
+}
 export interface ExtractedRecord {
     id: string; label: string; text: string; classification: 'observation' | 'claim' | 'interpretation'; status?: 'proposed';
     evidence: { start: number; end: number; quote: string }[];

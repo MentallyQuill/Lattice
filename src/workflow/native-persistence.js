@@ -15,8 +15,12 @@ async function boundedJson(response){
     return JSON.parse(text);
 }
 function selected(metadata,userId,selection){
-    const path=selection.kind==='document'?['latticeDocuments',userId,selection.targetId]:selection.kind==='introspection'?['latticeIntrospection',selection.storeId,selection.actorId]:['latticeDocumentCatalog',userId];
-    let value=metadata;for(const key of path){if(!plain(value))throw new Error('Missing');value=own(value,key);}return admitted(value);
+    const path=['document','document-checkpoint'].includes(selection.kind)?['latticeDocuments',userId,selection.targetId]:selection.kind==='introspection'?['latticeIntrospection',selection.storeId,selection.actorId]:['latticeDocumentCatalog',userId];
+    let value=metadata;for(const key of path){if(!plain(value))throw new Error('Missing');value=own(value,key);}
+    const document=admitted(value);
+    if(selection.kind!=='document-checkpoint')return document;
+    const namespace=own(metadata,'latticeDocumentHistory'),pages=own(namespace,userId);
+    return {document,pages:selection.pageIds.map(pageId=>admitted(own(pages,pageId)))};
 }
 /** Await native saving and verify only selected metadata from the saved active chat. No retry writes. */
 export function createNativePersistenceVerifier(ports){
@@ -25,7 +29,8 @@ export function createNativePersistenceVerifier(ports){
     if(typeof methods.getContext!=='function'||typeof methods.getUserId!=='function')throw new Error('Trusted user/chat scope required');const fetchMethod=methods.fetch??globalThis.fetch;
     const capture=raw=>{
         const selection=admitted(raw);
-        if(!plain(selection)||!['document','introspection','document-catalog'].includes(selection.kind)||Object.keys(selection).some(key=>!['kind','targetId','storeId','actorId'].includes(key)))throw new Error('Selection');
+        if(!plain(selection)||!['document','document-checkpoint','introspection','document-catalog'].includes(selection.kind)||Object.keys(selection).some(key=>!['kind','targetId','storeId','actorId','pageIds'].includes(key)))throw new Error('Selection');
+        if(selection.kind==='document-checkpoint'&&(!identifier(selection.targetId)||/[\\/:]/.test(selection.targetId)||selection.targetId.includes('..')||selection.storeId!==undefined||selection.actorId!==undefined||!Array.isArray(selection.pageIds)||selection.pageIds.length>4096||selection.pageIds.some(pageId=>!identifier(pageId))||new Set(selection.pageIds).size!==selection.pageIds.length)||selection.kind!=='document-checkpoint'&&selection.pageIds!==undefined)throw new Error('Selection');
         if(selection.kind==='document'&&(!identifier(selection.targetId)||/[\\/:]/.test(selection.targetId)||selection.targetId.includes('..')||selection.storeId!==undefined||selection.actorId!==undefined)||selection.kind==='introspection'&&(!identifier(selection.storeId)||!identifier(selection.actorId)||selection.targetId!==undefined)||selection.kind==='document-catalog'&&Object.keys(selection).length!==1)throw new Error('Selection');
         const c=methods.getContext(),userId=methods.getUserId(),chatId=c.getCurrentChatId?.()??c.chatId,character=c.characters?.[c.characterId];
         if(!identifier(userId)||!identifier(chatId)||c.groupId||!Array.isArray(c.chat)||!plain(c.chatMetadata)||!character||!identifier(character.avatar)||typeof character.chat!=='string'||!character.chat.trim()||character.chat.length>256||typeof character.name!=='string'||character.name.length>256)throw new Error('Scope');

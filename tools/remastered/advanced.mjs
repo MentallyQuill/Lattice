@@ -7,7 +7,9 @@ export function advanced() {
         r = builder(18, 'Let existing memories shape the next reply', 'Read genuine actor memory, reflect and express private portrayal Guidance; internalize only already settled events and stage accepted Commit.', 'Memory Read/Recall, Reflect, Express, Internalize and Commit');
         r.add('context', 'scene-context', { visibilityMode: 'public', includeCharacter: false }, 'public observations');
         r.add('state', 'memory', { mode: 'read', view: 'state' });
+        r.add('recall-query', 'text', { text: 'lighthouse' }, 'episode search');
         r.add('episodes', 'memory', { mode: 'recall', query: 'current scene', limit: 4 });
+        r.connect('recall-query', 'out', 'episodes', 'query');
         r.add('settled', 'memory', { mode: 'read', view: 'events', phase: 'post' });
         r.add('reflect', 'reflect', { mode: 'character', instructions: 'Treat private state as this selected actor’s perspective. Preserve uncertainty and observed facts.' });
         r.connect('context', 'out', 'reflect', 'context');
@@ -25,10 +27,10 @@ export function advanced() {
         r.add('internalize', 'internalize', { phase: 'post', instructions: 'Propose updates only from genuine settled events supplied by Memory Read. Empty or unsettled evidence grants no new history.' });
         r.connect('state', 'out', 'internalize', 'state');
         r.connect('settled', 'out', 'internalize', 'events');
-        r.add('commit', 'memory', { mode: 'commit' });
+        r.add('commit', 'memory', { mode: 'commit', idempotencyKey: 'lattice-memory-commit' });
         r.connect('internalize', 'out', 'commit', 'proposal');
         r.requirements = ['Select native Rowan and replace character:rowan.png consistently with the selected loaded actor identity. Use actual existing native memory state/episodes/events; imported files cannot create native private authority.'];
-        r.steps = ['Inspect Read state, Recall episodes and the event record provenance.', 'Express renders private hints deterministically; Collect retains their typed Guidance as private Data for the verified Character Direction native producer.', 'Post Memory Read captures the exact just-generated native event evidence; Internalize remains a pending proposal and default transaction-derived Commit settles only on accepted review.'];
+        r.steps = ['Inspect the lighthouse Text query wire, Read state, Recall episodes and the event record provenance. Connected Query overrides the saved query.', 'Express renders private hints deterministically; Collect retains their typed Guidance as private Data for the verified Character Direction native producer.', 'Post Memory Read captures the exact just-generated native event evidence; Internalize remains a pending proposal and Commit settles only on accepted review.'];
         r.budget = 'At most 4 auxiliary requests: Reflect, current participation interpretation, Character Direction and post Internalize. Express behavior and native Memory read/recall/commit are deterministic. One ordinary native generation.';
         r.check('internalize', 'out', 'A private proposal descends from genuine settled memory events; rejection leaves memory unchanged.');
         entries.push(r.finish());
@@ -111,7 +113,7 @@ export function advanced() {
         r.connect('remember', 'out', 'save', 'records');
         r.connect(event, 'out', 'save', 'evidence');
         r.requirements = ['Select native Rowan and existing accepted native memory episodes associated with the signal lantern. Prompted Memory recall reads that host episode store; the output file cannot seed native memory authority.', 'Accepted item-holders must identify Rowan as holder; a mention by another actor grants no ownership. Create actor-private JSON Workflow Data rowan-item-memories as an initially empty output array.'];
-        r.steps = ['This reminder pipeline watches the exact just-generated owned native Draft, after generation. A real on-page signal-lantern mention triggers current post presence, native episode recall and private save staging. It stages a remembered event for later portrayal; it does not inject Guidance into this generation.', 'This root is scoped to Rowan: another holder yields no matching private proposal.', 'Default recall/allowCreate false requires an existing permitted memory. Opt-in exercise may explicitly permit a new pending invented memory.', 'Review the private receipt separately; private memory never enters public notes.'];
+        r.steps = ['This reminder pipeline watches the exact just-generated owned native Draft, after generation. A real on-page signal-lantern mention triggers current post presence, native episode recall and private save staging. It stages a remembered event for later portrayal; it does not inject Guidance into this generation.', 'This root is scoped to Rowan: another holder yields no matching private proposal.', 'Default recall/allowCreate false requires existing permitted memories; a checked model no-match skips the reminder and save while the ordinary reply remains reviewable. No available authorized memories holds recall before a request. Opt-in exercise may explicitly permit a new pending invented memory.', 'Review the private receipt separately; private memory never enters public notes.'];
         r.budget = 'At most 2 auxiliary requests: cast interpretation and prompted memory when holder/presence match; one ordinary native generation.';
         r.check('save', 'receipt', 'Only Rowan’s private target receives a pending memory with canonical mention evidence.');
         for (const n of Object.values(r.graph.nodes))
@@ -173,20 +175,21 @@ export function advanced() {
     }
     {
         r = builder(25, 'Award experience from confirmed progress', 'Project generic authored State rules from confirmed native objectives with identity-ledger deduplication and accepted persistence.', 'State progression rules, Collection thresholds and identity ledger');
-        const source = draftEvidence(r), candidates = eventCandidates(r, source, { eventType: 'scene-action', instructions: 'Extract only an explicitly completed objective with exact evidence; at most three.' }), confirmed = confirmEach(r, candidates), state = liveJson(r, 'progression', 'player-progression');
+        const source = draftEvidence(r), candidates = eventCandidates(r, source, { eventType: 'scene-action', instructions: 'Extract only an explicitly completed objective with exact evidence; at most three.' }), confirmed = confirmEach(r, candidates);
+        r.add('progression-file', 'read-file', { targetId: 'player-progression' }, 'authorized live state');
         r.data('rules', { ruleSetId: 'objective-rewards', revision: 1, rules: [{
                     ruleId: 'completed-objective', eventType: 'objective-completed', targetKey: 'experience', identityFields: ['occurrenceId'], mode: 'add', amount: 20, min: 0, max: 1000
                 }] });
         r.add('progress-events', 'event-normalize', { mode: 'progression', eventType: 'objective-completed', phase: 'post' });
         r.connect(confirmed, 'out', 'progress-events', 'events');
         r.add('award', 'state', { mode: 'progression', phase: 'post' });
-        r.connect(state, 'out', 'award', 'state');
+        r.connect('progression-file', 'value', 'award', 'state');
         r.connect('rules', 'out', 'award', 'rules');
         r.connect('progress-events', 'out', 'award', 'events');
         r.add('before-experience', 'collection', {
             phase: 'post', mode: 'lookup', collectionPath: ['values'], fieldPath: ['key'], value: 'experience'
         });
-        r.connect(state, 'out', 'before-experience', 'in');
+        r.connect('progression-file', 'value', 'before-experience', 'in');
         r.add('after-experience', 'collection', {
             phase: 'post', mode: 'lookup', collectionPath: ['values'], fieldPath: ['key'], value: 'experience'
         });

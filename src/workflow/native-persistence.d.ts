@@ -1,5 +1,5 @@
 import type { Result } from './types';
-export type PersistenceSelection={kind:'document';targetId:string}|{kind:'introspection';storeId:string;actorId:string}|{kind:'document-catalog'};
+export type PersistenceSelection={kind:'document';targetId:string}|{kind:'document-checkpoint';targetId:string;pageIds:string[]}|{kind:'introspection';storeId:string;actorId:string}|{kind:'document-catalog'};
 export interface NativePersistenceReceipt { appliedLocally:true;saveAttempted:boolean;verificationAttempted:boolean;acknowledged:boolean;persistence:'confirmed'|'save-unverified';reasonCode?:string; }
 export interface NativePersistenceVerifier { saveAndVerify(selection:PersistenceSelection,controls?:{signal?:AbortSignal}):Promise<Result<NativePersistenceReceipt>>;verify(selection:PersistenceSelection,controls?:{signal?:AbortSignal}):Promise<Result<NativePersistenceReceipt>>; }
 export function createNativePersistenceVerifier(ports:{getContext:()=>{chatId?:string;getCurrentChatId?:()=>string;characterId:number;groupId?:string|null;chat:unknown[];chatMetadata:Record<string,unknown>;characters:{name:string;avatar:string;chat:string}[];saveMetadata?:()=>unknown|Promise<unknown>;getRequestHeaders?:()=>Record<string,string>};getUserId:()=>string;fetch?:typeof globalThis.fetch}):NativePersistenceVerifier;

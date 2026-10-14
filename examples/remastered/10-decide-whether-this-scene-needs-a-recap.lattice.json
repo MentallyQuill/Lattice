@@ -175,6 +175,8 @@
         "instructions": "Return concise records of the distinct public actions in this exact narrative with literal evidence.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "notes": {

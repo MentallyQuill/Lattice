@@ -34,10 +34,10 @@
 
 **Interfaces:** Prompted Memory accepts exactly a no-match result and returns skipped out with a bounded reason/report. Memory Recall has optional query Text; a wired query overrides the bounded existing control.
 
-- [ ] Add one no-match test with authorized unrelated memories; establish failure, implement the strict result, then run event tests.
-- [ ] Add one wired query test using actual recall service; establish failure, add optional Recall-only pin and Text validation/dispatch, then run introspection/native privacy tests.
-- [ ] Add invalid/missing/empty/stale query and malformed no-match cases individually; preserve existing unresolved authorization and creation checks.
-- [ ] Review full diff and report precise verification.
+- [x] Add one no-match test with authorized unrelated memories; establish failure, implement the strict result, then run event tests.
+- [x] Add one wired query test using actual recall service; establish failure, add optional Recall-only pin and Text validation/dispatch, then run introspection/native privacy tests.
+- [x] Add invalid/missing/empty/stale query and malformed no-match cases individually; preserve existing unresolved authorization and creation checks.
+- [x] Review full diff and report precise verification.
 
 ## Task 2: Literal extraction controls and typed Collection values
 
@@ -45,10 +45,10 @@
 
 **Interfaces:** Extract uses caseSensitive=true and match=substring defaults, with optional word matching; returned records quote actual source substrings. Collection Value accepts bounded typed JSON, retaining wired Match precedence and existing comparisons.
 
-- [ ] Add capitalization/boundary regression, establish failure, implement bounded literal matching with original offsets, and run model tests.
-- [ ] Add Unicode edge cases individually and keep literal regex metacharacters literal.
-- [ ] Add numeric Collection constant regression, establish failure, adopt bounded JSON value validation/descriptor, and run collection/control tests.
-- [ ] Verify old string defaults, wired Match precedence and invalid own-data shapes; report diff and tests.
+- [x] Add capitalization/boundary regression, establish failure, implement bounded literal matching with original offsets, and run model tests.
+- [x] Add Unicode edge cases individually and keep literal regex metacharacters literal.
+- [x] Add numeric Collection constant regression, establish failure, adopt bounded JSON value validation/descriptor, and run collection/control tests.
+- [x] Verify old string defaults, wired Match precedence and invalid own-data shapes; report diff and tests.
 
 ## Task 3: Parsed Read File output
 
@@ -56,43 +56,43 @@
 
 **Interfaces:** Add optional output value Data containing the already checked parsed value for structured formats. Existing text/document/reference pins remain unchanged; text/Markdown value output is explicitly skipped.
 
-- [ ] Add direct structured value test, establish failure, implement descriptor/output/privacy preservation, and run file tests.
-- [ ] Add textual-format skipped output and private material tests individually.
-- [ ] Verify copied value cannot authorize writing; report diff/tests.
+- [x] Add direct structured value test, establish failure, implement descriptor/output/privacy preservation, and run file tests.
+- [x] Add textual-format skipped output and private material tests individually.
+- [x] Verify copied value cannot authorize writing; report diff/tests.
 
 ## Task 4: Budget and formatting contracts, existing corrections
 
 **Own/controller:** src/workflow/compactor.js; operations/reference-transfer.js; catalog.js new-node defaults; tools/remastered example source; generated example packages; node-reference/docs and relevant tests.
 
-- [ ] Add compression request remaining-budget regression, establish failure, communicate conservative measured allowance/report; retain one request, completion cap and final overflow check.
-- [ ] Add Format Transfer dropped required literal regression, establish failure, validate aligned result before success.
-- [ ] Add lesson 15 order regression, correct source builder and regenerate current authoritative examples.
-- [ ] Set only newly created Repair nodes to Inspect using creation defaults; do not reinterpret existing saved Repair nodes.
-- [ ] Correct Current Holder loss documentation and update related guidance.
+- [x] Add compression request remaining-budget regression, establish failure, communicate conservative measured allowance/report; retain one request, completion cap and final overflow check.
+- [x] Add Format Transfer dropped required literal regression, establish failure, validate aligned result before success.
+- [x] Add lesson 15 order regression, correct source builder and regenerate current authoritative examples.
+- [x] Set only newly created Repair nodes to Inspect using creation defaults; do not reinterpret existing saved Repair nodes.
+- [x] Correct Current Holder loss documentation and update related guidance.
 
 ## Task 5: Native history lifecycle
 
 **Own:** Assigned after read-only design research; existing native state/file backend/progression history and Workflow Data action paths only.
 
-- [ ] Write concrete design identifying replay fence, current values retained, archive/preview semantics and capacity diagnostics.
-- [ ] Review design against real source identities and compare-and-swap behavior before edits.
-- [ ] Add one capacity/checkpoint test at a time; implement smallest host-owned explicit lifecycle.
-- [ ] Test retained current state and refusal of pre-checkpoint replay, stale review candidates, duplicate intents and private scope.
-- [ ] Use the existing Workflow Data dialog for preview/action; browser-test cancel and successful checkpoint.
+- [x] Write concrete design identifying replay fence, current values retained, archive/preview semantics and capacity diagnostics.
+- [x] Review design against real source identities and compare-and-swap behavior before edits.
+- [x] Add one capacity/checkpoint test at a time; implement smallest host-owned explicit lifecycle.
+- [x] Test retained current state and refusal of pre-checkpoint replay, stale review candidates, duplicate intents and private scope.
+- [x] Use the existing Workflow Data dialog for preview/action; browser-test cancel and successful checkpoint.
 
 ## Task 6: UI and curriculum integration
 
 **Own/controller:** ui/DetailControlEditor.svelte and existing typed editor/projections as needed; node guide content/fixtures; docs/examples and bounded browser tests.
 
-- [ ] Reuse descriptor-driven controls for matching options and the typed Value editor for Collection.
-- [ ] Update guides and relevant lessons to show wired recall/direct file value without unnecessary model requests.
-- [ ] Inspect desktop/narrow controls and checkpoint dialog against actual Gaea references; test keyboard/save/cancel and error feedback.
+- [x] Reuse descriptor-driven controls for matching options and the typed Value editor for Collection.
+- [x] Update guides and relevant lessons to show wired recall/direct file value without unnecessary model requests.
+- [x] Inspect desktop/narrow controls and checkpoint dialog against actual Gaea references; test keyboard/save/cancel and error feedback.
 
 ## Task 7: Final integration and publication
 
-- [ ] Run all repository-required tests, type checking, build, assets and browser checks with fresh evidence.
-- [ ] Independent review of the complete changes, with attention to privacy, replay and compatibility.
-- [ ] Fix actionable findings and rerun affected checks.
+- [x] Run all repository-required tests, type checking, build, assets and browser checks with fresh evidence.
+- [x] Independent review of the complete changes, with attention to privacy, replay and compatibility.
+- [x] Fix actionable findings and rerun affected checks.
 - [ ] Verify origin/main freshness, integrate without overwriting unrelated work, commit and push to origin/main.
 - [ ] Verify remote SHA and report delivered features and any material limitations.
 

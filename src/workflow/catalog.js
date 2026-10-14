@@ -267,5 +267,5 @@ export function operationDefaults(id = 'scene-context', { mode } = {}) {
         op = described.data.descriptor;
     }
     if (!op) throw new Error(`Unknown workflow operation: ${id}`);
-    return { operation: id, ...(op.minimumSchema === 3 ? { operationVersion: 1 } : {}), title: op.title, modelRole: op.modelRole, profileId: op.modelRole ? ACTIVE_PROFILE_ID : null, model: null, ...structuredClone(op.defaults) };
+    return { operation: id, ...(op.minimumSchema === 3 ? { operationVersion: 1 } : {}), title: op.title, modelRole: op.modelRole, profileId: op.modelRole ? ACTIVE_PROFILE_ID : null, model: null, ...structuredClone(op.defaults), ...(id === 'repair' ? {mode:'inspect',policyVersion:1} : {}) };
 }

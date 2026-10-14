@@ -10,7 +10,8 @@ import { projectIntrospectionNode } from './introspection/native.js?v=0.27.3';
 import { executeIntrospection } from './introspection/nodes.js?v=0.27.3';
 import { parseRecord } from './introspection/contracts.js?v=0.27.3';
 import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.27.3';
-import { createAcceptedNativeSettlement, createNativeFileSession, validateNativeFileEvidence } from './native-settlement.js?v=0.27.3';
+import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.27.3';
+import {queryProgressionHistory} from './progression.js?v=0.27.3';
 import { createChatDocumentCatalog } from './document-catalog.js?v=0.27.3';
 import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.27.3';
 import { createNativePersistenceVerifier } from './native-persistence.js?v=0.27.3';
@@ -191,6 +192,7 @@ export function createNativeWorkflowController(ports) {
     const documentCatalog=ports.documentCatalog??createChatDocumentCatalog({getContext:context,getUserId:()=>ports.userId?.()});
     const persistenceVerifier=ports.persistenceVerifier??createNativePersistenceVerifier({getContext:context,getUserId:()=>ports.userId?.()});
     const fileBarriers=new Map();
+    const documentHistory=createNativeDocumentHistory({catalog:documentCatalog,context,userId:()=>ports.userId?.(),actorId:()=>{const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);return actor.ok?actor.data.actorId:null;},isBusy:()=>applying||active!==null||ports.isBusy?.()===true,barriers:fileBarriers,persistenceVerifier,onApplied:()=>cancel('Workflow history checkpoint applied')});
     const outcomeCache=createNativeOutcomeCache({...(typeof ports.random==='function'?{random:ports.random}:{})});
     function releaseRun(run) {if(!run||run.resourcesReleased)return;run.resourcesReleased=true;run.guidanceComposition?.clear();run.modelScopes?.clear();run.modelAddresses=new WeakMap();recall.releaseRun(run);run.memorySession?.release();run.memorySession=null;run.storySession?.release();run.storySession=null;run.draftEvidence?.release();run.draftEvidence=null;run.draftSources?.clear();delete run.nativeContext;for(const session of run.fileSessions?.values()??[])session.release();run.fileSessions?.clear();run.fileSession?.release();run.fileSession=null;run.actorContext?.release();run.actorContext=null;for(const session of run.actorMemorySessions?.values()??[])session.release();run.actorMemorySessions?.clear();run.stagedFiles.length=0;run.memoryIntents.clear();run.memoryTerminals.clear();}
     let epoch=0, active=null, result=null, automaticResult=null, applying=false, internalEvents=0, unsubscribe=null;
@@ -381,6 +383,19 @@ export function createNativeWorkflowController(ports) {
             }
             return result;
         };
+        if(settings.operation==='state'&&['progression','time-decay'].includes(settings.mode)&&inputs.state?.value?.historyCheckpoint){
+            const marker=inputs.state.value.historyCheckpoint,fingerprint=JSON.stringify(inputs);
+            const authorized=[...run.fileSessions.values()].find(session=>session.visibility(marker.targetId).ok);
+            const files=authorized?{ok:true,data:authorized}:scopedFiles(run);if(!files.ok)return files;
+            const permission=files.data.visibility(marker.targetId);if(!permission.ok)return permission;
+            const read=await files.data.store.read(marker.targetId);if(!fresh(run))return fail('STALE_RUN','State history scope changed.');if(!read.ok)return read;
+            let stored;try{stored=JSON.parse(read.data.snapshot.content);}catch{return fail('INVALID_PROGRESSION_HISTORY','Checkpointed state requires its authorized JSON source.');}
+            if(JSON.stringify(stored.historyCheckpoint)!==JSON.stringify(marker))return fail('DOCUMENT_HISTORY_CHANGED','State history no longer matches its authorized document.');
+            const query=settings.mode==='progression'?queryProgressionHistory(inputs.state.value,inputs.events?.value,inputs.rules?.value):{ok:true,data:{identityKeys:[],eventIds:[]}};if(!query.ok)return query;
+            const lookup=await files.data.lookupHistory(marker.targetId,{progression:query.data});if(!fresh(run)||JSON.stringify(inputs)!==fingerprint)return fail('STALE_RUN','State inputs changed during history lookup.');if(!lookup.ok)return lookup;
+            if(lookup.data.epoch!==marker.epoch)return fail('DOCUMENT_HISTORY_CHANGED','State history epoch changed.');
+            boundedPorts.progressionHistory={targetId:marker.targetId,epoch:marker.epoch,visibility:lookup.data.visibility,...lookup.data.progression};
+        }
         const result=preserveArtifactPrivacy(await executeIntrospection(settings,inputs,{...boundedPorts,...(session?{memory:{read:consumeMemory('read'),recall:consumeMemory('recall')}}:{})}),inputs);
         const implicitStateRead=settings.operation==='state'&&settings.mode==='value'&&!inputs.state;
         if(run.hostUnified&&result.ok&&(settings.operation==='memory'&&['read','recall'].includes(settings.mode)||implicitStateRead)&&memoryReads.some(read=>same(read.artifact?.value,result.artifact?.value))&&artifactVisibility(result.artifact).kind==='actor-private'){const scoped=scopedActors(run);if(!scoped.ok)return scoped;const grant=scoped.data.authorizeSelectedActor();if(!grant.ok)return grant;const retained=scoped.data.captureScopedResult(result,grant.data.grant);if(!retained.ok)return retained;}
@@ -913,7 +928,7 @@ export function createNativeWorkflowController(ports) {
         unsubscribe=()=>{cancel('Controller disposed');for(const [event,fn]of subscriptions)(c.eventSource.removeListener ?? c.eventSource.off)?.call(c.eventSource,event,fn);unsubscribe=null;recall.dispose();};
         return unsubscribe;
     }
-    const controller={beforeGenerate,runTarget,apply,reject,syncRecall:recall.sync,statusRecall:recall.status,queueRecall:recall.queue,cancelRecall:recall.cancel,captureRecall:recall.captureQueueCommand,changeRecallQueues:recall.changeQueues,resetRecallDocument:recall.resetDocument,subscribeRecall:recall.subscribe,settlementStatus,retryPersistence,candidateStatus,cancel,activity,subscribeActivity,lastResult:()=>result,lastAutomaticResult:()=>automaticResult,subscribe,dispose:()=>{if(unsubscribe)unsubscribe();else recall.dispose();activityListeners.clear();}};
+    const controller={beforeGenerate,runTarget,apply,reject,previewStoryHistoryCheckpoint:documentHistory.preview,applyStoryHistoryCheckpoint:documentHistory.apply,inspectStoryHistory:documentHistory.inspect,syncRecall:recall.sync,statusRecall:recall.status,queueRecall:recall.queue,cancelRecall:recall.cancel,captureRecall:recall.captureQueueCommand,changeRecallQueues:recall.changeQueues,resetRecallDocument:recall.resetDocument,subscribeRecall:recall.subscribe,settlementStatus,retryPersistence,candidateStatus,cancel,activity,subscribeActivity,lastResult:()=>result,lastAutomaticResult:()=>automaticResult,subscribe,dispose:()=>{if(unsubscribe)unsubscribe();else recall.dispose();activityListeners.clear();}};
     retentionInspectors.set(controller,()=>{
         const runs=new Set([active,...[...sources.values(),...candidates.values()].map(entry=>entry.run)].filter(Boolean));
         const recordings=new Set([result?.recording,automaticResult?.result.recording,...[...runs].map(run=>run.publicResult?.recording),...[...candidates.values()].map(entry=>entry.applied?.recording)].filter(Boolean));

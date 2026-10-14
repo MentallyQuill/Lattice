@@ -39,6 +39,30 @@ test('native memory commits two settled turns and reads exact selected text with
     assert.equal((await second.memory.commit(await intent(second, 'two'), { root: true })).data.version, 2);
     assert.equal(f.writes(), 2); assert.deepEqual(f.c.chatMetadata.unrelated, { keep: true });
 });
+test('native wired Memory Recall stays within the selected actor namespace',async()=>{
+    const f=fixture(),session=f.capture();
+    const prior=await session.memory.read({view:'state'}),events=await session.memory.read({view:'events'});
+    const refs=[events.artifact.value.sourceRefs[0]];
+    const proposed=makeRecord('state-proposal',prior.artifact.value,{changes:[{op:'upsert',collection:'episodes',item:{id:'lighthouse',text:'Alice remembers the lighthouse.',classification:'interpretation',sourceRefs:refs}}]},refs).data;
+    const committed=await session.memory.commit(makeRecord('commit-intent',proposed.value,{proposal:proposed.value,idempotencyKey:'lighthouse'},refs).data,{root:true});
+    assert.equal(committed.ok,true,JSON.stringify(committed.error));
+    const graph={...nativeGraph(),nodes:{query:{...operationDefaults('text'),id:'query',type:'workflow',phase:'post',x:0,y:0,text:'lighthouse'},recall:{...operationDefaults('memory',{mode:'recall'}),id:'recall',type:'workflow',phase:'post',x:0,y:0,query:'garden'}},wires:{query:{id:'query',route:'wire',from:'query',fromPort:'out',to:'recall',toPort:'query'}}};
+    const controller=createNativeWorkflowController({context:()=>f.c,userId:()=> 'default-user',isBusy:()=>false});
+    const run=async()=>{
+        const result=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'recall',portId:'out'});
+        assert.equal(result.ok,true,JSON.stringify(result.error));
+        assert.equal(result.actualCalls,0);
+        return result.recording.artifacts.find(entry=>entry.origin.direction==='output'&&entry.value?.value?.recordType==='episodes')?.value;
+    };
+    const alice=await run();
+    assert.deepEqual(alice.value.payload.episodes.map(episode=>episode.id),['lighthouse']);
+    assert.equal(alice.value.scope.actorId,'character:alice.png');
+    f.c.characterId=1;
+    const bob=await run();
+    assert.deepEqual(bob.value.payload.episodes,[]);
+    assert.equal(bob.value.scope.actorId,'character:bob.png');
+    assert.equal(f.writes(),1);
+});
 for (const [name, mutate] of [['edit', c => { c.chat[1].mes = 'Edited'; }], ['swipe', c => { c.chat[1].swipe_id = 1; c.chat[1].mes = 'Another swipe'; }], ['delete', c => { c.chat.splice(1, 1); }], ['chat switch', c => { c.chatId = 'two'; }], ['actor switch', c => { c.characterId = 1; }]]) {
     test(`native ${name} rejects pending evidence before persistence`, async () => {
         const f = fixture(); const session = f.capture(); const request = await intent(session);

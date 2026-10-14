@@ -3,6 +3,7 @@ import { reflect, internalize, express } from './analysis.js?v=0.27.3';
 import { shapeContext, advanceState } from './context-state.js?v=0.27.3';
 import { parseRuntimeContext } from '../operations/context-data.js?v=0.27.3';
 import { PROGRESSION_STATE_MODES, describeProgressionState, executeProgressionState } from '../operations/progression-nodes.js?v=0.27.3';
+import { validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.3';
 
 const MODES = { reflect: ['character','recall','scene'], internalize: ['experience','pattern','recovery'], express: ['behavior','attention','inner-voice'], context: ['assemble','perspective','focus'], memory: ['read','recall','commit'], state: ['value','curve','track',...PROGRESSION_STATE_MODES] };
 const COMMON = ['mode'];
@@ -59,6 +60,7 @@ function describe(parsed,phase) {
     if (op === 'internalize') ports = [port('state','data'),port('events','data')];
     if (op === 'express') ports = [port('assessment','data'),port('state','data',false),port('events','data',false),port('episodes','data',false),port('context','context',false)];
     if (op === 'context') ports = mode === 'assemble' ? Array.from({length:settings.inputCount},(_,i)=>port(`in${i+1}`,'context')) : [port('context','context')];
+    if (op === 'memory' && mode === 'recall') ports = [port('query','text',false)];
     if (terminal) ports = [port('proposal','data')];
     const genericState = op === 'state' && PROGRESSION_STATE_MODES.includes(mode);
     if (op === 'state') ports = genericState ? describeProgressionState(settings).data.ports : [port('state','data',false),...(mode === 'track' ? [port('events','data')] : [])];
@@ -91,6 +93,10 @@ export async function executeIntrospection(node,namedInputs={},ports={}) {
         for (const p of known) {
             const value = inputs.data[p.id];
             if (value === undefined) { if (p.required) return fail('MISSING_INPUT',`Missing ${p.id}.`); continue; }
+            if (p.kind === 'text') {
+                if (!map(value) || Object.keys(value).some(key=>!['kind','text','visibility','provenance'].includes(key)) || value.kind !== 'text' || !boundedText(value.text) || !validVisibilityMetadata(value)) return fail('INVALID_INPUT','Expected a bounded Text artifact.');
+                continue;
+            }
             const valid = p.kind === 'context' ? parseRuntimeContext(value) : parseRecord(value);
             if (!valid.ok) return valid;
         }
@@ -118,7 +124,7 @@ export async function executeIntrospection(node,namedInputs={},ports={}) {
             } else {
                 const method = settings.mode === 'read' ? ports.memory?.read : ports.memory?.recall;
                 if (typeof method !== 'function') return fail('SERVICE_UNAVAILABLE','A scoped memory service is required.');
-                result = await method.call(ports.memory, settings.mode === 'read' ? {view:settings.view} : {query:settings.query,limit:settings.limit});
+                result = await method.call(ports.memory, settings.mode === 'read' ? {view:settings.view} : {query:input.query?.text ?? settings.query,limit:settings.limit});
             }
         } else {
             let state = input.state;

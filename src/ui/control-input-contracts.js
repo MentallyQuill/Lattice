@@ -20,7 +20,7 @@ declare('questions', 'decision.questions');
 declare('schedules', 'advance-time.schedules');
 declare('value', 'time-trigger.metadata');
 declare('schema', 'json-decode.schema extract.schema model-call.schema format.schema read-file.schema write-file.schema project-document.schema');
-declare('value', 'condition.value select-fields.default format.default');
+declare('value', 'condition.value collection.value select-fields.default format.default');
 declare('helper', 'for-each.helper for-each.roleOverrides');
 declare('hotkey', 'hotkey-arm.hotkey');
 declare('numbers', 'collection.thresholds');

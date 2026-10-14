@@ -13,7 +13,7 @@ const controls={
     mode:{type:'enum',values:modes,default:'count'},
     collectionPath:{type:'array',items:'string',default:[],max:32},
     fieldPath:{type:'array',items:'string',default:[],max:32},
-    value:{type:'string',default:'',maxLength:4096,help:'A wired Match Data value overrides this literal.'},
+    value:{type:'json-value',editor:'json',default:'',maxLength:4096,help:'A wired Match Data value overrides this authored JSON value.'},
     operator:{type:'enum',values:['equals','not-equals','at-least','at-most','contains','exists'],default:'equals'},
     missingPolicy:{type:'enum',values:['hold','exclude','include'],default:'hold'},
     thresholds:{type:'string',default:'[]',editor:'json',maxLength:4096},
@@ -28,7 +28,7 @@ function settingsFor(raw) {
     if(!exact(cloned.data.value,Object.keys(defaults)))return fail('INVALID_SETTINGS','Use supported Collection controls.');
     const settings={...defaults,...cloned.data.value};
     if(!modes.includes(settings.mode)||!path(settings.collectionPath)||!path(settings.fieldPath)||!path(settings.identityPath)
-        ||typeof settings.value!=='string'||settings.value.length>4096||!controls.operator.values.includes(settings.operator)
+        ||typeof settings.value==='string'&&settings.value.length>4096||!controls.operator.values.includes(settings.operator)
         ||!controls.missingPolicy.values.includes(settings.missingPolicy)||typeof settings.thresholds!=='string'||settings.thresholds.length>4096
         ||!controls.mergePolicy.values.includes(settings.mergePolicy))return fail('INVALID_SETTINGS','Use bounded Collection modes, paths and policies.');
     if(settings.mode==='threshold') {

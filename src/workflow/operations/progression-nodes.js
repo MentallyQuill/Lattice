@@ -57,6 +57,9 @@ export function executeProgressionState(rawSettings,rawInputs,rawPorts={}) {
         if(capabilities.data.signal?.aborted)return fail('ABORTED','State projection was stopped.');
         const checked=ownData(rawInputs);if(!checked.ok||!object(checked.data))return fail('INVALID_INPUT','State modes require bounded named Data artifacts.');
         const inputs=checked.data,required=described.data.ports.filter(pin=>pin.direction==='input');
+        const checkedHistory=capabilities.data.progressionHistory===undefined?null:ownData(capabilities.data.progressionHistory);
+        if(checkedHistory&&!checkedHistory.ok)return fail('INVALID_PROGRESSION_HISTORY','State history ports require bounded own data.');
+        const history=checkedHistory?.data,disclosedInputs=history?{...inputs,history:{visibility:history.visibility??{kind:'hidden'}}}:inputs;
         if(Object.keys(inputs).some(key=>!required.some(pin=>pin.id===key)))return fail('INVALID_INPUT','Use only declared State inputs.');
         for(const pin of required) {
             if(!Object.hasOwn(inputs,pin.id))return fail('MISSING_INPUT','Missing '+pin.id+'.');
@@ -64,16 +67,16 @@ export function executeProgressionState(rawSettings,rawInputs,rawPorts={}) {
             if(!exact(value,['kind','value','visibility','status','acceptance','scope','sourceRefs'])||value.kind!=='data'||!Object.hasOwn(value,'value'))return fail('INVALID_INPUT','State projection inputs must be plain Data artifacts.');
         }
         if(described.data.mode==='progression') {
-            const result=applyProgressionEvents(inputs.state.value,inputs.events.value,inputs.rules.value);
+            const result=applyProgressionEvents(inputs.state.value,inputs.events.value,inputs.rules.value,history);
             if(!result.ok)return result;
-            return proposedResult(described.data.mode,result.data,inputs);
+            return proposedResult(described.data.mode,result.data,disclosedInputs);
         }
         const rules=inputs.rules.value;
         if(!Array.isArray(rules)||rules.some(rule=>!exact(rule,['decayId','revision','targetKey','baseline','unitsPerMinute','min','max','initialMinute','subjectId','objectId'])))return fail('INVALID_TIME_DECAY','Use only declared authored time-decay rule fields.');
         const clock=advanceStoryClock(inputs.clock.value,{kind:'duration',minutes:0});
         if(!clock.ok)return clock;
-        const result=projectTimeDecay(inputs.state.value,clock.data.previousClock.absoluteMinute,rules);
+        const result=projectTimeDecay(inputs.state.value,clock.data.previousClock.absoluteMinute,rules,history);
         if(!result.ok)return result;
-        return proposedResult(described.data.mode,result.data,inputs,{clock:clock.data.previousClock});
+        return proposedResult(described.data.mode,result.data,disclosedInputs,{clock:clock.data.previousClock});
     }catch{return fail('INVALID_STATE_INPUT','State projection inputs could not be inspected.');}
 }

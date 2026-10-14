@@ -190,7 +190,7 @@
       "edge-2": {
         "id": "edge-2",
         "route": "wire",
-        "from": "recent",
+        "from": "wider",
         "fromPort": "out",
         "to": "join-context",
         "toPort": "context-1"
@@ -198,7 +198,7 @@
       "edge-3": {
         "id": "edge-3",
         "route": "wire",
-        "from": "wider",
+        "from": "recent",
         "fromPort": "out",
         "to": "join-context",
         "toPort": "context-2"

@@ -14,6 +14,16 @@ For terms, separate entries with commas or newlines and quote phrases containing
 
 CSV applies to declared list or table controls. Prose, templates, file paths and regex expressions keep their syntax. Expression rows never split a quantifier such as `a{1,3}`. Numeric lists, including Collection thresholds, validate numbers; path rows preserve literal keys and use array indices only where the consuming node supports them. Typed values distinguish null, false, zero, empty strings, arrays and objects; optional defaults can remain absent. A form that cannot represent an advanced shape keeps it in Advanced JSON instead of dropping fields. Table import uses explicit column mappings and **Add rows** or **Replace rows**, previews the result, then uses the ordinary Save action.
 
+## Checkpoint accepted document history
+
+Long-running stories can fill the active clock-turn, save-receipt, accepted-outcome or progression history. Open **Workflow › Configure › Workflow Data**, select the authorized document, then choose **Preview history checkpoint**. Review the counts and choose **Apply checkpoint** or **Cancel checkpoint**. Preview and Cancel make no storage change.
+
+Apply archives the exact accepted history while retaining current document values, clock/calendar/remainder, progression budgets, cooldowns, repetition totals and decay times. Future or unrecognized consumed clock IDs remain active. Archived intent fingerprints, original draws, clock turns and authored progression identities still prevent duplicate actions. Archive pages retain their original document and payload privacy, including actor restrictions after the catalog changes.
+
+A checkpoint invalidates captured file references and reviewed results; run the workflow again before acceptance. Checkpointed progression requires its authorized native history lookup. Copying its marker into an offline graph does not supply that authority. Ordinary writes preserve the marker.
+
+Local application and durable saving have separate status. If saving is unverified, further writes to that target remain held. **Inspect saved history** checks the exact checkpoint without another save and lists archive metadata when authorized. Missing or corrupt history fails closed. Active limits stay bounded; archives also have an explicit native capacity of 4,096 pages and 30 MB per user, with each page obeying existing JSON limits. History is never automatically pruned.
+
 ## Read the graph's types
 
 | Artifact | Carries |
@@ -90,7 +100,7 @@ Model calls below are maximum auxiliary calls **per execution of that operation*
 | Events | [Actor Context](#actor-context) | Both; root or static body | Exact presence → authorized private Context | 0 |
 | Events | [Character Direction](#character-direction) | Both | Exact presence + optional Data → private Guidance | 0–1 |
 | Events | [Prompted Memory](#prompted-memory) | Both | Presence + actual holder event → private proposal | 0–1 |
-| Input | [Read File](#read-file) | Both; root or static system body | Authorized target + optional presence → Text/document/reference | 0 |
+| Input | [Read File](#read-file) | Both; root or static system body | Authorized target + optional presence → Text/document/value/reference | 0 |
 | Shaping | [Format](#format) | Both | Records/raw JSON → checked Data/serialized Text | 0 |
 | Shaping | [Project Document](#project-document) | Both | Serialized source + mutation → projected Text/Data/receipt | 0 |
 | Output | [Write to File](#write-to-file) | Response/Post; root or static system body | Live reference + mutation → staged projection/receipt | 0 |
@@ -161,11 +171,13 @@ Fit a Context artifact to a target while retaining protected material. **Select*
 | `method` | `select` or `compress` | `select` |
 | `keepRecent` | Recent messages kept verbatim | 2 |
 | `pins` | Case-sensitive literal strings whose containing messages stay verbatim | Empty |
-| `maxTokens` | Completion cap for a compression request | 1,024 |
+| `maxTokens` | Independent completion cap for a compression request | 1,024 |
 
 ![Smart Compactor details with compression method, context budget, recent-message retention, and secondary protection settings](images/compactor-details.png)
 
 **Connect:** Scene Context → Smart Compactor → Response Plan. Missing protected literals or protected material exceeding the target produce an error; they are not silently removed. Compress uses the **Analysis** role by default.
+
+Compress calculates the summary allowance from the target minus reserved protected messages and summary framing, then includes that allowance in the request's instructions. The independent `maxTokens` completion cap still applies. The `COMPRESSION_BUDGET` report records `targetTokens`, `reservedTokens`, `summaryTokens` and `completionLimit`. The complete result is measured afterward; overflow holds and retains the original context.
 
 ### Context Join
 
@@ -262,6 +274,8 @@ Rule kinds are `literal` and `regex`. Literal flags support `i`, `u`; regex flag
 
 Use a model to propose JSON patches for the selected spans in a scanned Draft. **repair** makes up to one request through the **Prose** role. **scan** makes zero repair requests.
 
+New shelf nodes start in **Inspect**, which makes no model request. Saved nodes that omit Mode retain legacy **repair** behavior; saved explicit modes remain intact.
+
 **Controls:** `mode`, `strength` (default `light`), `instructions`, `maxTokens` (default 2,048), `protectedLiterals`, and model bindings. Strength is an instruction, not a measured preservation guarantee.
 
 **Connect:** An already authorized Draft with editable spans → Repair → Validate Patches. Pattern detects occurrences and does not construct those permissions. The requested result is a raw patches JSON object. Malformed or unacceptable output fails without a whole-reply fallback or implicit retry.
@@ -282,7 +296,7 @@ Controls include Input type, Reference (`text`/`data`), Mode, Scope, Strength, I
 
 ### Format Transfer
 
-Reorganize Text or permitted Draft material using a Text example or Data template. Text input returns Text; Draft input returns Patches, with at most one Prose request. Optional Context supplies background. Data may include `requiredContent`, exact strings that must already exist in the input text. Missing required content fails before a request. Controls match Style Transfer except its style mode; reference material cannot authorize new story facts.
+Reorganize Text or permitted Draft material using a Text example or Data template. Text input returns Text; Draft input returns Patches, with at most one Prose request. Optional Context supplies background. Data may include `requiredContent`, exact strings that must already exist in the input text. Missing required content fails before a request. The proposed result is checked for the same literals; dropping one fails without producing Text or Patches. Controls match Style Transfer except its style mode; reference material cannot authorize new story facts.
 
 ### Terminology Map
 
@@ -338,7 +352,7 @@ Use one **Analysis** request to propose actor updates from settled events. **Exp
 
 **Read** returns the selected State, Events or Episodes view as Data. **Recall** finds bounded stored episodes using Query and Results (`limit`, default 8, range 1–64). **Commit** consumes a state proposal and is a Response terminal. All three modes require the root graph and use the active host chat/actor; group chats require a selected actor. Model output cannot choose a store or actor authority.
 
-**Pins:** Read and Recall have no inputs and produce Data on `out`. Commit requires `proposal` (Data) and has **no output pin**. Its commit intent is recorded as a Host result for diagnostics.
+**Pins:** Read has no inputs. Recall accepts optional `query` Text, which overrides the saved Query when connected. Both produce Data on `out`. Commit requires `proposal` (Data) and has **no output pin**. Its commit intent is recorded as a Host result for diagnostics.
 
 **Controls:** Read: View (`state`/`events`/`episodes`). Recall: Query, Results. Commit: Commit key (`idempotencyKey`). The default `lattice-memory-commit` lets the native host derive a key from the graph, terminal and exact proposal. A custom key must identify one intended transaction; reusing it for changed content fails.
 
@@ -511,6 +525,8 @@ These settings apply to the complete connected Guidance, including a Compose mer
 
 **Both stages; zero calls in literal mode, one Prose request in model mode.** Source is Draft or Text according to **Source**; optional Context; output is record Data. Controls: Mode, Instructions, Record schema, Literal patterns, Completion limit. Patterns use unique IDs, literal text and labels. Draft extraction uses the narrative body rather than appended annotations. Model records are interpretations/proposals until the relevant validation and event-confirmation path accepts them.
 
+Literal mode also exposes **Case sensitive** (`caseSensitive`, default `true`) and **Match** (`substring`, the default, or `word`). Word matching checks Unicode word boundaries while retaining exact source offsets and quotes. Saved nodes without these settings retain case-sensitive substring behavior. These controls apply only to literal extraction.
+
 ### Enrich
 
 **Both stages; one Prose request.** Required record Data and optional Context produce enriched record Data. Controls: Instructions and Completion limit. Use it to add bounded context to extracted items before public Render Notes, or within a same-actor private branch. It does not turn possibilities into canonical events or declassify private records.
@@ -579,7 +595,7 @@ Choose an existing pinned Data item/result helper in **Configure node**. **Detai
 
 ### Current Holder
 
-**Both stages; zero calls.** Required confirmed events and explicit holders Data; outputs ordered events attributed to their genuine holder plus updated holders. No controls. Transfers/loss/use follow the supplied event order; unknown/ambiguous ownership holds. This path supplies active-holder authority to Prompted Memory rather than trusting a model's invented holder label.
+**Both stages; zero calls.** Required confirmed events and explicit holders Data; outputs ordered events attributed to their genuine holder plus updated holders. No controls. Confirmed transfers update the holder before later mentions or uses in the supplied event order; unknown ownership or conflicting use/transfer attribution holds. This path supplies active-holder authority to Prompted Memory rather than trusting a model's invented holder label.
 
 ### Scene Presence
 
@@ -597,11 +613,15 @@ Choose an existing pinned Data item/result helper in **Configure node**. **Detai
 
 **Both stages; one promptedMemory request when authorized.** Required presence and genuine current-holder event Data. Controls: Actor ID, Mode (`recall`, `create`, `recall-or-create`), Prompt, Allow create and Completion limit. Reads only the authorized actor's existing memories; creation needs explicit permission and remains a proposed record. Route the output into a matching actor-private persistence leg when you want to record it. This node does not silently commit native memory.
 
+Strict **recall** selects an authorized existing memory ID and preserves its stored text. A checked response of exactly `{"kind":"no-match"}` skips `out` with `MEMORY_NO_MATCH`, so an optional downstream branch can continue without a memory proposal. No available authorized memories leaves strict recall unresolved before a request. An invented response is rejected in recall mode even when Allow create is enabled.
+
 ## Documents and collections
 
 ### Read File
 
 **Both stages; root or static system body; zero calls.** Reads an authorized logical workflow data target in the active user/chat, producing serialized `text`, parsed `document` Data and exact live `reference` Data. Controls: Authorized target, optional Schema/CSV columns, Actor scope (`selected`/`presence`) and Present actor identity. Presence scope adds required exact live presence Data for the configured actor. Selected scope uses the native actor and no authored actor ID. It is distinct from File Input's portable imported snapshot. Authorize targets in **Workflow → Configure → Workflow Data…**; no arbitrary OS paths are exposed.
+
+The additive **Parsed value** (`value`) Data output exposes only the parsed structured content, without the `document` wrapper's target/revision/format metadata or top-level provenance. It inherits the file's visibility. JSON, JSON Lines and CSV can supply this value; Text and Markdown skip that output with `FILE_VALUE_UNAVAILABLE`. Existing Text, Parsed document and Live file reference outputs retain their contracts.
 
 ### Format
 
@@ -620,6 +640,8 @@ Append is Text/Markdown concatenation; JSON uses structured collection mutation.
 ### Collection
 
 **Both stages; zero calls.** Data input; optional Other for merge or Match for a connected lookup/filter value; Data output. Controls: Mode, Collection path, Field path, comparison Value/Operator, Missing policy, Thresholds, Merge policy and Identity path.
+
+**Value** is typed JSON: numbers, strings, booleans, null, arrays and objects retain their types. A connected **Match** Data value overrides the authored Value, including false, zero or null. Numeric comparisons require numbers; `1` and `"1"` are distinct equality values.
 
 | Mode | Result |
 | --- | --- |

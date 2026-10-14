@@ -9,6 +9,14 @@ import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.27.3';
 import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js?v=0.27.3';
 import {safe} from '../src/state.js?v=0.27.3';
 const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');
+test('a checkpoint applied in an earlier scope cannot cancel or refresh a replacement workflow',async()=>{
+ const start=source.indexOf('    async applyCheckpoint('),end=source.indexOf('\n    },',start);assert.ok(start>=0&&end>start);
+ let current=true,release,entered,effects=0;const waiting=new Promise(resolve=>entered=resolve),deferred=new Promise(resolve=>release=resolve);
+ const env={storySetup:()=>({isCurrent:key=>current&&key==='captured-key'}),workflowRuntime:{getNativeWorkflowController:()=>({applyStoryHistoryCheckpoint:()=>{entered();return deferred;}})},workflowSession:{cancel(){effects++;}},refreshWorkflowPreparation(){effects++;},updateWorkflowProjection(){effects++;}};
+ const method=Function('env','with(env){return ('+source.slice(start,end).trim().replace('async applyCheckpoint(','async function(')+'\n});}')(env);
+ const pending=method('captured-key',{});await waiting;current=false;release({ok:true,data:{applied:true,acknowledged:false}});
+ assert.equal((await pending).data.applied,true);assert.equal(effects,0,'The old checkpoint response cannot touch the new workflow');
+});
 function actual(name,env){const start=source.indexOf('function '+name+'('),end=source.indexOf('\n}',start)+2;assert.ok(start>=0);return Function('env','with(env){'+source.slice(start,end)+';return '+name+';}')(env);}
 function fixture(){
  const graph={id:'setup-controller',schema:3,runtime:2,mode:'native-unified',definitions:{},portals:{},nodes:{compose:{id:'compose',type:'workflow',operation:'compose',phase:'post',sections:[{name:'body',text:''}]}},wires:{}};

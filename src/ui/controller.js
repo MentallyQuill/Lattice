@@ -185,6 +185,20 @@ const storyDocumentsActions = {
     load(key, targetId) { return storySetup()?.load(key, targetId) ?? { ok: false, error: { code: 'DOCUMENT_SETUP_UNAVAILABLE', message: 'Workflow Data setup is unavailable.' } }; },
     async save(key, definition) { const setup = storySetup(); return setup ? storyDocumentsChanged(await setup.save(key, definition)) : { ok: false, error: { code: 'DOCUMENT_SETUP_UNAVAILABLE', message: 'Workflow Data setup is unavailable.' } }; },
     async remove(key, targetId) { const setup = storySetup(); return setup ? storyDocumentsChanged(await setup.remove(key, targetId)) : { ok: false, error: { code: 'DOCUMENT_SETUP_UNAVAILABLE', message: 'Workflow Data setup is unavailable.' } }; },
+    previewCheckpoint(key, targetId) {
+        if (!storySetup()?.isCurrent(key)) return { ok:false,error:{code:'STALE_DOCUMENT_SETUP',message:'Refresh Workflow Data before previewing history.'} };
+        return workflowRuntime.getNativeWorkflowController?.()?.previewStoryHistoryCheckpoint(targetId) ?? { ok:false,error:{code:'DOCUMENT_SETUP_UNAVAILABLE',message:'Native document history is unavailable.'} };
+    },
+    async applyCheckpoint(key, handle) {
+        if (!storySetup()?.isCurrent(key)) return { ok:false,error:{code:'STALE_DOCUMENT_SETUP',message:'Refresh Workflow Data before applying history.'} };
+        const result = await workflowRuntime.getNativeWorkflowController?.()?.applyStoryHistoryCheckpoint(handle);
+        if (result?.ok && storySetup()?.isCurrent(key)) { workflowSession.cancel('Document history changed'); refreshWorkflowPreparation(); updateWorkflowProjection(); }
+        return result ?? { ok:false,error:{code:'DOCUMENT_SETUP_UNAVAILABLE',message:'Native document history is unavailable.'} };
+    },
+    inspectHistory(key, targetId) {
+        if (!storySetup()?.isCurrent(key)) return { ok:false,error:{code:'STALE_DOCUMENT_SETUP',message:'Refresh Workflow Data before inspecting history.'} };
+        return workflowRuntime.getNativeWorkflowController?.()?.inspectStoryHistory(targetId) ?? { ok:false,error:{code:'DOCUMENT_SETUP_UNAVAILABLE',message:'Native document history is unavailable.'} };
+    },
 };
 let recallProjection = null, refreshingRecall = false, recallDetailsView = null;
 function recallSelectionIds(){return canvas?.multi.size?[...canvas.multi]:canvas?.selection?.kind==='node'?[canvas.selection.id]:[];}

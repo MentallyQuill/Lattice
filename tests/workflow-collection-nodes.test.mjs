@@ -14,6 +14,69 @@ test('filter preserves event ordering for a later count or sum reducer', () => {
     assert.equal(sum.ok,true,JSON.stringify(sum.error));
     assert.equal(sum.artifact.value,50);
 });
+test('filter accepts an authored numeric Value for numeric comparisons', () => {
+    const result=executeCollection({operation:'collection',mode:'filter',fieldPath:['points'],operator:'at-least',value:30},{in:data(records)});
+    assert.equal(result.ok,true,JSON.stringify(result.error));
+    assert.deepEqual(result.artifact.value.map(record=>record.id),['second','third']);
+});
+test('Collection describes authored Value with the typed JSON editor and compatible string bound', () => {
+    const described=describeCollection({operation:'collection',mode:'filter',value:30});
+    assert.equal(described.ok,true,JSON.stringify(described.error));
+    const value=described.data.descriptor.controlDescriptors.value;
+    assert.equal(value.type,'json-value');
+    assert.equal(value.editor,'json');
+    assert.equal(value.default,'');
+    assert.equal(value.maxLength,4096);
+});
+test('a wired numeric Match overrides the authored typed Value even when Match is zero', () => {
+    const result=executeCollection({operation:'collection',mode:'filter',fieldPath:['points'],value:30},{in:data([{id:'zero',points:0},...records]),match:data(0)});
+    assert.equal(result.ok,true,JSON.stringify(result.error));
+    assert.deepEqual(result.artifact.value.map(record=>record.id),['zero']);
+});
+test('authored Boolean, null, array and object Values retain exact JSON equality', () => {
+    const cases=[
+        {value:false,actual:false,other:'false'},
+        {value:null,actual:null,other:'null'},
+        {value:[1,false],actual:[1,false],other:['1',false]},
+        {value:{points:10,active:true},actual:{active:true,points:10},other:{active:true,points:'10'}},
+    ];
+    for(const {value,actual,other} of cases) {
+        const result=executeCollection({operation:'collection',mode:'filter',fieldPath:['value'],value},{in:data([{id:'exact',value:actual},{id:'different',value:other}])});
+        assert.equal(result.ok,true,JSON.stringify(result.error));
+        assert.deepEqual(result.artifact.value.map(record=>record.id),['exact']);
+    }
+});
+test('authored numeric Value never coerces strings for numeric comparison', () => {
+    const stringValue=executeCollection({operation:'collection',mode:'filter',fieldPath:['points'],operator:'at-least',value:'30'},{in:data(records)});
+    assert.equal(stringValue.ok,false);
+    assert.equal(stringValue.error.code,'INVALID_COMPARISON');
+    const stringField=executeCollection({operation:'collection',mode:'filter',fieldPath:['points'],operator:'at-least',value:30},{in:data([{points:'50'}])});
+    assert.equal(stringField.ok,false);
+    assert.equal(stringField.error.code,'INVALID_COMPARISON');
+});
+test('Collection rejects malformed authored JSON without evaluating getters', () => {
+    let reads=0;
+    const accessor={};Object.defineProperty(accessor,'secret',{enumerable:true,get(){reads++;return 'secret';}});
+    const cycle={};cycle.self=cycle;
+    const sparse=[];sparse.length=1;
+    for(const value of [undefined,NaN,Infinity,Symbol('value'),()=>0,Object.create({inherited:true}),accessor,cycle,sparse]) {
+        const result=executeCollection({operation:'collection',mode:'filter',fieldPath:['points'],value},{in:data(records)});
+        assert.equal(result.ok,false);
+        assert.equal(result.artifact,undefined);
+    }
+    assert.equal(reads,0);
+});
+test('Collection keeps the authored string bound and overall JSON clone limits', () => {
+    const value='x'.repeat(4096);
+    const bounded=executeCollection({operation:'collection',mode:'filter',fieldPath:[],value},{in:data([value])});
+    assert.equal(bounded.ok,true,JSON.stringify(bounded.error));
+    assert.deepEqual(bounded.artifact.value,[value]);
+    for(const value of ['x'.repeat(4097),{nested:'x'.repeat(262144)},Array(10001).fill(0)]) {
+        const result=executeCollection({operation:'collection',mode:'filter',value},{in:data([])});
+        assert.equal(result.ok,false);
+        assert.equal(result.artifact,undefined);
+    }
+});
 test('rule lookup selects authored matching rules without inventing rewards', () => {
     const table={ruleSetId:'rewards',revision:1,rules:[{ruleId:'quest',eventType:'quest-completed',amount:100},{ruleId:'kill',eventType:'enemy-defeated',amount:20}]};
     const result=executeCollection({operation:'collection',mode:'rule-lookup',fieldPath:['eventType'],value:'enemy-defeated'},{in:data(table)});

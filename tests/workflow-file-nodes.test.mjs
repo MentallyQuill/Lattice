@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { FILE_OPERATIONS, describeFileNode, executeFileNode } from '../src/workflow/operations/file-nodes.js';
 import { createFileStore } from '../src/workflow/file-store.js';
+import { executeCollection } from '../src/workflow/operations/collection-nodes.js';
 const node=(operation,settings={})=>({id:'node-'+operation,type:'workflow',operation,...settings});
 const data=value=>({kind:'data',value});
 const must=result=>{assert.equal(result.ok,true,JSON.stringify(result));return result;};
@@ -12,6 +13,17 @@ function fixture(content='{"souls":[]}',format='json',extra={}) {
     const local={root:true,phase:'post',files,createIntentId:()=>({ok:true,data:'stable-event-1'}),authorizeFileWrite:async()=>({ok:true,data:{destinationVisibility:extra.destinationVisibility??{kind:'public'}}}),stageFileIntent:async(prepared,evidence)=>{staged.push({prepared,evidence});return {ok:true};},...extra.local};
     return {files,local,writes:()=>writes,staged:()=>staged};
 }
+test('Read File exposes its checked structured value without granting write authority',async()=>{
+    const f=fixture();
+    const read=must(await executeFileNode(node('read-file',{targetId:'sword'}),{},f.local));
+    assert.deepEqual(read.outputs.value?.value,{souls:[]});
+    assert.deepEqual(read.outputs.value.visibility,read.outputs.document.visibility);
+    assert.ok(describeFileNode(node('read-file',{targetId:'sword'}),{phase:'post'}).data.ports.some(port=>port.id==='value'&&port.direction==='output'&&port.kind==='data'));
+    const written=await executeFileNode(node('write-file',{mode:'add',collectionPath:'/souls'}),{reference:read.outputs.value,records:data([])},f.local);
+    assert.equal(written.ok,false);
+    assert.equal(f.staged().length,0);
+});
+
 test('Format decodes only explicitly selected JSON text and emits separate bounded outputs',async()=>{
     const formatted=must(await executeFileNode(node('format',{inputMode:'json-text',format:'jsonl'}),{in:{kind:'text',text:'[{"eventId":"kill-1","victimId":"enemy-1"}]'}},{phase:'post'}));
     assert.deepEqual(formatted.outputs.records.value,[{eventId:'kill-1',victimId:'enemy-1'}]);
@@ -21,6 +33,13 @@ test('Format decodes only explicitly selected JSON text and emits separate bound
     assert.equal(FILE_OPERATIONS.format.requestBound,0);
     assert.equal(FILE_OPERATIONS['read-file'].rootOnly,true);
     assert.equal(describeFileNode(node('write-file'),{phase:'pre'}).error.code,'INVALID_PHASE');
+});
+
+test('Read File parsed value connects directly to strict Data consumers',async()=>{
+    const f=fixture('[1,2]');
+    const read=must(await executeFileNode(node('read-file',{targetId:'sword'}),{},f.local));
+    const counted=must(await executeCollection(node('collection',{mode:'count'}),{in:read.outputs.value},{phase:'post'}));
+    assert.equal(counted.artifact.value,2);
 });
 test('Read File preserves exact live reference authority and Write stages a proposal without committing',async()=>{
     const f=fixture();

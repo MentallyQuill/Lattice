@@ -96,7 +96,7 @@ function parseContext(input) {
     return { ok: true, data: messages };
 }
 function withReview(result, settings, requestCount, tokenCount) {
-    if (result.ok) result.data.report.push({ code: 'REFERENCE_TRANSFER', kind: settings.kind, ...(settings.kind === 'style' ? { mode: settings.mode } : {}), requestCount, ...(tokenCount === undefined ? {} : { tokenCount }), semanticPreservation: 'review-dependent', message: 'Immutable regions were validated; preservation of meaning and template requirements requires review.' });
+    if (result.ok) result.data.report.push({ code: 'REFERENCE_TRANSFER', kind: settings.kind, ...(settings.kind === 'style' ? { mode: settings.mode } : {}), requestCount, ...(tokenCount === undefined ? {} : { tokenCount }), semanticPreservation: 'review-dependent', message: settings.kind === 'format' ? 'Immutable regions and declared required literals were validated; preservation of meaning requires review.' : 'Immutable regions were validated; preservation of meaning requires review.' });
     return result;
 }
 /** One injected Prose call; resulting Patches still require semantic review. */
@@ -156,5 +156,9 @@ export async function transferDraft(draft, reference, settings, ports = {}) {
     if (!['stop', 'eos_token', 'eos', 'stop_sequence', 'end_turn', 'complete', 'completed'].includes(finish)) return failure('COMPLETION_UNVERIFIED', 'Completion lacks recognized successful finish evidence.');
 
     const result = alignReferenceCandidate(prepared.data, response.data.text, { finish: response.data.finish, usage: response.data.usage });
+    if (result.ok && settings.kind === 'format' && reference.kind === 'data') {
+        const missing = (reference.value.requiredContent ?? []).filter(text => !response.data.text.includes(text));
+        if (missing.length) return failure('MISSING_TEMPLATE_CONTENT', 'Formatted prose dropped required template content: ' + missing.slice(0,4).map(text => JSON.stringify(text.slice(0,80))).join(', ') + (missing.length > 4 ? '…' : '') + '.');
+    }
     return withReview(result, settings, 1, counted.tokens);
 }

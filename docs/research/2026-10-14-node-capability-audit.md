@@ -6,6 +6,8 @@ The lessons use 60 of the 75 operations. The other 15 retain useful tested purpo
 
 The library already expresses the examples' mechanics. The strongest improvements are clearer outcomes, usable typed inputs/outputs and tighter existing contracts. No new node family is justified by this audit.
 
+Delivery update: the user authorized A1–A7, E1–E3 and the separately approved N1 native history checkpoint. Those changes are implemented in the existing nodes and Workflow Data dialog; the proposal descriptions below remain the original audit evidence. Lessons 15, 18, 22, 25 and 30 and affected generated layouts now exercise the revised behavior. See the approved [checkpoint design](../superpowers/specs/2026-10-14-native-history-checkpoint-design.md) and [public lifecycle guidance](../node-reference.md#checkpoint-accepted-document-history).
+
 ## Selection criteria
 
 A proposal must serve a named lesson or an ordinary variation of its goal, stay inside the node's named responsibility, and remove a concrete limitation. Existing composition comes first. Preserve finite request budgets, exact evidence, actor privacy, source identity and explicit acceptance. Do not trade those guarantees for a shorter graph.

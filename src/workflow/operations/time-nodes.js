@@ -222,7 +222,11 @@ export async function executeTimeNode(node, inputs, local = {}) {
             if (typeof stage !== 'function') return fail('HOST_OPERATION_REQUIRED','Clock Commit requires a trusted accepted-state host.');
             let staged; try { staged = await stage(inputs.projection.value,inputs.occurrences?.value); } catch { return fail('CLOCK_COMMIT_FAILED','The clock projection could not be staged.'); }
             if (isStopped(signal)) return fail('ABORTED','Clock staging was stopped.');
-            if (staged?.ok !== true) return fail('CLOCK_COMMIT_FAILED','The captured time projection could not be staged; verify its clock and accepted occurrence history.');
+            if (staged?.ok !== true) {
+                const checked=cloneJsonValue(staged),code=checked.ok?checked.data.value?.error?.code:null;
+                const messages={CLOCK_LEDGER_FULL:'The clock history is full. Preview a history checkpoint in Workflow Data before continuing.',FILE_RECEIPT_LIMIT:'Save receipts are full. Preview a history checkpoint in Workflow Data before continuing.',DOCUMENT_HISTORY_CHANGED:'Document history changed. Read the clock and review a fresh projection.',DOCUMENT_HISTORY_LIMIT:'The native history archive reached its bounded capacity.',PERSISTENCE_UNKNOWN:'The previous native save remains unverified. Inspect saved history in Workflow Data.'};
+                return Object.hasOwn(messages,code)?fail(code,messages[code]):fail('CLOCK_COMMIT_FAILED','The captured time projection could not be staged; verify its clock and accepted occurrence history.');
+            }
             const checked = cloneJsonValue(staged.data);
             if (!checked.ok) return fail('CLOCK_COMMIT_FAILED','Clock staging requires a bounded descriptive receipt.');
             const receipt=dataArtifact(checked.data.value,visibilityFor(admitted.data));

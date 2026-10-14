@@ -12,7 +12,7 @@ function storageFixture(saveMetadata){let user='default-user';const context={cha
 test('required-configuration nodes remain discoverable without valid placeholder controls',()=>{
  const prepared=prepareNativeSearchCatalog(scope);assert.equal(prepared.ok,true);
  for(const operation of ['time-trigger','for-each','prompted-memory','item-mention-trigger','item-use-trigger','scene-presence','character-direction','parse-effect-library','recall','hotkey-arm']){const choice=prepared.data.choices.find(item=>item.id==='operation:'+operation);assert.ok(choice,operation);assert.equal(choice.requiresConfiguration,true);const command=resolveNativeSearchChoice(prepared.data,choice.id);assert.equal(command.requiresConfiguration,true);assert.equal(describeOperation(scope,{type:'workflow',...operationDefaults(operation)}).ok,false);}
- const read=matchNativeSearchPorts(prepared.data,'operation:read-file',{kind:'data',dir:'in'});assert.deepEqual(read.map(pin=>pin.portId),['document','reference']);
+ const read=matchNativeSearchPorts(prepared.data,'operation:read-file',{kind:'data',dir:'in'});assert.deepEqual(read.map(pin=>pin.portId),['document','value','reference']);
  const each=matchNativeSearchPorts(prepared.data,'operation:for-each',{kind:'data',dir:'out'});assert.deepEqual(each.map(pin=>pin.portId),['in','state']);
 });
 

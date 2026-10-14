@@ -72,6 +72,10 @@ test('canonical cleanup node retains category selection independently of mode an
 test('Repair Details shows scope and policy controls only for cleanup modes', async ({ page }) => {
     await launch(page);
     await insert(page, 'Surface', 'repair');
+    await expect.poll(() => controlValue(page, 'Mode')).toBe('inspect');
+    await expect.poll(() => controlValue(page, 'Scope')).toBe('narration');
+    await expect(page.getByLabel('Policy categories (empty selects all)', { exact: true })).toBeVisible();
+    await chooseControl(page, 'Mode', 'repair');
     await expect.poll(() => controlValue(page, 'Mode')).toBe('repair');
     await expect(page.getByLabel('Scope', { exact: true })).toHaveCount(0);
     await expect(page.getByLabel('Policy categories (empty selects all)', { exact: true })).toHaveCount(0);

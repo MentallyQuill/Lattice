@@ -54,6 +54,39 @@ test('Draft Text and literal Extract preserve parent provenance without model ca
     assert.equal(draft.text, 'Mara holds the broken wand.');
     assert.equal(calls, 0);
 });
+test('literal Extract can match capitalized words without matching map inside roadmap', async () => {
+    const source = root('Map in the roadmap beside a MAP and lantern.');
+    const result = must(await models.executeModelNode(node('extract', { mode: 'literal', caseSensitive: false, match: 'word', patterns: [{ id: 'map', literal: 'map', label: 'Map' }] }), { source }, { phase: 'post' }));
+    assert.deepEqual(result.artifact.value.records.map(record => ({ text: record.text, evidence: record.evidence })), [
+        { text: 'Map', evidence: [{ start: 0, end: 3, quote: 'Map' }] },
+        { text: 'MAP', evidence: [{ start: 28, end: 31, quote: 'MAP' }] },
+    ]);
+    assert.equal(result.reports[0].actualCalls, 0);
+});
+test('literal Extract uses Unicode case folding without shifting original UTF-16 evidence', async () => {
+    const result = must(await models.executeModelNode(node('extract', { mode: 'literal', caseSensitive: false, patterns: [{ id: 'k', literal: 'k', label: 'K' }] }), { source: root('İ 😀 K k') }, { phase: 'post' }));
+    assert.deepEqual(result.artifact.value.records.map(record => ({ id: record.id, text: record.text, evidence: record.evidence })), [
+        { id: 'k:5', text: 'K', evidence: [{ start: 5, end: 6, quote: 'K' }] },
+        { id: 'k:7', text: 'k', evidence: [{ start: 7, end: 8, quote: 'k' }] },
+    ]);
+});
+test('literal Extract word matching rejects adjacent Unicode letters, marks, digits and underscores', async () => {
+    const result = must(await models.executeModelNode(node('extract', { mode: 'literal', caseSensitive: false, match: 'word', patterns: [{ id: 'map', literal: 'map', label: 'Map' }] }), { source: root('émAP 𐐀MAP MAP𐐀 MAP\u0301 _MAP MAP2 😀MAP') }, { phase: 'post' }));
+    assert.deepEqual(result.artifact.value.records.map(record => record.evidence), [[{ start: 34, end: 37, quote: 'MAP' }]]);
+});
+test('literal Extract keeps regex metacharacters literal when matching case-insensitively', async () => {
+    const result = must(await models.executeModelNode(node('extract', { mode: 'literal', caseSensitive: false, patterns: [{ id: 'plus', literal: 'a+b', label: 'Plus' }, { id: 'brackets', literal: '[map]', label: 'Brackets' }] }), { source: root('A+B a+b aaab [MAP] [map]') }, { phase: 'post' }));
+    assert.deepEqual(result.artifact.value.records.map(record => record.evidence), [
+        [{ start: 0, end: 3, quote: 'A+B' }], [{ start: 4, end: 7, quote: 'a+b' }],
+        [{ start: 13, end: 18, quote: '[MAP]' }], [{ start: 19, end: 24, quote: '[map]' }],
+    ]);
+});
+test('saved literal Extract defaults retain case-sensitive nonoverlapping substring matches', async () => {
+    const map = must(await models.executeModelNode(node('extract', { mode: 'literal', patterns: [{ id: 'map', literal: 'map', label: 'Map' }] }), { source: root('Map in the roadmap beside a MAP and lantern.') }, { phase: 'post' }));
+    assert.deepEqual(map.artifact.value.records.map(record => record.evidence), [[{ start: 15, end: 18, quote: 'map' }]]);
+    const repeated = must(await models.executeModelNode(node('extract', { mode: 'literal', patterns: [{ id: 'pair', literal: 'aa', label: 'Pair' }] }), { source: root('aaa') }, { phase: 'post' }));
+    assert.deepEqual(repeated.artifact.value.records.map(record => record.evidence), [[{ start: 0, end: 2, quote: 'aa' }]]);
+});
 test('model extraction checks quoted evidence and keeps its semantic claims proposed', async () => {
     const source = root('Mara holds a compass.');
     const records = [{ id: 'compass', label: 'Compass', text: 'Mara holds a compass', classification: 'observation', evidence: [{ start: 13, end: 20, quote: 'compass' }] }];
@@ -127,6 +160,26 @@ test('model descriptors expose valid schema controls and reject unsupported oper
     assert.equal(literal.requestBound, 0);
     assert.equal(literal.modelRole, null);
 });
+test('literal Extract describes Boolean case and labeled match controls only for literal mode', () => {
+    const descriptor = must(models.describeModelNode(node('extract'), { phase: 'post' })).data.descriptor;
+    assert.equal(descriptor.controlDescriptors.caseSensitive.type, 'boolean');
+    assert.equal(descriptor.controlDescriptors.caseSensitive.default, true);
+    assert.deepEqual(descriptor.controlDescriptors.caseSensitive.visibleWhen, { key: 'mode', value: 'literal' });
+    assert.deepEqual(descriptor.controlDescriptors.match.values, ['substring', 'word']);
+    assert.equal(descriptor.controlDescriptors.match.default, 'substring');
+    assert.deepEqual(descriptor.controlDescriptors.match.valueLabels, { substring: 'Substring', word: 'Word' });
+    assert.deepEqual(descriptor.controlDescriptors.match.visibleWhen, { key: 'mode', value: 'literal' });
+});
+test('Extract rejects unsupported case and match settings without requesting', async () => {
+    let calls = 0;
+    for (const settings of [{ caseSensitive: 'false' }, { caseSensitive: 0 }, { match: 'whole-word' }, { match: null }]) {
+        const result = await models.executeModelNode(node('extract', { mode: 'literal', ...settings }), { source: root('Map') }, { phase: 'post', request: async () => { calls++; throw new Error('unused'); } });
+        assert.equal(result.ok, false);
+        assert.equal(result.error.code, 'INVALID_SETTINGS');
+        assert.equal(result.artifact, undefined);
+    }
+    assert.equal(calls, 0);
+});
 test('malformed Context is rejected before any auxiliary model request', async () => {
     let calls = 0;
     const result = await models.executeModelNode(node('model-call'), { prompt: { kind: 'text', text: 'Summarize' }, context: { kind: 'context', messages: [{ id: 'm1', role: 'developer', text: 'bad role' }] } }, { phase: 'pre', request: async () => { calls++; return { ok: true, data: { text: 'Output', finish: 'stop' } }; } });
@@ -137,6 +190,21 @@ test('literal extraction holds a collection that exceeds the next-node JSON boun
     const result = await models.executeModelNode(node('extract', { mode: 'literal', patterns: [{ id: 'x', literal: 'x', label: 'L'.repeat(1000) }] }), { source: root('x'.repeat(256)) }, { phase: 'post' });
     assert.equal(result.ok, false, 'An unreadable Data collection must not be emitted');
     assert.equal(result.error.code, 'OUTPUT_LIMIT');
+});
+test('literal Extract word matching holds more than 256 hits without truncating', async () => {
+    const operation = node('extract', { mode: 'literal', caseSensitive: false, match: 'word', patterns: [{ id: 'map', literal: 'map', label: 'Map' }] });
+    const bounded = must(await models.executeModelNode(operation, { source: root('MAP '.repeat(256)) }, { phase: 'post' }));
+    assert.equal(bounded.artifact.value.records.length, 256);
+    const overflow = await models.executeModelNode(operation, { source: root('MAP '.repeat(257)) }, { phase: 'post' });
+    assert.equal(overflow.ok, false);
+    assert.equal(overflow.error.code, 'EXTRACTION_LIMIT');
+    assert.equal(overflow.artifact, undefined);
+});
+test('literal Extract retains its bounded source size with case-insensitive matching', async () => {
+    const result = await models.executeModelNode(node('extract', { mode: 'literal', inputKind: 'text', caseSensitive: false, patterns: [{ id: 'map', literal: 'map', label: 'Map' }] }), { source: { kind: 'text', text: 'x'.repeat(100001) } }, { phase: 'post' });
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, 'INVALID_INPUT');
+    assert.equal(result.artifact, undefined);
 });
 test('cancellation rejects deterministic presentation as well as model-backed work', async () => {
     const controller = new AbortController(); controller.abort();
