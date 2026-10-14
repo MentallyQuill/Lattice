@@ -84,5 +84,4 @@
 - [x] Run focused tests, then full repository tests/type/build/assets/browser checks.
 - [x] Independent complete storage review: replay, marker bypass, visibility, CAS, archives and acknowledgement.
 - [x] Correct actionable findings, rerun affected checks, update public lifecycle guidance.
-- [ ] Controller combines with the seven node improvements, commits and pushes verified work to origin/main.
-
+- [x] Controller combines with the seven node improvements, commits and pushes verified work to origin/main.

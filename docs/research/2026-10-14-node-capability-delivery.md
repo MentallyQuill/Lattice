@@ -35,4 +35,4 @@ Complete repository verification passed **341/341 Node test files** and **474/47
 
 Regressions cover authored append retries after later entries, native file access while checkpoint saving is pending, and a nonselected present actor’s private State/accepted save after checkpointing. That last lookup reuses the already-authorized Read File session and rechecks target permission; no new authoring input or privilege is introduced. UI checks include keyboard Apply, cancel, unverified save reconciliation and narrow layout.
 
-Publication to origin/main follows this verified implementation commit.
+Implementation commit `3d1d9dc` was fast-forwarded to main and pushed to `MentallyQuill/Lattice` origin/main. GitHub CLI verified that remote main matched the implementation commit. The accompanying completion record closes both approved plans.

@@ -93,6 +93,5 @@
 - [x] Run all repository-required tests, type checking, build, assets and browser checks with fresh evidence.
 - [x] Independent review of the complete changes, with attention to privacy, replay and compatibility.
 - [x] Fix actionable findings and rerun affected checks.
-- [ ] Verify origin/main freshness, integrate without overwriting unrelated work, commit and push to origin/main.
-- [ ] Verify remote SHA and report delivered features and any material limitations.
-
+- [x] Verify origin/main freshness, integrate without overwriting unrelated work, commit and push to origin/main.
+- [x] Verify remote SHA and report delivered features and any material limitations.
