@@ -1,6 +1,6 @@
-import { cloneJsonValue } from './operations/json-data.js?v=0.27.3';
-import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.27.3';
-import { freeze } from './record-data.js?v=0.27.3';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.4';
+import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.27.4';
+import { freeze } from './record-data.js?v=0.27.4';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const good=data=>({ok:true,data:freeze(data)});
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&[Object.prototype,null].includes(Object.getPrototypeOf(value));

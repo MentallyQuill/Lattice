@@ -1,6 +1,6 @@
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.3';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectPinnedDefinitionIdentity } from './definitions.js?v=0.27.3';
-import { compositionIds, ownershipEntries, safeId } from './composition-edit.js?v=0.27.3';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.4';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectPinnedDefinitionIdentity } from './definitions.js?v=0.27.4';
+import { compositionIds, ownershipEntries, safeId } from './composition-edit.js?v=0.27.4';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 

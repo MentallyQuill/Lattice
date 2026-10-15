@@ -1,6 +1,6 @@
-import { applyProgressionEvents, projectTimeDecay } from '../progression.js?v=0.27.3';
-import { advanceStoryClock } from '../story-time.js?v=0.27.3';
-import { ownData, inspectCapabilities, freeze } from '../introspection/contracts.js?v=0.27.3';
+import { applyProgressionEvents, projectTimeDecay } from '../progression.js?v=0.27.4';
+import { advanceStoryClock } from '../story-time.js?v=0.27.4';
+import { ownData, inspectCapabilities, freeze } from '../introspection/contracts.js?v=0.27.4';
 
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);

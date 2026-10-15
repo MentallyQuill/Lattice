@@ -1,11 +1,11 @@
-import { freeze } from '../record-data.js?v=0.27.3';
-import { preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.3';
-import { resolveComposeContributions } from '../compose-guidance.js?v=0.27.3';
-import { composeText } from './compose.js?v=0.27.3';
-import { selectFields } from './select-fields.js?v=0.27.3';
-import { cloneJsonValue } from './json-data.js?v=0.27.3';
-import { decodeJson } from './json-decode.js?v=0.27.3';
-import { applyTextRules, createDraftRulePatches } from './text-rules.js?v=0.27.3';
+import { freeze } from '../record-data.js?v=0.27.4';
+import { preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.4';
+import { resolveComposeContributions } from '../compose-guidance.js?v=0.27.4';
+import { composeText } from './compose.js?v=0.27.4';
+import { selectFields } from './select-fields.js?v=0.27.4';
+import { cloneJsonValue } from './json-data.js?v=0.27.4';
+import { decodeJson } from './json-decode.js?v=0.27.4';
+import { applyTextRules, createDraftRulePatches } from './text-rules.js?v=0.27.4';
 
 const enumControl = (key, label, options) => ({ key, label, type: 'enum', options });
 const textControl = (key, label) => ({ key, label, type: 'text' });

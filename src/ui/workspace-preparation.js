@@ -1,28 +1,28 @@
-import { prepareNodeReadiness, readinessFromIssues, summarizeReadiness } from './node-readiness.js?v=0.27.3';
-import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.27.3';
-import { projectNodeControls, detailControl } from './node-control-projection.js?v=0.27.3';
-import { preparedViewContentIdentity } from './graph-view-session.js?v=0.27.3';
-import { iterationHelperChoices } from './configured-node-creation.js?v=0.27.3';
-import { prepareIterationBindings } from './iteration-bindings.js?v=0.27.3';
-import { prepareDefinitionRegistry, inspectPreparedDefinition } from '../workflow/graph-validation.js?v=0.27.3';
-import { projectRunRows } from '../workflow/run-state.js?v=0.27.3';
-import { definitionRefKey, nodeBindingOverrideKey } from '../workflow/definition-data.js?v=0.27.3';
-import { inspectGraphArtifacts } from '../workflow/graph-artifacts.js?v=0.27.3';
-import { prepareWorkflowPlanner, preparedWorkflowSource } from '../workflow/resolve.js?v=0.27.3';
-import { prepareCompositionViews } from '../workflow/composition-views.js?v=0.27.3';
-import { prepareWorkflowProjection, projectPreparedWorkflow } from './workflow-surface.js?v=0.27.3';
-import { ARTIFACT_KINDS, OPERATIONS, operationFor, portsForNode, phaseForNode, describeAuthoredOperation } from '../workflow/catalog.js?v=0.27.3';
-import { definitionChain, ownsDefinitionPath } from '../workflow/composition-edit.js?v=0.27.3';
-import { FAMILY_PALETTE, paletteForOperation, readNodePresentation } from './node-palette.js?v=0.27.3';
-import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.3';
-import { nodeCard } from '../canvas/presentation.js?v=0.27.3';
-import { modifierTypes, modifierSummary, applyTextModifiers } from '../workflow/modifiers.js?v=0.27.3';
-import { addressKey, boundedText, RENDERED_TEXT_BYTES, freeze } from '../workflow/record-data.js?v=0.27.3';
-import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.27.3';
-import { projectWorkflowData } from './workflow-data-setup.js?v=0.27.3';
-import { presentDiagnostic, presentDiagnostics } from './diagnostics.js?v=0.27.3';
-import { previewDiagnostics } from './preview-diagnostics.js?v=0.27.3';
-import { projectRecordedPreview, boundReadablePreviewSections } from './recorded-preview.js?v=0.27.3';
+import { prepareNodeReadiness, readinessFromIssues, summarizeReadiness } from './node-readiness.js?v=0.27.4';
+import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.27.4';
+import { projectNodeControls, detailControl } from './node-control-projection.js?v=0.27.4';
+import { preparedViewContentIdentity } from './graph-view-session.js?v=0.27.4';
+import { iterationHelperChoices } from './configured-node-creation.js?v=0.27.4';
+import { prepareIterationBindings } from './iteration-bindings.js?v=0.27.4';
+import { prepareDefinitionRegistry, inspectPreparedDefinition } from '../workflow/graph-validation.js?v=0.27.4';
+import { projectRunRows } from '../workflow/run-state.js?v=0.27.4';
+import { definitionRefKey, nodeBindingOverrideKey } from '../workflow/definition-data.js?v=0.27.4';
+import { inspectGraphArtifacts } from '../workflow/graph-artifacts.js?v=0.27.4';
+import { prepareWorkflowPlanner, preparedWorkflowSource } from '../workflow/resolve.js?v=0.27.4';
+import { prepareCompositionViews } from '../workflow/composition-views.js?v=0.27.4';
+import { prepareWorkflowProjection, projectPreparedWorkflow } from './workflow-surface.js?v=0.27.4';
+import { ARTIFACT_KINDS, OPERATIONS, operationFor, portsForNode, phaseForNode, describeAuthoredOperation } from '../workflow/catalog.js?v=0.27.4';
+import { definitionChain, ownsDefinitionPath } from '../workflow/composition-edit.js?v=0.27.4';
+import { FAMILY_PALETTE, paletteForOperation, readNodePresentation } from './node-palette.js?v=0.27.4';
+import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.4';
+import { nodeCard } from '../canvas/presentation.js?v=0.27.4';
+import { modifierTypes, modifierSummary, applyTextModifiers } from '../workflow/modifiers.js?v=0.27.4';
+import { addressKey, boundedText, RENDERED_TEXT_BYTES, freeze } from '../workflow/record-data.js?v=0.27.4';
+import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.27.4';
+import { projectWorkflowData } from './workflow-data-setup.js?v=0.27.4';
+import { presentDiagnostic, presentDiagnostics } from './diagnostics.js?v=0.27.4';
+import { previewDiagnostics } from './preview-diagnostics.js?v=0.27.4';
+import { projectRecordedPreview, boundReadablePreviewSections } from './recorded-preview.js?v=0.27.4';
 const panelCaches = new WeakMap();
 const authoredFieldCaches = new WeakMap();
 const runPanelCaches = new WeakMap();
@@ -384,7 +384,7 @@ function prepareEditorDrawBase(view, snapshots, compiledPhase = () => undefined,
                 body: wrapper ? 'Open the pinned subgraph'  : boundary ? 'Definition interface' : operation.title,
                 hostResult: !!operation?.terminal, modifierSummary: modifierSummary(node.modifiers ?? []), ...(cardOnly ? {} : { controlDescriptors: structuredClone(operation?.controlDescriptors ?? {}), defaults: structuredClone(operation?.defaults ?? {}) }), modelRole: operation?.modelRole ?? null,
                 ...(interfacePort ? { boundary: { direction: interfacePort.direction, editable: view.editable === true } } : {}),
-                ports: actualPorts.map(port => { const dir = port.direction === 'input' ? 'in' : 'out'; return { id: `${dir}:${port.id}`, port: port.id, dir, side: dir === 'in' ? 'left' : 'right', row: ++rows[dir], kind: port.kind, label: port.label, className: `pc-port pc-port-${dir}${readiness.issues.some(issue=>issue.category==='input' && issue.portId===port.id) ? ' pc-pin-input-required' : ''}`, title: `${port.label}: ${port.kind}${readiness.issues.some(issue=>issue.category==='input' && issue.portId===port.id) ? ' · Input Required' : ''}` }; }) };
+                ports: actualPorts.map(port => { const dir = port.direction === 'input' ? 'in' : 'out'; return { id: `${dir}:${port.id}`, port: port.id, dir, side: dir === 'in' ? 'left' : 'right', row: ++rows[dir], kind: port.kind, label: port.label, className: `pc-port pc-port-${dir}${readiness.issues.some(issue=>issue.category==='input' && issue.portId===port.id) ? ' pc-pin-input-required' : ''}`, title: `${port.label}: ${port.kind}${readiness.issues.some(issue=>issue.category==='input' && issue.portId===port.id) ? ' ï¿½ Input Required' : ''}` }; }) };
         }
 
     if (!cardOnly) drawBase.nativeAttachments = prepareEndpointAttachments(drawBase);

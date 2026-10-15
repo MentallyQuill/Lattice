@@ -2720,7 +2720,7 @@ var la = [
 ];
 for (let [e, t] of la) for (let n of e.split(" ")) ca[n] = t;
 //#endregion
-//#region src/ui/diagnostic-workflow.js?v=0.27.3
+//#region src/ui/diagnostic-workflow.js?v=0.27.4
 var ua = (e, t, n) => ({
 	id: e,
 	severity: "error",
@@ -2809,7 +2809,7 @@ for (let e of [
 	"EFFECT_PREVIEW_LIMIT"
 ]) ha[e] = ua("workflow-limit", "Workflow exceeds a size limit", "This workflow or its data exceeds a supported size limit. Simplify the selected workflow or reduce its input data.");
 //#endregion
-//#region src/ui/diagnostic-copy.js?v=0.27.3
+//#region src/ui/diagnostic-copy.js?v=0.27.4
 var ga = Object.freeze({
 	id: "unknown",
 	severity: "error",
@@ -4724,7 +4724,7 @@ function Ss(e, t) {
 }
 kr(["click"]);
 //#endregion
-//#region src/workflow/operations/json-data.js?v=0.27.3
+//#region src/workflow/operations/json-data.js?v=0.27.4
 function Cs(e) {
 	if (typeof e != "object" || !e) return JSON.stringify(e);
 	if (Array.isArray(e)) {
@@ -4855,7 +4855,7 @@ function ks(e) {
 }
 Object.freeze({ kind: "public" }), Object.freeze({ kind: "hidden" });
 //#endregion
-//#region src/workflow/recall-state.js?v=0.27.3
+//#region src/workflow/recall-state.js?v=0.27.4
 var As = (e, t) => ({
 	ok: !1,
 	error: {
@@ -4924,7 +4924,7 @@ function Rs(e) {
 	].some((t) => typeof e[t] != "boolean") ? As("INVALID_RECALL_HOTKEY", "Select a physical key with Control, Alt or Meta, or a function key.") : e.code === "KeyR" ? As("RECALL_HOTKEY_CONFLICT", "R is reserved for Run to here. Choose a different key.") : !e.ctrl && !e.alt && !e.meta && !/^F/u.test(e.code) ? As("INVALID_RECALL_HOTKEY", "Select a physical key with Control, Alt or Meta, or a function key.") : js(e);
 }
 //#endregion
-//#region src/workflow/operations/recall-nodes.js?v=0.27.3
+//#region src/workflow/operations/recall-nodes.js?v=0.27.4
 var zs = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5135,7 +5135,7 @@ function Ys(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/lifecycle-nodes.js?v=0.27.3
+//#region src/workflow/operations/lifecycle-nodes.js?v=0.27.4
 var Xs = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5273,7 +5273,7 @@ function nc(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/json-decode.js?v=0.27.3
+//#region src/workflow/operations/json-decode.js?v=0.27.4
 var rc = (e) => String(e).replaceAll("~", "~0").replaceAll("/", "~1"), ic = (e, t) => t === "object" ? typeof e == "object" && !!e && !Array.isArray(e) : t === "array" ? Array.isArray(e) : t === "null" ? e === null : t === "integer" ? Number.isInteger(e) : typeof e === t, ac = (e) => typeof e == "object" && !!e && !Array.isArray(e), oc = /* @__PURE__ */ new Set([
 	"type",
 	"enum",
@@ -5459,7 +5459,7 @@ function dc(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/select-fields.js?v=0.27.3
+//#region src/workflow/operations/select-fields.js?v=0.27.4
 var fc = () => ({
 	ok: !1,
 	error: {
@@ -5542,7 +5542,7 @@ function mc(e, t) {
 	} : a;
 }
 //#endregion
-//#region src/workflow/story-time.js?v=0.27.3
+//#region src/workflow/story-time.js?v=0.27.4
 var hc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5674,7 +5674,7 @@ function Tc(e) {
 	};
 }
 //#endregion
-//#region src/workflow/workflow-data-defaults.js?v=0.27.3
+//#region src/workflow/workflow-data-defaults.js?v=0.27.4
 var Ec = {
 	schemaVersion: 1,
 	clockId: "lattice-default-clock",
@@ -5722,7 +5722,7 @@ function Oc(e) {
 	}) : null;
 }
 //#endregion
-//#region src/workflow/operations/file-nodes.js?v=0.27.3
+//#region src/workflow/operations/file-nodes.js?v=0.27.4
 var kc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6019,7 +6019,7 @@ Object.freeze({
 	EFFECT_CAPABILITY_FAILED: "The trusted host could not stage the prepared file intent."
 });
 //#endregion
-//#region src/workflow/operations/time-nodes.js?v=0.27.3
+//#region src/workflow/operations/time-nodes.js?v=0.27.4
 var Uc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6284,7 +6284,7 @@ function $c(e, t = {}) {
 }
 Object.getOwnPropertyDescriptor(AbortSignal.prototype, "aborted").get;
 //#endregion
-//#region src/workflow/operations/context-data.js?v=0.27.3
+//#region src/workflow/operations/context-data.js?v=0.27.4
 function el(e) {
 	let t = 0, n = 0, r = /* @__PURE__ */ new Set(), i = (e, a) => {
 		if (++t > 2e4 || a > 40) return "limit";
@@ -6337,7 +6337,7 @@ function tl(e) {
 	return e;
 }
 //#endregion
-//#region src/workflow/operations/event-nodes.js?v=0.27.3
+//#region src/workflow/operations/event-nodes.js?v=0.27.4
 var nl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6649,7 +6649,7 @@ function ll(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/random-outcomes.js?v=0.27.3
+//#region src/workflow/operations/random-outcomes.js?v=0.27.4
 var ul = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6846,7 +6846,7 @@ function _l(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/progression.js?v=0.27.3
+//#region src/workflow/progression.js?v=0.27.4
 var vl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6885,7 +6885,7 @@ function xl(e, t, n) {
 	}
 }
 //#endregion
-//#region src/workflow/operations/collection-nodes.js?v=0.27.3
+//#region src/workflow/operations/collection-nodes.js?v=0.27.4
 var Sl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -7079,7 +7079,7 @@ function Ml(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/compose.js?v=0.27.3
+//#region src/workflow/operations/compose.js?v=0.27.4
 var Nl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -7190,7 +7190,7 @@ function Fl(e = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/nodes.js?v=0.27.3
+//#region src/workflow/operations/nodes.js?v=0.27.4
 var Il = (e, t, n) => ({
 	key: e,
 	label: t,
@@ -7421,7 +7421,7 @@ function Yl(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/context-join.js?v=0.27.3
+//#region src/workflow/operations/context-join.js?v=0.27.4
 var Xl = [{
 	id: "context-1",
 	label: "Context 1"
@@ -7507,7 +7507,7 @@ function eu(e, t) {
 	});
 }
 //#endregion
-//#region src/workflow/operations/transpose-nodes.js?v=0.27.3
+//#region src/workflow/operations/transpose-nodes.js?v=0.27.4
 var tu = (e, t, n, r, i = !1) => ({
 	id: e,
 	label: t,
@@ -7704,7 +7704,7 @@ function gu(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/library/slop-policy-data.js?v=0.27.3
+//#region src/workflow/library/slop-policy-data.js?v=0.27.4
 var _u = {
 	source: {
 		title: "Core banned AI slop and clichés",
@@ -9408,7 +9408,7 @@ function vu(e) {
 }
 vu(_u);
 //#endregion
-//#region src/workflow/operations/prose-cleanup.js?v=0.27.3
+//#region src/workflow/operations/prose-cleanup.js?v=0.27.4
 var yu = Object.freeze([
 	"inspect",
 	"contextual",
@@ -9564,7 +9564,7 @@ Object.freeze({
 	ABORTED: "The operation was stopped; discard its late response."
 });
 //#endregion
-//#region src/workflow/operations/progression-nodes.js?v=0.27.3
+//#region src/workflow/operations/progression-nodes.js?v=0.27.4
 var ju = (e, t) => ({
 	ok: !1,
 	error: {
@@ -9598,7 +9598,7 @@ function Iu(e) {
 	});
 }
 //#endregion
-//#region src/workflow/introspection/nodes.js?v=0.27.3
+//#region src/workflow/introspection/nodes.js?v=0.27.4
 var Lu = {
 	reflect: [
 		"character",
@@ -9862,7 +9862,7 @@ function Xu(e, t = {}) {
 	return !r.ok || !Wu(r.data) || Object.keys(r.data).some((e) => e !== "phase") || r.data.phase !== void 0 && !["pre", "post"].includes(r.data.phase) ? Tu("INVALID_SETTINGS", "Unsupported execution phase.") : n.data.node.operation === "memory" && n.data.settings.mode === "commit" && r.data.phase === "pre" ? Tu("INVALID_PHASE", "Memory Commit settles only after a successful root run.") : Ju(n.data, r.data.phase);
 }
 //#endregion
-//#region src/workflow/introspection/native.js?v=0.27.3
+//#region src/workflow/introspection/native.js?v=0.27.4
 var Zu = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10153,7 +10153,7 @@ function hd(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/control-nodes.js?v=0.27.3
+//#region src/workflow/operations/control-nodes.js?v=0.27.4
 var gd = [
 	"context",
 	"draft",
@@ -10411,7 +10411,7 @@ function Td(e, t = {}) {
 	}
 }
 //#endregion
-//#region src/workflow/decision.js?v=0.27.3
+//#region src/workflow/decision.js?v=0.27.4
 var Ed = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10446,7 +10446,7 @@ function Ad(e) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/decision-nodes.js?v=0.27.3
+//#region src/workflow/operations/decision-nodes.js?v=0.27.4
 var jd = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10559,7 +10559,7 @@ function Ld(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/model-nodes.js?v=0.27.3
+//#region src/workflow/operations/model-nodes.js?v=0.27.4
 var Rd = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10815,7 +10815,7 @@ function qd(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/pattern-nodes.js?v=0.27.3
+//#region src/workflow/operations/pattern-nodes.js?v=0.27.4
 var Jd = () => ({
 	ok: !1,
 	error: {
@@ -10985,7 +10985,7 @@ function ef(e) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/filter-text.js?v=0.27.3
+//#region src/workflow/operations/filter-text.js?v=0.27.4
 var tf = (e, t) => ({
 	ok: !1,
 	error: {
@@ -11103,7 +11103,7 @@ function cf(e) {
 	};
 }
 //#endregion
-//#region src/workflow/catalog.js?v=0.27.3
+//#region src/workflow/catalog.js?v=0.27.4
 var lf = [
 	"context",
 	"draft",
@@ -11464,7 +11464,7 @@ function xf(e, { phase: t, mode: n } = {}) {
 	}
 }
 //#endregion
-//#region src/workflow/recall-labels.js?v=0.27.3
+//#region src/workflow/recall-labels.js?v=0.27.4
 var Sf = {
 	activation: {
 		armed: "Manual queue",
@@ -11491,7 +11491,7 @@ var Sf = {
 	}
 }, Cf = (e, t) => Object.hasOwn(Sf[e], t) ? Sf[e][t] : "Unavailable", wf = (e, t) => Object.hasOwn(Sf, e) ? Cf(e, t) : null;
 //#endregion
-//#region src/ui/schedule-authoring.js?v=0.27.3
+//#region src/ui/schedule-authoring.js?v=0.27.4
 function Tf(e) {
 	let t = Cc(e);
 	return t.ok ? {
@@ -11513,7 +11513,7 @@ function Ef(e) {
 	} : n;
 }
 //#endregion
-//#region src/ui/delimited-input.js?v=0.27.3
+//#region src/ui/delimited-input.js?v=0.27.4
 function Df(e, t) {
 	let n = [], r = [], i = (e) => ({
 		ok: !1,
@@ -11546,7 +11546,7 @@ function Df(e, t) {
 	} : l;
 }
 //#endregion
-//#region src/ui/control-input-contracts.js?v=0.27.3
+//#region src/ui/control-input-contracts.js?v=0.27.4
 var Of = (e, t, n = {}) => ({
 	ok: !1,
 	error: {
@@ -11990,7 +11990,7 @@ function Jf(e, t = "auto") {
 	};
 }
 //#endregion
-//#region src/ui/decision-authoring.js?v=0.27.3
+//#region src/ui/decision-authoring.js?v=0.27.4
 var Yf = (e) => ({
 	ok: !1,
 	error: {
@@ -12508,7 +12508,7 @@ function bp(e) {
 	}
 }
 //#endregion
-//#region src/ui/control-input-adapters.js?v=0.27.3
+//#region src/ui/control-input-adapters.js?v=0.27.4
 var xp = () => ({
 	ok: !1,
 	error: {
@@ -12671,7 +12671,7 @@ function kp(e, t, n) {
 	}
 }
 //#endregion
-//#region src/ui/json-value-authoring.js?v=0.27.3
+//#region src/ui/json-value-authoring.js?v=0.27.4
 var Ap = (e, t) => ({
 	ok: !1,
 	error: {
@@ -17948,7 +17948,7 @@ function G_(e, t) {
 	}, [() => r() ? `Comment: ${r().title}` : n() ? `${n().label} node: ${n().ports.map((e) => e.label).join(", ")}` : "Node preview"]), q(e, l), Ke();
 }
 //#endregion
-//#region src/canvas/connection-route.js?v=0.27.3
+//#region src/canvas/connection-route.js?v=0.27.4
 var K_ = 25, q_ = 12, J_ = 6, Y_ = (e) => `${e.x},${e.y}`, X_ = (e, t, n = 0) => ({
 	x: e.x + t,
 	y: e.y + n
@@ -18469,7 +18469,7 @@ function bv(e, t) {
 }
 kr(["click"]);
 //#endregion
-//#region src/ui/node-guide-content.js?v=0.27.3
+//#region src/ui/node-guide-content.js?v=0.27.4
 var $ = (e, t, ...n) => ({
 	title: e,
 	summary: t,
@@ -24871,7 +24871,7 @@ function jD(e) {
 	}) : null;
 }
 //#endregion
-//#region src/workflow/semantic-json-data.js?v=0.27.3
+//#region src/workflow/semantic-json-data.js?v=0.27.4
 var MD = /* @__PURE__ */ new Set([
 	"condition",
 	"select-fields",
@@ -25021,7 +25021,7 @@ function qD(e, t, n) {
 	};
 }
 //#endregion
-//#region src/workflow/modifiers.js?v=0.27.3
+//#region src/workflow/modifiers.js?v=0.27.4
 var JD = (e) => (e && typeof e == "object" && (Object.values(e).forEach(JD), Object.freeze(e)), e), YD = (e, t, n) => ({
 	key: e,
 	label: t,
@@ -27203,10 +27203,10 @@ var Kk = {
 	generate_interceptor: "latticeGenerationInterceptor",
 	requires: [],
 	optional: [],
-	js: "index.js?v=0.27.3",
+	js: "index.js?v=0.27.4",
 	css: "style.css",
 	author: "Dulgadurbit",
-	version: "0.27.3",
+	version: "0.27.4",
 	homePage: "https://github.com/MentallyQuill/Lattice",
 	auto_update: !1,
 	description: "Build named-pin workflows for optional scene guidance and reviewed reply repairs in SillyTavern, with per-node model connections."

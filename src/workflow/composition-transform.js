@@ -1,10 +1,10 @@
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.3';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.3';
-import { portsForNode, operationFor, phaseForNode } from './catalog.js?v=0.27.3';
-import { computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from './definition-data.js?v=0.27.3';
-import { inspectExpandedGraph } from './graph-validation.js?v=0.27.3';
-import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.3';
-import { compositionIds, definitionChain, ownershipEntries, ownsDefinitionPath, samePath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.27.3';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.4';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.4';
+import { portsForNode, operationFor, phaseForNode } from './catalog.js?v=0.27.4';
+import { computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from './definition-data.js?v=0.27.4';
+import { inspectExpandedGraph } from './graph-validation.js?v=0.27.4';
+import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.4';
+import { compositionIds, definitionChain, ownershipEntries, ownsDefinitionPath, samePath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.27.4';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const reference = definition => ({ id: definition.id, version: definition.version, semanticHash: definition.semanticHash });

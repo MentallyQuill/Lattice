@@ -1,15 +1,15 @@
-import { ownJsonData } from './semantic-json-data.js?v=0.27.3';
-import { cloneDefinitionData, definitionRefKey } from './definitions.js?v=0.27.3';
-import { prepareGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.27.3';
-import { cloneWorkflowDocument } from './document.js?v=0.27.3';
-import { ARTIFACT_KINDS, OPERATIONS, describeAuthoredOperation, operationDefaults, operationFor, portsForNode } from './catalog.js?v=0.27.3';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.3';
-import { INTROSPECTION_NATIVE_OPERATIONS } from './introspection/native.js?v=0.27.3';
-import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.3';
-import { prepareLocalDefinitionEdit } from './definition-library.js?v=0.27.3';
-import { compositionIds, definitionChain, ownsDefinitionPath, safeId } from './composition-edit.js?v=0.27.3';
-import { prepareImportedDefinitionPins } from './definition-insertion.js?v=0.27.3';
-import { selectSubgraphClosure } from './packages.js?v=0.27.3';
+import { ownJsonData } from './semantic-json-data.js?v=0.27.4';
+import { cloneDefinitionData, definitionRefKey } from './definitions.js?v=0.27.4';
+import { prepareGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.27.4';
+import { cloneWorkflowDocument } from './document.js?v=0.27.4';
+import { ARTIFACT_KINDS, OPERATIONS, describeAuthoredOperation, operationDefaults, operationFor, portsForNode } from './catalog.js?v=0.27.4';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.4';
+import { INTROSPECTION_NATIVE_OPERATIONS } from './introspection/native.js?v=0.27.4';
+import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.4';
+import { prepareLocalDefinitionEdit } from './definition-library.js?v=0.27.4';
+import { compositionIds, definitionChain, ownsDefinitionPath, safeId } from './composition-edit.js?v=0.27.4';
+import { prepareImportedDefinitionPins } from './definition-insertion.js?v=0.27.4';
+import { selectSubgraphClosure } from './packages.js?v=0.27.4';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

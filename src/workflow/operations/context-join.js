@@ -1,5 +1,5 @@
 /** Pure schema-3 Context composition. No host, tokenizer, model or graph effects. */
-import { inspectContextData, parseRuntimeContext, canonicalContextData, freezeContextData } from './context-data.js?v=0.27.3';
+import { inspectContextData, parseRuntimeContext, canonicalContextData, freezeContextData } from './context-data.js?v=0.27.4';
 /**
  * @typedef {{id:string,label:string}} ContextJoinSlot
  * @typedef {{type:'workflow',operation:'context-join',operationVersion:1,inputs:ContextJoinSlot[]}} ContextJoinNode

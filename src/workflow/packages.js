@@ -1,8 +1,8 @@
-import { inspectDefinitionGraph } from './graph-validation.js?v=0.27.3';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.3';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.3';
-import { OPERATIONS, operationFor, phaseForNode } from './catalog.js?v=0.27.3';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata } from './definitions.js?v=0.27.3';
+import { inspectDefinitionGraph } from './graph-validation.js?v=0.27.4';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.4';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.4';
+import { OPERATIONS, operationFor, phaseForNode } from './catalog.js?v=0.27.4';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata } from './definitions.js?v=0.27.4';
 const limit = 2000000;
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const pick = (value, keys) => Object.fromEntries(keys.filter(key => Object.hasOwn(value, key)).map(key => [key, value[key]]));

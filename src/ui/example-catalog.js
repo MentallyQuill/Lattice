@@ -1,9 +1,9 @@
-import { listWorkflowExampleResults, workflowExampleCatalogRevision } from '../workflow/examples.js?v=0.27.3';
-import { prepareWorkflowThumbnail } from './workspace-preparation.js?v=0.27.3';
-import { nodeCards } from '../canvas/presentation.js?v=0.27.3';
-import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.3';
-import { buildConnectionRoute } from '../canvas/connection-route.js?v=0.27.3';
-import { diagnosticText } from './diagnostics.js?v=0.27.3';
+import { listWorkflowExampleResults, workflowExampleCatalogRevision } from '../workflow/examples.js?v=0.27.4';
+import { prepareWorkflowThumbnail } from './workspace-preparation.js?v=0.27.4';
+import { nodeCards } from '../canvas/presentation.js?v=0.27.4';
+import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.4';
+import { buildConnectionRoute } from '../canvas/connection-route.js?v=0.27.4';
+import { diagnosticText } from './diagnostics.js?v=0.27.4';
 
 const PRESENTATION_REVISION = 3;
 let cacheKey = '', cachedTiles;

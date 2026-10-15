@@ -1,8 +1,8 @@
-import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.27.3';
-import { UNIFIED_WORKFLOW_EXAMPLE_DATA } from './unified-example-data.js?v=0.27.3';
-import { parseWorkflow } from './packages.js?v=0.27.3';
-import { cloneWorkflowDocument } from './document.js?v=0.27.3';
-import { validateWorkflow } from './contracts.js?v=0.27.3';
+import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.27.4';
+import { UNIFIED_WORKFLOW_EXAMPLE_DATA } from './unified-example-data.js?v=0.27.4';
+import { parseWorkflow } from './packages.js?v=0.27.4';
+import { cloneWorkflowDocument } from './document.js?v=0.27.4';
+import { validateWorkflow } from './contracts.js?v=0.27.4';
 
 const ALL_WORKFLOW_EXAMPLES = [...REMASTERED_WORKFLOW_EXAMPLE_DATA, ...UNIFIED_WORKFLOW_EXAMPLE_DATA];
 const lessonMetadata = lesson => lesson ? structuredClone(lesson) : undefined;
