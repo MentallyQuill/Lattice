@@ -2,12 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { computeDefinitionIdentity, definitionRefKey, validateDefinition } from '../src/workflow/definitions.js';
 import { validateGraphStructure } from '../src/workflow/contracts.js';
-import { resolveWorkflow } from '../src/workflow/resolve.js';
+import { resolveWorkflow as resolveOutputWorkflow } from '../src/workflow/resolve.js';
 import * as library from '../src/workflow/definition-library.js';
 import * as composition from '../src/workflow/composition.js';
 import { graphSemanticSignature } from '../src/workflow/ports.js';
 import { exportWorkflow } from '../src/workflow/packages.js';
 
+// These composition assertions inspect the response plan output and its dependency closure.
+const resolveWorkflow = graph => resolveOutputWorkflow(graph, { target: { workflowId: graph.id, instancePath: [], nodeId: 'plan', portId: 'out' } });
 const finalize = draft => { const identity = computeDefinitionIdentity(draft); assert.equal(identity.ok, true); return { ...structuredClone(identity.data.materializedDefinition), semanticHash: identity.data.semanticHash }; };
 const ref = value => ({ id: value.id, version: value.version, semanticHash: value.semanticHash });
 const instance = (id, definition) => ({ id, type: 'subgraph', definition: ref(definition), parameterOverrides: {}, roleOverrides: {}, nodeBindingOverrides: {} });

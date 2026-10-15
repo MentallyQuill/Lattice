@@ -67,8 +67,12 @@ test('explicit Draft Transpose normalizes to the same saved identity and executi
         assert.deepEqual(identity.materializedDefinition, byId(baseline.workflowPackage.graph, definition.id));
     }
     must(validateGraphStructure(g));
-    assert.equal(graphSemanticSignature(g), baseline.graphSignature);
-    assert.equal(graphSemanticSignature(legacyGraph()), baseline.graphSignature);
+    assert.equal(graphSemanticSignature(g), graphSemanticSignature(legacyGraph()));
+    // Explicit root execution enrollment changes root identity, while archived definition pins remain exact.
+    const currentSignature = JSON.parse(graphSemanticSignature(g));
+    assert.deepEqual(currentSignature.runTargets, []);
+    delete currentSignature.runTargets;
+    assert.deepEqual(currentSignature, JSON.parse(baseline.graphSignature));
 });
 
 test('Text Transpose remains semantic and forged old pins or same-version conflicts still reject', () => {

@@ -1,3 +1,4 @@
+import { workflowRunTargets } from './run-targets.js?v=0.27.4';
 import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.4';
 import { own } from './record-data.js?v=0.27.4';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.4';
@@ -39,8 +40,8 @@ const reference = value => pick(value, ['id', 'version', 'semanticHash']);
 // enter this allowlist, including inside immutable definition bodies.
 function projectGraph(graph, depth = 0) {
     if (depth > 40) throw new Error('Authoring document exceeds nesting bounds.');
-    graph = pick(graph, ['id', 'name', 'description', 'schema', 'runtime', 'mode', 'nodes', 'wires', 'groups', 'roles', 'portals', 'definitions', 'localDefinitionOwners']);
-    const copy = pick(graph, ['id', 'name', 'description', 'schema', 'runtime', 'mode']);
+    graph = pick(graph, ['id', 'name', 'description', 'schema', 'runtime', 'mode', 'nodes', 'wires', 'groups', 'roles', 'portals', 'definitions', 'localDefinitionOwners', 'runTargets']);
+    const copy = pick(graph, ['id', 'name', 'description', 'schema', 'runtime', 'mode', 'runTargets']);
     copy.nodes = map(graph.nodes, node => {
         const metadata = pick(node, ['type', 'operation', 'mode']), registered = Object.hasOwn(OPERATIONS, metadata.operation) ? OPERATIONS[metadata.operation] : null;
         const candidateControls = registered?.family === 'Introspection' ? Object.keys(introspectionDefaults(metadata.operation, metadata.mode)) : registered?.controls ?? [];
@@ -132,6 +133,10 @@ export function serializeWorkflowDocument(graph, workspaceViews = null, options 
         // Stripping any authored difference forces ordinary admission; tokens never bless a projection by identity.
         const validation = checkedArtifacts && graphArtifactsFor(projected, checkedArtifacts).ok ? { ok: true } : validateGraphStructure(projected);
         if (!validation.ok) return validation;
+        if (!Object.hasOwn(projected, 'runTargets')) {
+            const targets = workflowRunTargets(projected); if (!targets.ok) return targets;
+            projected.runTargets = targets.data;
+        }
         if (projected.mode !== 'native-unified') return fail('WRONG_PHASE', 'Editable workflow documents require a unified root. Retired originals are recovery data only.');
         if (views && views.workflowId !== projected.id) return fail('VIEW_DATA', 'Workspace presentation belongs to a different workflow.');
         if (views) {

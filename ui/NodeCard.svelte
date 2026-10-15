@@ -1,8 +1,9 @@
 <script lang="ts">
+    import type {RunDiagnosticPaint} from '../src/ui/canvas-run-diagnostics';
     import type { RecallBadgeView } from './recall-types';
     import type { NodeCardData, CanvasActions } from './types';
     import ArtifactPin from './ArtifactPin.svelte';
-    let { card, actions, recall, status, targeted = false }: { card: NodeCardData; actions: CanvasActions; recall?: RecallBadgeView; status?: string; targeted?: boolean } = $props();
+    let { card, actions, recall, status, diagnostic, targeted = false }: { card: NodeCardData; actions: CanvasActions; recall?: RecallBadgeView; status?: string; diagnostic?: RunDiagnosticPaint; targeted?: boolean } = $props();
     let element: HTMLDivElement;
     $effect(() => {
         const next = status;
@@ -15,14 +16,14 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex (Cards are keyboard focus stops that reveal named pins and actions in overview.) -->
-<div bind:this={element} class={card.className} class:pc-recall-capable={card.label==='Recall'||card.label==='Recall Shortcut'} data-id={card.id} data-preview-target={targeted ? 'true' : undefined} title={card.offHint} role="group" tabindex="0" aria-label={`${card.label}: ${card.title}`} style:left={`${card.x}px`} style:top={`${card.y}px`}>
+<div bind:this={element} class={card.className} class:pc-run-failed={!!diagnostic} class:pc-recall-capable={card.label==='Recall'||card.label==='Recall Shortcut'} data-id={card.id} data-preview-target={targeted ? 'true' : undefined} title={diagnostic?.tooltip || card.offHint} role="group" tabindex="0" aria-label={`${card.label}: ${card.title}${diagnostic ? '. '+diagnostic.tooltip : ''}`} style:left={`${card.x}px`} style:top={`${card.y}px`}>
     {#if targeted}<span class="pc-node-target" title="Preview target" role="img" aria-label="Targeted node"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" /><path d="M12 2v5m0 10v5M2 12h5m10 0h5" /></svg></span>{/if}
     <div class="pc-native-heading"><svg class="pc-native-icon" viewBox="0 0 24 24" aria-hidden="true"><path d={card.iconPath} /></svg><span class="pc-node-title" title={card.titleHint}>{card.title}</span>{#if card.modifierSummary}<span class="pc-modifier-badge" title={card.modifierSummary.text} aria-label={card.modifierSummary.text}>+{card.modifierSummary.count}</span>{/if}</div>
     <div class="pc-native-pins">
         {#each card.ports as port (port.id)}
             <div class={`pc-native-row pc-native-row-${port.dir}`} style:grid-row={port.row}>
                 <span class="pc-native-pin-label">{port.label}</span>
-                <div class={port.className} data-node={card.id} data-dir={port.dir} data-port={port.port} data-side={port.side} data-kind={port.kind} title={port.title} role="img" aria-label={port.title} onmouseenter={() => actions.hoverPin({ nodeId: card.id, dir: port.dir, port: port.port })} onmouseleave={() => actions.hoverPin(null)}><ArtifactPin kind={port.kind} /></div>
+                <div class={port.className} class:pc-pin-run-failed={port.dir === 'in' && diagnostic?.inputPortId === port.port} data-node={card.id} data-dir={port.dir} data-port={port.port} data-side={port.side} data-kind={port.kind} title={port.dir === 'in' && diagnostic?.inputPortId === port.port ? port.title + '. ' + diagnostic.tooltip : port.title} role="img" aria-label={port.dir === 'in' && diagnostic?.inputPortId === port.port ? port.title + '. ' + diagnostic.tooltip : port.title} onmouseenter={() => actions.hoverPin({ nodeId: card.id, dir: port.dir, port: port.port })} onmouseleave={() => actions.hoverPin(null)}><ArtifactPin kind={port.kind} /></div>
             </div>
         {/each}
     </div>

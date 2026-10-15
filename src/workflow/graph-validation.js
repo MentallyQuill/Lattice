@@ -1,3 +1,4 @@
+import { expandedRunTargets } from './run-targets.js?v=0.27.4';
 import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.4';
 import { cloneJsonValue } from './operations/json-data.js?v=0.27.4';
 import { freeze } from './record-data.js?v=0.27.4';
@@ -69,7 +70,6 @@ function inspectScope(graph, { definition, snapshots = {} } = {}) {
         if (group.members && (group.members.some(member => graph.nodes[member]?.inGroup !== id) || nodes.some(node => node?.inGroup === id && !group.members.includes(node.id)))) return fail('INVALID_GROUP', 'Declared membership must agree with node membership.');
     }
     const describedNodes = new Map();
-    let memoryCommits = 0;
     for (const [id, node] of Object.entries(graph.nodes)) {
         if (!record(node) || !idText(id) || node.id !== id) return fail('MALFORMED_WORKFLOW', 'Invalid node identity.');
         if (!presentationValid(node) || node.presentation !== undefined && !presentationValid(node.presentation)) return fail('INVALID_SETTINGS', 'Invalid node presentation or layout.', id);
@@ -101,7 +101,6 @@ function inspectScope(graph, { definition, snapshots = {} } = {}) {
         if (operation.phase !== phaseForNode(graph, node)) return fail('WRONG_PHASE', 'An operation does not support the containing phase.', id);
         if (definition && operation.rootOnly && !isScopedSystemOperation(node)) return fail('ROOT_ONLY_OPERATION', 'This operation is not eligible for static definitions.', id);
         if (definition && operation.requiresStateInDefinition && !isScopedSystemOperation(node) && !wires.some(wire => wire?.to === id && wire.toPort === 'state')) return fail('ROOT_ONLY_OPERATION', 'This definition operation requires an explicit snapshot input.', id);
-        if (operation.id === 'memory' && operation.terminal && node.enabled !== false && ++memoryCommits > 1) return fail('MULTIPLE_MEMORY_COMMITS', 'A root workflow supports one Memory Commit terminal.', id);
         if (!bindingValid(node) || node.modelRole !== undefined && node.modelRole !== null && typeof node.modelRole !== 'string') return fail('INVALID_SETTINGS', 'Invalid model binding.', id);
         for (const [key, descriptor] of Object.entries(operation.controlDescriptors)) if (!controlValid(node[key] === undefined ? descriptor.default : node[key], descriptor)) return fail('INVALID_SETTINGS', `Invalid ${key}.`, id);
         if (node.operation === 'validate-patches' && node.protectedLiterals !== undefined && (!Array.isArray(node.protectedLiterals) || node.protectedLiterals.some(value => typeof value !== 'string'))) return fail('INVALID_SETTINGS', 'Invalid protected literals.', id);
@@ -417,7 +416,9 @@ export function inspectExpandedGraph(graph) {
         if (occurrences.length !== 1 || !samePath(occurrences[0].instancePath, owner.instancePath)) return fail('LOCAL_COPY_OWNERSHIP', 'Each owned ID must have one exact live instance path.');
         for (let depth = 1; depth < owner.instancePath.length; depth++) if (!owners.some(entry => samePath(entry.instancePath, owner.instancePath.slice(0, depth)))) return fail('LOCAL_COPY_OWNERSHIP', 'Every private child requires privately owned ancestor paths.');
     }
-    return {ok:true,data:withHelperSetup(expanded.data,preparedRegistries.get(preparedRegistry.data).expansions)};
+    const targets = expandedRunTargets(graph, expanded.data);
+    if (!targets.ok) return targets;
+    return {ok:true,data:{...withHelperSetup(expanded.data,preparedRegistries.get(preparedRegistry.data).expansions),runTargets:targets.data}};
 }
 
 function expandChecked(root, snapshots, rootDefinition) {

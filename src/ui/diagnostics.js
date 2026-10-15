@@ -24,9 +24,9 @@ function readInput(input) {
 }
 function readAddress(address) {
     if (!plain(address)) return undefined;
-    const workflowId = text(own(address, 'workflowId'), 256), nodeId = text(own(address, 'nodeId'), 256), path = own(address, 'instancePath');
+    const workflowId = own(address, 'workflowId'), nodeId = own(address, 'nodeId'), path = own(address, 'instancePath');
     const length = own(path, 'length');
-    if (!workflowId || !nodeId || !Array.isArray(path) || !Number.isSafeInteger(length) || length > 8) return undefined;
+    if (typeof workflowId !== 'string' || !workflowId || workflowId.length > 256 || typeof nodeId !== 'string' || !nodeId || nodeId.length > 256 || !Array.isArray(path) || !Number.isSafeInteger(length) || length > 8) return undefined;
     const instancePath = [];
     for (let index = 0; index < length; index++) {
         const id = own(path, String(index));

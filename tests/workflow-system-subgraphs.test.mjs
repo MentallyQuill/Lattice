@@ -43,6 +43,7 @@ test('nested defaults are stable per workflow and full instance path while Chat 
 
 test('disabled wrappers skip incomplete descendants without calls or default provisioning', async () => {
     const graph = main(system({ read: node('read', 'read-file'), write: node('write', 'write-file'), model: node('model', 'response-plan') }));
+    graph.runTargets=[{instancePath:['one'],nodeId:'write'}];
     graph.nodes.one.enabled = false;
     const resolved = resolveWorkflow(graph, { target: target('one') });
     assert.equal(resolved.ok, true, JSON.stringify(resolved));
@@ -65,6 +66,7 @@ function statefulMain({ shared = false } = {}) {
     Object.assign(graph.nodes, { send: node('send', 'on-send'), generate: node('generate', 'generate-reply'), review: node('review', 'review-publish') });
     graph.wires.activation = edge('activation', 'send', 'activation', 'generate', 'activation');
     graph.wires.review = edge('review', 'generate', 'draft', 'review', 'draft');
+    graph.runTargets=[{instancePath:[],nodeId:'review'},...['one','two'].map(id=>({instancePath:[id],nodeId:'write'}))];
     return graph;
 }
 test('sibling local writers retain different addressed intents in one accepted root bundle', async () => {
@@ -174,6 +176,7 @@ function nestedStateGraph(kind) {
     const definition = system(body.nodes, body.wires);
     graph.definitions = { [definitionRefKey(definition)]: definition };
     graph.nodes.one.definition = { id: definition.id, version: definition.version, semanticHash: definition.semanticHash };
+    graph.runTargets=[{instancePath:[],nodeId:'review'},{instancePath:['one'],nodeId:'commit'}];
     return graph;
 }
 
@@ -209,7 +212,7 @@ test('enabled connected systems with unfinished outputs fail addressed preflight
     const definition = system({ exit: { id: 'exit', type: 'subgraph-output', interfacePortId: 'out' } }, {}, [{ id: 'out', label: 'Out', kind: 'text', direction: 'output', required: false, cardinality: 'one', boundaryNodeId: 'exit' }]);
     const graph = main(definition); graph.nodes.compose = node('compose', 'compose', { sections: [{ name: 'System', text: 'fallback' }] }); graph.wires.result = edge('result', 'one', 'out', 'compose', 'section.System');
     const result = resolveWorkflow(graph, { target: { workflowId: 'main', instancePath: [], nodeId: 'compose', portId: 'out' } });
-    assert.equal(result.ok, false); assert.equal(result.error.code, 'MISSING_INPUT'); assert.deepEqual(result.error.address, { workflowId: 'main', instancePath: [], nodeId: 'one' });
+    assert.equal(result.ok, false); assert.equal(result.error.code, 'MISSING_INPUT'); assert.deepEqual(result.error.address, { workflowId: 'main', instancePath: [], nodeId: 'compose' }); assert.equal(result.error.inputPortId,'section.System');
 });
 
 test('nested private file reads retain current actor authorization and copied references cannot stage writes', async () => {
@@ -228,7 +231,7 @@ test('nested private file reads retain current actor authorization and copied re
 });
 
 test('identical sibling Clock Commit projections retain separate producer intents and reject the shared clock target', async () => {
-    const graph = nestedStateGraph('clock'); graph.nodes.two = { ...structuredClone(graph.nodes.one), id: 'two' };
+    const graph = nestedStateGraph('clock'); graph.nodes.two = { ...structuredClone(graph.nodes.one), id: 'two' }; graph.runTargets.push({instancePath:['two'],nodeId:'commit'});
     const f = unifiedRecipeHost(graph);
     const result = await f.generate('Native reply.');
     assert.equal(result.ok, false); assert.equal(result.error.code, 'DUPLICATE_EFFECT_TARGET'); assert.equal(f.saves(), 0); f.controller.dispose();
@@ -240,7 +243,7 @@ test('identical sibling Outcome Commit projections reject an explicit shared tar
     const identity = computeDefinitionIdentity(draft); assert.equal(identity.ok, true);
     const definition = { ...identity.data.materializedDefinition, semanticHash: identity.data.semanticHash };
     graph.definitions = { [definitionRefKey(definition)]: definition }; graph.nodes.one.definition = { id: definition.id, version: definition.version, semanticHash: definition.semanticHash };
-    graph.nodes.two = { ...structuredClone(graph.nodes.one), id: 'two' };
+    graph.nodes.two = { ...structuredClone(graph.nodes.one), id: 'two' }; graph.runTargets.push({instancePath:['two'],nodeId:'commit'});
     let draws = 0;
     const f = unifiedRecipeHost(graph, { playerText: 'Mara uses her wand.', random: () => { draws++; return 0.9; }, documents: [{ targetId: 'shared-outcomes', name: 'Shared Outcomes', format: 'json', content: '[]', visibility: { kind: 'public' } }] });
     const result = await f.generate('Blue sparks appear.'); assert.equal(result.ok, false); assert.equal(result.error.code, 'DUPLICATE_EFFECT_TARGET'); assert.equal(f.saves(), 0); assert.equal(draws, 1); f.controller.dispose();
@@ -256,7 +259,7 @@ test('missing output provenance survives an optional system input while an unbou
     const selected = { workflowId: 'main', instancePath: ['dest'], nodeId: 'compose', portId: 'out' };
     const result = resolveWorkflow(graph, { target: selected });
     assert.equal(result.ok, false); assert.equal(result.error.code, 'MISSING_INPUT');
-    assert.deepEqual(result.error.address, { workflowId: 'main', instancePath: [], nodeId: 'source' });
+    assert.deepEqual(result.error.address, { workflowId: 'main', instancePath: ['dest'], nodeId: 'compose' }); assert.equal(result.error.inputPortId,'section.Source');
     const f = unifiedRecipeHost(graph);
     const rejected = await f.controller.runTarget(graph, selected);
     assert.equal(rejected.ok, false); assert.equal(rejected.error.code, 'MISSING_INPUT');

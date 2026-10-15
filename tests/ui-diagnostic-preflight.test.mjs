@@ -73,13 +73,13 @@ test('model setup retains its actionable binding cause and support code in Detai
 
 test('selected preview status stays accurate while another step is running', () => {
     const address = { workflowId: 'workflow', instancePath: [], nodeId: 'selected' };
-    const preview = row => previewDiagnostics({ workflow: { rows: [{ address, ...row }] }, state: { busy: true }, target: { ...address, portId: 'out' }, selectedKey: 'selected', sections: [], enabled: true });
+    const preview = row => previewDiagnostics({ workflow: { rows: [{ address, ...row }] }, state: { busy: true, currentDiagnostics: row.error ? {nodes:[{address,error:row.error}]} : null }, target: { ...address, portId: 'out' }, selectedKey: 'selected', sections: [], enabled: true });
     assert.match(preview({ status: 'queued' }).emptyMessage, /waiting.*earlier/i);
     assert.match(preview({ status: 'skipped' }).emptyMessage, /skipped/i);
     assert.match(preview({ status: 'running' }).emptyMessage, /running/i);
     const blocked = preview({ status: 'blocked' });
-    assert.equal(blocked.diagnostics[0].technical.code, 'UPSTREAM_FAILED');
-    assert.match(blocked.diagnostics[0].message, /earlier step failed/i);
+    assert.deepEqual(blocked.diagnostics, []);
+    assert.match(blocked.emptyMessage, /earlier step failed/i);
     const failed = preview({ status: 'failed', error: { code: 'REQUEST_FAILED', message: 'The provider request failed.' } });
     assert.equal(failed.emptyMessage, '');
     assert.equal(failed.diagnostics[0].technical.code, 'REQUEST_FAILED');

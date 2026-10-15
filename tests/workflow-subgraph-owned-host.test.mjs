@@ -10,7 +10,7 @@ import { actorHostFixture } from './helpers/native-actor-host-fixture.mjs';
 const n = (id, operation, controls = {}) => ({ ...operationDefaults(operation, controls.mode ? { mode: controls.mode } : {}), id, type: 'workflow', operation, operationVersion: 1, ...controls });
 const w = (id, from, fromPort, to, toPort) => ({ id, route: 'wire', from, fromPort, to, toPort });
 function graph() {
-    return { id: 'owned-nesting', schema: 3, runtime: 2, mode: 'native-unified', definitions: {}, portals: {}, nodes: {
+    return { id: 'owned-nesting', schema: 3, runtime: 2, mode: 'native-unified', runTargets: [{instancePath:[],nodeId:'review'}], definitions: {}, portals: {}, nodes: {
         send: n('send', 'on-send'), generate: n('generate', 'generate-reply'), review: n('review', 'review-publish'),
     }, wires: { activation: w('activation', 'send', 'activation', 'generate', 'activation'), reply: w('reply', 'generate', 'draft', 'review', 'draft') } };
 }
@@ -107,6 +107,7 @@ function memoryGraph() {
     root.wires.state = w('state', 'state', 'out', 'track', 'state');
     root.wires.events = w('events', 'events', 'out', 'track', 'events');
     root.wires.commit = w('commit', 'track', 'out', 'commit', 'proposal');
+    root.runTargets.push({instancePath:[],nodeId:'commit'});
     return wrap(root, ['state', 'events', 'track', 'commit']);
 }
 
@@ -170,6 +171,7 @@ test('sibling Memory Commits with identical local IDs remain distinct and are re
     delete root.localDefinitionOwners;
     delete root.nodes.body.localCopy;
     root.nodes.second = { ...structuredClone(root.nodes.body), id: 'second' };
+    root.runTargets.push({instancePath:['second'],nodeId:'commit'});
     const f = unifiedRecipeHost(root, { request: unexpectedRequest });
     try {
         const result = await f.generate('This generation must not start.');
@@ -184,6 +186,7 @@ test('a disabled sibling Memory Commit does not block the live accepted memory t
     delete root.localDefinitionOwners;
     delete root.nodes.body.localCopy;
     root.nodes.disabled = { ...structuredClone(root.nodes.body), id: 'disabled', enabled: false };
+    root.runTargets.push({instancePath:['disabled'],nodeId:'commit'});
     const f = unifiedRecipeHost(root, { request: unexpectedRequest });
     try {
         const result = await f.generate('One enabled memory terminal.');

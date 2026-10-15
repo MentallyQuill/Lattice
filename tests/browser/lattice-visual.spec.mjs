@@ -130,7 +130,7 @@ test('approved floating shelf retains an aligned canonical node menu and quiet s
     expect(codes.some(code => code.trim().length > 0)).toBe(true);
 });
 
-test('a selected failed native node keeps its red ring and dimmed interior', async ({ page }) => {
+test('a selected failed native node keeps its red ring and artifact colors', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 900 });
     await openNativeWorkspace(page);
     await page.evaluate(() => {
@@ -155,8 +155,8 @@ test('a selected failed native node keeps its red ring and dimmed interior', asy
     }));
     expect(paint.border).toBe('rgb(229, 118, 118)');
     expect(paint.ring).toContain('rgb(229, 118, 118)');
-    expect(paint.opacity).toBeLessThan(1);
-    expect(paint.filter).toContain('grayscale');
+    expect(paint.opacity).toBe(1);
+    expect(paint.filter).toBe('none');
     const after = await failed.boundingBox();
     expect(after.width).toBe(before.width); expect(after.height).toBe(before.height);
 });

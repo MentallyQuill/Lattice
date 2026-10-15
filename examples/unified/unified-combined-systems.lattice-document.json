@@ -9,6 +9,30 @@
     "schema": 3,
     "runtime": 2,
     "mode": "native-unified",
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      },
+      {
+        "instancePath": [
+          "wand"
+        ],
+        "nodeId": "wand-outcome-commit"
+      },
+      {
+        "instancePath": [
+          "weather"
+        ],
+        "nodeId": "weather-commit-clock"
+      },
+      {
+        "instancePath": [
+          "relationship"
+        ],
+        "nodeId": "relationship-save"
+      }
+    ],
     "nodes": {
       "send": {
         "id": "send",

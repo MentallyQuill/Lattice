@@ -6,6 +6,7 @@ import { join, resolve, relative, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { compile } from 'svelte/compiler';
 import { JSDOM } from 'jsdom';
+import { operationFor } from '../src/workflow/catalog.js?v=0.27.4';
 import { starterGraph } from '../src/workflow/starters.js?v=0.27.4';
 import { cloneWorkflowDocument } from '../src/workflow/document.js?v=0.27.4';
 import { prepareCreateFromSelection } from '../src/workflow/composition.js?v=0.27.4';
@@ -25,6 +26,13 @@ const clientURL = new URL('../node_modules/svelte/src/index-client.js', import.m
 const { mount, unmount, flushSync } = await import(clientURL);
 const controllerText = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function controllerFunction(name, env) {
+    env.retiredCanvasAttempt ??= null;
+    env.operationFor ??= operationFor;
+    if (name === 'updateWorkflowProjection') {
+        env.documentSession.capture ??= () => env.current;
+        for (const helper of ['currentWorkflowDiagnosticState', 'scopedRunDiagnostics', 'scopedRunTraces', 'workflowOutputItems']) env[helper] ??= controllerFunction(helper, env);
+        env.rootSystemWritable ??= controllerFunction('rootSystemWritable', env);
+    }
     env.recallProjection ??= {nodes:{}}; env.recallSetupView ??= () => null;
     env.activeEditRoot ??= () => env.current;
     env.readNodePresentation ??= readNodePresentation;

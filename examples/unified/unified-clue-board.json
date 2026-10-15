@@ -104,6 +104,8 @@
         "instructions": "Extract evidence visible to the player and explicitly attributed witness claims. Exclude private motives or hidden answers.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "scene": {
@@ -265,6 +267,12 @@
       "x": 0,
       "y": 0,
       "zoom": 0.7
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      }
+    ]
   }
 }

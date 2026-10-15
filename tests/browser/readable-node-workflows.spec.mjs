@@ -123,7 +123,7 @@ test('Pattern placement accepts a later plain Elara term in Details with separat
     await openLesson(page);
     await page.evaluate(async () => {
         const h = window.canvasHarness, graph = structuredClone(h.graph);
-        graph.nodes = {}; graph.wires = {}; await h.activate(graph);
+        graph.nodes = {}; graph.wires = {}; graph.runTargets = []; await h.activate(graph);
     });
     await page.locator('.pc-canvas-host').dblclick({ position: { x: 180, y: 120 } });
     await page.getByRole('combobox', { name: 'Search nodes and subgraphs', exact: true }).fill('Pattern');

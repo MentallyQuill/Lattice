@@ -133,6 +133,7 @@ export function describePrimitive(node, options = {}) {
     return { ok: true, data: { descriptor, ports } };
 }
 
+const inputFailure = (result,inputPortId) => ({...result,error:{...result.error,inputPortId}});
 function validateInputs(namedInputs, ports) {
     const inputs = ownRecord(namedInputs);
     const effective = ports.filter(item => item.direction === 'input');
@@ -140,17 +141,17 @@ function validateInputs(namedInputs, ports) {
         const expected = effective.find(item => item.id === key);
         if (!expected) return failure('UNSUPPORTED_INPUT', 'Unsupported or stale input: ' + key);
         const artifact = ownRecord(inputs[key], undefined, true);
-        if (!Object.hasOwn(artifact, 'kind') || artifact.kind !== expected.kind) return failure('INVALID_INPUT', 'Input ' + key + ' requires ' + expected.kind + '.');
-        if (['text', 'guidance'].includes(expected.kind) && (!Object.hasOwn(artifact, 'text') || typeof artifact.text !== 'string' || artifact.text.length > 100000)) return failure('INVALID_INPUT', 'Text input must contain at most 100,000 UTF-16 units.');
+        if (!Object.hasOwn(artifact, 'kind') || artifact.kind !== expected.kind) return inputFailure(failure('INVALID_INPUT', 'Input ' + key + ' requires ' + expected.kind + '.'),key);
+        if (['text', 'guidance'].includes(expected.kind) && (!Object.hasOwn(artifact, 'text') || typeof artifact.text !== 'string' || artifact.text.length > 100000)) return inputFailure(failure('INVALID_INPUT', 'Text input must contain at most 100,000 UTF-16 units.'),key);
         if (expected.kind === 'data') {
-            if (!Object.hasOwn(artifact, 'value')) return failure('INVALID_INPUT', 'Data input requires an own value.');
+            if (!Object.hasOwn(artifact, 'value')) return inputFailure(failure('INVALID_INPUT', 'Data input requires an own value.'),key);
             const cloned = cloneJsonValue(artifact.value);
             if (!cloned.ok) return cloned;
             artifact.value = cloned.data.value;
         }
         inputs[key] = artifact;
     }
-    for (const expected of effective) if (expected.required && !Object.hasOwn(inputs, expected.id)) return failure('MISSING_INPUT', 'Required input is missing: ' + expected.id);
+    for (const expected of effective) if (expected.required && !Object.hasOwn(inputs, expected.id)) return inputFailure(failure('MISSING_INPUT', 'Required input is missing: ' + expected.id),expected.id);
     return { ok: true, data: { inputs } };
 }
 
@@ -188,7 +189,7 @@ async function executePrimitiveRaw(node, namedInputs, execution = {}) {
             const transformed = descriptor.id === 'json-decode'
                 ? decodeJson(settings.mode === 'parse' ? inputs.in.text : inputs.in.value, { mode: settings.mode, ...(Object.hasOwn(settings, 'parsedSchema') ? { schema: settings.parsedSchema } : {}) })
                 : selectFields(inputs.in.value, { fields: settings.fields });
-            if (!transformed.ok) return transformed;
+            if (!transformed.ok) return ['INVALID_JSON','SCHEMA_MISMATCH','MISSING_FIELD','INVALID_JSON_DATA'].includes(transformed.error.code)?inputFailure(transformed,'in'):transformed;
             return { ok: true, artifact: { kind: 'data', value: transformed.data.value }, reports: transformed.data.report };
         }
         if (descriptor.id !== 'compose') return failure('UNKNOWN_OPERATION', 'Primitive is not implemented.');

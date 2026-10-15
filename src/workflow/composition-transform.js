@@ -1,3 +1,4 @@
+import { cloneWorkflowDocument } from './document.js?v=0.27.4';
 import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.4';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.4';
 import { portsForNode, operationFor, phaseForNode } from './catalog.js?v=0.27.4';
@@ -33,9 +34,10 @@ function editScope(root, command, path) {
     const chain = path.length ? definitionChain(root, path) : [];
     if (!chain) return fail('INVALID_INSTANCE', 'The containing scope does not exist.');
     if (path.length && !ownsDefinitionPath(root, path)) return fail('READ_ONLY_DEFINITION', 'Make a local copy of the containing scope before editing.');
-    const candidate = clone(root); candidate.definitions ??= {};
+    const normalized = cloneWorkflowDocument(root); if (!normalized.ok) return normalized;
+    const candidate = normalized.data; candidate.definitions ??= {};
     const definition = chain.at(-1)?.definition;
-    return { ok: true, data: { candidate, path, definition, scope: clone(definition?.body ?? root), ids: compositionIds(root) } };
+    return { ok: true, data: { candidate, path, definition, scope: clone(definition?.body ?? candidate), ids: compositionIds(root) } };
 }
 
 function saveDefinition(candidate, draft) {
@@ -72,7 +74,8 @@ function finishScope(original, context, owners, details, relocate = address => a
         scope.nodes[path[depth]].definition = reference(saved.data);
         rewriteBindings(scope, path.slice(0, depth));
     }
-    candidate = { ...scope, definitions: candidate.definitions };
+    const runTargets = candidate.runTargets.map(target=>{const at=relocate([...target.instancePath,target.nodeId]);return {instancePath:at.slice(0,-1),nodeId:at.at(-1)};});
+    candidate = { ...scope, definitions: candidate.definitions, runTargets };
     // The edited ancestor IDs remain stable. Keep only ownership still backed by live exact pins.
     candidate.localDefinitionOwners = owners.filter(entry => definitionChain(candidate, entry.instancePath)?.at(-1).definition.id === entry.definitionId);
     candidate.localDefinitionOwners = candidate.localDefinitionOwners.filter(entry => entry.instancePath.every((_, index) => candidate.localDefinitionOwners.some(parent => samePath(parent.instancePath, entry.instancePath.slice(0, index + 1)))));

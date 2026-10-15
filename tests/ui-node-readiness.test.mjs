@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { prepareNodeReadiness } from '../src/ui/node-readiness.js';
 
-test('setup issues retain field addresses and take priority over unconnected required pins', () => {
+test('setup issues retain field addresses while unconnected required pins stay quiet', () => {
     const address = {workflowId:'root',instancePath:['one'],nodeId:'memory'};
     const result = prepareNodeReadiness({address, setupIssues:[{code:'ACTOR_REQUIRED',message:'Choose an actor',field:'actorId'}], ports:[{id:'in',direction:'input',required:true,label:'Context'}], wires:[]});
     assert.equal(result.state,'setup');
     assert.equal(result.label,'Setup Required');
-    assert.equal(result.issues.length,2);
+    assert.equal(result.issues.length,1);
     assert.deepEqual(result.issues[0],{code:'ACTOR_REQUIRED',message:'Choose an actor',field:'actorId',address,category:'setup'});
     assert.equal(prepareNodeReadiness({address,ports:[],wires:[]}).state,'ready');
 });
@@ -77,11 +77,11 @@ test('selected pinned helper body setup is projected onto its For Each control',
     assert.equal(readiness.state,'setup');assert.equal(readiness.issues[0].field,'helper');assert.match(readiness.description,/memory/);
 });
 
-test('summaries count each full occurrence once using its primary readiness category',async()=>{
+test('summaries count each full setup occurrence once and omit draft inputs',async()=>{
     const {summarizeReadiness}=await import('../src/ui/node-readiness.js');
     const address=(instance,nodeId)=>({workflowId:'root',instancePath:[instance],nodeId});
     const setup=prepareNodeReadiness({address:address('one','same'),setupIssues:[{code:'A',message:'Actor',field:'actorId'},{code:'B',message:'Memory set',field:'memorySetId'}],ports:[{id:'in',required:true,direction:'input'}]});
     const input=prepareNodeReadiness({address:address('two','same'),ports:[{id:'in',required:true,direction:'input'}]});
     const summary=summarizeReadiness([setup,input,setup]);
-    assert.equal(summary.setup,1);assert.equal(summary.input,1);assert.equal(summary.label,'1 needs setup · 1 needs input');
+    assert.equal(summary.setup,1);assert.equal(summary.input,0);assert.equal(summary.label,'1 needs setup');
 });

@@ -1,6 +1,6 @@
 import { recognizeRecordedText } from './retained-text.js?v=0.27.4';
 import { createRunState, reduceRunState } from './run-state.js?v=0.27.4';
-import { addressKey, nodeAddress, own, plain, dense, parseRunPlan, freeze, encode, bytes, textBytes, boundedText, safeSource, safeBinding, safeError, safePortState, safeUsage, errorResult, successResult, TOTAL_RECORD_BYTES, ARTIFACT_RECORD_BYTES, RENDERED_TEXT_BYTES } from './record-data.js?v=0.27.4';
+import { addressKey, nodeAddress, own, plain, dense, parseRunPlan, freeze, encode, bytes, textBytes, boundedText, safeSource, safeBinding, safeError, expandRecordAddress, safePortState, safeUsage, errorResult, successResult, TOTAL_RECORD_BYTES, ARTIFACT_RECORD_BYTES, RENDERED_TEXT_BYTES } from './record-data.js?v=0.27.4';
 
 export { TOTAL_RECORD_BYTES, ARTIFACT_RECORD_BYTES, RENDERED_TEXT_BYTES };
 /** @template T @typedef {{ok:true,data:T}|{ok:false,error:{code:string,message:string}}} Result */
@@ -21,7 +21,7 @@ function internPlan(plan, runId) {
     const target = value => value.kind === 'terminal' ? { kind: 'terminal', address: address(value.address) } : { address: address(value), port: string(value.portId) };
     const compactPlan = { workflowId: string(plan.workflowId), phase: plan.phase, mode: plan.mode, callBound: plan.callBound };
     for (const key of ['target', 'resolvedTarget']) if (plan[key]) compactPlan[key] = target(plan[key]);
-    const hierarchy = plan.hierarchy.map(entry => ({ address: address(entry.address), kind: entry.kind, included: entry.included, ...(entry.parent ? { parent: address(entry.parent) } : {}) }));
+    const hierarchy = plan.hierarchy.map(entry => ({ address: address(entry.address), kind: entry.kind, included: entry.included, ...(entry.parent ? { parent: address(entry.parent) } : {}), ...(entry.inputPorts ? {inputPorts:entry.inputPorts.map(string)} : {}) }));
     const terminals = plan.terminals.map(terminal => ({ ...target(terminal), artifact: null }));
     return { version: 1, runId, lastSeq: 0, status: 'waiting', at: null, elapsedMs: 0, plan: compactPlan, identities: { strings, paths, addresses }, units, hierarchy, terminals, artifacts: [] };
 }
@@ -40,7 +40,19 @@ export function admitRunPlan(rawPlan, options) {
     } catch { return errorResult('INVALID_RUN_PLAN', 'The safe run inventory could not be inspected.'); }
 }
 
-const mandatoryReserve = record => 512 + record.units.length * 128 + (record.units.reduce((count, unit) => count + unit.ports.length, 0) + record.terminals.length) * 384;
+const causeReserve = record => {
+    let maximum = 0;
+    // safeError retains nodeId as well as address.nodeId: reserve both exact copies.
+    for (let index=0;index<record.identities.addresses.length;index++) {
+        const address=expandRecordAddress(record,index);
+        maximum=Math.max(maximum,bytes({address,nodeId:address.nodeId}));
+    }
+    let portMaximum=0;
+    for(const unit of record.units)for(const port of unit.ports)if(port.direction==='input')portMaximum=Math.max(portMaximum,bytes(record.identities.strings[port.port]));
+    for(const entry of record.hierarchy)for(const port of entry.inputPorts??[])portMaximum=Math.max(portMaximum,bytes(record.identities.strings[port]));
+    return maximum+portMaximum+4096;
+};
+const mandatoryReserve = record => causeReserve(record) + 512 + record.units.length * 128 + (record.units.reduce((count, unit) => count + unit.ports.length, 0) + record.terminals.length) * 384;
 function retentionBudget(skeleton) {
     const mandatoryBytes = bytes(skeleton) + mandatoryReserve(skeleton);
     const metadataAllowance = Math.min(524288, TOTAL_RECORD_BYTES - mandatoryBytes);
@@ -225,6 +237,10 @@ export function createRunRecorder(options) {
         const record = JSON.parse(encode(skeleton));
         record.lastSeq = state.lastSeq; record.status = state.status; record.at = state.at; record.elapsedMs = state.elapsedMs;
         const optional = state.nodes.map(node => ({ operation: node.operation, ...(node.label !== undefined ? { label: node.label } : {}), ...(node.metadataTruncated ? { metadataTruncated: true } : {}), ...(node.request ? { request: node.request } : {}), ...(node.error ? { error: node.error } : {}), ...(node.reason?{reason:node.reason}:{}), ...(node.binding ? { binding: node.binding } : {}) }));
+        // The admitted reserve owns exact cause, code and a bounded fallback message.
+        // Optional display metadata may be shed without losing the causal node/pin.
+        const mandatoryError = state.error ? {...state.error,message:boundedText(state.error.message,128),...(state.error.message.length>126?{truncated:true}:{})} : null;
+        if(mandatoryError)record.error=mandatoryError;
         const runOptional = state.error ? { error: state.error } : {};
         state.nodes.forEach((node, index) => {
             for (const key of ['status', 'subphase', 'attempts', 'startedAt', 'settledAt', 'durationMs']) record.units[index][key] = node[key];

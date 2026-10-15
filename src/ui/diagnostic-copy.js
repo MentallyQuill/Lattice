@@ -22,6 +22,8 @@ const variants = [
     ['STALE_SOURCE', /memory/i, { id: 'memory-source-changed', severity: 'error', title: 'Memory evidence changed', message: 'The memory evidence changed after it was read. Inspect the current memory and its source before preparing another change.' }],
 ];
 const extraCopy = {
+    MISSING_RUN_TARGETS: { id: 'workflow-outputs-missing', severity: 'error', title: 'Choose workflow outputs', message: 'Open Workflow > Workflow outputs and select the output steps this workflow should run.' },
+    INVALID_RUN_TARGETS: { id: 'workflow-outputs-invalid', severity: 'error', title: 'Workflow outputs need updating', message: 'Open Workflow > Workflow outputs and choose existing output steps again before running.' },
     CLOCK_LEDGER_FULL: {id:'clock-history-full',severity:'warning',title:'Clock history is full',message:'Open Workflow Data, select the clock and choose Preview history checkpoint before continuing.'},
     FILE_RECEIPT_LIMIT: {id:'save-history-full',severity:'warning',title:'Save history is full',message:'Open Workflow Data, select the document and choose Preview history checkpoint before continuing.'},
     PERSISTENCE_UNKNOWN: {id:'native-save-held',severity:'warning',title:'The previous save is unverified',message:'Further writes are held until the previous save is verified. For a history checkpoint, open Workflow Data and choose Inspect saved history.'},

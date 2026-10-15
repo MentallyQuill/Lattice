@@ -21,6 +21,7 @@ test('checkpointed private State retains the present actor scope of its authoriz
     for(const [id,value]of [['rules',rules],['clock',clock]]){node(id+'Text','text',{text:JSON.stringify(value)});node(id,'json-decode');wire(id+'Text',id+'Text','out',id,'in');}
     node('decay','state',{mode:'time-decay'});wire('state','read','value','decay','state');wire('rules','rules','out','decay','rules');wire('clock','clock','out','decay','clock');
     node('encode','format',{format:'json',jsonShape:'single'});wire('encode','decay','out','encode','in');node('save','write-file',{mode:'replace',actorScope:'presence',actorId:elias});wire('savePresence','elias','out','save','presence');wire('reference','read','reference','save','reference');wire('text','encode','text','save','text');
+    f.graph.runTargets=[{instancePath:[],nodeId:'review'},{instancePath:[],nodeId:'save'}];
     try{const ready=await f.start();assert.equal(ready.ok,true,JSON.stringify(ready.error));const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));const applied=await f.controller.apply(result.reviewHandles[0]);assert.equal(applied.ok,true,JSON.stringify(applied.error));const stored=JSON.parse(f.c.chatMetadata.latticeDocuments[storageScope.userId]['elias-progress'].content);assert.equal(stored.values[0].value,9);assert.equal(stored.historyCheckpoint.epoch,1);}finally{f.controller.dispose();}
 });
 test('a pending checkpoint save holds native file access until acknowledgement',async()=>{

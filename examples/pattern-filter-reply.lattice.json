@@ -249,6 +249,12 @@
     "groups": {},
     "roles": {},
     "portals": {},
-    "definitions": {}
+    "definitions": {},
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      }
+    ]
   }
 }

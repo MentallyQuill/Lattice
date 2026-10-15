@@ -429,6 +429,11 @@
         </div>
         {#if openGuide}<button type="button" class="pc-node-guide-help" aria-label={`Open ${view.canonicalTitle} guide`} title={`Help with ${view.canonicalTitle}`} onclick={openGuide}>?</button>{/if}
     </header>
+    {#if view.runDiagnostic}
+        <section class="pc-node-run-diagnostic" aria-label="Current run error">
+            <strong>{view.runDiagnostic.code}</strong><p>{view.runDiagnostic.message}</p>
+        </section>
+    {/if}
     {#if view.readiness && (view.readiness.issues.length || view.readiness.deferred.length)}
         <section class="pc-node-readiness-issues" tabindex="-1" aria-label={view.readiness.label || 'Live requirements'} data-readiness={view.readiness.state}>
             <strong>{view.readiness.label || 'Live requirements'}</strong>
@@ -506,7 +511,7 @@
             {#if errors.modelRole || errors.profileId || drafts.model?.error || errors.model}<div class="pc-detail-error"><DiagnosticMessage issue={errors.modelRole || errors.profileId || drafts.model?.error || errors.model} context={{ nodeTitle: view?.title }} /></div>{/if}
         </details>
     {/if}
-    {#if view.ports.length}<details class="pc-detail-group"><summary>Inputs and outputs</summary>{#each view.ports as port (port.direction + ':' + port.id)}<p class="pc-detail-port">{port.direction === 'input' ? 'In' : 'Out'} · {port.label}<small>{port.kind}</small></p>{/each}</details>{/if}
+    {#if view.ports.length}<details class="pc-detail-group"><summary>Inputs and outputs</summary>{#each view.ports as port (port.direction + ':' + port.id)}<p class="pc-detail-port">{port.direction === 'input' ? 'In' : 'Out'} · {port.label}<small>{port.kind}{port.required ? ' · Required' : ''}</small></p>{/each}</details>{/if}
     {#if view.status}<p role="status">{view.status}</p>{/if}
     {#each presentDiagnostics((view.issues ?? []).filter(issue => issue !== view?.model?.issue && issue !== view?.helperBindings?.issue), {nodeTitle: view.title}) as diagnostic (diagnostic.id)}<div class="pc-detail-error"><DiagnosticMessage {diagnostic} /></div>{/each}
     {#if view.modifiers}
@@ -525,9 +530,10 @@
     .pc-node-guide-help { flex: none; align-self: center; width: 26px; height: 26px; border: 1px solid var(--pc-border); border-radius: 50%; background: transparent; color: var(--pc-muted); font: inherit; font-weight: 600; cursor: pointer; }
     .pc-node-guide-help:hover { color: var(--pc-text); background: var(--pc-hover); }
     .pc-node-guide-help:focus-visible { outline: 2px solid var(--pc-flow); outline-offset: 2px; }
+    .pc-node-run-diagnostic { margin:8px 0; padding:8px; border:1px solid var(--pc-error); border-radius:4px; }
+    .pc-node-run-diagnostic p { margin:5px 0 0; }
     .pc-node-readiness-issues { margin:8px 0; padding:8px; border:1px solid var(--pc-border); border-radius:4px; }
     .pc-node-readiness-issues[data-readiness="setup"] { border-color:var(--pc-error); }
-    .pc-node-readiness-issues[data-readiness="input"] { border-color:var(--pc-warning,#e9b450); }
     .pc-node-readiness-issues :is(p,small,button) { display:block; margin:5px 0 0; }
     .pc-node-readiness-issues button { width:100%; padding:4px; text-align:left; color:inherit; background:var(--pc-control); border:1px solid var(--pc-border); border-radius:3px; font:inherit; cursor:pointer; }
     .pc-node-readiness-issues:focus-visible { outline:2px solid var(--pc-accent); outline-offset:2px; }

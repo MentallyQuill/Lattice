@@ -1,5 +1,5 @@
 import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.4';
-import { validateGraphStructure } from './contracts.js?v=0.27.4';
+import { inspectExpandedGraph } from './graph-validation.js?v=0.27.4';
 
 /** Detach a current document and supply its absent optional authoring containers.
  * A supplied private artifact must match this admitted authored content exactly.
@@ -8,9 +8,13 @@ import { validateGraphStructure } from './contracts.js?v=0.27.4';
  * @returns {import('./types').Result<import('./types').NativeGraph3>}
  */
 export function cloneWorkflowDocument(graph, { checkedArtifacts } = {}) {
-    const validation = checkedArtifacts === undefined ? validateGraphStructure(graph) : graphArtifactsFor(graph, checkedArtifacts);
+    const validation = checkedArtifacts === undefined ? inspectExpandedGraph(graph) : graphArtifactsFor(graph, checkedArtifacts);
     if (!validation.ok) return validation;
     const copy = structuredClone(graph);
+    if (!Object.hasOwn(copy, 'runTargets')) {
+        const targets = checkedArtifacts === undefined ? validation.data.runTargets : validation.data.checked.data.runTargets;
+        copy.runTargets = targets.map(target => ({ instancePath: [...target.instancePath], nodeId: target.nodeId }));
+    }
     for (const key of ['groups', 'roles', 'portals', 'definitions']) copy[key] ??= {};
     return { ok: true, data: copy };
 }

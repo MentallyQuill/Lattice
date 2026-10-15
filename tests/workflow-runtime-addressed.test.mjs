@@ -92,7 +92,7 @@ test('target closure excludes unrelated completeness and bindings but whole-grap
     const ports={countTokens,snapshot:()=>{snapshots++;return context;},resolveBinding:()=>{bindings++;return {ok:true,data:{profileId:'fixture',model:'fixture'}};},request:async()=>{requests++;return {ok:true,data:{text:'Target proposal',finish:'stop'}};}};
     const target={workflowId:graph.id,instancePath:['first/path'],nodeId:'work',portId:'out'},result=await runWorkflow(graph,{...ports,target});
     assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.callBound,1);assert.equal(result.actualCalls,1);assert.deepEqual([snapshots,bindings,requests],[1,1,1]);assert.equal(result.mode,'target');assert.ok(result.recording.units.some(unit=>!unit.included&&unit.status==='not-run'));
-    assert.equal((await runWorkflow(graph,ports)).error.code,'MISSING_TERMINAL');
+    assert.equal((await runWorkflow(graph,ports)).error.code,'MISSING_RUN_TARGETS');
     for(const id of ['cycle-a','cycle-b'])graph.nodes[id]={id,type:'workflow',operation:'reroute',phase:'pre',artifactKind:'context'};
     graph.wires.cycleA=direct('cycleA','cycle-a','out','cycle-b','in');graph.wires.cycleB=direct('cycleB','cycle-b','out','cycle-a','in');
     const cyclic=await runWorkflow(graph,{...ports,target});assert.equal(cyclic.error.code,'CYCLE');assert.equal(cyclic.recording.status,'invalid');assert.deepEqual([snapshots,bindings,requests],[1,1,1]);

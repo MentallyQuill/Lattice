@@ -32,10 +32,10 @@ test('nested boundary and primitive summaries preserve the exact shared resolver
     const views=prepareCompositionViews(root,prepared.data);assert.equal(views.data.views.length,4);assert.equal(prepareCompositionViews(root,prepared.data),views);
 });
 test('unfinished roots retain inventory while target completeness stays local and cycles stay global',()=>{
-    assert.equal(typeof planning.prepareWorkflowPlanner,'function');const root=graph3();delete root.nodes['review-publish'];delete root.wires.draft;
+    assert.equal(typeof planning.prepareWorkflowPlanner,'function');const root=graph3();delete root.nodes['review-publish'];delete root.wires.draft;root.runTargets=[];
     // Use a valid pre-phase request operation with its input deliberately unconnected.
     root.nodes.unfinished={id:'unfinished',type:'workflow',operation:'response-plan'};
-    const prepared=planning.prepareWorkflowPlanner(root);assert.equal(prepared.ok,true);assert.equal(prepared.data.summarize().error.code,'MISSING_TERMINAL');assert.equal(prepared.data.summarize(target(root,'response-plan')).ok,true);assert.equal(prepared.data.summarize(target(root,'unfinished')).error.code,'MISSING_INPUT');
+    const prepared=planning.prepareWorkflowPlanner(root);assert.equal(prepared.ok,true);assert.equal(prepared.data.summarize().error.code,'MISSING_RUN_TARGETS');assert.equal(prepared.data.summarize(target(root,'response-plan')).ok,true);assert.equal(prepared.data.summarize(target(root,'unfinished')).error.code,'MISSING_INPUT');
     root.nodes.a={id:'a',type:'workflow',operation:'reroute',phase:'pre',artifactKind:'context'};root.nodes.b={id:'b',type:'workflow',operation:'reroute',phase:'pre',artifactKind:'context'};
     root.wires.a={id:'a',route:'wire',from:'a',fromPort:'out',to:'b',toPort:'in'};root.wires.b={id:'b',route:'wire',from:'b',fromPort:'out',to:'a',toPort:'in'};
     assert.equal(planning.prepareWorkflowPlanner(root).error.code,'CYCLE');

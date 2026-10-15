@@ -378,6 +378,7 @@ function activateDocument(graph, options = {}, { ownerReplacement = false } = {}
         if (!ownerReplacement) flushRecovery({ onRecoveryIssue: options.onRecoveryIssue });
         graphHistory.dispose(previous);
     }
+    if (!Object.hasOwn(graph, 'runTargets')) graph.runTargets = checked.data.runTargets;
     graphHistory.reset(graph);
     const token = documentSession.activate(graph, options);
     reportRecovery(persistRecovery(), options.onRecoveryIssue);
@@ -407,11 +408,11 @@ export function retainRecoveryWorkflows(graphs) {
 
 /** An empty current authoring document; terminals and connections are explicit. */
 export function blankGraph(name = 'Untitled', phase = 'unified') {
-    return { id: uid('g'), name, description: '', schema: 3, runtime: 2, mode: phase === 'unified' ? 'native-unified' : phase === 'post' ? 'native-post' : 'native-pre', createdAt: Date.now(), updatedAt: Date.now(), nodes: {}, wires: {}, portals: {}, definitions: {}, groups: {}, roles: {}, view: { x: 0, y: 0, zoom: 1 } };
+    return { id: uid('g'), name, description: '', runTargets: [], schema: 3, runtime: 2, mode: phase === 'unified' ? 'native-unified' : phase === 'post' ? 'native-post' : 'native-pre', createdAt: Date.now(), updatedAt: Date.now(), nodes: {}, wires: {}, portals: {}, definitions: {}, groups: {}, roles: {}, view: { x: 0, y: 0, zoom: 1 } };
 }
 export function createGraph(name, phase = 'unified') {
     const graph = blankGraph(name || 'Untitled', phase);
-    if (phase === 'unified') { const starter = starterGraph('unified-basic'); Object.assign(graph, { nodes: starter.nodes, wires: starter.wires }); }
+    if (phase === 'unified') { const starter = starterGraph('unified-basic'); Object.assign(graph, { nodes: starter.nodes, wires: starter.wires, runTargets: starter.runTargets }); }
     return graph;
 }
 

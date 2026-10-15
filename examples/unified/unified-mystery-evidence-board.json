@@ -86,7 +86,7 @@
         "x": 80,
         "y": 1320,
         "w": 270,
-        "h": 160,
+        "h": 170,
         "profileId": null,
         "model": null,
         "modelRole": null,
@@ -132,6 +132,8 @@
         "instructions": "Extract observations and attributed witness claims only. Classification must remain observation or claim; a spoken assertion is not proof that it happened. Use stable clue IDs and exact quotes. Omit offscreen motives and hidden solution facts.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "hypotheses": {
@@ -485,6 +487,16 @@
       "x": 0,
       "y": 0,
       "zoom": 0.7
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      },
+      {
+        "instancePath": [],
+        "nodeId": "save-evidence"
+      }
+    ]
   }
 }

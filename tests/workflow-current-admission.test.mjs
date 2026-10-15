@@ -45,7 +45,7 @@ assert.deepEqual([cloned.data.groups, cloned.data.roles, cloned.data.portals, cl
 cloned.data.nodes.source.alias = 'Detached';
 assert.equal(unfinished.nodes.source.alias, undefined);
 assert.equal(parseWorkflow(JSON.stringify(exportWorkflow(unfinished))).ok, true);
-assert.equal(contracts.validateWorkflow(unfinished).error.code, 'MISSING_TERMINAL');
+assert.equal(contracts.validateWorkflow(unfinished).error.code, 'MISSING_RUN_TARGETS');
 for (const retired of [{ ...unfinished, schema: 2, runtime: 1 }, { schema: 1, nodes: {}, wires: {} }]) {
     assert.equal(cloneWorkflowDocument(retired).error.code, 'UNSUPPORTED_VERSION');
     assert.equal(prepareWorkflowInsertion(unfinished, retired).ok, false);

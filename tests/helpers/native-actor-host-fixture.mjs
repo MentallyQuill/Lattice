@@ -21,7 +21,7 @@ export function actorHostGraph(mode='direction'){
    node(id+'Write','write-file',{actorScope:'presence',actorId,mode:'append'});wire(id+'WritePresence',id,'out',id+'Write','presence');wire(id+'Reference',id+'Read','reference',id+'Write','reference');wire(id+'Reflection',id+'Reflect','out',id+'Write','text');
   }
  }
- return {id:'actor-story',name:'Actor story',schema:3,runtime:2,mode:'native-unified',nodes,wires,definitions:{},portals:{}};
+ return {id:'actor-story',name:'Actor story',schema:3,runtime:2,mode:'native-unified',runTargets:['review',...(mode==='direction'?[]:['maraWrite','eliasWrite'])].map(nodeId=>({instancePath:[],nodeId})),nodes,wires,definitions:{},portals:{}};
 }
 export function actorHostFixture(mode='direction',options={}){
  const graph=actorHostGraph(mode),listeners=new Map(),results=[],requests=[];let busy=false,user='default-user';

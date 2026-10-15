@@ -32,7 +32,10 @@ test('Ember keeps orange selection and compact aliases while real JSON failure r
     await page.evaluate(()=>window.canvasHarness.canvas.select({kind:'node',id:'guidance'}));await page.locator('.pc-output-preview [data-run-here]').click();await expect(failed).toHaveClass(/pc-trace-failed/);await expect(page.locator('.pc-run-meter-label')).toHaveText('Failed');await failed.locator('.pc-native-heading').click();
     const result=await measureEmber(page),paint=result.nodes.find(node=>node.id===ids.jsonDecode);
     expect(paint.classes).toContain('pc-selected');assertColor(paint.border,result.roles.error,'failure border has priority');expect(hasOuterRing(paint.shadow,result.roles.error)).toBe(true);expect(hasOuterRing(paint.shadow,approvedEmber.settings.tokens.SmartThemeQuoteColor)).toBe(false);
-    expect(Number(paint.heading.opacity)).toBeGreaterThan(0);expect(Number(paint.heading.opacity)).toBeLessThan(1);expect(paint.heading.filter).toContain('grayscale');expect(result.nodes.some(node=>node.classes.includes('pc-trace-blocked')&&Number(node.opacity)<1)).toBe(true);expect(result.providerCalls).toBe(0);
+    const original=initial.nodes.find(node=>node.id===ids.jsonDecode);
+    expect(Number(paint.heading.opacity)).toBe(1);expect(paint.heading.filter).toBe('none');assertColor(paint.heading.color,original.heading.color,'failed heading retains family color');assertColor(paint.icon.color,original.icon.color,'failed icon retains family color');
+    for(const pin of paint.pins){const originalPin=original.pins.find(candidate=>candidate.port===pin.port&&candidate.kind===pin.kind);assertColor(pin.dot,originalPin.dot,'failed artifact pin retains color');assertColor(pin.label.color,originalPin.label.color,'failed artifact label retains color');expect(pin.opacity).toBe(originalPin.opacity);}
+    expect(result.nodes.some(node=>node.classes.includes('pc-trace-blocked')&&Number(node.opacity)<1)).toBe(true);expect(result.providerCalls).toBe(0);
     const after=await failed.boundingBox();expect(after.width).toBe(before.width);expect(after.height).toBe(before.height);
     await page.screenshot({path:testInfo.outputPath('ember-selected-failure.png'),animations:'disabled'});
 });

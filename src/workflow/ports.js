@@ -1,3 +1,4 @@
+import { workflowRunTargets } from './run-targets.js?v=0.27.4';
 import { ownJsonData } from './semantic-json-data.js?v=0.27.4';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.4';
 import { cloneWorkflowDocument } from './document.js?v=0.27.4';
@@ -10,7 +11,10 @@ const endpoint = value => value && typeof value === 'object' && !Array.isArray(v
 const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
 
 /** Pure current execution identity excludes presentation and includes effective bindings. */
-export function graphSemanticSignature(graph) {
+const legacyEnrollmentBySemanticContent = new Map();
+let legacyEnrollmentCacheCharacters = 0;
+const LEGACY_ENROLLMENT_CACHE_CHARACTERS = 4_000_000;
+export function graphSemanticSignature(graph, definitionBody = false) {
     if (!graph) return 'null';
     const binding = value => value && typeof value === 'object' && !Array.isArray(value) ? { profileId: value.profileId ?? null, model: value.model ?? null } : value;
     const inheritedBinding = value => value && typeof value === 'object' && !Array.isArray(value)
@@ -34,10 +38,35 @@ export function graphSemanticSignature(graph) {
         definitions: Object.fromEntries(Object.entries(graph.definitions ?? {}).map(([key, definition]) => [key, {
             id: definition.id, version: definition.version, semanticHash: definition.semanticHash,
             interface: definition.interface?.map(({ label, ...port }) => port), parameters: definition.parameters?.map(({ label, ...parameter }) => parameter),
-            body: JSON.parse(graphSemanticSignature(definition.body)),
+            body: JSON.parse(graphSemanticSignature(definition.body, true)),
         }])),
     };
-    return JSON.stringify(canonical({ schema: graph.schema, runtime: graph.runtime, mode: graph.mode, nodes, wires, roles, ...composition }));
+    const semantic = { schema: graph.schema, runtime: graph.runtime, mode: graph.mode, nodes, wires, roles, ...composition };
+    if (!definitionBody) {
+        let targets = graph.runTargets;
+        if (targets === undefined) {
+            // Legacy inference is computed once per semantic content, never per layout,
+            // selection, camera or alias update. Explicit documents need no expansion.
+            const key = JSON.stringify(canonical(semantic));
+            if (legacyEnrollmentBySemanticContent.has(key)) targets = legacyEnrollmentBySemanticContent.get(key).targets;
+            else {
+                const inferred = workflowRunTargets(graph);
+                targets = inferred.ok ? inferred.data : [];
+                const characters = key.length + JSON.stringify(targets).length;
+                while (legacyEnrollmentBySemanticContent.size && (legacyEnrollmentBySemanticContent.size >= 64 || legacyEnrollmentCacheCharacters + characters > LEGACY_ENROLLMENT_CACHE_CHARACTERS)) {
+                    const oldest = legacyEnrollmentBySemanticContent.keys().next().value;
+                    legacyEnrollmentCacheCharacters -= legacyEnrollmentBySemanticContent.get(oldest).characters;
+                    legacyEnrollmentBySemanticContent.delete(oldest);
+                }
+                if (characters <= LEGACY_ENROLLMENT_CACHE_CHARACTERS) {
+                    legacyEnrollmentBySemanticContent.set(key, {targets,characters});
+                    legacyEnrollmentCacheCharacters += characters;
+                }
+            }
+        }
+        semantic.runTargets = targets;
+    }
+    return JSON.stringify(canonical(semantic));
 }
 
 /** Document precondition includes aliases/layout, but excludes root camera/selection and save bookkeeping. */

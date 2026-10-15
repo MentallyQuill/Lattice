@@ -834,3 +834,20 @@ test('producer contract capability changes preserve compatible boundary fields a
         assert.equal(f.host.querySelector('[aria-label="Node name"]').value, 'Replacement');
     } finally { await f.close(); }
 });
+
+test('current run diagnostics update Details without replacing authored drafts and clear independently',async()=>{
+ const base=node(),f=await fixture('NodeDetails',base,{});
+ try {
+  const name=f.host.querySelector('[aria-label="Node name"]');
+  f.update({...base,runDiagnostic:{code:'INPUT_REQUIRED',message:'Connect Context.',inputPortId:'in'}});
+  const error=f.host.querySelector('[aria-label="Current run error"]');assert.ok(error);assert.match(error.textContent,/INPUT_REQUIRED/);assert.match(error.textContent,/Connect Context/);
+  assert.equal(f.host.querySelector('[aria-label="Node name"]'),name);
+  f.update(base);assert.equal(f.host.querySelector('[aria-label="Current run error"]'),null);
+ }finally{await f.close();}
+});
+
+
+test('unattempted incomplete Preview stays quiet and explains native policy as ordinary text',async()=>{
+ const f=await fixture('OutputPreview',preview({status:'not-run',sections:[],review:null,issues:['Input needs a connection'],runHere:{enabled:false,callBound:0,issue:'This step starts when you send a message.',reason:'This step starts when you send a message.'}}),{});
+ try{assert.equal(f.host.querySelectorAll('.pc-diagnostic').length,0);assert.doesNotMatch(f.host.textContent,/Error:|Input needs a connection/);assert.match(f.host.textContent,/This step starts when you send a message/);}finally{await f.close();}
+});

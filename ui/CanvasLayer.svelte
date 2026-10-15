@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type {RunDiagnosticPaint} from '../src/ui/canvas-run-diagnostics';
     import type {RecallBadgeView} from './recall-types';
     import { updateRenderSlots } from '../src/canvas/retained-scene.js';
     import NodeCard from './NodeCard.svelte';
@@ -12,12 +13,14 @@
     let { actions }: { actions: CanvasActions } = $props();
     class Slot<T extends {id: string}> {
         id: string;
+        diagnostic = $state.raw<RunDiagnosticPaint | undefined>(undefined);
         value = $state.raw<T>(null as unknown as T);
         constructor(value: T) { this.id = value.id; this.value = value; }
     }
     const nodeSlots = new Map<string, Slot<NodeCardData>>(), groupSlots = new Map<string, Slot<GroupCardData>>(), commentSlots = new Map<string, Slot<CommentFrameData>>();
     let nodes = $state.raw<Slot<NodeCardData>[]>([]), groups = $state.raw<Slot<GroupCardData>[]>([]), wires = $state.raw<WireData[]>([]);
     let trace = $state.raw<Readonly<Record<string, {status: string}>>>({});
+    let diagnostics: ReadonlyMap<string,RunDiagnosticPaint> = new Map();
     let recall = $state.raw<Readonly<Record<string,RecallBadgeView>>>({});
     let previewTarget = $state<string | null>(null);
     let comments = $state.raw<Slot<CommentFrameData>[]>([]);
@@ -40,9 +43,16 @@
         if ('ghost' in value) ghost = value.ghost ?? null;
         if (value.nodeProfiles) nodeProfiles = value.nodeProfiles;
     }
+    export function setRunDiagnostics(value: ReadonlyMap<string,RunDiagnosticPaint>) {
+        for (const id of new Set([...diagnostics.keys(),...value.keys()])) {
+            const slot=nodeSlots.get(id), next=value.get(id);
+            if (slot && slot.diagnostic !== next) slot.diagnostic=next;
+        }
+        diagnostics=value;
+    }
     export function setRecallStatus(value:Readonly<Record<string,RecallBadgeView>>) { recall = value; }
     export function setPreviewTarget(id: string | null) { previewTarget = id; }
-    export function setNodes(value: NodeCardData[]) { nodes = updateRenderSlots(value, nodes, nodeSlots, (row: NodeCardData) => new Slot(row)); }
+    export function setNodes(value: NodeCardData[]) { nodes = updateRenderSlots(value, nodes, nodeSlots, (row: NodeCardData) => { const slot=new Slot(row); slot.diagnostic=diagnostics.get(row.id); return slot; }); }
     export function setNodeProfiles(value: NodeProfileData[]) { nodeProfiles = value; }
     export function setGroups(value: GroupCardData[]) { groups = updateRenderSlots(value, groups, groupSlots, (row: GroupCardData) => new Slot(row)); }
     export function setWires(value: WireData[], size: { w: number; h: number }, preview: typeof ghost) { wires = value; bounds = size; ghost = preview; }
@@ -66,7 +76,7 @@
     </svg>
     <div class="pc-nodes" bind:this={nodeLayer}>
         {#each groups.filter(slot => !slot.value.collapsed) as slot (slot.id)}<GroupCard group={slot.value} {actions} />{/each}
-        {#each nodes as slot (slot.id)}<NodeCard card={slot.value} recall={recall[slot.id]} status={trace[slot.id]?.status} targeted={previewTarget === slot.id} {actions} />{/each}
+        {#each nodes as slot (slot.id)}<NodeCard card={slot.value} diagnostic={slot.diagnostic} recall={recall[slot.id]} status={trace[slot.id]?.status} targeted={previewTarget === slot.id} {actions} />{/each}
         {#each groups.filter(slot => slot.value.collapsed) as slot (slot.id)}<GroupCard group={slot.value} {actions} />{/each}
     </div>
     <div class="pc-node-profile-layer">

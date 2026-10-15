@@ -11,7 +11,7 @@ const fixture = () => ({ id: 'root', schema: 3, runtime: 2, mode: 'native-unifie
 // Structural authoring validation must allow absent terminals and disabled unfinished branches.
 assert.equal(typeof contracts.validateGraphStructure, 'function');
 assert.equal(contracts.validateGraphStructure(fixture()).ok, true);
-assert.equal(contracts.validateWorkflow(fixture()).error.code, 'MISSING_TERMINAL');
+assert.equal(contracts.validateWorkflow(fixture()).error.code, 'MISSING_RUN_TARGETS');
 assert.equal(typeof contracts.isWorkflowGraph, 'function');
 assert.equal(contracts.isWorkflowGraph(fixture()), true);
 for (const schema of [1, 2, 99]) assert.equal(contracts.isWorkflowGraph({ ...fixture(), schema }), false);

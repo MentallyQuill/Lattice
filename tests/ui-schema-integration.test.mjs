@@ -21,7 +21,7 @@ import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js';
 import * as H from '../src/history.js?v=0.27.4';
 const operations=['json-decode','extract','model-call','format','read-file','write-file','project-document'];
 const scope={schema:3,runtime:2,mode:'native-unified',workflowId:'schema-work',viewPath:[],inDefinition:false};
-const graph=()=>({id:'schema-work',schema:3,runtime:2,mode:'native-unified',roles:{},nodes:{},wires:{},definitions:{},portals:{}});
+const graph=()=>({id:'schema-work',schema:3,runtime:2,mode:'native-unified',runTargets:[],roles:{},nodes:{},wires:{},definitions:{},portals:{}});
 const settings=operation=>({...Object.fromEntries(Object.entries(operationDefaults(operation)).filter(([key])=>OPERATIONS[operation].controls.includes(key))),...(operation==='model-call'?{outputKind:'data'}:{})});
 const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');
 function actual(name,env){const start=source.indexOf('function '+name+'('),end=source.indexOf('\n}',start)+2;assert.ok(start>=0);return Function('env','with(env){'+source.slice(start,end)+';return '+name+';}')(env);}

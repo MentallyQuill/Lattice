@@ -38,7 +38,7 @@ function unifiedGraph({ guidance = false, revise = true } = {}) {
     wires.reply = { id: 'reply', route: 'wire', from: 'generate', fromPort: 'draft', to: revise ? 'revise' : 'review', toPort: 'draft' };
     if (revise) wires.review = { id: 'review', route: 'wire', from: 'revise', fromPort: 'out', to: 'review', toPort: 'draft' };
     if (guidance) { nodes.guide = { id: 'guide', type: 'workflow', operation: 'compose', outputKind: 'guidance', sections: [{ name: 'Style', text: 'Use vivid prose.' }] }; wires.guidance = { id: 'guidance', route: 'wire', from: 'guide', fromPort: 'out', to: 'generate', toPort: 'guidance' }; }
-    return { id: 'unified', name: 'Unified test', schema: 3, runtime: 2, mode: 'native-unified', nodes, wires, portals: {}, definitions: {} };
+    return { id: 'unified', name: 'Unified test', schema: 3, runtime: 2, mode: 'native-unified', runTargets: [{instancePath:[],nodeId:'review'}], nodes, wires, portals: {}, definitions: {} };
 }
 function nativeFixture(graph = unifiedGraph(), options = {}) {
     const listeners = new Map(), events = [], results = [];

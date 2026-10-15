@@ -63,6 +63,7 @@ export interface WorkflowDataCreate {
 }
 export type WorkflowDataResponse = { ok: true; data?: { definition?: WorkflowDataDefinition; message?: string } } | { ok: false; error: DetailError };
 export interface NodeDetailsView extends DetailSelection {
+    runDiagnostic?: {code: string; message: string; inputPortId?: string};
     readiness?: import('./readiness-types').NodeReadiness;
     editorContractKey?: string;
     guideKey?: string; guideCard?: NodeCardData | null;
@@ -75,7 +76,7 @@ export interface NodeDetailsView extends DetailSelection {
     modifiers?: { items: DetailModifier[]; options: DetailModifierOption[]; editable: boolean; outputPortId: string } | null;
     fileInput?: { fileName: string; loaded: boolean };
     boundary?: { id: string; label: string; direction: 'input' | 'output'; kind: string; required: boolean; kinds: string[] };
-    ports: { id: string; label: string; direction: 'input' | 'output'; kind: string }[];
+    ports: { id: string; label: string; direction: 'input' | 'output'; kind: string; required?: boolean }[];
     status?: string; issues?: string[];
 }
 export interface NodeDetailsActions {

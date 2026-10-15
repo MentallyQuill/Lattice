@@ -4,8 +4,9 @@ import * as planning from '../src/workflow/resolve.js?v=0.27.4';
 import * as validation from '../src/workflow/graph-validation.js?v=0.27.4';
 import * as transactions from '../src/workflow/transactions.js?v=0.27.4';
 import { prepareGraphCandidate } from '../src/workflow/prepared-graph-edit.js?v=0.27.4';
-import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
+import { siblingWorkflow as savedSiblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 import * as history from '../src/history.js?v=0.27.4';
+const siblingWorkflow = () => ({...savedSiblingWorkflow(), runTargets: []});
 const context = root => transactions.captureGraphEditContext(root, () => ({sessionId:'owned',viewPath:[],readOnly:false})).data;
 test('planner memoizes only actual inventory targets, including completeness failures, without getters', () => {
  const root=siblingWorkflow(), planner=planning.prepareWorkflowPlanner(root).data;

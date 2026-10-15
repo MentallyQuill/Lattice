@@ -1,8 +1,15 @@
+import { safeGraphArtifactData } from './graph-artifacts.js?v=0.27.4';
+import { workflowRunTargets } from './run-targets.js?v=0.27.4';
 import { prepareCheckedCandidate } from './checked-candidate.js?v=0.27.4';
 import { graphSemanticSignature, graphDocumentSignature } from './ports.js?v=0.27.4';
 
 /** Pure dual-precondition boundary shared by composition and immutable definition revisions. */
 export function prepareGraphCandidate(original, candidate, addedEdgeIds = [], removedEdgeIds = [], sourceRoot = original) {
+    if (candidate && !Object.hasOwn(candidate, 'runTargets')) {
+        if (!safeGraphArtifactData(candidate)) return {ok:false,error:{code:'MALFORMED_WORKFLOW',message:'Expected a bounded plain workflow graph.'}};
+        const targets=workflowRunTargets(original); if (!targets.ok) return targets;
+        candidate={...candidate,runTargets:targets.data};
+    }
     const validation = prepareCheckedCandidate(original, candidate, sourceRoot);
     if (!validation.ok) return validation;
     const baseDocumentSignature = graphDocumentSignature(original);

@@ -131,6 +131,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract notable physical items established in the final narrative, with exact quotes. Exclude ideas that are merely hypothetical.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "scene": {
@@ -300,7 +302,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -436,6 +444,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract visible positions, injuries and hazards. Report uncertain outcomes as interpretations.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "notes": {
@@ -555,7 +565,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -672,6 +688,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract evidence visible to the player and explicitly attributed witness claims. Exclude private motives or hidden answers.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "scene": {
@@ -833,7 +851,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -943,6 +967,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract landmarks, route obstacles and named destinations explicitly visible in the narrative.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "scene": {
@@ -1104,7 +1130,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -1195,6 +1227,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract newly discovered physical objects. Quote the discovery or description; an object being seen is not proof it was picked up.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "notes": {
@@ -1298,7 +1332,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -1389,6 +1429,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract explicit promises, obligations and stated deadlines. Attribute each speaker; speculation and intention are not completed actions.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "notes": {
@@ -1492,7 +1534,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -1583,6 +1631,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract each literal sign, inscription or written phrase quoted in this scene, preserving original spelling.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "scene": {
@@ -1736,7 +1786,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -1846,6 +1902,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract facts established by the revised scene about locations, object condition and character actions. Distinguish claims from observations.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "notes": {
@@ -1957,7 +2015,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -2093,6 +2157,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract visible gestures, stated feelings and boundary-setting. Mark inferred emotion as interpretation, not fact.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "notes": {
@@ -2212,7 +2278,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -2303,6 +2375,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract a concise list of events stated in the final narrative. Retain exact quoted evidence; do not infer offscreen events.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "notes": {
@@ -2470,7 +2544,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "write"
+            }
+          ]
         }
       }
     ]
@@ -2746,7 +2830,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 1560,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -3494,7 +3578,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "persist-outcomes"
+            }
+          ]
         }
       }
     ]
@@ -3768,7 +3862,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "commit-time"
+            }
+          ]
         }
       }
     ]
@@ -4042,7 +4146,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "commit-time"
+            }
+          ]
         }
       }
     ]
@@ -4317,7 +4431,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "commit-time"
+            }
+          ]
         }
       }
     ]
@@ -4601,7 +4725,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 1560,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -5342,7 +5466,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "write"
+            }
+          ]
         }
       }
     ]
@@ -5608,7 +5742,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 1560,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -6544,7 +6678,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "write"
+            }
+          ]
         }
       }
     ]
@@ -6810,7 +6954,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 1560,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -7455,7 +7599,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "write"
+            }
+          ]
         }
       }
     ]
@@ -8618,7 +8772,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save-roll"
+            }
+          ]
         }
       }
     ]
@@ -9157,7 +9321,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "lyrical-review"
+            }
+          ]
         }
       }
     ]
@@ -9890,7 +10064,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -9972,7 +10152,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 600,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -10954,7 +11134,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "thread-update"
+            }
+          ]
         }
       }
     ]
@@ -11658,7 +11848,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -11757,7 +11953,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 1320,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -11803,6 +11999,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract observations and attributed witness claims only. Classification must remain observation or claim; a spoken assertion is not proof that it happened. Use stable clue IDs and exact quotes. Omit offscreen motives and hidden solution facts.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "hypotheses": {
@@ -12156,7 +12354,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save-evidence"
+            }
+          ]
         }
       }
     ]
@@ -12549,7 +12757,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 1560,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -12933,7 +13141,21 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "commit-clock"
+            }
+          ]
         }
       }
     ]
@@ -13015,7 +13237,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 600,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -13082,6 +13304,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract new observed landmarks/exits and explicitly suspected routes. Use stable location or directed edge IDs and exact source quotes. Classify actually traversed/observed connections as observation and suspected tunnels as interpretation. Never disclose an unvisited secret room.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "spatial-input": {
@@ -13430,7 +13654,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save-map"
+            }
+          ]
         }
       }
     ]
@@ -13512,7 +13746,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 600,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -14094,6 +14328,8 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract observed properties of the completed potion with exact quotes. Do not invent hidden mechanics or a free future experiment.",
               "schema": "",
               "patterns": [],
+              "caseSensitive": true,
+              "match": "substring",
               "maxTokens": 2048
             },
             "specialist": {
@@ -14691,7 +14927,17 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save"
+            }
+          ]
         }
       }
     ]
@@ -15301,7 +15547,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -15568,7 +15820,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -16171,7 +16429,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 4520,
               "y": 840,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -16588,7 +16846,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 4520,
               "y": 1800,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -17090,7 +17348,21 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "mara-save"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "elias-save"
+            }
+          ]
         }
       }
     ]
@@ -17768,7 +18040,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 2300,
               "y": 2040,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -18134,7 +18406,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 2300,
               "y": 2760,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -19134,7 +19406,21 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "mara-save"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "elias-save"
+            }
+          ]
         }
       }
     ]
@@ -19319,7 +19605,7 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
               "x": 80,
               "y": 1560,
               "w": 270,
-              "h": 160,
+              "h": 170,
               "profileId": null,
               "model": null,
               "modelRole": null,
@@ -19512,7 +19798,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -19773,7 +20065,13 @@ export const UNIFIED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.7
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]

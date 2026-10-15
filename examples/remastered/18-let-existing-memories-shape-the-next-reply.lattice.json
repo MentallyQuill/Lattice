@@ -561,6 +561,16 @@
       "x": 0,
       "y": 0,
       "zoom": 0.65
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      },
+      {
+        "instancePath": [],
+        "nodeId": "commit"
+      }
+    ]
   }
 }

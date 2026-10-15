@@ -159,7 +159,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -382,7 +388,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -607,7 +619,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -863,7 +881,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -1089,7 +1113,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -1374,7 +1404,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -1633,7 +1669,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -1930,7 +1972,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -2353,7 +2401,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -2830,7 +2884,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -3275,7 +3335,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -3690,7 +3756,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -4280,7 +4352,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -4714,7 +4792,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -5019,7 +5103,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -5243,7 +5333,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -5702,7 +5798,17 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save"
+            }
+          ]
         }
       }
     ]
@@ -6322,7 +6428,17 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "commit"
+            }
+          ]
         }
       }
     ]
@@ -7108,7 +7224,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -7849,7 +7971,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -8161,7 +8289,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -9261,7 +9395,17 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save"
+            }
+          ]
         }
       }
     ]
@@ -9626,7 +9770,17 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "commit-clock"
+            }
+          ]
         }
       }
     ]
@@ -10249,7 +10403,17 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "commit-clock"
+            }
+          ]
         }
       }
     ]
@@ -11504,7 +11668,17 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save"
+            }
+          ]
         }
       }
     ]
@@ -11962,7 +12136,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            }
+          ]
         }
       }
     ]
@@ -13635,7 +13815,17 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "outcome-commit"
+            }
+          ]
         }
       }
     ]
@@ -14947,7 +15137,17 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save"
+            }
+          ]
         }
       }
     ]
@@ -17647,7 +17847,21 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "rowan-save"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "iris-save"
+            }
+          ]
         }
       }
     ]
@@ -18878,7 +19092,17 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
             "x": 0,
             "y": 0,
             "zoom": 0.65
-          }
+          },
+          "runTargets": [
+            {
+              "instancePath": [],
+              "nodeId": "review"
+            },
+            {
+              "instancePath": [],
+              "nodeId": "save"
+            }
+          ]
         }
       }
     ]

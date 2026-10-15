@@ -7,7 +7,7 @@ import { resolveWorkflow } from '../src/workflow/resolve.js';
 const node = (id, operation, settings = {}) => ({ id, type: 'workflow', operation, ...settings });
 const wire = (id, from, to, toPort = 'in', fromPort = 'out') => ({ id, route: 'wire', from, fromPort, to, toPort });
 const graph = (mode = 'native-unified', nodes = {}, wires = {}) => ({ id: 'unified', schema: 3, runtime: 2, mode, nodes, wires, definitions: {}, portals: {} });
-const mixed = () => graph('native-unified', {
+const mixed = () => ({...graph('native-unified', {
     context: node('context', 'scene-context'), compact: node('compact', 'smart-compactor'),
     plan: node('plan', 'response-plan'), guidance: node('guidance', 'guidance'),
     reply: node('reply', 'reply-snapshot'), scan: node('scan', 'pattern'),
@@ -17,7 +17,7 @@ const mixed = () => graph('native-unified', {
     a: wire('a', 'context', 'compact'), b: wire('b', 'compact', 'plan'), c: wire('c', 'plan', 'guidance'),
     d: wire('d', 'reply', 'scan'), e: wire('e', 'scan', 'repair'), f: wire('f', 'repair', 'validated'),
     g: wire('g', 'validated', 'review'), h: wire('h', 'review', 'apply'),
-});
+}), runTargets:[{instancePath:[],nodeId:'apply'}]});
 
 test('unified schema3 roots admit mixed pre and post operations with per-node phases', () => {
     const g = mixed();
@@ -174,9 +174,9 @@ test('unified typed dependencies and cycles reject invalid authoring before clos
     const result = resolveWorkflow(guided, { target: { workflowId: guided.id, instancePath: [], nodeId: 'onward', portId: 'out' } });
     assert.equal(result.ok, true, JSON.stringify(result));
     assert.deepEqual(result.data.primitives.filter(unit => unit.included).map(unit => unit.node.id), ['plan', 'guide', 'onward']);
-    assert.equal(resolveWorkflow(guided).error.code, 'MISSING_TERMINAL', 'Guidance is composable and requires a final terminal in unified root plans');
+    assert.equal(resolveWorkflow(guided).error.code, 'MISSING_RUN_TARGETS', 'Guidance is composable and full unified root runs require enrolled outputs');
     guided.mode = 'native-pre'; delete guided.nodes.onward; delete guided.wires.b;
-    const legacy = resolveWorkflow(guided);
+    const legacy = resolveWorkflow(guided, {target:{kind:'terminal',address:{workflowId:guided.id,instancePath:[],nodeId:'guide'}}});
     assert.equal(legacy.ok, true);
     assert.deepEqual(catalog.portsForNode(guided, guided.nodes.guide).map(port => port.id), ['in']);
     assert.deepEqual(legacy.data.terminals.map(item => item.address.nodeId), ['guide']);

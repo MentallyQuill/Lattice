@@ -78,3 +78,11 @@ test('menu models preserve disabled Run and Recall reasons for visible accessibl
  assert.equal(recall.find(entry=>entry.command==='recall-queue-selected').reason,commands.selected.queueReason);
  assert.equal(recall.find(entry=>entry.command==='recall-cancel-all').reason,commands.all.cancelReason);
 });
+
+
+test('Workflow outputs lists address-qualified terminal choices even with no selected outputs',()=>{
+ const workflowOutputs=[{label:'First / Save',command:'workflow-output:first',checked:false,disabled:false},{label:'Second / Save',command:'workflow-output:second',checked:true,disabled:false}];
+ const menu=item({...base,workflowOutputs},'Workflow','workflow-outputs');
+ assert.ok(menu);assert.equal(menu.disabled,false);
+ assert.deepEqual(menu.children.map(row=>[row.label,row.command,row.checked,row.kind]),workflowOutputs.map(row=>[row.label,row.command,row.checked,'check']));
+});

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { FAMILIES, OPERATIONS, operationDefaults, operationFor, describeOperation, portsForNode, semanticControlsForNode } from '../src/workflow/catalog.js';
-import { validateGraphStructure } from '../src/workflow/contracts.js';
+import { validateGraphStructure, validateWorkflow } from '../src/workflow/contracts.js';
 import { describeExposedControl, computeDefinitionIdentity } from '../src/workflow/definition-data.js';
 import { validateDefinition } from '../src/workflow/graph-validation.js';
 
@@ -77,7 +77,15 @@ assert.equal(committed.data.descriptor.rootOnly, true);
 assert.equal(committed.data.descriptor.output, null);
 assert.deepEqual(committed.data.ports.map(port => port.id), ['proposal'], 'commit has no routable terminal output');
 const secondCommit = { ...commit, id: 'second' };
-assert.equal(validateGraphStructure(graph({ introspection: commit, second: secondCommit }, 'post')).error?.code, 'MULTIPLE_MEMORY_COMMITS');
+const multipleCommits = { ...graph({ introspection: commit, second: secondCommit, proposal: native('state', { id: 'proposal', phase: 'post', updates: {} }) }, 'unified', {
+    first: { id: 'first', route: 'wire', from: 'proposal', fromPort: 'out', to: 'introspection', toPort: 'proposal' },
+    second: { id: 'second', route: 'wire', from: 'proposal', fromPort: 'out', to: 'second', toPort: 'proposal' },
+}), runTargets: [{ instancePath: [], nodeId: 'introspection' }, { instancePath: [], nodeId: 'second' }] };
+multipleCommits.nodes.introspection.phase = 'post'; multipleCommits.nodes.second.phase = 'post';
+assert.equal(validateGraphStructure(multipleCommits).ok, true, 'multiple authoring commits remain structurally admissible');
+assert.equal(validateWorkflow(multipleCommits).error?.code, 'MULTIPLE_MEMORY_COMMITS', 'multiple selected commits remain unsafe');
+const singleCommit = { ...multipleCommits, runTargets: [{ instancePath: [], nodeId: 'introspection' }] };
+assert.equal(validateWorkflow(singleCommit).ok, true, 'an unenrolled sibling commit does not block the selected closure');
 
 const value = native('state', { updates: { trust: 0.25 }, min: -0.5, max: 0.75 });
 const valueMetadata = describeOperation(graph({ introspection: value }), value).data.descriptor;

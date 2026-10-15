@@ -68,10 +68,21 @@ export function boundedText(value, limit) {
 }
 export const errorResult = (code, message) => freeze({ ok: false, error: { code, message } });
 export const successResult = data => freeze({ ok: true, data });
-export function safeError(raw) {
+export function safeError(raw, inventory, fallbackAddress) {
     if (!plain(raw) || typeof own(raw, 'code') !== 'string' || typeof own(raw, 'message') !== 'string') return undefined;
     const code = boundedText(own(raw, 'code'), 128), message = boundedText(own(raw, 'message'), 2048);
-    return { code, message, ...(code !== own(raw, 'code') || message !== own(raw, 'message') ? { truncated: true } : {}) };
+    const result = { code, message, ...(code !== own(raw, 'code') || message !== own(raw, 'message') ? { truncated: true } : {}) };
+    const explicit = nodeAddress(own(raw, 'address')), fallback = nodeAddress(fallbackAddress);
+    const admitted = address => !inventory || [...inventory.units, ...inventory.hierarchy.filter(entry => entry.kind === 'instance')].some(entry => entry.included && addressKey(entry.address) === addressKey(address));
+    const address = explicit && admitted(explicit) ? explicit : fallback && admitted(fallback) ? fallback : null;
+    if (address) {
+        result.address = address; result.nodeId = address.nodeId;
+        const port = own(raw, 'inputPortId');
+        const entry = inventory && [...inventory.units, ...inventory.hierarchy].find(entry => entry.included && addressKey(entry.address) === addressKey(address));
+        // A foreign explicit cause cannot transfer its pin onto the executing fallback.
+        if ((!explicit || addressKey(explicit) === addressKey(address)) && typeof port === 'string' && port && (!inventory || entry?.inputPorts?.includes(port))) result.inputPortId = port;
+    }
+    return result;
 }
 /** Port state is mandatory metadata; bound its reason within each reserved recording row. */
 export function safePortState(raw) {
@@ -201,7 +212,9 @@ export function parseRunPlan(raw) {
         if (!plain(entry) || !address || address.workflowId !== workflowId || !['instance', 'primitive'].includes(kind)) return null;
         const parentRaw = own(entry, 'parent'), parent = parentRaw === undefined ? undefined : nodeAddress(parentRaw);
         if (parentRaw !== undefined && (!parent || parent.workflowId !== workflowId)) return null;
-        hierarchy.push({ address, kind, ...(parent ? { parent } : {}), included: own(entry, 'included') === true });
+        const inputPorts = own(entry, 'inputPorts');
+        if (inputPorts !== undefined && (!dense(inputPorts, 1000) || inputPorts.some(port => typeof port !== 'string' || !port))) return null;
+        hierarchy.push({ address, kind, ...(parent ? { parent } : {}), included: own(entry, 'included') === true, ...(inputPorts ? { inputPorts: [...inputPorts] } : {}) });
     }
     for (let i = 0; i < terminalData.length; i++) { const target = targetAddress(own(terminalData, String(i))); if (!target || target.kind !== 'terminal' || !identities.has(addressKey(target.address))) return null; terminals.push(target); }
     const result = { workflowId, phase, mode, units, hierarchy, terminals, callBound };

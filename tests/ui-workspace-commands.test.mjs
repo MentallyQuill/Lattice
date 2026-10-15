@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.4';
 import { prepareWorkspaceViews, projectEditorDraw } from '../src/ui/workspace-preparation.js';
 import { createGraphViewSession } from '../src/ui/graph-view-session.js';
 import { operationFor } from '../src/workflow/catalog.js';
@@ -33,7 +34,7 @@ function fixture(graph = siblingWorkflow()) {
     const session = createGraphViewSession({ root: graph, activationId: 'menu-commands', ...prepared.data }).data;
     const env = { current: graph, graphViews: session, workspacePrepared: { ...prepared.data, libraryDefinitions: graph.definitions }, editorDraw: projectEditorDraw(session.readEditor()),
         canvas: { selection: null, multi: new Set(), wireMulti: new Set() }, selected: null, selectedKind: null,
-        operationFor, isCommentFrame, readNodePresentation, groupMembers, definitionRefKey, prepareCreateFromSelection, captureRelocatedSubgraphViews, createCommentFrame, prepareCommentEdit, makeClip, makeDefinitionClip, readClip, prepareClipPaste, H, captureGraphEditContext, prepareQualifiedScopeEdit, editorCaptures: new WeakMap(), workspaceRevision: 0, isOpen: () => true, activeEditRoot: () => graph, readGraphEditContext: () => session.readEditContext(), graphDocumentHooks: {}, workbench: { focusCommentTitle() {}, update() {} }, persistGraphViews() {}, toast() {}, workflowState: { busy: false }, workflowRuntime: { getNativeWorkflowController: () => ({ activity: () => null }) } };
+        projectPreparedWorkflow, operationFor, isCommentFrame, readNodePresentation, groupMembers, definitionRefKey, prepareCreateFromSelection, captureRelocatedSubgraphViews, createCommentFrame, prepareCommentEdit, makeClip, makeDefinitionClip, readClip, prepareClipPaste, H, captureGraphEditContext, prepareQualifiedScopeEdit, editorCaptures: new WeakMap(), workspaceRevision: 0, isOpen: () => true, activeEditRoot: () => graph, readGraphEditContext: () => session.readEditContext(), graphDocumentHooks: {}, workbench: { focusCommentTitle() {}, update() {} }, persistGraphViews() {}, toast() {}, workflowState: { busy: false }, workflowRuntime: { getNativeWorkflowController: () => ({ activity: () => null }) } };
     const documentToken = Object.freeze({}); env.documentSession = { capture: () => documentToken };
     env.documentTransition = false; env.rootSystemWritable = actual('rootSystemWritable', env);
     env.canCreateSubgraph = actual('canCreateSubgraph', env);

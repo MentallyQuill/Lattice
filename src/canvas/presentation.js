@@ -58,7 +58,7 @@ function presentNodeCard(node, prepared, { selection, multi = new Set(), trace }
     return {
         id: node.id, type: node.type, x: node.x ?? 0, y: node.y ?? 0, w: node.w || 260,
         className: `pc-node pc-node-${node.type} pc-node-native pc-family-${prepared.family.toLowerCase()}`
-            + (prepared.readiness?.state === 'setup' ? ' pc-setup-required' : prepared.readiness?.state === 'input' ? ' pc-input-required' : '')
+            + (prepared.readiness?.state === 'setup' ? ' pc-setup-required' : '')
             + (node.enabled === false ? ' pc-off' : '')
             + (selection?.kind === 'node' && selection.id === node.id ? ' pc-selected' : '')
             + (multi.has(node.id) ? ' pc-multi' : '') + (tr ? ` pc-trace-${tr.status}` : '') + (compact ? ' pc-node-compact' : ''),

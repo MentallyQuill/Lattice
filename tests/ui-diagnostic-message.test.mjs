@@ -91,6 +91,16 @@ test('disabled Recall actions refer to visible setup and queue explanations with
     } finally { await f.close(); }
 });
 
+test('DiagnosticMessage never offers navigation to a truncated node prefix', async () => {
+    const prefix = 'n'.repeat(256), calls = [];
+    const f = await fixture('DiagnosticMessage', { issue: { code: 'MISSING_INPUT', address: { workflowId: 'flow', instancePath: [], nodeId: prefix + 'x' } }, reveal: value => calls.push(value) });
+    try {
+        assert.match(f.host.textContent, /connect/i);
+        assert.equal(f.host.querySelector('button'), null, 'oversized exact identity cannot reveal the existing 256-character decoy');
+        assert.deepEqual(calls, []);
+    } finally { await f.close(); }
+});
+
 test('Preview associates a disabled action with its existing explanation without repeating that explanation', async () => {
     const f = await fixture('OutputPreview', { view: preview({ runHere: { enabled: false, callBound: 1, reason: diagnostic.message } }), actions: { runHere() { assert.fail(); } } });
     try {
@@ -128,7 +138,7 @@ test('component issue inputs go through shared presentation and never render an 
         assert.equal(f.host.querySelector('button'), null);
     } finally { await f.close(); }
     const legacy = await fixture('OutputPreview', { view: preview({ diagnostics: undefined, review: null }) });
-    try { assert.equal(legacy.host.querySelectorAll('[data-diagnostic]').length, 1); assert.equal(legacy.host.querySelector('.pc-preview-empty'), null); }
+    try { assert.equal(legacy.host.querySelectorAll('[data-diagnostic]').length, 0); assert.ok(legacy.host.querySelector('.pc-preview-empty')); }
     finally { await legacy.close(); }
 });
 

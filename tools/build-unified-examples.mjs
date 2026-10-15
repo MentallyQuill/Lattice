@@ -1,3 +1,4 @@
+import { inspectExpandedGraph } from '../src/workflow/graph-validation.js';
 import {buildScopedStoryExamples} from './scoped-story-examples.mjs';
 import {buildStoryFlowExamples} from './story-flow-examples.mjs';
 import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definitions.js';
@@ -14,7 +15,7 @@ function recipe(id,title,goal,setup='Choose each auxiliary model’s local profi
  const add=(key,operation,settings={},column=0,row=0)=>{const node={...operationDefaults(operation,settings),profileId:null,id:key,type:'workflow',enabled:true,x:80+column*370,y:120+row*240,w:270,h:160,...settings};if(node.modelRole)graph.roles[node.modelRole]={model:null,profileId:null};graph.nodes[key]=node;return key;};
  const connect=(from,fromPort,to,toPort)=>{const id=`wire-${++wire}`;graph.wires[id]={id,route:'wire',from,fromPort,to,toPort};};
  add('send','on-send',{},0,0);add('generate','generate-reply',{},2,0);add('review','review-publish',{},7,0);connect('send','activation','generate','activation');
- return {id,title,goal,graph,add,connect,finish(draft='generate',port='draft'){connect(draft,port,'review','draft');for(const node of Object.values(graph.nodes)){const pins=portsForNode(graph,node);node.h=Math.max(160,70+Math.max(pins.filter(p=>p.direction==='input').length,pins.filter(p=>p.direction==='output').length)*25);}must(validateWorkflow(graph),title);const envelope=exportWorkflow(graph);must(validateWorkflow(must(parseWorkflow(JSON.stringify(envelope)),title)),title);entries.push({id:`unified-${id}`,number:1+entries.length,title,goal,packages:[envelope]});return envelope;}};
+ return {id,title,goal,graph,add,connect,finish(draft='generate',port='draft'){connect(draft,port,'review','draft');for(const node of Object.values(graph.nodes)){const pins=portsForNode(graph,node);node.h=Math.max(160,70+Math.max(pins.filter(p=>p.direction==='input').length,pins.filter(p=>p.direction==='output').length)*25);}graph.runTargets=must(inspectExpandedGraph(graph),title).primitives.filter(unit=>unit.terminal).map(unit=>({instancePath:unit.address.instancePath,nodeId:unit.address.nodeId}));must(validateWorkflow(graph),title);const envelope=exportWorkflow(graph);must(validateWorkflow(must(parseWorkflow(JSON.stringify(envelope)),title)),title);entries.push({id:`unified-${id}`,number:1+entries.length,title,goal,packages:[envelope]});return envelope;}};
 }
 function notes(r,{guidance,revision,instructions,title='Scene notes',enrichment}={}) {
  const {add,connect}=r;let source='generate',port='draft';
@@ -38,6 +39,7 @@ const journal=entries.at(-1).packages[0].graph;
 journal.nodes.file={...operationDefaults('read-file'),id:'file',type:'workflow',targetId:'scene-journal',enabled:true,x:80,y:1000,w:270,h:180};
 journal.nodes.write={...operationDefaults('write-file'),id:'write',type:'workflow',mode:'append',enabled:true,x:2300,y:1000,w:270,h:230};
 for(const [id,from,fromPort,to,toPort]of[['journal-ref','file','reference','write','reference'],['journal-text','notes','out','write','text']])journal.wires[id]={id,route:'wire',from,fromPort,to,toPort};
+journal.runTargets.push({instancePath:[],nodeId:'write'});
 entries.at(-1).packages=[exportWorkflow(journal)];must(validateWorkflow(journal),'Scene journal');
 function literal(r,id,value,col=0,row=3){r.add(id+'-text','text',{text:JSON.stringify(value)},col,row);r.add(id,'json-decode',{},col+1,row);r.connect(id+'-text','out',id,'in');return id;}
 function document(r,id,targetId,col=0,row=3){r.add(id+'-file','read-file',{targetId},col,row);r.add(id,'json-decode',{},col+1,row);r.connect(id+'-file','text',id,'in');return id;}

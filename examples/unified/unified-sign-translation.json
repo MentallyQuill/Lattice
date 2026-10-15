@@ -78,6 +78,8 @@
         "instructions": "Extract each literal sign, inscription or written phrase quoted in this scene, preserving original spelling.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "scene": {
@@ -231,6 +233,12 @@
       "x": 0,
       "y": 0,
       "zoom": 0.7
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      }
+    ]
   }
 }

@@ -1,4 +1,5 @@
 import { nodeDecorationElements, measureDecorationExtents } from './ui/node-decorations.js?v=0.27.4';
+import { projectRunDiagnostics, retainRunDiagnostics } from './ui/canvas-run-diagnostics.js?v=0.27.4';
 import { summarizeReadiness } from './ui/node-readiness.js?v=0.27.4';
 import { graphPoint, zoomAt, zoomTo, wheelFactor, zoomShortcutFactor } from './canvas/camera.js?v=0.27.4';
 import { createFrameScheduler } from './canvas/frame.js?v=0.27.4';
@@ -69,6 +70,7 @@ export class Canvas {
         this.spaceDown = false;
         this.geometry = createGeometryCache();
         this.recallStatus = {};
+        this.runDiagnostics = new Map();
         this.nodeProfiles = [];
         this.nodeProfileVersion = 0;
         this.decorationExtents = new Map(); this.decorationElements = new Set();
@@ -210,6 +212,7 @@ export class Canvas {
         this.geometryScopeKey = geometryScopeKey;
         this.legacyScopeKey = legacyScopeKey;
         this.nodeProfiles = []; this.nodeProfileVersion++; this.decorationExtents.clear();
+        this.runDiagnostics = new Map(); this.layer.setRunDiagnostics(this.runDiagnostics);
         this.graph = graph; this.selection = null; this.multi.clear();
         if (scope?.workflowId && this.nativeSelectionRoot !== scope.workflowId) this.wireSelections.clear();
         this.nativeSelectionRoot = scope?.workflowId ?? this.nativeSelectionRoot;
@@ -219,6 +222,13 @@ export class Canvas {
     }
 
     /** Runtime display only: never prepare a graph, cancel a gesture or measure geometry. */
+    setRunDiagnostics(value) {
+        const scope = this.hooks.nativeScope?.() ?? {workflowId:this.graph?.id,instancePath:[]};
+        const next = retainRunDiagnostics(projectRunDiagnostics(value, scope, this.graph?.nativeCards), this.runDiagnostics);
+        if (next === this.runDiagnostics) return;
+        this.runDiagnostics = next; this.layer.setRunDiagnostics(next);
+    }
+
     setRecallStatus(status) { this.recallStatus = status; this.layer.setRecallStatus(status); }
 
     setTrace(trace) {

@@ -38,6 +38,7 @@ test('Branch routes only its selected output and skips an unbound model without 
         model: node('model', 'repair'), planned: node('planned', 'validate-patches'), selected: node('selected', 'apply-reply'),
         fallback: node('fallback', 'repair', { mode: 'scan' }), checked: node('checked', 'validate-patches'), final: node('final', 'apply-reply'),
     }, [wire('a', 'json', 'out', 'data', 'in'), wire('b', 'data', 'out', 'condition', 'in'), wire('c', 'condition', 'out', 'branch', 'condition'), wire('d', 'source', 'out', 'branch', 'in'), wire('e', 'branch', 'yes', 'model', 'in'), wire('f', 'model', 'out', 'planned', 'in'), wire('g', 'branch', 'no', 'fallback', 'in'), wire('h', 'fallback', 'out', 'checked', 'in'), wire('i', 'checked', 'out', 'final', 'in'), wire('j', 'planned', 'out', 'selected', 'in')]);
+    root.runTargets=['selected','final'].map(nodeId=>({instancePath:[],nodeId}));
     for (const mode of ['native-unified']) {
         let bindings = 0, requests = 0;
         const result = await runWorkflow({ ...root, mode }, { snapshot: () => ({ kind: 'draft', text: 'An ordinary scene.', spans: [], source: { originalText: 'An ordinary scene.' } }), countTokens: async () => ({ tokens: 8 }), resolveBinding: () => { bindings++; return { ok: false, error: { code: 'PROFILE_MISSING', message: 'Missing' } }; }, request: () => { requests++; } });

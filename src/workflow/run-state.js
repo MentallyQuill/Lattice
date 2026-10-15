@@ -49,7 +49,7 @@ export function reduceRunState(previous, raw) {
             if (previous.status === 'empty') return previous;
             next.status = 'cancelling';
             nodes = nodes.map(node => node.status === 'running' ? { ...node, status: 'cancelling', subphase: 'cancelling' } : node);
-            const error = safeError(own(raw, 'reason')); if (error) next.error = error;
+            const error = safeError(own(raw, 'reason'), previous.plan ?? {units:[],hierarchy:[]}); if (error) next.error = error;
         } else if (type === 'run-settled') {
             const status = own(raw, 'status'); if (!['completed', 'unresolved', 'failed', 'cancelled', 'invalid', 'stale'].includes(status)) return previous;
             if (previous.status === 'empty' && !['invalid', 'cancelled', 'stale'].includes(status)) return previous;
@@ -61,7 +61,10 @@ export function reduceRunState(previous, raw) {
                 if (!node.included || terminal(node.status) || node.status === 'blocked' || node.status === 'not-run') return node;
                 return settleNode(node, status === 'completed' ? (active(node) ? 'completed' : 'not-run') : status, elapsedMs);
             });
-            const error = safeError(own(raw, 'error')); if (error) next.error = error;
+            const error = safeError(own(raw, 'error'), previous.plan ?? {units:[],hierarchy:[]}, failedAddress); if (error) {
+                next.error = error;
+                if (status === 'failed' && error.address) nodes = nodes.map(node => addressKey(node.address) === addressKey(error.address) ? { ...node, error } : node);
+            }
         } else {
             if (!previous.plan) return previous;
             const address = nodeAddress(own(raw, 'address')); if (!address) return previous;
@@ -92,13 +95,13 @@ export function reduceRunState(previous, raw) {
                 node.request = { ...node.request, status, durationMs };
                 const finish = own(raw, 'finish'); if (typeof finish === 'string' || finish === null) node.request.finish = boundedText(finish, 128) ?? null;
                 const usage = safeUsage(own(raw, 'usage')); if (usage !== undefined) node.request.usage = usage;
-                const error = safeError(own(raw, 'error')); if (error) node.request.error = error;
+                const error = safeError(own(raw, 'error'), previous.plan, address); if (error) node.request.error = error;
                 node.subphase = 'executing';
             } else if (type === 'node-settled') {
                 const status = own(raw, 'status'); if (!['completed', 'skipped', 'unresolved', 'failed', 'cancelled'].includes(status) || (node.status !== 'running' && !(status === 'failed' && node.subphase === 'binding') && !(['skipped','unresolved'].includes(status)&&untouched(node)&&node.dependencies.every(dependency=>nodes.some(item=>addressKey(item.address)===addressKey(dependency)&&['completed','skipped','unresolved'].includes(item.status)))))) return previous;
                 node = settleNode(node, status, elapsedMs);
                 const reason = safeError(own(raw,'reason')); if(reason) node.reason = reason;
-                const error = safeError(own(raw, 'error')); if (error) node.error = error;
+                const error = safeError(own(raw, 'error'), previous.plan, address); if (error) node.error = error;
                 if (status === 'failed') nodes = failNodes(nodes, address, elapsedMs);
             } else return previous;
             nodes = nodes.slice(); nodes[index] = node;

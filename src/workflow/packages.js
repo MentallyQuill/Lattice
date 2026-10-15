@@ -1,3 +1,4 @@
+import { workflowRunTargets } from './run-targets.js?v=0.27.4';
 import { inspectDefinitionGraph } from './graph-validation.js?v=0.27.4';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.4';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.4';
@@ -73,7 +74,7 @@ function portableProjection(snapshots) {
     return context;
 }
 function portableNativeDocument(graph, context) {
-    const copy = pick(graph, ['id', 'name', 'description', 'schema', 'runtime', 'mode', 'nodes', 'wires', 'groups', 'roles', 'portals', 'definitions', 'template', 'view', 'createdAt', 'updatedAt']);
+    const copy = pick(graph, ['id', 'name', 'description', 'schema', 'runtime', 'mode', 'nodes', 'wires', 'groups', 'roles', 'portals', 'definitions', 'template', 'view', 'createdAt', 'updatedAt', 'runTargets']);
     copy.nodes = Object.fromEntries(Object.entries(graph.nodes).map(([id, node]) => [id, pick(node, [
         'id', 'type', 'operation', 'operationVersion', 'modifiers', 'title', 'enabled', 'x', 'y', 'w', 'h', 'width', 'height', 'collapsed', 'compact', 'inGroup', 'color',
         'profileId', 'model', 'modelRole', 'artifactKind', 'phase', 'alias', ...(node.type === 'note' ? ['content', 'commentFrame', 'moveContents'] : []),
@@ -127,6 +128,8 @@ export function exportWorkflow(graph) {
     const structure = validateGraphStructure(graph);
     if (!structure.ok) throw new Error(structure.error.message);
     const portable = portableGraph(graph);
+    const targets = workflowRunTargets(graph); if (!targets.ok) throw new Error(targets.error.message);
+    portable.runTargets = targets.data;
     const validation = validateGraphStructure(portable);
     if (!validation.ok) throw new Error(validation.error.message);
     const envelope = { kind: 'lattice-workflow', schema: 2, minRuntime: 2, graph: portable };
@@ -137,6 +140,7 @@ export function exportWorkflow(graph) {
 export function parseWorkflow(json) {
     const parsed = parseWorkflowFragment(json);
     if (parsed.ok && parsed.data.mode !== 'native-unified') return fail('WRONG_PHASE', 'Root workflow imports require a unified workflow. Retired originals are recovery data only.');
+    if (parsed.ok) { const targets=workflowRunTargets(parsed.data); if(!targets.ok)return targets; parsed.data.runTargets=targets.data; }
     return parsed;
 }
 /** Clipboard fragments from pinned stage bodies carry no root execution authority. */

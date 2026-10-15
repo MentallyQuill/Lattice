@@ -10,7 +10,7 @@ import { graphPoint } from '../src/canvas/camera.js';
 import * as history from '../src/history.js?v=0.27.4';
 const api = await import('../src/ui/native-wire-bridge.js').catch(() => ({}));
 let rootSequence = 0;
-const fixture = () => ({ id: 'bridge-root-' + ++rootSequence, schema: 3, runtime: 2, mode: 'native-unified', nodes: {
+const fixture = () => ({ id: 'bridge-root-' + ++rootSequence, schema: 3, runtime: 2, mode: 'native-unified', runTargets: [], nodes: {
     source: { id: 'source', type: 'workflow', operation: 'scene-context' }, alternate: { id: 'alternate', type: 'workflow', operation: 'scene-context' },
     first: { id: 'first', type: 'workflow', operation: 'smart-compactor' }, second: { id: 'second', type: 'workflow', operation: 'smart-compactor' },
 }, wires: {}, portals: {}, definitions: {}, groups: {} });

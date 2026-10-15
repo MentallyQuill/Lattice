@@ -15,7 +15,7 @@ const endpoint = (nodeId, portId = 'out') => ({ nodeId, portId });
 const wire = (id, from, to, extra = {}) => ({ id, route: 'wire', from, fromPort: 'out', to, toPort: 'in', ...extra });
 const node = (id, operation = 'smart-compactor') => ({ id, type: 'workflow', operation });
 function fixture() {
-    return { id: 'connection-root', schema: 3, runtime: 2, mode: 'native-pre', nodes: {
+    return { id: 'connection-root', schema: 3, runtime: 2, mode: 'native-pre', runTargets: [], nodes: {
         source: node('source', 'scene-context'), alternate: node('alternate', 'scene-context'),
         first: node('first'), second: node('second'), third: node('third'),
     }, wires: { incoming: wire('incoming', 'source', 'first', { order: 7, kind: 'append' }) }, portals: {}, definitions: {}, groups: {} };
@@ -282,7 +282,7 @@ function nestedFixture() {
     const leaf = finalize({ id: 'leaf', version: 1, name: 'Leaf', interface: [
         { id: 'input', label: 'Input', direction: 'input', kind: 'context', required: true, cardinality: 'one', boundaryNodeId: 'entry' },
         { id: 'output', label: 'Output', direction: 'output', kind: 'context', required: false, cardinality: 'one', boundaryNodeId: 'exit' },
-    ], parameters: [], body: { schema: 3, runtime: 2, mode: 'native-pre', nodes: {
+    ], parameters: [], body: { schema: 3, runtime: 2, mode: 'native-pre', runTargets: [], nodes: {
         entry: { id: 'entry', type: 'subgraph-input', interfacePortId: 'input' }, work: node('work'), exit: { id: 'exit', type: 'subgraph-output', interfacePortId: 'output' },
     }, wires: { first: wire('first', 'entry', 'work'), second: wire('second', 'work', 'exit') } } });
     const outerDraft = structuredClone(leaf); outerDraft.id = 'outer'; outerDraft.body.nodes.work = instance('work', leaf);

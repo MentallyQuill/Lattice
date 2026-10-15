@@ -466,3 +466,17 @@ test('creation and editing project the same labels and input grammar', async () 
  assert.equal(created.find(control=>control.key==='sections').inputSpec.storage,'json-value');
  session.cancel(opened.view.key); await opened.result;
 });
+
+test('Run to Here remains attemptable for incomplete selected input and disabled for native generation',async()=>{
+ const {operationDefaults}=await import('../src/workflow/catalog.js');
+ const make=(id,operation)=>({id,type:'workflow',...operationDefaults(operation),phase:'pre'});
+ const root={id:'preview-attempt-policy',schema:3,runtime:2,mode:'native-unified',runTargets:[],nodes:{draft:make('draft','guidance'),generate:make('generate','generate-reply')},wires:{},groups:{},definitions:{}};
+ const prepared=api.prepareWorkspaceViews(root);assert.equal(prepared.ok,true,JSON.stringify(prepared));
+ const session=createGraphViewSession({root,activationId:'preview-attempt-policy',...prepared.data}).data;
+ for(const [nodeId,enabled] of [['draft',true],['generate',false]]) {
+  const target={workflowId:root.id,instancePath:[],nodeId,portId:nodeId==='generate'?'draft':'out'};
+  const workflow=projectPreparedWorkflow(prepared.data.workflow,{selectedId:nodeId,selectedTarget:target});
+  const panels=api.projectWorkspacePanels(session.readEditor(),workflow,{},'policy',target,null);
+  assert.equal(panels.outputPreview.runHere.enabled,enabled,nodeId);
+ }
+});

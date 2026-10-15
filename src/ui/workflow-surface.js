@@ -1,17 +1,19 @@
+import { projectCurrentDiagnostics } from './current-diagnostics.js?v=0.27.4';
 import { prepareGraphArtifacts } from '../workflow/graph-artifacts.js?v=0.27.4';
-import { prepareWorkflowPlanner, preparedWorkflowExpansion } from '../workflow/resolve.js?v=0.27.4';
+import { prepareWorkflowAttempt, prepareWorkflowPlanner, preparedWorkflowExpansion } from '../workflow/resolve.js?v=0.27.4';
 import { cloneWorkflowDocument } from '../workflow/document.js?v=0.27.4';
 import { sha256Text } from '../workflow/definition-data.js?v=0.27.4';
 import { prepareCompositionViews } from '../workflow/composition-views.js?v=0.27.4';
 import { createRunState, reduceRunState, projectRunRows } from '../workflow/run-state.js?v=0.27.4';
 import { projectRecordedPreview } from './recorded-preview.js?v=0.27.4';
-import { addressKey, nodeAddress, targetAddress, own, plain, safeBinding, safeError, expandRecordAddress, freeze } from '../workflow/record-data.js?v=0.27.4';
+import { addressKey, nodeAddress, targetAddress, own, plain, dense, safeBinding, safeError, expandRecordAddress, freeze } from '../workflow/record-data.js?v=0.27.4';
 import { workflowSignature } from '../workflow/runtime.js?v=0.27.4';
 import { FAMILIES, OPERATIONS, operationFor, phaseForNode } from '../workflow/catalog.js?v=0.27.4';
 import { safeWorkflowData } from '../workflow/contracts.js?v=0.27.4';
 import { readNodePresentation } from './node-palette.js?v=0.27.4';
 import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.27.4';
 import { presentDiagnostic, presentDiagnostics, diagnosticText } from './diagnostics.js?v=0.27.4';
+const plainMetadata = value => { try { return plain(value) && Object.values(Object.getOwnPropertyDescriptors(value)).every(descriptor => 'value' in descriptor); } catch { return false; } };
 const descriptions = { Input: 'Bring material into a workflow.', Shaping: 'Change the plan or amount of material.', Surface: 'Refine expression.', Transpose: 'Apply a reference’s qualities.', Derive: 'Extract findings from a source.', Introspection: 'Reflect on experience, context and actor state.', Output: 'Inspect or commit an artifact.' };
 export const QUOTE_SCOPE_HELP = 'Dialogue is text inside paired ASCII double quotes (") or paired curly double quotes (“…”). Narration is text outside those paired quotes, excluding the quote delimiters. Apostrophes and single quotes are ordinary text.';
 // Content/host preparation owns expensive work. Selection projects cached plain data.
@@ -113,8 +115,8 @@ export function prepareWorkflowProjection(root, { planner, profiles = [], active
             boundDiagnostics.set(addressKey(unit.address), presentDiagnostic({ ...resolution?.error, message: issue, address: unit.address }, { operation: unit.node.operation, nodeTitle: readNodePresentation(unit.node).alias || unit.node.title || operationFor(unit.node)?.title }));
         }
     }
-    const withBindings = summary => {
-        const safe = summaryView(summary), issues = [...safe.issues], diagnostics = [...safe.diagnostics];
+    const withBindings = (summary, target) => {
+        const policy = planner.policy(target), safe = { ...summaryView(summary), ...(policy.ok ? policy.data : {}), attemptable: policy.ok && (target === undefined || !policy.data.requiresNativeGeneration) }, issues = [...safe.issues], diagnostics = [...safe.diagnostics];
         for (const address of safe.requiredBindingAddresses) if (boundIssues.has(addressKey(address))) { issues.push(boundIssues.get(addressKey(address))); diagnostics.push(boundDiagnostics.get(addressKey(address))); }
         return freeze({ ...safe, issues: [...new Set(issues)], diagnostics });
     };
@@ -173,7 +175,7 @@ export function prepareWorkflowProjection(root, { planner, profiles = [], active
         handles.set(handle.handleId, freeze({ handle, issue: freshness?.ok === false ? diagnosticText(freshness.error) : '', diagnostic: freshness?.ok === false ? presentDiagnostic(freshness.error) : null, persistOnly: freshness?.ok === true && freshness.persistOnly === true }));
     }
     projections.set(token, { base: freeze({ ...baseWorkflowView(graph, profiles, settings, activeModel), workflowData, reviewTerminals }), rootSummary, summaries, targetInventory, summarize: target => {
-        const summary = withBindings(planner.summarize(target));
+        const summary = withBindings(planner.summarize(target),target);
         if (!summary.requiresNativeGeneration) return summary;
         const manual = presentDiagnostic({ code: 'MANUAL_NATIVE_TRIGGER_REQUIRED', message: 'This step starts when you send a message. Enable Lattice, then send a message in SillyTavern to run this workflow.' });
         return freeze({ ...summary, issues: [...summary.issues, manual.message], diagnostics: [...summary.diagnostics, manual] });
@@ -259,15 +261,22 @@ function boundedResult(raw, handles) {
 export function createWorkflowSession({ runtime, current, epoch, rootCurrent = current, runEpoch = epoch, documentToken, active, changed }) {
     let result = null, recording = null, runState = null, preparationError = null, reviewHandles = [], availability = 'current';
     let busy = false, status = '', applyIssue = '', applyDiagnostic = null, generation = 0, invocation = null;
+    let diagnosticAttempt = null, diagnosticCache = null;
+    const retiredAutomatic = new WeakSet();
     let ignoredAutomatic = new WeakSet(), displayedAutomatic = null, documentOwner = documentToken?.();
-    const publish = () => changed({ result, recording, runState, preparationError, reviewHandles, availability, busy, status, applyIssue, applyDiagnostic: applyIssue ? applyDiagnostic : null });
+    const currentDiagnostics = (documentKey = String(documentOwner ?? rootCurrent()?.id ?? '')) => {
+        if (!diagnosticAttempt || !active() || diagnosticAttempt.graph !== rootCurrent() || diagnosticAttempt.epoch !== runEpoch() || diagnosticAttempt.documentOwner !== documentToken?.() || diagnosticAttempt.serial !== generation) return null;
+        if (diagnosticCache?.documentKey === documentKey) return diagnosticCache;
+        diagnosticCache = projectCurrentDiagnostics({ ...diagnosticAttempt, documentKey }); return diagnosticCache;
+    };
+    const publish = () => changed({ currentDiagnostics: currentDiagnostics(), result, recording, runState, preparationError, reviewHandles, availability, busy, status, applyIssue, applyDiagnostic: applyIssue ? applyDiagnostic : null });
     const rootOwned = transaction => active() && rootCurrent() === transaction.graph && generation === transaction.serial && (!documentToken || documentToken() === transaction.documentOwner);
     const valid = transaction => rootOwned(transaction) && runEpoch() === transaction.epoch && !transaction.cancelled;
     const settledValid = transaction => valid(transaction) && workflowSignature(transaction.graph) === transaction.revision;
     function syncDocument() {
         const next = documentToken?.();
         if (next === documentOwner) return;
-        documentOwner = next; generation++; invocation = null;
+        documentOwner = next; diagnosticAttempt = null; diagnosticCache = null; generation++; invocation = null;
         result = null; recording = null; runState = null; preparationError = null; reviewHandles = [];
         availability = 'current'; busy = false; status = ''; applyIssue = '';
         displayedAutomatic = null; ignoredAutomatic = new WeakSet(); publish();
@@ -277,7 +286,11 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
         if (result?.recording) result = boundedResult(result, reviewHandles);
     }
     function adopt(response, cancelled = false, revision) {
-        preparationError = null;
+        preparationError = null; diagnosticAttempt = null; diagnosticCache = null;
+        if (!cancelled) {
+            const graph = rootCurrent(), selected = !response.recording ? prepareWorkflowAttempt(graph, invocation?.target === undefined ? {} : {target:invocation.target}) : null;
+            diagnosticAttempt = {graph,epoch:runEpoch(),documentOwner,serial:generation,attemptId:response.runId ?? 'attempt-'+generation,recording:response.recording,plan:selected?.ok?selected.data.selection:undefined,error:response.error};
+        }
         if (response.recording) {
             recording = response.recording;
             rememberRecordingRevision(recording, revision);
@@ -311,16 +324,46 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
     }
     return {
         result: () => result,
+        currentDiagnostics,
         syncDocument,
         receiveAutomatic(record) {
             syncDocument();
-            const graph = rootCurrent(), origin = record?.origin;
-            if (!active() || !record?.result || !origin || (documentToken && origin.documentToken !== documentOwner) || origin.kind !== 'send' || origin.phase !== 'unified' || graph?.mode !== 'native-unified' || origin.graph !== graph || origin.graphId !== graph.id || origin.signature !== workflowSignature(graph) || ignoredAutomatic.has(record) || displayedAutomatic === record) return;
+            const graph = rootCurrent(), origin = own(record,'origin'), incoming = own(record,'result');
+            if(!plainMetadata(record)||!plainMetadata(origin)||!plainMetadata(incoming))return;
+            if (!active() || !record?.result || !origin || (documentToken && origin.documentToken !== documentOwner) || origin.kind !== 'send' || origin.phase !== 'unified' || graph?.mode !== 'native-unified' || origin.graph !== graph || origin.graphId !== graph.id || origin.signature !== workflowSignature(graph) || ignoredAutomatic.has(record) || retiredAutomatic.has(record) || displayedAutomatic === record) return;
             if (busy) { ignoredAutomatic.add(record); return; }
+            // Real controllers identify their one latest attempt, including recorded failures.
+            // Lightweight historical view adapters without this API still retire replaced records.
+            const controller=runtime();
+            if(typeof controller?.lastAutomaticResult==='function' && controller.lastAutomaticResult()!==record)return;
             // A payload-free superseded Send cannot replace the one retained diagnostic.
-            const received = record.result.recording;
-            if (!received || record.result.mode !== 'root' || typeof origin.runId !== 'string' || !origin.runId || origin.runId !== record.result.runId || origin.runId !== received.runId || received.plan?.mode !== 'root' || received.plan?.phase !== origin.phase || received.identities?.strings?.[received.plan?.workflowId] !== graph.id) return;
+            const received = own(incoming,'recording');
+            if(received!==undefined && !plainMetadata(received))return;
+            if(received && own(received,'plan')===null) {
+                // No selected inventory exists: only the exact latest host attempt can publish a global error.
+                if(controller?.lastAutomaticResult?.()!==record || own(incoming,'ok')!==false || own(incoming,'mode')!=='root' || typeof origin.runId!=='string' || !origin.runId || own(incoming,'runId')!==origin.runId || own(received,'runId')!==origin.runId || own(received,'status')!=='invalid' || own(received,'version')!==1 || own(incoming,'actualCalls')!==0)return;
+                const identities=own(received,'identities'), paths=own(identities,'paths');
+                if(!plainMetadata(identities)||!dense(own(identities,'strings'),0)||!dense(own(identities,'addresses'),0)||!dense(paths,1)||paths.length!==1||own(paths,'0')!==null||!['units','hierarchy','terminals','artifacts'].every(key=>dense(own(received,key),0)))return;
+                const admission=prepareWorkflowAttempt(graph);
+                if(admission.ok)return;
+                const emptyInventory={units:[],hierarchy:[]}, error=safeError(admission.error,emptyInventory);
+                if(!error || safeError(own(incoming,'error'),emptyInventory)?.code!==error.code || safeError(own(received,'error'),emptyInventory)?.code!==error.code)return;
+                if(displayedAutomatic)retiredAutomatic.add(displayedAutomatic);
+                generation++; invocation=null; displayedAutomatic=record;
+                adopt({schema:3,runtime:2,mode:'root',runId:origin.runId,ok:false,actualCalls:0,callBound:0,error},false,origin.signature);
+                applyIssue='';publish();return;
+            }
+            if (!received) {
+                // A record-free envelope is trusted only as this exact controller's latest attempt.
+                // Selection is rebuilt from the admitted current root; payload location remains untrusted.
+                if (runtime()?.lastAutomaticResult?.() !== record || record.result.ok !== false || record.result.mode !== 'root' || typeof origin.runId !== 'string' || !origin.runId || record.result.runId !== origin.runId) return;
+                if(displayedAutomatic)retiredAutomatic.add(displayedAutomatic);
+                generation++; invocation = null; displayedAutomatic = record; adopt(record.result, false, origin.signature); applyIssue = '';
+                status = diagnosticText(record.result.error || {code:'PREPARATION_FAILED',message:'Workflow preparation failed.'}); publish(); return;
+            }
+            if (record.result.mode !== 'root' || typeof origin.runId !== 'string' || !origin.runId || origin.runId !== record.result.runId || origin.runId !== received.runId || received.plan?.mode !== 'root' || received.plan?.phase !== origin.phase || received.identities?.strings?.[received.plan?.workflowId] !== graph.id) return;
             if (availability !== 'current' && recording?.runId === record.result.recording.runId) return;
+            if(displayedAutomatic)retiredAutomatic.add(displayedAutomatic);
             generation++; invocation = null; displayedAutomatic = record; adopt(record.result, false, origin.signature); applyIssue = '';
             status = `Automatic Send · unified workflow · "${origin.graphName || graph.name}". ${result?.ok ? 'Review the result.' : diagnosticText(record.result.error || { code: 'WORKFLOW_FAILED', message: 'Run failed.' })}`; publish();
         },
@@ -342,7 +385,7 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
             const controller = runtime(), previous = controller?.lastAutomaticResult?.();
             if (previous?.origin.graph === rootCurrent()) ignoredAutomatic.add(previous);
             displayedAutomatic = null;
-            const transaction = capture();
+            const transaction = capture(); transaction.target = options.target; diagnosticAttempt = null; diagnosticCache = null;
             if (recording) { clearAuthority(); availability = 'superseded'; } else result = null;
             runState = null; preparationError = null; busy = true; status = ''; applyIssue = ''; publish();
             try {
@@ -395,6 +438,8 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
             finally { if (valid(transaction)) { busy = false; invocation = null; publish(); } }
         },
         cancel(reason = 'Workflow view closed') {
+            if(displayedAutomatic)retiredAutomatic.add(displayedAutomatic);
+            diagnosticAttempt = null; diagnosticCache = null; preparationError = null;
             // Host publishes the recording barrier synchronously while this observer still owns the invocation.
             runtime()?.cancel(reason);
             if (invocation) invocation.cancelled = true;
@@ -403,6 +448,8 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
             availability = recording ? 'stale' : 'current'; busy = false; status = ''; applyIssue = ''; publish();
         },
         invalidate(reason = 'Workflow changed') {
+            if(displayedAutomatic)retiredAutomatic.add(displayedAutomatic);
+            diagnosticAttempt = null; diagnosticCache = null; preparationError = null;
             runtime()?.cancel(reason); generation++; invocation = null; clearAuthority();
             if (!recording) result = null;
             availability = recording ? 'stale' : 'current'; busy = false; status = ''; applyIssue = ''; publish();

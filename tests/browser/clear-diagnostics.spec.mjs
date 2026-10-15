@@ -16,26 +16,22 @@ async function openNativePreview(page) {
 for (const width of [1440, 320]) test(`native preview explains how to start without a model request at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 1000 });
     const preview = await openNativePreview(page);
-    const diagnostic = preview.locator('[data-diagnostic]');
-    await expect(diagnostic).toHaveCount(1);
-    await expect(diagnostic).toHaveAttribute('data-severity', 'info');
-    await expect(diagnostic.locator('p').first()).toContainText('Enable Lattice');
-    await expect(diagnostic.locator('p').first()).toContainText('send a message in SillyTavern');
-    await expect(preview.locator('.pc-preview-empty')).toHaveCount(0);
+    await expect(preview.locator('[data-diagnostic]')).toHaveCount(0);
+    await expect(preview.locator('.pc-preview-empty')).toContainText('has not run yet');
+    const instruction = preview.locator('footer .pc-preview-note');
+    await expect(instruction).toContainText('Enable Lattice');
+    await expect(instruction).toContainText('send a message in SillyTavern');
     const run = preview.locator('[data-run-here]');
     await expect(run).toBeDisabled();
     await expect(run).toHaveAccessibleDescription(/send a message in SillyTavern/i);
-    await expect(preview.locator('footer')).not.toContainText('send a message');
-
-    const technical = diagnostic.locator('details');
-    await expect(technical).not.toHaveAttribute('open', '');
-    await technical.locator('summary').focus();
-    await page.keyboard.press('Enter');
-    await expect(technical).toHaveAttribute('open', '');
-    await expect(technical.locator('code')).toHaveText('MANUAL_NATIVE_TRIGGER_REQUIRED');
-    await page.keyboard.press('Enter');
-    await expect(technical).not.toHaveAttribute('open', '');
-    await diagnostic.getByRole('button', { name: 'Show node', exact: true }).click();
+    const policyCodes = await page.evaluate(async () => {
+        const h = window.canvasHarness;
+        const { prepareWorkspaceViews } = await import('/src/ui/workspace-preparation.js?v=' + h.version);
+        const { projectPreparedWorkflow } = await import('/src/ui/workflow-surface.js?v=' + h.version);
+        const prepared = prepareWorkspaceViews(h.graph).data;
+        return projectPreparedWorkflow(prepared.workflow, { selectedId: 'generate-reply', selectedTarget: { workflowId: h.graph.id, instancePath: [], nodeId: 'generate-reply', portId: 'draft' } }).targetSummary.diagnostics.map(item => item.technical?.code);
+    });
+    expect(policyCodes).toContain('MANUAL_NATIVE_TRIGGER_REQUIRED');
     await expect(page.locator('.pc-node-native[data-id="generate-reply"]')).toHaveClass(/selected/);
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
@@ -43,7 +39,7 @@ for (const width of [1440, 320]) test(`native preview explains how to start with
     await preview.screenshot({ path: testInfo.outputPath(`clear-preview-${width}.png`) });
 
     await page.getByRole('switch', { name: 'Enable Lattice', exact: true }).check();
-    await expect(diagnostic.locator('p').first()).toHaveText('Send a message in SillyTavern to run this workflow.');
+    await expect(instruction).toHaveText('Send a message in SillyTavern to run this workflow.');
     await expect(run).toBeDisabled();
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
 });

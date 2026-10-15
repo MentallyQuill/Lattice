@@ -34,6 +34,7 @@ function selectFragment(source, expansion, selection, path, snapshots) {
     const fragment = { ...structuredClone(source), mode: effective.mode, nodes: {}, wires: {}, groups: {}, portals: {}, roles: {}, definitions: {} };
     // Source admission checked private ownership; portable selections carry no authority.
     delete fragment.localDefinitionOwners;
+    fragment.runTargets = [];
     const pool = { ...structuredClone(source), definitions: structuredClone(snapshots) }, ids = compositionIds(pool);
     for (const id of nodes) {
         const node = structuredClone(effective.nodes[id]); fragment.nodes[id] = node; delete node.localCopy;

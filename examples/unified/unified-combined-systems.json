@@ -2371,6 +2371,30 @@
       "x": 0,
       "y": 0,
       "zoom": 0.65
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      },
+      {
+        "instancePath": [
+          "wand"
+        ],
+        "nodeId": "wand-outcome-commit"
+      },
+      {
+        "instancePath": [
+          "weather"
+        ],
+        "nodeId": "weather-commit-clock"
+      },
+      {
+        "instancePath": [
+          "relationship"
+        ],
+        "nodeId": "relationship-save"
+      }
+    ]
   }
 }

@@ -106,7 +106,7 @@
         {#if row.model}
             <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard focus exposes the complete truncated model identifier.) -->
             <div class="node-model-meta" title={row.model} tabindex="0" role="note" aria-label={`Model: ${row.model}`}>{row.model}</div>{/if}
-        {#if row.readiness && row.readiness.state !== 'ready'}
+        {#if row.readiness?.state === 'setup'}
             <button type="button" class="pc-node-readiness" data-readiness={row.readiness.state} title={`${row.readiness.label}: ${row.readiness.description}`} aria-label={`${row.readiness.label}: ${row.readiness.description}`} aria-describedby={`${row.id}-readiness-diagnostics`} onclick={() => openReadinessDetails?.(row.selection,row.readiness?.issues[0])}>
                 <svg viewBox="0 0 24 24" aria-hidden="true">{#if row.readiness.state === 'setup'}<path d="m14 6 4 4m-3-7a6 6 0 0 0-7 7L2 16a3 3 0 0 0 4 4l6-6a6 6 0 0 0 7-7l-4 4-3-3z" />{:else}<path d="M9 3v5m6-5v5M6 8h12v4a6 6 0 0 1-12 0zM12 18v4" />{/if}</svg>
                 <span class="pc-readiness-label">{row.readiness.label}</span>
@@ -145,7 +145,6 @@
     .node-model-meta { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; width:100%; max-height:31px; overflow:hidden; color:var(--pc-muted); font-size:11px; line-height:15px; overflow-wrap:anywhere; }
     .node-model-meta:focus-visible { outline:2px solid var(--pc-accent); }
     .pc-node-readiness { display:flex; align-items:center; gap:5px; max-width:100%; min-height:calc(24px * var(--pc-recall-scale,1)); min-width:calc(24px * var(--pc-recall-scale,1)); padding:3px 6px; border:1px solid currentColor; border-radius:4px; background:var(--pc-panel-solid); color:var(--pc-error,#ef6666); font:inherit; font-size:11px; line-height:16px; cursor:pointer; margin:0; appearance:none; filter:none; text-shadow:none; box-shadow:none; }
-    .pc-node-readiness[data-readiness="input"] { color:var(--pc-warning,#e9b450); }
     .pc-node-readiness svg { width:calc(14px * var(--pc-recall-scale,1)); height:calc(14px * var(--pc-recall-scale,1)); flex:0 0 calc(14px * var(--pc-recall-scale,1)); }
     .pc-readiness-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .pc-node-readiness:focus-visible { outline:2px solid var(--pc-accent); outline-offset:3px; }

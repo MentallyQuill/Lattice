@@ -97,6 +97,8 @@
         "instructions": "Extract landmarks, route obstacles and named destinations explicitly visible in the narrative.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "scene": {
@@ -258,6 +260,12 @@
       "x": 0,
       "y": 0,
       "zoom": 0.7
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      }
+    ]
   }
 }

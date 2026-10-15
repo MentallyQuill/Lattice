@@ -338,7 +338,7 @@
 /* Camera overview preserves layout, named pin positions and interactive ports. */
 :root .pc-root .pc-canvas-host[data-pc-detail="overview"] .pc-node-native:not(:is(.pc-selected, .pc-multi, :hover, :focus-within)) :is(.pc-native-pin-label, .pc-node-body, .pc-node-action),
 :root .pc-root .pc-canvas-host[data-pc-detail="overview"] .pc-node-native:not(:is(.pc-selected, .pc-multi, :hover, :focus-within, .pc-node-compact)) .pc-native-icon { visibility: hidden; }
-:root .pc-root .pc-canvas-host[data-pc-detail="overview"] .pc-node-native:not(:is(.pc-selected, .pc-multi, :hover, :focus-within, .pc-trace-running, .pc-trace-failed)) { box-shadow: none; }
+:root .pc-root .pc-canvas-host[data-pc-detail="overview"] .pc-node-native:not(:is(.pc-selected, .pc-multi, :hover, :focus-within, .pc-trace-running, .pc-trace-failed, .pc-run-failed)) { box-shadow: none; }
 .pc-node-native:focus-visible { outline: 2px solid var(--pc-flow); outline-offset: 3px; }
 .pc-native-heading { display: flex; align-items: center; gap: 4px; padding: 8px 8px 3px; }
 .pc-native-icon { flex: none; width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
@@ -416,10 +416,6 @@
 :root .pc-root .pc-node-native.pc-trace-failed {
     border-color: var(--pc-error);
     box-shadow: 0 1px 2px #00000050, 0 0 0 2px var(--pc-error);
-}
-.pc-node-native.pc-trace-failed > :is(.pc-native-heading, .pc-native-pins, .pc-native-alias, .pc-host-result) {
-    opacity: .55;
-    filter: grayscale(1);
 }
 :root .pc-root .pc-node-native.pc-trace-blocked {
     border-color: var(--pc-muted);
@@ -733,9 +729,9 @@
 
 /* Authoring readiness is independent of disabled and execution state. */
 :root .pc-root .pc-node-native.pc-setup-required { border-color:var(--pc-error); }
-:root .pc-root .pc-node-native.pc-input-required { border-color:var(--pc-warning,#e9b450); }
-:root .pc-root .pc-node-native:is(.pc-setup-required,.pc-input-required):is(.pc-selected,.pc-multi,:focus-visible) { outline:2px solid var(--pc-accent); outline-offset:3px; }
-:root .pc-root .pc-node-native:is(.pc-setup-required,.pc-input-required).pc-trace-running { box-shadow:0 0 0 3px var(--pc-flow); }
+:root .pc-root .pc-node-native.pc-setup-required:is(.pc-selected,.pc-multi,:focus-visible) { outline:2px solid var(--pc-accent); outline-offset:3px; }
+:root .pc-root .pc-node-native.pc-setup-required.pc-trace-running { box-shadow:0 0 0 3px var(--pc-flow); }
 :root .pc-root .pc-node-native.pc-setup-required.pc-off { border-style:dashed; }
 
-:root .pc-root .pc-port.pc-pin-input-required { color:var(--pc-warning,#e9b450); }
+:root .pc-root .pc-node-native.pc-run-failed { border-color:var(--pc-error); box-shadow:0 1px 2px #00000050,0 0 0 2px var(--pc-error); }
+:root .pc-root .pc-port.pc-pin-run-failed::after { content:''; position:absolute; box-sizing:border-box; width:18px; height:18px; left:50%; top:50%; transform:translate(-50%,-50%); border:2px solid var(--pc-error); border-radius:50%; pointer-events:none; }

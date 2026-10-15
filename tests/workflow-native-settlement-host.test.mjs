@@ -12,7 +12,7 @@ function unifiedGraph({ guidance = false, revise = true } = {}) {
     wires.reply = { id: 'reply', route: 'wire', from: 'generate', fromPort: 'draft', to: revise ? 'revise' : 'review', toPort: 'draft' };
     if (revise) wires.review = { id: 'review', route: 'wire', from: 'revise', fromPort: 'out', to: 'review', toPort: 'draft' };
     if (guidance) { nodes.guide = { id: 'guide', type: 'workflow', operation: 'compose', outputKind: 'guidance', sections: [{ name: 'Style', text: 'Use vivid prose.' }] }; wires.guidance = { id: 'guidance', route: 'wire', from: 'guide', fromPort: 'out', to: 'generate', toPort: 'guidance' }; }
-    return { id: 'unified', name: 'Unified test', schema: 3, runtime: 2, mode: 'native-unified', nodes, wires, portals: {}, definitions: {} };
+    return { id: 'unified', name: 'Unified test', schema: 3, runtime: 2, mode: 'native-unified', runTargets: [{instancePath:[],nodeId:'review'}], nodes, wires, portals: {}, definitions: {} };
 }
 function nativeFixture(graph = unifiedGraph(), options = {}) {
     const listeners = new Map(), events = [], results = [];
@@ -42,6 +42,7 @@ function consequenceGraph({memory=false,memoryEpisode=false,twoFiles=false,revis
         graph.nodes.body=node('body','draft-text');wire('body','generate','draft','body','draft');
         for(const id of twoFiles?['one','two']:['one']){graph.nodes['read'+id]=node('read'+id,'read-file',{targetId:id+'.txt'});graph.nodes['write'+id]=node('write'+id,'write-file',{mode:'append'});wire('ref'+id,'read'+id,'reference','write'+id,'reference');wire('text'+id,'body','out','write'+id,'text');}
     }
+    graph.runTargets.push(...(memory?['commit']:twoFiles?['writeone','writetwo']:['writeone']).map(nodeId=>({instancePath:[],nodeId})));
     return graph;
 }
 function consequenceFixture(options={}) {

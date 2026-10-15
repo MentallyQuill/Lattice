@@ -260,6 +260,7 @@ function presenceFileSystem(f, enabled, readPhase = 'post') {
     f.graph.definitions[definitionRefKey(definition)] = definition;
     f.graph.nodes.files = { id: 'files', type: 'subgraph', enabled, definition: { id: definition.id, version: definition.version, semanticHash: definition.semanticHash } };
     f.graph.wires.systemPresence = wire('systemPresence', 'mara', 'out', 'files', 'presence');
+    f.graph.runTargets=[{instancePath:[],nodeId:'review'},{instancePath:['files'],nodeId:'write'}];
 }
 
 test('nested presence files alone start the Main scene session and disabled files skip discovery and effects', async () => {

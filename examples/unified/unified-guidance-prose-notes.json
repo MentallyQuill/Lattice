@@ -123,6 +123,8 @@
         "instructions": "Extract notable physical items established in the final narrative, with exact quotes. Exclude ideas that are merely hypothetical.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "scene": {
@@ -292,6 +294,12 @@
       "x": 0,
       "y": 0,
       "zoom": 0.7
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      }
+    ]
   }
 }

@@ -1,3 +1,4 @@
+import { inspectExpandedGraph } from '../../src/workflow/graph-validation.js';
 import { teachingFor, lessonComment } from './teaching.mjs';
 import { lessonCommentSize } from './comment-layout.mjs';
 import { layout } from './graph-layout.mjs';
@@ -125,6 +126,7 @@ export function builder(number, title, goal, focus) {
             id: 'lesson-note', type: 'note', content: graph.description, title: 'Lesson instructions', x: 100, y: 0, ...lessonCommentSize(graph.description), enabled: true, commentFrame: true, moveContents: false
         };
         layout(graph);
+        graph.runTargets = must(inspectExpandedGraph(graph), id).primitives.filter(unit=>unit.terminal).map(unit=>({instancePath:unit.address.instancePath,nodeId:unit.address.nodeId}));
         must(validateWorkflow(graph), id);
         must(prepareWorkflowPlanner(graph), id + ' prepare');
         const envelope = exportWorkflow(graph);

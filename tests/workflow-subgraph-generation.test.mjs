@@ -19,7 +19,7 @@ function generationGraph() {
         wire('guidance', 'plan', 'out', 'generate', 'guidance'),
         wire('reply', 'generate', 'draft', 'review', 'draft'),
     ];
-    return { id: 'generation-subgraph', schema: 3, runtime: 2, mode: 'native-unified', definitions: {}, portals: {}, nodes: {
+    return { id: 'generation-subgraph', schema: 3, runtime: 2, mode: 'native-unified', runTargets: [{instancePath:[],nodeId:'review'}], definitions: {}, portals: {}, nodes: {
         send: node('send', 'on-send'), scene: node('scene', 'scene-context', { visibilityMode: 'public' }),
         'other-scene': node('other-scene', 'scene-context', { visibilityMode: 'public' }),
         join: node('join', 'context-join'), compact: node('compact', 'smart-compactor', { method: 'select' }),
@@ -92,6 +92,7 @@ test('two selected generation subgraphs fail before native or auxiliary requests
     delete root.nodes.generation.localCopy;
     root.nodes.second = { ...structuredClone(root.nodes.generation), id: 'second' };
     root.nodes['second-review'] = node('second-review', 'review-publish');
+    root.runTargets.push({instancePath:[],nodeId:'second-review'});
     for (const edge of Object.values(root.wires)) {
         if (edge.to === 'generation') root.wires[edge.id + '-second'] = { ...edge, id: edge.id + '-second', to: 'second' };
     }

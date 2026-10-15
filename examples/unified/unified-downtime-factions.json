@@ -380,7 +380,7 @@
         "x": 80,
         "y": 1560,
         "w": 270,
-        "h": 160,
+        "h": 170,
         "profileId": null,
         "model": null,
         "modelRole": null,
@@ -764,6 +764,20 @@
       "x": 0,
       "y": 0,
       "zoom": 0.7
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      },
+      {
+        "instancePath": [],
+        "nodeId": "save"
+      },
+      {
+        "instancePath": [],
+        "nodeId": "commit-clock"
+      }
+    ]
   }
 }

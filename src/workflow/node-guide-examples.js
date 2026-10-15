@@ -58,6 +58,7 @@ function approvedCompose() {
     const graph = base('compose', 'Compose example · a scene brief');
     const ids = { 'on-send': 'send', 'generate-reply': 'generate', 'review-publish': 'review' };
     graph.nodes = Object.fromEntries(Object.entries(graph.nodes).map(([id, n]) => { n.id = ids[id]; return [n.id, n]; }));
+    graph.runTargets = graph.runTargets.map(target => ({ ...target, nodeId: ids[target.nodeId] }));
     graph.wires = {};
     Object.assign(graph.nodes.send, { x: 20, y: 280, w: 220, h: 210 });
     Object.assign(graph.nodes.generate, { x: 210, y: 250, w: 220, h: 210 });

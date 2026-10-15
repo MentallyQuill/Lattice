@@ -82,9 +82,12 @@ export function prepareNodeGuideInsertion(destination, example, options = {}) {
         }
         // A custom response path remains connected even when its input is not touched
         // by a preparation-only example. The imported native generation is removed.
-        const valid = validateWorkflow(candidate); if (!valid.ok) return fail(valid.error.code, `This example cannot join the current workflow: ${valid.error.message}`);
+        const valid = validateWorkflow(candidate);
+        // Insertion authors an unenrolled draft in an empty document. The strict
+        // resolver has already admitted its structure before reporting no outputs.
+        if (!valid.ok && valid.error.code !== 'MISSING_RUN_TARGETS') return fail(valid.error.code, `This example cannot join the current workflow: ${valid.error.message}`);
         const prepared = prepareGraphCandidate(destination, candidate, added.wires, removedEdgeIds); if (!prepared.ok) return prepared;
-        const diagnostics = { ...pasted.data.diagnostics, callBound: valid.data.callBound,
+        const diagnostics = { ...pasted.data.diagnostics, callBound: valid.ok ? valid.data.callBound : pasted.data.diagnostics.callBound,
             terminals: pasted.data.diagnostics.terminals.map(item => ({ ...item, nodeId: remap[item.nodeId] ?? item.nodeId, ...(item.address ? { address: { ...item.address, nodeId: remap[item.address.nodeId] ?? item.address.nodeId } } : {}) })) };
         return { ok: true, data: { ...pasted.data, ...prepared.data, diagnostics, added, identityMap, reusedNodeIds: Object.values(reused), selectedNodeIds: [...added.nodes],
             message: removedEdgeIds.length ? 'Adds the example and replaces the unchanged starter Draft connection with its response path in one undoable edit.' : Object.keys(reused).length ? 'Adds the example using this tab’s compatible native lifecycle nodes.' : 'Adds the complete example to this tab.' } };

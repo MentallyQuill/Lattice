@@ -2,22 +2,33 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { getNodeGuideExample } from '../src/workflow/node-guide-examples.js';
 import { starterGraph } from '../src/workflow/starters.js';
-import { validateWorkflow } from '../src/workflow/contracts.js';
+import { validateWorkflow, validateGraphStructure } from '../src/workflow/contracts.js';
+import { setWorkflowRunTargets } from '../src/workflow/run-targets.js';
+import { inspectExpandedGraph } from '../src/workflow/graph-validation.js';
 import { graphSemanticSignature, graphDocumentSignature } from '../src/workflow/ports.js';
 import { runWorkflowForHost } from '../src/workflow/runtime.js';
 
 const insertion = await import('../src/workflow/node-guide-insertion.js').catch(() => ({}));
-const empty = () => ({ ...starterGraph('unified-basic'), id: 'destination', name: 'Keep my name', nodes: {}, wires: {}, customSetting: { keep: true } });
+const empty = () => ({ ...starterGraph('unified-basic'), id: 'destination', name: 'Keep my name', nodes: {}, wires: {}, runTargets: [], customSetting: { keep: true } });
+// These complete sample fixtures explicitly choose their intended outputs before
+// execution; inserting a sample alone never makes that enrollment decision.
+function enrollSampleOutputs(graph) {
+    assert.equal(validateGraphStructure(graph).ok, true);
+    const inventory = inspectExpandedGraph(graph); assert.equal(inventory.ok, true);
+    const selected = setWorkflowRunTargets(graph, inventory.data.primitives.filter(unit => unit.terminal).map(unit => ({ instancePath: unit.address.instancePath, nodeId: unit.address.nodeId })));
+    assert.equal(selected.ok, true); return selected.data;
+}
 test('empty roots receive a complete fresh graph in one pure prepared edit', () => {
     assert.equal(typeof insertion.prepareNodeGuideInsertion, 'function');
     const destination = empty(), example = getNodeGuideExample('compose'), before = structuredClone(destination), source = structuredClone(example);
     const result = insertion.prepareNodeGuideInsertion(destination, example);
     assert.equal(result.ok, true, JSON.stringify(result));
     assert.equal(result.data.added.nodes.length, 5);
+    assert.deepEqual(result.data.candidate.runTargets, [], 'Insertion preserves explicit empty enrollment.');
     assert.equal(result.data.candidate.id, destination.id);
     assert.equal(result.data.candidate.name, destination.name);
     assert.deepEqual(result.data.candidate.customSetting, destination.customSetting);
-    assert.equal(validateWorkflow(result.data.candidate).ok, true);
+    assert.equal(validateWorkflow(enrollSampleOutputs(result.data.candidate)).ok, true);
     assert.equal(result.data.baseSignature, graphSemanticSignature(destination));
     assert.equal(result.data.baseDocumentSignature, graphDocumentSignature(destination));
     assert.ok(result.data.added.nodes.every(id => !Object.hasOwn(example.graph.nodes, id)));
@@ -31,7 +42,7 @@ test('Compose reuses compatible native lifecycle nodes and rejects occupied guid
     assert.equal(result.data.added.nodes.length, 2);
     for (const id of Object.keys(destination.nodes)) assert.deepEqual(result.data.candidate.nodes[id], destination.nodes[id]);
     assert.equal(Object.values(result.data.candidate.nodes).filter(n => n.operation === 'generate-reply').length, 1);
-    assert.equal(validateWorkflow(result.data.candidate).ok, true);
+    assert.equal(validateWorkflow(enrollSampleOutputs(result.data.candidate)).ok, true);
     const again = insertion.prepareNodeGuideInsertion(result.data.candidate, example);
     assert.equal(again.ok, false); assert.match(again.error.message, /guidance.*occupied|occupied.*guidance/i);
     assert.deepEqual(destination, before);
@@ -43,7 +54,7 @@ test('response-path examples splice only a canonical starter Draft edge', () => 
     assert.equal(result.ok, true, JSON.stringify(result));
     assert.deepEqual(result.data.removedEdgeIds, ['draft']);
     assert.match(result.data.message, /starter.*Draft|Draft.*starter/i);
-    assert.equal(validateWorkflow(result.data.candidate).ok, true);
+    assert.equal(validateWorkflow(enrollSampleOutputs(result.data.candidate)).ok, true);
     const custom = starterGraph('unified-basic'); custom.wires.draft.id = 'custom'; custom.wires.custom = custom.wires.draft; delete custom.wires.draft;
     const blocked = insertion.prepareNodeGuideInsertion(custom, example);
     assert.equal(blocked.ok, false); assert.match(blocked.error.message, /custom|occupied/i);
@@ -67,6 +78,8 @@ test('incompatible lifecycle settings are blocked and unrelated content is prese
 });
 
 async function runCompose(graph) {
+    graph = enrollSampleOutputs(graph);
+    assert.equal(validateWorkflow(graph).ok, true);
     let generations = 0, published, guidance;
     const text = 'The lighthouse stands above the sound of waves.';
     const draft = { kind: 'draft', text, source: { token: 'guide-merged-fixture', originalText: text } };
@@ -117,7 +130,7 @@ test('portable insertion rebases portals and dependent definitions, strips local
     assert.equal(second.ok, true, JSON.stringify(second));
     for (const kind of ['nodes', 'wires', 'portals']) assert.ok(second.data.added[kind].every(id => !first.data.added[kind].includes(id)));
     assert.ok(second.data.added.definitions.every(key => !first.data.added.definitions.includes(key)));
-    assert.equal(validateWorkflow(second.data.candidate).ok, true);
+    assert.equal(validateWorkflow(enrollSampleOutputs(second.data.candidate)).ok, true);
     assert.deepEqual(example, source);
     assert.deepEqual(destination, empty());
     assert.ok(before.graph.definitions);
@@ -128,7 +141,7 @@ test('every guide can insert its complete parent into an empty unified root', ()
     for (const key of keys) {
         const result = insertion.prepareNodeGuideInsertion(empty(), getNodeGuideExample(key));
         assert.equal(result.ok, true, `${key}: ${JSON.stringify(result)}`);
-        assert.equal(validateWorkflow(result.data.candidate).ok, true, key);
+        assert.equal(validateWorkflow(enrollSampleOutputs(result.data.candidate)).ok, true, key);
     }
 });
 

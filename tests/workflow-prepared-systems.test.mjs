@@ -10,7 +10,7 @@ import {describeOperation} from '../src/workflow/catalog.js?v=0.27.4';
 function fixture(){
  const identity=computeDefinitionIdentity({id:'unfinished-system',version:1,name:'System',parameters:[],interface:[{id:'result',label:'Result',kind:'guidance',direction:'output',required:false,cardinality:'one',boundaryNodeId:'exit'}],body:{schema:3,runtime:2,mode:'native-unified',nodes:{exit:{id:'exit',type:'subgraph-output',interfacePortId:'result'}},wires:{}}});
  assert.equal(identity.ok,true);const definition={...identity.data.materializedDefinition,semanticHash:identity.data.semanticHash};
- return {id:'prepared-system',schema:3,runtime:2,mode:'native-unified',nodes:{system:{id:'system',type:'subgraph',enabled:false,definition:{id:definition.id,version:definition.version,semanticHash:definition.semanticHash}},merge:{id:'merge',type:'workflow',operation:'compose',outputKind:'guidance',budgetTokens:64,sections:[{name:'system',text:'',kind:'guidance',required:false,onSkipped:'omit'}]}},wires:{result:{id:'result',route:'wire',from:'system',fromPort:'result',to:'merge',toPort:'section.system'}},definitions:{[definitionRefKey(definition)]:definition}};
+ return {id:'prepared-system',schema:3,runtime:2,mode:'native-unified',runTargets:[],nodes:{system:{id:'system',type:'subgraph',enabled:false,definition:{id:definition.id,version:definition.version,semanticHash:definition.semanticHash}},merge:{id:'merge',type:'workflow',operation:'compose',outputKind:'guidance',budgetTokens:64,sections:[{name:'system',text:'',kind:'guidance',required:false,onSkipped:'omit'}]}},wires:{result:{id:'result',route:'wire',from:'system',fromPort:'result',to:'merge',toPort:'section.system'}},definitions:{[definitionRefKey(definition)]:definition}};
 }
 const target=root=>({workflowId:root.id,instancePath:[],nodeId:'merge',portId:'out'});
 
@@ -27,7 +27,7 @@ test('checked system planners preserve skipped boundaries and historical complet
  assert.equal(graphArtifactsFor(root,artifacts.data).ok,false,'old checked content does not authorize the enabled root');
  assert.equal(planner.summarize(at),initial,'historical planner remains paired with its disabled snapshot');
  const current=prepareWorkflowPlanner(root,change.artifacts);assert.equal(current.ok,true);
- const summary=current.data.summarize(at);assert.equal(summary.error.code,'MISSING_INPUT');assert.equal(summary.error.address.nodeId,'system');
+ const summary=current.data.summarize(at);assert.equal(summary.error.code,'MISSING_INPUT');assert.deepEqual(summary.error.address,{workflowId:root.id,instancePath:[],nodeId:'merge'});assert.equal(summary.error.inputPortId,'section.system');
  assert.equal(current.data.summarize(at),summary,'addressed completeness failure is memoized');
  assert.deepEqual(summary.error,resolveWorkflow(root,{target:at}).error);
 });

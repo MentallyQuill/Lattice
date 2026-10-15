@@ -114,6 +114,7 @@ function independentCopy(source) {
         portal.id = portals[portal.id]; portal.source.nodeId = nodes[portal.source.nodeId];
         return [portal.id, portal];
     }));
+    graph.runTargets = graph.runTargets.map(target=>target.instancePath.length ? {...target,instancePath:[nodes[target.instancePath[0]],...target.instancePath.slice(1)]} : {...target,nodeId:nodes[target.nodeId]});
     graph.id = id;
     graph.createdAt = graph.updatedAt = Date.now();
     return cloneWorkflowDocument(graph);

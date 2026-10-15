@@ -3,7 +3,7 @@ import test from 'node:test';
 import {describeOperation} from '../src/workflow/catalog.js?v=0.27.4';
 import {prepareNativeNodeEdit} from '../src/workflow/definition-library.js?v=0.27.4';
 import {captureGraphEditContext} from '../src/workflow/transactions.js?v=0.27.4';
-const graph=()=>({id:'work-counts',schema:3,runtime:2,mode:'native-unified',nodes:Object.fromEntries(Array.from({length:100},(_,i)=>['n'+i,{id:'n'+i,type:'workflow',operation:'text',operationVersion:1,text:'short text'}])),wires:{},groups:{},roles:{},portals:{},definitions:{}});
+const graph=()=>({id:'work-counts',schema:3,runtime:2,mode:'native-unified',runTargets:[],nodes:Object.fromEntries(Array.from({length:100},(_,i)=>['n'+i,{id:'n'+i,type:'workflow',operation:'text',operationVersion:1,text:'short text'}])),wires:{},groups:{},roles:{},portals:{},definitions:{}});
 function countClones(run) { const clone=globalThis.structuredClone;let calls=0;globalThis.structuredClone=(...args)=>{calls++;return clone(...args);};try{return {result:run(),calls};}finally{globalThis.structuredClone=clone;} }
 test('scalar text operation descriptions do not allocate structured clones',()=>{
  const root=graph();const measured=countClones(()=>{for(const node of Object.values(root.nodes)) assert.equal(describeOperation(root,node).ok,true);});

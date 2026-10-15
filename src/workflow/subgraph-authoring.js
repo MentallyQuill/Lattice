@@ -95,7 +95,7 @@ export function prepareSubgraphNodeDeletion(root, input) {
         }
         pruneTargetBindings(scope, path.slice(0, depth), deletedTarget);
     }
-    const finished = { ...scope, definitions: candidate.definitions };
+    const finished = { ...scope, definitions: candidate.definitions, runTargets: candidate.runTargets.filter(target=>!deletedTarget([...target.instancePath,target.nodeId])) };
     reconcileOwners(finished, ownershipEntries(root).filter(entry => !deletedTarget(entry.instancePath)));
     prunePrivateSnapshots(finished, new Set(ownershipEntries(root).map(entry => entry.definitionId)));
     const prepared = prepareGraphCandidate(root, finished, [], [...removedEdges]);

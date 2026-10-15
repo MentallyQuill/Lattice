@@ -83,7 +83,7 @@ test('host settlement retains the ordinary Decision binding and records its comp
     const binding = { profileId: 'decision-text', model: 'separate-model' }; let retained;
     const ports = { resolveBinding: async () => ({ ok: true, data: binding }), countTokens: async () => ({ tokens: 5 }), request: async () => ({ ok: true, data: { text: '{"answers":{"decision":{"type":"noul","accepted":true}}}', finish: 'stop' } }) };
     const hooks = { settle: async value => { retained = value.bindings; return { ok: true }; } };
-    const result = await runWorkflowForHost(root, ports, hooks); assert.equal(result.error.code, 'MISSING_TERMINAL');
+    const result = await runWorkflowForHost(root, ports, hooks); assert.equal(result.error.code, 'MISSING_RUN_TARGETS');
     const targeted = await runWorkflowForHost(root, { ...ports, target: target('decision') }, hooks);
     assert.equal(targeted.ok, true, JSON.stringify(targeted.error)); assert.deepEqual(retained.map(item => [item.binding, item.capability, item.role]), [[binding, 'text-completion', 'decision']]); assert.equal(retained[0].binding,binding); assert.equal(row(targeted, 'decision').binding.profileId, 'decision-text'); assert.equal(row(targeted, 'decision').binding.model, 'separate-model'); assert.equal(row(targeted, 'decision').binding.capability, 'text-completion'); assert.equal(output(targeted, 'decision').value.actualCalls, 1);
 });

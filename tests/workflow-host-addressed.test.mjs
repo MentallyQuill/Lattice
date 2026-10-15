@@ -15,7 +15,7 @@ function fixture(graph,options={}) {
 function graph3(kind) {const g=kind==='reviewed-de-slop'?reviewGraph():starterGraph(kind);for(const node of Object.values(g.nodes))if(node.operation==='scene-context')node.visibilityMode='public';for(const role of Object.values(g.roles))role.profileId='fixed';for(const node of Object.values(g.nodes))if(node.modelRole)node.profileId=null;return cloneWorkflowDocument(g).data;}
 
 test('schema3 keeps all addressed candidate handles private and Apply rejects changed effective profiles',async()=>{
-    const graph=graph3('reviewed-de-slop');graph.nodes.second={id:'second',type:'workflow',operation:'review-publish'};graph.wires.second={id:'second',route:'wire',from:'repair',fromPort:'out',to:'second',toPort:'draft'};
+    const graph=graph3('reviewed-de-slop');graph.runTargets.push({instancePath:[],nodeId:'second'});graph.nodes.second={id:'second',type:'workflow',operation:'review-publish'};graph.wires.second={id:'second',route:'wire',from:'repair',fromPort:'out',to:'second',toPort:'draft'};
     const f=fixture(graph),result=await f.generate(graph);
     assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.reviewHandles.length,2);assert.notEqual(result.reviewHandles[0].handleId,result.reviewHandles[1].handleId);assert.equal(result.recording.terminals.length,2);
     assert.ok(!('artifact' in result)&&!('outputs' in result)&&!('calls' in result));assert.equal(f.message.mes,'We delve.');

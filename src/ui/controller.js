@@ -33,6 +33,7 @@ import { createCommentFrame, containedCommentNodes, fitCommentFrame, isCommentFr
 import { captureCommentPresentation, applyCommentPresentation, applyCommentGroupPresentation } from './comment-presentation.js?v=0.27.4';
 import { captureRelocatedSubgraphViews, refreshRelocatedSubgraphViews, restoreSubgraphViews } from './subgraph-view-state.js?v=0.27.4';
 import { preparePortalRename, prepareCreateFromSelection, prepareUnpack, prepareQualifiedPortalEdit } from '../workflow/composition.js?v=0.27.4';
+import { workflowRunTargets, setWorkflowRunTargets } from '../workflow/run-targets.js?v=0.27.4';
 import { prepareGraphCandidate } from '../workflow/prepared-graph-edit.js?v=0.27.4';
 import { definitionRefKey } from '../workflow/definition-data.js?v=0.27.4';
 import { exportSubgraph } from '../workflow/packages.js?v=0.27.4';
@@ -70,7 +71,7 @@ let uiEpoch = 0;
 let graphEditAdapter = null;
 let pendingImport = null;
 let graphViews = null, workspacePrepared = null, editorDraw = null, rootRunEpoch = 0, workspaceRevision = 0;
-let documentTransition = false, libraryRevision = 0, restoringEditor = false, canvasTraceRows = null;
+let documentTransition = false, libraryRevision = 0, restoringEditor = false, canvasTraceRows = null, retiredCanvasAttempt = null;
 // Opening installs fresh editor authority before one final surface publication.
 let openingWorkspace = false;
 let viewSaveTimer = null, pinnedPreview = null, targetedPreview = null, selectedPreview = null, nativeWireBridge = null, nativeCatalog = null, positionEdit = null;
@@ -264,7 +265,7 @@ function prepareWorkspaceDocument(change = null) {
     const result = prepareWorkspaceViews(current, { ...workspaceInputs(), ...(change?.artifacts ? { artifacts: change.artifacts } : {}) });
     if (!result.ok) { workspaceIssue = diagnosticText(result.error); toast(result.error, 'error'); return false; }
     workspaceIssue = '';
-    workspacePrepared = result.data; workspaceRevision++;
+    workspacePrepared = result.data; workspacePrepared.runTargets = workflowRunTargets(current).data ?? []; workspaceRevision++;
     const shelf = L.loadSubgraphLibrary();
     workspacePrepared.libraryIssue = shelf.ok ? '' : diagnosticText(shelf.error);
     workspacePrepared.shelfDefinitions = shelf.ok ? shelf.data.definitions : {};
@@ -460,6 +461,35 @@ function workflowView() {
 function guideInsertionIsBusy(activity = workflowRuntime.getNativeWorkflowController?.()?.activity?.()) {
     return !!workflowState.busy || !!activity?.busy;
 }
+function currentWorkflowDiagnosticState(activity) {
+    const documentOwner = documentSession.capture(), diagnostics = workflowSession.currentDiagnostics(documentSession.draftNamespace());
+    const priorRunId = workflowState.result?.runId;
+    if (activity?.busy && activity.native && activity.graph === current && (activity.documentToken === undefined || activity.documentToken === documentOwner) && diagnostics?.attemptId !== activity.runId) {
+        retiredCanvasAttempt = { documentOwner, attemptId: diagnostics?.attemptId, priorRunId, preparationError: workflowState.preparationError };
+    }
+    const retired = retiredCanvasAttempt?.documentOwner === documentOwner && (diagnostics ? diagnostics.attemptId === retiredCanvasAttempt.attemptId : !!priorRunId && priorRunId === retiredCanvasAttempt.priorRunId || !!workflowState.preparationError && workflowState.preparationError === retiredCanvasAttempt.preparationError);
+    return { currentDiagnostics: retired ? null : diagnostics, availability: retired ? 'superseded' : workflowState.availability, preparationError: retired && workflowState.preparationError === retiredCanvasAttempt.preparationError ? null : workflowState.preparationError };
+}
+function scopedRunDiagnostics(diagnostics, editor) {
+    const identity = editor?.view.identity;
+    if (!diagnostics || !identity || identity.kind === 'library') return null;
+    const nodes = diagnostics.nodes.filter(node => node.address.workflowId === identity.workflowId && JSON.stringify(node.address.instancePath) === JSON.stringify(identity.instancePath ?? []));
+    return nodes.length ? { ...diagnostics, nodes } : null;
+}
+function scopedRunTraces(rows, editor, availability, diagnostics) {
+    const identity = editor?.view.identity, traces = [];
+    if (!identity || identity.kind === 'library') return traces;
+    const key = address => JSON.stringify([address.workflowId, address.instancePath, address.nodeId]);
+    const causes = new Set(), ancestors = new Set();
+    for (const node of availability === 'current' ? diagnostics?.nodes ?? [] : []) {
+        const address = node.address; causes.add(key(address));
+        for (let index = 0; index < address.instancePath.length; index++) ancestors.add(key({ workflowId: address.workflowId, instancePath: address.instancePath.slice(0, index), nodeId: address.instancePath[index] }));
+    }
+    const visit = items => { for (const row of items ?? []) {
+        if (row.address.workflowId === identity.workflowId && JSON.stringify(row.address.instancePath) === JSON.stringify(identity.instancePath ?? []) && (row.status !== 'failed' || causes.has(key(row.address)) || row.kind === 'instance' && ancestors.has(key(row.address)))) traces.push({ id: row.address.nodeId, status: row.status });
+        visit(row.children);
+    } }; visit(rows); return traces;
+}
 function updateWorkflowProjection() {
     const activity = workflowRuntime.getNativeWorkflowController?.()?.activity?.();
     const ownedBusy = !!workflowState.busy || !!activity?.busy && activity.graph === current;
@@ -468,16 +498,23 @@ function updateWorkflowProjection() {
     const rootWorkflow = { ...projectPreparedWorkflow(workspacePrepared?.workflow,workflowState), ownedBusy };
     if (canvas && graphViews) canvas.setNodeProfiles?.(projectNodeProfiles(graphViews.readEditor(), view, revision));
     const recall = recallSetupView();
-    const panels = graphViews ? projectWorkspacePanels({ ...graphViews.readEditor(), documentNamespace: documentSession.draftNamespace() }, view, { ...workflowState, enabled: !!settings().enabled }, revision, selectedPreview, pinnedPreview || targetedPreview, rootWorkflow, workspacePrepared.idleRunRows, workspacePrepared.previewChoices) : {};
+    const diagnosticState = currentWorkflowDiagnosticState(activity);
+    const diagnostics = scopedRunDiagnostics(diagnosticState.currentDiagnostics, graphViews?.readEditor());
+    const panels = graphViews ? projectWorkspacePanels({ ...graphViews.readEditor(), documentNamespace: documentSession.draftNamespace() }, view, { ...workflowState, ...diagnosticState, currentDiagnostics: diagnostics, enabled: !!settings().enabled }, revision, selectedPreview, pinnedPreview || targetedPreview, rootWorkflow, workspacePrepared.idleRunRows, workspacePrepared.previewChoices) : {};
     if (canvas && graphViews) {
         const editor = graphViews.readEditor(), address = previewAddress(targetedPreview);
         canvas.setPreviewTarget(address && editor.view.identity.kind !== 'library' && address.workflowId === current.id && JSON.stringify(address.instancePath) === JSON.stringify(editor.view.identity.instancePath ?? []) ? address.nodeId : null);
     }
+    if (panels.nodeDetails) {
+        const cause = diagnostics?.nodes.find(node => node.key === JSON.stringify([panels.nodeDetails.address.workflowId, panels.nodeDetails.address.instancePath, panels.nodeDetails.address.nodeId]));
+        panels.nodeDetails = { ...panels.nodeDetails, runDiagnostic: cause ? { code: cause.error.code, message: cause.error.message, ...(cause.inputPortId ? { inputPortId: cause.inputPortId } : {}) } : undefined };
+    }
+    if (canvas) canvas.setRunDiagnostics?.(diagnostics);
     recallDetailsView=panels.nodeDetails&&graphViews.readEditor().view.identity.kind!=='library'&&recallProjection?.nodes[panels.nodeDetails.address.nodeId]?{...panels.nodeDetails,recall:recallProjection.nodes[panels.nodeDetails.address.nodeId]}:null;
     if(recallDetailsView)panels.nodeDetails=recallDetailsView;
     if (panels.outputPreview) panels.outputPreview = { ...panels.outputPreview, pinned: !!pinnedPreview, targeted: !!targetedPreview, followSelection: !pinnedPreview && !targetedPreview, busy: panels.outputPreview.busy || !!activity?.busy };
-    if (canvas && graphViews && editorDraw && canvasTraceRows!==view.rows) { canvasTraceRows=view.rows;const traces = []; const visit = rows => { for (const row of rows ?? []) { traces.push({ id: row.address.nodeId, status: row.status }); } }; if(graphViews.readEditor().view.identity.kind!=='library')visit(view.rows); canvas.setTrace(traces); }
-    workbench?.update({ workflow: view, rootWorkflow, guideInsertionBusy: guideInsertionIsBusy(activity), menuContextKey: graphViews?.readEditContext().sessionId, menuCapabilities: selectionMenuCapabilities(), recall, ...panels, nativeDiagnostic: workspaceIssue, nativeFlatCanvas: !settings().ui?.theme?.style?.grid });
+    if (canvas && graphViews && editorDraw && (canvasTraceRows?.rows !== view.rows || canvasTraceRows?.availability !== diagnosticState.availability || canvasTraceRows?.diagnostics !== diagnosticState.currentDiagnostics)) { canvasTraceRows = { rows: view.rows, availability: diagnosticState.availability, diagnostics: diagnosticState.currentDiagnostics }; canvas.setTrace(scopedRunTraces(view.rows, graphViews.readEditor(), diagnosticState.availability, diagnosticState.currentDiagnostics)); }
+    workbench?.update({ workflow: view, rootWorkflow, guideInsertionBusy: guideInsertionIsBusy(activity), workflowOutputs: workflowOutputItems(), menuContextKey: graphViews?.readEditContext().sessionId, menuCapabilities: selectionMenuCapabilities(), recall, ...panels, nativeDiagnostic: workspaceIssue, nativeFlatCanvas: !settings().ui?.theme?.style?.grid });
 }
 function prepareGroupPresentation() {
     const captured = captureEditor(true); if (!captured.ok) return null;
@@ -841,7 +878,40 @@ function reviewHostResult() {
     outputPreviewActions.select(graphViews.readEditContext().sessionId + ':' + workspaceRevision, choice.key, choice.target);
     workbench.revealPreview();
 }
+function workflowOutputItems() {
+    const key = graphViews?.readEditContext().sessionId + ':' + workspaceRevision;
+    const selected = new Set((workspacePrepared?.runTargets ?? []).map(target => JSON.stringify([target.instancePath, target.nodeId])));
+    if (workspacePrepared && !workspacePrepared.workflowOutputChoices) {
+        const units = new Map(workspacePrepared.planner.inventory.primitives.map(unit => [JSON.stringify([unit.address.workflowId, unit.address.instancePath, unit.address.nodeId]), unit]));
+        workspacePrepared.workflowOutputChoices = workspacePrepared.planner.inventory.terminals.map(terminal => {
+            const address = terminal.address, target = { instancePath: [...address.instancePath], nodeId: address.nodeId };
+            const unit = units.get(JSON.stringify([address.workflowId, address.instancePath, address.nodeId]));
+            return { target, label: [...target.instancePath, unit?.node.title || operationFor(unit?.node)?.title || target.nodeId].join(' / ') + ' - ' + target.nodeId };
+        });
+    }
+    const disabled = !rootSystemWritable();
+    return (workspacePrepared?.workflowOutputChoices ?? []).map(({ target, label }) => {
+        const checked = selected.has(JSON.stringify([target.instancePath, target.nodeId]));
+        return { label, command: 'workflow-output:' + encodeURIComponent(JSON.stringify({ key, target, enabled: !checked })), checked, disabled };
+    });
+}
+function changeWorkflowOutput(key, target, enabled) {
+    const stale = () => ({ ok: false, error: { code: 'STALE_CONTEXT', message: 'The workflow changed. Choose its outputs again.' } });
+    if (key !== graphViews?.readEditContext().sessionId + ':' + workspaceRevision || !rootSystemWritable() || typeof enabled !== 'boolean') return stale();
+    const origin = captureEditor(true); if (!origin.ok) return origin;
+    // Enrollment edits the root document even when invoked from a pinned child view.
+    const context = captureGraphEditContext(current, () => ({ sessionId: readGraphEditContext().sessionId, viewPath: [], readOnly: !rootSystemWritable() || !editorCurrent(origin.data) }));
+    if (!context.ok) return context;
+    const targets = workflowRunTargets(current); if (!targets.ok) return targets;
+    const targetKey = JSON.stringify([target.instancePath, target.nodeId]);
+    const next = targets.data.filter(item => JSON.stringify([item.instancePath, item.nodeId]) !== targetKey);
+    if (enabled) next.push(target);
+    const candidate = setWorkflowRunTargets(current, next); if (!candidate.ok) return candidate;
+    const prepared = prepareGraphCandidate(current, candidate.data); if (!prepared.ok) return prepared;
+    return commitGraphEdit(current, { ...prepared.data, context: context.data, viewPath: [] }, graphDocumentHooks);
+}
 function menuCommandAction(name) {
+    if (name.startsWith('workflow-output:')) return () => { try { const command = JSON.parse(decodeURIComponent(name.slice(16))); return changeWorkflowOutput(command.key, command.target, command.enabled); } catch { return undefined; } };
     const allowed = (flag, action) => () => selectionMenuCapabilities()[flag] ? action() : undefined;
     const commands = {
         'stop-workflow': allowed('stop', () => stopOwnedWorkflow()),
@@ -1307,10 +1377,11 @@ function canvasPreviewMenuItems(node, token) {
     const busy = () => !!workflowState.busy || !!workflowRuntime.getNativeWorkflowController?.()?.activity?.()?.busy;
     const run = { id: 'run-to-here', label: 'Run to here', icon: 'run', tone: 'preview', shortcut: 'R',
         matchesShortcut: event => event.key.toLowerCase() === 'r' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey,
-        disabled: busy() || !!summary.issues.length,
-        hint: busy() ? 'A workflow is already running.' : (summary.diagnostics?.map(issue => issue.message) ?? summary.issues.map(issue => diagnosticText(issue, { action: 'run to here' }))).join(' ') || `Run ${labelFor(target)} and its dependencies. Maximum auxiliary calls: ${summary.callBound}.`,
+        disabled: busy() || summary.attemptable !== true || !!summary.requiresNativeGeneration,
+        hint: busy() ? 'A workflow is already running.' : summary.requiresNativeGeneration ? 'This step starts when you send a message.' : (summary.diagnostics?.map(issue => issue.message) ?? summary.issues.map(issue => diagnosticText(issue, { action: 'run to here' }))).join(' ') || `Run ${labelFor(target)} and its dependencies. Maximum auxiliary calls: ${summary.callBound}.`,
         action: () => {
-            if (!currentKey() || busy() || summaryFor(target).issues.length) return;
+            const policy = summaryFor(target);
+            if (!currentKey() || busy() || policy.attemptable !== true || policy.requiresNativeGeneration) return;
             outputPreviewActions.select(sourceKey, choice.key, target);
             workbench.revealPreview(); outputPreviewActions.runHere(sourceKey, target);
         } };
@@ -1328,7 +1399,12 @@ function canvasPreviewMenuItems(node, token) {
         matchesShortcut: event => event.key.toLowerCase() === 't' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && !event.isComposing,
         hint: 'Follow this node in Preview. Press T again to clear its target.',
         action: () => { if (currentKey()) togglePreviewTarget(node); } };
-    return [targetNode, run, ...(choices.length > 1 ? [
+    const terminal = workspacePrepared.planner?.inventory.terminals.find(item => item.address.nodeId === node.id && JSON.stringify(item.address.instancePath) === JSON.stringify(path));
+    const enrolled = terminal && (workspacePrepared.runTargets ?? []).some(item => item.nodeId === node.id && JSON.stringify(item.instancePath) === JSON.stringify(path));
+    const enrollment = terminal ? [{ id: 'workflow-output', label: enrolled ? 'Remove from workflow run' : 'Run with workflow', icon: 'run', checked: !!enrolled, disabled: !rootSystemWritable(), action: () => {
+        if (currentKey()) changeWorkflowOutput(sourceKey, { instancePath: [...path], nodeId: node.id }, !enrolled);
+    } }] : [];
+    return [targetNode, run, ...enrollment, ...(choices.length > 1 ? [
         { id: 'pin-preview', label: 'Pin preview', icon: 'pin', tone: 'preview', children: pins },
     ] : pins)];
 }
@@ -1875,6 +1951,8 @@ const nodeDetailsActions = {
 function runPreviewHere(key,target) {
     if (key !== graphViews?.readEditContext().sessionId + ':' + workspaceRevision || graphViews.readEditor().view.identity.kind === 'library') return;
     if (workflowState.busy || workflowRuntime.getNativeWorkflowController?.()?.activity?.()?.busy) return;
+    const editor = graphViews.readEditor(), policy = projectPreparedWorkflow(workspacePrepared.workflow, { ...workflowState, viewPath: editor.view.identity.instancePath ?? [], selectedTarget: target, pinnedPreview: null }).targetSummary;
+    if (activeEditRoot() !== current || policy?.attemptable !== true || policy.requiresNativeGeneration) return;
     return workflowSession.run({target});
 }
 function revealDiagnosticNode(address) {

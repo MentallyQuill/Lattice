@@ -13,7 +13,7 @@ async function fixture(page,compact=false) {
     },compact);
 }
 
-test('readiness opens existing Details and progressively saves required fields without effects',async({page})=>{
+test('readiness opens existing Details and progressively saves required fields without effects',async({page},testInfo)=>{
     await fixture(page);
     const badge=page.locator('.pc-node-profile[data-id="memory"] .pc-node-readiness');
     await expect(badge).toHaveAttribute('data-readiness','setup');
@@ -21,7 +21,10 @@ test('readiness opens existing Details and progressively saves required fields w
     await expect(page.locator('.pc-node-details')).toContainText('Setup Required');
     await expect(page.getByLabel('Actor id',{exact:true})).toBeFocused();
     await page.getByLabel('Actor id',{exact:true}).fill('real-actor');await page.getByLabel('Actor id',{exact:true}).press('Tab');
-    await expect(badge).toHaveAttribute('data-readiness','input');
+    await expect(badge).toHaveCount(0);
+    await expect(page.locator('.pc-node[data-id="memory"]')).not.toHaveClass(/pc-input-required/);
+    await expect(page.locator('.pc-pin-input-required')).toHaveCount(0);
+    await page.screenshot({path:testInfo.outputPath('quiet-idle-draft-inputs.png')});
     expect(await page.evaluate(()=>window.canvasHarness.graph.nodes.memory.actorId)).toBe('real-actor');
     expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
 });
@@ -76,7 +79,7 @@ test('folded groups summarize unique sources, open Details, and Fit includes eve
         await h.activate(root);await h.view({x:280,y:60,zoom:1});
     });
     const summary=page.locator('.pc-group-readiness');
-    await expect(summary).toHaveText('2 need setup · 1 needs input');
+    await expect(summary).toHaveText('2 need setup');
     await summary.focus();await page.keyboard.press('Enter');
     await expect(page.getByRole('textbox',{name:'Node name',exact:true})).toHaveValue('Prompted Memory');
     await summary.focus();await page.keyboard.press('Delete');
@@ -91,7 +94,7 @@ test('folded groups summarize unique sources, open Details, and Fit includes eve
     await page.screenshot({path:testInfo.outputPath('readiness-expanded-group-fit.png')});
 });
 
-test('production shelf placement at quarter zoom clears the long readiness stack of the node above',async({page},testInfo)=>{
+test('production shelf placement at quarter zoom clears the model and setup stack of the node above',async({page},testInfo)=>{
     await fixture(page);
     const family=await page.evaluate(async()=>{
         const h=window.canvasHarness,{operationDefaults,OPERATIONS}=await import('/src/workflow/catalog.js?v='+h.version);
@@ -99,8 +102,7 @@ test('production shelf placement at quarter zoom clears the long readiness stack
         const root={id:'quarter-shelf',name:'Quarter zoom placement',schema:3,runtime:2,mode:'native-unified',nodes:{above:{id:'above',type:'workflow',...operationDefaults('model-call'),phase:'pre',x:0,y:0,profileId:'missing-profile',model:'organization/'+ 'long-existing-model-name-'.repeat(18)}},wires:{},groups:{},definitions:{},portals:{}};
         await h.activate(root);await h.view({x:0,y:0,zoom:.25});
         const rect=h.canvas.host.getBoundingClientRect(),center=h.canvas.toGraph(rect.left+rect.width/2,rect.top+rect.height/2),node=h.canvas.graph.nodes.above,bounds=h.canvas.visualBoundsOf(node),height=h.canvas.heightOf(node);
-        // Reproduces the old 64px upper reservation's exact 24px gap: its live
-        // quarter-zoom stack then extended 19 graph pixels into this blocker.
+        // Put the existing model and setup decorations above the shelf placement.
         root.nodes.above.x=center.x-h.canvas.widthOf(node)/2;
         root.nodes.above.y=center.y-height/2-80-(bounds.y+bounds.h-node.y);
         await h.activate(root);await h.view({x:0,y:0,zoom:.25});
@@ -111,15 +113,12 @@ test('production shelf placement at quarter zoom clears the long readiness stack
     const newId=await page.evaluate(()=>Object.keys(window.canvasHarness.graph.nodes).find(id=>id!=='above'));
     expect(newId).toBeTruthy();
     await expect(page.locator(`.pc-node-profile[data-id="${newId}"] .node-model-meta`)).toContainText('long-live-model-name');
-    await expect(page.locator(`.pc-node-profile[data-id="${newId}"] .pc-node-readiness`)).toBeVisible();
+    await expect(page.locator(`.pc-node-profile[data-id="${newId}"] .pc-node-readiness`)).toHaveCount(0);
     const geometry=await page.evaluate(id=>{
         const h=window.canvasHarness,node=h.canvas.graph.nodes[id],a=h.canvas.visualBoundsOf(h.canvas.graph.nodes.above),b=h.canvas.visualBoundsOf(node),rect=h.canvas.host.getBoundingClientRect(),center=h.canvas.toGraph(rect.left+rect.width/2,rect.top+rect.height/2);
-        const formerOriginY=center.y+64-(h.canvas.heightOf(node)+48+64)/2;
-        const formerVisualTop=formerOriginY+b.y-node.y;
-        return {a,b,formerOverlap:a.y+a.h-formerVisualTop,zoom:h.canvas.view.zoom,clear:a.x+a.w+24<=b.x||b.x+b.w+24<=a.x||a.y+a.h+24<=b.y||b.y+b.h+24<=a.y};
+        return {a,b,zoom:h.canvas.view.zoom,clear:a.x+a.w+24<=b.x||b.x+b.w+24<=a.x||a.y+a.h+24<=b.y||b.y+b.h+24<=a.y};
     },newId);
     expect(geometry.zoom).toBe(.25);expect(geometry.a.y).toBeLessThan(geometry.b.y);expect(geometry.clear).toBe(true);
-    expect(geometry.formerOverlap).toBeCloseTo(19,0);
     expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
     await page.screenshot({path:testInfo.outputPath('readiness-quarter-shelf-placement.png')});
 });
@@ -165,4 +164,29 @@ test('nested library readiness opens the exact descendant definition before sele
     await expect(page.getByLabel('Actor id',{exact:true})).toBeDisabled();
     expect(await page.evaluate(()=>JSON.stringify(window.canvasHarness.graph))).toBe(before);
     expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+});
+
+test('run diagnostics outline only the cause, ring a known input and preserve artifact colors and anchors',async({page},testInfo)=>{
+    await fixture(page);
+    const result=await page.evaluate(()=>{
+        const h=window.canvasHarness,card=document.querySelector('.pc-node[data-id="model"]'),pin=card.querySelector('[data-dir="in"]'),other=card.querySelector('[data-dir="out"]');
+        const before={width:card.offsetWidth,height:card.offsetHeight,pin:h.canvas.endpoint('model','in',pin.dataset.port),color:getComputedStyle(pin).color,fill:getComputedStyle(pin.querySelector('svg')).fill,hitWidth:pin.offsetWidth,hitHeight:pin.offsetHeight};
+        let reads=0;const cardRead=card.getBoundingClientRect,pinRead=pin.getBoundingClientRect;
+        card.getBoundingClientRect=pin.getBoundingClientRect=()=>{reads++;throw Error('Diagnostic paint remeasured a card or pin');};
+        const address={workflowId:h.graph.id,instancePath:[],nodeId:'model'},dto={attemptId:'browser-run',documentKey:'browser-document',nodes:[{key:JSON.stringify([h.graph.id,[],'model']),address,error:{code:'INPUT_REQUIRED',message:'Connect the selected Context input.'},inputPortId:pin.dataset.port}]};
+        h.canvas.setRunDiagnostics(dto);
+        card.getBoundingClientRect=cardRead;pin.getBoundingClientRect=pinRead;
+        window.diagnosticCard=card;window.diagnosticPin=pin;
+        const ring=getComputedStyle(pin,'::after');
+        return {ring:{width:ring.width,height:ring.height,content:ring.content,pointerEvents:ring.pointerEvents},reads,before,after:{width:card.offsetWidth,height:card.offsetHeight,pin:h.canvas.endpoint('model','in',pin.dataset.port),color:getComputedStyle(pin).color,fill:getComputedStyle(pin.querySelector('svg')).fill,hitWidth:pin.offsetWidth,hitHeight:pin.offsetHeight},same:card===document.querySelector('.pc-node[data-id="model"]'),other:other.classList.contains('pc-pin-run-failed')};
+    });
+    expect(result.ring.width).toBe('18px');expect(result.ring.height).toBe('18px');expect(result.ring.content).toBe('\"\"');expect(result.ring.pointerEvents).toBe('none');
+    expect(result.reads).toBe(0);expect(result.same).toBe(true);expect(result.after).toEqual(result.before);expect(result.other).toBe(false);
+    await expect(page.locator('.pc-node[data-id="model"]')).toHaveClass(/pc-run-failed/);
+    await expect(page.locator('.pc-pin-run-failed')).toHaveCount(1);
+    await expect(page.locator('.pc-node[data-id="model"]')).toHaveAttribute('aria-label',/INPUT_REQUIRED: Connect the selected Context input/);
+    await page.screenshot({path:testInfo.outputPath('run-diagnostic-causal-input.png')});
+    await page.evaluate(()=>window.canvasHarness.canvas.setRunDiagnostics(null));
+    await expect(page.locator('.pc-run-failed,.pc-pin-run-failed')).toHaveCount(0);
+    expect(await page.evaluate(()=>window.diagnosticCard===document.querySelector('.pc-node[data-id="model"]'))).toBe(true);
 });

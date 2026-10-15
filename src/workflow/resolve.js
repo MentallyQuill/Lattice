@@ -5,7 +5,7 @@ import { artifactAddressKey } from './definition-data.js?v=0.27.4';
 import { operationFor, describeOperation } from './catalog.js?v=0.27.4';
 import { freeze } from './record-data.js?v=0.27.4';
 
-const fail = (code, message, address) => ({ ok: false, error: { code, message, ...(address ? { nodeId: address.nodeId, address } : {}) } });
+const fail = (code, message, address, inputPortId) => ({ ok: false, error: { code, message, ...(address ? { nodeId: address.nodeId, address } : {}), ...(inputPortId ? { inputPortId } : {}) } });
 const planners = new WeakMap();
 const validOptions = options => safeWorkflowData(options) && options && typeof options === 'object' && !Array.isArray(options);
 function indexExpansion(plan) {
@@ -25,8 +25,8 @@ function indexExpansion(plan) {
     };
 }
 /** One target/completeness algorithm shared by current execution and cached UI summaries. */
-function selectClosure(index, target) {
-    const { plan, byKey, terminals, dependencies } = index;
+function selectClosure(index, target, strict = true) {
+    const { plan, byKey, dependencies } = index;
     let resolvedTarget, starts;
     if (target !== undefined) {
         if (!safeWorkflowData(target) || !target || typeof target !== 'object') return fail('INVALID_TARGET', 'Expected an actual output or tagged terminal target.');
@@ -47,33 +47,36 @@ function selectClosure(index, target) {
             starts = [unit];
         }
     } else {
-        if (!terminals.length) return fail('MISSING_TERMINAL', plan.phase === 'unified' ? 'Add Review / Publish to finish the workflow.' : 'Add a stage output to finish this helper.');
-        starts = terminals.map(terminal => byKey.get(nodeAddressKey(terminal.address)));
+        if (!plan.runTargets.length) return fail('MISSING_RUN_TARGETS', 'Choose workflow outputs before running this workflow.');
+        starts = plan.runTargets.map(target => byKey.get(nodeAddressKey({workflowId: plan.workflowId, ...target})));
     }
     const included = new Set();
     const visit = unit => { const key = nodeAddressKey(unit.address); if (included.has(key)) return; included.add(key); if (unit.systemDisabled) return; for (const at of dependencies.get(key)) visit(byKey.get(nodeAddressKey(at))); };
     starts.forEach(visit);
-    // Settings for the entire selected dependency closure precede input/effect preparation.
-    for (const unit of plan.primitives) if (included.has(nodeAddressKey(unit.address)) && !unit.systemDisabled && unit.setupIssues?.length) {
-        const issue=unit.setupIssues[0];
-        return {ok:false,error:{...issue,nodeId:unit.address.nodeId,address:unit.address}};
-    }
-    for (const edge of plan.unresolvedEdges ?? []) if (included.has(nodeAddressKey(edge.to)) && !byKey.get(nodeAddressKey(edge.to)).systemDisabled) return fail('MISSING_INPUT', 'Connect the selected system output producer.', index.mappings.get(artifactAddressKey(edge.from))?.instance ?? edge.from);
     const containsIncluded = (instance, activeOnly = false) => plan.primitives.some(unit => (!activeOnly || !unit.systemDisabled) && included.has(nodeAddressKey(unit.address)) && unit.address.instancePath.length > instance.instancePath.length && instance.instancePath.every((id, i) => unit.address.instancePath[i] === id) && unit.address.instancePath[instance.instancePath.length] === instance.nodeId);
-    for (const mapping of plan.boundaryMappings) if (target === undefined && mapping.direction === 'input' && mapping.required && containsIncluded(mapping.instance, true) && !mapping.source) return fail('MISSING_INPUT', 'Connect the required instance input.', mapping.instance);
-    for (const unit of plan.primitives) if (included.has(nodeAddressKey(unit.address))) {
-        if (unit.systemDisabled) continue;
-        if (!unit.enabled || index.disabled.has(nodeAddressKey(unit.address))) return fail('DISABLED_OPERATION', 'A selected dependency is disabled.', unit.address);
-        for (const port of unit.inputPorts) if (port.required && !index.incoming.has(artifactAddressKey({ ...unit.address, portId: port.id }))) return fail('MISSING_INPUT', 'Connect the required input artifact.', unit.address);
+    if (strict) {
+        // Settings for the entire selected dependency closure precede input/effect preparation.
+        for (const unit of plan.primitives) if (included.has(nodeAddressKey(unit.address)) && !unit.systemDisabled && unit.setupIssues?.length) {
+            const issue=unit.setupIssues[0];
+            return {ok:false,error:{...issue,nodeId:unit.address.nodeId,address:unit.address}};
+        }
+        for (const edge of plan.unresolvedEdges ?? []) if (included.has(nodeAddressKey(edge.to)) && !byKey.get(nodeAddressKey(edge.to)).systemDisabled) return fail('MISSING_INPUT', 'Connect the selected system output producer.', {workflowId:edge.to.workflowId,instancePath:edge.to.instancePath,nodeId:edge.to.nodeId}, edge.to.portId);
+        for (const mapping of plan.boundaryMappings) if (target === undefined && mapping.direction === 'input' && mapping.required && containsIncluded(mapping.instance, true) && !mapping.source) return fail('MISSING_INPUT', 'Connect the required instance input.', mapping.instance, mapping.portId);
+        for (const unit of plan.primitives) if (included.has(nodeAddressKey(unit.address))) {
+            if (unit.systemDisabled) continue;
+            if (!unit.enabled || index.disabled.has(nodeAddressKey(unit.address))) return fail('DISABLED_OPERATION', 'A selected dependency is disabled.', unit.address);
+            for (const port of unit.inputPorts) if (port.required && !index.incoming.has(artifactAddressKey({ ...unit.address, portId: port.id }))) return fail('MISSING_INPUT', 'Connect the required input artifact.', unit.address, port.id);
+        }
     }
     const selected = plan.primitives.filter(unit => included.has(nodeAddressKey(unit.address)));
+    if (strict && selected.filter(unit => unit.enabled && unit.node.operation === 'memory' && unit.terminal).length > 1) return fail('MULTIPLE_MEMORY_COMMITS', 'A selected workflow supports one Memory Commit terminal.');
     let ordered = plan.primitives, effectiveDependencies = dependencies;
     if (plan.phase === 'unified' && target === undefined) {
         const boundaries = selected.filter(unit => operationFor(unit.node, { phase: unit.phase, mode: 'native-unified' })?.nativeBoundary);
-        if (boundaries.length > 1) return fail('MULTIPLE_NATIVE_GENERATIONS', 'A selected unified root supports one native generation boundary.');
+        if (strict && boundaries.length > 1) return fail('MULTIPLE_NATIVE_GENERATIONS', 'A selected unified root supports one native generation boundary.');
         if (boundaries.length) {
-            const boundary = boundaries[0], boundaryKey = nodeAddressKey(boundary.address);
-            if (selected.filter(unit => unit.node.operation === 'on-send').length !== 1) return fail('NATIVE_ACTIVATION_REQUIRED', 'A native boundary requires one selected owned On Send activation.');
+            const boundary = boundaries[0];
+            if (strict && selected.filter(unit => unit.node.operation === 'on-send').length !== 1) return fail('NATIVE_ACTIVATION_REQUIRED', 'A native boundary requires one selected owned On Send activation.');
             // These links order stages and appear in safe plans; they never supply
             // an artifact, connect a port or expand a manual target's authority.
             effectiveDependencies = new Map([...dependencies].map(([key, values]) => [key, [...values]]));
@@ -90,13 +93,15 @@ function selectClosure(index, target) {
             const complete = new Set(), visiting = new Set();
             const order = unit => {
                 const key = nodeAddressKey(unit.address);
+                if (!included.has(key)) return true;
                 if (visiting.has(key)) return false;
                 if (complete.has(key)) return true;
                 visiting.add(key);
                 for (const upstream of effectiveDependencies.get(key)) if (!order(byKey.get(nodeAddressKey(upstream)))) return false;
                 visiting.delete(key); complete.add(key); ordered.push(unit); return true;
             };
-            if (plan.primitives.some(unit => !order(unit))) return fail('CYCLE', 'Native preparation and Post-stage dependencies contain a cycle.');
+            if (selected.some(unit => !order(unit))) { if (strict) return fail('CYCLE', 'Native preparation and Post-stage dependencies contain a cycle.'); ordered = selected; }
+            ordered.push(...plan.primitives.filter(unit => !included.has(nodeAddressKey(unit.address))));
         }
     }
     return { ok: true, data: { included, containsIncluded, resolvedTarget, ordered, dependencies: effectiveDependencies,
@@ -105,22 +110,17 @@ function selectClosure(index, target) {
         requiredBindingAddresses: selected.filter(unit => unit.requestBound > 0).map(unit => unit.address) } };
 }
 /** Pure complete inventory plus selected upstream execution closure. No binding/host work. */
-export function resolveWorkflow(root, options = {}) {
+export function prepareWorkflowAttempt(root, options = {}) {
     if (!validOptions(options)) return fail('INVALID_TARGET', 'Expected plain planning options.');
     const expanded = inspectExpandedGraph(root); if (!expanded.ok) return expanded;
-    const index = indexExpansion(expanded.data), selection = selectClosure(index, options.target); if (!selection.ok) return selection;
-    // Recheck strict operation settings after selection; an authoring inventory is never execution authority.
-    for(const unit of expanded.data.primitives) if(selection.data.included.has(nodeAddressKey(unit.address))&&!unit.systemDisabled) {
-        const strict=describeOperation({schema:3,runtime:2,mode:'native-unified'}, {...unit.node,phase:unit.phase});
-        if(!strict.ok)return {...strict,error:{...strict.error,nodeId:unit.address.nodeId,address:unit.address}};
-    }
+    const index = indexExpansion(expanded.data), selection = selectClosure(index, options.target, false); if (!selection.ok) return selection;
     const { plan, terminals } = index, { included, containsIncluded, resolvedTarget, callBound, ordered, dependencies } = selection.data, target = options.target;
     const primitives = ordered.map(unit => {
         const resolved = resolveSystemNode(unit.node, unit.address).data;
         return { ...unit, node: resolved.node, systemDefaults: unit.systemDisabled ? [] : resolved.defaults, included: included.has(nodeAddressKey(unit.address)), dependencies: dependencies.get(nodeAddressKey(unit.address)) };
     });
-    const hierarchy = plan.hierarchy.map(entry => ({ ...entry, included: entry.kind === 'primitive' ? included.has(nodeAddressKey(entry.address)) : containsIncluded(entry.address) }));
-    return { ok: true, data: {
+    const hierarchy = plan.hierarchy.map(entry => ({ ...entry, included: entry.kind === 'primitive' ? included.has(nodeAddressKey(entry.address)) : containsIncluded(entry.address), ...(entry.kind === 'instance' ? {inputPorts:plan.boundaryMappings.filter(mapping=>mapping.direction==='input' && nodeAddressKey(mapping.instance)===nodeAddressKey(entry.address)).map(mapping=>mapping.portId)} : {}) }));
+    const selectedPlan = {
         workflowId: plan.workflowId, phase: plan.phase, mode: target === undefined ? 'root' : 'target', primitives, edges: plan.edges, hierarchy, boundaryMappings: plan.boundaryMappings,
         dependencies: primitives.map(unit => ({ address: unit.address, dependencies: unit.dependencies })),
         terminals: terminals.filter(terminal => included.has(nodeAddressKey(terminal.address))), callBound,
@@ -128,7 +128,17 @@ export function resolveWorkflow(root, options = {}) {
         requiredRoles: [...new Set(primitives.filter(unit => unit.included && unit.requestBound > 0).map(unit => unit.node.modelRole).filter(Boolean))],
         ...(target === undefined ? {} : { target: structuredClone(target), resolvedTarget }),
         units: primitives.map(unit => ({ address: unit.address, operation: unit.node.operation, phase: unit.phase, label: unit.node.alias ?? unit.node.title ?? unit.node.operation, included: unit.included, dependencies: unit.dependencies, requestBound: unit.requestBound, inputPorts: unit.inputPorts.map(port => port.id), outputPorts: unit.outputPorts.map(port => port.id) })),
-    } };
+    };
+    let preflight = selectClosure(index, options.target);
+    if (preflight.ok) for (const unit of selectedPlan.primitives.filter(unit=>unit.included && !unit.systemDisabled)) {
+        const strict = describeOperation({schema:3,runtime:2,mode:'native-unified'}, {...unit.node,phase:unit.phase});
+        if (!strict.ok) { preflight = {...strict,error:{...strict.error,nodeId:unit.address.nodeId,address:unit.address}}; break; }
+    }
+    return {ok:true,data:{selection:selectedPlan,preflight:preflight.ok ? {ok:true,data:selectedPlan} : preflight}};
+}
+export function resolveWorkflow(root, options = {}) {
+    const attempt = prepareWorkflowAttempt(root, options);
+    return attempt.ok ? attempt.data.preflight : attempt;
 }
 /** Owned content preparation. Caller root is neither retained in public DTOs nor frozen. */
 export function prepareWorkflowPlanner(root, artifacts) {
@@ -140,7 +150,7 @@ export function prepareWorkflowPlanner(root, artifacts) {
     const index = indexExpansion(checked.data);
     const inventory = freeze({ workflowId: index.plan.workflowId, phase: index.plan.phase, primitives: index.plan.primitives, pins: index.plan.pins, hierarchy: index.plan.hierarchy, terminals: index.terminals });
     // Keys come only from the finite admitted inventory, never arbitrary caller input.
-    const summaries = new Map();
+    const summaries = new Map(), policies = new Map();
     const targetKey = target => {
         if (target === undefined) return 'root';
         if (!safeWorkflowData(target) || !target || typeof target !== 'object' || Array.isArray(target)) return null;
@@ -153,7 +163,15 @@ export function prepareWorkflowPlanner(root, artifacts) {
         const key = artifactAddressKey(target);
         return index.pins.has(key) ? 'output:' + key : null;
     };
-    const planner = Object.freeze({ inventory, summarize(target) {
+    const policy = target => {
+        const key = targetKey(target);
+        if (key === null) return freeze(fail('INVALID_TARGET', 'Expected an actual output or tagged terminal target.'));
+        if (policies.has(key)) return policies.get(key);
+        const selection = selectClosure(index, target, false);
+        const result = freeze(selection.ok ? {ok:true,data:{callBound:selection.data.callBound,requiredBindingAddresses:selection.data.requiredBindingAddresses,requiresNativeGeneration:selection.data.requiresNativeGeneration}} : selection);
+        policies.set(key, result); return result;
+    };
+    const planner = Object.freeze({ inventory, policy, summarize(target) {
         const key = targetKey(target);
         if (key === null) return freeze(fail('INVALID_TARGET', 'Expected an actual output or tagged terminal target.'));
         if (summaries.has(key)) return summaries.get(key);

@@ -132,6 +132,7 @@ function defaultWorkflow() {
     wire('body', 'generate', 'draft', 'body', 'draft'); wire('reference', 'read', 'reference', 'write', 'reference'); wire('notes', 'body', 'out', 'write', 'text');
     node('clock', 'story-clock', { clockId: '' }); node('duration', 'text', { text: '{"kind":"duration","minutes":30}' }); node('proposal', 'json-decode'); node('advance', 'advance-time'); node('commit', 'commit-clock');
     wire('parse', 'duration', 'out', 'proposal', 'in'); wire('clock', 'clock', 'out', 'advance', 'clock'); wire('proposal', 'proposal', 'out', 'advance', 'proposal'); wire('commit', 'advance', 'report', 'commit', 'projection');
+    g.runTargets = ['review', 'write', 'commit'].map(nodeId => ({ instancePath: [], nodeId }));
     return g;
 }
 
@@ -193,6 +194,7 @@ function defaultOutcomeWorkflow() {
     }
     node('pick', 'random-pick'); node('commit', 'commit-outcomes', { targetId: '' });
     wire('events', 'events', 'out', 'pick', 'events'); wire('library', 'library', 'out', 'pick', 'library'); wire('commit', 'pick', 'out', 'commit', 'outcomes');
+    g.runTargets = ['review', 'commit'].map(nodeId => ({ instancePath: [], nodeId }));
     return { g, playerText };
 }
 
@@ -267,6 +269,7 @@ function defaultOutcomeIteration({ included = true } = {}) {
     g.nodes.pick = { id: 'pick', type: 'workflow', ...operationDefaults('for-each'), helper: ref, limit: 2 };
     g.wires.events.toPort = 'in';
     delete g.wires.library;
+    g.runTargets = ['review', 'commit'].map(nodeId => ({ instancePath: [], nodeId }));
     return { g, playerText };
 }
 

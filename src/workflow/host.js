@@ -5,7 +5,7 @@ import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime
 import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.27.4';
 import { addressKey, safeError } from './record-data.js?v=0.27.4';
 import { cloneWorkflowDocument } from './document.js?v=0.27.4';
-import { resolveWorkflow } from './resolve.js?v=0.27.4';
+import { prepareWorkflowAttempt, resolveWorkflow } from './resolve.js?v=0.27.4';
 import { projectIntrospectionNode } from './introspection/native.js?v=0.27.4';
 import { executeIntrospection } from './introspection/nodes.js?v=0.27.4';
 import { parseRecord } from './introspection/contracts.js?v=0.27.4';
@@ -222,16 +222,17 @@ export function createNativeWorkflowController(ports) {
         publishActivity();
         // Replaced documents cannot publish late diagnostics into the current document's cache.
         if(owner && typeof ports.getDocumentToken==='function' && owner.documentToken!==ports.getDocumentToken())return freezeArtifact({...value,reviewHandles:[],superseded:true});
+        const origin=run?.automaticOrigin ?? (run?.native && run.graph ? Object.freeze({graph:run.originalGraph,documentToken:run.documentToken,graphId:run.graph.id,graphName:run.graph.name,signature:run.signature,phase:run.unified?'unified':'pre',kind:'send',runId:run.runId}) : null);
         const previous=result;
         if(!value.recording && previous?.recording) {
             // A failed attempt has no run identity. Preserve the old diagnostic separately.
             result=freezeArtifact({...previous,reviewHandles:[],superseded:true});
-            const failure=freezeArtifact({...value,error:safeError(value.error)});
-            observe(ports.onResult,failure,null);
+            const failure=freezeArtifact({...value,...(origin?{runId:origin.runId}:{}),error:safeError(value.error)});
+            if(origin)automaticResult=Object.freeze({result:failure,origin});
+            observe(ports.onResult,failure,origin);
             return failure;
         }
         result=freezeArtifact(value);
-        const origin=run?.native && run.graph ? Object.freeze({graph:run.originalGraph,documentToken:run.documentToken,graphId:run.graph.id,graphName:run.graph.name,signature:run.signature,phase:run.unified?'unified':'pre',kind:'send',runId:run.runId}) : null;
         if(origin)automaticResult=Object.freeze({result,origin});
         else if(result.recording && automaticResult?.result.recording && automaticResult.result.recording!==result.recording) {
             const prior=automaticResult.result;
@@ -750,7 +751,11 @@ export function createNativeWorkflowController(ports) {
     async function beforeUnified(graph,chat,abort,type) {
         if(generation.overlap){abort?.(true);return notify(fail('OVERLAPPING_GENERATION','A new generation overlapped the owned native continuation.'));}
         if(active?.native){cancel('Overlapping native generation');abort?.(true);return notify(fail('OVERLAPPING_GENERATION','Overlapping native requests are unsupported.'));}
-        const run=start(graph,true,abort);run.unified=true;run.nativeType=type;run.nativeReady=deferred();run.nativeCompletion=deferred();
+        const run=start(graph,true,abort);run.unified=true;
+        // Capture only admitted document identity before completeness can stop execution.
+        const admitted=cloneWorkflowDocument(graph);
+        if(admitted.ok)run.automaticOrigin=Object.freeze({graph:run.originalGraph,documentToken:run.documentToken,graphId:admitted.data.id,graphName:admitted.data.name,signature:workflowSignature(graph),phase:'unified',kind:'send',runId:run.runId});
+        run.nativeType=type;run.nativeReady=deferred();run.nativeCompletion=deferred();
         const completion=execute(run,{chat}).then(value=>{
             run.nativeReady.resolve(value.ok?fail('NATIVE_BOUNDARY_MISSING','The selected workflow never reached native generation.'):value);
             if(active===run){active=null;notify(value,run);}else if(active===null && run.controller.signal.aborted)notify(value,run);return value;
@@ -776,11 +781,11 @@ export function createNativeWorkflowController(ports) {
         if(!admitted.ok){const owner={documentToken:ports.getDocumentToken?.()};return notify(await runWorkflowForHost(graph,{target}),null,owner);}
         // Manual previews cannot own SillyTavern's generation. Check the entire
         // dependency path before starting a run or dispatching auxiliary work.
-        const planned=resolveWorkflow(admitted.data,{target});
+        const attempt=prepareWorkflowAttempt(admitted.data,{target}),planned=attempt.ok?{ok:true,data:attempt.data.selection}:attempt;
         if(planned.ok&&planned.data.primitives.some(unit=>unit.included&&['on-send','generate-reply'].includes(unit.node.operation))){
             const source=planned.data.primitives.find(unit=>unit.included&&['on-send','generate-reply'].includes(unit.node.operation));
             const owner={documentToken:ports.getDocumentToken?.()};
-            return notify(freezeArtifact({ok:false,mode:'target',schema:admitted.data.schema,runtime:admitted.data.runtime,actualCalls:0,callBound:planned.data.callBound,reviewHandles:[],error:{code:'NATIVE_OWNER_MISSING',message:'This step starts when you send a message. Enable Lattice, then send a message in SillyTavern to run this workflow.',nodeId:source.address.nodeId,address:source.address}}),null,owner);
+            return notify(freezeArtifact({ok:false,runId:globalThis.crypto?.randomUUID?.()??'attempt-'+Date.now(),mode:'target',schema:admitted.data.schema,runtime:admitted.data.runtime,actualCalls:0,callBound:planned.data.callBound,reviewHandles:[],error:{code:'NATIVE_OWNER_MISSING',message:'This step starts when you send a message. Enable Lattice, then send a message in SillyTavern to run this workflow.',nodeId:source.address.nodeId,address:source.address}}),null,owner);
         }
         const run=start(graph,false,null,target);
         const value=await execute(run,{messageIndex,onEvent});

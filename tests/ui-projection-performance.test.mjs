@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as preparation from '../src/ui/workspace-preparation.js?v=0.27.4';
 import { prepareWorkflowProjection, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.4';
 import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.4';
+import { cloneWorkflowDocument } from '../src/workflow/document.js?v=0.27.4';
 import { fixtureGraph } from './helpers/workflow-fixtures.mjs';
 import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.27.4';
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.27.4';
@@ -116,7 +117,7 @@ test('retained artifact Source and Readable references survive new recording sta
 
 for (const [fixture, selectedId] of [['structured-guidance', 'compose-json'], ['native-guidance', 'response-plan']]) {
     test('verified coordinate commit retains selected authored Details for ' + selectedId, () => {
-        const root = fixtureGraph(fixture); history.reset(root);
+        const root = cloneWorkflowDocument(fixtureGraph(fixture)).data; history.reset(root);
         const prepared = preparation.prepareWorkspaceViews(root, { profiles: [{ id: 'connection', name: 'Connection' }], resolveBinding: () => ({ ok: true, data: { profileId: 'connection', model: 'model' } }) });
         assert.equal(prepared.ok, true, JSON.stringify(prepared));
         const session = createGraphViewSession({ root, activationId: 'coordinate-details', ...prepared.data }).data;

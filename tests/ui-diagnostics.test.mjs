@@ -41,6 +41,16 @@ test('diagnostic locations prevent independent node failures being collapsed', (
     assert.equal(api.presentDiagnostic(errors[0]).id, views[0].id);
 });
 
+test('navigation rejects oversized identities instead of aliasing an existing prefix', () => {
+    const prefix = 'n'.repeat(256), address = { workflowId: 'flow', instancePath: [], nodeId: prefix };
+    assert.deepEqual(api.presentDiagnostic({ code: 'MISSING_INPUT', address }).address, address);
+    for (const oversized of [
+        { ...address, nodeId: prefix + 'x' },
+        { ...address, workflowId: 'w'.repeat(257) },
+        { ...address, instancePath: [prefix + 'x'] },
+    ]) assert.equal(api.presentDiagnostic({ code: 'MISSING_INPUT', address: oversized }).address, undefined);
+});
+
 test('malformed records and contexts never read accessors or convert objects to text', () => {
     let calls = 0;
     const input = { code: 'MISSING_INPUT', get message() { calls++; throw new Error('private'); }, get address() { calls++; return {}; } };
@@ -326,5 +336,19 @@ test('reserved R Recall conflicts name Run to here while duplicate shortcuts kee
 test('INVALID_CONTROL_JSON uses actionable static authoring copy without revealing raw draft or exception text',()=>{
  for(const source of [{code:'INVALID_CONTROL_JSON',message:'private diary sk-secret'},'INVALID_CONTROL_JSON: private diary sk-secret']){
   const view=api.presentDiagnostic(source,{inputLabel:'Sections'});assert.match(view.message,/Enter valid JSON/);assert.equal(view.technical.code,'INVALID_CONTROL_JSON');assert.doesNotMatch(JSON.stringify(view),/diary|sk-secret/);
+ }
+});
+
+
+test('workflow output selection failures name the management menu without source disclosure or invented authority',()=>{
+ const cases=[
+  ['MISSING_RUN_TARGETS','Choose workflow outputs','Open Workflow > Workflow outputs and select the output steps this workflow should run.'],
+  ['INVALID_RUN_TARGETS','Workflow outputs need updating','Open Workflow > Workflow outputs and choose existing output steps again before running.'],
+ ];
+ for(const [code,title,message] of cases){
+  const view=api.presentDiagnostic({code,message:'PRIVATE HOST DETAIL Authorization: Bearer private-token'},{nodeTitle:'Unrelated draft',action:'run'});
+  assert.equal(view.title,title);assert.equal(view.message,message);assert.equal(view.severity,'error');assert.equal(view.technical.code,code);
+  assert.equal(view.technical.message,message);assert.doesNotMatch(JSON.stringify(view),/PRIVATE HOST DETAIL|Authorization|Bearer|private-token|Unrelated draft/);
+  assert.equal(Object.hasOwn(view,'address'),false);assert.equal(Object.hasOwn(view,'action'),false);
  }
 });

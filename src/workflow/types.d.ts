@@ -1,6 +1,6 @@
 /** Plain boundary DTOs: never carry host adapters, authenticated bindings or authority. */
 export type Result<T> = { ok: true; data: T } | { ok: false; error: WorkflowError };
-export interface WorkflowError { code: string; message: string; nodeId?: string; address?: NodeAddress; }
+export interface WorkflowError { code: string; message: string; nodeId?: string; address?: NodeAddress; inputPortId?: string; }
 export type { PatternRule, PatternSettings, PatternOccurrence, PatternMatchReport, PatternReportBinding } from './operations/pattern-engine';
 export type { FilterTextSettings, FilterTextReport } from './operations/filter-text';
 export type ArtifactKind = 'context' | 'draft' | 'patches' | 'candidate' | 'guidance' | 'text' | 'data';
@@ -101,7 +101,10 @@ interface NativeDocument {
     roles?: Record<string, Binding>;
     [key: string]: unknown;
 }
+export interface WorkflowRunTarget { instancePath: string[]; nodeId: string; }
+export type RootWorkflow = NativeGraph3;
 export interface NativeGraph3 extends NativeDocument {
+    runTargets?: WorkflowRunTarget[];
     schema: 3; runtime: 2; wires: Record<string, DirectWire | PortalWire>;
     portals?: Record<string, Portal>;
     definitions?: SnapshotTable;

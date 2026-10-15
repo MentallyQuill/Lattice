@@ -175,7 +175,7 @@ test('a retired schema-2 recovery draft is preserved without becoming the active
 });
 
 test('a unified active document retains pinned Pre and Post definition bodies through local save and reopen', async () => {
-    const graph = legacyGraph('unified-with-stage-bodies','native-unified');
+    const graph = legacyGraph('unified-with-stage-bodies','native-unified'); graph.runTargets=[];
     for (const mode of ['native-pre','native-post']) {
         const draft = {id:mode + '-body',version:1,name:mode,interface:[],parameters:[],body:{schema:3,runtime:2,mode,nodes:{text:{id:'text',type:'workflow',operation:'text',operationVersion:1,text:'Preserve pinned ' + mode}},wires:{}}};
         const checked = computeDefinitionIdentity(draft);assert.equal(checked.ok,true,JSON.stringify(checked.error));

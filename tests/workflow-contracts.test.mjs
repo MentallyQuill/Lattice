@@ -9,6 +9,7 @@ function fixturePreGraph() {
         output: { id: 'output', type: 'workflow', operation: 'guidance', enabled: true, x: 0, y: 300, budgetTokens: 768 },
     }, wires: { a: { id: 'a', route: 'wire', from: 'source', fromPort: 'out', to: 'compact', toPort: 'in' }, b: { id: 'b', route: 'wire', from: 'compact', fromPort: 'out', to: 'plan', toPort: 'in' }, c: { id: 'c', route: 'wire', from: 'plan', fromPort: 'out', to: 'output', toPort: 'in' } }, groups: {} };
     for (const node of Object.values(graph.nodes)) node.phase = 'pre';
+    graph.runTargets = [{ instancePath: [], nodeId: 'review-publish' }];
     return withNativeBoundary(graph, 'output');
 }
 const graph = fixturePreGraph();
@@ -43,9 +44,9 @@ const invalidNumber = fixturePreGraph();
 invalidNumber.nodes.compact.targetTokens = 0;
 assert.equal(validateWorkflow(invalidNumber).error?.code, 'INVALID_SETTINGS');
 const noTerminal = fixturePreGraph();
-delete noTerminal.nodes['review-publish']; delete noTerminal.wires.draft;
-assert.equal(validateWorkflow(noTerminal).error?.code, 'MISSING_TERMINAL');
-assert.match(validateWorkflow(noTerminal).error?.message, /Review.*Publish/i);
+delete noTerminal.nodes['review-publish']; delete noTerminal.wires.draft; noTerminal.runTargets = [];
+assert.equal(validateWorkflow(noTerminal).error?.code, 'MISSING_RUN_TARGETS');
+assert.match(validateWorkflow(noTerminal).error?.message, /workflow outputs/i);
 const reachable = fixturePreGraph();
 reachable.nodes.compact.method = 'compress';
 reachable.nodes.unused = { id: 'unused', type: 'workflow', operation: 'response-plan', maxTokens: 768 };
@@ -120,6 +121,7 @@ const scanOnly = { id: 'post', schema: 3, runtime: 2, mode: 'native-unified', ro
     apply: { id: 'apply', type: 'workflow', operation: 'apply-reply' },
 }, wires: { a: { id: 'a', route: 'wire', from: 'source', fromPort: 'out', to: 'scan', toPort: 'in' }, b: { id: 'b', route: 'wire', from: 'scan', fromPort: 'out', to: 'repair', toPort: 'in' }, c: { id: 'c', route: 'wire', from: 'repair', fromPort: 'out', to: 'validate', toPort: 'in' }, d: { id: 'd', route: 'wire', from: 'validate', fromPort: 'out', to: 'review', toPort: 'in' }, e: { id: 'e', route: 'wire', from: 'review', fromPort: 'out', to: 'apply', toPort: 'in' } } };
 for (const node of Object.values(scanOnly.nodes)) node.phase = 'post';
+scanOnly.runTargets = [{ instancePath: [], nodeId: 'apply' }];
 const scanTarget = { workflowId: scanOnly.id, instancePath: [], nodeId: 'review', portId: 'out' };
 assert.equal(validateWorkflow(scanOnly, { target: scanTarget }).data.callBound, 0);
 assert.deepEqual(validateWorkflow(scanOnly, { target: scanTarget }).data.requiredRoles, []);

@@ -26,6 +26,7 @@ export function fixtureLibraryWorkflow(id) {
     if(pre){add(graph,'output','guidance','pre');wire(graph,'output','library','output',definition.interface[1].id);withNativeBoundary(graph,'output');}
     else if(id==='literal-cleanup'){delete graph.nodes.source;withNativeBoundary(graph);delete graph.wires.source;graph.wires.draft.from='library';graph.wires.draft.fromPort='filtered-draft';wire(graph,'library-source','generate-reply','library','draft','draft');}
     else{add(graph,'review','review-gate','post');add(graph,'apply','apply-reply','post');wire(graph,'review','library','review',definition.interface[1].id);wire(graph,'apply','review','apply');}
+    graph.runTargets=[{instancePath:[],nodeId:pre||id==='literal-cleanup'?'review-publish':'apply'}];
     return {ok:true,data:{graph}};
 }
 export function fixtureGraph(id) {

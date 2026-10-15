@@ -27,7 +27,9 @@ async function installWorkflow(page, title) {
         const h = window.canvasHarness, { fixtureGraph } = await import('/tests/helpers/workflow-fixtures.mjs');
         const id = { 'Scene guidance': 'native-guidance', 'Reviewed AI De-slop': 'reviewed-de-slop' }[title];
         if (!id) throw new Error('Unknown authoring fixture: ' + title);
-        await h.activate(fixtureGraph(id));
+        const graph = fixtureGraph(id);
+        graph.runTargets = [{ instancePath: [], nodeId: id === 'reviewed-de-slop' ? 'apply-reply' : 'review-publish' }];
+        await h.activate(graph);
     }, title);
 }
 async function bindNode(page, operation, profile) {
@@ -217,6 +219,7 @@ test('formation request summary follows inspect mode and additional reachable re
         for (const [i, [from, to]] of [[byOp('reply-snapshot').id, 'repair-extra'], ['repair-extra', 'validate-patches-extra'], ['validate-patches-extra', 'apply-reply-extra']].entries()) {
             const id = 'extra-wire-' + i; graph.wires[id] = {id,route:'wire',from,fromPort:'out',to,toPort:'in'};
         }
+        graph.runTargets.push({ instancePath: [], nodeId: 'apply-reply-extra' });
         S.touchGraph(graph); window.canvasHarness.canvas.render(); UI.refreshIfOpen();
     });
     await expectBound(page, 2);
@@ -354,6 +357,7 @@ async function prepareReviewRoot(page) {
         const g = h.graph; delete g.nodes['apply-reply'];
         for (const [id, wire] of Object.entries(g.wires)) if (wire.to === 'apply-reply' || wire.from === 'apply-reply') delete g.wires[id];
         withNativeBoundary(g);
+        g.runTargets = [{ instancePath: [], nodeId: 'review-publish' }];
         g.nodes.revision = {...operationDefaults('revise-draft'),id:'revision',type:'workflow',operationVersion:1,phase:'post',profileId:'prose',scope:'whole',instructions:'Replace delve with explore.',x:650,y:500};
         g.wires.draft = {id:'draft',route:'wire',from:'generate-reply',fromPort:'draft',to:'revision',toPort:'draft'};
         g.wires.revision = {id:'revision',route:'wire',from:'revision',fromPort:'out',to:'review-publish',toPort:'draft'};

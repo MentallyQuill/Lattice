@@ -5,7 +5,7 @@ export function reviewGraph({second=false,revise=true}={}) {
  const wires={activation:{id:'activation',route:'wire',from:'send',fromPort:'activation',to:'generate',toPort:'activation'},draft:{id:'draft',route:'wire',from:'generate',fromPort:'draft',to:revise?'repair':'review',toPort:'draft'}};
  if(revise){nodes.repair={id:'repair',type:'workflow',operation:'revise-draft',scope:'whole',instructions:'Tighten prose.',profileId:null,modelRole:'Prose',x:410,y:140,inGroup:'ai-de-slop'};wires.review={id:'review',route:'wire',from:'repair',fromPort:'out',to:'review',toPort:'draft'};}
  if(second){nodes.second={id:'second',type:'workflow',operation:'review-publish'};wires.second={id:'second',route:'wire',from:revise?'repair':'generate',fromPort:revise?'out':'draft',to:'second',toPort:'draft'};}
- return {id:'host-review',name:'Host review',schema:3,runtime:2,mode:'native-unified',nodes,wires,definitions:{},portals:{},roles:{Prose:{profileId:'fixed',model:null}},groups:revise?{'ai-de-slop':{id:'ai-de-slop',members:['repair'],collapsed:true,x:410,y:140,w:260}}:{},view:{x:0,y:0,zoom:1}};
+ return {id:'host-review',name:'Host review',schema:3,runtime:2,mode:'native-unified',runTargets:[{instancePath:[],nodeId:'review'},...(second?[{instancePath:[],nodeId:'second'}]:[])],nodes,wires,definitions:{},portals:{},roles:{Prose:{profileId:'fixed',model:null}},groups:revise?{'ai-de-slop':{id:'ai-de-slop',members:['repair'],collapsed:true,x:410,y:140,w:260}}:{},view:{x:0,y:0,zoom:1}};
 }
 export function nativeFixture(graph=reviewGraph(),options={}) {
  const original={mes:'We delve.',is_user:false,swipe_id:0,swipes:['We delve.'],swipe_info:[{extra:{old:'keep'},send_date:1,gen_started:1,gen_finished:2}],extra:{old:'keep'},send_date:1,gen_started:1,gen_finished:2};

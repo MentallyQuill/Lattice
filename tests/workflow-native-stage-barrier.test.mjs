@@ -7,7 +7,7 @@ import { parseRunPlan } from '../src/workflow/record-data.js?v=0.27.4';
 
 const node = (id, operation, settings = {}) => ({ id, type: 'workflow', operation, ...settings });
 const wire = (id, from, fromPort, to, toPort) => ({ id, route: 'wire', from, fromPort, to, toPort });
-const graph = (nodes, wires, mode = 'native-unified') => ({ id: 'stages', schema: 3, runtime: 2, mode, nodes, wires: Object.fromEntries(wires.map(edge => [edge.id, edge])), definitions: {}, portals: {} });
+const graph = (nodes, wires, mode = 'native-unified') => ({ id: 'stages', schema: 3, runtime: 2, mode, nodes, runTargets:Object.values(nodes).filter(node=>['review-publish','write-file'].includes(node.operation)).map(node=>({instancePath:[],nodeId:node.id})), wires: Object.fromEntries(wires.map(edge => [edge.id, edge])), definitions: {}, portals: {} });
 const address = (nodeId, portId = 'out') => ({ workflowId: 'stages', instancePath: [], nodeId, portId });
 function nativeGraph() {
     // The Post source deliberately precedes native generation in authored insertion order.
@@ -104,8 +104,9 @@ test('multiple selected native generators are rejected while unselected generato
     const root = nativeGraph();
     root.nodes.sendTwo = node('sendTwo', 'on-send'); root.nodes.generateTwo = node('generateTwo', 'generate-reply'); root.nodes.reviewTwo = node('reviewTwo', 'review-publish');
     root.wires.activationTwo = wire('activationTwo', 'sendTwo', 'activation', 'generateTwo', 'activation'); root.wires.reviewTwo = wire('reviewTwo', 'generateTwo', 'draft', 'reviewTwo', 'draft');
+    root.runTargets.push({instancePath:[],nodeId:'reviewTwo'});
     assert.equal(resolveWorkflow(root).error?.code, 'MULTIPLE_NATIVE_GENERATIONS');
-    delete root.nodes.reviewTwo; delete root.wires.reviewTwo;
+    delete root.nodes.reviewTwo; delete root.wires.reviewTwo; root.runTargets = root.runTargets.filter(target=>target.nodeId!=='reviewTwo');
     assert.equal(resolveWorkflow(root).ok, true, 'An unselected generator is an unfinished authoring branch');
     const target = resolveWorkflow(root, { target: address('preText') });
     assert.equal(target.ok, true, JSON.stringify(target.error)); assert.deepEqual(ids(target), ['preText']);

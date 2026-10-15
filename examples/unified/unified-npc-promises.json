@@ -78,6 +78,8 @@
         "instructions": "Extract explicit promises, obligations and stated deadlines. Attribute each speaker; speculation and intention are not completed actions.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "notes": {
@@ -181,6 +183,12 @@
       "x": 0,
       "y": 0,
       "zoom": 0.7
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      }
+    ]
   }
 }

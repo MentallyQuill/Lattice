@@ -18,7 +18,8 @@ test('preparing the current starter leaves Lattice disabled and the active docum
 test('authored zero-call operation layouts project without connection or model effects', () => {
     let bindings=0;
     for (const id of ['literal-cleanup','structured-guidance']) {
-        const view=project(starterGraph(id),{resolveBinding(){bindings++;throw new Error('No model needed');}});
+        const root=starterGraph(id);root.runTargets=[{instancePath:[],nodeId:id==='literal-cleanup'?'apply-reply':'review-publish'}];
+        const view=project(root,{resolveBinding(){bindings++;throw new Error('No model needed');}});
         assert.equal(view.callBound,0); assert.equal(view.issues.length,0);
         assert.equal(view.nodes.some(node=>node.operation==='compose'||node.operation==='text-rules'),true);
     }

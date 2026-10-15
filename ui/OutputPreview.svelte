@@ -28,7 +28,7 @@
     const copyMessage = (message: PreviewMessage) => copy(message.text);
     const previewId = $props.id();
     let diagnostics = $derived.by(() => {
-        const items = view?.diagnostics ?? presentDiagnostics([view?.runHere?.issue, ...(view?.issues ?? []), view?.review?.issue].filter((issue): issue is string => !!issue), { nodeTitle: view?.title });
+        const items = view?.diagnostics ?? (view?.status === 'current' ? presentDiagnostics([view?.review?.issue].filter((issue): issue is string => !!issue), { nodeTitle: view?.title }) : []);
         return items.filter((item, index) => items.findIndex(other => other.id === item.id) === index);
     });
     let sectionScope = $derived(JSON.stringify([view?.sourceKey, view?.selectedKey]));

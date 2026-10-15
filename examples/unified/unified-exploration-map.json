@@ -69,7 +69,7 @@
         "x": 80,
         "y": 600,
         "w": 270,
-        "h": 160,
+        "h": 170,
         "profileId": null,
         "model": null,
         "modelRole": null,
@@ -136,6 +136,8 @@
         "instructions": "Extract new observed landmarks/exits and explicitly suspected routes. Use stable location or directed edge IDs and exact source quotes. Classify actually traversed/observed connections as observation and suspected tunnels as interpretation. Never disclose an unvisited secret room.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "spatial-input": {
@@ -484,6 +486,16 @@
       "x": 0,
       "y": 0,
       "zoom": 0.7
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      },
+      {
+        "instancePath": [],
+        "nodeId": "save-map"
+      }
+    ]
   }
 }

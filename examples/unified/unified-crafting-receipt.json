@@ -69,7 +69,7 @@
         "x": 80,
         "y": 600,
         "w": 270,
-        "h": 160,
+        "h": 170,
         "profileId": null,
         "model": null,
         "modelRole": null,
@@ -651,6 +651,8 @@
         "instructions": "Extract observed properties of the completed potion with exact quotes. Do not invent hidden mechanics or a free future experiment.",
         "schema": "",
         "patterns": [],
+        "caseSensitive": true,
+        "match": "substring",
         "maxTokens": 2048
       },
       "specialist": {
@@ -1248,6 +1250,16 @@
       "x": 0,
       "y": 0,
       "zoom": 0.7
-    }
+    },
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      },
+      {
+        "instancePath": [],
+        "nodeId": "save"
+      }
+    ]
   }
 }

@@ -47,6 +47,7 @@ export function workspaceMenus(view: WorkbenchView, panels: WorkspaceMenuPanels 
  {name:'Workflow',groups:[
   [row('Add system…','add-system','subgraph',!c.addSystem || busy)],
   [check('Enable Lattice','enable-workflow',!!view.enabled,!root)],
+  [{...row('Workflow outputs','workflow-outputs','run',!view.workflowOutputs?.length),title:'Choose the terminal steps included when Lattice runs this workflow.',children:(view.workflowOutputs ?? []).map(output=>check(output.label,output.command,output.checked,output.disabled))}],
   [row('Validate workflow','validate-workflow','check',!root),row('Review host result','review-host-result','details',root?.reviewTerminals ? !root.reviewTerminals.length : !root?.nodes?.some(node=>node.terminal)),row('Stop workflow','stop-workflow','stop',!c.stop)],
   [{...row('Run to current output','run-preview','run',!preview?.runHere?.enabled || !!preview?.busy || busy),reason:preview?.busy || busy ? 'Wait for the current run to finish.' : preview?.runHere?.reason ?? (!preview?.selectedKey ? 'Select a node output to preview first.' : undefined)},row('Run details…','run-details','details',!view.runDetails)],
   [{...row('Configure','configure','details'),children:[row('Workflow Data…','story-documents','library')]}],

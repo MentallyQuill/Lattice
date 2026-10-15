@@ -1,3 +1,4 @@
+import { inspectExpandedGraph } from '../src/workflow/graph-validation.js';
 import {builder,layout,must} from './remastered/builder.mjs';
 import {liveJson,eventCandidates,confirmEach,writeState,actor,partner} from './remastered/shared.mjs';
 import {prepareCreateFromSelection} from '../src/workflow/composition-transform.js';
@@ -60,6 +61,7 @@ export function buildCombinedExample({waitMinutes=480}={}){
   if(prefix!=='relationship')r.connect(prefix+'-guidance','out','compose','section.'+(prefix==='wand'?'Wand':'Weather'));
   selections.push({prefix,nodeIds:ids.map(translate)});
  }
+ graph.runTargets=must(inspectExpandedGraph(graph),'Flat Main').primitives.filter(unit=>unit.terminal).map(unit=>({instancePath:unit.address.instancePath,nodeId:unit.address.nodeId}));
  layout(graph);must(validateWorkflow(graph),'Flat Main');let candidate=graph;
  for(const {prefix,nodeIds} of selections){const proposal=must(prepareCreateFromSelection(candidate,{nodeIds,definitionId:'combined-'+prefix,instanceId:prefix,name:prefix==='wand'?'Broken wand':prefix==='weather'?'Eight-hour rain':'Rowan toward Iris'}),'Extract '+prefix);candidate=proposal.candidate;}
  // Extraction exposes optional diagnostics too; this example's reusable interface keeps only Main's connected boundaries.

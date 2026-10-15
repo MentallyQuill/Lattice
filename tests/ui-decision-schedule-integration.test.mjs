@@ -23,7 +23,7 @@ import * as H from '../src/history.js?v=0.27.4';
 
 const operations = ['decision', 'advance-time', 'time-trigger'];
 const scope = { schema: 3, runtime: 2, mode: 'native-unified', workflowId: 'n6-integration', viewPath: [], inDefinition: false };
-const emptyGraph = () => ({ id: 'n6-integration', schema: 3, runtime: 2, mode: 'native-unified', roles: {}, nodes: {}, wires: {}, definitions: {}, portals: {} });
+const emptyGraph = () => ({ id: 'n6-integration', schema: 3, runtime: 2, mode: 'native-unified', runTargets: [], roles: {}, nodes: {}, wires: {}, definitions: {}, portals: {} });
 const question = { type: 'noul', instructions: 'Before, exact words.', criteria: { true: { evidence: [null, false, 0, ''] }, false: [] } };
 const schedule = { scheduleId: 'curse-1', kind: 'interval', anchorMinute: 0, intervalMinutes: 480, revision: 7, clockId: 'chosen-clock', calendarId: 'chosen-calendar', scope: { visibility: 'private', actorId: 'Rowan', values: [null, false, 0, ''] } };
 function settings(operation) {

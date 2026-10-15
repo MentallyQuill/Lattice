@@ -1,3 +1,4 @@
+import { inspectExpandedGraph } from '../../src/workflow/graph-validation.js';
 import { operationDefaults } from '../../src/workflow/catalog.js';
 import { exportWorkflow } from '../../src/workflow/packages.js';
 import { validateWorkflow } from '../../src/workflow/contracts.js';
@@ -10,5 +11,6 @@ export function patternFilterLesson() {
  add('join','join',{artifactKind:'draft',inputs:[{id:'filtered',label:'Filtered',required:false},{id:'bypass',label:'No match',required:false}]},5); add('review','review-publish',{},6);
  graph.nodes.fixture={id:'fixture',type:'note',title:'Synthetic source fixture',content:PATTERN_FILTER_SOURCE,x:80,y:400,w:500,h:220};
  for (const [id,from,fromPort,to,toPort] of [['activation','send','activation','generate','activation'],['source','generate','draft','pattern','in'],['payload','pattern','out','branch','in'],['condition','pattern','matched','branch','condition'],['selected','branch','yes','filter','in'],['report','pattern','matches','filter','matches'],['filtered','filter','out','join','filtered'],['bypass','branch','no','join','bypass'],['review','join','out','review','draft']]) graph.wires[id]={id,route:'wire',from,fromPort,to,toPort};
+ graph.runTargets = inspectExpandedGraph(graph).data.primitives.filter(unit=>unit.terminal).map(unit=>({instancePath:unit.address.instancePath,nodeId:unit.address.nodeId}));
  const valid=validateWorkflow(graph); if(!valid.ok)throw Error(JSON.stringify(valid.error)); return exportWorkflow(graph);
 }

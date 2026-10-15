@@ -6,13 +6,7 @@ export function previewDiagnostics({ workflow, state, target, selectedKey, secti
     if (library) return { diagnostics: presentDiagnostics(['Library inspection is read-only and has no runtime output.']), emptyMessage: '', statusDetail: '', runReason: '' };
     const context = { enabled, nodeTitle: title };
     const priorRun = state.busy && state.availability === 'superseded';
-    const diagnostics = [...(workflow.diagnostics ?? presentDiagnostics(workflow.issues ?? [], context))];
-    if (state.preparationError) diagnostics.push(presentDiagnostic(state.preparationError, context));
-    if (!priorRun && !state.preparationError) {
-        if (workflow.result?.errorDiagnostic) diagnostics.push(workflow.result.errorDiagnostic);
-        else if (workflow.result?.error) diagnostics.push(presentDiagnostic(workflow.result.error, context));
-        if (workflow.result?.applyIssue) diagnostics.push(workflow.result.applyDiagnostic ?? presentDiagnostic(workflow.result.applyIssue, context));
-    }
+    const diagnostics = [];
     const address = nodeAddress(target?.kind === 'terminal' ? target.address : target);
     const visit = rows => {
         for (const row of rows ?? []) {
@@ -21,14 +15,18 @@ export function previewDiagnostics({ workflow, state, target, selectedKey, secti
         }
     };
     const row = address && !(priorRun && !state.runState) ? visit(workflow.rows) : null;
-    if (row?.error) diagnostics.push(presentDiagnostic({ ...row.error, address: row.address }, context));
-    else if (row?.status === 'blocked') diagnostics.push(presentDiagnostic({ code: 'UPSTREAM_FAILED', address: row.address }, context));
+    const cause = state.currentDiagnostics?.nodes.find(node => address && addressKey(node.address) === addressKey(address));
+    if (cause) diagnostics.push(presentDiagnostic(cause.error, context));
+    const preparationAddress = nodeAddress(state.preparationError?.address);
+    if (state.preparationError && (!preparationAddress || address && addressKey(preparationAddress) === addressKey(address)) && !cause && state.preparationError.code !== 'MANUAL_NATIVE_TRIGGER_REQUIRED') diagnostics.push(presentDiagnostic(state.preparationError, context));
+    if (!['stale', 'superseded', 'cancelled'].includes(state.availability) && workflow.result?.applyIssue) diagnostics.push(workflow.result.applyDiagnostic ?? presentDiagnostic(workflow.result.applyIssue, context));
     const selectedStatus = priorRun ? row?.status : workflow.result?.previewStatus || row?.status;
     for (let index = 0; index < diagnostics.length; index++) if (diagnostics[index].technical?.code === 'MANUAL_NATIVE_TRIGGER_REQUIRED') diagnostics[index] = presentDiagnostic({ code: 'MANUAL_NATIVE_TRIGGER_REQUIRED', message: 'This step starts when you send a message.', ...(address ? { address } : {}) }, context);
     const unique = diagnostics.filter((item, index) => diagnostics.findIndex(other => other.id === item.id) === index);
     let emptyMessage = '';
     if (!sections.length && !unique.length) {
         const code = target && !selectedKey ? 'OUTPUT_REMOVED'
+            : selectedStatus === 'blocked' ? 'UPSTREAM_FAILED'
             : selectedStatus === 'skipped' ? 'PREVIEW_SKIPPED'
             : ['waiting', 'queued'].includes(selectedStatus) ? 'PREVIEW_WAITING'
             : selectedStatus === 'cancelled' ? 'ABORTED'
@@ -41,9 +39,9 @@ export function previewDiagnostics({ workflow, state, target, selectedKey, secti
     }
     const earlier = state.availability === 'superseded' || state.availability === 'stale';
     const historyNotice = earlier && (sections.length || !state.busy && workflow.result) ? 'This preview describes an earlier run. It may not match the current workflow or reply.' : '';
-    const statusDetail = state.preparationError || !priorRun && workflow.result?.error || unique.some(item => item.message === state.status) ? '' : state.status || '';
+    const statusDetail = state.preparationError || workflow.result?.error || unique.some(item => item.message === state.status) ? '' : state.status || '';
     const runReason = state.busy ? 'Wait for the current run to finish.'
         : workflow.targetSummary?.requiresNativeGeneration ? presentDiagnostic({ code: 'MANUAL_NATIVE_TRIGGER_REQUIRED', message: 'This step starts when you send a message.' }, context).message
-        : (workflow.targetSummary?.diagnostics ?? []).map(item => item.message).join(' ');
+        : workflow.targetSummary?.attemptable === false ? (workflow.targetSummary?.diagnostics ?? []).map(item => item.message).join(' ') : '';
     return { diagnostics: unique, emptyMessage, statusDetail, historyNotice, runReason };
 }
