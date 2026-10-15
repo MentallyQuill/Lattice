@@ -78,7 +78,7 @@
 - [x] Update configuration-specific creation tests to assert direct creation plus existing post-placement field editors. Do not weaken input parsing or runtime authorization tests.
 - [x] Connect the readiness action to existing node selection/Details and the actionable control. Ensure incomplete controls use authoring descriptors and progressive canonical saves.
 - [x] Test all 75 operation choices and preset packets, shelf/blank-space/wire search, one Undo insertion+connection, stage-restricted definitions, unavailable chat/profile, and stale capture rejection.
-- [ ] Run targeted creation/Details/search suites, types, and relevant browser tests. Commit/review the integrated deliverable when Task 1 interfaces are ready.
+- [x] Run targeted creation/Details/search suites, types, and relevant browser tests. Commit/review the integrated deliverable when Task 1 interfaces are ready.
 
 ## Task 4: Place saved systems before configuring connections
 
@@ -98,9 +98,9 @@
 - [x] Run `npm test`, `npm run check:types`, `npm run build`, `npm run check:assets`, and `npm run test:browser`. Fix substantive failures and rerun affected checks; record evidence.
 - [x] Inspect browser screenshots for long metadata, statuses, compact/overview, groups, and post-placement system setup. Confirm no hidden nodes or shifting pin anchors.
 - [x] Obtain fresh whole-branch review against the approved brief and regression matrix. Address substantive findings and run affected checks again.
-- [ ] Commit only completed owned changes using the repository's conventions; check diff whitespace, branch status, and main's latest remote state.
-- [ ] Merge into local main without discarding unrelated work, rerun integration checks required by any merge changes, and push main to origin. Use GitHub CLI only with network permission enabled; prompt reauthentication if its token expires.
-- [ ] Verify remote main equals the delivered commit. Mark the goal complete only when implementation, required verification/review, merge, and push are all complete.
+- [x] Commit only completed owned changes using the repository's conventions; check diff whitespace, branch status, and main's latest remote state.
+- [x] Merge into local main without discarding unrelated work, rerun integration checks required by any merge changes, and push main to origin. Use GitHub CLI only with network permission enabled; prompt reauthentication if its token expires.
+- [x] Verify remote main equals the delivered commit. Mark the goal complete only when implementation, required verification/review, merge, and push are all complete.
 
 ## Progress
 
@@ -110,7 +110,7 @@
 - Task 2: implemented; focused Node/browser checks, visual inspection, nine production readiness regressions and actual group-title dragging pass. The supported-stage projection correction is independently reviewed.
 - Task 3: implemented with all 75 immediate operation choices and progressive Details. Navigation, focus, quarter-zoom placement and supported-stage review fixes pass focused checks and independent review.
 - Task 4: implemented; 41 Node checks, two system browser checks and 44 entry/capability browser checks pass. Documentation and actual UI captures are updated.
-- Task 5: all 347 Node test files and 483 browser tests pass. Independent domain/UI reviews are clear, including camera measurement and placement clearance fixes. Types (zero errors/warnings), build, assets, documentation and whitespace checks pass. Commit, main integration and push remain.
+- Task 5: all 347 Node test files and 483 browser tests pass. Independent domain/UI reviews are clear, including camera measurement and placement clearance fixes. Types (zero errors/warnings), build, assets, documentation and whitespace checks pass. Committed as `3c8c79d`, fast-forward merged into main, pushed to origin/main, and verified through the GitHub main reference.
 
 ## Verification evidence
 
@@ -121,3 +121,7 @@
 - `npm run build` and `npm run check:assets`: passed; 708 versioned local imports verified.
 - `node tools/check-documentation.mjs`: 15 documents, 487 links, 75 operations, 54 screenshots and five animations verified.
 - Independent domain and whole-change reviews: no remaining substantive findings after reproducing and correcting their findings.
+
+## Delivery
+
+Implementation commit: `3c8c79d0574e05797269adbe66096d5fe6058ee1`. Main was fast-forward merged and pushed; GitHub reported this exact commit. Pre-existing local shelf edits were preserved, hash-checked, and rebuilt successfully after integration.

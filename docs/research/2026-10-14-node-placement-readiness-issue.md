@@ -1,7 +1,7 @@
 # Place every node immediately and show setup readiness on the canvas
 
 Date: 2026-10-14
-Status: Approved design and pre-change audit. Implementation and verification are tracked in `docs/superpowers/plans/2026-10-14-node-placement-readiness.md`.
+Status: Implemented, verified, and pushed to main. This document retains the pre-change audit; implementation and delivery evidence are tracked in `docs/superpowers/plans/2026-10-14-node-placement-readiness.md`.
 
 ## Intended outcome
 
