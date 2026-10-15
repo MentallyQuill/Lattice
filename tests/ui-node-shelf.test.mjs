@@ -250,6 +250,40 @@ test('hover opens aligned drawers without stealing focus and Escape cancels defe
         await keys(family, 'Escape'); assert.equal(host.querySelector('.pc-family-menu'), null); assert.equal(document.activeElement, family);
     });
 });
+
+test('browsing families and filtering search reuse prepared catalog metadata', async () => {
+    let reads = 0;
+    const choices = [
+        { id: 'operation:compose', get label() { reads++; return 'Compose'; }, family: 'Shaping', phase: 'pre', searchAliases: ['assemble'] },
+        { id: 'operation:guidance', get label() { reads++; return 'Guidance'; }, family: 'Output', phase: 'pre' },
+    ];
+    await fixture({ view: initial, choices, choose() {} }, async (host, instance) => {
+        reads = 0;
+        for (const name of ['Shaping', 'Output', 'Shaping']) {
+            host.querySelector(`[data-family="${name}"]`).dispatchEvent(new dom.window.MouseEvent('pointerenter'));
+            flushSync(); await tick(); flushSync();
+            assert.equal(host.querySelector('.pc-family-menu').getAttribute('aria-label'), name + ' nodes');
+        }
+        await instance.openSearch(); flushSync();
+        const input = host.querySelector('input[aria-label="Search nodes"]');
+        for (const query of ['assemble', 'guidance']) {
+            input.value = query; input.dispatchEvent(new dom.window.Event('input', { bubbles: true })); flushSync(); await tick();
+            assert.equal(host.querySelectorAll('[data-shelf-choice]').length, 1);
+        }
+        assert.equal(reads, 0, 'hover and query changes should not re-read unchanged catalog metadata');
+    });
+});
+
+test('switching families resets the shared drawer scroll before reusing its rows', async () => {
+    await fixture({ view: initial, choose() {} }, async host => {
+        await click(host.querySelector('[data-family="Shaping"]'));
+        const menu = host.querySelector('.pc-family-menu'); menu.scrollTop = 180;
+        host.querySelector('[data-family="Output"]').dispatchEvent(new dom.window.MouseEvent('pointerenter'));
+        flushSync(); await tick(); flushSync();
+        assert.equal(host.querySelector('.pc-family-menu'), menu);
+        assert.equal(menu.scrollTop, 0, 'each family starts with its first rows visible');
+    });
+});
 test('a current disabled catalog entry rejects a raw event from its previously enabled shelf button', async () => {
     const calls = [], choice = { id: 'operation:compose', label: 'Compose', family: 'Shaping', phase: 'pre', shortcode: 'co' };
     await fixture({ view: initial, choices: [choice], choose: id => calls.push(id), add() {} }, async host => {

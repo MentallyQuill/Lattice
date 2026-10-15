@@ -26378,26 +26378,58 @@ var FO = "M3 7 12 2l9 5v10l-9 5-9-5ZM3 7l9 5 9-5M12 12v10", IO = "M3 6l4-2 4 2v5
 	group: "Blocks",
 	shortcode: "",
 	icon: FO
-}), UO = (e) => Object.hasOwn(VO, e) ? VO[e] : HO, WO = /* @__PURE__ */ K("<button type=\"button\" class=\"pc-family-row\" aria-haspopup=\"menu\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path></path></svg><span> </span></button>"), GO = /* @__PURE__ */ K("<button type=\"button\" role=\"menuitem\">‹ Families</button>"), KO = /* @__PURE__ */ K("<input class=\"text_pole\" aria-label=\"Search nodes\" placeholder=\"Search nodes…\"/>"), qO = /* @__PURE__ */ K("<div class=\"pc-shelf-group svelte-hk6fzp\" role=\"presentation\"> </div>"), JO = /* @__PURE__ */ K("<span class=\"pc-shelf-reason svelte-hk6fzp\"> </span>"), YO = /* @__PURE__ */ K("<!> <button type=\"button\" role=\"menuitem\" class=\"svelte-hk6fzp\"><svg class=\"pc-leaf-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path></path></svg><span class=\"pc-catalog-name\"> <!></span><small> </small></button>", 1), XO = /* @__PURE__ */ K("<p class=\"pc-shelf-empty svelte-hk6fzp\"> </p>"), ZO = /* @__PURE__ */ K("<div role=\"menu\" tabindex=\"-1\"><!> <!> <!></div>"), QO = /* @__PURE__ */ K("<div class=\"pc-shelf-menu pc-shelf-subgraph-menu svelte-hk6fzp\" role=\"menu\" tabindex=\"-1\"><button type=\"button\" role=\"menuitem\" data-shelf-subgraph-action=\"open\">Open saved definition</button> <button type=\"button\" role=\"menuitem\" data-shelf-subgraph-action=\"delete\">Delete</button></div>"), $O = /* @__PURE__ */ K("<div class=\"pc-shelf-drag-preview svelte-hk6fzp\" aria-hidden=\"true\"> </div>"), ek = /* @__PURE__ */ K("<nav aria-label=\"Node families\"></nav> <!> <!> <!>", 1);
-function tk(e, t) {
+}), UO = (e) => Object.hasOwn(VO, e) ? VO[e] : HO, WO = /* @__PURE__ */ K("<div class=\"pc-shelf-group svelte-hk6fzp\" role=\"presentation\"> </div>"), GO = /* @__PURE__ */ K("<span class=\"pc-shelf-reason svelte-hk6fzp\"> </span>"), KO = /* @__PURE__ */ K("<!> <button type=\"button\" role=\"menuitem\" class=\"svelte-hk6fzp\"><svg class=\"pc-leaf-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path></path></svg><span class=\"pc-catalog-name\"> <!></span><small> </small></button>", 1), qO = /* @__PURE__ */ K("<p class=\"pc-shelf-empty svelte-hk6fzp\"> </p>"), JO = /* @__PURE__ */ K("<button type=\"button\" class=\"pc-family-row\" aria-haspopup=\"menu\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path></path></svg><span> </span></button>"), YO = /* @__PURE__ */ K("<button type=\"button\" role=\"menuitem\">‹ Families</button>"), XO = /* @__PURE__ */ K("<input class=\"text_pole\" aria-label=\"Search nodes\" placeholder=\"Search nodes…\"/> <!>", 1), ZO = /* @__PURE__ */ K("<div role=\"menu\" tabindex=\"-1\"><!> <!></div>"), QO = /* @__PURE__ */ K("<div class=\"pc-shelf-entries svelte-hk6fzp\"><!></div>"), $O = /* @__PURE__ */ K("<div class=\"pc-shelf-menu pc-shelf-subgraph-menu svelte-hk6fzp\" role=\"menu\" tabindex=\"-1\"><button type=\"button\" role=\"menuitem\" data-shelf-subgraph-action=\"open\">Open saved definition</button> <button type=\"button\" role=\"menuitem\" data-shelf-subgraph-action=\"delete\">Delete</button></div>"), ek = /* @__PURE__ */ K("<div class=\"pc-shelf-drag-preview svelte-hk6fzp\" aria-hidden=\"true\"> </div>"), tk = /* @__PURE__ */ K("<nav aria-label=\"Node families\"></nav> <!> <!> <!> <!>", 1);
+function nk(e, t) {
 	Ge(t, !0);
-	let n = Vi(t, "choices", 19, () => []), r = Vi(t, "readOnly", 3, !1), i, a = /* @__PURE__ */ R(null), o = /* @__PURE__ */ R(""), s = /* @__PURE__ */ R(!1), c = /* @__PURE__ */ R(""), l = /* @__PURE__ */ R(!1), u = /* @__PURE__ */ R(0), d = /* @__PURE__ */ R(0), f = null, p = 0, m = /* @__PURE__ */ R(null), h = /* @__PURE__ */ R(null), g = null, _ = LO.map((e) => e.name), v = (e) => LO.find((t) => t.name === e)?.color, y = null, b = null, x = null, S = /* @__PURE__ */ R(null);
-	function C() {
-		b !== null && clearTimeout(b), b = null;
-		let e = y;
-		y = null, z(S, null), document.body.classList.remove("pc-shelf-dragging"), e?.button.hasPointerCapture?.(e.pointerId) && e.button.releasePointerCapture(e.pointerId);
+	let n = (e, n = b, r = b) => {
+		var a = Br();
+		X(V(a), 19, n, (e) => e.family + e.id, (e, a, o) => {
+			let s = /* @__PURE__ */ L(() => !W(a).compatible || i()), c = /* @__PURE__ */ L(() => !!W(a).definitionRef && !!t.shelfSubgraph), l = /* @__PURE__ */ L(() => i() ? W(c) ? "This graph is read-only. Right-click for subgraph actions." : "This graph is read-only." : W(a).disabledReason || (W(a).compatible ? "" : "Choose a graph in the " + W(a).phase + " stage to add this node."));
+			var u = KO(), d = V(u), f = (e) => {
+				var t = WO(), n = B(t, !0);
+				I(t), U(() => {
+					Q(t, "data-shelf-group", W(a).group), J(n, W(a).group);
+				}), q(e, t);
+			};
+			Y(d, (e) => {
+				!r() && W(a).group && n()[W(o) - 1]?.group !== W(a).group && e(f);
+			});
+			var p = H(d, 2);
+			let m;
+			var h = B(p), g = B(h);
+			I(h);
+			var _ = H(h), v = B(_, !0), y = H(v), b = (e) => {
+				var t = GO(), n = B(t, !0);
+				I(t), U(() => J(n, W(l))), q(e, t);
+			};
+			Y(y, (e) => {
+				W(l) && e(b);
+			}), I(_);
+			var S = H(_), C = B(S, !0);
+			I(S), I(p), U((e) => {
+				Q(p, "data-shelf-choice", W(a).id), Q(p, "data-insertion-disabled", W(s)), p.disabled = W(s) && !W(c), Q(p, "aria-disabled", W(s) && !W(c)), Q(p, "aria-haspopup", W(c) ? "menu" : void 0), Q(p, "title", W(l) || W(a).purpose || "Add " + W(a).title), m = Si(p, "", m, e), Q(g, "d", W(a).icon), J(v, W(a).title), J(C, W(a).shortcode);
+			}, [() => ({ "--pc-family": x(W(a).family) })]), G("pointerdown", p, (e) => O(e, W(a))), Or("lostpointercapture", p, () => E()), G("click", p, (e) => j(e, W(a))), q(e, u);
+		}, (e) => {
+			var t = qO(), n = B(t, !0);
+			I(t), U(() => J(n, r() ? "No nodes match your search. Try another name or clear the search." : "No nodes are available in this family for the current graph.")), q(e, t);
+		}), q(e, a);
+	}, r = Vi(t, "choices", 19, () => []), i = Vi(t, "readOnly", 3, !1), a, o = /* @__PURE__ */ R(null), s = /* @__PURE__ */ R(""), c = /* @__PURE__ */ R(!1), l = /* @__PURE__ */ R(""), u = /* @__PURE__ */ R(!1), d = /* @__PURE__ */ R(0), f = /* @__PURE__ */ R(0), p = an([]), m = null, h = 0, g = /* @__PURE__ */ R(null), _ = /* @__PURE__ */ R(null), v = null, y = LO.map((e) => e.name), x = (e) => LO.find((t) => t.name === e)?.color, S = null, C = null, w = null, T = /* @__PURE__ */ R(null);
+	function E() {
+		C !== null && clearTimeout(C), C = null;
+		let e = S;
+		S = null, z(T, null), document.body.classList.remove("pc-shelf-dragging"), e?.button.hasPointerCapture?.(e.pointerId) && e.button.releasePointerCapture(e.pointerId);
 	}
-	function w() {
-		y && (b !== null && clearTimeout(b), b = null, x = y.button, document.body.classList.add("pc-shelf-dragging"), z(S, {
-			title: y.entry.title,
-			family: y.entry.family,
-			...y.point
+	function D() {
+		S && (C !== null && clearTimeout(C), C = null, w = S.button, document.body.classList.add("pc-shelf-dragging"), z(T, {
+			title: S.entry.title,
+			family: S.entry.family,
+			...S.point
 		}, !0));
 	}
-	function T(e, t) {
-		if (e.button !== 0 || e.isPrimary === !1 || y || r() || !k(t.family).find((e) => e.id === t.id)?.compatible) return;
+	function O(e, t) {
+		if (e.button !== 0 || e.isPrimary === !1 || S || i() || !M(t.family).find((e) => e.id === t.id)?.compatible) return;
 		let n = e.currentTarget;
-		x = null, y = {
+		w = null, S = {
 			entry: t,
 			pointerId: e.pointerId,
 			button: n,
@@ -26409,44 +26441,44 @@ function tk(e, t) {
 				x: e.clientX,
 				y: e.clientY
 			}
-		}, n.setPointerCapture?.(e.pointerId), b = setTimeout(w, 180);
+		}, n.setPointerCapture?.(e.pointerId), C = setTimeout(D, 180);
 	}
-	function E(e) {
-		y && e.pointerId === y.pointerId && (y.point = {
+	function k(e) {
+		S && e.pointerId === S.pointerId && (S.point = {
 			x: e.clientX,
 			y: e.clientY
-		}, !W(S) && Math.hypot(e.clientX - y.start.x, e.clientY - y.start.y) >= 5 && w(), W(S) && (e.preventDefault(), z(S, {
-			...W(S),
-			...y.point
+		}, !W(T) && Math.hypot(e.clientX - S.start.x, e.clientY - S.start.y) >= 5 && D(), W(T) && (e.preventDefault(), z(T, {
+			...W(T),
+			...S.point
 		}, !0)));
 	}
-	function D(e) {
-		if (!y || e.pointerId !== y.pointerId) return;
-		let t = y.entry, n = !!W(S), r = n ? document.elementFromPoint(e.clientX, e.clientY) : null, a = i.closest(".pc-canvas-area")?.querySelector(".pc-canvas-host");
-		C(), n && (e.preventDefault(), e.stopPropagation(), r && a?.contains(r) && ne(t, {
+	function A(e) {
+		if (!S || e.pointerId !== S.pointerId) return;
+		let t = S.entry, n = !!W(T), r = n ? document.elementFromPoint(e.clientX, e.clientY) : null, i = a.closest(".pc-canvas-area")?.querySelector(".pc-canvas-host");
+		E(), n && (e.preventDefault(), e.stopPropagation(), r && i?.contains(r) && de(t, {
 			x: e.clientX,
 			y: e.clientY
 		}));
 	}
-	function O(e, t) {
-		e.currentTarget === x && e.detail !== 0 ? x = null : ne(t);
+	function j(e, t) {
+		e.currentTarget === w && e.detail !== 0 ? w = null : de(t);
 	}
-	function k(e = W(o)) {
-		let r = /* @__PURE__ */ new Map();
-		for (let t of n().filter((t) => t.family === e)) {
-			let e = t.id.startsWith("operation:") ? t.id.split(":")[1] : "", n = e ? "operation:" + e : t.id, i = r.get(n), a = [
+	function M(e) {
+		let n = /* @__PURE__ */ new Map();
+		for (let t of r().filter((t) => t.family === e)) {
+			let e = t.id.startsWith("operation:") ? t.id.split(":")[1] : "", r = e ? "operation:" + e : t.id, i = n.get(r), a = [
 				t.label,
 				t.id,
 				t.purpose ?? "",
 				t.shortcode ?? "",
 				...t.searchAliases ?? []
 			];
-			i ? (i.aliases.push(...a), t.id === n && (i.choice = t)) : r.set(n, {
+			i ? (i.aliases.push(...a), t.id === r && (i.choice = t)) : n.set(r, {
 				choice: t,
 				aliases: a
 			});
 		}
-		return [...r.values()].map(({ choice: n, aliases: r }) => {
+		return [...n.values()].map(({ choice: n, aliases: r }) => {
 			let i = n.id.startsWith("operation:") ? n.id.split(":")[1] : "", a = UO(i), o = i ? n.label.split(" · ")[0] : n.label, s = n.id.startsWith("boundary:");
 			return {
 				...n,
@@ -26459,15 +26491,34 @@ function tk(e, t) {
 			};
 		});
 	}
-	function A(e = !1) {
-		z(m, null), e && g?.focus({ preventScroll: !0 });
+	let N = /* @__PURE__ */ L(() => new Map(y.map((e) => [e, M(e)])));
+	function P(e = W(s)) {
+		return W(N).get(e) ?? [];
 	}
-	function j(e = !1) {
-		C(), p++, z(o, ""), z(s, !1), A(), e && f?.focus({ preventScroll: !0 });
+	let F = /* @__PURE__ */ new Map();
+	function ee() {
+		F.clear();
 	}
-	let M;
+	function te(e, t) {
+		function n(t) {
+			t ? t.append(e) : e.remove();
+		}
+		return n(t), {
+			update: n,
+			destroy() {
+				e.remove();
+			}
+		};
+	}
+	function ne(e = !1) {
+		z(g, null), e && v?.focus({ preventScroll: !0 });
+	}
+	function re(e = !1) {
+		E(), h++, z(s, ""), z(c, !1), ne(), e && m?.focus({ preventScroll: !0 });
+	}
+	let ie;
 	En(() => {
-		let e = JSON.stringify([t.insertionContextKey, t.view?.graphId]), n = r(), i = JSON.stringify(_.flatMap((e) => k(e).map((e) => [
+		let e = JSON.stringify([t.insertionContextKey, t.view?.graphId]), n = i(), r = JSON.stringify(y.flatMap((e) => P(e).map((e) => [
 			e.id,
 			e.title,
 			e.compatible,
@@ -26483,14 +26534,18 @@ function tk(e, t) {
 			e.definitionRef?.version,
 			e.definitionRef?.semanticHash
 		])));
-		M && (e !== M.scope || i !== M.catalog || n !== M.locked) && j(), M = {
+		ie && (e !== ie.scope || r !== ie.catalog || n !== ie.locked) && (ee(), re()), ie = {
 			scope: e,
-			catalog: i,
+			catalog: r,
 			locked: n
 		};
-	}), Qr(() => j());
-	function N() {
-		let e = i.closest(".pc-canvas-area"), t = e.getBoundingClientRect();
+	}), Zr(() => (document.addEventListener("pc-theme", ee), document.fonts?.addEventListener("loadingdone", ee), () => {
+		document.removeEventListener("pc-theme", ee), document.fonts?.removeEventListener("loadingdone", ee);
+	})), Qr(() => {
+		re(), ee();
+	});
+	function ae() {
+		let e = a.closest(".pc-canvas-area"), t = e.getBoundingClientRect();
 		return {
 			left: t.left + e.clientLeft,
 			top: t.top + e.clientTop,
@@ -26499,95 +26554,119 @@ function tk(e, t) {
 			height: e.clientHeight
 		};
 	}
-	function P(e, t, n, r) {
-		let i = N(), a = i.right - e.right - 6, o = e.left - i.left - 6, s = a >= t || o >= t, c = a >= t ? e.right - i.left + 3 : o >= t ? e.left - i.left - t - 3 : 13;
+	function oe(e, t, n, r, i = ae()) {
+		let a = i.right - e.right - 6, o = e.left - i.left - 6, s = a >= t || o >= t, c = a >= t ? e.right - i.left + 3 : o >= t ? e.left - i.left - t - 3 : 13;
 		return {
 			x: Math.max(4, Math.min(c, i.width - t - 4)),
 			y: Math.max(4, Math.min(e.top - i.top, i.height - n - 4)),
 			compact: !s || i.width < t + r + 26
 		};
 	}
-	function F(e, t, n) {
-		let r = t.querySelector("button")?.getBoundingClientRect();
-		return r ? e.top + (e.height - r.height) / 2 - (r.top - n.top) : e.top;
+	function se(e) {
+		let t = e.getBoundingClientRect(), n = e.querySelector("button")?.getBoundingClientRect();
+		return {
+			width: t.width,
+			height: t.height,
+			firstHeight: n?.height ?? 0,
+			firstOffset: n ? n.top - t.top + e.scrollTop : 0
+		};
 	}
-	async function ee(e, t, n = !0) {
-		if (y) return;
-		if (A(), W(o) === e) {
-			n && W(a)?.querySelector("button:not(:disabled)")?.focus({ preventScroll: !0 });
+	function ce(e, t, n) {
+		let r = oe({
+			top: t.firstHeight ? e.top + (e.height - t.firstHeight) / 2 - t.firstOffset : e.top,
+			left: e.left,
+			right: e.right
+		}, t.width, t.height, e.width, n);
+		z(d, r.x, !0), z(f, r.y, !0), z(u, r.compact, !0);
+	}
+	async function le(e, t, n = !0) {
+		if (S) return;
+		if (ne(), W(s) === e) {
+			n && W(o)?.querySelector("button:not(:disabled)")?.focus({ preventScroll: !0 });
 			return;
 		}
-		let r = ++p;
-		if (z(o, e, !0), z(s, !1), f = t, await vr(), r !== p || W(o) !== e || !W(a)?.isConnected) return;
-		let i = t.getBoundingClientRect(), c = W(a).getBoundingClientRect(), m = P({
-			top: F(i, W(a), c),
-			left: i.left,
-			right: i.right
-		}, c.width, c.height, i.width);
-		z(u, m.x, !0), z(d, m.y, !0), z(l, m.compact, !0), n && W(a).querySelector("button:not(:disabled)")?.focus({ preventScroll: !0 });
+		let r = ++h, i = t.getBoundingClientRect(), a = ae(), l = F.get(e), d = l && l.paneWidth === a.width && l.paneHeight === a.height && l.anchorWidth === i.width;
+		if (W(o) && (W(o).scrollTop = 0), d && (z(u, l.compact, !0), ce(i, l, a)), p.includes(e) || p.push(e), z(s, e, !0), z(c, !1), m = t, (!d || n) && (await vr(), r === h && W(s) === e && W(o)?.isConnected)) {
+			if (!d) {
+				i = t.getBoundingClientRect(), a = ae();
+				let n = se(W(o)), c = W(u);
+				if (ce(i, n, a), c !== W(u)) {
+					if (await vr(), r !== h || W(s) !== e || !W(o)?.isConnected) return;
+					i = t.getBoundingClientRect(), a = ae(), n = se(W(o)), ce(i, n, a);
+				}
+				F.set(e, {
+					...n,
+					paneWidth: a.width,
+					paneHeight: a.height,
+					anchorWidth: i.width,
+					compact: W(u)
+				});
+			}
+			n && W(o).querySelector("button:not(:disabled)")?.focus({ preventScroll: !0 });
+		}
 	}
-	async function te() {
-		let e = ++p;
-		if (z(o, ""), z(s, !0), z(c, ""), await vr(), e !== p || !W(s) || !W(a)?.isConnected) return;
-		let t = N(), n = i.getBoundingClientRect(), r = W(a).getBoundingClientRect();
-		z(u, Math.max(4, Math.min(n.right - t.left + 3, t.width - r.width - 4)), !0), z(d, n.top - t.top), W(a).querySelector("input")?.focus();
+	async function ue() {
+		let e = ++h;
+		if (z(s, ""), z(c, !0), z(l, ""), await vr(), e !== h || !W(c) || !W(o)?.isConnected) return;
+		let t = ae(), n = a.getBoundingClientRect(), r = W(o).getBoundingClientRect();
+		z(d, Math.max(4, Math.min(n.right - t.left + 3, t.width - r.width - 4)), !0), z(f, n.top - t.top), W(o).querySelector("input")?.focus();
 	}
-	function ne(e, n) {
-		let i = k(e.family).find((t) => t.id === e.id);
-		i?.compatible && !r() && (j(!0), n ? t.choose?.(i.id, n) : t.choose?.(i.id));
+	function de(e, n) {
+		let r = M(e.family).find((t) => t.id === e.id);
+		r?.compatible && !i() && (re(!0), n ? t.choose?.(r.id, n) : t.choose?.(r.id));
 	}
-	async function re(e, n) {
-		let r = k("Subgraphs").find((t) => t.id === e.dataset.shelfChoice);
+	async function fe(e, n) {
+		let r = M("Subgraphs").find((t) => t.id === e.dataset.shelfChoice);
 		if (!r?.definitionRef || !t.shelfSubgraph) return;
-		let i = N(), a = e.getBoundingClientRect();
-		if (g = e, z(m, {
+		let i = ae(), a = e.getBoundingClientRect();
+		if (v = e, z(g, {
 			id: r.id,
 			title: r.title,
 			x: (n?.x ?? a.right) - i.left,
 			y: (n?.y ?? a.top) - i.top
-		}, !0), await vr(), !W(m) || W(m).id !== r.id || !W(h)?.isConnected) return;
-		let o = W(h).getBoundingClientRect();
-		z(m, {
-			...W(m),
-			x: Math.max(4, Math.min(W(m).x, i.width - o.width - 4)),
-			y: Math.max(4, Math.min(W(m).y, i.height - o.height - 4))
-		}, !0), W(h).querySelector("button")?.focus({ preventScroll: !0 });
+		}, !0), await vr(), !W(g) || W(g).id !== r.id || !W(_)?.isConnected) return;
+		let o = W(_).getBoundingClientRect();
+		z(g, {
+			...W(g),
+			x: Math.max(4, Math.min(W(g).x, i.width - o.width - 4)),
+			y: Math.max(4, Math.min(W(g).y, i.height - o.height - 4))
+		}, !0), W(_).querySelector("button")?.focus({ preventScroll: !0 });
 	}
-	function ie(e) {
+	function pe(e) {
 		let n = e.target.closest("[data-shelf-choice]");
-		n && k("Subgraphs").some((e) => e.id === n.dataset.shelfChoice && e.definitionRef) && t.shelfSubgraph && (e.preventDefault(), e.stopPropagation(), re(n, {
+		n && M("Subgraphs").some((e) => e.id === n.dataset.shelfChoice && e.definitionRef) && t.shelfSubgraph && (e.preventDefault(), e.stopPropagation(), fe(n, {
 			x: e.clientX,
 			y: e.clientY
 		}));
 	}
-	function ae(e) {
-		let n = k("Subgraphs").find((e) => e.id === W(m)?.id);
-		j(!0), n?.definitionRef && t.shelfSubgraph?.(n.id, e);
+	function me(e) {
+		let n = M("Subgraphs").find((e) => e.id === W(g)?.id);
+		re(!0), n?.definitionRef && t.shelfSubgraph?.(n.id, e);
 	}
-	function oe(e) {
+	function he(e) {
 		if ((e.key === "ContextMenu" || e.key === "F10" && e.shiftKey) && e.target.dataset.shelfChoice) {
-			e.preventDefault(), e.stopPropagation(), re(e.target);
+			e.preventDefault(), e.stopPropagation(), fe(e.target);
 			return;
 		}
-		if (W(m) && e.key === "Escape") {
-			e.preventDefault(), e.stopPropagation(), A(!0);
+		if (W(g) && e.key === "Escape") {
+			e.preventDefault(), e.stopPropagation(), ne(!0);
 			return;
 		}
 		if (e.key === "Escape") {
-			e.preventDefault(), e.stopPropagation(), j(!0);
+			e.preventDefault(), e.stopPropagation(), re(!0);
 			return;
 		}
 		let t = e.target;
 		if (e.key === "ArrowRight" && t.dataset.family && !t.disabled) {
-			e.preventDefault(), e.stopPropagation(), ee(t.dataset.family, t);
+			e.preventDefault(), e.stopPropagation(), le(t.dataset.family, t);
 			return;
 		}
-		if (e.key === "ArrowLeft" && W(o)) {
-			e.preventDefault(), e.stopPropagation(), j(!0);
+		if (e.key === "ArrowLeft" && W(s)) {
+			e.preventDefault(), e.stopPropagation(), re(!0);
 			return;
 		}
 		if (e.key === "Tab") {
-			j();
+			re();
 			return;
 		}
 		if (![
@@ -26597,132 +26676,125 @@ function tk(e, t) {
 			"End"
 		].includes(e.key) || e.target.tagName === "INPUT") return;
 		e.preventDefault();
-		let n = [...(e.target.closest("[role=\"menu\"]") || i).querySelectorAll("button:not(:disabled)")], r = n.indexOf(e.target);
+		let n = [...(e.target.closest("[role=\"menu\"]") || a).querySelectorAll("button:not(:disabled)")], r = n.indexOf(e.target);
 		n[e.key === "Home" ? 0 : e.key === "End" ? n.length - 1 : (r + (e.key === "ArrowUp" ? n.length - 1 : 1)) % n.length]?.focus();
 	}
-	var se = { openSearch: te }, ce = ek();
+	var ge = { openSearch: ue }, _e = tk();
 	Or("pointerdown", cn, (e) => {
-		e.target.closest(".pc-node-shelf, .pc-shelf-menu") || j();
-	}), Or("pointermove", cn, E), Or("pointerup", cn, D), Or("pointercancel", cn, () => C()), Or("blur", cn, () => j()), Or("resize", cn, () => j()), Or("keydown", cn, (e) => {
-		y && e.key === "Escape" && (e.preventDefault(), e.stopPropagation(), j(!0));
+		e.target.closest(".pc-node-shelf, .pc-shelf-menu") || re();
+	}), Or("pointermove", cn, k), Or("pointerup", cn, A), Or("pointercancel", cn, () => E()), Or("blur", cn, () => re()), Or("resize", cn, () => {
+		ee(), re();
+	}), Or("keydown", cn, (e) => {
+		S && e.key === "Escape" && (e.preventDefault(), e.stopPropagation(), re(!0));
 	});
-	var le = V(ce);
-	X(le, 21, () => LO, ti, (e, t) => {
-		var n = WO();
+	var ve = V(_e);
+	X(ve, 21, () => LO, ti, (e, t) => {
+		var n = JO();
 		let r;
 		var i = B(n), a = B(i);
 		I(i);
-		var s = H(i), c = B(s, !0);
-		I(s), I(n), U((e) => {
-			Q(n, "data-family", W(t).name), n.disabled = e, Q(n, "title", "Browse " + W(t).name + " nodes"), Q(n, "aria-expanded", W(o) === W(t).name), r = Si(n, "", r, { "--pc-family": W(t).color }), Q(a, "d", W(t).icon), J(c, W(t).name);
-		}, [() => !k(W(t).name).length]), G("click", n, (e) => ee(W(t).name, e.currentTarget)), Or("pointerenter", n, (e) => {
-			e.pointerType !== "touch" && !e.currentTarget.disabled && ee(W(t).name, e.currentTarget, !1);
-		}), G("keydown", n, oe), q(e, n);
-	}), I(le), Bi(le, (e) => i = e, () => i);
-	var ue = H(le, 2), de = (e) => {
-		let n = /* @__PURE__ */ L(() => W(s) ? _.flatMap((e) => k(e)).filter((e) => [
-			e.title,
-			e.id,
-			e.family,
-			e.purpose,
-			e.shortcode,
-			...e.searchAliases ?? []
-		].join(" ").toLowerCase().includes(W(c).toLowerCase())) : k());
-		var i = ZO();
-		let f;
-		var p = B(i), m = (e) => {
-			var t = GO();
-			G("click", t, () => j(!0)), q(e, t);
+		var o = H(i), c = B(o, !0);
+		I(o), I(n), U((e) => {
+			Q(n, "data-family", W(t).name), n.disabled = e, Q(n, "title", "Browse " + W(t).name + " nodes"), Q(n, "aria-expanded", W(s) === W(t).name), r = Si(n, "", r, { "--pc-family": W(t).color }), Q(a, "d", W(t).icon), J(c, W(t).name);
+		}, [() => !P(W(t).name).length]), G("click", n, (e) => le(W(t).name, e.currentTarget)), Or("pointerenter", n, (e) => {
+			e.pointerType !== "touch" && !e.currentTarget.disabled && le(W(t).name, e.currentTarget, !1);
+		}), G("keydown", n, he), q(e, n);
+	}), I(ve), Bi(ve, (e) => a = e, () => a);
+	var ye = H(ve, 2), be = (e) => {
+		var t = ZO();
+		let r;
+		var i = B(t), a = (e) => {
+			var t = YO();
+			G("click", t, () => re(!0)), q(e, t);
+		};
+		Y(i, (e) => {
+			W(u) && W(s) && e(a);
+		});
+		var p = H(i, 2), m = (e) => {
+			var t = XO(), r = V(t);
+			Z(r);
+			var i = H(r, 2);
+			{
+				let e = /* @__PURE__ */ L(() => y.flatMap((e) => P(e)).filter((e) => [
+					e.title,
+					e.id,
+					e.family,
+					e.purpose,
+					e.shortcode,
+					...e.searchAliases ?? []
+				].join(" ").toLowerCase().includes(W(l).toLowerCase())));
+				n(i, () => W(e), () => !0);
+			}
+			Ii(r, () => W(l), (e) => z(l, e)), q(e, t);
 		};
 		Y(p, (e) => {
-			W(l) && W(o) && e(m);
-		});
-		var h = H(p, 2), g = (e) => {
-			var t = KO();
-			Z(t), Ii(t, () => W(c), (e) => z(c, e)), q(e, t);
-		};
-		Y(h, (e) => {
-			W(s) && e(g);
-		}), X(H(h, 2), 19, () => W(n), (e) => e.family + e.id, (e, i, a) => {
-			let o = /* @__PURE__ */ L(() => !W(i).compatible || r()), c = /* @__PURE__ */ L(() => !!W(i).definitionRef && !!t.shelfSubgraph), l = /* @__PURE__ */ L(() => r() ? W(c) ? "This graph is read-only. Right-click for subgraph actions." : "This graph is read-only." : W(i).disabledReason || (W(i).compatible ? "" : "Choose a graph in the " + W(i).phase + " stage to add this node."));
-			var u = YO(), d = V(u), f = (e) => {
-				var t = qO(), n = B(t, !0);
-				I(t), U(() => {
-					Q(t, "data-shelf-group", W(i).group), J(n, W(i).group);
-				}), q(e, t);
-			};
-			Y(d, (e) => {
-				!W(s) && W(i).group && W(n)[W(a) - 1]?.group !== W(i).group && e(f);
-			});
-			var p = H(d, 2);
-			let m;
-			var h = B(p), g = B(h);
-			I(h);
-			var _ = H(h), y = B(_, !0), b = H(y), x = (e) => {
-				var t = JO(), n = B(t, !0);
-				I(t), U(() => J(n, W(l))), q(e, t);
-			};
-			Y(b, (e) => {
-				W(l) && e(x);
-			}), I(_);
-			var S = H(_), w = B(S, !0);
-			I(S), I(p), U((e) => {
-				Q(p, "data-shelf-choice", W(i).id), Q(p, "data-insertion-disabled", W(o)), p.disabled = W(o) && !W(c), Q(p, "aria-disabled", W(o) && !W(c)), Q(p, "aria-haspopup", W(c) ? "menu" : void 0), Q(p, "title", W(l) || W(i).purpose || "Add " + W(i).title), m = Si(p, "", m, e), Q(g, "d", W(i).icon), J(y, W(i).title), J(w, W(i).shortcode);
-			}, [() => ({ "--pc-family": v(W(i).family) })]), G("pointerdown", p, (e) => T(e, W(i))), Or("lostpointercapture", p, () => C()), G("click", p, (e) => O(e, W(i))), q(e, u);
-		}, (e) => {
-			var t = XO(), n = B(t, !0);
-			I(t), U(() => J(n, W(s) ? "No nodes match your search. Try another name or clear the search." : "No nodes are available in this family for the current graph.")), q(e, t);
-		}), I(i), Bi(i, (e) => z(a, e), () => W(a)), U((e) => {
-			bi(i, 1, `pc-shelf-menu ${W(s) ? "pc-leaf-menu" : "pc-family-menu"}`, "svelte-hk6fzp"), Q(i, "aria-label", W(s) ? "Search nodes" : W(o) + " nodes"), f = Si(i, "", f, e);
+			W(c) && e(m);
+		}), I(t), Bi(t, (e) => z(o, e), () => W(o)), U((e) => {
+			bi(t, 1, `pc-shelf-menu ${W(c) ? "pc-leaf-menu" : "pc-family-menu"}`, "svelte-hk6fzp"), Q(t, "aria-label", W(c) ? "Search nodes" : W(s) + " nodes"), r = Si(t, "", r, e);
 		}, [() => ({
-			left: `${W(u)}px`,
-			top: `${W(d)}px`,
-			"--pc-family": v(W(o))
-		})]), G("keydown", i, oe), G("contextmenu", i, ie), q(e, i);
+			left: "0px",
+			top: "0px",
+			transform: `translate(${W(d)}px, ${W(f)}px)`,
+			"--pc-family": x(W(s))
+		})]), G("keydown", t, he), G("contextmenu", t, pe), q(e, t);
 	};
-	Y(ue, (e) => {
-		(W(o) || W(s)) && e(de);
+	Y(ye, (e) => {
+		(W(s) || W(c)) && e(be);
 	});
-	var fe = H(ue, 2), pe = (e) => {
-		var t = QO();
+	var xe = H(ye, 2);
+	X(xe, 17, () => y, ti, (e, t) => {
+		var r = Br(), i = V(r), a = (e) => {
+			var r = QO(), i = B(r);
+			{
+				let e = /* @__PURE__ */ L(() => P(W(t)));
+				n(i, () => W(e), () => !1);
+			}
+			I(r), di(r, (e, t) => te?.(e, t), () => W(s) === W(t) ? W(o) : null), q(e, r);
+		}, c = /* @__PURE__ */ L(() => p.includes(W(t)));
+		Y(i, (e) => {
+			W(c) && e(a);
+		}), q(e, r);
+	});
+	var Se = H(xe, 2), Ce = (e) => {
+		var t = $O();
 		let n;
 		var r = B(t), i = H(r, 2);
-		I(t), Bi(t, (e) => z(h, e), () => W(h)), U(() => {
-			Q(t, "aria-label", W(m).title + " actions"), n = Si(t, "", n, {
-				left: `${W(m).x}px`,
-				top: `${W(m).y}px`
+		I(t), Bi(t, (e) => z(_, e), () => W(_)), U(() => {
+			Q(t, "aria-label", W(g).title + " actions"), n = Si(t, "", n, {
+				left: `${W(g).x}px`,
+				top: `${W(g).y}px`
 			});
-		}), G("keydown", t, oe), G("click", r, () => ae("open")), G("click", i, () => ae("delete")), q(e, t);
+		}), G("keydown", t, he), G("click", r, () => me("open")), G("click", i, () => me("delete")), q(e, t);
 	};
-	Y(fe, (e) => {
-		W(m) && e(pe);
+	Y(Se, (e) => {
+		W(g) && e(Ce);
 	});
-	var me = H(fe, 2), he = (e) => {
-		var t = $O();
+	var we = H(Se, 2), Te = (e) => {
+		var t = ek();
 		let n;
 		var r = B(t, !0);
 		I(t), U((e) => {
-			n = Si(t, "", n, e), J(r, W(S).title);
+			n = Si(t, "", n, e), J(r, W(T).title);
 		}, [() => ({
-			"--pc-family": v(W(S).family),
-			left: `${W(S).x + 12}px`,
-			top: `${W(S).y + 12}px`
+			"--pc-family": x(W(T).family),
+			left: `${W(T).x + 12}px`,
+			top: `${W(T).y + 12}px`
 		})]), q(e, t);
 	};
-	return Y(me, (e) => {
-		W(S) && e(he);
-	}), U(() => bi(le, 1, `pc-node-shelf${W(l) && W(o) ? " pc-shelf-replaced" : ""}`, "svelte-hk6fzp")), q(e, ce), Ke(se);
+	return Y(we, (e) => {
+		W(T) && e(Te);
+	}), U(() => bi(ve, 1, `pc-node-shelf${W(u) && W(s) ? " pc-shelf-replaced" : ""}`, "svelte-hk6fzp")), q(e, _e), Ke(ge);
 }
 kr([
+	"pointerdown",
 	"click",
 	"keydown",
-	"contextmenu",
-	"pointerdown"
+	"contextmenu"
 ]);
 //#endregion
 //#region ui/ExamplesBrowser.svelte
-var nk = /* @__PURE__ */ K("<button type=\"button\" class=\"pc-btn menu_button svelte-18p7ib8\">Reload examples</button>"), rk = /* @__PURE__ */ K("<div class=\"pc-examples-issue svelte-18p7ib8\"><!><!></div>"), ik = /* @__PURE__ */ K("<option> </option>"), ak = /* @__PURE__ */ K("<li class=\"svelte-18p7ib8\"> </li>"), ok = /* @__PURE__ */ K("<li data-checkpoint=\"\" class=\"svelte-18p7ib8\"><strong> </strong><span class=\"svelte-18p7ib8\"> </span></li>"), sk = /* @__PURE__ */ K("<li class=\"svelte-18p7ib8\"><strong> </strong><span class=\"svelte-18p7ib8\"> </span></li>"), ck = /* @__PURE__ */ K("<p class=\"pc-example-focus svelte-18p7ib8\"><strong> </strong> </p> <h4 class=\"svelte-18p7ib8\">Learn</h4><ul class=\"svelte-18p7ib8\"></ul> <h4 class=\"svelte-18p7ib8\">Setup</h4><ul class=\"svelte-18p7ib8\"></ul> <h4 class=\"svelte-18p7ib8\">Try the lesson</h4><ol class=\"svelte-18p7ib8\"></ol> <h4 class=\"svelte-18p7ib8\">Checkpoints</h4><ul class=\"svelte-18p7ib8\"></ul> <h4 class=\"svelte-18p7ib8\">Experiments</h4><ul class=\"svelte-18p7ib8\"></ul> <h4 class=\"svelte-18p7ib8\">Expected cases</h4><ul class=\"svelte-18p7ib8\"></ul> <p class=\"svelte-18p7ib8\"><strong>Auxiliary call budget:</strong> </p>", 1), lk = /* @__PURE__ */ K("<div><!></div>"), uk = /* @__PURE__ */ K("<section class=\"pc-example-details svelte-18p7ib8\"><header class=\"svelte-18p7ib8\"><h3 tabindex=\"-1\" class=\"svelte-18p7ib8\"> </h3><button type=\"button\" class=\"pc-btn menu_button\" aria-label=\"Close lesson details\">Close</button></header> <p class=\"svelte-18p7ib8\"> </p> <!> <!> <button type=\"button\" class=\"pc-btn menu_button\">Open independent copy</button></section>"), dk = /* @__PURE__ */ K("<p class=\"pc-examples-empty svelte-18p7ib8\" role=\"status\">Loading examples…</p>"), fk = /* @__PURE__ */ K("<p class=\"pc-examples-empty svelte-18p7ib8\"> </p>"), pk = /* @__PURE__ */ Rr("<g class=\"pc-example-group svelte-18p7ib8\"><rect rx=\"6\" class=\"svelte-18p7ib8\"></rect><text class=\"svelte-18p7ib8\"> </text></g>"), mk = /* @__PURE__ */ Rr("<g class=\"pc-example-comment svelte-18p7ib8\"><rect rx=\"4\" class=\"svelte-18p7ib8\"></rect><text class=\"svelte-18p7ib8\"> </text></g>"), hk = /* @__PURE__ */ Rr("<path class=\"pc-wire pc-wire-native\"></path>"), gk = /* @__PURE__ */ Rr("<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\"><path class=\"pc-example-icon svelte-18p7ib8\"></path></svg>"), _k = /* @__PURE__ */ Rr("<g><rect class=\"pc-example-card svelte-18p7ib8\" rx=\"4\"></rect><!><text class=\"pc-example-node-title svelte-18p7ib8\" lengthAdjust=\"spacingAndGlyphs\"> </text><!></g>"), vk = /* @__PURE__ */ Rr("<!><!><!><!>", 1), yk = /* @__PURE__ */ Rr("<svg class=\"pc-example-preview svelte-18p7ib8\" preserveAspectRatio=\"xMidYMid meet\" aria-hidden=\"true\" focusable=\"false\"><!></svg>"), bk = /* @__PURE__ */ K("<span class=\"pc-example-unavailable-preview svelte-18p7ib8\"><strong class=\"svelte-18p7ib8\">Unavailable</strong><span class=\"svelte-18p7ib8\">Open Lesson details for this example.</span></span>"), xk = /* @__PURE__ */ K("<span class=\"pc-example-band svelte-18p7ib8\"> </span>"), Sk = /* @__PURE__ */ K("<article class=\"pc-example-entry svelte-18p7ib8\"><button type=\"button\"><!> <span class=\"pc-example-title svelte-18p7ib8\"> </span> <!> <span class=\"pc-example-goal svelte-18p7ib8\"> </span></button> <!> <button type=\"button\" class=\"pc-example-details-button svelte-18p7ib8\">Lesson details</button></article>"), Ck = /* @__PURE__ */ K("<!> <div class=\"pc-examples-filters svelte-18p7ib8\"><label class=\"svelte-18p7ib8\">Search lessons<input aria-label=\"Search lessons\" type=\"search\" placeholder=\"Goal, node or technique\" class=\"svelte-18p7ib8\"/></label> <label class=\"svelte-18p7ib8\">Difficulty<select aria-label=\"Difficulty\" class=\"svelte-18p7ib8\"><option>All difficulties</option><!></select></label> <span class=\"pc-examples-count svelte-18p7ib8\" role=\"status\"> </span></div> <div class=\"pc-examples-grid svelte-18p7ib8\"><!> <!> <!> <!></div>", 1);
-function wk(e, t) {
+var rk = /* @__PURE__ */ K("<button type=\"button\" class=\"pc-btn menu_button svelte-18p7ib8\">Reload examples</button>"), ik = /* @__PURE__ */ K("<div class=\"pc-examples-issue svelte-18p7ib8\"><!><!></div>"), ak = /* @__PURE__ */ K("<option> </option>"), ok = /* @__PURE__ */ K("<li class=\"svelte-18p7ib8\"> </li>"), sk = /* @__PURE__ */ K("<li data-checkpoint=\"\" class=\"svelte-18p7ib8\"><strong> </strong><span class=\"svelte-18p7ib8\"> </span></li>"), ck = /* @__PURE__ */ K("<li class=\"svelte-18p7ib8\"><strong> </strong><span class=\"svelte-18p7ib8\"> </span></li>"), lk = /* @__PURE__ */ K("<p class=\"pc-example-focus svelte-18p7ib8\"><strong> </strong> </p> <h4 class=\"svelte-18p7ib8\">Learn</h4><ul class=\"svelte-18p7ib8\"></ul> <h4 class=\"svelte-18p7ib8\">Setup</h4><ul class=\"svelte-18p7ib8\"></ul> <h4 class=\"svelte-18p7ib8\">Try the lesson</h4><ol class=\"svelte-18p7ib8\"></ol> <h4 class=\"svelte-18p7ib8\">Checkpoints</h4><ul class=\"svelte-18p7ib8\"></ul> <h4 class=\"svelte-18p7ib8\">Experiments</h4><ul class=\"svelte-18p7ib8\"></ul> <h4 class=\"svelte-18p7ib8\">Expected cases</h4><ul class=\"svelte-18p7ib8\"></ul> <p class=\"svelte-18p7ib8\"><strong>Auxiliary call budget:</strong> </p>", 1), uk = /* @__PURE__ */ K("<div><!></div>"), dk = /* @__PURE__ */ K("<section class=\"pc-example-details svelte-18p7ib8\"><header class=\"svelte-18p7ib8\"><h3 tabindex=\"-1\" class=\"svelte-18p7ib8\"> </h3><button type=\"button\" class=\"pc-btn menu_button\" aria-label=\"Close lesson details\">Close</button></header> <p class=\"svelte-18p7ib8\"> </p> <!> <!> <button type=\"button\" class=\"pc-btn menu_button\">Open independent copy</button></section>"), fk = /* @__PURE__ */ K("<p class=\"pc-examples-empty svelte-18p7ib8\" role=\"status\">Loading examples…</p>"), pk = /* @__PURE__ */ K("<p class=\"pc-examples-empty svelte-18p7ib8\"> </p>"), mk = /* @__PURE__ */ Rr("<g class=\"pc-example-group svelte-18p7ib8\"><rect rx=\"6\" class=\"svelte-18p7ib8\"></rect><text class=\"svelte-18p7ib8\"> </text></g>"), hk = /* @__PURE__ */ Rr("<g class=\"pc-example-comment svelte-18p7ib8\"><rect rx=\"4\" class=\"svelte-18p7ib8\"></rect><text class=\"svelte-18p7ib8\"> </text></g>"), gk = /* @__PURE__ */ Rr("<path class=\"pc-wire pc-wire-native\"></path>"), _k = /* @__PURE__ */ Rr("<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\"><path class=\"pc-example-icon svelte-18p7ib8\"></path></svg>"), vk = /* @__PURE__ */ Rr("<g><rect class=\"pc-example-card svelte-18p7ib8\" rx=\"4\"></rect><!><text class=\"pc-example-node-title svelte-18p7ib8\" lengthAdjust=\"spacingAndGlyphs\"> </text><!></g>"), yk = /* @__PURE__ */ Rr("<!><!><!><!>", 1), bk = /* @__PURE__ */ Rr("<svg class=\"pc-example-preview svelte-18p7ib8\" preserveAspectRatio=\"xMidYMid meet\" aria-hidden=\"true\" focusable=\"false\"><!></svg>"), xk = /* @__PURE__ */ K("<span class=\"pc-example-unavailable-preview svelte-18p7ib8\"><strong class=\"svelte-18p7ib8\">Unavailable</strong><span class=\"svelte-18p7ib8\">Open Lesson details for this example.</span></span>"), Sk = /* @__PURE__ */ K("<span class=\"pc-example-band svelte-18p7ib8\"> </span>"), Ck = /* @__PURE__ */ K("<article class=\"pc-example-entry svelte-18p7ib8\"><button type=\"button\"><!> <span class=\"pc-example-title svelte-18p7ib8\"> </span> <!> <span class=\"pc-example-goal svelte-18p7ib8\"> </span></button> <!> <button type=\"button\" class=\"pc-example-details-button svelte-18p7ib8\">Lesson details</button></article>"), wk = /* @__PURE__ */ K("<!> <div class=\"pc-examples-filters svelte-18p7ib8\"><label class=\"svelte-18p7ib8\">Search lessons<input aria-label=\"Search lessons\" type=\"search\" placeholder=\"Goal, node or technique\" class=\"svelte-18p7ib8\"/></label> <label class=\"svelte-18p7ib8\">Difficulty<select aria-label=\"Difficulty\" class=\"svelte-18p7ib8\"><option>All difficulties</option><!></select></label> <span class=\"pc-examples-count svelte-18p7ib8\" role=\"status\"> </span></div> <div class=\"pc-examples-grid svelte-18p7ib8\"><!> <!> <!> <!></div>", 1);
+function Tk(e, t) {
 	Ge(t, !0);
 	let n = Vi(t, "examples", 19, () => []), r = Vi(t, "issue", 3, ""), i = Vi(t, "loading", 3, !1), a = Vi(t, "scrollTop", 3, 0), o, s = /* @__PURE__ */ R(void 0), c = /* @__PURE__ */ R(void 0), l = /* @__PURE__ */ R(""), u = /* @__PURE__ */ R(""), d = /* @__PURE__ */ R(""), f = /* @__PURE__ */ R(""), p = /* @__PURE__ */ R(an(/* @__PURE__ */ new Set())), m = null, h = /* @__PURE__ */ new WeakMap(), g = [
 		"Foundations",
@@ -26768,13 +26840,13 @@ function wk(e, t) {
 			}
 		}
 	}
-	var w = Ck(), T = V(w), E = (e) => {
-		var n = rk(), i = B(n);
+	var w = wk(), T = V(w), E = (e) => {
+		var n = ik(), i = B(n);
 		Ha(i, { get issue() {
 			return r();
 		} });
 		var a = H(i), o = (e) => {
-			var n = nk();
+			var n = rk();
 			G("click", n, () => t.retry?.()), q(e, n);
 		};
 		Y(a, (e) => {
@@ -26788,7 +26860,7 @@ function wk(e, t) {
 	Z(k), Bi(k, (e) => z(c, e), () => W(c)), I(O);
 	var A = H(O, 2), j = H(B(A)), M = B(j);
 	M.value = M.__value = "", X(H(M), 17, () => g, ti, (e, t) => {
-		var n = ik(), r = B(n, !0);
+		var n = ak(), r = B(n, !0);
 		I(n);
 		var i = {};
 		U(() => {
@@ -26798,35 +26870,35 @@ function wk(e, t) {
 	var N = H(A, 2), P = B(N);
 	I(N), I(D);
 	var F = H(D, 2), ee = B(F), te = (e) => {
-		var t = uk(), n = B(t), r = B(n), i = B(r);
+		var t = dk(), n = B(t), r = B(n), i = B(r);
 		I(r), Bi(r, (e) => z(s, e), () => W(s));
 		var a = H(r);
 		I(n);
 		var o = H(n, 2), c = B(o, !0);
 		I(o);
 		var u = H(o, 2), d = (e) => {
-			var t = ck(), n = V(t), r = B(n), i = B(r, !0);
+			var t = lk(), n = V(t), r = B(n), i = B(r, !0);
 			I(r);
 			var a = H(r);
 			I(n);
 			var o = H(n, 3);
 			X(o, 21, () => W(v).lesson.learn, ti, (e, t) => {
-				var n = ak(), r = B(n, !0);
+				var n = ok(), r = B(n, !0);
 				I(n), U(() => J(r, W(t))), q(e, n);
 			}), I(o);
 			var s = H(o, 3);
 			X(s, 21, () => W(v).lesson.requirements, ti, (e, t) => {
-				var n = ak(), r = B(n, !0);
+				var n = ok(), r = B(n, !0);
 				I(n), U(() => J(r, W(t))), q(e, n);
 			}), I(s);
 			var c = H(s, 3);
 			X(c, 21, () => W(v).lesson.steps, ti, (e, t) => {
-				var n = ak(), r = B(n, !0);
+				var n = ok(), r = B(n, !0);
 				I(n), U(() => J(r, W(t))), q(e, n);
 			}), I(c);
 			var l = H(c, 3);
 			X(l, 21, () => W(v).lesson.checkpoints, ti, (e, t) => {
-				var n = ok(), r = B(n), i = B(r);
+				var n = sk(), r = B(n), i = B(r);
 				I(r);
 				var a = H(r), o = B(a, !0);
 				I(a), I(n), U(() => {
@@ -26835,7 +26907,7 @@ function wk(e, t) {
 			}), I(l);
 			var u = H(l, 3);
 			X(u, 21, () => W(v).lesson.experiments, ti, (e, t) => {
-				var n = sk(), r = B(n), i = B(r, !0);
+				var n = ck(), r = B(n), i = B(r, !0);
 				I(r);
 				var a = H(r), o = B(a, !0);
 				I(a), I(n), U(() => {
@@ -26844,7 +26916,7 @@ function wk(e, t) {
 			}), I(u);
 			var d = H(u, 3);
 			X(d, 21, () => W(v).lesson.cases, ti, (e, t) => {
-				var n = sk(), r = B(n), i = B(r, !0);
+				var n = ck(), r = B(n), i = B(r, !0);
 				I(r);
 				var a = H(r), o = B(a, !0);
 				I(a), I(n), U(() => {
@@ -26860,7 +26932,7 @@ function wk(e, t) {
 			W(v).lesson && e(d);
 		});
 		var f = H(u, 2), p = (e) => {
-			var t = lk();
+			var t = uk();
 			Ha(B(t), { get issue() {
 				return W(v).issue;
 			} }), I(t), U(() => Q(t, "id", `pc-example-issue-${W(v).number}`)), q(e, t);
@@ -26877,33 +26949,33 @@ function wk(e, t) {
 		W(v) && e(te);
 	});
 	var ne = H(ee, 2), re = (e) => {
-		q(e, dk());
+		q(e, fk());
 	};
 	Y(ne, (e) => {
 		i() && !n().length && e(re);
 	});
 	var ie = H(ne, 2), ae = (e) => {
-		var t = fk(), n = B(t, !0);
+		var t = pk(), n = B(t, !0);
 		I(t), U((e) => J(n, e), [() => W(u).trim() || W(d) ? "No lessons match your search and difficulty. Clear a filter to see more lessons." : "No lessons are available yet. Reload examples to check again."]), q(e, t);
 	};
 	Y(ie, (e) => {
 		!W(_).length && !r() && !i() && e(ae);
 	}), X(H(ie, 2), 17, () => W(_), (e) => e.id, (e, t) => {
 		let n = /* @__PURE__ */ L(() => W(t).thumbnail);
-		var r = Sk(), i = B(r);
+		var r = Ck(), i = B(r);
 		let a;
 		var o = B(i), s = (e) => {
-			var r = yk(), i = B(r), a = (e) => {
-				var t = vk(), r = V(t);
+			var r = bk(), i = B(r), a = (e) => {
+				var t = yk(), r = V(t);
 				X(r, 17, () => W(n).groups, (e) => e.id, (e, t) => {
-					var n = pk(), r = B(n), i = H(r), a = B(i, !0);
+					var n = mk(), r = B(n), i = H(r), a = B(i, !0);
 					I(i), I(n), U(() => {
 						Q(n, "data-id", W(t).id), Q(r, "x", W(t).x), Q(r, "y", W(t).y), Q(r, "width", W(t).w), Q(r, "height", W(t).h), Q(i, "x", W(t).x + 12), Q(i, "y", W(t).y + 24), J(a, W(t).title);
 					}), q(e, n);
 				});
 				var i = H(r);
 				X(i, 17, () => W(n).comments, (e) => e.id, (e, t) => {
-					var n = mk(), r = B(n);
+					var n = hk(), r = B(n);
 					let i;
 					var a = H(r), o = B(a, !0);
 					I(a), I(n), U(() => {
@@ -26912,13 +26984,13 @@ function wk(e, t) {
 				});
 				var a = H(i);
 				X(a, 17, () => W(n).wires, (e) => e.id, (e, t) => {
-					var n = hk();
+					var n = gk();
 					U(() => {
 						Q(n, "data-kind", W(t).kind), Q(n, "data-id", W(t).id), Q(n, "d", W(t).d);
 					}), q(e, n);
 				}), X(H(a), 17, () => W(n).nodes, (e) => e.id, (e, t) => {
-					var n = _k(), r = B(n), i = H(r), a = (e) => {
-						var n = gk(), r = B(n);
+					var n = vk(), r = B(n), i = H(r), a = (e) => {
+						var n = _k(), r = B(n);
 						I(n), U(() => {
 							Q(n, "x", W(t).x + 8), Q(n, "y", W(t).y + 7), Q(r, "d", W(t).iconPath);
 						}), q(e, n);
@@ -26952,7 +27024,7 @@ function wk(e, t) {
 				W(o) && e(a);
 			}), I(r), di(r, (e, t) => b?.(e, t), () => W(t).id), U(() => Q(r, "viewBox", `${W(n).bounds.x} ${W(n).bounds.y} ${W(n).bounds.w} ${W(n).bounds.h}`)), q(e, r);
 		}, c = (e) => {
-			q(e, bk());
+			q(e, xk());
 		};
 		Y(o, (e) => {
 			W(n) ? e(s) : e(c, -1);
@@ -26960,7 +27032,7 @@ function wk(e, t) {
 		var u = H(o, 2), d = B(u);
 		I(u);
 		var m = H(u, 2), h = (e) => {
-			var n = xk(), r = B(n);
+			var n = Sk(), r = B(n);
 			I(n), U(() => J(r, `${W(t).lesson.difficulty ?? ""} · ${W(t).lesson.focus ?? ""}`)), q(e, n);
 		};
 		Y(m, (e) => {
@@ -26969,7 +27041,7 @@ function wk(e, t) {
 		var g = H(m, 2), _ = B(g, !0);
 		I(g), I(i);
 		var v = H(i, 2), y = (e) => {
-			var n = lk();
+			var n = uk();
 			Ha(B(n), { get issue() {
 				return W(t).issue;
 			} }), I(n), U(() => Q(n, "id", `pc-example-issue-${W(t).number}`)), q(e, n);
@@ -26988,8 +27060,8 @@ function wk(e, t) {
 kr(["click"]);
 //#endregion
 //#region ui/ImportReview.svelte
-var Tk = /* @__PURE__ */ K("<p> </p>"), Ek = /* @__PURE__ */ K("<li> </li>"), Dk = /* @__PURE__ */ K("<h3>Saved bindings to review</h3><ul></ul>", 1), Ok = /* @__PURE__ */ K("<p>Saved model metadata is present. Review local connections before running.</p>"), kk = /* @__PURE__ */ K("<h3>Imported terminal effects</h3><ul></ul>", 1), Ak = /* @__PURE__ */ K("<p>No imported terminal effects.</p>"), jk = /* @__PURE__ */ K("<div><!></div>"), Mk = /* @__PURE__ */ K("<button type=\"button\" class=\"pc-btn menu_button\">Prepare again</button>"), Nk = /* @__PURE__ */ K("<div class=\"pc-workspace-overlay pc-import-overlay\"><div class=\"pc-workspace-dialog pc-import-review\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Import into graph\" tabindex=\"-1\"><header><h2>Import into graph</h2><button type=\"button\" class=\"pc-btn menu_button\" aria-label=\"Cancel import\">×</button></header> <p><strong> </strong> <small> </small></p> <dl><dt>Phase</dt><dd> </dd><dt>Additions</dt><dd> </dd><dt>Conservative request bound</dt><dd> </dd></dl> <p class=\"pc-import-explanation\">This authoring bound includes unfinished branches. Bindings and reachable execution are checked when you explicitly run the workflow.</p> <!> <!> <!> <p>Insertion keeps internal wiring and relative layout. Review the inserted nodes before running the workflow.</p> <!> <footer><button type=\"button\" class=\"pc-btn menu_button\">Cancel</button><!><button type=\"button\" class=\"pc-btn menu_button pc-import-accept\">Insert into graph</button></footer></div></div>");
-function Pk(e, t) {
+var Ek = /* @__PURE__ */ K("<p> </p>"), Dk = /* @__PURE__ */ K("<li> </li>"), Ok = /* @__PURE__ */ K("<h3>Saved bindings to review</h3><ul></ul>", 1), kk = /* @__PURE__ */ K("<p>Saved model metadata is present. Review local connections before running.</p>"), Ak = /* @__PURE__ */ K("<h3>Imported terminal effects</h3><ul></ul>", 1), jk = /* @__PURE__ */ K("<p>No imported terminal effects.</p>"), Mk = /* @__PURE__ */ K("<div><!></div>"), Nk = /* @__PURE__ */ K("<button type=\"button\" class=\"pc-btn menu_button\">Prepare again</button>"), Pk = /* @__PURE__ */ K("<div class=\"pc-workspace-overlay pc-import-overlay\"><div class=\"pc-workspace-dialog pc-import-review\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Import into graph\" tabindex=\"-1\"><header><h2>Import into graph</h2><button type=\"button\" class=\"pc-btn menu_button\" aria-label=\"Cancel import\">×</button></header> <p><strong> </strong> <small> </small></p> <dl><dt>Phase</dt><dd> </dd><dt>Additions</dt><dd> </dd><dt>Conservative request bound</dt><dd> </dd></dl> <p class=\"pc-import-explanation\">This authoring bound includes unfinished branches. Bindings and reachable execution are checked when you explicitly run the workflow.</p> <!> <!> <!> <p>Insertion keeps internal wiring and relative layout. Review the inserted nodes before running the workflow.</p> <!> <footer><button type=\"button\" class=\"pc-btn menu_button\">Cancel</button><!><button type=\"button\" class=\"pc-btn menu_button pc-import-accept\">Insert into graph</button></footer></div></div>");
+function Fk(e, t) {
 	let n = Vr();
 	Ge(t, !0);
 	let r;
@@ -27003,7 +27075,7 @@ function Pk(e, t) {
 			e.shiftKey && document.activeElement === n && (e.preventDefault(), i?.focus()), !e.shiftKey && document.activeElement === i && (e.preventDefault(), n?.focus());
 		}
 	}
-	var a = Nk(), o = B(a), s = B(o), c = H(B(s));
+	var a = Pk(), o = B(a), s = B(o), c = H(B(s));
 	I(s);
 	var l = H(s, 2), u = B(l), d = B(u, !0);
 	I(u);
@@ -27016,38 +27088,38 @@ function Pk(e, t) {
 	var y = H(_, 2), b = B(y);
 	I(y), I(m);
 	var x = H(m, 4), S = (e) => {
-		var n = Tk(), r = B(n);
+		var n = Ek(), r = B(n);
 		I(n), U((e) => J(r, `Imported model roles: ${e ?? ""}.`), [() => t.view.requiredRoles.join(", ")]), q(e, n);
 	};
 	Y(x, (e) => {
 		t.view.requiredRoles.length && e(S);
 	});
 	var C = H(x, 2), w = (e) => {
-		var n = Dk(), r = H(V(n));
+		var n = Ok(), r = H(V(n));
 		X(r, 21, () => t.view.unresolvedBindings, ti, (e, t) => {
-			var n = Ek(), r = B(n);
+			var n = Dk(), r = B(n);
 			I(n), U((e) => J(r, `${W(t).title ?? ""} · ${W(t).role ?? ""}: missing ${e ?? ""}`), [() => W(t).missing.join(" and ")]), q(e, n);
 		}), I(r), q(e, n);
 	}, T = (e) => {
-		q(e, Ok());
+		q(e, kk());
 	};
 	Y(C, (e) => {
 		t.view.unresolvedBindings.length ? e(w) : t.view.bindingReviewRequired && e(T, 1);
 	});
 	var E = H(C, 2), D = (e) => {
-		var n = kk(), r = H(V(n));
+		var n = Ak(), r = H(V(n));
 		X(r, 21, () => t.view.terminals, ti, (e, t) => {
-			var n = Ek(), r = B(n);
+			var n = Dk(), r = B(n);
 			I(n), U(() => J(r, `${W(t).title ?? ""} · ${W(t).operation ?? ""}`)), q(e, n);
 		}), I(r), q(e, n);
 	}, O = (e) => {
-		q(e, Ak());
+		q(e, jk());
 	};
 	Y(E, (e) => {
 		t.view.terminals.length ? e(D) : e(O, -1);
 	});
 	var k = H(E, 4), A = (e) => {
-		var r = jk();
+		var r = Mk();
 		Ha(B(r), { get issue() {
 			return t.view.error;
 		} }), I(r), U(() => Q(r, "id", n + "-error")), q(e, r);
@@ -27056,7 +27128,7 @@ function Pk(e, t) {
 		t.view.error && e(A);
 	});
 	var j = H(k, 2), M = B(j), N = H(M), P = (e) => {
-		var n = Mk();
+		var n = Nk();
 		G("click", n, () => t.actions.prepareImportAgain?.()), q(e, n);
 	};
 	Y(N, (e) => {
@@ -27070,26 +27142,26 @@ function Pk(e, t) {
 kr(["keydown", "click"]);
 //#endregion
 //#region ui/WorkspaceReport.svelte
-var Fk = /* @__PURE__ */ K("<li class=\"svelte-1xdk4mm\"><!></li>"), Ik = /* @__PURE__ */ K("<ul></ul>"), Lk = /* @__PURE__ */ K("<p role=\"status\" class=\"svelte-1xdk4mm\">No validation issues found.</p>"), Rk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\">Root workflow: <strong> </strong> </p> <!> <p class=\"svelte-1xdk4mm\">Validation checks the current workflow without running it. Diagnostic previews and Apply recheck their inputs when used.</p>", 1), zk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\">Workflow validation is unavailable.</p>"), Bk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\"><strong> </strong></p> <p class=\"svelte-1xdk4mm\">Named-pin workflows, optional scene guidance and reviewed reply repairs for SillyTavern.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Project guide</a></p>", 1), Vk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\">Browse the node shelf by family. Select a node to read its controls, connections and help in Details.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Open the complete node reference</a></p>", 1), Hk = /* @__PURE__ */ K("<table class=\"svelte-1xdk4mm\"><thead><tr><th class=\"svelte-1xdk4mm\">Action</th><th class=\"svelte-1xdk4mm\">Shortcut</th></tr></thead><tbody><tr><td class=\"svelte-1xdk4mm\">Undo / Redo</td><td class=\"svelte-1xdk4mm\">Ctrl Z / Ctrl Shift Z</td></tr><tr><td class=\"svelte-1xdk4mm\">Cut / Copy / Paste</td><td class=\"svelte-1xdk4mm\">Ctrl X / Ctrl C / Ctrl V</td></tr><tr><td class=\"svelte-1xdk4mm\">Duplicate / Delete selection</td><td class=\"svelte-1xdk4mm\">Ctrl D / Delete</td></tr><tr><td class=\"svelte-1xdk4mm\">Select all</td><td class=\"svelte-1xdk4mm\">Ctrl A</td></tr><tr><td class=\"svelte-1xdk4mm\">Group / Ungroup</td><td class=\"svelte-1xdk4mm\">Ctrl G / Ctrl Shift G</td></tr><tr><td class=\"svelte-1xdk4mm\">Comment selection / Add comment</td><td class=\"svelte-1xdk4mm\">C</td></tr><tr><td class=\"svelte-1xdk4mm\">Fit and center selection</td><td class=\"svelte-1xdk4mm\">F</td></tr><tr><td class=\"svelte-1xdk4mm\">Rename selection</td><td class=\"svelte-1xdk4mm\">F2</td></tr><tr><td class=\"svelte-1xdk4mm\">Run to selected node</td><td class=\"svelte-1xdk4mm\">R</td></tr><tr><td class=\"svelte-1xdk4mm\">Target selected node / Clear target</td><td class=\"svelte-1xdk4mm\">T</td></tr><tr><td class=\"svelte-1xdk4mm\">Pan / Zoom</td><td class=\"svelte-1xdk4mm\">Middle mouse / Wheel</td></tr><tr><td class=\"svelte-1xdk4mm\">Zoom out / Zoom in</td><td class=\"svelte-1xdk4mm\">[ / ] with a graph camera focused</td></tr><tr><td class=\"svelte-1xdk4mm\">Dismiss a menu or panel</td><td class=\"svelte-1xdk4mm\">Escape</td></tr></tbody></table> <p class=\"svelte-1xdk4mm\">In menus, use arrows to move, Home/End to jump, type a label to find it, and Enter/Space to choose it. Tab dismisses the menu.</p>", 1), Uk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\">Browse node families on the floating shelf. Middle mouse pans the graph; the wheel zooms around the pointer. Use the dividers or their arrow keys to resize Preview and Details. View controls panel visibility and restores the default layout.</p> <p class=\"svelte-1xdk4mm\">File opens workflow documents, saves the current file, imports a fragment into the current graph, and exports a portable copy without local connections. Graph tabs open child views of the current document.</p> <p class=\"svelte-1xdk4mm\">Enable Lattice while the unified document is open, then Send in SillyTavern. Choose model connections on the node bar and advanced overrides in Details. Workflow › Configure opens Workflow Data, and Memory recall offers queue actions and an overview.</p> <p class=\"svelte-1xdk4mm\">Graph groups nodes, creates and saves subgraphs, adds comments and manages portals. Right-click actions remain available beside the relevant node or pin.</p> <p class=\"svelte-1xdk4mm\">Preview follows selection until you pin an output or target a node with T. Targeting keeps that node's output visible while you select other nodes; T moves or clears the target. Workflow › Run to current output tests its dependencies within the displayed request bound. Apply and Reject stay beside the exact result they review.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Open the project guide</a> · <a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Node reference</a></p>", 1);
-function Wk(e, t) {
+var Ik = /* @__PURE__ */ K("<li class=\"svelte-1xdk4mm\"><!></li>"), Lk = /* @__PURE__ */ K("<ul></ul>"), Rk = /* @__PURE__ */ K("<p role=\"status\" class=\"svelte-1xdk4mm\">No validation issues found.</p>"), zk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\">Root workflow: <strong> </strong> </p> <!> <p class=\"svelte-1xdk4mm\">Validation checks the current workflow without running it. Diagnostic previews and Apply recheck their inputs when used.</p>", 1), Bk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\">Workflow validation is unavailable.</p>"), Vk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\"><strong> </strong></p> <p class=\"svelte-1xdk4mm\">Named-pin workflows, optional scene guidance and reviewed reply repairs for SillyTavern.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Project guide</a></p>", 1), Hk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\">Browse the node shelf by family. Select a node to read its controls, connections and help in Details.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Open the complete node reference</a></p>", 1), Uk = /* @__PURE__ */ K("<table class=\"svelte-1xdk4mm\"><thead><tr><th class=\"svelte-1xdk4mm\">Action</th><th class=\"svelte-1xdk4mm\">Shortcut</th></tr></thead><tbody><tr><td class=\"svelte-1xdk4mm\">Undo / Redo</td><td class=\"svelte-1xdk4mm\">Ctrl Z / Ctrl Shift Z</td></tr><tr><td class=\"svelte-1xdk4mm\">Cut / Copy / Paste</td><td class=\"svelte-1xdk4mm\">Ctrl X / Ctrl C / Ctrl V</td></tr><tr><td class=\"svelte-1xdk4mm\">Duplicate / Delete selection</td><td class=\"svelte-1xdk4mm\">Ctrl D / Delete</td></tr><tr><td class=\"svelte-1xdk4mm\">Select all</td><td class=\"svelte-1xdk4mm\">Ctrl A</td></tr><tr><td class=\"svelte-1xdk4mm\">Group / Ungroup</td><td class=\"svelte-1xdk4mm\">Ctrl G / Ctrl Shift G</td></tr><tr><td class=\"svelte-1xdk4mm\">Comment selection / Add comment</td><td class=\"svelte-1xdk4mm\">C</td></tr><tr><td class=\"svelte-1xdk4mm\">Fit and center selection</td><td class=\"svelte-1xdk4mm\">F</td></tr><tr><td class=\"svelte-1xdk4mm\">Rename selection</td><td class=\"svelte-1xdk4mm\">F2</td></tr><tr><td class=\"svelte-1xdk4mm\">Run to selected node</td><td class=\"svelte-1xdk4mm\">R</td></tr><tr><td class=\"svelte-1xdk4mm\">Target selected node / Clear target</td><td class=\"svelte-1xdk4mm\">T</td></tr><tr><td class=\"svelte-1xdk4mm\">Pan / Zoom</td><td class=\"svelte-1xdk4mm\">Middle mouse / Wheel</td></tr><tr><td class=\"svelte-1xdk4mm\">Zoom out / Zoom in</td><td class=\"svelte-1xdk4mm\">[ / ] with a graph camera focused</td></tr><tr><td class=\"svelte-1xdk4mm\">Dismiss a menu or panel</td><td class=\"svelte-1xdk4mm\">Escape</td></tr></tbody></table> <p class=\"svelte-1xdk4mm\">In menus, use arrows to move, Home/End to jump, type a label to find it, and Enter/Space to choose it. Tab dismisses the menu.</p>", 1), Wk = /* @__PURE__ */ K("<p class=\"svelte-1xdk4mm\">Browse node families on the floating shelf. Middle mouse pans the graph; the wheel zooms around the pointer. Use the dividers or their arrow keys to resize Preview and Details. View controls panel visibility and restores the default layout.</p> <p class=\"svelte-1xdk4mm\">File opens workflow documents, saves the current file, imports a fragment into the current graph, and exports a portable copy without local connections. Graph tabs open child views of the current document.</p> <p class=\"svelte-1xdk4mm\">Enable Lattice while the unified document is open, then Send in SillyTavern. Choose model connections on the node bar and advanced overrides in Details. Workflow › Configure opens Workflow Data, and Memory recall offers queue actions and an overview.</p> <p class=\"svelte-1xdk4mm\">Graph groups nodes, creates and saves subgraphs, adds comments and manages portals. Right-click actions remain available beside the relevant node or pin.</p> <p class=\"svelte-1xdk4mm\">Preview follows selection until you pin an output or target a node with T. Targeting keeps that node's output visible while you select other nodes; T moves or clears the target. Workflow › Run to current output tests its dependencies within the displayed request bound. Apply and Reject stay beside the exact result they review.</p> <p class=\"svelte-1xdk4mm\"><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Open the project guide</a> · <a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1xdk4mm\">Node reference</a></p>", 1);
+function Gk(e, t) {
 	Ge(t, !0);
 	let n = /* @__PURE__ */ L(() => t.workflow?.diagnostics ?? Ia(t.workflow?.issues ?? []));
 	var r = Br(), i = V(r), a = (e) => {
 		var r = Br(), i = V(r), a = (e) => {
-			var r = Rk(), i = V(r), a = H(B(i)), o = B(a, !0);
+			var r = zk(), i = V(r), a = H(B(i)), o = B(a, !0);
 			I(a);
 			var s = H(a);
 			I(i);
 			var c = H(i, 2), l = (e) => {
-				var t = Ik();
+				var t = Lk();
 				X(t, 21, () => W(n), (e) => e.id, (e, t) => {
-					var n = Fk();
+					var n = Ik();
 					Ha(B(n), { get diagnostic() {
 						return W(t);
 					} }), I(n), q(e, n);
 				}), I(t), q(e, t);
 			}, u = (e) => {
-				q(e, Lk());
+				q(e, Rk());
 			};
 			Y(c, (e) => {
 				W(n).length ? e(l) : e(u, -1);
@@ -27097,26 +27169,26 @@ function Wk(e, t) {
 				J(o, t.workflow.name), J(s, ` · ${t.workflow.phase ?? ""} · maximum ${t.workflow.callBound ?? ""} model requests.`);
 			}), q(e, r);
 		}, o = (e) => {
-			q(e, zk());
+			q(e, Bk());
 		};
 		Y(i, (e) => {
 			t.workflow ? e(a) : e(o, -1);
 		}), q(e, r);
 	}, o = (e) => {
-		var n = Bk(), r = V(n), i = B(r), a = B(i);
+		var n = Vk(), r = V(n), i = B(r), a = B(i);
 		I(i), I(r);
 		var o = H(r, 4), s = B(o);
 		I(o), U(() => {
 			J(a, `Lattice ${t.version ?? ""}`), Q(s, "href", t.guideUrl);
 		}), q(e, n);
 	}, s = (e) => {
-		var n = Vk(), r = H(V(n), 2), i = B(r);
+		var n = Hk(), r = H(V(n), 2), i = B(r);
 		I(r), U(() => Q(i, "href", t.referenceUrl)), q(e, n);
 	}, c = (e) => {
-		var t = Hk();
+		var t = Uk();
 		Pe(2), q(e, t);
 	}, l = (e) => {
-		var n = Uk(), r = H(V(n), 10), i = B(r), a = H(i, 2);
+		var n = Wk(), r = H(V(n), 10), i = B(r), a = H(i, 2);
 		I(r), U(() => {
 			Q(i, "href", t.guideUrl), Q(a, "href", t.referenceUrl);
 		}), q(e, n);
@@ -27125,7 +27197,7 @@ function Wk(e, t) {
 		t.panel === "validate-workflow" ? e(a) : t.panel === "about" ? e(o, 1) : t.panel === "node-reference" ? e(s, 2) : t.panel === "shortcuts" ? e(c, 3) : e(l, -1);
 	}), q(e, r), Ke();
 }
-var Gk = {
+var Kk = {
 	display_name: "Lattice",
 	loading_order: 120,
 	generate_interceptor: "latticeGenerationInterceptor",
@@ -27138,8 +27210,8 @@ var Gk = {
 	homePage: "https://github.com/MentallyQuill/Lattice",
 	auto_update: !1,
 	description: "Build named-pin workflows for optional scene guidance and reviewed reply repairs in SillyTavern, with per-node model connections."
-}, Kk = /* @__PURE__ */ K("<div class=\"pc-native-diagnostic svelte-1dr9aew\"><!></div>"), qk = /* @__PURE__ */ K("<p>Browse node families on the floating shelf. Middle mouse pans the graph; the wheel zooms around the pointer. Use the dividers or their arrow keys to resize Preview and Details. View controls panel visibility; View › Reset panel layout restores the default layout.</p><p>Open examples from File to start a workflow document. A unified workflow's preparation stage feeds Generate Reply, and its response stage reshapes the captured Draft before Review and Publish. Choose each model node's connection with the bar under it. Details contains advanced model overrides and inheritance settings. Enable Lattice runs the open document for Send in SillyTavern. Run to here tests supported nodes; Workflow › Stop workflow cancels the current run. Retired pre and post workflows remain available only for archived export.</p><p>File › New workflow, Open workflow, Open Recent and Open examples replace the open document after offering Save, Don't Save or Cancel for unsaved changes. Save writes the current file; Save As chooses a destination. Save As creates a JSON copy when direct file saving is unavailable. Export workflow JSON makes a portable sharing copy without local connections. Import into graph reviews a compatible fragment before one undoable insertion. Recover previous workflows opens unified documents preserved from earlier settings. File › Export archived workflows preserves retired originals for reference. Recovery drafts remain available in SillyTavern, while the filename and document status describe the current file.</p><p>Select nodes and right-click Create Subgraph to open their connected body in a new tab. Double-click a subgraph to open it. Add Input and Output nodes from the Subgraphs shelf inside an editable subgraph, then name and configure their ports in Details.</p><p>Right-click a subgraph block and choose Add to Subgraphs to save it for reuse. Right-click a saved shelf entry to delete it. Saving updates the shelf only when you choose to save; existing placed copies stay unchanged. Portals connect pins through named references. Preview artifact tabs show results for the selected node; Run to here checks the request bound before running. Apply reviews the fresh result against the full root workflow.</p><p><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1dr9aew\">Open the project guide</a> · <a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1dr9aew\">Node reference</a></p>", 1), Jk = /* @__PURE__ */ K("<div class=\"pc-workspace-overlay\"><div role=\"dialog\" tabindex=\"-1\" aria-modal=\"true\"><header class=\"svelte-1dr9aew\"><h2 class=\"svelte-1dr9aew\"> </h2><button type=\"button\" class=\"pc-btn menu_button\"> </button></header> <!></div></div>"), Yk = /* @__PURE__ */ K("<div class=\"pc-workspace-overlay\"><div class=\"pc-manager-dialog svelte-1dr9aew\" role=\"dialog\" tabindex=\"-1\" aria-modal=\"true\" aria-label=\"Manage portals\"><!></div></div>"), Xk = /* @__PURE__ */ K("<div role=\"dialog\" aria-modal=\"true\" aria-label=\"Lattice\" data-pc-workbench=\"svelte\"><!>  <div class=\"pc-body\" role=\"region\" aria-label=\"Workspace panels\" tabindex=\"0\"><div class=\"pc-stage\"><section aria-label=\"Output preview\"><header class=\"pc-preview-pane-head\"><strong>Preview</strong><button type=\"button\" class=\"pc-btn menu_button\"> </button></header> <div class=\"pc-preview-content\"><!></div></section> <!> <!> <!> <div class=\"pc-canvas-area\" id=\"pc-workspace-graph\" role=\"tabpanel\"><div class=\"pc-workspace-run svelte-1dr9aew\"><!></div> <div class=\"pc-canvas-host\" aria-label=\"Node canvas\"></div> <!> <div><!></div></div></div> <!> <div class=\"pc-inspector pc-workspace-details svelte-1dr9aew\"><header class=\"pc-details-heading svelte-1dr9aew\"><strong class=\"svelte-1dr9aew\">Details</strong><button type=\"button\" aria-label=\"Close Details\" title=\"Close Details\">×</button></header> <!> <div class=\"pc-node-details-holder svelte-1dr9aew\"><!></div></div></div> <!> <!> <!> <!> <!> <!> <!> <!> <!></div>");
-function Zk(e, t) {
+}, qk = /* @__PURE__ */ K("<div class=\"pc-native-diagnostic svelte-1dr9aew\"><!></div>"), Jk = /* @__PURE__ */ K("<p>Browse node families on the floating shelf. Middle mouse pans the graph; the wheel zooms around the pointer. Use the dividers or their arrow keys to resize Preview and Details. View controls panel visibility; View › Reset panel layout restores the default layout.</p><p>Open examples from File to start a workflow document. A unified workflow's preparation stage feeds Generate Reply, and its response stage reshapes the captured Draft before Review and Publish. Choose each model node's connection with the bar under it. Details contains advanced model overrides and inheritance settings. Enable Lattice runs the open document for Send in SillyTavern. Run to here tests supported nodes; Workflow › Stop workflow cancels the current run. Retired pre and post workflows remain available only for archived export.</p><p>File › New workflow, Open workflow, Open Recent and Open examples replace the open document after offering Save, Don't Save or Cancel for unsaved changes. Save writes the current file; Save As chooses a destination. Save As creates a JSON copy when direct file saving is unavailable. Export workflow JSON makes a portable sharing copy without local connections. Import into graph reviews a compatible fragment before one undoable insertion. Recover previous workflows opens unified documents preserved from earlier settings. File › Export archived workflows preserves retired originals for reference. Recovery drafts remain available in SillyTavern, while the filename and document status describe the current file.</p><p>Select nodes and right-click Create Subgraph to open their connected body in a new tab. Double-click a subgraph to open it. Add Input and Output nodes from the Subgraphs shelf inside an editable subgraph, then name and configure their ports in Details.</p><p>Right-click a subgraph block and choose Add to Subgraphs to save it for reuse. Right-click a saved shelf entry to delete it. Saving updates the shelf only when you choose to save; existing placed copies stay unchanged. Portals connect pins through named references. Preview artifact tabs show results for the selected node; Run to here checks the request bound before running. Apply reviews the fresh result against the full root workflow.</p><p><a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1dr9aew\">Open the project guide</a> · <a target=\"_blank\" rel=\"noreferrer\" class=\"svelte-1dr9aew\">Node reference</a></p>", 1), Yk = /* @__PURE__ */ K("<div class=\"pc-workspace-overlay\"><div role=\"dialog\" tabindex=\"-1\" aria-modal=\"true\"><header class=\"svelte-1dr9aew\"><h2 class=\"svelte-1dr9aew\"> </h2><button type=\"button\" class=\"pc-btn menu_button\"> </button></header> <!></div></div>"), Xk = /* @__PURE__ */ K("<div class=\"pc-workspace-overlay\"><div class=\"pc-manager-dialog svelte-1dr9aew\" role=\"dialog\" tabindex=\"-1\" aria-modal=\"true\" aria-label=\"Manage portals\"><!></div></div>"), Zk = /* @__PURE__ */ K("<div role=\"dialog\" aria-modal=\"true\" aria-label=\"Lattice\" data-pc-workbench=\"svelte\"><!>  <div class=\"pc-body\" role=\"region\" aria-label=\"Workspace panels\" tabindex=\"0\"><div class=\"pc-stage\"><section aria-label=\"Output preview\"><header class=\"pc-preview-pane-head\"><strong>Preview</strong><button type=\"button\" class=\"pc-btn menu_button\"> </button></header> <div class=\"pc-preview-content\"><!></div></section> <!> <!> <!> <div class=\"pc-canvas-area\" id=\"pc-workspace-graph\" role=\"tabpanel\"><div class=\"pc-workspace-run svelte-1dr9aew\"><!></div> <div class=\"pc-canvas-host\" aria-label=\"Node canvas\"></div> <!> <div><!></div></div></div> <!> <div class=\"pc-inspector pc-workspace-details svelte-1dr9aew\"><header class=\"pc-details-heading svelte-1dr9aew\"><strong class=\"svelte-1dr9aew\">Details</strong><button type=\"button\" aria-label=\"Close Details\" title=\"Close Details\">×</button></header> <!> <div class=\"pc-node-details-holder svelte-1dr9aew\"><!></div></div></div> <!> <!> <!> <!> <!> <!> <!> <!> <!></div>");
+function Qk(e, t) {
 	Ge(t, !0);
 	let n = Vi(t, "actions", 7), r = /* @__PURE__ */ R({
 		graphId: "",
@@ -27353,7 +27425,7 @@ function Zk(e, t) {
 		renameGraphView: m,
 		focusCommentTitle: h,
 		revealPreview: fe
-	}, Te = Xk();
+	}, Te = Zk();
 	let Ee;
 	var De = B(Te);
 	{
@@ -27452,7 +27524,7 @@ function Zk(e, t) {
 	var Je = H(We, 2);
 	Bi(Je, (e) => o = e, () => o);
 	var Ye = H(Je, 2), Xe = (e) => {
-		var t = Kk();
+		var t = qk();
 		Ha(B(t), { get issue() {
 			return W(r).nativeDiagnostic;
 		} }), I(t), q(e, t);
@@ -27461,7 +27533,7 @@ function Zk(e, t) {
 		W(r).nativeDiagnostic && e(Xe);
 	});
 	var Ze = H(Ye, 2);
-	Bi(tk(B(Ze), {
+	Bi(nk(B(Ze), {
 		get view() {
 			return W(r).workflow;
 		},
@@ -27531,7 +27603,7 @@ function Zk(e, t) {
 	}
 	I(at), I(et), Bi(et, (e) => c = e, () => c), I(Oe), Bi(Oe, (e) => a = e, () => a);
 	var st = H(Oe, 2), ct = (e) => {
-		var t = Jk(), i = B(t);
+		var t = Yk(), i = B(t);
 		let a;
 		var o = B(i), s = B(o), c = B(s, !0);
 		I(s);
@@ -27555,7 +27627,7 @@ function Zk(e, t) {
 			}), q(e, t);
 		}, p = (e) => {
 			var t = Br(), i = V(t), a = (e) => {
-				wk(e, {
+				Tk(e, {
 					get examples() {
 						return W(r).examples;
 					},
@@ -27624,7 +27696,7 @@ function Zk(e, t) {
 					});
 				}
 			}, l = (e) => {
-				Wk(e, {
+				Gk(e, {
 					get panel() {
 						return W(D);
 					},
@@ -27632,7 +27704,7 @@ function Zk(e, t) {
 						return W(P);
 					},
 					get version() {
-						return Gk.version;
+						return Kk.version;
 					},
 					get referenceUrl() {
 						return W(te);
@@ -27642,7 +27714,7 @@ function Zk(e, t) {
 					}
 				});
 			}, u = (e) => {
-				var t = qk(), n = H(V(t), 5), r = B(n), i = H(r, 2);
+				var t = Jk(), n = H(V(t), 5), r = B(n), i = H(r, 2);
 				I(n), U(() => {
 					Q(r, "href", W(ne)), Q(i, "href", W(te));
 				}), q(e, t);
@@ -27682,7 +27754,7 @@ function Zk(e, t) {
 		}
 	});
 	var dt = H(ut, 2), ft = (e) => {
-		var t = Yk(), i = B(t);
+		var t = Xk(), i = B(t);
 		jE(B(i), {
 			get view() {
 				return W(r).portalManager;
@@ -27735,7 +27807,7 @@ function Zk(e, t) {
 		W(r).subgraphSave && e(vt);
 	});
 	var yt = H(_t, 2), bt = (e) => {
-		Pk(e, {
+		Fk(e, {
 			get view() {
 				return W(r).importReview;
 			},
@@ -27772,7 +27844,7 @@ function Zk(e, t) {
 kr(["click", "keydown"]);
 //#endregion
 //#region ui/entry.js
-function Qk(e, t, i) {
+function $k(e, t, i) {
 	let a = document.createElement("div");
 	a.style.cssText = "position:absolute;left:0;top:0;visibility:hidden;pointer-events:none", a.setAttribute("aria-hidden", "true"), a.inert = !0, e.append(a);
 	let o, s;
@@ -27828,7 +27900,7 @@ function Qk(e, t, i) {
 		s && Jr(s), o && Jr(o), a.remove();
 	}
 }
-function $k(e, t) {
+function eA(e, t) {
 	let n = Wr(Io, {
 		target: e,
 		props: { actions: t }
@@ -27851,8 +27923,8 @@ function $k(e, t) {
 		destroy: () => Jr(n)
 	};
 }
-function eA(e, t) {
-	let n = Wr(Zk, {
+function tA(e, t) {
+	let n = Wr(Qk, {
 		target: e,
 		props: { actions: t }
 	});
@@ -27867,4 +27939,4 @@ function eA(e, t) {
 	};
 }
 //#endregion
-export { Qk as measureNodeCard, $k as mountCanvas, eA as mountWorkbench };
+export { $k as measureNodeCard, eA as mountCanvas, tA as mountWorkbench };
