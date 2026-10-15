@@ -196,15 +196,15 @@
     .pc-wd-choices { display: flex; align-items: stretch; gap: 0; min-width: 0; padding: 3px; background: var(--pc-field); border: 0; border-radius: var(--pc-wd-edge); }
     button { min-height: 28px; padding: 5px 7px; border: 1px solid var(--pc-border); border-radius: var(--pc-wd-edge); background: var(--pc-control); color: var(--pc-text); font: inherit; font-size: 11px; cursor: pointer; }
     .pc-workflow-data.pc-workflow-data .pc-wd-choices button[type] { flex: 1 1 auto; min-width: 0; border: 0; border-radius: var(--pc-wd-edge); padding: 5px 3px; color: var(--pc-muted); background: transparent; font-size: 10px; overflow-wrap: anywhere; }
-    .pc-workflow-data.pc-workflow-data .pc-wd-choices button[type][aria-pressed='false']:hover:not(:disabled) { background: color-mix(in srgb, var(--pc-text) 7%, var(--pc-control)); }
+    .pc-workflow-data.pc-workflow-data .pc-wd-choices button[type][aria-pressed='false']:hover:global(:where(:not(body.pc-node-held *))):not(:disabled) { background: color-mix(in srgb, var(--pc-text) 7%, var(--pc-control)); }
     .pc-workflow-data.pc-workflow-data .pc-wd-choices button[type][aria-pressed='true'],
-    .pc-workflow-data.pc-workflow-data .pc-wd-choices button[type][aria-pressed='true']:hover { background: color-mix(in srgb, var(--pc-text) 12%, var(--pc-control)); color: var(--pc-text); }
-    button:hover:not(:disabled) { background: color-mix(in srgb, var(--pc-text) 10%, var(--pc-control)); }
+    .pc-workflow-data.pc-workflow-data .pc-wd-choices button[type][aria-pressed='true']:hover:global(:where(:not(body.pc-node-held *))) { background: color-mix(in srgb, var(--pc-text) 12%, var(--pc-control)); color: var(--pc-text); }
+    button:hover:global(:where(:not(body.pc-node-held *))):not(:disabled) { background: color-mix(in srgb, var(--pc-text) 10%, var(--pc-control)); }
     .pc-wd-source-row { display: grid; grid-template-columns: minmax(48px, 22%) minmax(0, 1fr) 27px; align-items: center; gap: 5px; margin: 6px 0; }
     .pc-wd-row-label { color: var(--pc-muted); font-size: 11px; overflow-wrap: anywhere; }
     .pc-wd-source-value { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .pc-wd-add { font-size: 18px; line-height: 19px; padding: 2px; color: var(--pc-text); background: transparent; border-color: transparent; }
-    .pc-wd-add:hover:not(:disabled) { border-color: var(--pc-border); }
+    .pc-wd-add:hover:global(:where(:not(body.pc-node-held *))):not(:disabled) { border-color: var(--pc-border); }
     .pc-wd-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
     .pc-wd-save { margin: 0 0 9px; padding: 0 10px; }
     .pc-wd-create { margin: 8px 0; }

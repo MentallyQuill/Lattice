@@ -157,12 +157,12 @@
     .pc-graph-tab-lock { font-size: 10px; }
     .pc-graph-tab-close { position: absolute; right: 4px; top: 7px; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 2px; background: transparent; color: var(--pc-muted); font: inherit; line-height: 18px; }
     .pc-graph-view-overflow { flex: 0 0 26px; align-self: center; height: 24px; border: 1px solid var(--pc-border); border-radius: 2px; background: var(--pc-panel-solid); color: var(--pc-text); font: inherit; }
-    .pc-graph-tab-close:hover, .pc-graph-view-overflow:hover { color: var(--pc-accent); background: var(--pc-panel); }
+    .pc-graph-tab-close:hover:global(:where(:not(body.pc-node-held *))), .pc-graph-view-overflow:hover:global(:where(:not(body.pc-node-held *))) { color: var(--pc-accent); background: var(--pc-panel); }
     .pc-graph-tab-close:focus-visible, .pc-graph-view-overflow:focus-visible, .pc-graph-view-menu button:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: -2px; }
     .pc-graph-view-menu { position: absolute; top: 100%; right: 4px; z-index: 10; display: flex; flex-direction: column; width: max-content; max-width: min(420px, calc(100vw - 40px)); max-height: min(360px, 60vh); overflow: auto; padding: 4px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-panel-solid); box-shadow: var(--pc-recess); }
     .pc-graph-tab-menu { position: fixed; right: auto; z-index: 70; }
     .pc-graph-view-menu button { display: block; width: 100%; padding: 6px 8px; border: 0; border-radius: 2px; background: transparent; color: var(--pc-text); font: inherit; font-size: 12px; text-align: left; overflow-wrap: anywhere; }
-    .pc-graph-view-menu button:hover:not(:disabled) { background: var(--pc-panel); color: var(--pc-accent); }
+    .pc-graph-view-menu button:hover:global(:where(:not(body.pc-node-held *))):not(:disabled) { background: var(--pc-panel); color: var(--pc-accent); }
     .pc-graph-view-menu button:disabled { opacity: .45; }
     @media (max-width: 480px) { .pc-graph-tab-item, .pc-graph-tabs-multi .pc-graph-tab { max-width: 160px; } }
 </style>

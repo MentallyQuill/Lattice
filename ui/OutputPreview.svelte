@@ -151,7 +151,7 @@
     h3 { flex: 1 1 140px; min-width: 0; margin: 0; font-size: 14px; font-weight: 400; overflow-wrap: anywhere; }
     small { color: var(--pc-muted, #a1a59b); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
     button { min-height: 25px; max-width: 100%; padding: 4px 7px; border: 0; border-radius: 2px; background: transparent; color: inherit; font: inherit; font-size: 12px; line-height: 1.4; cursor: pointer; box-shadow: none; overflow-wrap: anywhere; }
-    button:hover:not(:disabled) { background: var(--pc-raised, #353632); }
+    button:hover:global(:where(:not(body.pc-node-held *))):not(:disabled) { background: var(--pc-raised, #353632); }
     button[aria-pressed='true'], button[aria-selected='true'] { background: #ffffff06; }
     :is(button, [role='tabpanel']):focus-visible { outline: 2px solid var(--pc-accent, #e18a24); outline-offset: -2px; }
     :disabled { opacity: .55; cursor: default; }

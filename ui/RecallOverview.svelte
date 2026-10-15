@@ -30,6 +30,6 @@
  fieldset{margin:1rem 0;padding:.75rem;min-width:0;border:1px solid var(--pc-border);border-radius:var(--pc-r);background:var(--pc-field);color:var(--pc-text)}
  legend{overflow-wrap:anywhere;color:var(--pc-text)}p,small{line-height:1.5}small{display:block;color:var(--pc-muted)}
  button{padding:5px 8px;border:1px solid var(--pc-border);border-radius:var(--pc-r);background:var(--pc-control);color:var(--pc-text);font:inherit;cursor:pointer;box-shadow:none}
- button:hover:enabled{background:color-mix(in srgb,var(--pc-text) 7%,var(--pc-control))}button:focus-visible{outline:2px solid var(--pc-accent);outline-offset:2px}button:disabled{cursor:default}
+ button:hover:global(:where(:not(body.pc-node-held *))):enabled{background:color-mix(in srgb,var(--pc-text) 7%,var(--pc-control))}button:focus-visible{outline:2px solid var(--pc-accent);outline-offset:2px}button:disabled{cursor:default}
  .pc-recall-overview-actions{display:flex;gap:6px;flex-wrap:wrap}
 </style>

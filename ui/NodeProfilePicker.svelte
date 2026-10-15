@@ -150,14 +150,14 @@
     .pc-node-readiness:focus-visible { outline:2px solid var(--pc-accent); outline-offset:3px; }
     .pc-readiness-diagnostics { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); }
     .pc-decoration-compact .pc-node-readiness { padding:3px; }
-    .pc-decoration-compact:not(.pc-decoration-selected):not(:hover):not(:focus-within) .pc-readiness-label { display:none; }
-    :global([data-pc-detail="overview"]) .pc-node-profile:not(.pc-decoration-selected):not(:hover):not(:focus-within) .pc-readiness-label { display:none; }
+    .pc-decoration-compact:not(.pc-decoration-selected):not(:hover:global(:where(:not(body.pc-node-held *)))):not(:focus-within) .pc-readiness-label { display:none; }
+    :global([data-pc-detail="overview"]) .pc-node-profile:not(.pc-decoration-selected):not(:hover:global(:where(:not(body.pc-node-held *)))):not(:focus-within) .pc-readiness-label { display:none; }
     :global([data-pc-detail="overview"]) .pc-node-readiness { min-width:24px; }
-    .pc-decoration-compact:is(:hover,:focus-within) .pc-node-readiness { max-width:none; }
+    .pc-decoration-compact:is(:hover:global(:where(:not(body.pc-node-held *))),:focus-within) .pc-node-readiness { max-width:none; }
 
     .profile-picker { position:absolute; width:100%; pointer-events:auto; }
     .profile-bar { display:flex; align-items:center; gap:7px; width:100%; padding:8px; margin:0; border:1px solid var(--pc-border); border-radius:var(--pc-r); background:var(--pc-control); color:var(--pc-text); font:inherit; font-size:12px; min-height:35px; text-align:left; cursor:pointer; appearance:none; filter:none; text-shadow:none; box-shadow:none; }
-    .profile-bar:hover:enabled { background:color-mix(in srgb,var(--pc-text) 7%,var(--pc-control)); } .profile-bar:disabled { cursor:default; }
+    .profile-bar:hover:global(:where(:not(body.pc-node-held *))):enabled { background:color-mix(in srgb,var(--pc-text) 7%,var(--pc-control)); } .profile-bar:disabled { cursor:default; }
     .profile-bar:focus-visible { outline:2px solid var(--pc-accent); outline-offset:2px; }
     svg { fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
     .profile-bar svg { width:14px; height:14px; flex:0 0 14px; }
@@ -173,7 +173,7 @@
     .profile-options { min-height:0; flex:1 1 auto; max-height:244px; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:auto; scrollbar-color:var(--pc-scrollbar-thumb) var(--pc-scrollbar-track); padding:4px; }
     .profile-options::-webkit-scrollbar { width:10px; } .profile-options::-webkit-scrollbar-track { background:var(--pc-scrollbar-track); } .profile-options::-webkit-scrollbar-thumb { background:var(--pc-scrollbar-thumb); border:2px solid var(--pc-scrollbar-track); border-radius:var(--pc-r); }
     .profile-option { display:flex; align-items:flex-start; gap:7px; padding:9px 8px; margin:0; width:100%; border:0; border-radius:var(--pc-r); background:transparent; color:var(--pc-text); text-align:left; font:inherit; font-size:13px; line-height:1.35; cursor:pointer; appearance:none; filter:none; text-shadow:none; box-shadow:none; }
-    .profile-option:hover:enabled,.profile-option.is-active { background:color-mix(in srgb,var(--pc-text) 7%,var(--profile-panel)); } .profile-option[aria-selected="true"] { background:color-mix(in srgb,var(--pc-accent) 14%,var(--profile-panel)); }
+    .profile-option:hover:global(:where(:not(body.pc-node-held *))):enabled,.profile-option.is-active { background:color-mix(in srgb,var(--pc-text) 7%,var(--profile-panel)); } .profile-option[aria-selected="true"] { background:color-mix(in srgb,var(--pc-accent) 14%,var(--profile-panel)); }
     .profile-option.is-active,.profile-option:focus-visible { outline:2px solid var(--pc-accent); outline-offset:-2px; }
     .profile-option:disabled { cursor:default; }
     .profile-option-copy { min-width:0; flex:1; } .profile-name { display:block; overflow-wrap:anywhere; } .profile-meta { display:block; margin-top:3px; color:var(--pc-muted); font-size:11px; overflow-wrap:anywhere; }

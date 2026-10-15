@@ -140,7 +140,7 @@
     .pc-examples-count { flex: none; padding-bottom: 5px; font-size: 11px; }
     .pc-example-entry { display: flex; flex-direction: column; min-width: 0; }
     .pc-example-details-button { padding: 5px 8px; text-align: left; color: var(--pc-muted); background: var(--pc-block); border: 1px solid var(--pc-border); border-top: 0; border-radius: 0 0 4px 4px; font: 11px system-ui, 'Segoe UI', sans-serif; cursor: pointer; }
-    .pc-example-details-button:hover, .pc-example-details-button:focus-visible { color: var(--pc-text); outline-color: var(--pc-accent, var(--pc-flow)); }
+    .pc-example-details-button:hover:global(:where(:not(body.pc-node-held *))), .pc-example-details-button:focus-visible { color: var(--pc-text); outline-color: var(--pc-accent, var(--pc-flow)); }
     .pc-example-band, .pc-example-goal { padding: 4px 3px 0; color: var(--pc-muted); font: 11px/15px system-ui, 'Segoe UI', sans-serif; }
     .pc-example-band { color: var(--pc-text); }
     .pc-example-goal { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
@@ -162,7 +162,7 @@
     .pc-examples-issue button { flex: none; padding: 3px 8px; }
     .pc-examples-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: 8px; overflow: auto; min-height: 0; flex: 1; padding: 10px; scrollbar-gutter: stable; }
     .pc-example-tile { box-sizing: border-box; display: flex; flex-direction: column; min-width: 0; min-height: 190px; padding: 4px; border: 1px solid var(--pc-border); border-radius: 4px; color: var(--pc-text); background: var(--pc-block); text-align: left; cursor: pointer; }
-    .pc-example-tile:hover, .pc-example-tile:focus-visible { border-color: var(--pc-accent, var(--pc-flow)); }
+    .pc-example-tile:hover:global(:where(:not(body.pc-node-held *))), .pc-example-tile:focus-visible { border-color: var(--pc-accent, var(--pc-flow)); }
     .pc-example-tile:focus-visible { outline: 2px solid var(--pc-accent, var(--pc-flow)); outline-offset: -2px; }
     .pc-example-tile:disabled { cursor: progress; opacity: .7; }
     .pc-example-tile.pc-example-unavailable { cursor: default; opacity: .8; }

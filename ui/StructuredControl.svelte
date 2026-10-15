@@ -132,7 +132,7 @@
     textarea { min-height: 55px; resize: vertical; line-height: 1.5; }
     .pc-structured-row textarea { min-height: 100px; }
     button { min-height: 28px; padding: 4px 6px; border: 1px solid var(--pc-border); border-radius: 2px; background: var(--pc-control); color: var(--pc-text); font: inherit; font-size: 12px; cursor: pointer; }
-    button:hover:not(:disabled) { background: var(--pc-panel); }
+    button:hover:global(:where(:not(body.pc-node-held *))):not(:disabled) { background: var(--pc-panel); }
     .pc-structured-mode { display: flex; justify-content: flex-end; margin: 4px 0; }
     .pc-structured-raw { min-height: 110px; font-family: var(--pc-mono, monospace); }
     small { display: block; margin-top: 5px; color: var(--pc-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }

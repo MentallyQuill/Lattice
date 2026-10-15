@@ -88,7 +88,7 @@
     .pc-node-search { position: fixed; z-index: 12; width: 284px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; box-sizing: border-box; padding: 9px; background: var(--pc-panel-solid); color: var(--pc-text); border: 1px solid var(--pc-border); border-radius: var(--pc-r); box-shadow: 0 8px 28px #0005; font: 400 14px/1.4 var(--pc-font, system-ui, sans-serif); }
     button, input { font: inherit; color: inherit; box-sizing: border-box; border-radius: 2px; }
     button { background: transparent; border: 0; padding: 6px 9px; cursor: pointer; }
-    button:hover:enabled, button[aria-selected="true"]:enabled { background: var(--pc-control); }
+    button:hover:global(:where(:not(body.pc-node-held *))):enabled, button[aria-selected="true"]:enabled { background: var(--pc-control); }
     button:disabled { opacity: .55; cursor: default; }
     button:focus-visible, input:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
     .pc-search-field { display: block; margin: 0; font-size: 12px; }

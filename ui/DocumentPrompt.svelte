@@ -33,5 +33,5 @@
     p { color: var(--pc-muted); line-height: 1.5; } strong { color: var(--pc-text); }
     footer { display: flex; justify-content: flex-end; gap: 7px; margin-top: 16px; }
     button { padding: 5px 10px; border: 1px solid var(--pc-border); border-radius: var(--pc-r-sm); background: var(--pc-control); color: var(--pc-text); font: inherit; cursor: pointer; }
-    button:hover { border-color: var(--pc-flow); } button:focus-visible { outline: 2px solid var(--pc-flow); outline-offset: 1px; }
+    button:hover:global(:where(:not(body.pc-node-held *))) { border-color: var(--pc-flow); } button:focus-visible { outline: 2px solid var(--pc-flow); outline-offset: 1px; }
 </style>

@@ -1,6 +1,7 @@
 import { nodeDecorationElements, measureDecorationExtents } from './ui/node-decorations.js?v=0.27.4';
 import { projectRunDiagnostics, retainRunDiagnostics } from './ui/canvas-run-diagnostics.js?v=0.27.4';
 import { summarizeReadiness } from './ui/node-readiness.js?v=0.27.4';
+import { beginNodeHold } from './ui/node-hold.js?v=0.27.4';
 import { graphPoint, zoomAt, zoomTo, wheelFactor, zoomShortcutFactor } from './canvas/camera.js?v=0.27.4';
 import { createFrameScheduler } from './canvas/frame.js?v=0.27.4';
 import { selectionMode, rectangle, intersects, combineSelection } from './canvas/selection.js?v=0.27.4';
@@ -169,7 +170,7 @@ export class Canvas {
     }
 
     async destroy() {
-        this.cancelGesture();
+        this.cancelGesture('destroy');
         this.frames.destroy();
         this.resizeObserver?.disconnect(); this.layoutObserver?.disconnect();
         this.eventController.abort();
@@ -810,6 +811,7 @@ export class Canvas {
         if (this.pan?.start && this.graph) Object.assign(this.view, this.pan.start);
         this.marquee?.box.remove();
         this.drag = null; this.marquee = null; this.pan = null;
+        this.releaseNodeHold?.(!['blur', 'destroy', 'view-change'].includes(reason)); this.releaseNodeHold = null;
         this.nativeMouseSuppressed = false;
         this.spaceDown = false;
         this.host.classList.remove('pc-panning', 'pc-interacting', 'pc-space-pan');
@@ -1049,6 +1051,10 @@ export class Canvas {
         const on = (target, type, handler, options = {}) => target.addEventListener(type, handler, { ...options, signal: this.eventController.signal });
         const inEditor = (e) => e.target?.closest?.('input, textarea, select, [contenteditable="true"]');
         const typing = (e) => inEditor(e) || document.activeElement?.matches?.('input, textarea, select, [contenteditable="true"]');
+        on(document, 'pc-node-hold', () => {
+            this.hoverPin = null; this.hoverWire = null;
+            if (this.graph) this.#applyFocus();
+        });
         on(host, 'scroll', () => {
             // Keyboard focus can scroll an overflow-hidden host to an offscreen
             // card. Adopt that movement into the camera so hit testing and the
@@ -1304,6 +1310,11 @@ export class Canvas {
                 return;
             }
         });
+        // Run after the press handler has decided whether this is an actual
+        // node/group/comment hold, including holds that have not moved yet.
+        on(host, 'mousedown', e => {
+            if (this.drag && !this.releaseNodeHold) this.releaseNodeHold = beginNodeHold(host.ownerDocument, e);
+        });
         on(window, 'mousemove', (e) => {
             if (inNodeProfile(e)) return;
             if (this.marquee) {
@@ -1370,6 +1381,7 @@ export class Canvas {
             }
             if (this.drag) {
                 const d = this.drag; this.drag = null;
+                this.releaseNodeHold?.(); this.releaseNodeHold = null;
                 const ids = d.id ? [d.id] : d.several.map(([id]) => id);
                 if (d.moved) {
                     this.hooks.onDragBlock?.(false);

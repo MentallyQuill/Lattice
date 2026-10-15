@@ -37,7 +37,7 @@
 <style>
     .pc-details-divider { position: relative; flex: 0 0 8px; width: 8px; align-self: stretch; cursor: ew-resize; touch-action: none; }
     .pc-details-divider::after { content: ''; position: absolute; top: 50%; left: 3px; width: 2px; height: 38px; transform: translateY(-50%); background: var(--pc-muted); }
-    .pc-details-divider:hover::after, .pc-details-divider:focus-visible::after { background: var(--pc-accent); }
+    .pc-details-divider:hover:global(:where(:not(body.pc-node-held *)))::after, .pc-details-divider:focus-visible::after { background: var(--pc-accent); }
     .pc-details-divider:focus-visible { outline: 1px solid var(--pc-accent); outline-offset: -1px; }
     @media (max-width: 860px) { .pc-details-divider { display: none; } }
 </style>

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount, tick } from 'svelte';
     import { FAMILY_PALETTE, PALETTE_GROUPS, paletteForOperation } from '../src/ui/node-palette.js';
+    import { beginNodeHold } from '../src/ui/node-hold.js';
     import type { WorkflowView } from './types';
     type ShelfChoice = { id: string; label: string; family: string; phase: string; shortcode?: string; purpose?: string; searchAliases?: readonly string[]; disabledReason?: string; definitionRef?: { id: string; version: number; semanticHash: string } };
     type ClientPoint = { x: number; y: number };
@@ -22,10 +23,12 @@
     let holdTimer: ReturnType<typeof setTimeout> | null = null;
     let suppressedButton: HTMLButtonElement | null = null;
     let dragPreview = $state<{ title: string; family: string; x: number; y: number } | null>(null);
+    let releaseNodeHold: (() => void) | null = null;
     function endGesture() {
         if (holdTimer !== null) clearTimeout(holdTimer);
         holdTimer = null;
         const previous = gesture; gesture = null; dragPreview = null;
+        releaseNodeHold?.(); releaseNodeHold = null;
         document.body.classList.remove('pc-shelf-dragging');
         if (previous?.button.hasPointerCapture?.(previous.pointerId)) previous.button.releasePointerCapture(previous.pointerId);
     }
@@ -42,6 +45,7 @@
         suppressedButton = null;
         gesture = { entry, pointerId: event.pointerId, button, start: { x: event.clientX, y: event.clientY }, point: { x: event.clientX, y: event.clientY } };
         button.setPointerCapture?.(event.pointerId);
+        releaseNodeHold = beginNodeHold(button.ownerDocument, event);
         holdTimer = setTimeout(beginDrag, 180);
     }
     function pointerMove(event: PointerEvent) {

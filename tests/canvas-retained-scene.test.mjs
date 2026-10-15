@@ -193,14 +193,15 @@ test('explicit replacement cancellation rolls back pan and selection without sce
     assert.equal(counts.renders,0);assert.equal(counts.wires,0);assert.deepEqual(graph.view,beforeView);assert.equal(canvas.selection.id,'b');assert.ok(selections>before[0]);assert.ok(multis>before[1]);assert.ok(commits>before[2]);assert.equal(canvas.pan,null);await canvas.destroy();
 });
 
-test('steady drag frames skip unchanged focus and selection DOM scans while retaining highlights', async () => {
+test('steady drag frames retain selection without hover feedback or repeated DOM scans', async () => {
     const {canvas,host}=fixture(),{mouse}=await import('./canvas-fixture.mjs');
     const card=host.querySelector('.pc-node[data-id="a"]'),pin=card.querySelector('.pc-port'),path=host.querySelector('.pc-wire-native');
+    pin.dispatchEvent(new window.MouseEvent('mouseenter'));assert.ok(pin.classList.contains('pc-pin-highlight'));
     mouse(card,'mousedown',80,80);pin.dispatchEvent(new window.MouseEvent('mouseenter'));mouse(window,'mousemove',100,100);canvas.frames.flush();
     const scans=[];for(const layer of [canvas.nodeLayer,canvas.commentLayer,canvas.svg]) {const query=layer.querySelectorAll.bind(layer);layer.querySelectorAll=selector=>{scans.push(selector);return query(selector);};}
     const before=path.getAttribute('d'),stringify=JSON.stringify;let serializations=0;
     try {JSON.stringify=(...args)=>{serializations++;return stringify(...args);};for(let i=0;i<12;i++){mouse(window,'mousemove',110+i*4,110+i*3);canvas.frames.flush();}} finally {JSON.stringify=stringify;}
-    assert.equal(serializations,0);assert.deepEqual(scans,[]);assert.notEqual(path.getAttribute('d'),before);assert.ok(card.classList.contains('pc-selected'));assert.ok(pin.classList.contains('pc-pin-highlight'));assert.ok(path.classList.contains('pc-wire-feeds'));
+    assert.equal(serializations,0);assert.deepEqual(scans,[]);assert.notEqual(path.getAttribute('d'),before);assert.ok(card.classList.contains('pc-selected'));assert.ok(!pin.classList.contains('pc-pin-highlight'));assert.ok(!path.classList.contains('pc-wire-feeds'));
     canvas.cancelGesture();assert.equal(card.style.left,'50px');await canvas.destroy();
 });
 

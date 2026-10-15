@@ -52,7 +52,7 @@
     .pc-menu-head { display: flex; align-items: center; gap: 8px; padding: 5px 8px; }
     h2 { min-width: 0; margin: 0 auto 0 0; font-size: 12px; font-weight: 400; overflow-wrap: anywhere; color: var(--pc-muted); }
     button { box-sizing: border-box; padding: 6px 9px; border: 0; border-radius: 2px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
-    button:hover:enabled { background: var(--pc-control); }
+    button:hover:global(:where(:not(body.pc-node-held *))):enabled { background: var(--pc-control); }
     button:disabled { opacity: .55; cursor: default; }
     button:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
     .pc-menu-head button { flex: none; box-shadow: none; }

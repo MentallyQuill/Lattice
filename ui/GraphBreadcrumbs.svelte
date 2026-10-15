@@ -27,7 +27,7 @@
     li { display: flex; align-items: center; min-width: 0; overflow-wrap: anywhere; }
     li + li::before { content: '›'; margin: 0 6px; color: var(--pc-muted); }
     button { padding: 2px 3px; border: 0; border-radius: 2px; color: var(--pc-text); background: transparent; font: inherit; overflow-wrap: anywhere; text-align: left; }
-    button:hover:not(:disabled) { color: var(--pc-accent); background: var(--pc-panel); }
+    button:hover:global(:where(:not(body.pc-node-held *))):not(:disabled) { color: var(--pc-accent); background: var(--pc-panel); }
     button:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: -2px; }
     button:disabled { color: var(--pc-muted); }
     [aria-current="page"] { color: var(--pc-text); padding: 2px 3px; }
