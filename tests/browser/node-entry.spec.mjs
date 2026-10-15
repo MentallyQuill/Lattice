@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 // Synthetic public authoring fixtures. The real controller, shared editors,
-// configured session, validation, transaction and history remain in the loop.
+// immediate placement, validation, transaction and history remain in the loop.
 const details = page => page.getByRole('region', { name: 'Node details', exact: true });
 const configuration = page => page.getByRole('dialog', { name: 'Configure node', exact: true });
 const table = scope => scope.getByRole('region', { name: 'Table import', exact: true });
@@ -64,6 +64,7 @@ async function choose(scope, label, value) {
     else await control.selectOption(value);
 }
 async function startCreation(page, operation, label, variant = '') {
+    const beforeIds = Object.keys((await saved(page)).nodes);
     const host = page.locator('.pc-canvas-host');
     const position = await host.evaluate(element => {
         const box = element.getBoundingClientRect();
@@ -78,10 +79,14 @@ async function startCreation(page, operation, label, variant = '') {
     else await host.dblclick({ position });
     await page.getByRole('combobox', { name: 'Search nodes and subgraphs', exact: true }).fill(label);
     await page.locator(`[data-choice="operation:${operation}${wireVariant ? ':' + variant : ''}"]`).click();
-    await expect(configuration(page)).toBeVisible();
-    if(['focus','curve'].includes(variant))await choose(configuration(page),'Mode',variant);
-    return configuration(page);
+    await expect(configuration(page)).toHaveCount(0);
+    const created = Object.values((await saved(page)).nodes).find(node => !beforeIds.includes(node.id));
+    expect(created).toBeTruthy();
+    await select(page, created.id);
+    if(['focus','curve'].includes(variant))await choose(details(page),'Mode',variant);
+    return details(page);
 }
+async function remount(page, id) { await page.evaluate(async () => { window.canvasHarness.canvas.select(null); await window.canvasHarness.settle(); }); await select(page, id); }
 async function terms(scope, text, format = 'auto') {
     const toggle = scope.getByRole('button', { name: 'Use Rules terms', exact: true });
     if (await toggle.count()) await toggle.click();
@@ -105,13 +110,12 @@ async function importDraft(scope, label, text, columns, action = 'replace', deli
 async function undo(page) { await page.getByRole('button', { name: 'Undo', exact: true }).click(); }
 async function redo(page) { await page.getByRole('button', { name: 'Redo', exact: true }).click(); }
 
-test('successful node creation closes its dialog without an asynchronous panel error', async ({ page }) => {
+test('successful immediate node placement opens Details without an asynchronous panel error', async ({ page }) => {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await setup(page);
-    const dialog = await startCreation(page, 'text-rules', 'Text Rules');
-    await dialog.getByRole('button', { name: 'Create node', exact: true }).click();
-    await expect(dialog).toHaveCount(0);
+    await startCreation(page, 'text-rules', 'Text Rules');
+    await expect(configuration(page)).toHaveCount(0);
     const created = Object.values((await saved(page)).nodes);
     expect(created).toHaveLength(1);
     expect(created[0].operation).toBe('text-rules');
@@ -124,24 +128,23 @@ for (const entry of [
     { name: 'plain', text: 'though', format: 'auto', expected: [{ id: 'pattern-1', pattern: 'though' }] },
     { name: 'CSV', text: '"red, blue", green', format: 'csv', expected: [{ id: 'pattern-1', pattern: 'red, blue' }, { id: 'pattern-2', pattern: 'green' }] },
     { name: 'JSON', text: '[{"id":"authored","pattern":"001","label":"Keep"}]', format: 'json', expected: [{ id: 'authored', pattern: '001', label: 'Keep' }] },
-]) test('Pattern ' + entry.name + ' entry uses the shared creation/details route and one Undo per save', async ({ page }) => {
+]) test('Pattern ' + entry.name + ' edits a placed node through Details with separate placement and Save Undo', async ({ page }) => {
     await setup(page);
-    const dialog = await startCreation(page, 'pattern', 'Pattern');
-    expect(Object.keys((await saved(page)).nodes)).toEqual([]);
-    await terms(dialog, entry.text, entry.format);
-    expect(Object.keys((await saved(page)).nodes)).toEqual([]);
-    await dialog.getByRole('button', { name: 'Create node', exact: true }).click();
-    await expect(dialog).toHaveCount(0);
-    const created = Object.values((await saved(page)).nodes);
-    expect(created).toHaveLength(1); expect(created[0].rules).toEqual(entry.expected);
+    const panel = await startCreation(page, 'pattern', 'Pattern');
+    const placed = Object.values((await saved(page)).nodes)[0], defaults = structuredClone(placed.rules);
+    await terms(panel, entry.text, entry.format);
+    expect((await saved(page)).nodes[placed.id].rules).toEqual(defaults);
+    await panel.getByRole('button', { name: 'Save Rules', exact: true }).click();
+    expect((await saved(page)).nodes[placed.id].rules).toEqual(entry.expected);
+    await undo(page); expect((await saved(page)).nodes[placed.id].rules).toEqual(defaults);
     await undo(page); expect(Object.keys((await saved(page)).nodes)).toEqual([]);
-    await redo(page); expect((await saved(page)).nodes[created[0].id].rules).toEqual(entry.expected);
-    await select(page, created[0].id);
+    await redo(page); await redo(page); expect((await saved(page)).nodes[placed.id].rules).toEqual(entry.expected);
+    await select(page, placed.id);
     await terms(details(page), '[{"id":"edited","pattern":"changed","label":"Exact"}]', 'json');
-    expect((await saved(page)).nodes[created[0].id].rules).toEqual(entry.expected);
+    expect((await saved(page)).nodes[placed.id].rules).toEqual(entry.expected);
     await details(page).getByRole('button', { name: 'Save Rules', exact: true }).click();
-    expect((await saved(page)).nodes[created[0].id].rules).toEqual([{ id: 'edited', pattern: 'changed', label: 'Exact' }]);
-    await undo(page); expect((await saved(page)).nodes[created[0].id].rules).toEqual(entry.expected);
+    expect((await saved(page)).nodes[placed.id].rules).toEqual([{ id: 'edited', pattern: 'changed', label: 'Exact' }]);
+    await undo(page); expect((await saved(page)).nodes[placed.id].rules).toEqual(entry.expected);
     await noWork(page);
 });
 
@@ -163,21 +166,18 @@ test('mapped CSV Add rows previews exact cells, confirms a local candidate, then
     await noWork(page);
 });
 
-test('mapped TSV Replace rows keeps invalid source and located errors through creation form remount', async ({ page }) => {
+test('mapped TSV Replace rows keeps invalid source and located errors through placed Details remount', async ({ page }) => {
     await setup(page);
-    const dialog = await startCreation(page, 'pattern', 'Pattern');
+    const panel = await startCreation(page, 'pattern', 'Pattern'), placed = Object.values((await saved(page)).nodes)[0];
     const text = 'Expression\tLabel\tIdentity\nred, blue\t\tx\ngreen\tSecond\tx';
-    let importer = await importDraft(dialog, 'Rules', text, { pattern: 'Expression', label: 'Label', id: 'Identity' }, 'replace', '\t');
+    let importer = await importDraft(panel, 'Rules', text, { pattern: 'Expression', label: 'Label', id: 'Identity' }, 'replace', '\t');
     await importer.getByRole('button', { name: 'Review import', exact: true }).click();
     await expect(importer.getByRole('alert')).toContainText('Row 3, cell 3');
     await expect(importer.getByRole('button', { name: 'Confirm import', exact: true })).toBeDisabled();
-    const create = dialog.getByRole('button', { name: 'Create node', exact: true });
-    if (await create.isEnabled()) await create.click();
-    expect(Object.keys((await saved(page)).nodes)).toEqual([]);
-    await dialog.getByRole('button', { name: 'Configuration format', exact: true }).click();
-    await expect(dialog.getByLabel('Node controls JSON', { exact: true })).toBeVisible();
-    await dialog.getByRole('button', { name: 'Configuration format', exact: true }).click();
-    importer = await openTable(dialog, 'Rules');
+    await expect(panel.getByRole('button', { name: 'Save Rules', exact: true })).toBeDisabled();
+    expect((await saved(page)).nodes[placed.id].rules).toEqual(placed.rules);
+    await remount(page, placed.id);
+    importer = await openTable(details(page), 'Rules');
     await expect(importer.getByLabel('Table data', { exact: true })).toHaveValue(text);
     await expect(importer.getByLabel('Table delimiter', { exact: true })).toHaveValue('\t');
     await expect(importer.getByLabel('Map id column', { exact: true })).toHaveValue('Identity');
@@ -185,10 +185,10 @@ test('mapped TSV Replace rows keeps invalid source and located errors through cr
     await importer.getByLabel('Table data', { exact: true }).fill(text.replace('Second\tx', 'Second\ty'));
     await importer.getByRole('button', { name: 'Review import', exact: true }).click();
     await importer.getByRole('button', { name: 'Confirm import', exact: true }).click();
-    expect(Object.keys((await saved(page)).nodes)).toEqual([]);
-    await create.click();
-    const created = Object.values((await saved(page)).nodes);
-    expect(created).toHaveLength(1); expect(created[0].rules).toEqual([{ id: 'x', pattern: 'red, blue', label: '' }, { id: 'y', pattern: 'green', label: 'Second' }]);
+    expect((await saved(page)).nodes[placed.id].rules).toEqual(placed.rules);
+    await details(page).getByRole('button', { name: 'Save Rules', exact: true }).click();
+    expect((await saved(page)).nodes[placed.id].rules).toEqual([{ id: 'x', pattern: 'red, blue', label: '' }, { id: 'y', pattern: 'green', label: 'Second' }]);
+    await undo(page); expect((await saved(page)).nodes[placed.id].rules).toEqual(placed.rules);
     await undo(page); expect(Object.keys((await saved(page)).nodes)).toEqual([]);
     await noWork(page);
 });
@@ -239,7 +239,7 @@ test('rejected changed-port Save retains confirmed slot rows and the saved wire'
     await noWork(page);
 });
 
-test('wire creation still rejects a selected pin removed by a reviewed slots import', async ({ page }) => {
+test('wire creation places its selected pin immediately and a later reviewed slot edit preserves the connection', async ({ page }) => {
     await setup(page, 'source');
     const before = await saved(page);
     const origin = page.locator('.pc-port[data-node="source"][data-dir="out"]').first();
@@ -251,16 +251,19 @@ test('wire creation still rejects a selected pin removed by a reviewed slots imp
     await page.locator('[data-choice="operation:join"]').click();
     const pins = page.getByRole('dialog', { name: 'Choose connection port', exact: true });
     await expect(pins).toBeVisible(); await pins.locator('[data-port="base"]').click();
-    const dialog = configuration(page); await expect(dialog).toBeVisible();
-    const importer = await importDraft(dialog, 'Inputs', 'id,label,required\nreplacement,New,false', { id: 'id', label: 'label', required: 'required' });
+    await expect(configuration(page)).toHaveCount(0);
+    const placed = Object.values((await saved(page)).nodes).find(node => node.operation === 'join');
+    expect(placed).toBeTruthy(); await select(page, placed.id);
+    const connected = await saved(page);
+    expect(Object.values(connected.wires).some(wire => wire.from === 'source' && wire.to === placed.id && wire.toPort === 'base')).toBe(true);
+    const importer = await importDraft(details(page), 'Inputs', 'id,label,required\nreplacement,New,false', { id: 'id', label: 'label', required: 'required' });
     await importer.getByRole('button', { name: 'Review import', exact: true }).click();
     await importer.getByRole('button', { name: 'Confirm import', exact: true }).click();
-    await dialog.getByRole('button', { name: 'Create node', exact: true }).click();
-    await expect(dialog.locator('.pc-diagnostic[data-severity="error"]')).toContainText('CONFIGURATION_PORT_CHANGED');
-    await expect(dialog.locator('.pc-diagnostic[data-severity="error"]')).toContainText('compatible output and input pins');
-    expect(await saved(page)).toEqual(before);
-    await dialog.getByRole('button', { name: 'Close node configuration', exact: true }).click();
-    expect(await saved(page)).toEqual(before); await noWork(page);
+    await details(page).getByRole('button', { name: 'Save Inputs', exact: true }).click();
+    await expect(details(page).locator('.pc-diagnostic[data-severity="error"]')).toBeVisible();
+    expect(await saved(page)).toEqual(connected);
+    await undo(page); expect((await saved(page)).nodes).toEqual(before.nodes); expect((await saved(page)).wires).toEqual(before.wires);
+    await noWork(page);
 });
 
 test('Condition null and State curve durations retain their real dynamic friendly editors', async ({ page }) => {
@@ -283,30 +286,32 @@ test('Condition null and State curve durations retain their real dynamic friendl
 
 // Remaining N7 routes: N5 owns seven schema operations; N6 owns Decision/Advance Time.
 const routes = [
-    ['smart-compactor', 'Smart Compactor', '', 'pre', true], ['pattern', 'Pattern', '', 'post', true],
-    ['filter-text', 'Filter Text', '', 'post', true], ['repair', 'Repair', '', 'post', true],
-    ['compose', 'Compose', '', 'pre', false], ['text-rules', 'Text Rules', '', 'pre', false],
-    ['select-fields', 'Select Fields', '', 'pre', false], ['style-transfer', 'Style Transfer', '', 'pre', false],
-    ['format-transfer', 'Format Transfer', '', 'pre', false], ['terminology-map', 'Terminology Map', '', 'pre', false],
-    ['context', 'Context', 'focus', 'pre', false], ['state', 'State', '', 'pre', false], ['state', 'State', 'curve', 'pre', false],
-    ['condition', 'Condition', '', 'pre', false], ['join', 'Join', '', 'pre', false],
-    ['collect', 'Collect', '', 'pre', false], ['confidence-gate', 'Confidence Gate', '', 'pre', false],
-    ['revise-draft', 'Revise Draft', '', 'post', true], ['collection', 'Collection', '', 'pre', false],
-    ['context-join', 'Context Join', '', 'pre', true],
-    ['style-transfer', 'Style Transfer', 'reply-draft', 'post', true],
-    ['format-transfer', 'Format Transfer', 'reply-draft', 'post', true],
-    ['terminology-map', 'Terminology Map', 'reply-draft', 'post', true],
-    ['text-rules', 'Text Rules', 'draft', 'post', true], ['compose', 'Compose', 'guidance', 'pre', true],
+    ['smart-compactor', 'Smart Compactor', '', 'pre'], ['pattern', 'Pattern', '', 'post'],
+    ['filter-text', 'Filter Text', '', 'post'], ['repair', 'Repair', '', 'post'],
+    ['compose', 'Compose', '', 'pre'], ['text-rules', 'Text Rules', '', 'pre'],
+    ['select-fields', 'Select Fields', '', 'pre'], ['style-transfer', 'Style Transfer', '', 'pre'],
+    ['format-transfer', 'Format Transfer', '', 'pre'], ['terminology-map', 'Terminology Map', '', 'pre'],
+    ['context', 'Context', 'focus', 'pre'], ['state', 'State', '', 'pre'], ['state', 'State', 'curve', 'pre'],
+    ['condition', 'Condition', '', 'pre'], ['join', 'Join', '', 'pre'],
+    ['collect', 'Collect', '', 'pre'], ['confidence-gate', 'Confidence Gate', '', 'pre'],
+    ['revise-draft', 'Revise Draft', '', 'post'], ['collection', 'Collection', '', 'pre'],
+    ['context-join', 'Context Join', '', 'pre'],
+    ['style-transfer', 'Style Transfer', 'reply-draft', 'post'],
+    ['format-transfer', 'Format Transfer', 'reply-draft', 'post'],
+    ['terminology-map', 'Terminology Map', 'reply-draft', 'post'],
+    ['text-rules', 'Text Rules', 'draft', 'post'], ['compose', 'Compose', 'guidance', 'pre'],
 ];
-for (const [operation, label, variant, phase, locked] of routes) test(operation + (variant ? ':' + variant : '') + ' opens configuration with its source-kind stage and Cancel leaves no creation step', async ({ page }) => {
+for (const [operation, label, variant, phase] of routes) test(operation + (variant ? ':' + variant : '') + ' places immediately with its source-kind stage and one placement Undo', async ({ page }) => {
     await setup(page,variant&&!['focus','curve'].includes(variant)?'creation-origin':'empty'); const before = await saved(page);
-    const dialog = await startCreation(page, operation, label, variant);
-    await expect(dialog.getByLabel('Node stage', { exact: true })).toHaveValue(phase);
-    if (locked) await expect(dialog.getByLabel('Node stage', { exact: true })).toBeDisabled();
-    else await expect(dialog.getByLabel('Node stage', { exact: true })).toBeEnabled();
-    expect(await saved(page)).toEqual(before);
-    await dialog.getByRole('button', { name: 'Close node configuration', exact: true }).click();
-    await expect(dialog).toHaveCount(0); expect(await saved(page)).toEqual(before);
+    const panel = await startCreation(page, operation, label, variant);
+    const graph = await saved(page), created = Object.values(graph.nodes).find(node => !Object.hasOwn(before.nodes, node.id));
+    expect(created.phase).toBe(phase);
+    const stage = panel.getByLabel('Workflow stage', { exact: true });
+    await expect(panel.locator('header small')).toContainText(phase + ' phase');
+    if (await stage.count()) await expect(stage).toHaveValue(phase);
+    await expect(configuration(page)).toHaveCount(0);
+    if (['focus','curve'].includes(variant)) await undo(page);
+    await undo(page); expect((await saved(page)).nodes).toEqual(before.nodes); expect((await saved(page)).wires).toEqual(before.wires);
     await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
     await noWork(page);
 });
@@ -342,18 +347,20 @@ for(const operation of ['pattern','extract']) {
   await panel.getByLabel(label,{exact:true}).fill(JSON.stringify([record('new-rule','Mara')]));await panel.getByRole('button',{name:'Save '+label,exact:true}).click();
   expect((await saved(page)).nodes.pattern[key]).toEqual([record('new-rule','Mara')]);await undo(page);expect((await saved(page)).nodes.pattern[key]).toEqual(before);await noWork(page);
  });
- test(operation+' Configure form remount retains Plain CSV and invalid JSON then creates exact identity',async({page})=>{
-  await setup(page);const dialog=await startCreation(page,operation,operation==='pattern'?'Pattern':'Extract');
-  await dialog.getByRole('button',{name:'Use '+label+' terms',exact:true}).click();await dialog.getByLabel(label,{exact:true}).fill('[red, blue]');await dialog.getByLabel(label+' input format',{exact:true}).selectOption('plain');
-  await dialog.getByRole('button',{name:'Configuration format',exact:true}).click();await dialog.getByRole('button',{name:'Configuration format',exact:true}).click();
-  await expect(dialog.getByLabel(label+' input format',{exact:true})).toHaveValue('plain');await expect(dialog.getByLabel(label,{exact:true})).toHaveValue('[red, blue]');
-  await dialog.getByLabel(label+' input format',{exact:true}).selectOption('csv');await dialog.getByLabel(label,{exact:true}).fill('"red, blue",green');
-  await dialog.getByRole('button',{name:'Configuration format',exact:true}).click();await dialog.getByRole('button',{name:'Configuration format',exact:true}).click();
-  await expect(dialog.getByLabel(label+' input format',{exact:true})).toHaveValue('csv');await expect(dialog.getByLabel(label,{exact:true})).toHaveValue('"red, blue",green');
-  await dialog.getByRole('button',{name:'Use '+label+' rows',exact:true}).click();await dialog.getByRole('button',{name:'Edit '+label+' as JSON',exact:true}).click();
-  const unfinished='[{"unfinished":';await dialog.getByLabel(label,{exact:true}).fill(unfinished);await dialog.getByRole('button',{name:'Create node',exact:true}).click();expect(Object.keys((await saved(page)).nodes)).toEqual([]);
-  await dialog.getByRole('button',{name:'Use '+label+' terms',exact:true}).click();await expect(dialog.getByLabel(label+' input format',{exact:true})).toHaveValue('json');await expect(dialog.getByLabel(label,{exact:true})).toHaveValue(unfinished);
-  await dialog.getByLabel(label,{exact:true}).fill(JSON.stringify([record('created-id','Mara')]));await dialog.getByRole('button',{name:'Create node',exact:true}).click();
-  await expect(dialog).toHaveCount(0);const nodes=Object.values((await saved(page)).nodes);expect(nodes).toHaveLength(1);expect(nodes[0][key]).toEqual([record('created-id','Mara')]);expect(nodes[0].phase).toBe('post');await undo(page);expect(Object.keys((await saved(page)).nodes)).toEqual([]);await noWork(page);
+ test(operation+' placed Details remount retains Plain CSV and invalid JSON then saves exact identity',async({page})=>{
+  await setup(page);const panel=await startCreation(page,operation,operation==='pattern'?'Pattern':'Extract');
+  const placed=Object.values((await saved(page)).nodes)[0];
+  await panel.getByRole('button',{name:'Use '+label+' terms',exact:true}).click();await panel.getByLabel(label,{exact:true}).fill('[red, blue]');await panel.getByLabel(label+' input format',{exact:true}).selectOption('plain');
+  await remount(page,placed.id);
+  await expect(panel.getByLabel(label+' input format',{exact:true})).toHaveValue('plain');await expect(panel.getByLabel(label,{exact:true})).toHaveValue('[red, blue]');
+  await panel.getByLabel(label+' input format',{exact:true}).selectOption('csv');await panel.getByLabel(label,{exact:true}).fill('"red, blue",green');
+  await remount(page,placed.id);
+  await expect(panel.getByLabel(label+' input format',{exact:true})).toHaveValue('csv');await expect(panel.getByLabel(label,{exact:true})).toHaveValue('"red, blue",green');
+  await panel.getByRole('button',{name:'Use '+label+' rows',exact:true}).click();await panel.getByRole('button',{name:'Edit '+label+' as JSON',exact:true}).click();
+  const unfinished='[{"unfinished":';await panel.getByLabel(label,{exact:true}).fill(unfinished);await panel.getByRole('button',{name:'Save '+label,exact:true}).click();expect((await saved(page)).nodes[placed.id][key]).toEqual(placed[key]);
+  await remount(page,placed.id);
+  await panel.getByRole('button',{name:'Use '+label+' terms',exact:true}).click();await expect(panel.getByLabel(label+' input format',{exact:true})).toHaveValue('json');await expect(panel.getByLabel(label,{exact:true})).toHaveValue(unfinished);
+  await panel.getByLabel(label,{exact:true}).fill(JSON.stringify([record('created-id','Mara')]));await panel.getByRole('button',{name:'Save '+label,exact:true}).click();
+  expect((await saved(page)).nodes[placed.id][key]).toEqual([record('created-id','Mara')]);expect((await saved(page)).nodes[placed.id].phase).toBe('post');await undo(page);expect((await saved(page)).nodes[placed.id][key]).toEqual(placed[key]);await undo(page);expect(Object.keys((await saved(page)).nodes)).toEqual([]);await noWork(page);
  });
 }

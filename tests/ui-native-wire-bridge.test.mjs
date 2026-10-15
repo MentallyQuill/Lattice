@@ -35,19 +35,7 @@ function setup(root = fixture(), options = {}) {
         isCurrent(capture) { counts.current++; const saved = records.get(capture); return !!saved && saved.revision === revision && !context.readOnly && (!options.session || options.session.isEditorContextCurrent(saved.editor)); },
         prepare(capture, command) {
             counts.prepare++; commands.push(structuredClone(command));
-            let result;
-            if (command.kind === 'create' && nodeNeedsConfiguration(command.operation, command.controls)) {
-                assert.equal(command.requiresConfiguration, true, 'covered catalog packets request validated configuration');
-                const origin = command.connection?.origin, originNode = origin && root.nodes[origin.nodeId];
-                const originPort = originNode && portsForNode(root, originNode).find(port => port.id === origin.portId);
-                const stage = configuredCreationStage(command.operation, root.mode, originNode && phaseForNode(root, originNode), viewPath.length > 0, command.controls);
-                const configured = createConfiguredNodeSession({ isCurrent: saved => adapter.isCurrent(saved),
-                    prepare: (saved, candidate) => prepareNativeConnectionEdit(root, { ...candidate, viewPath }) });
-                const opened = configured.open(capture, command, { ...stage, targets: [], helpers: [],
-                    ...(originPort ? { originKind: originPort.kind, originDirection: originPort.direction === 'input' ? 'in' : 'out' } : {}) });
-                const applied = configured.apply(opened.view.key, opened.view.controls, opened.view.phase);
-                result = applied.ok ? opened.result : applied;
-            } else result = prepareNativeConnectionEdit(root, { ...command, viewPath });
+            const result = prepareNativeConnectionEdit(root, { ...command, viewPath });
             if (options.defer && counts.prepare === 1) return new Promise(resolve => pending.push(() => resolve(result)));
             return result;
         },

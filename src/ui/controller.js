@@ -1,6 +1,6 @@
 import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.27.3';
 import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.3';
-import { prepareAddSystem, projectSystemAuthoring } from '../workflow/system-authoring.js?v=0.27.3';
+import { prepareAddSystem, prepareSystemAssistance, projectSystemAuthoring } from '../workflow/system-authoring.js?v=0.27.3';
 import { vacantSystemPoint, preflightSystemViews, captureSystemPresentation, refreshSystemPresentation, restoreSystemViews } from './system-authoring-views.js?v=0.27.3';
 import {createRecallCommands} from './recall-commands.js?v=0.27.3';
 import { diagnosticText, presentDiagnostic } from './diagnostics.js?v=0.27.3';
@@ -17,7 +17,7 @@ import * as workflowRuntime from '../run.js?v=0.27.3';
 import { workflowSignature } from '../workflow/runtime.js?v=0.27.3';
 import { installWorkflowExample } from '../workflow/examples.js?v=0.27.3';
 import { projectWorkflowExamples } from './example-catalog.js?v=0.27.3';
-import { OPERATIONS, operationFor, portsForNode } from '../workflow/catalog.js?v=0.27.3';
+import { OPERATIONS, operationFor, portsForNode, phaseForNode } from '../workflow/catalog.js?v=0.27.3';
 import { validateNodeModifiers } from '../workflow/modifiers.js?v=0.27.3';
 import { isWorkflowGraph } from '../workflow/contracts.js?v=0.27.3';
 import { parseWorkflowInsertionFile, prepareWorkflowInsertion } from '../workflow/insertion.js?v=0.27.3';
@@ -57,6 +57,7 @@ import * as L from '../library.js?v=0.27.3';
 import { Canvas } from '../canvas.js?v=0.27.3';
 import { createWorkbench } from './workbench.js?v=0.27.3';
 import { measureNodeCard } from '../../dist/lattice-ui.js?v=0.27.3';
+import { findVacantNodePoint, nodePlacementFootprint } from './node-placement-geometry.js?v=0.27.3';
 
 let workbench = null;
 let root = null;
@@ -346,8 +347,9 @@ function navigateGraphView(action, ...args) {
     if (!graphViews) return;
     canvas?.cancelGesture(); persistGraphViews(true);
     const result = graphViews[action](...args);
-    if (!result.ok) return toast(result.error, 'error');
+    if (!result.ok) { toast(result.error, 'error'); return result; }
     activateEditorDraw(); persistGraphViews();
+    return result;
 }
 
 async function onSaveGraph(saveAs = false) {
@@ -521,14 +523,9 @@ const workflowActions = {
 function defaultNodeSpot() {
     const rect = canvas.host.getBoundingClientRect(), zoom = canvas.view.zoom || 1;
     const center = canvas.toGraph(rect.left + rect.width / 2 - Math.min(130 * zoom, rect.width / 4), rect.top + rect.height / 2 - 60 * zoom);
-    const nodes = Object.values(editorDraw?.nodes ?? current.nodes), width = 260, height = 140, gap = 24;
-    const vacant = spot => nodes.every(node => spot.x + width + gap <= node.x || spot.x >= node.x + canvas.widthOf(node) + gap || spot.y + height + gap <= node.y || spot.y >= node.y + canvas.heightOf(node) + gap);
-    if (vacant(center)) return center;
-    for (let row = 0; row < 6; row++) for (let col = 0; col < 6; col++) {
-        const spot = canvas.toGraph(rect.left + 16 + col * Math.max(36, (rect.width - 32) / 6), rect.top + 16 + row * Math.max(36, (rect.height - 32) / 6));
-        if (vacant(spot)) return spot;
-    }
-    return { x: center.x + nodes.length * 28, y: center.y + nodes.length * 28 };
+    const occupied = Object.values(editorDraw?.nodes ?? current.nodes).map(node => canvas.visualBoundsOf?.(node)
+        ?? {x:node.x,y:node.y,w:canvas.widthOf(node),h:canvas.heightOf(node)});
+    return findVacantNodePoint({preferred:center,footprint:nodePlacementFootprint({width:260,height:140}),occupied});
 }
 export function isOpen() { return !!root && root.classList.contains('pc-open'); }
 export function open() {
@@ -663,6 +660,7 @@ function build() {
         onToast: message => toast(message, 'error'), onReveal: showSettings,
         onHostResult(node) { showSettings({ kind: 'node', id: node.id }); workbench.revealPreview(); },
         onRecallDetails: openRecallDetails,
+        onReadinessDetails: openReadinessDetails,
         onContextMenu: onCanvasMenu,
         onEmptyContextMenu(payload) {
             if (graphViews?.readEditor().view.identity.kind !== 'instance' && !canvas.multi.size) return false;
@@ -909,6 +907,57 @@ function openRecallDetails(nodeId,scope='selected') {
     if (!graphViews.readEditor().prepared.savedGraph.nodes[nodeId]) return;
     canvas.setMulti([]); showSettings({kind:'node',id:nodeId}); canvas.fitSelection();
     requestAnimationFrame(()=>workbench.parts.inspector.querySelector('.pc-recall-details')?.scrollIntoView({block:'nearest'}));
+}
+function openReadinessDetails(selection, issue) {
+    if (!detailCapture(selection, true).ok) return;
+    const address = issue?.address ?? selection.address;
+    if (address.kind !== 'library' && address.workflowId !== current.id) return;
+    let editor = graphViews.readEditor();
+    if (address.kind === 'library') {
+        if (selection.address.kind !== 'library' || definitionRefKey(address.definitionRef) !== definitionRefKey(selection.address.definitionRef)) return;
+        for (const wrapperId of address.instancePath ?? []) {
+            const wrapper = editor.prepared.savedGraph.nodes[wrapperId];
+            if (wrapper?.type !== 'subgraph' || !wrapper.definition) return;
+            const opened = navigateGraphView('openLibrary', wrapper.definition);
+            if (!opened?.ok) return;
+            editor = graphViews.readEditor();
+            if (definitionRefKey(editor.prepared.definitionRef) !== definitionRefKey(wrapper.definition)) return;
+        }
+    } else if (JSON.stringify(address.instancePath) !== JSON.stringify(editor.view.identity.instancePath ?? [])) {
+        const navigated = address.instancePath.length
+            ? navigateGraphView('openInstance', address.instancePath)
+            : navigateGraphView('focusView', graphViews.project().graphViews.tabs[0].key);
+        if (navigated?.ok === false) return;
+        editor = graphViews.readEditor();
+    }
+    const nodeId = address.nodeId;
+    if (!editor.prepared.savedGraph.nodes[nodeId]) return;
+    canvas.setMulti([]); showSettings({kind:'node',id:nodeId});
+    const viewKey = graphViews.readEditor().view.key;
+    requestAnimationFrame(() => {
+        const currentEditor = graphViews.readEditor();
+        if (currentEditor.view.key !== viewKey || !currentEditor.prepared.savedGraph.nodes[nodeId] || canvas.selection && (canvas.selection.kind !== 'node' || canvas.selection.id !== nodeId)) return;
+        const inspector = workbench.parts.inspector, field = issue?.field;
+        const controls = [...inspector.querySelectorAll('input,select,textarea,button')];
+        let target = field && controls.find(control => !control.disabled && control.id?.startsWith('pc-node-details-' + field + '-'));
+        if (!target && field === 'profileId') {
+            const decoration = [...(canvas.host?.querySelectorAll('.pc-node-profile') ?? [])].find(row => row.dataset.id === nodeId);
+            target = decoration?.querySelector('.profile-bar:not([disabled])')
+                ?? inspector.querySelector('[data-helper-bindings] select[aria-label$=" connection profile"]:not([disabled])');
+        }
+        if (!target && ['model','modelRole'].includes(field)) {
+            const group = inspector.querySelector('[data-model-controls]'); if (group) group.open = true;
+            target = inspector.querySelector(field === 'modelRole' ? '[aria-label="Model role"]:not([disabled])'
+                : '[aria-label="Model identifier"]:not([disabled]),[aria-label="Model mode"]:not([disabled])');
+        }
+        if (!target && ['targetId','clockId'].includes(field)) {
+            const group = inspector.querySelector('[data-workflow-advanced]'); if (group) group.open = true;
+            target = group?.querySelector('button[data-workflow-source]:not([disabled]),select[aria-label$=" source"]:not([disabled]),button.pc-wd-add:not([disabled])')
+                ?? group?.querySelector('summary');
+        }
+        target ||= inspector.querySelector('.pc-node-readiness-issues');
+        if (target) { const group = target.closest?.('details'); if (group) group.open = true; target.focus?.({preventScroll:true}); target.scrollIntoView?.({block:'nearest'}); }
+    });
 }
 function showSettings(selection) { if (root.classList.contains('pc-details-hidden')) togglePane(); canvas.select(selection); const inspector = workbench.parts.inspector; inspector.scrollTop = 0; inspector.classList.add('pc-flash'); requestAnimationFrame(revealNarrowDetails); setTimeout(() => inspector.classList.remove('pc-flash'), 400); }
 function touch() { touchGraph(current); refreshWorkspaceDocument(); }
@@ -1321,6 +1370,7 @@ function onCanvasMenu({ event, node, wire, at, group = null, several = null }) {
     }
     if (node?.type === 'subgraph' && !several) section([
         entry('open-subgraph', 'Open subgraph', 'open', () => editor.view.identity.kind === 'library' ? subgraphWrapperAction(node.id, 'open') : graphViewActions.openInstance([...(editor.view.identity.instancePath ?? []), node.id]), false, '', { tone: 'subgraph' }),
+        ...(editor.view.identity.kind === 'root' && rootSystemWritable() ? [entry('configure-system', 'Configure system connections\u2026', 'edit', () => openAddSystem(node.id), readOnly)] : []),
         entry('save-subgraph', 'Add to Subgraphs', 'save', () => openSubgraphSave(node.id), false, '', { tone: 'subgraph' }),
         entry('editable-copy', 'Make editable copy', 'edit', () => subgraphWrapperAction(node.id, 'copy'), readOnly),
         entry('saved-definition', 'Open saved definition', 'library', () => subgraphWrapperAction(node.id, 'open')),
@@ -1727,6 +1777,7 @@ const nodeGuideActions = {
     },
 };
 const nodeDetailsActions = {
+    openReadinessIssue(selection, issue) { return openReadinessDetails(selection, issue); },
     queueRecall(selection){const captured=detailCapture(selection,true);return captured.ok?recallActions.change([selection.address.nodeId],'queue'):captured;},
     cancelRecall(selection){const captured=detailCapture(selection,true);return captured.ok?recallActions.change([selection.address.nodeId],'cancel'):captured;},
     revealRecallShortcut:nodeId=>openRecallDetails(nodeId,'all'),
@@ -1786,7 +1837,8 @@ const nodeDetailsActions = {
         const captured = detailCapture(selection); if (!captured.ok) return captured;
         return commitCaptured(captured.data, prepareScopeMutation(captured.data, context => {
             const node = context.scope.nodes[selection.address.nodeId];
-            if (!node || context.scope.mode !== 'native-unified' || OPERATIONS[node.operation]?.phase !== 'both' || !['pre', 'post'].includes(phase)) return { ok: false, error: { code: 'INVALID_PHASE', message: 'Choose a preparation or response stage for a both-stage node in a unified workflow.' } };
+            if (!node || context.scope.mode !== 'native-unified' || !['pre', 'post'].includes(phase)
+                || phaseForNode(context.scope, {...node,phase:'pre'}) !== 'pre' || phaseForNode(context.scope, {...node,phase:'post'}) !== 'post') return { ok: false, error: { code: 'INVALID_PHASE', message: 'The current node settings must support both preparation and response stages.' } };
             node.phase = phase; return { ok: true, data: {} };
         }));
     },
@@ -1892,36 +1944,16 @@ function commitNodeCreation(capture, prepared) {
     return commitCaptured(capture, prepared);
 }
 function requestNodeCreation(capture, command, at = null, shelf = false) {
-    if (command.kind !== 'create' || !nodeNeedsConfiguration(command.operation, command.controls)) {
-        const { requiresConfiguration, ...plain } = command;
-        if (command.kind === 'create') {
-            if (!editorCurrent(capture)) return { ok: false, error: { code: 'STALE_CONTEXT', message: 'The graph view changed.' } };
-            const editor = graphViews.readEditor(), origin = command.connection?.origin;
-            const originCard = origin ? editorDraw?.nativeCards[origin.nodeId] : null;
-            if (['read-file', 'story-clock', 'commit-outcomes'].includes(command.operation)) plain.phase = configuredCreationStage(command.operation, editor.prepared.savedGraph.mode, originCard?.phase ?? editorDraw?.nativeCards[selected?.id]?.phase, editor.view.identity.kind === 'instance').phase;
-        }
-        return shelf ? prepareShelfNodeCreation(capture, plain, at) : prepareNativeCreation(capture, plain);
-    }
     if (!editorCurrent(capture)) return { ok: false, error: { code: 'STALE_CONTEXT', message: 'The graph view changed.' } };
-    if (shelf && at) { command = { ...command, graphPoint: canvas.toGraph(at.x, at.y) }; shelf = false; at = null; }
-    const editor = graphViews.readEditor(), origin = command.connection?.origin;
-    const originCard = origin ? editorDraw?.nativeCards[origin.nodeId] : null;
-    const originPort = originCard?.ports.find(port => port.port === origin.portId);
-    const stage = configuredCreationStage(command.operation, editor.prepared.savedGraph.mode, originCard?.phase ?? editorDraw?.nativeCards[selected?.id]?.phase, editor.view.identity.kind === 'instance', command.controls);
-    let targets = [], documentScopeKey;
-    if (['read-file', 'story-clock', 'commit-outcomes'].includes(command.operation)) {
-        const captured = workflowRuntime.getStoryDocumentCatalog?.()?.capture();
-        const preset = workflowDataPresetFor(command.operation);
-        const automatic = command.operation === 'read-file' && (command.controls?.[preset.controlKey] ?? preset.targetId) === preset.targetId;
-        if (!captured?.ok && !automatic) return { ok: false, error: { code: 'DOCUMENT_SETUP_UNAVAILABLE', message: 'Open an active chat and authorize a target in Workflow › Configure › Workflow Data before creating this node.' } };
-        if (captured?.ok) {
-            documentScopeKey = globalThis.crypto.randomUUID(); nodeDocumentCaptures.set(documentScopeKey, captured.data);
-            targets = captured.data.documents.map(({ content, ...summary }) => summary);
-        }
+    const { requiresConfiguration, ...plain } = command;
+    if (plain.kind === 'create') {
+        const editor = graphViews.readEditor(), origin = plain.connection?.origin;
+        const originCard = origin ? editorDraw?.nativeCards[origin.nodeId] : null;
+        plain.phase ??= configuredCreationStage(plain.operation, editor.prepared.savedGraph.mode,
+            originCard?.phase ?? editorDraw?.nativeCards[selected?.id]?.phase,
+            editor.view.identity.kind === 'instance', plain.controls).phase;
     }
-    const opened = configuredNodeSession.open(capture, command, { ...stage, targets, helpers: iterationHelperChoices(current, prepareNodeProfileOptions(readNodeProfileMetadata(ctx(), profiles()), activeModelMetadata(ctx())).map(option => ({ id: option.value, name: option.label }))), shelf, at, ...(documentScopeKey ? { documentScopeKey } : {}), ...(originPort ? { originKind: originPort.kind, originDirection: originPort.dir } : {}) });
-    pendingConfiguredNode = opened.view; workbench?.update({ configureNode: opened.view });
-    return opened.result.finally(() => { if (documentScopeKey) nodeDocumentCaptures.delete(documentScopeKey); if (pendingConfiguredNode?.key === opened.view.key) { pendingConfiguredNode = null; workbench?.update({ configureNode: null }); } });
+    return shelf ? prepareShelfNodeCreation(capture, plain, at) : prepareNativeCreation(capture, plain);
 }
 function prepareNativeCreation(capture, command) {
     if (command.kind !== 'create-boundary') return prepareNativeConnectionEdit(current, { ...command, ...scopeCommand(capture) });
@@ -1943,7 +1975,11 @@ function prepareShelfNodeCreation(capture, command, at = null) {
     const placement = prepareNodePlacementCard(checkedCandidateArtifacts(provisional.data.checkedCandidate), { nodeId: id, viewPath: path });
     if (!placement.ok) return placement;
     const size = measureNodeCard(canvas.nodeLayer, placement.data), rect = canvas.host.getBoundingClientRect();
-    const origin = canvas.toGraph(rect.left + (rect.width - size.width) / 2, rect.top + (rect.height - size.height) / 2);
+    const footprint = nodePlacementFootprint(size,canvas.view.zoom||1,placement.data.compact), center = canvas.toGraph(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    const preferred = {x:center.x-footprint.x-footprint.w/2,y:center.y-footprint.y-footprint.h/2};
+    const occupied = Object.values(editorDraw?.nodes ?? {}).map(node => canvas.visualBoundsOf?.(node)
+        ?? {x:node.x,y:node.y,w:canvas.widthOf(node),h:canvas.heightOf(node)});
+    const origin = findVacantNodePoint({preferred,footprint,occupied});
     // Reprepare private definitions so their content pins include the final coordinates.
     return prepareNativeCreation(capture, { ...command, graphPoint: origin });
 }
@@ -2078,24 +2114,27 @@ function ensureDocumentCommands() {
 function rootSystemWritable() {
     return isOpen() && !!graphViews && activeEditRoot() === current && current?.schema === 3 && current.runtime === 2 && current.mode === 'native-unified' && graphViews.readEditor().view.identity.kind !== 'library' && !documentTransition && !workflowState.busy && !workflowRuntime.getNativeWorkflowController?.()?.activity?.()?.busy;
 }
-function openAddSystem() {
+function openAddSystem(instanceId = null) {
     if (!rootSystemWritable()) return { ok: false, error: { code: 'VIEW_INACTIVE', message: 'Main is unavailable for system editing.' } };
     const origin = captureEditor(true); if (!origin.ok) return origin;
     const context = captureGraphEditContext(current, () => ({ sessionId: graphViews?.readEditContext().sessionId ?? 'inactive', viewPath: [], readOnly: !rootSystemWritable() || !editorCurrent(origin.data) })); if (!context.ok) return context;
     const entries = L.getSubgraphShelfEntries(), library = L.loadSubgraphLibrary(); if (!entries.ok) return entries; if (!library.ok) return library;
-    const projected = projectSystemAuthoring(current, entries.data.map(definition => ({ definition, snapshots: library.data.definitions }))); if (!projected.ok) return projected;
-    const key = crypto.randomUUID(); pendingAddSystem = { key, origin: origin.data, context: context.data, libraryRevision, librarySignature: JSON.stringify(library.data), picker: projected.data, prepared: null };
-    workbench.update({ addSystem: { ...projected.data, key } }); return { ok: true, data: { key } };
+    const wrapper = instanceId === null ? null : current.nodes[instanceId];
+    if (instanceId !== null && wrapper?.type !== 'subgraph') return { ok: false, error: { code: 'INVALID_INSTANCE', message: 'Choose a placed system in Main.' } };
+    const selected = wrapper ? [{ definition: current.definitions[definitionRefKey(wrapper.definition)], snapshots: current.definitions }] : entries.data.map(definition => ({ definition, snapshots: library.data.definitions }));
+    const projected = projectSystemAuthoring(current, selected); if (!projected.ok) return projected;
+    const key = crypto.randomUUID(); pendingAddSystem = { key, origin: origin.data, context: context.data, libraryRevision, librarySignature: JSON.stringify(library.data), picker: { ...projected.data, ...(wrapper ? { mode: 'assist' } : {}) }, instanceId, expectedInstanceRef: wrapper?.definition, prepared: null };
+    workbench.update({ addSystem: { ...pendingAddSystem.picker, key } }); return { ok: true, data: { key } };
 }
 function previewAddSystem(key, draft) {
     const pending = pendingAddSystem;
     if (!pending || pending.key !== key || !editorCurrent(pending.origin) || pending.libraryRevision !== libraryRevision || !systemShelfCurrent(pending)) return { ok: false, error: { code: 'STALE_CONTEXT', message: 'The graph view or saved library changed. Reopen Add system.' } };
     pending.prepared = null;
     const choice = pending.picker.choices.find(item => item.key === draft.choiceKey); if (!choice) return { ok: false, error: { code: 'INVALID_DEFINITION', message: 'Choose the captured saved system revision.' } };
-    const prepared = prepareAddSystem(current, { definition: choice.definition, snapshots: choice.snapshots, graphPoint: vacantSystemPoint(current), inputs: draft.inputs, outputs: draft.outputs, parameterOverrides: draft.parameterOverrides, ...(draft.guidance ? { guidance: draft.guidance } : {}) }); if (!prepared.ok) return prepared;
+    if (!pending.instanceId) return { ok: false, error: { code: 'INVALID_COMMAND', message: 'Place the saved system before configuring connections.' } };
+    const wrapper = current.nodes[pending.instanceId];
+    const prepared = prepareSystemAssistance(current, { instanceId: pending.instanceId, expectedInstanceRef: pending.expectedInstanceRef, graphPoint: { x: wrapper?.x ?? 0, y: wrapper?.y ?? 0 }, inputs: draft.inputs, outputs: draft.outputs, parameterOverrides: draft.parameterOverrides, ...(draft.guidance ? { guidance: draft.guidance } : {}) }); if (!prepared.ok) return prepared;
     const views = prepareSystemWorkspace(prepared.data.candidate); if (!views.ok) return views;
-    const before = graphViews.serialize(); if (!before.ok) return before;
-    const preflight = preflightSystemViews(prepared.data.candidate, views.data, before.data, prepared.data.instanceId); if (!preflight.ok) return preflight;
     pending.prepared = prepared;
     const describe = (nodeId, portId) => {
         if (nodeId === prepared.data.instanceId) return choice.name + ' · ' + (choice.definition.interface.find(port => port.id === portId)?.label ?? portId);
@@ -2106,11 +2145,21 @@ function previewAddSystem(key, draft) {
     const connections = prepared.data.addedEdgeIds.map(id => { const edge = prepared.data.candidate.wires[id]; return describe(edge.from, edge.fromPort) + ' → ' + describe(edge.to, edge.toPort) + (prepared.data.preview.some(change => change.kind === 'guidance' && change.nodeId === edge.to && edge.toPort === 'section.' + change.sectionName) ? ' → Generate Reply' : ''); });
     return { ok: true, data: { connections, changes: prepared.data.preview } };
 }
-function submitAddSystem(key) {
+function submitAddSystem(key, choiceKey) {
     const pending = pendingAddSystem;
     const reject = message => { workbench.update({ addSystem: pending ? { ...pending.picker, key: pending.key, error: message } : null }); return { ok: false, error: { code: 'STALE_CONTEXT', message } }; };
-    if (!pending || pending.key !== key || !pending.prepared?.ok || !editorCurrent(pending.origin) || pending.libraryRevision !== libraryRevision || !systemShelfCurrent(pending)) return reject('The graph view or saved library changed. Reopen Add system.');
-    const prepared = pending.prepared, views = prepareSystemWorkspace(prepared.data.candidate); if (!views.ok) return reject(views.error.message);
+    if (!pending || pending.key !== key || !editorCurrent(pending.origin) || pending.libraryRevision !== libraryRevision || !systemShelfCurrent(pending)) return reject('The graph view or saved library changed. Reopen Add system.');
+    if (pending.instanceId) {
+        if (!pending.prepared?.ok) return reject('Preview the system configuration before applying it.');
+        const result = commitGraphEdit(current, { ...pending.prepared.data, context: pending.context }, graphDocumentHooks);
+        if (!result.ok) return reject(result.error.message);
+        pendingAddSystem = null; workbench.update({ addSystem: null }); return result;
+    }
+    const choice = pending.picker.choices.find(item => item.key === choiceKey);
+    if (!choice) return reject('Choose the captured saved system revision.');
+    const prepared = prepareAddSystem(current, { definition: choice.definition, snapshots: choice.snapshots, graphPoint: vacantSystemPoint(current) });
+    if (!prepared.ok) return reject(prepared.error.message);
+    const views = prepareSystemWorkspace(prepared.data.candidate); if (!views.ok) return reject(views.error.message);
     persistGraphViews(true); const before = graphViews.serialize(); if (!before.ok) return reject(before.error.message);
     const preflight = preflightSystemViews(prepared.data.candidate, views.data, before.data, prepared.data.instanceId); if (!preflight.ok) return reject(preflight.error.message);
     const beforeState = commentDocumentState(current), receipt = H.capturePresentationStep(current);

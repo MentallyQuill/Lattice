@@ -155,33 +155,13 @@ function oneUndo(f, before) {
     assert.equal(H.undo(f.root), null, 'The interaction must not create a second Undo step');
 }
 
-test('question and schedule discoveries route valid defaults through real configured creation', () => {
+test('question and schedule discovery separates missing settings from placement availability', () => {
     const catalog = prepareNativeSearchCatalog(scope); assert.equal(catalog.ok, true, JSON.stringify(catalog));
     for (const operation of operations) {
-        assert.equal(nodeNeedsConfiguration(operation), true, operation);
+        assert.equal(nodeNeedsConfiguration(operation),operation==='time-trigger',operation);
         const choice = catalog.data.choices.find(choice => choice.id === 'operation:' + operation);
-        assert.ok(choice, operation); assert.equal(choice.requiresConfiguration, true, operation);
-        assert.equal(resolveNativeSearchChoice(catalog.data, choice.id).requiresConfiguration, true);
-    }
-});
-
-test('actual configured question, schedule and metadata forms commit once and Undo the entire creation', async () => {
-    for (const operation of operations) {
-        const f = controller(), before = structuredClone(f.root), { form, pending } = await createPanel(f, operation);
-        try {
-            assert.equal(f.preparations(), 0); assert.deepEqual(f.root, before);
-            if (operation === 'decision') input(form.host, 'Question 1 instructions', 'After, exact words.');
-            if (operation === 'advance-time') { input(form.host, 'Schedule 1 interval quantity', '8'); input(form.host, 'Schedule 1 interval unit', 'hours', 'change'); }
-            if (operation === 'time-trigger') { const label = labelFor(operation); await click(form.host, 'Edit ' + label + ' key scope'); await click(form.host, 'Edit ' + label + ' key actorId'); input(form.host, label + ' string', 'Mira'); }
-            await click(form.host, 'Create node'); assert.equal(f.preparations(), 1, operation + ': ' + form.host.textContent);
-            const prepared = await pending; assert.equal(prepared.ok, true, JSON.stringify(prepared)); assert.deepEqual(f.root, before);
-            const id = prepared.data.addedNodeIds[0], candidate = prepared.data.candidate.nodes[id];
-            assert.equal(describeOperation(scope, candidate).ok, true); assert.equal(candidate.x, 20); assert.equal(candidate.y, 30);
-            if (operation === 'decision') assert.deepEqual(candidate.questions, { 'question-1': { ...question, instructions: 'After, exact words.' } });
-            if (operation === 'advance-time') assert.deepEqual(candidate.schedules, [schedule]);
-            if (operation === 'time-trigger') { assert.deepEqual(candidate.metadata.scope, { visibility: 'private', actorId: 'Mira' }); assert.deepEqual(candidate.metadata.own, { numeric: 0, 'a.b': false, 'red, blue': null }); assert.equal(candidate.scheduleId, 'trigger-1'); }
-            assert.equal(f.environment.commitNodeCreation(f.token, prepared).ok, true); assert.equal(f.commits(), 1); oneUndo(f, before);
-        } finally { f.environment.cancelConfiguredNode(); await form.close(); }
+        assert.ok(choice, operation); assert.equal(choice.requiresConfiguration,undefined);
+        assert.equal(resolveNativeSearchChoice(catalog.data, choice.id).requiresConfiguration,undefined);
     }
 });
 
@@ -203,7 +183,7 @@ test('actual detail Save uses native preparation and preserves stable IDs, optio
 });
 
 test('unfinished question cards block actual Create and Save after parent switches, then repair the same stable question', async () => {
-    for (const creation of [true, false]) {
+    for (const creation of [false]) {
         const f = creation ? controller() : editing('decision'), before = structuredClone(f.root), view = creation ? null : detail(f.root);
         const opened = creation ? await createPanel(f, 'decision') : { form: await panel('NodeDetails', view, { editControl: f.editControl }) }, form = opened.form;
         try {
@@ -219,7 +199,7 @@ test('unfinished question cards block actual Create and Save after parent switch
 });
 
 test('unfinished schedule minute drafts block actual parent submissions across remounts and preserve private metadata on repair', async () => {
-    for (const creation of [true, false]) {
+    for (const creation of [false]) {
         const authored = { ...schedule, kind: 'delay', dueMinute: 10 }, f = creation ? controller() : editing('advance-time');
         if (!creation) { f.root.nodes.node.schedules = [authored]; H.reset(f.root); f.refresh(); }
         const before = structuredClone(f.root), view = creation ? null : detail(f.root), opened = creation ? await createPanel(f, 'advance-time', { ...settings('advance-time'), schedules: [authored] }) : { form: await panel('NodeDetails', view, { editControl: f.editControl }) }, form = opened.form;
@@ -235,7 +215,7 @@ test('unfinished schedule minute drafts block actual parent submissions across r
 });
 
 test('reserved Time Trigger metadata stays rejected by actual Create and Save after a parent switch', async () => {
-    for (const creation of [true, false]) {
+    for (const creation of [false]) {
         const f = creation ? controller() : editing('time-trigger'), before = structuredClone(f.root), view = creation ? null : detail(f.root), opened = creation ? await createPanel(f, 'time-trigger') : { form: await panel('NodeDetails', view, { editControl: f.editControl }) }, form = opened.form, label = labelFor('time-trigger');
         try {
             await click(form.host, 'Edit ' + label + ' as JSON'); input(form.host, label + ' JSON', JSON.stringify({ scope: { visibility: 'private', actorId: 'Rowan' }, scheduleId: 'contradiction' }));
@@ -251,7 +231,7 @@ test('reserved Time Trigger metadata stays rejected by actual Create and Save af
 });
 
 test('days cannot use an inferred calendar merely because the schedule names one', async () => {
-    for (const creation of [true, false]) {
+    for (const creation of [false]) {
         const f = creation ? controller() : editing('advance-time'), before = structuredClone(f.root), opened = creation ? await createPanel(f, 'advance-time') : { form: await panel('NodeDetails', detail(f.root), { editControl: f.editControl }) }, form = opened.form;
         try {
             input(form.host, 'Schedule 1 interval quantity', '1'); input(form.host, 'Schedule 1 interval unit', 'days', 'change'); await click(form.host, creation ? 'Create node' : 'Save ' + labelFor('advance-time')); assert.equal(f.commits(), 0); assert.deepEqual(f.root, before); assert.match(form.host.textContent, /day length|calendar/i);
@@ -270,32 +250,11 @@ test('optional question criteria removal survives real Save and preserves absenc
     } finally { await form.close(); }
 });
 
-test('actual configured N6 Cancel and stale or phase-rejected Apply leave graph and history unchanged', async () => {
-    for (const operation of operations) {
-        const f = controller(), before = structuredClone(f.root), pending = f.environment.requestNodeCreation(f.token, { kind: 'create', operation, controls: settings(operation) }); assert.ok(f.environment.view);
-        const key = f.environment.view.key; f.expire(); assert.equal(f.environment.configuredNodeSession.apply(key, f.environment.view.controls, 'pre').error.code, 'STALE_CONTEXT'); f.environment.cancelConfiguredNode(key); assert.equal((await pending).error.code, 'NODE_CONFIGURATION_CANCELLED'); assert.equal(f.preparations(), 0); assert.equal(f.commits(), 0); assert.deepEqual(f.root, before); assert.equal(H.undo(f.root), null);
-        const locked = controller(); locked.environment.graphViews = { readEditor: () => ({ view: { identity: { kind: 'instance' } }, prepared: { savedGraph: { ...locked.root, mode: 'native-post' } } }) };
-        const held = locked.environment.requestNodeCreation(locked.token, { kind: 'create', operation, controls: settings(operation) }); assert.ok(locked.environment.view); assert.equal(locked.environment.view.phase, 'post'); assert.equal(locked.environment.view.phaseLocked, true);
-        assert.equal(locked.environment.configuredNodeSession.apply(locked.environment.view.key, locked.environment.view.controls, 'pre').error.code, 'INVALID_PHASE'); assert.equal(locked.preparations(), 0); locked.environment.cancelConfiguredNode(); assert.equal((await held).error.code, 'NODE_CONFIGURATION_CANCELLED'); assert.equal(locked.commits(), 0); assert.equal(H.undo(locked.root), null);
-    }
-});
-
 test('shared N6 input contracts reject invalid canonical questions schedules and reserved metadata before preparation', () => {
     for (const [operation, value] of [['decision', {}], ['advance-time', [{ ...schedule, intervalMinutes: 0 }]], ['time-trigger', { dueMinute: 0 }]]) {
         const spec = projectNodeControls(operation, settings(operation), { phase: 'post' }).find(control => control.key === keyFor(operation)).inputSpec;
         assert.equal(parseControlInput(spec, { format: 'rows', value }).ok, false, operation);
     }
-});
-
-test('actual Time Trigger configured Apply commits retained private metadata through the transaction and one Undo', async () => {
-    const f = controller(), before = structuredClone(f.root), { form, pending } = await createPanel(f, 'time-trigger');
-    try {
-        await click(form.host, 'Create node'); assert.equal(f.preparations(), 1, form.host.textContent);
-        const prepared = await pending; assert.equal(prepared.ok, true, JSON.stringify(prepared)); assert.deepEqual(f.root, before);
-        assert.equal(f.environment.commitNodeCreation(f.token, prepared).ok, true); assert.equal(f.commits(), 1);
-        const node = f.root.nodes[prepared.data.addedNodeIds[0]];
-        assert.equal(node.scheduleId, 'trigger-1'); assert.deepEqual(node.metadata, settings('time-trigger').metadata); oneUndo(f, before);
-    } finally { f.environment.cancelConfiguredNode(); await form.close(); }
 });
 
 test('nested question criteria drafts remain repairable at their exact path through real inspector remounts', async () => {
@@ -361,16 +320,6 @@ test('old N6 Save acknowledgement retains newer invalid-only drafts after revisi
             input(form.host,label,operation==='time-trigger'?JSON.stringify(changedValue(operation,2)):'2');await click(form.host,'Save '+labelFor(operation));assert.equal(calls,2);release();flushSync();await tick();
         }finally{if(release)release();await form.close();}
     }
-});
-
-
-test('actual configured Apply admits N6 intrinsic controls before preparing and normalizes schedule revisions',async()=>{
-    for(const [operation,key,value] of [['decision','questions',{}],['advance-time','schedules',[{...schedule,intervalMinutes:0}]],['time-trigger','metadata',{dueMinute:0}]]){
-        const f=controller(),pending=f.environment.requestNodeCreation(f.token,{kind:'create',operation,controls:settings(operation)}),view=f.environment.view;
-        assert.ok(view);const result=f.environment.configuredNodeSession.apply(view.key,JSON.stringify({...settings(operation),[key]:value}),view.phase);assert.equal(result.ok,false,operation);assert.equal(f.preparations(),0);f.environment.cancelConfiguredNode();await pending;assert.equal(H.undo(f.root),null);
-    }
-    const f=controller(),{revision,...withoutRevision}=schedule,pending=f.environment.requestNodeCreation(f.token,{kind:'create',operation:'advance-time',graphPoint:{x:0,y:0},controls:{...settings('advance-time'),schedules:[withoutRevision]}}),view=f.environment.view;
-    const applied=f.environment.configuredNodeSession.apply(view.key,view.controls,view.phase);assert.equal(applied.ok,true,JSON.stringify(applied));const prepared=await pending;assert.equal(prepared.ok,true);assert.deepEqual(prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]].schedules,[{...withoutRevision,revision:1}]);assert.equal(f.commits(),0);
 });
 test('N6 adapters round-trip complete question criteria, explicit absence and schedule scope while discovery preserves declared pins',()=>{
     for(const operation of ['decision','advance-time']){const value=settings(operation)[keyFor(operation)],spec=projectNodeControls(operation,settings(operation),{phase:'post'}).find(control=>control.key===keyFor(operation)).inputSpec,rows=readControlRows(spec,value);assert.equal(rows.ok,true);assert.deepEqual(writeControlRows(spec,rows.data.rows,value).data.value,value);}

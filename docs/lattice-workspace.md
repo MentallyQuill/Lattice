@@ -46,7 +46,7 @@ A recovery draft keeps saved editor changes across reloads, but does not update 
 
 ## Find your way around
 
-Use **Graph → Add node…** to search the shelf. When a tool opens **Configure node**, fill its required settings and choose **Create node**. Connect its output pin to a compatible input pin; the connections decide which results feed the next step. Canvas position does not decide execution order.
+Use **Graph → Add node…** to search the shelf and place a node immediately. A red border and wrench labeled **Setup Required** identify missing settings; activate the wrench to open Details. An amber **Input Required** indicator identifies required wiring. Connect output pins to compatible inputs; the connections decide which results feed the next step. Canvas position does not decide execution order.
 
 **View → Fit graph** and **Fit selection** bring your work into view. Press **F** to fit the selection, or the whole graph when nothing is selected. The default **Ember** theme follows SillyTavern’s colors. **View → Theme and colours…** offers other themes; Harbor and Signal include connection patterns and labeled, shaped pins.
 
@@ -72,7 +72,7 @@ For named documents required by a lesson, open **Workflow → Configure → Work
 
 ## Add a reusable system
 
-Once a process works, save it as a subgraph and choose **Workflow → Add system…**. Select a saved system, choose its inputs and output destinations, then **Preview connections** before adding it. Lattice opens its editable body in a tab. One Undo removes the whole addition.
+Once a process works, save it as a subgraph and choose **Workflow → Add system…**. Select a saved revision and add its editable instance immediately. Use the wrapper's **Configure system connections…** action afterward to adjust exposed values, choose inputs and output destinations, and preview the proposed connections. Placement and later connection assistance have separate Undo steps.
 
 Select the system’s wrapper and use **Details → Run this system** to include or skip it. Closing the tab only changes your view. Keep one main reply and one final Review / Publish path. The [combined systems example](combined-system-example.md) shows a wand, weather, and relationship state sharing a workflow.
 

@@ -28,31 +28,45 @@ function fixture(){
  for(const name of ['requestNodeCreation','cancelConfiguredNode','commitNodeCreation'])env[name]=actual(name,env);
  return {graph,catalog,capture,env,user:value=>user=value,camera:value=>camera=value,commits:()=>commits};
 }
-test('actual controller native pin configuration keeps the origin stage and named output before preparing',async()=>{
- const f=fixture(),before=structuredClone(f.graph),pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',controls:{targetId:'souls.json'},requiresConfiguration:true,graphPoint:{x:25,y:30},connection:{origin:{nodeId:'compose',portId:'section.body'},portId:'text'}});assert.equal(f.env.view.phase,'post');assert.equal(JSON.stringify(f.env.view).includes('\"content\"'),false);const applied=f.env.configuredNodeSession.apply(f.env.view.key,'{"targetId":"souls.json"}','post');assert.equal(applied.ok,true,JSON.stringify(applied));const prepared=await pending;assert.equal(prepared.ok,true,JSON.stringify(prepared));const node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];assert.equal(node.phase,'post');assert.equal(node.x,25);assert.equal(node.targetId,'souls.json');assert.deepEqual(f.graph,before);assert.equal(f.env.view,null);
+
+test('direct native pin placement retains origin stage, logical target and named output',async()=>{
+ const f=fixture(),before=structuredClone(f.graph);
+ const prepared=await f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',controls:{targetId:'souls.json'},graphPoint:{x:25,y:30},connection:{origin:{nodeId:'compose',portId:'section.body'},portId:'text'}});
+ assert.equal(prepared.ok,true,JSON.stringify(prepared.error));assert.equal(f.env.view,undefined);
+ const node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];
+ assert.equal(node.phase,'post');assert.equal(node.x,25);assert.equal(node.targetId,'souls.json');assert.deepEqual(f.graph,before);
+ assert.equal(f.env.nodeDocumentCaptures.size,0);
 });
-test('actual controller shelf configuration captures drop geometry and checks document lease again at commit',async()=>{
- const f=fixture(),pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',controls:{targetId:'souls.json'}},{x:30,y:40},true);f.camera(1000);assert.equal(f.env.configuredNodeSession.apply(f.env.view.key,'{"targetId":"souls.json"}','post').ok,true);const prepared=await pending,node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];assert.equal(node.x,40);assert.equal(node.y,50);f.catalog.remove('souls.json');const result=f.env.commitNodeCreation(f.capture,prepared);assert.equal(result.ok,false);assert.equal(result.error.code,'STALE_DOCUMENT_SETUP');assert.equal(f.commits(),0);
+
+test('shelf placement captures drop geometry without acquiring document authorization',async()=>{
+ const f=fixture();f.env.canvas.cancelGesture=()=>{};f.env.prepareShelfNodeCreation=actual('prepareShelfNodeCreation',f.env);
+ f.env.workflowRuntime.getStoryDocumentCatalog=()=>{throw Error('No document capture during placement');};
+ const prepared=await f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',controls:{targetId:'souls.json'}},{x:30,y:40},true);
+ f.camera(1000);assert.equal(prepared.ok,true,JSON.stringify(prepared.error));const node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];
+ assert.equal(node.x,40);assert.equal(node.y,50);f.catalog.remove('souls.json');
+ assert.equal(f.env.commitNodeCreation(f.capture,prepared).ok,true);assert.equal(f.commits(),1);assert.equal(f.env.nodeDocumentCaptures.size,0);
 });
-test('actual controller cancellation creates no candidate and scope switches hold configuration',async()=>{
- const f=fixture(),before=structuredClone(f.graph),pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',controls:{targetId:'souls.json'},graphPoint:{x:0,y:0}});const key=f.env.view.key;f.user('other-user');assert.equal(f.env.configuredNodeSession.apply(key,'{"targetId":"souls.json"}','post').error.code,'STALE_DOCUMENT_SETUP');f.env.cancelConfiguredNode(key);assert.equal((await pending).error.code,'NODE_CONFIGURATION_CANCELLED');assert.equal(f.env.nodeDocumentCaptures.size,0);assert.deepEqual(f.graph,before);assert.equal(f.commits(),0);
+
+test('stale placement capture cannot prepare a node or acquire a document scope',async()=>{
+ const f=fixture(),before=structuredClone(f.graph);
+ const rejected=await f.env.requestNodeCreation({}, {kind:'create',operation:'read-file',controls:{targetId:'souls.json'},graphPoint:{x:0,y:0}});
+ assert.equal(rejected.error.code,'STALE_CONTEXT');assert.equal(f.env.nodeDocumentCaptures.size,0);assert.deepEqual(f.graph,before);assert.equal(f.commits(),0);
 });
 
 test('actual controller automatic data nodes need no active chat and inherit the selected response stage',async()=>{
  for(const [operation,key,targetId] of [['read-file','targetId','lattice-default-notes'],['story-clock','clockId','lattice-default-clock'],['commit-outcomes','targetId','lattice-default-outcomes']]){
   const f=fixture();f.env.workflowRuntime={getStoryDocumentCatalog:()=>undefined};
   const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation,graphPoint:{x:25,y:30}});
-  if(operation==='read-file'){assert.ok(f.env.view);assert.equal(f.env.configuredNodeSession.apply(f.env.view.key,f.env.view.controls,f.env.view.phase).ok,true);}
   const prepared=await pending;
   assert.equal(prepared.ok,true,operation+' '+JSON.stringify(prepared));
   const node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];assert.equal(node[key],targetId);assert.equal(node.phase,'post');
-  assert.equal(f.env.view,operation==='read-file'?null:undefined);assert.equal(f.env.nodeDocumentCaptures.size,0);assert.equal(f.commits(),0);
+  assert.equal(f.env.view,undefined);assert.equal(f.env.nodeDocumentCaptures.size,0);assert.equal(f.commits(),0);
  }
 });
 
 test('actual controller automatic pin creation keeps the origin response stage and commits once through its capture',async()=>{
  const f=fixture();f.env.workflowRuntime={getStoryDocumentCatalog:()=>undefined};
- const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',graphPoint:{x:25,y:30},connection:{origin:{nodeId:'compose',portId:'section.body'},portId:'text'}});assert.ok(f.env.view);assert.equal(f.env.view.phase,'post');assert.equal(f.env.configuredNodeSession.apply(f.env.view.key,f.env.view.controls,f.env.view.phase).ok,true);const prepared=await pending;
+ const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',graphPoint:{x:25,y:30},connection:{origin:{nodeId:'compose',portId:'section.body'},portId:'text'}});assert.equal(f.env.view,undefined);const prepared=await pending;
  assert.equal(prepared.ok,true,JSON.stringify(prepared));const id=prepared.data.addedNodeIds[0],node=prepared.data.candidate.nodes[id];assert.equal(node.phase,'post');assert.equal(node.targetId,'lattice-default-notes');
  assert.equal(Object.values(prepared.data.candidate.wires).some(wire=>wire.from===id&&wire.fromPort==='text'&&wire.to==='compose'&&wire.toPort==='section.body'),true);
  assert.equal(f.env.commitNodeCreation(f.capture,prepared).ok,true);assert.equal(f.commits(),1);
@@ -79,11 +93,9 @@ test('awaited node data edits cannot cancel refresh or bind a replacement docume
  }
 });
 
-test('configured shared fields retain controller capture and produce one creation commit',async()=>{
+test('direct logical document placement retains its capture and commits once without setup',async()=>{
  const f=fixture(),before=structuredClone(f.graph);
- const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',controls:{targetId:'souls.json'},graphPoint:{x:10,y:15}});
- const fields=f.env.view.fields;assert.ok(fields.length);assert.equal(fields.find(control=>control.key==='targetId').inputSpec.storage,'text');
- assert.equal(f.env.configuredNodeSession.apply(f.env.view.key,f.env.view.controls,'post').ok,true);
- const prepared=await pending;assert.deepEqual(f.graph,before);assert.equal(f.commits(),0);
- assert.equal(f.env.commitNodeCreation(f.capture,prepared).ok,true);assert.equal(f.commits(),1);assert.equal(f.env.view,null);
+ const prepared=await f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',controls:{targetId:'souls.json'},graphPoint:{x:10,y:15}});
+ assert.equal(prepared.ok,true,JSON.stringify(prepared.error));assert.equal(f.env.view,undefined);assert.deepEqual(f.graph,before);assert.equal(f.commits(),0);
+ assert.equal(f.env.commitNodeCreation(f.capture,prepared).ok,true);assert.equal(f.commits(),1);
 });

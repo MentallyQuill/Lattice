@@ -37,6 +37,8 @@ export interface OperationDescriptor {
     rootOnly?: boolean; requiresStateInDefinition?: boolean; modes?: string[];
     acceptsSkippedInputs?: boolean; hostOperation?: boolean; nativeBoundary?: boolean;
 }
+export interface SetupIssue { code: string; message: string; field?: string; portId?: string; }
+export interface AuthoredOperationDescription extends OperationDescription { setupIssues: SetupIssue[]; }
 export interface OperationDescription { descriptor: OperationDescriptor; ports: PortDescriptor[]; }
 export interface Binding { profileId?: string | null; model?: string | null; }
 export interface NativeNode extends Binding {
@@ -121,6 +123,7 @@ export interface RunPlan {
     units: RunUnit[]; hierarchy: RunHierarchyEntry[]; terminals: TerminalTarget[]; callBound: number;
 }
 export interface ResolvedPrimitive {
+    setupIssues?: SetupIssue[];
     systemDefaults?: import('./workflow-data-defaults').WorkflowDataPreset[]; systemDisabled?: boolean;
     address: NodeAddress; node: NativeNode; phase: WorkflowPhase; enabled: boolean; terminal: boolean; included: boolean;
     inputPorts: PortDescriptor[]; outputPorts: PortDescriptor[]; requestBound: number; dependencies: NodeAddress[];

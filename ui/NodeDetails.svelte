@@ -429,6 +429,15 @@
         </div>
         {#if openGuide}<button type="button" class="pc-node-guide-help" aria-label={`Open ${view.canonicalTitle} guide`} title={`Help with ${view.canonicalTitle}`} onclick={openGuide}>?</button>{/if}
     </header>
+    {#if view.readiness && (view.readiness.issues.length || view.readiness.deferred.length)}
+        <section class="pc-node-readiness-issues" tabindex="-1" aria-label={view.readiness.label || 'Live requirements'} data-readiness={view.readiness.state}>
+            <strong>{view.readiness.label || 'Live requirements'}</strong>
+            {#each view.readiness.issues as issue, index (`${issue.code}:${JSON.stringify(issue.address)}:${issue.field || issue.portId || index}`)}
+                {#if actions.openReadinessIssue}<button type="button" onclick={() => view && actions.openReadinessIssue?.(selection(view),issue)}>{view.system ? [...(issue.address.instancePath ?? []),issue.address.nodeId].join(' / ') + ': ' : ''}{issue.message}</button>{:else}<p>{view.system ? [...(issue.address.instancePath ?? []),issue.address.nodeId].join(' / ') + ': ' : ''}{issue.message}</p>{/if}
+            {/each}
+            {#each view.readiness.deferred as requirement}<small>{requirement}</small>{/each}
+        </section>
+    {/if}
     {#if view.phaseEditable}<label>Workflow stage<select aria-label="Workflow stage" value={view.phase} disabled={view.readOnly || !actions.editPhase} onchange={event => { const phase = event.currentTarget.value as 'pre' | 'post'; void perform('phase', false, captured => actions.editPhase!(captured, phase)); }}><option value="pre">Preparation · before Generate Reply</option><option value="post">Response · after Generate Reply</option></select></label>{#if errors.phase}<div class="pc-detail-error"><DiagnosticMessage issue={errors.phase} context={{ nodeTitle: view?.title }} /></div>{/if}{/if}
     {#if view.recall}<RecallDetails view={view.recall} actions={{queue:()=>actions.queueRecall?.(selection(view!))??{ok:false,error:{code:'RECALL_UNAVAILABLE',message:'Memory recall is unavailable.'}},cancel:()=>actions.cancelRecall?.(selection(view!))??{ok:false,error:{code:'RECALL_UNAVAILABLE',message:'Memory recall is unavailable.'}},revealShortcut:actions.revealRecallShortcut}} />{/if}
     {#if view.readOnly || !view.enabled}<p class="pc-detail-state">{#if view.readOnly}<span>Read-only body</span>{/if}{#if !view.enabled}<span class="pc-detail-blocked">{view.system ? 'System skipped' : 'Blocks run · Disabled'}</span>{/if}</p>{/if}
@@ -516,6 +525,12 @@
     .pc-node-guide-help { flex: none; align-self: center; width: 26px; height: 26px; border: 1px solid var(--pc-border); border-radius: 50%; background: transparent; color: var(--pc-muted); font: inherit; font-weight: 600; cursor: pointer; }
     .pc-node-guide-help:hover { color: var(--pc-text); background: var(--pc-hover); }
     .pc-node-guide-help:focus-visible { outline: 2px solid var(--pc-flow); outline-offset: 2px; }
+    .pc-node-readiness-issues { margin:8px 0; padding:8px; border:1px solid var(--pc-border); border-radius:4px; }
+    .pc-node-readiness-issues[data-readiness="setup"] { border-color:var(--pc-error); }
+    .pc-node-readiness-issues[data-readiness="input"] { border-color:var(--pc-warning,#e9b450); }
+    .pc-node-readiness-issues :is(p,small,button) { display:block; margin:5px 0 0; }
+    .pc-node-readiness-issues button { width:100%; padding:4px; text-align:left; color:inherit; background:var(--pc-control); border:1px solid var(--pc-border); border-radius:3px; font:inherit; cursor:pointer; }
+    .pc-node-readiness-issues:focus-visible { outline:2px solid var(--pc-accent); outline-offset:2px; }
     .pc-node-details { --pc-r-sm: 4px; box-sizing: border-box; flex: 1; display: flex; flex-direction: column; min-width: 0; width: 100%; color: var(--pc-text); font: inherit; font-size: 12px; padding: 10px; }
     .pc-node-details :global(.pc-modifiers) { margin-top: auto; padding-top: 12px; }
     header { display: flex; gap: 7px; align-items: start; padding: 7px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-field); }

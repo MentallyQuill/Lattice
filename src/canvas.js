@@ -1,3 +1,5 @@
+import { nodeDecorationElements, measureDecorationExtents } from './ui/node-decorations.js?v=0.27.3';
+import { summarizeReadiness } from './ui/node-readiness.js?v=0.27.3';
 import { graphPoint, zoomAt, zoomTo, wheelFactor, zoomShortcutFactor } from './canvas/camera.js?v=0.27.3';
 import { createFrameScheduler } from './canvas/frame.js?v=0.27.3';
 import { selectionMode, rectangle, intersects, combineSelection } from './canvas/selection.js?v=0.27.3';
@@ -69,6 +71,7 @@ export class Canvas {
         this.recallStatus = {};
         this.nodeProfiles = [];
         this.nodeProfileVersion = 0;
+        this.decorationExtents = new Map(); this.decorationElements = new Set();
         this.nodeElements = new Map();
         this.layoutKeys = new Map(); this.dirtyGeometry = new Set(); this.observerSizes = new Map();
         this.cardSlots = new Map(); this.groupSlots = new Map(); this.commentSlots = new Map();
@@ -80,6 +83,14 @@ export class Canvas {
         host.tabIndex = 0;
         host.innerHTML = '';
         this.layer = mountCanvas(host, {
+            openGroupReadiness: id => {
+                const members=this.#groupMembers(id), row=this.nodeProfiles.find(row=>members.some(node=>node.id===row.id) && row.readiness?.issues.length);
+                if(row)this.hooks.onReadinessDetails?.(row.selection,row.readiness.issues[0]);
+            },
+            openReadinessDetails: (selection, issue) => {
+                const id = selection.address.nodeId;
+                if (this.graph?.nodes[id]) { this.setMulti([]); this.select({kind:'node',id}); this.hooks.onReadinessDetails?.(selection, issue); }
+            },
             openRecallDetails: id => this.hooks.onRecallDetails?.(id),
             hostResult: id => this.hooks.onHostResult?.(this.graph?.nodes[id]),
             hoverPin: pin => { this.hoverPin = pin; this.#applyFocus(); },
@@ -100,8 +111,9 @@ export class Canvas {
             return new Resize(entries => {
             if (epoch !== this.geometryEpoch || this.eventController.signal.aborted) return;
             if (!this.#isVisible()) return;
-            const pending = [];
+            const pending = []; let decorationsChanged=false;
             for (const entry of entries) {
+                if(this.decorationElements.has(entry.target)){decorationsChanged=true;continue;}
                 const id = entry.target.dataset.id ?? 'group:' + entry.target.dataset.group;
                 if (this.nodeElements.get(id) !== entry.target || !this.host.contains(entry.target)) continue;
                 const size = entry.contentRect && [entry.contentRect.width, entry.contentRect.height];
@@ -111,6 +123,7 @@ export class Canvas {
                 pending.push([entry.target, id]);
             }
             const changed = this.#measureEntries(pending);
+            if(decorationsChanged && this.graph && this.#measureDecorations())this.layer.setGroups(this.#groupCards());
             if (changed.size && this.graph) {
                 this.#drawWires(changed, {groups:this.#groupCards(changed), nodeProfiles:this.#nodeProfileRows()});
             }
@@ -186,7 +199,7 @@ export class Canvas {
         if (geometryScopeKey !== this.geometryScopeKey) {
             this.geometry.clear(); this.wireViews.clear(); this.publishedWireClasses.clear(); this.layoutKeys.clear(); this.dirtyGeometry.clear();
             this.cardSlots.clear(); this.groupSlots.clear(); this.commentSlots.clear();
-            this.geometryEpoch++; this.resizeObserver?.disconnect();
+            this.geometryEpoch++; this.resizeObserver?.disconnect(); this.decorationElements.clear();
             this.resizeObserver = this.createResizeObserver?.();
             this.nodeElements.clear(); this.observerSizes.clear();
         }
@@ -196,7 +209,7 @@ export class Canvas {
         this.detailScopeKey = detailScopeKey;
         this.geometryScopeKey = geometryScopeKey;
         this.legacyScopeKey = legacyScopeKey;
-        this.nodeProfiles = []; this.nodeProfileVersion++;
+        this.nodeProfiles = []; this.nodeProfileVersion++; this.decorationExtents.clear();
         this.graph = graph; this.selection = null; this.multi.clear();
         if (scope?.workflowId && this.nativeSelectionRoot !== scope.workflowId) this.wireSelections.clear();
         this.nativeSelectionRoot = scope?.workflowId ?? this.nativeSelectionRoot;
@@ -215,6 +228,7 @@ export class Canvas {
 
     setPreviewTarget(id) {
         this.layer.setPreviewTarget(id);
+        if(this.#measureDecorations())this.layer.setGroups(this.#groupCards());
     }
 
     /** Accept prepared profile metadata; layout adds only cached native bounds. */
@@ -224,7 +238,40 @@ export class Canvas {
         this.#drawNodeProfiles();
     }
 
-    #drawNodeProfiles() { if (this.graph) this.layer.setNodeProfiles(this.#nodeProfileRows()); }
+    #drawNodeProfiles() { if (this.graph) { this.layer.setNodeProfiles(this.#nodeProfileRows()); this.#measureDecorations(); this.layer.setGroups(this.#groupCards()); } }
+
+    #measureDecorations() {
+        if (!this.graph || !this.#isVisible()) return;
+        const zoom=this.view.zoom || 1, keep=new Set(); let changed=false,viewportOrigin;
+        const roots=new Map([...this.viewport.querySelectorAll('.pc-node-profile[data-id]')].map(root=>[root.dataset.id,root]));
+        const observed=new Set();
+        for (const [id,card] of this.nodeElements) {
+            const node=this.graph.nodes[id]; if(!node || !this.host.contains(card))continue; keep.add(id);
+            const root=roots.get(id),elements=nodeDecorationElements(card,root);
+            if(!elements.length){if(this.decorationExtents.delete(id))changed=true;continue;}
+            // Native card size/pins remain cached during camera motion. A node
+            // without a profile row shares the viewport origin plus its graph position.
+            if(!root && !viewportOrigin)viewportOrigin=this.viewport.getBoundingClientRect();
+            const origin=root ? root.getBoundingClientRect() : {left:viewportOrigin.left+(node.x??0)*zoom,top:viewportOrigin.top+(node.y??0)*zoom};
+            for(const element of elements) {
+                observed.add(element);if(!this.decorationElements.has(element)){this.decorationElements.add(element);this.resizeObserver?.observe(element);}
+            }
+            const {measured,...next}=measureDecorationExtents(elements,origin,zoom,{width:this.widthOf(node),height:this.heightOf(node)});
+            if(measured){if(JSON.stringify(this.decorationExtents.get(id))!==JSON.stringify(next))changed=true;this.decorationExtents.set(id,next);}
+        }
+        for(const id of this.decorationExtents.keys())if(!keep.has(id)){this.decorationExtents.delete(id);changed=true;}
+        for(const element of this.decorationElements)if(!observed.has(element)){this.resizeObserver?.unobserve(element);this.decorationElements.delete(element);}
+        return changed;
+    }
+
+    /** Visual framing includes decorations; intrinsic card and pin coordinates never change. */
+    visualBoundsOf(node) {
+        const w=this.widthOf(node),h=this.heightOf(node),extents=this.decorationExtents.get(node.id);
+        const row=this.nodeProfiles.find(row=>row.id===node.id),compact=node.presentation?.compact;
+        const estimate={left:0,top:row?.model || row?.readiness?.state && row.readiness.state!=='ready' ? -12-(row.model?31:0)-(row.readiness?.state && row.readiness.state!=='ready'?29:0) : 0,right:w,bottom:h+(row && row.hasProfile!==false ? 42+(compact?38:0) : compact?38:0)};
+        const bounds=extents ?? estimate;
+        return {x:(node.x??0)+bounds.left,y:(node.y??0)+bounds.top,w:bounds.right-bounds.left,h:bounds.bottom-bounds.top};
+    }
 
     #nodeProfileRows() {
         if (!this.graph || !this.nodeProfiles.length) return [];
@@ -232,8 +279,8 @@ export class Canvas {
         const visibleBounds = { x: -view.x / zoom, y: -view.y / zoom, w: rect.width / zoom, h: rect.height / zoom };
         return this.nodeProfiles.flatMap(row => {
             const node = this.graph.nodes[row.id];
-            if (!node || isCommentFrame(node) || this.#folded(node)) return [];
-            return [{ ...row, x: node.x, y: node.y, w: this.widthOf(node), h: this.heightOf(node),
+            if (!node || isCommentFrame(node) || this.#folded(node) || row.hasProfile===false && !row.model && (!row.readiness || row.readiness.state==='ready')) return [];
+            return [{ ...row, selected: this.selection?.kind==='node' && this.selection.id===node.id || this.multi.has(node.id), x: node.x, y: node.y, w: this.widthOf(node), h: this.heightOf(node),
                 clearance: node.presentation?.compact ? 38 : 0, authorityVersion: this.nodeProfileVersion, visibleBounds }];
         });
     }
@@ -329,7 +376,7 @@ export class Canvas {
 
     fit({ avoidShelf = true } = {}) {
         this.#finishZoom(false);
-        const boxes = Object.values(this.graph?.nodes ?? {}).filter(n => !this.#folded(n)).map(n => ({ x: n.x, y: n.y, w: this.widthOf(n), h: this.heightOf(n) || 160 }));
+        const boxes = Object.values(this.graph?.nodes ?? {}).filter(n => !this.#folded(n)).map(n => this.visualBoundsOf(n));
         for (const g of Object.values(this.graph?.groups ?? {})) {
             if (g.collapsed) boxes.push({ x: g.x, y: g.y, w: g.w || 260, h: this.geometry.get(`group:${g.id}`, 160) || 160 });
             else boxes.push(this.#nativeGroupFrame(g));
@@ -573,9 +620,10 @@ export class Canvas {
     #nativeGroupFrame(g) {
         const members = this.#groupMembers(g.id);
         if (!members.length) return g.frame ?? { x: g.x ?? 0, y: g.y ?? 0, w: g.w || 260, h: 140 };
-        const x = Math.min(...members.map(node => node.x)) - 24, y = Math.min(...members.map(node => node.y)) - 48;
-        const right = Math.max(...members.map(node => node.x + this.widthOf(node))) + 24;
-        const bottom = Math.max(...members.map(node => node.y + this.heightOf(node))) + 24;
+        const boxes=members.map(node=>this.visualBoundsOf(node));
+        const x = Math.min(...boxes.map(box => box.x)) - 24, y = Math.min(...boxes.map(box => box.y)) - 48;
+        const right = Math.max(...boxes.map(box => box.x + box.w)) + 24;
+        const bottom = Math.max(...boxes.map(box => box.y + box.h)) + 24;
         if (!g.frame) return { x, y, w: right - x, h: bottom - y };
         const left = Math.min(g.frame.x, x), top = Math.min(g.frame.y, y);
         return { x: left, y: top, w: Math.max(g.frame.x + g.frame.w, right) - left, h: Math.max(g.frame.y + g.frame.h, bottom) - top };
@@ -583,10 +631,11 @@ export class Canvas {
 
     #groupCard(g) {
         const members = this.#groupMembers(g.id).sort((a, b) => (a.y - b.y) || (a.x - b.x));
+        const readiness=summarizeReadiness(members.map(node=>this.#nativeCard(node)?.readiness));
         const frame = this.#nativeGroupFrame(g), selected = this.selection?.kind === 'group' && this.selection.id === g.id;
         const multi = members.length > 0 && members.every(n => this.multi.has(n.id));
         return {
-            id: g.id, collapsed: !!g.collapsed, x: g.collapsed ? g.x ?? frame.x : frame.x, y: g.collapsed ? g.y ?? frame.y : frame.y,
+            id: g.id, readiness, collapsed: !!g.collapsed, x: g.collapsed ? g.x ?? frame.x : frame.x, y: g.collapsed ? g.y ?? frame.y : frame.y,
             w: g.collapsed ? g.w || 260 : frame.w, h: frame.h,
             className: (g.collapsed ? 'pc-node pc-node-group' : 'pc-group-frame') + (selected ? ' pc-selected' : '') + (multi ? ' pc-multi' : '') + (members.length ? '' : ' pc-group-empty'),
             title: g.title || 'Group', body: members.map(n => n.presentation?.alias || n.title || (this.#nativeCard(n).canonicalTitle ?? this.#nativeCard(n).label)).join(' · '),
@@ -626,6 +675,7 @@ export class Canvas {
         if (samePaintValues(this.selectionPaint?.values, values) && samePaintMembers(this.selectionPaint?.multi, this.multi)
             && samePaintMembers(this.selectionPaint?.wireMulti, this.wireMulti)) { this.#applyFocus(); return; }
         this.selectionPaint = {values, multi:new Set(this.multi), wireMulti:new Set(this.wireMulti)};
+        for(const el of this.viewport.querySelectorAll('.pc-node-profile[data-id]'))el.classList.toggle('pc-decoration-selected',this.selection?.kind==='node' && this.selection.id===el.dataset.id || this.multi.has(el.dataset.id));
         for (const el of this.nodeLayer.querySelectorAll('.pc-node[data-id]')) el.classList.toggle('pc-selected', this.selection?.kind === 'node' && this.selection.id === el.dataset.id);
         for (const el of this.nodeLayer.querySelectorAll('.pc-node-group, .pc-group-frame')) el.classList.toggle('pc-selected', this.selection?.kind === 'group' && this.selection.id === el.dataset.group);
         this.#paintMulti();
@@ -701,7 +751,7 @@ export class Canvas {
             if (!node) continue;
             const group = this.#folded(node);
             if (group) addGroup(group);
-            else boxes.push({ x: node.x, y: node.y, w: this.widthOf(node), h: this.heightOf(node) });
+            else boxes.push(this.visualBoundsOf(node));
         }
         if (this.selection?.kind === 'group') addGroup(this.graph.groups?.[this.selection.id]);
         if (all) for (const group of Object.values(this.graph.groups ?? {})) addGroup(group);
@@ -883,6 +933,7 @@ export class Canvas {
         if (positions) this.layer.setPositions(positions, [], publication);
         else if (scene) this.layer.applyScene(publication);
         else this.layer.setWires([...this.wireViews.values()], bounds, ghost);
+        if(!positions && scene?.nodeProfiles && this.#measureDecorations()) this.layer.setGroups(this.#groupCards());
         if (wirePaintChanged) this.paintRevision++;
         this.#paintSelection();
     }

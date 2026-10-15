@@ -36,11 +36,11 @@ These are systems you can author with the supplied tools and lessons. [Story sys
 
 ## Build it by connecting the pieces
 
-Each box, called a **node**, does one job. Search for a tool and drag it onto the canvas. If a setup dialog opens, choose its settings and **Create node**. Connect its output to the next tool’s input. A workflow might read scene context, compose instructions, ask a model a question, edit text, or propose a saved story change.
+Each box, called a **node**, does one job. Search for a tool and drag it onto the canvas. Available tools place immediately. Select the node to edit its settings in **Details**; a wrench and **Setup Required** identify missing settings, while **Input Required** identifies missing connections. Connect its output to the next tool’s input. A workflow might read scene context, compose instructions, ask a model a question, edit text, or propose a saved story change.
 
 ![Searching for Text Rules and placing it on the canvas](docs/images/search-and-place.gif)
 
-*Search, drag, and configure. Select a node to edit its settings in Details.*
+*Search and drag to place a node, then edit its settings in Details.*
 
 Click a node’s **?** button for an illustrated guide to its purpose, settings, connections, and examples. Preview shows recorded results along the way. **Run to here** tests a supported part of the workflow; a test that includes model tools can make additional requests.
 

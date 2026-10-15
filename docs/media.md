@@ -19,12 +19,13 @@ node tools/build-documentation-banner.mjs
 | Task | Images |
 | --- | --- |
 | Find help for a node | [Question mark button](images/node-help-button.png), [opened guide and example](images/node-guide.png) |
-| Add or organize a node | [Node actions](images/node-actions.png), [creation settings](images/node-creation.png), [shelf families](images/node-shelf.png), [search](images/node-search.png), [dragging from search](images/shelf-drag.png) |
+| Add or organize a node | [Node actions](images/node-actions.png), [placed node Details](images/node-creation.png), [shelf families](images/node-shelf.png), [search](images/node-search.png), [dragging from search](images/shelf-drag.png) |
 | Read a result | [Readable and Source controls](images/preview-modes.png), [guidance](images/guidance-preview.png), [pinned preview](images/pinned-preview.png), [review controls](images/review-candidate.png), [run details](images/run-details.png) |
 | Change settings | [Compose](images/compose-details.png), [Select Fields](images/select-fields-details.png), [JSON Decode](images/json-decode-details.png), [Text Rules](images/text-rules-details.png), [text modifiers](images/text-modifiers.png), [Smart Compactor](images/compactor-details.png), [model settings](images/model-details.png), [connection picker](images/profile-picker.png) |
 | Keep the graph readable | [Comment frame](images/workflow-comments.png), [portals](images/portals.png), [themes and type cues](images/themes.png) |
 | Save and share | [File menu](images/file-menu.png), [save choice](images/save-changes.png) |
 | Set up story data | [Workflow Data](images/workflow-data.png), [clock settings](images/clock-settings.png), [recall overview](images/recall-controls.png) |
+| Inspect placement readiness | [Setup Required](images/node-setup-required.png), [setup reasons in Details](images/node-setup-details.png), [Input Required](images/node-input-required.png) |
 | Diagnose a problem | [Valid starter](images/workflow-validation.png), [missing reply connection](images/validation-issue.png) |
 
 The node settings captures also support the existing technical reference. The operator’s manual teaches how to find the in-app **?** guide instead of reproducing every node’s settings.
@@ -37,13 +38,13 @@ The node settings captures also support the existing technical reference. The op
 | Choose a lesson | [Examples browser](images/examples-curriculum.png), [lesson details](images/example-lesson.png) |
 | Connected processes | [Text and Data connections](images/connecting-nodes.png), [text cleanup](images/text-rules-graph.png), [scene planning](images/scene-planning-graph.png), [context assembly](images/context-assembly.png) |
 | Reusable tools | [Selected nodes](images/selection-subgraph.png), [extracted body](images/created-subgraph.png), [reconnected parent](images/subgraph-parent.png), [placed instance](images/subgraph-instance.png), [body tab](images/subgraph-tab.png), [port settings](images/subgraph-interface.png), [save dialog](images/subgraph-save.png) |
-| Story systems | [Combined workflow](images/beta-overview.png), [system settings](images/system-settings.png), [add a system](images/add-system.png), [wand system body](images/wand-system.png) |
+| Story systems | [Combined workflow](images/beta-overview.png), [system settings](images/system-settings.png), [saved-system chooser](images/add-system.png), [placed-system connection assistance](images/system-connections.png), [wand system body](images/wand-system.png) |
 
 ## Animated walkthroughs
 
 | Animation | What it shows |
 | --- | --- |
-| [Search and place](images/search-and-place.gif) | Search for Text Rules, drag it onto the canvas, review its settings, and choose Create node |
+| [Search and place](images/search-and-place.gif) | Search for Text Rules, drag it onto the canvas to place it immediately, then open its settings in Details |
 | [Connect nodes](images/connect-nodes.gif) | Draw a Text connection and a Data connection between compatible pins |
 | [Create a subgraph](images/create-subgraph.gif) | Select three nodes, package them, inspect the new body, and return to the parent |
 | [Inspect and pin](images/inspect-and-pin.gif) | Keep one result visible while selecting another node, then resume following selection |
@@ -63,7 +64,7 @@ node tools/check-documentation.mjs
 
 The first script captures operation and graph examples on port 4186. The second captures the manual close-ups, story systems, dialogs, and GIFs on port 4187. Both start temporary local servers and close their browsers and servers when finished. They read the committed UI bundle; rebuild first when documenting UI source changes.
 
-For an individual take, use `--only=manual`, `--only=screenshots`, `--only=shelf`, `--only=connect`, `--only=subgraph`, `--only=preview`, or `--only=comments` with the second script. `LATTICE_BETA_DOC_PORT` selects its port. `LATTICE_DOC_PORT` and `LATTICE_DOC_SHOTS` select the first script’s port and named captures.
+For an individual take, use `--only=manual`, `--only=screenshots`, `--only=shelf`, `--only=connect`, `--only=subgraph`, `--only=system-placement`, `--only=preview`, or `--only=comments` with the second script. The system-placement take captures the saved-revision chooser, explicit later connection assistance, and Prompted Memory changing from Setup Required to Input Required. The shelf take captures immediate placement and the placed node’s Details. `LATTICE_BETA_DOC_PORT` selects its port. `LATTICE_DOC_PORT` and `LATTICE_DOC_SHOTS` select the first script’s port and named captures.
 
 `tools/documentation-framing.mjs` captures the visible bounds of one control or a group of related elements, with a little padding. It captures that region directly from the browser rather than modifying an earlier image. Keep settings text readable and leave enough context to identify the target. Recapture a changed interface instead of cropping an outdated screenshot.
 

@@ -23,9 +23,10 @@ async function presentation(page) {
 
 async function startDrag(page) {
     await expect(header(page)).toBeVisible();
-    const bounds = await header(page).boundingBox();
+    const bounds = await header(page).locator('.pc-group-frame-title').boundingBox();
     expect(bounds).not.toBeNull();
-    const point = { x: bounds.x + 100, y: bounds.y + bounds.height / 2 };
+    const point = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+    expect(await page.evaluate(point=>{const hit=document.elementFromPoint(point.x,point.y);return !!hit?.closest('.pc-group-frame-head') && !hit.closest('button');},point),'Start on the group title, clear of readiness and fold actions').toBe(true);
     await page.mouse.move(point.x, point.y); await page.mouse.down();
     return point;
 }

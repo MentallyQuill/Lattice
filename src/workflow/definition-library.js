@@ -3,7 +3,7 @@ import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, descr
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.3';
 import { inspectGraphArtifacts, prepareGraphArtifacts } from './graph-artifacts.js?v=0.27.3';
 import { cloneWorkflowDocument } from './document.js?v=0.27.3';
-import { ARTIFACT_KINDS, describeOperation, operationFor } from './catalog.js?v=0.27.3';
+import { ARTIFACT_KINDS, describeAuthoredOperation, operationFor } from './catalog.js?v=0.27.3';
 import { applyDeclaredNodeControlChange, graphDocumentSignature } from './ports.js?v=0.27.3';
 import { selectSubgraphClosure } from './packages.js?v=0.27.3';
 import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.3';
@@ -134,7 +134,7 @@ function applyNativeNodeEdit(context, command) {
             else { node[field][key] ??= {}; node[field][key][command.field] = command.value; }
         }
     } else {
-        const described = describeOperation(context.metadata(), node); if (!described.ok) return described;
+        const described = describeAuthoredOperation(context.metadata(), node); if (!described.ok) return described;
         if (command.kind === 'controls') return applyDeclaredNodeControlChange(context, command);
         if (command.kind === 'enabled') node.enabled = command.value;
         else { const field = command.kind === 'model-role' ? 'modelRole' : command.field; if (command.mode === 'remove') delete node[field]; else node[field] = command.value; }
@@ -180,6 +180,12 @@ export function installDefinition(library, definition, snapshots = {}) {
     if (!merged.ok) return merged;
     const key = definitionRefKey(definition), validation = validateDefinition(merged.data[key], merged.data);
     if (!validation.ok) return validation;
+    // Every newly stored snapshot becomes a reusable library entry. Local registry
+    // admission is intentionally weaker and cannot establish publication readiness.
+    for (const [entryKey, entry] of Object.entries(merged.data)) if (entryKey !== key && !Object.hasOwn(library.definitions, entryKey)) {
+        const publishable = validateDefinition(entry, merged.data);
+        if (!publishable.ok) return publishable;
+    }
     const materialized = {};
     for (const [key, item] of Object.entries(merged.data)) {
         const identity = computeDefinitionIdentity(item);

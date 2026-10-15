@@ -11,7 +11,7 @@ function storageFixture(saveMetadata){let user='default-user';const context={cha
 
 test('required-configuration nodes remain discoverable without valid placeholder controls',()=>{
  const prepared=prepareNativeSearchCatalog(scope);assert.equal(prepared.ok,true);
- for(const operation of ['time-trigger','for-each','prompted-memory','item-mention-trigger','item-use-trigger','scene-presence','character-direction','parse-effect-library','recall','hotkey-arm']){const choice=prepared.data.choices.find(item=>item.id==='operation:'+operation);assert.ok(choice,operation);assert.equal(choice.requiresConfiguration,true);const command=resolveNativeSearchChoice(prepared.data,choice.id);assert.equal(command.requiresConfiguration,true);assert.equal(describeOperation(scope,{type:'workflow',...operationDefaults(operation)}).ok,false);}
+ for(const operation of ['time-trigger','for-each','prompted-memory','item-mention-trigger','item-use-trigger','scene-presence','character-direction','parse-effect-library','recall','hotkey-arm']){const choice=prepared.data.choices.find(item=>item.id==='operation:'+operation);assert.ok(choice,operation);assert.equal(choice.requiresConfiguration,undefined);const command=resolveNativeSearchChoice(prepared.data,choice.id);assert.equal(command.requiresConfiguration,undefined);assert.equal(describeOperation(scope,{type:'workflow',...operationDefaults(operation)}).ok,false);}
  const read=matchNativeSearchPorts(prepared.data,'operation:read-file',{kind:'data',dir:'in'});assert.deepEqual(read.map(pin=>pin.portId),['document','value','reference']);
  const each=matchNativeSearchPorts(prepared.data,'operation:for-each',{kind:'data',dir:'out'});assert.deepEqual(each.map(pin=>pin.portId),['in','state']);
 });
@@ -20,9 +20,9 @@ test('document-backed nodes can be created from search with usable automatic def
  const {prepareNativeConnectionEdit}=await import('../src/workflow/connection-edits.js?v=0.27.3');
  const graph={id:'automatic-data',schema:3,runtime:2,mode:'native-unified',nodes:{},wires:{},definitions:{},portals:{}},prepared=prepareNativeSearchCatalog(scope);
  for(const [operation,key,targetId] of [['read-file','targetId','lattice-default-notes'],['story-clock','clockId','lattice-default-clock'],['commit-outcomes','targetId','lattice-default-outcomes']]){
-  assert.equal(config.nodeNeedsConfiguration(operation),operation==='read-file',operation+' preserves its intended creation route');
+  assert.equal(config.nodeNeedsConfiguration(operation),false,operation+' uses its usable automatic default');
   const choice=prepared.data.choices.find(item=>item.id==='operation:'+operation),command=resolveNativeSearchChoice(prepared.data,choice.id);
-  assert.equal(choice.requiresConfiguration,operation==='read-file'?true:undefined);assert.equal(command.requiresConfiguration,operation==='read-file'?true:undefined);
+  assert.equal(choice.requiresConfiguration,undefined);assert.equal(command.requiresConfiguration,undefined);
   const {requiresConfiguration,...preparedCommand}=command;const created=prepareNativeConnectionEdit(graph,{kind:'create',...preparedCommand,graphPoint:{x:20,y:30},phase:'post'});assert.equal(created.ok,true,JSON.stringify(created));
   const node=created.data.candidate.nodes[created.data.addedNodeIds[0]];assert.equal(node[key],targetId);assert.equal(describeOperation(scope,node).ok,true);
   assert.equal(config.validateConfiguredNodeControls(operation,'{}',{phase:'post',targets:[],helpers:[]}).ok,true);
@@ -32,8 +32,8 @@ test('document-backed nodes can be created from search with usable automatic def
 test('automatic node creation retains explicit target and control validation',()=>{
  const options={phase:'post',targets:[{targetId:'custom.json',format:'json'}],helpers:[]};
  for(const [operation,key] of [['read-file','targetId'],['story-clock','clockId'],['commit-outcomes','targetId']]){
-  assert.equal(config.nodeNeedsConfiguration(operation,{[key]:'custom.json'}),true);
-  assert.equal(config.nodeNeedsConfiguration(operation,{[key]:''}),true);
+  assert.equal(config.nodeNeedsConfiguration(operation,{[key]:'custom.json'}),false,'A logical target is configured independently of current authorization');
+  assert.equal(config.nodeNeedsConfiguration(operation,{[key]:''}),false,'Automatic target fallback is an operation setting, not a placement gate');
   assert.equal(config.validateConfiguredNodeControls(operation,JSON.stringify({[key]:''}),options).ok,false);
   assert.equal(config.validateConfiguredNodeControls(operation,JSON.stringify({[key]:'unconfigured.json'}),options).error.code,'DOCUMENT_NOT_AUTHORIZED');
  }
@@ -104,7 +104,7 @@ test('story clock template uses the real engine contract and no ambient time',as
 
 test('Recall deferred ports match their configured activation in root and static bodies',()=>{
  const prepared=prepareNativeSearchCatalog(scope).data,body=prepareNativeSearchCatalog({...scope,viewPath:['child'],inDefinition:true}).data;
- for(const operation of ['recall','hotkey-arm']){assert.equal(prepared.choices.find(item=>item.id==='operation:'+operation).requiresConfiguration,true);assert.equal(body.choices.find(item=>item.id==='operation:'+operation).requiresConfiguration,true);}
+ for(const operation of ['recall','hotkey-arm']){assert.equal(prepared.choices.find(item=>item.id==='operation:'+operation).requiresConfiguration,undefined);assert.equal(body.choices.find(item=>item.id==='operation:'+operation).requiresConfiguration,undefined);}
  for(const activation of ['armed','keyword','event','armed-or-character']){const controls={actorId:'mara',memorySetId:'memories',activation,keywords:['wand'],eventTypes:['kiss']},described=describeOperation({...scope,mode:'native-unified'},{type:'workflow',...operationDefaults('recall'),...controls});assert.equal(described.ok,true);assert.deepEqual(config.deferredNodeDescription('recall',controls).ports,described.data.ports);}
 });
 

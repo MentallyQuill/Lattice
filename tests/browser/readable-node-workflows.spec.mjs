@@ -119,7 +119,7 @@ async function pinPort(page, id, label) {
     await page.getByRole('menuitemcheckbox', { name: label, exact: true }).click();
 }
 
-test('Pattern creation accepts a plain Elara term before its single creation transaction', async ({ page }) => {
+test('Pattern placement accepts a later plain Elara term in Details with separate placement and settings Undo', async ({ page }) => {
     await openLesson(page);
     await page.evaluate(async () => {
         const h = window.canvasHarness, graph = structuredClone(h.graph);
@@ -128,13 +128,21 @@ test('Pattern creation accepts a plain Elara term before its single creation tra
     await page.locator('.pc-canvas-host').dblclick({ position: { x: 180, y: 120 } });
     await page.getByRole('combobox', { name: 'Search nodes and subgraphs', exact: true }).fill('Pattern');
     await page.locator('[data-choice="operation:pattern"]').click();
-    const dialog = page.getByRole('dialog', { name: 'Configure node', exact: true });
-    await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', { name: 'Use Rules terms', exact: true }).click();
-    await dialog.getByLabel('Rules', { exact: true }).fill('Elara');
-    await expect(dialog.locator('[data-control-item]')).toHaveText(['Elara']);
-    await dialog.getByRole('button', { name: 'Create node', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Configure node', exact: true })).toHaveCount(0);
+    const placed = await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes));
+    expect(placed).toHaveLength(1); expect(placed[0].operation).toBe('pattern');
+    await select(page, placed[0].id);
+    const panel = details(page);
+    await panel.getByRole('button', { name: 'Use Rules terms', exact: true }).click();
+    await panel.getByLabel('Rules', { exact: true }).fill('Elara');
+    await expect(panel.locator('[data-control-item]')).toHaveText(['Elara']);
+    expect(await page.evaluate(id => window.canvasHarness.graph.nodes[id].rules, placed[0].id)).toEqual(placed[0].rules);
+    await panel.getByRole('button', { name: 'Save Rules', exact: true }).click();
     expect(await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).map(node => node.rules))).toEqual([[{ id: 'pattern-1', pattern: 'Elara' }]]);
+    await page.getByRole('button', { name: 'Undo', exact: true }).click();
+    expect(await page.evaluate(id => window.canvasHarness.graph.nodes[id].rules, placed[0].id)).toEqual(placed[0].rules);
+    await page.getByRole('button', { name: 'Undo', exact: true }).click();
+    expect(await page.evaluate(() => Object.keys(window.canvasHarness.graph.nodes))).toEqual([]);
     expect(await page.evaluate(() => ({ calls: window.canvasHarness.providerCalls(), effects: window.workflowEffects }))).toEqual({ calls: 0, effects: { captures: 0, workers: 0, commits: 0 } });
 });
 

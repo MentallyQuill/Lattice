@@ -63,6 +63,7 @@ export interface WorkflowDataCreate {
 }
 export type WorkflowDataResponse = { ok: true; data?: { definition?: WorkflowDataDefinition; message?: string } } | { ok: false; error: DetailError };
 export interface NodeDetailsView extends DetailSelection {
+    readiness?: import('./readiness-types').NodeReadiness;
     editorContractKey?: string;
     guideKey?: string; guideCard?: NodeCardData | null;
     recall?: RecallNodeStatus;
@@ -78,6 +79,7 @@ export interface NodeDetailsView extends DetailSelection {
     status?: string; issues?: string[];
 }
 export interface NodeDetailsActions {
+    openReadinessIssue?: (selection: DetailSelection, issue: import('./readiness-types').ReadinessIssue) => void;
     queueRecall?:(selection:DetailSelection)=>DetailEditResponse;
     cancelRecall?:(selection:DetailSelection)=>DetailEditResponse;
     revealRecallShortcut?:(nodeId:string)=>void;

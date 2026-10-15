@@ -2,18 +2,19 @@
     import DiagnosticMessage from './DiagnosticMessage.svelte';
     import { tick } from 'svelte';
     import type { NodeProfileData, NodeProfileOption, EditNodeProfile } from './node-profile-types';
-    let { row, editProfile, refreshProfiles }: { row: NodeProfileData; editProfile?: EditNodeProfile; refreshProfiles?: (selection: NodeProfileData['selection']) => unknown } = $props();
+    let { row, editProfile, refreshProfiles, openReadinessDetails }: { row: NodeProfileData; editProfile?: EditNodeProfile; refreshProfiles?: (selection: NodeProfileData['selection']) => unknown; openReadinessDetails?: (selection: NodeProfileData['selection'], issue?: import('./readiness-types').ReadinessIssue) => void } = $props();
     let opened = $state(false), query = $state(''), active = $state(0), error = $state(''), pending = $state(false);
     let capturedVersion = -1;
     let focusVersion = 0, editFocusPending = false;
     let barHeight = $state(35);
-    let root: HTMLDivElement, bar: HTMLButtonElement;
+    let root: HTMLDivElement;
+    let bar = $state<HTMLButtonElement>(null as unknown as HTMLButtonElement);
     let input = $state<HTMLInputElement>(), list = $state<HTMLDivElement>();
     const stop = (event: Event) => event.stopPropagation();
     function isolate(element: HTMLDivElement) {
         // Native listeners stop shortcuts before host/window handlers; delegated
         // Svelte keyboard listeners run after those handlers have already fired.
-        const keyboard = (event: KeyboardEvent) => { void keydown(event); };
+        const keyboard = (event: KeyboardEvent) => { if ((event.target as Element).closest('.profile-picker')) void keydown(event); else stop(event); };
         const otherOpened = (event: Event) => { if ((event as CustomEvent).detail !== element) close(); };
         const focusMoved = (event: FocusEvent) => {
             if (editFocusPending && !element.contains(event.target as Node)) { focusVersion++; editFocusPending = false; }
@@ -100,8 +101,20 @@
 
 <svelte:document onpointerdown={(event) => { if ((opened || editFocusPending) && !root.contains(event.target as Node)) close(); }} />
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions (Decoration contains its own keyboard controls and isolates canvas gestures.) -->
-<div class="pc-node-profile" data-id={row.id} role="group" aria-label="Node connection profile" bind:this={root} use:isolate style:left={`${row.x}px`} style:top={`${row.y}px`} style:width={`${row.w}px`} style:z-index={opened ? 20 : 2} onwheel={stop}>
-    {#if row.model}<div class="node-model-meta" title={row.model}>{row.model}</div>{/if}
+<div class="pc-node-profile" class:pc-decoration-compact={row.compact} class:pc-decoration-selected={row.selected} data-id={row.id} role="group" aria-label={row.hasProfile===false ? 'Node readiness' : 'Node connection profile'} bind:this={root} use:isolate style:left={`${row.x}px`} style:top={`${row.y}px`} style:width={`${row.w}px`} style:z-index={opened ? 20 : 2} onwheel={stop}>
+    <div class="pc-node-decoration-stack">
+        {#if row.model}
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard focus exposes the complete truncated model identifier.) -->
+            <div class="node-model-meta" title={row.model} tabindex="0" role="note" aria-label={`Model: ${row.model}`}>{row.model}</div>{/if}
+        {#if row.readiness && row.readiness.state !== 'ready'}
+            <button type="button" class="pc-node-readiness" data-readiness={row.readiness.state} title={`${row.readiness.label}: ${row.readiness.description}`} aria-label={`${row.readiness.label}: ${row.readiness.description}`} aria-describedby={`${row.id}-readiness-diagnostics`} onclick={() => openReadinessDetails?.(row.selection,row.readiness?.issues[0])}>
+                <svg viewBox="0 0 24 24" aria-hidden="true">{#if row.readiness.state === 'setup'}<path d="m14 6 4 4m-3-7a6 6 0 0 0-7 7L2 16a3 3 0 0 0 4 4l6-6a6 6 0 0 0 7-7l-4 4-3-3z" />{:else}<path d="M9 3v5m6-5v5M6 8h12v4a6 6 0 0 1-12 0zM12 18v4" />{/if}</svg>
+                <span class="pc-readiness-label">{row.readiness.label}</span>
+            </button>
+            <span class="pc-readiness-diagnostics" id={`${row.id}-readiness-diagnostics`}>{row.readiness.description}</span>
+        {/if}
+    </div>
+    {#if row.hasProfile !== false}
     <div class="profile-picker" style:top={`${barTop}px`}>
         <button type="button" class="profile-bar" title={row.label} aria-label={`Connection profile: ${row.label}`} aria-haspopup="listbox" aria-expanded={opened} disabled={!row.editable} bind:this={bar} onclick={() => opened ? close() : show()}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2" /></svg><span class="profile-value">{row.label}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
@@ -121,13 +134,28 @@
             </div>
         {/if}
     </div>
+    {/if}
 </div>
 
 <style>
     .pc-node-profile { position:absolute; pointer-events:none; color:var(--pc-text); font-family:var(--pc-font,inherit); font-size:14px; line-height:1.4; color-scheme:dark; }
     :global(:root[data-pc-light="1"]) .pc-node-profile { color-scheme:light; }
     .pc-node-profile * { box-sizing:border-box; }
-    .node-model-meta { position:absolute; bottom:8px; left:0; width:100%; color:var(--pc-muted); font-size:11px; overflow-wrap:anywhere; }
+    .pc-node-decoration-stack { position:absolute; bottom:12px; left:0; width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:5px; pointer-events:auto; }
+    .node-model-meta { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; width:100%; max-height:31px; overflow:hidden; color:var(--pc-muted); font-size:11px; line-height:15px; overflow-wrap:anywhere; }
+    .node-model-meta:focus-visible { outline:2px solid var(--pc-accent); }
+    .pc-node-readiness { display:flex; align-items:center; gap:5px; max-width:100%; min-height:calc(24px * var(--pc-recall-scale,1)); min-width:calc(24px * var(--pc-recall-scale,1)); padding:3px 6px; border:1px solid currentColor; border-radius:4px; background:var(--pc-panel-solid); color:var(--pc-error,#ef6666); font:inherit; font-size:11px; line-height:16px; cursor:pointer; margin:0; appearance:none; filter:none; text-shadow:none; box-shadow:none; }
+    .pc-node-readiness[data-readiness="input"] { color:var(--pc-warning,#e9b450); }
+    .pc-node-readiness svg { width:calc(14px * var(--pc-recall-scale,1)); height:calc(14px * var(--pc-recall-scale,1)); flex:0 0 calc(14px * var(--pc-recall-scale,1)); }
+    .pc-readiness-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pc-node-readiness:focus-visible { outline:2px solid var(--pc-accent); outline-offset:3px; }
+    .pc-readiness-diagnostics { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); }
+    .pc-decoration-compact .pc-node-readiness { padding:3px; }
+    .pc-decoration-compact:not(.pc-decoration-selected):not(:hover):not(:focus-within) .pc-readiness-label { display:none; }
+    :global([data-pc-detail="overview"]) .pc-node-profile:not(.pc-decoration-selected):not(:hover):not(:focus-within) .pc-readiness-label { display:none; }
+    :global([data-pc-detail="overview"]) .pc-node-readiness { min-width:24px; }
+    .pc-decoration-compact:is(:hover,:focus-within) .pc-node-readiness { max-width:none; }
+
     .profile-picker { position:absolute; width:100%; pointer-events:auto; }
     .profile-bar { display:flex; align-items:center; gap:7px; width:100%; padding:8px; margin:0; border:1px solid var(--pc-border); border-radius:var(--pc-r); background:var(--pc-control); color:var(--pc-text); font:inherit; font-size:12px; min-height:35px; text-align:left; cursor:pointer; appearance:none; filter:none; text-shadow:none; box-shadow:none; }
     .profile-bar:hover:enabled { background:color-mix(in srgb,var(--pc-text) 7%,var(--pc-control)); } .profile-bar:disabled { cursor:default; }

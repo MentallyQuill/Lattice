@@ -25,7 +25,7 @@ export interface ControlExecution {
     inputStates?: Readonly<Record<string, PortState>>; /** Trusted root verifies exact successful compiled results; user JSON cannot recover failed requests. */ isRecoveredIterationResult?: (result: IterationResult) => boolean; iterateHelper?: IterateHelper; request?: IterationRequest;
 }
 export const CONTROL_OPERATIONS: Record<ControlOperationId, OperationDescriptor>;
-export function describeControl(node: NativeNode | Record<string, unknown>, options?: { phase?: WorkflowPhase }): Result<OperationDescription>;
+export function describeControl(node: NativeNode | Record<string, unknown>, options?: { phase?: WorkflowPhase; authoring?: boolean }): Result<OperationDescription>;
 export function executeControl(node: NativeNode | Record<string, unknown>, inputs: Record<string, unknown>, local?: ControlExecution): Promise<OperationResult>;
 
 /** Same sparse profile/model map as subgraph overrides; local profile selectors are portable-redacted. */

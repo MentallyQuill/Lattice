@@ -29,7 +29,7 @@ export interface FileNodeExecution {
 }
 export const FILE_OPERATIONS: Record<FileOperationId, OperationDescriptor>;
 /** Native control descriptors and explicit phase-dependent ports. All operations reserve zero requests. */
-export function describeFileNode(node: NativeNode | Record<string, unknown>, options?: { phase?: WorkflowPhase }): Result<OperationDescription>;
+export function describeFileNode(node: NativeNode | Record<string, unknown>, options?: { phase?: WorkflowPhase; authoring?: boolean }): Result<OperationDescription>;
 /** Project Document is pure: source Text + records/Text emits projected text/data/receipt without authority or staging.`n * Format is pure. Read/Write use exclusively injected trusted host capabilities.
  * Format emits records/text/report. Read emits text/document/value/reference; value is skipped for plain text/Markdown, and reference.value preserves
  * the exact opaque FileReference identity. Copied/imported reference DTOs cannot authorize Write.

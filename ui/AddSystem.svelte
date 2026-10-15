@@ -4,6 +4,7 @@
  let {view,actions}:{view:AddSystemView;actions:AddSystemActions}=$props();
  let dialog:HTMLDivElement;
  onMount(()=>{const anchor=document.activeElement as HTMLElement;(dialog.querySelector<HTMLElement>('select')??dialog.querySelector<HTMLElement>('button'))?.focus({preventScroll:true});return()=>anchor?.focus({preventScroll:true});});
+ let assisting=$derived(view.mode==='assist');
  let choiceKey=$state(untrack(()=>view.choices[0]?.key??''));
  let inputs=$state<Record<string,string>>({}),outputs=$state<Record<string,string>>({}),parameters=$state<Record<string,string>>({});
  let guidancePort=$state(''),merge=$state(''),error=$state(''),preview=$state<string[]|null>(null);
@@ -19,12 +20,12 @@
  function prepare(){try{if(guidancePort&&!merge){error='Choose a Guidance merge destination.';preview=null;return;}const result=actions.preview(view.key,draft());if(!result.ok){error=result.error.message;preview=null;return;}error='';preview=[...result.data.connections,...result.data.changes.filter(c=>c.kind==='template').map(c=>c.kind==='template'?'Template: '+c.before+' → '+c.after:'')];}catch{error='Enter exposed settings as JSON values.';preview=null;}}
  function keys(event:KeyboardEvent){event.stopPropagation();if(event.key==='Escape'){event.preventDefault();actions.close();}if(event.key==='Tab'){const controls=[...dialog.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled)')],first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}}
 </script>
-<div class="pc-system-overlay"><div class="pc-system-dialog" role="dialog" aria-modal="true" aria-label="Add system" tabindex="-1" bind:this={dialog} onkeydowncapture={keys} onpaste={event=>event.stopPropagation()}>
- <header><h2>Add system</h2><button type="button" aria-label="Close Add system" onclick={()=>actions.close()}>×</button></header>
- <p>Add an editable system to Main. Connections decide what runs and what reaches the reply.</p>
+<div class="pc-system-overlay"><div class="pc-system-dialog" role="dialog" aria-modal="true" aria-label={assisting?'Configure system connections':'Add system'} tabindex="-1" bind:this={dialog} onkeydowncapture={keys} onpaste={event=>event.stopPropagation()}>
+ <header><h2>{assisting?'Configure system connections':'Add system'}</h2><button type="button" aria-label={assisting?'Close system configuration':'Close Add system'} onclick={()=>actions.close()}>×</button></header>
+ <p>{assisting?'Configure this placed system. Preview explicit connections and settings before applying them.':'Choose a saved revision to place an editable system in Main. Configure its settings and connections afterward from its context menu.'}</p>
  {#if !view.choices.length}<p>No saved reusable subgraphs are available. Save a subgraph to the shelf first.</p>{:else}
- <label>Saved system<select aria-label="Saved system" value={choiceKey} onchange={event=>choose(event.currentTarget.value)}>{#each view.choices as c}<option value={c.key}>{c.name} · revision {c.definition.version}{view.choices.filter(other=>other.name===c.name&&other.definition.version===c.definition.version).length>1 ? ' · '+c.definition.id : ''}</option>{/each}</select></label>
- {#if choice}
+ {#if assisting}<p>{choice?.name} · revision {choice?.definition.version}</p>{:else}<label>Saved system<select aria-label="Saved system" value={choiceKey} onchange={event=>choose(event.currentTarget.value)}>{#each view.choices as c}<option value={c.key}>{c.name} · revision {c.definition.version}{view.choices.filter(other=>other.name===c.name&&other.definition.version===c.definition.version).length>1 ? ' · '+c.definition.id : ''}</option>{/each}</select></label>{/if}
+ {#if assisting&&choice}
  {#each choice.inputs as port}<label>{port.label} · {port.kind}{port.required?' · required':''}<select aria-label={'System input '+port.label} value={inputs[port.id]??''} onchange={event=>{inputs={...inputs,[port.id]:event.currentTarget.value};changed();}}><option value="">{port.required?'Choose source':'Unused'}</option>{#each view.pins.filter(p=>p.direction==='output'&&p.kind===port.kind) as pin}<option value={JSON.stringify({nodeId:pin.nodeId,portId:pin.portId})}>{pin.label}</option>{/each}</select></label>{/each}
  {#each choice.parameters as parameter}<label>{parameter.label} · JSON override<input aria-label={'System setting '+parameter.label} placeholder="Use saved value" value={parameters[parameter.id]??''} oninput={event=>{parameters={...parameters,[parameter.id]:event.currentTarget.value};changed();}} /></label>{/each}
  {#if choice.outputs.some(p=>p.kind==='guidance')}<fieldset><legend>Optional reply guidance</legend><label>Guidance output<select aria-label="System Guidance output" value={guidancePort} onchange={event=>{guidancePort=event.currentTarget.value;changed();}}><option value="">Unused</option>{#each choice.outputs.filter(p=>p.kind==='guidance') as port}<option value={port.id}>{port.label}</option>{/each}</select></label>
@@ -32,11 +33,11 @@
  {#each choice.outputs.filter(port=>port.id!==guidancePort || !!outputs[port.id]) as port}<label>{port.label} · explicit {port.kind} destination<select aria-label={'System output '+port.label} value={outputs[port.id]??''} onchange={event=>{outputs={...outputs,[port.id]:event.currentTarget.value};changed();}}><option value="">Unused</option>{#each view.pins.filter(p=>p.direction==='input'&&p.kind===port.kind&&!p.occupied) as pin}<option value={JSON.stringify({nodeId:pin.nodeId,portId:pin.portId})}>{pin.label}</option>{/each}</select></label>{/each}
  {#if !choice.outputs.length}<p>This system participates through its staged state terminals.</p>{/if}
  {/if}
- <button type="button" onclick={prepare}>Preview connections</button>
- {#if preview}<div class="pc-system-preview"><h3>Connection preview</h3>{#if preview.length}<ul>{#each preview as line}<li>{line}</li>{/each}</ul>{:else}<p>State-only system; no output bindings.</p>{/if}<p>Adds {choice?.name} to Main and opens its tab. Undo removes the whole addition.</p></div>{/if}
+ {#if assisting}<button type="button" onclick={prepare}>Preview connections</button>
+ {#if preview}<div class="pc-system-preview"><h3>Connection preview</h3>{#if preview.length}<ul>{#each preview as line}<li>{line}</li>{/each}</ul>{:else}<p>No new connections.</p>{/if}<p>Applies to the placed {choice?.name} system. Undo restores its previous settings and connections.</p></div>{/if}{/if}
  {/if}
  {#if error||view.error}<p role="alert">{error||view.error}</p>{/if}
- <footer><button type="button" onclick={()=>actions.close()}>Cancel</button><button type="button" disabled={!preview} onclick={()=>actions.submit(view.key)}>Add system</button></footer>
+ <footer><button type="button" onclick={()=>actions.close()}>Cancel</button><button type="button" disabled={assisting?!preview:!choice} onclick={()=>actions.submit(view.key,assisting?undefined:choiceKey)}>{assisting?'Apply configuration':'Add system'}</button></footer>
 </div></div>
 <style>
  .pc-system-overlay{position:absolute;inset:0;z-index:80;display:grid;place-items:center;background:rgba(0,0,0,.45)}

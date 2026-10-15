@@ -70,7 +70,7 @@
         {#each groups.filter(slot => slot.value.collapsed) as slot (slot.id)}<GroupCard group={slot.value} {actions} />{/each}
     </div>
     <div class="pc-node-profile-layer">
-        {#each nodeProfiles as row (row.id)}<NodeProfilePicker {row} editProfile={actions.editProfile} refreshProfiles={actions.refreshProfiles} />{/each}
+        {#each nodeProfiles as row (row.id)}<NodeProfilePicker {row} editProfile={actions.editProfile} refreshProfiles={actions.refreshProfiles} openReadinessDetails={actions.openReadinessDetails} />{/each}
     </div>
 </div>
 <style>

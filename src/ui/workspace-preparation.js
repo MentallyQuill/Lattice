@@ -1,3 +1,4 @@
+import { prepareNodeReadiness, readinessFromIssues, summarizeReadiness } from './node-readiness.js?v=0.27.3';
 import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.27.3';
 import { projectNodeControls, detailControl } from './node-control-projection.js?v=0.27.3';
 import { preparedViewContentIdentity } from './graph-view-session.js?v=0.27.3';
@@ -10,7 +11,7 @@ import { inspectGraphArtifacts } from '../workflow/graph-artifacts.js?v=0.27.3';
 import { prepareWorkflowPlanner, preparedWorkflowSource } from '../workflow/resolve.js?v=0.27.3';
 import { prepareCompositionViews } from '../workflow/composition-views.js?v=0.27.3';
 import { prepareWorkflowProjection, projectPreparedWorkflow } from './workflow-surface.js?v=0.27.3';
-import { ARTIFACT_KINDS, OPERATIONS, operationFor, portsForNode, phaseForNode } from '../workflow/catalog.js?v=0.27.3';
+import { ARTIFACT_KINDS, OPERATIONS, operationFor, portsForNode, phaseForNode, describeAuthoredOperation } from '../workflow/catalog.js?v=0.27.3';
 import { definitionChain, ownsDefinitionPath } from '../workflow/composition-edit.js?v=0.27.3';
 import { FAMILY_PALETTE, paletteForOperation, readNodePresentation } from './node-palette.js?v=0.27.3';
 import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.3';
@@ -41,6 +42,7 @@ export function initialWorkspaceCamera(node, { width, shelf, meter } = {}) {
 export function prepareWorkspaceViews(root, options = {}) {
     const prepared = prepareWorkflowPlanner(root, options.artifacts); if (!prepared.ok) return prepared;
     const planner = prepared.data;
+    const primitiveUnits = new Map(planner.inventory.primitives.map(unit => [addressKey(unit.address), unit]));
     const primitivePhases = new Map(planner.inventory.primitives.map(unit => [addressKey(unit.address), unit.phase]));
     const composition = prepareCompositionViews(root, planner); if (!composition.ok) return composition;
     const workflow = prepareWorkflowProjection(root, { ...options, ...(planner ? { planner } : {}) });
@@ -78,8 +80,28 @@ export function prepareWorkspaceViews(root, options = {}) {
             const role = node.modelRole ?? drawBase.nativeCards[node.id]?.modelRole;
             if (Object.keys(binding).length || chain.some(owner => Object.keys(owner.node.roleOverrides?.[role] ?? {}).some(key => ['profileId','model'].includes(key) && !node[key]))) drawBase.instanceBindingSources[node.id] = true;
         }
+        const display = projectPreparedWorkflow(workflow, { viewPath: view.instancePath });
+        for (const [id, card] of Object.entries(drawBase.nativeCards)) {
+            const address = { workflowId: root.id, instancePath: [...view.instancePath], nodeId: id };
+            const issues = (card.readiness?.issues ?? []).map(issue => ({...issue,address}));
+            for(const issue of primitiveUnits.get(addressKey(address))?.setupIssues ?? [])if(!issues.some(existing=>existing.category==='setup' && existing.code===issue.code && existing.field===issue.field && existing.message===issue.message))issues.unshift({...issue,address,category:'setup'});
+            const bound = display.nodes.find(node => node.id === id);
+            if (options.resolveBinding && bound?.issue) issues.push({code:'BINDING_UNAVAILABLE',message:bound.issueDiagnostic?.message || presentDiagnostic(bound.issue).message,field:'profileId',address,category:'setup'});
+            const document = projectWorkflowData(effectiveNodes[id],options.workflowData ?? {},false,address);
+            if (document?.available && document.issue) issues.push({code:'DOCUMENT_UNAVAILABLE',message:document.issue,field:document.controlKey,address,category:'setup'});
+            const deferred = [!options.resolveBinding && bound?.requestBound ? 'Live model connection has not been evaluated.' : '',document && !document.available ? 'Live document availability has not been evaluated.' : ''].filter(Boolean);
+            card.readiness = readinessFromIssues(issues,deferred);
+        }
         return { identity, ...(view.definitionRef ? { definitionRef: view.definitionRef } : {}), readOnly: !view.editable, savedGraph: view.savedGraph, effectiveNodes, interface: view.interface, ports: view.ports, drawBase };
     });
+    // Wrappers summarize unique descendant addresses; wrapper input requirements remain their own source.
+    for (const view of [...preparedViews].sort((a,b) => (b.identity.instancePath?.length ?? 0)-(a.identity.instancePath?.length ?? 0))) {
+        const path=view.identity.instancePath ?? [];
+        for (const node of Object.values(view.drawBase.nodes)) if(node.type==='subgraph') {
+            const descendant=preparedViews.find(other => JSON.stringify(other.identity.instancePath)===JSON.stringify([...path,node.id]));
+            if(descendant && (view.drawBase.nativeCards[node.id].readiness.issues.length || Object.values(descendant.drawBase.nativeCards).some(card=>card.readiness?.issues.length))) view.drawBase.nativeCards[node.id].readiness=summarizeReadiness([view.drawBase.nativeCards[node.id].readiness,...Object.values(descendant.drawBase.nativeCards).map(card=>card.readiness)]);
+        }
+    }
     const inventory=planner.inventory;
     const idleRunRows=projectRunRows({plan:{workflowId:root.id,hierarchy:inventory.hierarchy},nodes:inventory.primitives.map(unit=>({...unit,included:unit.enabled!==false,status:'not-run',attempts:0,durationMs:null,request:null}))});
     const previewChoices = preparedViews.flatMap(view => previewChoicesFor(view, projectPreparedWorkflow(workflow, { viewPath: view.identity.instancePath ?? [] }).targets));
@@ -106,7 +128,7 @@ export function prepareNodePlacement(root, { nodeId, viewPath = [], artifacts } 
     const view = composition.data.views.find(view => samePath(view.instancePath));
     if (!view || !Object.hasOwn(view.effectiveNodes, nodeId)) return invalid();
     const unit = planner.inventory.primitives.find(unit => unit.address.nodeId === nodeId && samePath(unit.address.instancePath));
-    const graph = prepareEditorDrawBase(view, root.definitions, () => unit?.phase, nodeId);
+    const graph = prepareEditorDrawBase(view, root.definitions, () => unit?.phase, nodeId, false, {workflowId:root.id,instancePath:viewPath,setupIssues:unit?.setupIssues});
     if (!graph.nativeCards[nodeId]) return invalid();
     return { ok: true, data: { graph, node: graph.nodes[nodeId] } };
 }
@@ -129,7 +151,7 @@ export function prepareNodePlacementCard(artifacts, { nodeId, viewPath = [] } = 
     const definition = viewPath.length ? definitionChain(root, viewPath).at(-1).definition : null;
     const view = { savedGraph: definition?.body ?? root, effectiveNodes: scope.graph.nodes, interface: definition?.interface ?? [], editable: !viewPath.length || ownsDefinitionPath(root, viewPath) };
     const unit = owned.checked.data.primitives.find(unit => unit.address.nodeId === nodeId && samePath(unit.address.instancePath));
-    const graph = prepareEditorDrawBase(view, root.definitions, () => unit?.phase, nodeId, true);
+    const graph = prepareEditorDrawBase(view, root.definitions, () => unit?.phase, nodeId, true, {workflowId:root.id,instancePath:viewPath,setupIssues:unit?.setupIssues});
     if (!graph.nativeCards[nodeId]) return invalid();
     return { ok: true, data: structuredClone(nodeCard(graph.nodes[nodeId], { graph })) };
 }
@@ -165,14 +187,16 @@ export function projectNodeProfiles(editor, workflow, revision) {
     return Object.values(editor.prepared.effectiveNodes).flatMap(node => {
         const op = operationFor(node), bound = op?.requestBound;
         const requestBound = typeof bound === 'function' ? bound(node) : bound || 0;
-        if (!requestBound) return [];
+        const hasProfile = !!requestBound;
+        const readiness=editor.prepared.drawBase.nativeCards[node.id]?.readiness;
+        if(!hasProfile && (!readiness || readiness.state==='ready'))return [];
         const prepared = library ? null : workflow.nodes.find(row => row.id === node.id);
-        const role = node.modelRole ?? op.modelRole;
+        const role = node.modelRole ?? op?.modelRole;
         const value = prepared?.profileId ?? node.profileId ?? editor.prepared.savedGraph.roles?.[role]?.profileId ?? '';
         const option = available.find(option => option.value === value);
-        const model = prepared?.model || node.model || prepared?.resolvedModel || (option ? option.model : '') || '';
+        const model = hasProfile ? prepared?.model || node.model || prepared?.resolvedModel || (option ? option.model : '') || '' : '';
         const address = library ? { kind: 'library', definitionRef: editor.prepared.definitionRef, nodeId: node.id } : { workflowId: workflow.graphId, instancePath: [...path], nodeId: node.id };
-        return [{ id: node.id, selection: { selectionKey: JSON.stringify([editor.view.key, node.id]), revision, address }, value, label: option?.label || (value ? 'Unavailable connection · ' + value : 'Choose a connection'), model, editable: !library, options: available }];
+        return [{ id: node.id, selection: { selectionKey: JSON.stringify([editor.view.key, node.id]), revision, address }, value, label: option?.label || (value ? 'Unavailable connection · ' + value : 'Choose a connection'), model, editable: !library, hasProfile, readiness, compact: readNodePresentation(node).compact, options: available }];
     });
 }
 
@@ -249,12 +273,12 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
             const interfacePort = metadata?.boundary ? editor.prepared.interface.find(port => port.id === saved?.interfacePortId && port.boundaryNodeId === selectedId) : null;
             const boundary = interfacePort ? { id: interfacePort.id, label: interfacePort.label, direction: interfacePort.direction, kind: interfacePort.kind, required: interfacePort.required, kinds: [...ARTIFACT_KINDS] } : null;
             const commentDetails = isCommentFrame(saved) ? { selection, comment: { id: saved.id, x: saved.x, y: saved.y, w: saved.w, h: saved.h, title: saved.title ?? 'Comment', content: saved.content ?? '', color: saved.color ?? '#637d89', moveContents: saved.moveContents !== false, selected: true, readOnly: editor.readOnly || library } } : null;
-            const nodeDetails = saved && metadata && !commentDetails ? { ...selection, guideKey, guideCard, title: boundary?.label ?? (presentation.alias || (typeof saved.title === 'string' ? saved.title : metadata.canonicalTitle)), canonicalTitle: metadata.canonicalTitle, operation: saved.operation, system: saved.type === 'subgraph', iconPath: metadata.iconPath, family: metadata.family, familyColor: metadata.familyColor, phase: effective?.phase ?? phaseForNode(graph,saved) ?? metadata.phase ?? graph.mode.slice(7), phaseEditable: graph.mode === 'native-unified' && OPERATIONS[saved.operation]?.phase === 'both', alias: presentation.alias, compact: presentation.compact, enabled: saved.enabled !== false, readOnly: editor.readOnly || library, canPresent: true, controls, ...(fileInput ? { fileInput } : {}), ...(boundary ? { boundary } : {}),
+            const nodeDetails = saved && metadata && !commentDetails ? { ...selection, guideKey, guideCard, title: boundary?.label ?? (presentation.alias || (typeof saved.title === 'string' ? saved.title : metadata.canonicalTitle)), canonicalTitle: metadata.canonicalTitle, operation: saved.operation, system: saved.type === 'subgraph', iconPath: metadata.iconPath, family: metadata.family, familyColor: metadata.familyColor, phase: effective?.phase ?? phaseForNode(graph,saved) ?? metadata.phase ?? graph.mode.slice(7), phaseEditable: graph.mode === 'native-unified' && phaseForNode(graph,{...saved,phase:'pre'}) === 'pre' && phaseForNode(graph,{...saved,phase:'post'}) === 'post', alias: presentation.alias, compact: presentation.compact, enabled: saved.enabled !== false, readOnly: editor.readOnly || library, canPresent: true, controls, ...(fileInput ? { fileInput } : {}), ...(boundary ? { boundary } : {}),
                 model: metadata.modelRole && (effective?.effective !== 'No model call' || saved.model || saved.profileId || Object.keys(editor?.prepared.drawBase.bindingBlocks?.[selectedId] ?? {}).length) ? { role: saved.modelRole ?? metadata.modelRole, roleEditable: true, editable: !library, profileDefaultModel: editor.prepared.drawBase.profileDefaultModels?.[selectedId] ?? !!saved.profileId, profile: field('profileId', workflow.profiles.map(profile => ({ value: profile.id, label: profile.name }))), model: field('model'), effective: effective?.effective || (library ? [editor.prepared.effectiveNodes[selectedId]?.profileId ?? graph.roles?.[saved.modelRole ?? metadata.modelRole]?.profileId,editor.prepared.effectiveNodes[selectedId]?.model ?? graph.roles?.[saved.modelRole ?? metadata.modelRole]?.model].filter(Boolean).join(' · ') : ''), source: editor.prepared.drawBase.instanceBindingSources?.[selectedId] ? 'Containing instance override' : saved.profileId || saved.model ? 'Node override' : 'Inherited from ' + (saved.modelRole ?? metadata.modelRole), ...(effective?.issue ? {issue: effective.issue} : {}) } : null,
                 helperBindings: saved.operation === 'for-each' ? { ...editor.prepared.drawBase.iterationBindings?.[selectedId], editable: !(editor.readOnly || library) } : null,
                 ...(workflowData ? { workflowData } : {}),
                 modifiers: modifierView(saved, metadata, !(editor.readOnly || library)),
-                ports: fields.ports, issues: [] } : null;
+                ports: fields.ports, readiness: metadata.readiness, issues: [] } : null;
             if (nodeDetails?.model && effective?.issueDiagnostic) nodeDetails.model.issueDiagnostic = effective.issueDiagnostic;
             if (nodeDetails) nodeDetails.editorContractKey = detailsEditorContractKey(nodeDetails);
             return { nodeDetails, commentDetails, fields };
@@ -318,7 +342,7 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
     return { nodeDetails, commentDetails, outputPreview, runDetails, runMeter };
 }
 
-function prepareEditorDrawBase(view, snapshots, compiledPhase = () => undefined, onlyNodeId, cardOnly = false) {
+function prepareEditorDrawBase(view, snapshots, compiledPhase = () => undefined, onlyNodeId, cardOnly = false, readinessContext = {workflowId:view.savedGraph.id || '',instancePath:view.instancePath ?? []}) {
         // Clone effective nodes once; authored nodes were previously copied only
         // to be discarded. Measurement prepares metadata for its one node.
         const nodes = onlyNodeId === undefined ? view.effectiveNodes : { [onlyNodeId]: view.effectiveNodes[onlyNodeId] };
@@ -342,19 +366,25 @@ function prepareEditorDrawBase(view, snapshots, compiledPhase = () => undefined,
             if (typeof node.title !== 'string') delete node.title;
             node.x ??= 40 + index % 3 * 240; node.y ??= 40 + Math.floor(index++ / 3) * 160;
             const phase = compiledPhase(node.id) ?? phaseForNode(view.savedGraph, node);
-            const operation = operationFor(node, { phase, mode: view.savedGraph.mode });
+            const authored = node.type === 'workflow' ? describeAuthoredOperation(metadata, node) : null;
+            const operation = authored?.ok ? authored.data.descriptor : operationFor(node, { phase, mode: view.savedGraph.mode });
             const wrapper = node.type === 'subgraph', boundary = ['subgraph-input', 'subgraph-output'].includes(node.type);
-            if (node.type === 'note') { drawBase.nativeCards[node.id] = { canonicalTitle: 'Note', family: 'Organization', familyColor: '#a3aa99', iconPath: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5', body: typeof node.content === 'string' ? node.content : '', ports: [], hostResult: false, defaults: {}, controlDescriptors: {}, modelRole: null }; continue; }
+            if (node.type === 'note') { drawBase.nativeCards[node.id] = { canonicalTitle: 'Note', family: 'Organization', familyColor: '#a3aa99', iconPath: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5', body: typeof node.content === 'string' ? node.content : '', ports: [], hostResult: false, defaults: {}, controlDescriptors: {}, modelRole: null, readiness:readinessFromIssues([]) }; continue; }
             if (!operation && !wrapper && !boundary) continue;
-            const actualPorts = portsForNode(metadata, node), rows = { in: 0, out: 0 };
+            const actualPorts = authored?.ok ? authored.data.ports : portsForNode(metadata, node), rows = { in: 0, out: 0 };
             const interfacePort = boundary ? view.interface.find(port => port.id === node.interfacePortId && port.boundaryNodeId === node.id) : null;
             const title = operation?.title || (wrapper ? snapshots?.[JSON.stringify([node.definition.id, node.definition.version, node.definition.semanticHash])]?.name || 'Subgraph' : interfacePort?.label || node.interfacePortId);
             const family = operation?.family || 'Subgraphs', palette = FAMILY_PALETTE.find(item => item.name === family), discovery = paletteForOperation(node.operation);
+            const readiness = prepareNodeReadiness({address:{workflowId:readinessContext.workflowId,instancePath:[...readinessContext.instancePath],nodeId:node.id},setupIssues:readinessContext.setupIssues ?? (authored?.ok ? authored.data.setupIssues : []),ports:actualPorts,wires:view.savedGraph.wires ?? {}});
+            const requestBound=typeof operation?.requestBound==='function'?operation.requestBound(node):operation?.requestBound;
+            if(requestBound && operation?.modelRole)readiness.deferred.push('Live model connection has not been evaluated.');
+            if(projectWorkflowData(node,{},false))readiness.deferred.push('Live document availability has not been evaluated.');
             drawBase.nativeCards[node.id] = { canonicalTitle: title, ...(phase || operation?.phase ? { phase: phase ?? operation.phase } : {}), ...(operation?.requestCapability ? { requestCapability: operation.requestCapability } : {}), family, familyColor: palette?.color || '#a3aa99', iconPath: wrapper ? palette?.icon : boundary ? paletteForOperation(node.type).icon : discovery.icon,
-                body: wrapper ? 'Open the pinned subgraph' : boundary ? 'Definition interface' : operation.title,
+                readiness,
+                body: wrapper ? 'Open the pinned subgraph'  : boundary ? 'Definition interface' : operation.title,
                 hostResult: !!operation?.terminal, modifierSummary: modifierSummary(node.modifiers ?? []), ...(cardOnly ? {} : { controlDescriptors: structuredClone(operation?.controlDescriptors ?? {}), defaults: structuredClone(operation?.defaults ?? {}) }), modelRole: operation?.modelRole ?? null,
                 ...(interfacePort ? { boundary: { direction: interfacePort.direction, editable: view.editable === true } } : {}),
-                ports: actualPorts.map(port => { const dir = port.direction === 'input' ? 'in' : 'out'; return { id: `${dir}:${port.id}`, port: port.id, dir, side: dir === 'in' ? 'left' : 'right', row: ++rows[dir], kind: port.kind, label: port.label, className: `pc-port pc-port-${dir}`, title: `${port.label}: ${port.kind}` }; }) };
+                ports: actualPorts.map(port => { const dir = port.direction === 'input' ? 'in' : 'out'; return { id: `${dir}:${port.id}`, port: port.id, dir, side: dir === 'in' ? 'left' : 'right', row: ++rows[dir], kind: port.kind, label: port.label, className: `pc-port pc-port-${dir}${readiness.issues.some(issue=>issue.category==='input' && issue.portId===port.id) ? ' pc-pin-input-required' : ''}`, title: `${port.label}: ${port.kind}${readiness.issues.some(issue=>issue.category==='input' && issue.portId===port.id) ? ' � Input Required' : ''}` }; }) };
         }
 
     if (!cardOnly) drawBase.nativeAttachments = prepareEndpointAttachments(drawBase);
@@ -432,6 +462,19 @@ export function prepareLibraryViews(workflowId, snapshots) {
         const view={savedGraph:actual.body,effectiveNodes:scope.graph.nodes,interface:actual.interface};
         navigation.push({identity,label:actual.name,readOnly:true});
         const drawBase=prepareEditorDrawBase(view,snapshots);drawBase.iterationBindings={};
+        for(const [nodeId,card] of Object.entries(drawBase.nativeCards)) {
+            const external=new Set(actual.parameters.filter(parameter=>!parameter.target.instancePath.length && parameter.target.nodeId===nodeId).map(parameter=>parameter.target.controlId));
+            card.readiness=readinessFromIssues((card.readiness?.issues ?? []).filter(issue=>!(issue.category==='setup' && external.has(issue.field))).map(issue=>({...issue,address:{kind:'library',definitionRef:ref,nodeId}})),card.readiness?.deferred ?? []);
+        }
+        for(const unit of expansion.primitives) {
+            const path=unit.address.instancePath;
+            const scope=expansion.scopes.find(scope=>JSON.stringify(scope.instancePath)===JSON.stringify(path));
+            const external=new Set(actual.parameters.filter(parameter=>JSON.stringify(parameter.target.instancePath)===JSON.stringify(path) && parameter.target.nodeId===unit.address.nodeId).map(parameter=>parameter.target.controlId));
+            const readiness=prepareNodeReadiness({address:unit.address,setupIssues:(unit.setupIssues ?? []).filter(issue=>!external.has(issue.field)),ports:unit.inputPorts,wires:scope?.graph.wires ?? {}});
+            readiness.issues=readiness.issues.map(issue=>({...issue,address:{kind:'library',definitionRef:ref,instancePath:[...path],nodeId:unit.address.nodeId}}));
+            if(path.length && drawBase.nativeCards[path[0]])drawBase.nativeCards[path[0]].readiness=summarizeReadiness([drawBase.nativeCards[path[0]].readiness,readiness]);
+            else if(drawBase.nativeCards[unit.address.nodeId])drawBase.nativeCards[unit.address.nodeId].readiness=readinessFromIssues(readiness.issues,drawBase.nativeCards[unit.address.nodeId].readiness.deferred);
+        }
         for(const node of Object.values(actual.body.nodes))if(node.operation==='for-each')drawBase.iterationBindings[node.id]=prepareIterationBindings(node,snapshots,prepareNodeProfileOptions().map(option=>({id:option.value,name:option.label})),scope.graph.roles??{});
         preparedViews.push({identity,definitionRef:ref,readOnly:true,...view,ports,drawBase});
     }

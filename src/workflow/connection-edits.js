@@ -2,7 +2,7 @@ import { ownJsonData } from './semantic-json-data.js?v=0.27.3';
 import { cloneDefinitionData, definitionRefKey } from './definitions.js?v=0.27.3';
 import { prepareGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.27.3';
 import { cloneWorkflowDocument } from './document.js?v=0.27.3';
-import { ARTIFACT_KINDS, OPERATIONS, describeOperation, operationDefaults, operationFor, portsForNode } from './catalog.js?v=0.27.3';
+import { ARTIFACT_KINDS, OPERATIONS, describeAuthoredOperation, operationDefaults, operationFor, portsForNode } from './catalog.js?v=0.27.3';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.3';
 import { INTROSPECTION_NATIVE_OPERATIONS } from './introspection/native.js?v=0.27.3';
 import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.3';
@@ -164,7 +164,7 @@ function create(context, command) {
     if (command.operation === 'reroute') Object.assign(node, { artifactKind: command.artifactKind, compact: true });
     if(command.phase!==undefined)node.phase=command.phase;
     else if(OPERATIONS[command.operation].minimumSchema===3&&context.scope.mode!=='native-unified'||command.operation==='reroute'&&context.scope.mode!=='native-unified')node.phase=context.scope.mode.slice(7);
-    const described = describeOperation(context.metadata(), node);
+    const described = describeAuthoredOperation(context.metadata(), node);
     if (!described.ok) return described;
     // Configured modes can introduce a model call absent from registration defaults.
     node.modelRole = described.data.descriptor.modelRole;

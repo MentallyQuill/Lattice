@@ -37,5 +37,5 @@ export function parseEffectLibrary(raw: unknown, settings?: EffectLibrarySetting
 export function validateRandomOutcome(raw:unknown):Promise<Result<{outcome:RandomOutcome}>>;
 export function selectRandomOutcomes(events: unknown, library: unknown, saved?: unknown, ports?: RandomPorts): Promise<Result<{ outcomes: RandomOutcome[]; draws: number; actualCalls: 0 }>>;
 export const RANDOM_OPERATIONS: Record<RandomOperationId, OperationDescriptor>;
-export function describeRandom(node: NativeNode | Record<string,unknown>, options?: { phase?: WorkflowPhase }): WorkflowResult<OperationDescription>;
+export function describeRandom(node: NativeNode | Record<string,unknown>, options?: { phase?: WorkflowPhase; authoring?: boolean }): WorkflowResult<OperationDescription>;
 export function executeRandom(node: NativeNode | Record<string,unknown>, inputs: Record<string,unknown>, local?: RandomExecution): Promise<OperationResult>;

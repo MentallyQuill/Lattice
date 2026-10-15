@@ -1,0 +1,2 @@
+export interface ReadinessIssue { code:string; message:string; field?:string; portId?:string; category:'setup'|'input'; address: {workflowId:string;instancePath:string[];nodeId:string} | {kind:'library';definitionRef:{id:string;version:number;semanticHash:string};nodeId:string;instancePath?:string[]} }
+export interface NodeReadiness {state:'ready'|'setup'|'input';label:string;issues:ReadinessIssue[];deferred:string[];description:string;setup?:number;input?:number}

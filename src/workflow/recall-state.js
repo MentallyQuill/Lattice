@@ -13,10 +13,8 @@ export function validateRecallScope(raw){const value=checked(raw);return exact(v
 export function validateRecallQueueProposal(raw){
  const value=checked(raw);
  if(!exact(value,['schemaVersion','type','actorId','memorySetId','target','uses','consumeOn','hotkey'])||value.schemaVersion!==1||value.type!=='recall-arm-proposal'||!id(value.actorId)||!id(value.memorySetId)||!targets.includes(value.target)||!uses.includes(value.uses)||!['success','accepted'].includes(value.consumeOn))return fail('INVALID_RECALL_QUEUE','Use a bounded recall proposal with explicit target and consumption policy.');
- const hotkey=value.hotkey;
- if(!exact(hotkey,['code','ctrl','alt','shift','meta'])||typeof hotkey.code!=='string'||!(/^(Key[A-Z]|Digit[0-9]|F([1-9]|1[0-2]))$/u).test(hotkey.code)||['ctrl','alt','shift','meta'].some(key=>typeof hotkey[key]!=='boolean'))return fail('INVALID_RECALL_HOTKEY','Select a physical key with Control, Alt or Meta, or a function key.');
- if(hotkey.code==='KeyR')return fail('RECALL_HOTKEY_CONFLICT','R is reserved for Run to here. Choose a different key.');
- if(!hotkey.ctrl&&!hotkey.alt&&!hotkey.meta&&!/^F/u.test(hotkey.code))return fail('INVALID_RECALL_HOTKEY','Select a physical key with Control, Alt or Meta, or a function key.');
+ const checkedHotkey=validateRecallHotkey(value.hotkey);if(!checkedHotkey.ok)return checkedHotkey;
+ const hotkey=checkedHotkey.data;
  return good({schemaVersion:1,type:'recall-arm-proposal',actorId:value.actorId,memorySetId:value.memorySetId,target:value.target,uses:value.uses,consumeOn:value.consumeOn,hotkey:{code:hotkey.code,ctrl:hotkey.ctrl,alt:hotkey.alt,shift:hotkey.shift,meta:hotkey.meta}});
 }
 function automaticTrigger(raw){const value=checked(raw);return exact(value,['kind','sourceId','revision','eventIds'])&&['keyword','event','character'].includes(value.kind)&&id(value.sourceId)&&id(value.revision)&&Array.isArray(value.eventIds)&&value.eventIds.length<=64&&value.eventIds.every(eventId)&&new Set(value.eventIds).size===value.eventIds.length?good(value):fail('INVALID_RECALL_TRIGGER','Recall activation needs bounded distinct source and event identities.');}
@@ -123,4 +121,13 @@ export function createRecallState(ports){
  const inspect=()=>{const fresh=authority();return fresh.ok?good({scope,requests:[...requests.values()].map(requestView),activationCount:claims.size}):fresh;};
  const release=()=>{released=true;requests.clear();claims.clear();};
  return {ok:true,data:Object.freeze({current,queue,changeQueues,activate,checkClaim,settle,releaseClaim,cancel,inspect,release})};
+}
+
+/** Shared bounded shortcut shape, independent of actor and memory selection. */
+export function validateRecallHotkey(hotkey){
+
+ if(!exact(hotkey,['code','ctrl','alt','shift','meta'])||typeof hotkey.code!=='string'||!(/^(Key[A-Z]|Digit[0-9]|F([1-9]|1[0-2]))$/u).test(hotkey.code)||['ctrl','alt','shift','meta'].some(key=>typeof hotkey[key]!=='boolean'))return fail('INVALID_RECALL_HOTKEY','Select a physical key with Control, Alt or Meta, or a function key.');
+ if(hotkey.code==='KeyR')return fail('RECALL_HOTKEY_CONFLICT','R is reserved for Run to here. Choose a different key.');
+ if(!hotkey.ctrl&&!hotkey.alt&&!hotkey.meta&&!/^F/u.test(hotkey.code))return fail('INVALID_RECALL_HOTKEY','Select a physical key with Control, Alt or Meta, or a function key.');
+ return good(hotkey);
 }

@@ -63,7 +63,7 @@ test('occupied generator and occupied destination never replace bindings or muta
     assert.equal(api.prepareAddSystem(graph, command(helper(), { guidance: undefined, outputs: [{ outputPortId: 'guidance', destination: { nodeId: 'generate', portId: 'guidance' } }] })).error.code, 'AMBIGUOUS_INPUT');
     assert.deepEqual(graph, before);
 });
-test('required typed system inputs are explicit and invalid commands leave the source untouched', () => {
+test('required typed system inputs can remain unbound at placement and invalid commands leave the source untouched', () => {
     const original = helper(), draft = structuredClone(original);
     delete draft.semanticHash;
     draft.interface.push({ id: 'data', label: 'Data', direction: 'input', kind: 'data', required: true, cardinality: 'one', boundaryNodeId: 'input' });
@@ -71,7 +71,9 @@ test('required typed system inputs are explicit and invalid commands leave the s
     const identity = computeDefinitionIdentity(draft);
     const definition = { ...identity.data.materializedDefinition, semanticHash: identity.data.semanticHash };
     const graph = root(), before = structuredClone(graph);
-    assert.equal(api.prepareAddSystem(graph, command(definition)).error.code, 'REQUIRED_INPUT');
+    const placed = api.prepareAddSystem(graph, command(definition, { guidance: undefined }));
+    assert.equal(placed.ok, true, JSON.stringify(placed));
+    assert.equal(Object.values(placed.data.candidate.wires).some(w => w.to === placed.data.instanceId), false);
     assert.equal(api.prepareAddSystem(graph, command(definition, { inputs: { data: { nodeId: 'send', portId: 'draft' } } })).ok, false);
     assert.deepEqual(graph, before);
 });
@@ -190,4 +192,89 @@ test('admitted Add system inspection preserves immutable artifacts and exact liv
  const foreign=structuredClone(graph),foreignContext=captureGraphEditContext(foreign,current).data;
  assert.equal(commitPreparedGraph(foreign,{...edit.data,context:foreignContext}).ok,false,'checked insertion belongs to the original live root');
  assert.equal(commitPreparedGraph(graph,{...edit.data,context:captured}).ok,true,'inspecting a frozen snapshot must not rebind commit ownership');
+});
+
+
+test('bare saved-system placement retains exact closure and defaults in an editable local instance without connecting guidance', () => {
+    const graph = root(), definition = helper();
+    const result = api.prepareAddSystem(graph, { definition, snapshots: {}, graphPoint: { x: 100, y: 100 } });
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(ownsDefinitionPath(result.data.candidate, [result.data.instanceId]), true);
+    assert.deepEqual(result.data.candidate.definitions[definitionRefKey(definition)], definition);
+    assert.deepEqual(result.data.candidate.wires, graph.wires);
+    assert.equal(Object.values(result.data.candidate.nodes).filter(n => n.type === 'subgraph').length, 1);
+});
+
+test('later assistance targets the placed instance and has separate Undo, cancellation and stale-preview boundaries', async () => {
+    const { captureGraphEditContext, commitPreparedGraph } = await import('../src/workflow/transactions.js');
+    const H = await import('../src/history.js?v=0.27.3');
+    const graph = root(), initial = structuredClone(graph), current = () => ({ sessionId: 'assist', viewPath: [], readOnly: false });
+    H.track(graph);
+    const placement = api.prepareAddSystem(graph, command(helper(), { guidance: undefined }));
+    assert.equal(placement.ok, true, JSON.stringify(placement));
+    assert.equal(commitPreparedGraph(graph, { ...placement.data, context: captureGraphEditContext(graph, current).data }).ok, true);
+    const placed = structuredClone(graph), instanceId = placement.data.instanceId;
+    assert.equal(typeof api.prepareSystemAssistance, 'function', 'existing-instance assistance exists');
+    const context = captureGraphEditContext(graph, current).data;
+    const assisted = api.prepareSystemAssistance(graph, { instanceId, expectedInstanceRef: graph.nodes[instanceId].definition, graphPoint: { x: 100, y: 100 }, inputs: {}, outputs: [], parameterOverrides: {}, guidance: { outputPortId: 'guidance', destination: { kind: 'new-compose' } } });
+    assert.equal(assisted.ok, true, JSON.stringify(assisted));
+    assert.deepEqual(graph, placed, 'preview or cancellation leaves the placed instance intact');
+    assert.equal(Object.values(assisted.data.candidate.nodes).filter(n => n.type === 'subgraph').length, 1);
+    assert.deepEqual(assisted.data.candidate.nodes[instanceId].definition, graph.nodes[instanceId].definition);
+    assert.equal(commitPreparedGraph(graph, { ...assisted.data, context }).ok, true);
+    assert.ok(H.undo(graph)); assert.deepEqual(graph, placed, 'first Undo removes assistance only');
+    assert.ok(H.undo(graph)); assert.deepEqual(graph, initial, 'second Undo removes placement');
+    assert.ok(H.redo(graph));
+    const staleContext = captureGraphEditContext(graph, current).data;
+    const stale = api.prepareSystemAssistance(graph, { instanceId, expectedInstanceRef: graph.nodes[instanceId].definition, graphPoint: { x: 100, y: 100 }, inputs: {}, outputs: [], parameterOverrides: {}, guidance: { outputPortId: 'guidance', destination: { kind: 'new-compose' } } });
+    assert.equal(stale.ok, true, JSON.stringify(stale));
+    graph.description = 'Changed after preview'; const changed = structuredClone(graph);
+    assert.equal(commitPreparedGraph(graph, { ...stale.data, context: staleContext }).error.code, 'STALE_DOCUMENT');
+    assert.deepEqual(graph, changed);
+});
+
+
+test('assistance rejects malformed exact pins and occupied destinations without changing the placed system', () => {
+    const placement = api.prepareAddSystem(root(), command(helper(), { guidance: undefined }));
+    const graph = placement.data.candidate, instanceId = placement.data.instanceId;
+    graph.nodes.existing = node('existing', 'compose', { outputKind: 'guidance' });
+    graph.wires.guidance = wire('guidance', 'existing', 'out', 'generate', 'guidance');
+    const before = structuredClone(graph);
+    const base = { instanceId, expectedInstanceRef: graph.nodes[instanceId].definition, graphPoint: { x: 0, y: 0 } };
+    assert.equal(api.prepareSystemAssistance(graph, { ...base, expectedInstanceRef: { ...base.expectedInstanceRef, extra: true } }).ok, false, 'only an exact reference shape is accepted');
+    assert.equal(api.prepareSystemAssistance(graph, { ...base, outputs: [{ outputPortId: 'guidance', destination: { nodeId: 'generate', portId: 'guidance' } }] }).error.code, 'AMBIGUOUS_INPUT');
+    assert.equal(api.prepareSystemAssistance(graph, { ...base, guidance: { outputPortId: 'guidance', destination: { kind: 'new-compose' } } }).error.code, 'OCCUPIED_GUIDANCE');
+    assert.deepEqual(graph, before);
+});
+
+test('default exposed settings survive placement and later overrides configure the existing wrapper', () => {
+    const draft = structuredClone(helper()); delete draft.semanticHash;
+    draft.parameters = [{ id: 'separator', label: 'Separator', target: { instancePath: [], nodeId: 'compose', controlId: 'separator' } }];
+    draft.body.nodes.compose.separator = ' | ';
+    const checked = computeDefinitionIdentity(draft); assert.equal(checked.ok, true, JSON.stringify(checked));
+    const definition = { ...checked.data.materializedDefinition, semanticHash: checked.data.semanticHash };
+    const placed = api.prepareAddSystem(root(), { definition, snapshots: {}, graphPoint: { x: 0, y: 0 } }); assert.equal(placed.ok, true, JSON.stringify(placed));
+    const graph = placed.data.candidate, instanceId = placed.data.instanceId, ref = graph.nodes[instanceId].definition;
+    assert.equal(graph.definitions[definitionRefKey(ref)].body.nodes.compose.separator, ' | ');
+    assert.deepEqual(graph.nodes[instanceId].parameterOverrides, {});
+    const assisted = api.prepareSystemAssistance(graph, { instanceId, expectedInstanceRef: ref, graphPoint: { x: 0, y: 0 }, parameterOverrides: { separator: ' / ' } });
+    assert.equal(assisted.ok, true, JSON.stringify(assisted));
+    assert.deepEqual(assisted.data.candidate.nodes[instanceId].parameterOverrides, { separator: ' / ' });
+    assert.deepEqual(assisted.data.candidate.nodes[instanceId].definition, ref);
+    assert.deepEqual(assisted.data.addedNodeIds, []);
+    assert.deepEqual(assisted.data.addedEdgeIds, []);
+});
+
+
+test('system chooser and explicit guidance routes remain available beside included incomplete settings', async () => {
+    const { resolveWorkflow } = await import('../src/workflow/resolve.js');
+    const graph = root(); graph.nodes.shortcut = node('shortcut', 'hotkey-arm');
+    graph.wires.send = wire('send', 'shortcut', 'proposal', 'generate', 'activation');
+    assert.equal(resolveWorkflow(graph).ok, false, 'incomplete shortcut blocks execution');
+    const projected = api.projectSystemAuthoring(graph, [{ definition: helper(), snapshots: {} }]);
+    assert.equal(projected.ok, true, JSON.stringify(projected));
+    assert.equal(projected.data.choices[0].name, 'Weather');
+    assert.equal(projected.data.canCreate, true);
+    const placed = api.prepareAddSystem(graph, { definition: helper(), snapshots: {}, graphPoint: { x: 0, y: 0 } });
+    assert.equal(placed.ok, true, JSON.stringify(placed));
 });

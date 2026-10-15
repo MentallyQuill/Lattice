@@ -730,3 +730,12 @@
 
 .pc-recall-status-space { height:26px; pointer-events:none; }
 @media(pointer:coarse) { .pc-recall-status-space { height:46px; } }
+
+/* Authoring readiness is independent of disabled and execution state. */
+:root .pc-root .pc-node-native.pc-setup-required { border-color:var(--pc-error); }
+:root .pc-root .pc-node-native.pc-input-required { border-color:var(--pc-warning,#e9b450); }
+:root .pc-root .pc-node-native:is(.pc-setup-required,.pc-input-required):is(.pc-selected,.pc-multi,:focus-visible) { outline:2px solid var(--pc-accent); outline-offset:3px; }
+:root .pc-root .pc-node-native:is(.pc-setup-required,.pc-input-required).pc-trace-running { box-shadow:0 0 0 3px var(--pc-flow); }
+:root .pc-root .pc-node-native.pc-setup-required.pc-off { border-style:dashed; }
+
+:root .pc-root .pc-port.pc-pin-input-required { color:var(--pc-warning,#e9b450); }

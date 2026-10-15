@@ -6,28 +6,30 @@ import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.3';
 import { compositionIds, safeId } from './composition-edit.js?v=0.27.3';
 import { selectSubgraphClosure } from './packages.js?v=0.27.3';
 import { OPERATIONS, portsForNode } from './catalog.js?v=0.27.3';
-import { resolveWorkflow } from './resolve.js?v=0.27.3';
 import { artifactAddressKey } from './definition-data.js?v=0.27.3';
-import { nodeAddressKey } from './graph-validation.js?v=0.27.3';
+import { inspectExpandedGraph, nodeAddressKey } from './graph-validation.js?v=0.27.3';
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const only = (value, keys) => record(value) && Object.keys(value).every(key => keys.includes(key));
 const endpoint = value => only(value, ['nodeId', 'portId']) && safeId(value.nodeId) && safeId(value.portId);
-function parsed(input) {
+function parsed(input, existing = false) {
     const admitted = cloneDefinitionData(input);
     if (!admitted.ok)
         return admitted;
-    const c = admitted.data;
-    if (!only(c, ['definition', 'snapshots', 'graphPoint', 'inputs', 'outputs', 'parameterOverrides', 'guidance']) || !record(c.definition) || !record(c.snapshots) || !only(c.graphPoint, ['x', 'y']) || !Number.isFinite(c.graphPoint.x) || !Number.isFinite(c.graphPoint.y) || !record(c.inputs) || !Object.entries(c.inputs).every(([id, e]) => safeId(id) && endpoint(e)) || !Array.isArray(c.outputs) || !c.outputs.every(o => only(o, ['outputPortId', 'destination']) && safeId(o.outputPortId) && endpoint(o.destination)) || !record(c.parameterOverrides))
+    const c = { inputs: {}, outputs: [], parameterOverrides: {}, ...admitted.data };
+    if (!only(c, ['definition', 'snapshots', 'graphPoint', 'inputs', 'outputs', 'parameterOverrides', 'guidance', ...(existing ? ['instanceId', 'expectedInstanceRef'] : [])]) || (existing ? !safeId(c.instanceId) || !only(c.expectedInstanceRef, ['id', 'version', 'semanticHash']) : !record(c.definition) || !record(c.snapshots)) || !only(c.graphPoint, ['x', 'y']) || !Number.isFinite(c.graphPoint.x) || !Number.isFinite(c.graphPoint.y) || !record(c.inputs) || !Object.entries(c.inputs).every(([id, e]) => safeId(id) && endpoint(e)) || !Array.isArray(c.outputs) || !c.outputs.every(o => only(o, ['outputPortId', 'destination']) && safeId(o.outputPortId) && endpoint(o.destination)) || !record(c.parameterOverrides))
         return fail('INVALID_COMMAND', 'Choose a saved system and explicit typed bindings.');
     if (c.guidance !== undefined && (!only(c.guidance, ['outputPortId', 'destination']) || !safeId(c.guidance.outputPortId) || !(only(c.guidance.destination, ['kind']) && c.guidance.destination.kind === 'new-compose' || only(c.guidance.destination, ['kind', 'nodeId']) && c.guidance.destination.kind === 'existing-compose' && safeId(c.guidance.destination.nodeId))))
         return fail('INVALID_COMMAND', 'Choose an explicit Guidance merge.');
     return { ok: true, data: c };
 }
 /** Pure atomic root producer; continuation authorization and history stay with the controller. */
-export function prepareAddSystem(root, input) {
+export function prepareAddSystem(root, input) { return prepareSystemEdit(root, input, false); }
+/** Preview explicit settings and connections on a previously placed instance. */
+export function prepareSystemAssistance(root, input) { return prepareSystemEdit(root, input, true); }
+function prepareSystemEdit(root, input, existing) {
     try {
-        const parsedCommand = parsed(input);
+        const parsedCommand = parsed(input, existing);
         if (!parsedCommand.ok)
             return parsedCommand;
         const admitted = prepareGraphArtifacts(root);
@@ -36,13 +38,12 @@ export function prepareAddSystem(root, input) {
         const c = parsedCommand.data;
         if (original.schema !== 3 || original.runtime !== 2 || original.mode !== 'native-unified')
             return fail('WRONG_PHASE', 'Add systems to a unified Main workflow.');
-        const closure = selectSubgraphClosure(c.definition, c.snapshots);
-        if (!closure.ok)
-            return closure;
+        const wrapper = existing && original.nodes[c.instanceId];
+        if (existing && (wrapper?.type !== 'subgraph' || definitionRefKey(wrapper.definition) !== definitionRefKey(c.expectedInstanceRef)))
+            return fail('STALE_DEFINITION', 'The placed system revision changed. Reopen connection assistance.');
+        const closure = selectSubgraphClosure(existing ? original.definitions?.[definitionRefKey(wrapper.definition)] : c.definition, existing ? original.definitions ?? {} : c.snapshots);
+        if (!closure.ok) return closure;
         const definition = closure.data.definition;
-        for (const port of definition.interface.filter(p => p.direction === 'input' && p.required))
-            if (!Object.hasOwn(c.inputs, port.id))
-                return fail('REQUIRED_INPUT', 'Bind required system input ' + port.label + '.');
         // Connection gestures accept either direction; explicit authoring commands do not.
         const checkBinding = (portId, rootEndpoint, direction) => {
             const boundary = definition.interface.find(port => port.id === portId && port.direction === direction);
@@ -64,9 +65,9 @@ export function prepareAddSystem(root, input) {
             const valid = checkBinding(output.outputPortId, output.destination, 'output');
             if (!valid.ok) return valid;
         }
-        const inserted = prepareNativeConnectionEdit(root, { kind: 'create-instance', definition, snapshots: closure.data.definitions, graphPoint: c.graphPoint });
-        if (!inserted.ok)
-            return inserted;
+        const inserted = existing ? { ok: true, data: { candidate: structuredClone(original), addedNodeIds: [c.instanceId] } }
+            : prepareNativeConnectionEdit(root, { kind: 'create-instance', definition, snapshots: closure.data.definitions, graphPoint: c.graphPoint });
+        if (!inserted.ok) return inserted;
         let candidate = inserted.data.candidate;
         const instanceId = inserted.data.addedNodeIds[0];
         for (const [parameterId, value] of Object.entries(c.parameterOverrides)) {
@@ -75,10 +76,11 @@ export function prepareAddSystem(root, input) {
                 return changed;
             candidate = changed.data.candidate;
         }
-        const copied = makeLocalCopy(candidate, { instancePath: [instanceId], id: compositionIds(candidate).next('system-definition'), materializeOverrides: true });
-        if (!copied.ok)
-            return copied;
-        candidate = copied.data.candidate;
+        if (!existing) {
+            const copied = makeLocalCopy(candidate, { instancePath: [instanceId], id: compositionIds(candidate).next('system-definition'), materializeOverrides: true });
+            if (!copied.ok) return copied;
+            candidate = copied.data.candidate;
+        }
         const connect = (from, to) => {
             const edit = prepareNativeConnectionEdit(candidate, { kind: 'connect', origin: from, target: to });
             if (edit.ok) candidate = edit.data.candidate;
@@ -177,11 +179,20 @@ function identifyChoices(choices) {
 /** Artifact routes, including expanded portals, never preparation ordering dependencies. */
 export function projectGuidanceMerges(root) {
     try {
-        const expanded = resolveWorkflow(root);
+        const expanded = inspectExpandedGraph(root);
         if (!expanded.ok)
             return expanded;
         const units = new Map(expanded.data.primitives.map(u => [nodeAddressKey(u.address), u]));
-        const generators = expanded.data.primitives.filter(u => u.node.operation === 'generate-reply' && u.included && !u.address.instancePath.length && u.node.enabled !== false);
+        // Follow authored terminal dependencies without requiring executable settings.
+        const upstream = new Map(), included = new Set();
+        for (const edge of expanded.data.edges) {
+            const key = nodeAddressKey(edge.to);
+            if (!upstream.has(key)) upstream.set(key, []);
+            upstream.get(key).push(nodeAddressKey(edge.from));
+        }
+        function include(key) { if (included.has(key)) return; included.add(key); for (const source of upstream.get(key) ?? []) include(source); }
+        for (const unit of expanded.data.primitives) if (unit.terminal) include(nodeAddressKey(unit.address));
+        const generators = expanded.data.primitives.filter(u => u.node.operation === 'generate-reply' && included.has(nodeAddressKey(u.address)) && !u.address.instancePath.length && u.node.enabled !== false);
         if (generators.length !== 1)
             return fail('NATIVE_BOUNDARY', 'Main needs exactly one enabled Generate Reply.');
         const generator = generators[0];

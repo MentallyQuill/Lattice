@@ -70,8 +70,11 @@ function resolve(node, options = {}) {
             || control.type === 'enum' && !control.values.includes(value)
             || control.type === 'array' && (!Array.isArray(value) || value.length > control.max || control.items === 'record' && value.some(item => !plain(item)))) return fail('INVALID_SETTINGS', 'Use supported bounded Time controls.');
     }
+    const setupIssues=[];
+    if(operation==='time-trigger'&&!id(settings.scheduleId))setupIssues.push({code:'INVALID_SETTINGS',message:'Select a schedule identity.',field:'scheduleId'});
+    if(setupIssues.length&&!options.authoring)return {ok:false,error:setupIssues[0]};
     if (operation === 'story-clock' && (!id(settings.clockId) || settings.calendarId !== '' && !id(settings.calendarId))) return fail('INVALID_SETTINGS', 'Select an explicit clock and optional calendar identity.');
-    if (operation === 'time-trigger' && (!id(settings.scheduleId) || settings.clockId !== '' && !id(settings.clockId) || settings.calendarId !== '' && !id(settings.calendarId) || !plain(settings.metadata) || Object.keys(settings.metadata).length > 128 || Object.keys(settings.metadata).some(key => ['scheduleId', 'revision', 'kind', 'clockId', 'calendarId', 'minuteOfDay', 'anchorMinute', 'intervalMinutes', 'dueMinute', 'order'].includes(key)))) return fail('INVALID_SETTINGS', 'Time Trigger requires an identity and noncontradictory bounded schedule metadata.');
+    if (operation === 'time-trigger' && (settings.clockId !== '' && !id(settings.clockId) || settings.calendarId !== '' && !id(settings.calendarId) || !plain(settings.metadata) || Object.keys(settings.metadata).length > 128 || Object.keys(settings.metadata).some(key => ['scheduleId', 'revision', 'kind', 'clockId', 'calendarId', 'minuteOfDay', 'anchorMinute', 'intervalMinutes', 'dueMinute', 'order'].includes(key)))) return fail('INVALID_SETTINGS', 'Time Trigger requires an identity and noncontradictory bounded schedule metadata.');
     if (settings.consumedIds && settings.consumedIds.some(value => typeof value !== 'string' || !value.length || value.length > 4096)) return fail('INVALID_SETTINGS', 'Consumed occurrence IDs require bounded nonempty strings.');
     const ports = operation === 'commit-clock' ? [pin('projection','Advance Time report','input',true),pin('occurrences','Additional checked due events','input'),pin('receipt','Staged clock receipt','output')] : operation === 'story-clock' ? [pin('out', 'Accepted Story Clock', 'output')] : operation === 'time-trigger' ? [
         pin('previous', 'Previous Story Clock', 'input', true), pin('destination', 'Projected Story Clock', 'input', true), pin('consumed', 'Settled occurrence IDs (optional)', 'input'),
@@ -81,10 +84,10 @@ function resolve(node, options = {}) {
         pin('schedules', 'Authored schedules (optional)', 'input'), pin('consumed', 'Settled occurrence IDs (optional)', 'input'),
         pin('clock', 'Projected Story Clock', 'output'), pin('occurrences', 'Ordered due events', 'output'), pin('remainder', 'Remaining duration', 'output'), pin('report', 'Time projection report', 'output'),
     ];
-    return { ok: true, data: { descriptor: { ...base, phase }, settings, ports } };
+    return { ok: true, data: { descriptor: { ...base, phase }, settings, ports, setupIssues } };
 }
 export function describeTimeNode(node, options = {}) {
-    try { const result = resolve(node, options); if (!result.ok) return result; return { ok: true, data: { descriptor: result.data.descriptor, ports: result.data.ports } }; }
+    try { const result = resolve(node, options); if (!result.ok) return result; return { ok: true, data: { descriptor: result.data.descriptor, ports: result.data.ports, ...(options.authoring?{setupIssues:result.data.setupIssues}:{}) } }; }
     catch { return fail('INVALID_SETTINGS', 'Time controls and routing metadata require own data.'); }
 }
 function checkedClock(value) {

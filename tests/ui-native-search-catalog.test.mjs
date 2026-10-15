@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ARTIFACT_KINDS, describeOperation, operationDefaults, portsForNode, phaseForNode } from '../src/workflow/catalog.js';
+import { ARTIFACT_KINDS, describeAuthoredOperation, describeOperation, operationDefaults, portsForNode, phaseForNode } from '../src/workflow/catalog.js';
 import { computeDefinitionIdentity, definitionRefKey, validateDefinition } from '../src/workflow/definitions.js';
 import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js';
 import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js';
@@ -99,10 +99,9 @@ test('default and declared variants describe real pins in the containing phase w
         const value = catalog(scope(mode));
         for (const item of value.choices.filter(item => !item.disabledReason)) {
             const command = api.resolveNativeSearchChoice(value, item.id);
-            const described = describeOperation(scope(mode), { type: 'workflow', ...operationDefaults(command.operation), ...command.controls, ...(item.requiresConfiguration ? configuredSamples[command.operation] : {}),
+            const described = describeAuthoredOperation(scope(mode), { type: 'workflow', ...operationDefaults(command.operation), ...command.controls,
                 ...(command.operation === 'reroute' ? { artifactKind: command.artifactKind, phase: 'pre' } : {}) });
-            assert.equal(described.ok, true, item.id + ' ' + JSON.stringify(described.error));
-            if(item.requiresConfiguration) { assert.equal(command.requiresConfiguration,true); const friendlyForm=['decision','advance-time','json-decode','extract','model-call','format','read-file','write-file','project-document','smart-compactor','pattern','filter-text','repair','compose','text-rules','select-fields','style-transfer','format-transfer','terminology-map','context','state','condition','join','collect','confidence-gate','revise-draft','collection','context-join'].includes(command.operation);assert.equal(describeOperation(scope(mode),{type:'workflow',...operationDefaults(command.operation),...command.controls}).ok,friendlyForm,'Friendly structured forms intentionally configure usable defaults'); }
+            assert.equal(described.ok, true, item.id + ' ' + JSON.stringify(described.error));            assert.equal(item.requiresConfiguration,undefined); assert.equal(command.requiresConfiguration,undefined);
             assert.equal(item.phase, described.data.descriptor.phase);
             assert.deepEqual(item.ports, described.data.ports.map(port => ({ portId: port.id, dir: port.direction === 'input' ? 'in' : 'out', kind: port.kind, label: port.label, required: port.required })));
             for (const port of item.ports) for (const key of ['nodeId', 'center', 'address']) assert.equal(Object.hasOwn(port, key), false);
@@ -450,7 +449,7 @@ test('one unified shelf exposes preparation and reply processing with their actu
     assert.equal(choice(unified,'operation:guidance').ports.find(port=>port.dir==='out').kind,'guidance');
     assert.equal(choice(unified,'operation:decision').label,'Decision');
     for(const item of unified.choices.filter(item=>item.id.startsWith('operation:'))){
-        const command=api.resolveNativeSearchChoice(unified,item.id);const described=describeOperation(scope('native-unified'),{type:'workflow',...operationDefaults(command.operation),...command.controls,...(item.requiresConfiguration?configuredSamples[command.operation]:{}),...(command.artifactKind?{artifactKind:command.artifactKind,phase:'pre'}:{})});
+        const command=api.resolveNativeSearchChoice(unified,item.id);const described=describeAuthoredOperation(scope('native-unified'),{type:'workflow',...operationDefaults(command.operation),...command.controls,...(command.artifactKind?{artifactKind:command.artifactKind,phase:'pre'}:{})});
         assert.equal(described.ok,true,item.id+' '+JSON.stringify(described.error));assert.deepEqual(item.ports,described.data.ports.map(({id,label,kind,direction,required})=>({portId:id,label,kind,dir:direction==='input'?'in':'out',required})));
     }
 });
@@ -460,10 +459,10 @@ test('Data pin discovery offers Character Direction data without inventing its r
     const items = api.filterNativeSearchChoices(value, {query:'Character Direction', origin});
     const item = items.find(item => item.id === 'operation:character-direction');
     assert.ok(item);
-    assert.equal(item.requiresConfiguration, true);
+    assert.equal(item.requiresConfiguration, undefined);
     assert.deepEqual(api.matchNativeSearchPorts(value, item.id, origin).map(port => [port.portId, port.kind, port.required]), [['presence','data',true], ['data','data',false]]);
     const command = api.resolveNativeSearchChoice(value, item.id);
-    assert.equal(command.requiresConfiguration, true);
+    assert.equal(command.requiresConfiguration, undefined);
     assert.equal(Object.hasOwn(command.controls ?? {}, 'actorId'), false);
     assert.equal(describeOperation(scope('native-unified'), {type:'workflow', ...operationDefaults(command.operation), ...command.controls}).ok, false);
 });

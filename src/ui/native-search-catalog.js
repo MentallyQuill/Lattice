@@ -1,6 +1,5 @@
 import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.3';
-import { deferredNodeDescription, nodeNeedsConfiguration } from './configured-node-creation.js?v=0.27.3';
-import { ARTIFACT_KINDS, FAMILIES, OPERATIONS, describeOperation, operationDefaults } from '../workflow/catalog.js?v=0.27.3';
+import { ARTIFACT_KINDS, FAMILIES, OPERATIONS, describeAuthoredOperation, operationDefaults } from '../workflow/catalog.js?v=0.27.3';
 import { cloneDefinitionData, definitionRefKey } from '../workflow/definitions.js?v=0.27.3';
 import { selectSubgraphClosure } from '../workflow/packages.js?v=0.27.3';
 
@@ -107,18 +106,15 @@ export function prepareNativeSearchCatalog(scope, options = {}) {
         if (input.inDefinition && OPERATIONS[operation].rootOnly && !isScopedSystemOperation({type:'workflow',operation})) return;
         if (operation === 'reroute' && !artifactKind) artifactKind = 'text';
         if (OPERATIONS[operation].family === 'Transpose' && !variant) controls = { inputKind: 'text', ...controls };
-        let description = describeOperation(input, { type: 'workflow', ...operationDefaults(operation, { mode: controls?.mode }), ...controls,
+        const description = describeAuthoredOperation(input, { type: 'workflow', ...operationDefaults(operation, { mode: controls?.mode }), ...controls,
             ...(artifactKind ? { artifactKind, phase: phase === 'unified' ? 'pre' : phase } : {}) });
-        const deferred = !description.ok && deferredNodeDescription(operation, controls);
-        if (deferred) description = { ok: true, data: { ...deferred, descriptor: { ...deferred.descriptor, phase: ['pre', 'post'].includes(deferred.descriptor.phase) ? deferred.descriptor.phase : phase === 'unified' ? 'pre' : phase } } };
         if (!description.ok || phase !== 'unified' && description.data.descriptor.phase !== phase) return;
-        const requiresConfiguration = !!deferred || nodeNeedsConfiguration(operation, controls);
         const id = 'operation:' + operation + (variant ? ':' + variant : '');
         const baseSearch = searchMetadata[operation] ?? { purpose: '', shortcode: '', searchAliases: [operation] }, variantSearch = variantSearchMetadata[operation + ':' + (variant?.startsWith('text-') ? variant.slice(5) : variant)];
         const metadata = variantSearch ? { ...variantSearch, searchAliases: [...baseSearch.searchAliases, ...variantSearch.searchAliases] } : baseSearch;
         choices.push({ id, label: label ?? description.data.descriptor.title, family: description.data.descriptor.family, phase: description.data.descriptor.phase, ...metadata,
-            ports: description.data.ports.map(portProjection), ...(requiresConfiguration ? { requiresConfiguration: true } : {}) });
-        commands.set(id, freeze({ operation, ...(requiresConfiguration ? { requiresConfiguration: true } : {}), ...(controls ? { controls: structuredClone(controls) } : {}), ...(artifactKind ? { artifactKind } : {}) }));
+            ports: description.data.ports.map(portProjection) });
+        commands.set(id, freeze({ operation, ...(controls ? { controls: structuredClone(controls) } : {}), ...(artifactKind ? { artifactKind } : {}) }));
     };
     for (const operation of Object.keys(OPERATIONS)) addOperation(operation);
     for (const operation of Object.keys(OPERATIONS).filter(id => OPERATIONS[id].family === 'Transpose')) {

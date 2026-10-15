@@ -101,19 +101,19 @@ export function phaseForNode(graph, node) {
         return declared !== undefined && declared !== phase || fixed !== undefined && fixed !== phase ? null : phase;
     } catch { return null; }
 }
-function dynamicDescription(node, phase) {
+function dynamicDescription(node, phase, authoring = false) {
     if (node.operation === 'filter-text') return phase === 'post' ? describeFilterText(node) : failure('INVALID_PHASE', 'Filter Text requires post phase.');
     if (node.operation === 'pattern') return phase === 'post' ? describePattern(node) : failure('INVALID_PHASE', 'Pattern requires post phase.');
-    if (Object.hasOwn(RECALL_OPERATIONS, node.operation)) return describeRecallNode(node, { phase });
+    if (Object.hasOwn(RECALL_OPERATIONS, node.operation)) return describeRecallNode(node, { phase, authoring });
     if (Object.hasOwn(LIFECYCLE_OPERATIONS, node.operation)) return describeLifecycleNode(node, { phase });
-    if (Object.hasOwn(FILE_OPERATIONS, node.operation)) return describeFileNode(node, { phase });
-    if (Object.hasOwn(TIME_OPERATIONS, node.operation)) return describeTimeNode(node, { phase });
-    if (Object.hasOwn(EVENT_OPERATIONS, node.operation)) return describeEvent(node, { phase });
-    if (Object.hasOwn(RANDOM_OPERATIONS, node.operation)) return describeRandom(node, { phase });
+    if (Object.hasOwn(FILE_OPERATIONS, node.operation)) return describeFileNode(node, { phase, authoring });
+    if (Object.hasOwn(TIME_OPERATIONS, node.operation)) return describeTimeNode(node, { phase, authoring });
+    if (Object.hasOwn(EVENT_OPERATIONS, node.operation)) return describeEvent(node, { phase, authoring });
+    if (Object.hasOwn(RANDOM_OPERATIONS, node.operation)) return describeRandom(node, { phase, authoring });
     if (Object.hasOwn(COLLECTION_OPERATIONS, node.operation)) return describeCollection(node, { phase });
     if (Object.hasOwn(MODEL_OPERATIONS, node.operation)) return describeModelNode(node, { phase });
     if (Object.hasOwn(DECISION_OPERATIONS, node.operation)) return describeDecision(node, { phase });
-    if (Object.hasOwn(CONTROL_OPERATIONS, node.operation)) return describeControl(node, { phase });
+    if (Object.hasOwn(CONTROL_OPERATIONS, node.operation)) return describeControl(node, { phase, authoring });
     if (Object.hasOwn(INPUT_OPERATIONS, node.operation)) return describeInput(node, { phase });
     if (Object.hasOwn(INTROSPECTION_NATIVE_OPERATIONS, node.operation)) return describeNativeIntrospection(node, { phase });
     if (node.operation === 'repair') {
@@ -164,7 +164,7 @@ export function operationFor(node, { phase, mode } = {}) {
         if (newOperation(op.id)) {
             const effectivePhase = phase ?? declared ?? (op.phase === 'post' || op.id === 'extract' && ownMetadata(node, 'inputKind') !== 'text' || op.id === 'memory' && ownMetadata(node, 'mode') === 'commit' || op.id === 'text-rules' && ownMetadata(node, 'inputKind') === 'draft' ? 'post' : 'pre');
             if (declared !== undefined && declared !== effectivePhase) return null;
-            const described = dynamicDescription(node, effectivePhase);
+            const described = dynamicDescription(node, effectivePhase, true);
             return described.ok ? described.data.descriptor : null;
         }
         if (op.id !== 'reroute') {
@@ -179,7 +179,15 @@ export function operationFor(node, { phase, mode } = {}) {
 /** One checked producer for effective descriptor, settings validation and actual named pins.
  * @returns {import('./types').Result<import('./types').OperationDescription>}
  */
-export function describeOperation(graph, node) {
+export function describeOperation(graph, node) { return describeNode(graph, node, false); }
+/** Bounded authoring shape, preserving missing semantic settings as diagnostics.
+ * @returns {import('./types').Result<import('./types').AuthoredOperationDescription>}
+ */
+export function describeAuthoredOperation(graph, node) {
+    const result = describeNode(graph, node, true);
+    return result.ok ? { ok: true, data: { ...result.data, setupIssues: result.data.setupIssues ?? [] } } : result;
+}
+function describeNode(graph, node, authoring) {
     try {
         const own = (value, key) => {
             if (!value || typeof value !== 'object' || Array.isArray(value) || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) throw new Error('plain metadata');
@@ -200,7 +208,7 @@ export function describeOperation(graph, node) {
             if (!phase) return failure('WRONG_PHASE', 'The operation does not support its effective native phase.');
             // Context Join receives only its declared settings; no envelope metadata is runtime Context.
             if (id === 'context-join') own(node, 'inputs');
-            const result = dynamicDescription(node, phase);
+            const result = dynamicDescription(node, phase, authoring);
             return !result.ok && result.error.code === 'INVALID_PHASE' ? failure('WRONG_PHASE', result.error.message) : result;
         }
         const phase = phaseForNode(graph, node);
@@ -255,7 +263,7 @@ export function portsForNode(graph, node) {
         const port = Array.isArray(graph?.interface) ? graph.interface.find(port => port.id === node.interfacePortId && port.boundaryNodeId === node.id) : null;
         return port ? [{ id: node.type === 'subgraph-input' ? 'out' : 'in', label: port.label, kind: port.kind, direction: node.type === 'subgraph-input' ? 'output' : 'input', required: node.type === 'subgraph-output', cardinality: 'one' }] : [];
     }
-    const described = describeOperation(graph, node);
+    const described = describeAuthoredOperation(graph, node);
     return described.ok ? described.data.ports : [];
 }
 export function operationDefaults(id = 'scene-context', { mode } = {}) {

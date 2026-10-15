@@ -182,19 +182,24 @@ function resolve(node,options={}) {
             ||control.type==='integer'&&(!Number.isSafeInteger(settings[key])||settings[key]<control.min||settings[key]>control.max))return fail('INVALID_SETTINGS','Use supported bounded Random controls.');
     }
     if(operation==='commit-outcomes'&&settings.targetId==='')settings.targetId=base.defaults.targetId;
+    const setupIssues=[];
     let ports;
     if(operation==='commit-outcomes') {if(!id(settings.targetId))return fail('INVALID_SETTINGS','Choose an authorized outcomes source.');ports=[pin('outcomes','data','input',true),pin('receipt','data','output')];}
     else if(operation==='parse-effect-library') {
-        if(!id(settings.libraryId)||!id(settings.revision)||!id(settings.itemId))return fail('INVALID_SETTINGS','Supply explicit library, revision and item identities.');
+        for(const field of ['libraryId','revision','itemId'])if(!id(settings[field]))setupIssues.push({code:'INVALID_SETTINGS',message:'Supply an explicit '+field+'.',field});
         ports=[pin('in',settings.format==='data'?'data':'text','input',true),pin('out','data','output')];
     } else if(operation==='random-pick')ports=[pin('events','data','input',true),pin('library','data','input',true),pin('saved','data','input'),pin('out','data','output')];
     else if(operation==='saved-outcome')ports=[pin('event','data','input',true),pin('saved','data','input',true),pin('out','data','output')];
     else ports=[pin('in','data','input',true),...(operation==='effect-author'?[pin('context','data','input')]:[pin('novelty','data','input')]),pin('out','data','output')];
-    if(operation==='random-pick'&&(settings.rerollPolicy==='explicit'&&!id(settings.rerollId)||settings.rerollPolicy==='reuse'&&settings.rerollId!==''))return fail('REROLL_POLICY_REQUIRED','Explicit reroll mode requires an authored reroll identity; reuse leaves it empty.');
-    return {ok:true,data:{descriptor:{...base,phase,input:ports[0].kind},ports,settings}};
+    if(operation==='random-pick') {
+        if(settings.rerollPolicy==='reuse'&&settings.rerollId!=='')return fail('REROLL_POLICY_REQUIRED','Reuse leaves reroll identity empty.');
+        if(settings.rerollPolicy==='explicit'&&!id(settings.rerollId))setupIssues.push({code:'REROLL_POLICY_REQUIRED',message:'Provide an explicit reroll identity.',field:'rerollId'});
+    }
+    if(setupIssues.length&&!options.authoring)return {ok:false,error:setupIssues[0]};
+    return {ok:true,data:{descriptor:{...base,phase,input:ports[0].kind},ports,settings,setupIssues}};
 }
 export function describeRandom(node,options={}) {
-    const result=resolve(node,options);if(!result.ok)return result;return {ok:true,data:{descriptor:result.data.descriptor,ports:result.data.ports}};
+    const result=resolve(node,options);if(!result.ok)return result;return {ok:true,data:{descriptor:result.data.descriptor,ports:result.data.ports,...(options.authoring?{setupIssues:result.data.setupIssues}:{})}};
 }
 function checkedInputs(raw,ports) {
     const result=cloneJsonValue(raw);if(!result.ok)return result;const inputs=result.data.value;

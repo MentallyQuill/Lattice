@@ -180,7 +180,7 @@ async function executeWorkflow(original,ports,hooks={}) {
         const nodes=plan.primitives.filter(unit=>unit.included);
         const workflowDataNodes=[];
         // Validate every selected real helper before any source or model effect, even for an empty collection.
-        if(typeof ports.iterateHelper!=='function')for(const unit of nodes)if(!unit.systemDisabled&&unit.node.operation==='for-each') {
+        for(const unit of nodes)if(!unit.systemDisabled&&unit.node.operation==='for-each') {
             const compiled=compileIterationHelper(prepared.graph,{helper:unit.node.helper,mode:unit.node.mode??'map',phase:unit.phase,address:unit.address,requestBoundPerIteration:unit.node.requestBoundPerIteration??0});
             if(!compiled.ok)return finish(compiled);helperPrograms.set(addressKey(unit.address),compiled.data.token);workflowDataNodes.push(...compiled.data.workflowDataNodes);
         }
@@ -324,7 +324,8 @@ async function executeWorkflow(original,ports,hooks={}) {
                 try{return await executeNode(childNode,childInputs,childOp,{...ports,...childLocal,iterateHelper:childIterate,isRecoveredIterationResult:result=>recovered.has(result),binding:undefined,request:childRequest,getRequestCount:()=>childCalls,executeIntrospection:hooks.executeIntrospection,executeHostOperation:undefined});}
                 finally{childOpen=false;childBindings.clear();childAuthorizers.delete(childKey);}
             };
-            const recovered=new WeakSet(),compiled=helperPrograms.get(key),iterateHelper=compiled?async(invocation,helperPorts)=>{const result=await executeCompiledIteration(compiled,invocation,{executeUnit:executeHelperUnit,request:helperPorts.request,signal:ports.signal,retainScopedOutput:payload=>retainScopedOutput({...payload,inputs:payload.seed?inputs:payload.inputs})});if(result?.ok===true)recovered.add(result);return result;}:ports.iterateHelper;
+            // Custom adapters retain the same bounded request capability after mandatory helper preflight.
+            const recovered=new WeakSet(),compiled=helperPrograms.get(key),iterateHelper=typeof ports.iterateHelper==='function'?ports.iterateHelper:compiled?async(invocation,helperPorts)=>{const result=await executeCompiledIteration(compiled,invocation,{executeUnit:executeHelperUnit,request:helperPorts.request,signal:ports.signal,retainScopedOutput:payload=>retainScopedOutput({...payload,inputs:payload.seed?inputs:payload.inputs})});if(result?.ok===true)recovered.add(result);return result;}:ports.iterateHelper;
             // Static instances inherit owned host capabilities; repeated helpers use their separate bounded adapter.
             const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,rootMode:prepared.graph.mode,binding,request,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0 || isScopedSystemOperation(node) && typeof hooks.executeHostOperation==='function',address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings});
             // Native generation authors the public story from scoped portrayal guidance; it never publishes guidance verbatim.

@@ -19,5 +19,5 @@ export interface EventExecution {
     request?: (request: EventModelRequest) => Promise<Result<{ text: string; finish?: string; usage?: ReportedUsage }>>;
 }
 export const EVENT_OPERATIONS: Record<EventOperationId, OperationDescriptor>;
-export function describeEvent(node: NativeNode | Record<string,unknown>, options?: { phase?: WorkflowPhase }): Result<OperationDescription>;
+export function describeEvent(node: NativeNode | Record<string,unknown>, options?: { phase?: WorkflowPhase; authoring?: boolean }): Result<OperationDescription>;
 export function executeEvent(node: NativeNode | Record<string,unknown>, inputs: Record<string,unknown>, local?: EventExecution): Promise<OperationResult>;

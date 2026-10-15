@@ -59,19 +59,30 @@ function resolve(rawNode,rawOptions={}){
             if(!checked.ok&&checked.error.code!=='SCHEMA_MISMATCH')return checked;
         }
         if(node.operation==='format'&&settings.jsonShape==='single'&&settings.format!=='json')return fail('INVALID_SETTINGS','Single-object shape applies only to JSON serialization.');
-        if(['read-file','write-file'].includes(node.operation)&&(settings.actorScope==='presence'?!id(settings.actorId):settings.actorId!==''))return fail('INVALID_SETTINGS','Presence scope requires a configured actor; selected scope uses the native selection.');
+        const setupIssues=[];
+        if(['read-file','write-file'].includes(node.operation)) {
+            if(settings.actorScope==='selected'&&settings.actorId!=='')return fail('INVALID_SETTINGS','Selected scope uses the native selection.');
+            if(settings.actorScope==='presence'&&!id(settings.actorId))setupIssues.push({code:'INVALID_SETTINGS',message:'Select a canonical present actor.',field:'actorId'});
+        }
         if(node.operation==='read-file'&&!id(settings.targetId))return fail('INVALID_SETTINGS','Select an authorized target identity.');
-        if(['write-file','project-document'].includes(node.operation)&&(['add-unique','upsert','update-fields'].includes(settings.mode)&&!id(settings.key)||settings.mode==='update-fields'&&(!settings.fields.length||settings.fields.some(field=>!id(field))||new Set(settings.fields).size!==settings.fields.length)))return fail('INVALID_SETTINGS','Keyed updates require an identity field and selected unique fields.');
+        if(['write-file','project-document'].includes(node.operation)) {
+            if(['add-unique','upsert','update-fields'].includes(settings.mode)&&!id(settings.key))setupIssues.push({code:'INVALID_SETTINGS',message:'Choose an identity field for keyed updates.',field:'key'});
+            if(settings.mode==='update-fields') {
+                if(settings.fields.some(field=>!id(field))||new Set(settings.fields).size!==settings.fields.length)return fail('INVALID_SETTINGS','Updated fields must be unique bounded names.');
+                if(!settings.fields.length)setupIssues.push({code:'INVALID_SETTINGS',message:'Choose at least one field to update.',field:'fields'});
+            }
+        }
+        if(setupIssues.length&&!options.authoring)return {ok:false,error:setupIssues[0]};
         let ports;
         if(node.operation==='format')ports=[port('in','Records / raw JSON',settings.inputMode==='records'?'data':'text','input',true),port('records','Validated records','data','output'),port('text','Serialized text','text','output'),port('report','Format report','data','output')];
         else if(node.operation==='read-file')ports=[port('text','Contents','text','output'),port('document','Parsed document','data','output'),port('value','Parsed value','data','output'),port('reference','Live file reference','data','output')];
         else if(node.operation==='project-document')ports=[port('source','Original document','text','input',true),port(['append','replace'].includes(settings.mode)?'text':'records',['append','replace'].includes(settings.mode)?'Text':'Records',['append','replace'].includes(settings.mode)?'text':'data','input',true),port('text','Projected document text','text','output'),port('data','Projected document data','data','output'),port('receipt','Projection receipt','data','output')];
         else ports=[port('reference','Live file reference','data','input',true),port(['append','replace'].includes(settings.mode)?'text':'records',['append','replace'].includes(settings.mode)?'Text':'Records',['append','replace'].includes(settings.mode)?'text':'data','input',true),port('evidence','Canonical source evidence','data','input'),port('projection','Projected document','data','output'),port('receipt','Staging receipt','data','output')];
         if(settings.actorScope==='presence')ports.unshift(port('presence','Confirmed live actor presence','data','input',true));
-        return {ok:true,data:{node:freeze({id:id(node.id)?node.id:'file-operation',type:'workflow',operation:node.operation,operationVersion:1,phase,...settings}),settings:freeze(settings),schema,ports,descriptor:{...base,phase}}};
+        return {ok:true,data:{node:freeze({id:id(node.id)?node.id:'file-operation',type:'workflow',operation:node.operation,operationVersion:1,phase,...settings}),settings:freeze(settings),schema,ports,setupIssues,descriptor:{...base,phase}}};
     }catch{return fail('INVALID_SETTINGS','File settings must be own plain data properties.');}
 }
-export function describeFileNode(node,options={}){const resolved=resolve(node,options);return resolved.ok?{ok:true,data:{descriptor:resolved.data.descriptor,ports:resolved.data.ports}}:resolved;}
+export function describeFileNode(node,options={}){const resolved=resolve(node,options);return resolved.ok?{ok:true,data:{descriptor:resolved.data.descriptor,ports:resolved.data.ports,...(options.authoring?{setupIssues:resolved.data.setupIssues}:{})}}:resolved;}
 function inputArtifacts(raw,ports){
     try{
         const inputs=own(raw),out={};

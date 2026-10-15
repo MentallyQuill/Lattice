@@ -8,10 +8,20 @@ import { fixtureGraph as starterGraph } from './helpers/workflow-fixtures.mjs';
 const guidanceTarget=root=>({workflowId:root.id,instancePath:[],nodeId:'guidance',portId:'out'});
 import { requestModel, resolveBinding } from '../src/workflow/connections.js';
 import { createRunState, reduceRunState } from '../src/workflow/run-state.js';
+import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definition-data.js';
 
 const node = (id, operation, settings = {}) => ({ id, type: 'workflow', operation, ...settings });
 const wire = (id, from, fromPort, to, toPort) => ({ id, route: 'wire', from, fromPort, to, toPort });
-const graph = (nodes, edges, mode = 'native-unified') => ({ id: 'control-runtime', schema: 3, runtime: 2, mode, nodes, wires: Object.fromEntries(edges.map(edge => [edge.id, edge])), definitions: {}, portals: {} });
+// Complete pinned helper bodies keep custom-adapter tests subject to real admission/preflight.
+function helperFixture(id, stateful = false) {
+    const pins = [['item', 'input', 'entry'], ['result', 'output', 'exit'], ...(stateful ? [['projectedState', 'input', 'stateEntry'], ['nextState', 'output', 'stateExit']] : [])];
+    const identity = computeDefinitionIdentity({id, version:1, name:id, parameters:[], interface:pins.map(([id,direction,boundaryNodeId])=>({id,label:id,direction,kind:'data',required:direction==='input',cardinality:'one',boundaryNodeId})), body:{schema:3,runtime:2,mode:'native-unified',nodes:Object.fromEntries(pins.map(([id,direction,boundaryNodeId])=>[boundaryNodeId,{id:boundaryNodeId,type:direction==='input'?'subgraph-input':'subgraph-output',interfacePortId:id}])),wires:{pass:wire('pass','entry','out','exit','in'),...(stateful?{state:wire('state','stateEntry','out','stateExit','in')}:{})}}});
+    assert.equal(identity.ok,true,JSON.stringify(identity.error));
+    const definition={...identity.data.materializedDefinition,semanticHash:identity.data.semanticHash};
+    return {definition,ref:{id,version:1,semanticHash:definition.semanticHash}};
+}
+const modelHelper = helperFixture('model-helper'), stateHelper = helperFixture('state-helper',true);
+const graph = (nodes, edges, mode = 'native-unified') => ({ id: 'control-runtime', schema: 3, runtime: 2, mode, nodes, wires: Object.fromEntries(edges.map(edge => [edge.id, edge])), definitions: Object.fromEntries([modelHelper,stateHelper].filter(fixture=>Object.values(nodes).some(node=>node.helper===fixture.ref)).map(fixture=>[definitionRefKey(fixture.ref),fixture.definition])), portals: {} });
 const address = (id, portId = 'out') => ({ workflowId: 'control-runtime', instancePath: [], nodeId: id, portId });
 const unit = (result, id) => result.recording.units.find(item => expandRecordAddress(result.recording, item.address).nodeId === id);
 const output = (result, id, portId = 'out') => {
@@ -114,8 +124,16 @@ test('required unresolved input holds dependent model binding and remains distin
     assert.equal(output(result,'branch','yes'),undefined);
 });
 
+test('complete pinned helpers retain the supplied iteration adapter after strict preflight',async()=>{
+    const helper=modelHelper.ref;
+    const root=graph({source:node('source','text',{text:'[1]'}),decode:node('decode','json-decode'),each:node('each','for-each',{helper,limit:1})},[wire('a','source','out','decode','in'),wire('b','decode','out','each','in')]);
+    let calls=0;
+    const result=await runWorkflow(root,{target:address('each'),iterateHelper:async({item})=>{calls++;return {ok:true,artifact:{kind:'data',value:item+1}};}});
+    assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(calls,1);assert.deepEqual(output(result,'each').value,[2]);
+});
+
 test('For Each counts activated helper requests once and enforces each iteration bound',async()=>{
-    const helper={id:'model-helper',version:1,semanticHash:'sha256:'+'b'.repeat(64)};
+    const helper=modelHelper.ref;
     const root=graph({source:node('source','compose',{sections:[{name:'json',text:'[1,2]'}]}),decode:node('decode','json-decode'),each:node('each','for-each',{helper,limit:3,requestBoundPerIteration:1})},[wire('a','source','out','decode','in'),wire('b','decode','out','each','in')]);
     let requests=0;
     const ports={target:address('each'),countTokens:async()=>({tokens:2}),request:async()=>{requests++;return {ok:true,data:{text:'answer',finish:'stop'}};},iterateHelper:async({item},{request})=>{const response=await request({messages:[{role:'user',content:String(item)}],maxTokens:4});return response.ok?{ok:true,artifact:{kind:'data',value:response.data.text}}:response;}};
@@ -126,14 +144,14 @@ test('For Each counts activated helper requests once and enforces each iteration
 });
 
 test('iteration model bindings stay private while the shared root wrapper owns request accounting',async()=>{
-    const helper={id:'model-helper',version:1,semanticHash:'sha256:'+'b'.repeat(64)},binding={profileId:'helper-profile',privateEndpoint:'secret'};
+    const helper=modelHelper.ref,binding={profileId:'helper-profile',privateEndpoint:'secret'};
     const root=graph({source:node('source','compose',{sections:[{name:'json',text:'[1]'}]}),decode:node('decode','json-decode'),each:node('each','for-each',{helper,limit:1,requestBoundPerIteration:1})},[wire('a','source','out','decode','in'),wire('b','decode','out','each','in')]);
     const result=await runWorkflow(root,{target:address('each'),countTokens:async()=>({tokens:2}),request:async options=>options.binding===binding?{ok:true,data:{text:'bound helper',finish:'stop'}}:{ok:false,error:{code:'WRONG_BINDING',message:'Helper binding lost'}},iterateHelper:async(_, {request})=>{const response=await request({binding,messages:[{role:'user',content:'Confirm?'}],maxTokens:4});return response.ok?{ok:true,artifact:{kind:'data',value:response.data.text}}:response;}});
     assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.actualCalls,1);assert.deepEqual(output(result,'each').value,['bound helper']);assert.ok(!JSON.stringify(result.recording).includes('secret'));
 });
 
 test('provider failures are failures and never turn into an accepted No branch',async()=>{
-    const helper={id:'model-helper',version:1,semanticHash:'sha256:'+'b'.repeat(64)};
+    const helper=modelHelper.ref;
     const root=graph({source:node('source','compose',{sections:[{name:'json',text:'[1]'}]}),decode:node('decode','json-decode'),each:node('each','for-each',{helper,limit:1,requestBoundPerIteration:1})},[wire('a','source','out','decode','in'),wire('b','decode','out','each','in')]);
     const result=await runWorkflow(root,{target:address('each'),countTokens:async()=>({tokens:2}),request:async()=>({ok:false,error:{code:'TRANSPORT_FAILED',message:'Unavailable'}}),iterateHelper:async(_, {request})=>{await request({messages:[{role:'user',content:'Confirm?'}],maxTokens:4});return {ok:true,artifact:{kind:'data',value:false}};}});
     assert.equal(result.error.code,'TRANSPORT_FAILED');assert.equal(result.recording.status,'failed');assert.equal(output(result,'each'),undefined);
@@ -150,7 +168,7 @@ test('one run and recording span an awaited host source without restarting execu
 });
 
 test('runtime cancellation during iteration discards late artifacts and closes the same recording',async()=>{
-    const helper={id:'model-helper',version:1,semanticHash:'sha256:'+'b'.repeat(64)},controller=new AbortController();
+    const helper=modelHelper.ref,controller=new AbortController();
     const root=graph({source:node('source','compose',{sections:[{name:'json',text:'[1]'}]}),decode:node('decode','json-decode'),each:node('each','for-each',{helper,limit:1,requestBoundPerIteration:1})},[wire('a','source','out','decode','in'),wire('b','decode','out','each','in')]);
     const result=await runWorkflow(root,{runId:'cancelled-iteration',target:address('each'),signal:controller.signal,countTokens:async()=>({tokens:2}),request:async()=>{controller.abort();return {ok:true,data:{text:'late private result',finish:'stop'}};},iterateHelper:async(_, {request})=>{await request({messages:[{role:'user',content:'Work'}],maxTokens:4});return {ok:true,artifact:{kind:'data',value:'late private result'}};}});
     assert.equal(result.error.code,'ABORTED');assert.equal(result.recording.status,'cancelled');assert.equal(result.actualCalls,1);assert.equal(unit(result,'each').request.status,'cancelled');assert.ok(!JSON.stringify(result.recording).includes('late private result'));
@@ -166,7 +184,7 @@ test('port-state reasons remain bounded without creating artifacts for skipped o
 });
 
 test('projected iteration records its ordered results and final state on distinct real pins',async()=>{
-    const helper={id:'state-helper',version:1,semanticHash:'sha256:'+'c'.repeat(64)};
+    const helper=stateHelper.ref;
     const root=graph({items:node('items','text',{text:'[1,2]'}),initial:node('initial','text',{text:'{"total":0}'}),data:node('data','json-decode'),state:node('state','json-decode'),each:node('each','for-each',{helper,phase:'post',limit:2,mode:'projected-state'})},[wire('a','items','out','data','in'),wire('b','initial','out','state','in'),wire('c','data','out','each','in'),wire('d','state','out','each','state')]);
     const result=await runWorkflow(root,{target:address('each','state'),iterateHelper:async({item,projectedState,phase,rootMode})=>{assert.equal(phase,'post');assert.equal(rootMode,'native-unified');const total=projectedState.total+item;return {ok:true,artifact:{kind:'data',value:total},projectedState:{total}};}});
     assert.equal(result.ok,true,JSON.stringify(result.error));assert.deepEqual(output(result,'each','out').value,[1,3]);assert.deepEqual(output(result,'each','state').value,{total:3});
@@ -187,7 +205,7 @@ test('ordinary operations omit declared optional skipped inputs and use their au
 });
 
 test('reserved For Each requests need no parent profile and retain iteration child provenance',async()=>{
-    const helper={id:'model-helper',version:1,semanticHash:'sha256:'+'b'.repeat(64)};
+    const helper=modelHelper.ref;
     const root=graph({source:node('source','text',{text:'[1,2]'}),decode:node('decode','json-decode'),each:node('each','for-each',{helper,limit:3,requestBoundPerIteration:1})},[wire('a','source','out','decode','in'),wire('b','decode','out','each','in')]);
     let lookups=0;const events=[];
     const result=await runWorkflow(root,{target:address('each'),resolveBinding:()=>{lookups++;throw new Error('No parent model');},countTokens:async()=>({tokens:1}),onEvent:event=>events.push(event),request:async()=>({ok:true,data:{text:'answer',finish:'stop'}}),iterateHelper:async({index},{request})=>{const response=await request({childAddress:{workflowId:helper.id,instancePath:[],nodeId:'decision-'+index},messages:[{role:'user',content:'Work'}],maxTokens:2});return response.ok?{ok:true,artifact:{kind:'data',value:index}}:response;}});
@@ -196,7 +214,7 @@ test('reserved For Each requests need no parent profile and retain iteration chi
 });
 
 test('empty For Each reserves its conservative bound without binding a model or invoking a helper',async()=>{
-    const helper={id:'model-helper',version:1,semanticHash:'sha256:'+'b'.repeat(64)};
+    const helper=modelHelper.ref;
     const root=graph({source:node('source','text',{text:'[]'}),decode:node('decode','json-decode'),each:node('each','for-each',{helper,limit:3,requestBoundPerIteration:2})},[wire('a','source','out','decode','in'),wire('b','decode','out','each','in')]);
     let effects=0;const effect=()=>{effects++;throw new Error('Empty iteration');};
     const result=await runWorkflow(root,{target:address('each'),resolveBinding:effect,request:effect,countTokens:effect,iterateHelper:effect});

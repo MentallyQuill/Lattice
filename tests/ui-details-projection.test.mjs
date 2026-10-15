@@ -284,3 +284,26 @@ test('cached Compose Details includes token budget and typed section schema with
     assert.equal(next.controls, first.controls); assert.equal(next.editorContractKey, first.editorContractKey);
     assert.equal(Object.isFrozen(next.controls), true);
 });
+
+test('stage editing follows the current controls capabilities rather than static catalog phase', async () => {
+    const {operationDefaults}=await import('../src/workflow/catalog.js?v=0.27.3');
+    const cases=[
+        ['style-transfer',{inputKind:'text'},'pre',true],
+        ['style-transfer',{inputKind:'text'},'post',true],
+        ['format-transfer',{inputKind:'text'},'pre',true],
+        ['format-transfer',{inputKind:'text'},'post',true],
+        ['terminology-map',{inputKind:'text'},'pre',true],
+        ['style-transfer',{inputKind:'draft'},'post',false],
+        ['format-transfer',{inputKind:'draft'},'post',false],
+        ['terminology-map',{inputKind:'draft'},'post',false],
+        ['compose',{outputKind:'guidance'},'pre',false],
+        ['text-rules',{inputKind:'draft'},'post',false],
+        ['compose',{outputKind:'text'},'pre',true],
+    ];
+    for(const [operation,controls,phase,editable] of cases){
+        const root={id:'stage-capabilities',schema:3,runtime:2,mode:'native-unified',nodes:{node:{id:'node',type:'workflow',...operationDefaults(operation),...controls,phase}},wires:{}};
+        assert.equal(details(root,'node').phaseEditable,editable,`${operation} ${JSON.stringify(controls)} ${phase}`);
+    }
+    const legacy={id:'legacy-stage',schema:3,runtime:2,mode:'native-pre',nodes:{node:{id:'node',type:'workflow',...operationDefaults('style-transfer'),inputKind:'text',phase:'pre'}},wires:{}};
+    assert.equal(details(legacy,'node').phaseEditable,false,'Legacy single-stage scopes do not expose a stage selector');
+});

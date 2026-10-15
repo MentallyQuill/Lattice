@@ -45,7 +45,8 @@ function resolve(node,options={}) {
             || control.type==='enum'&&!control.values.includes(settings[key])
             || control.type==='boolean'&&typeof settings[key]!=='boolean') return fail('INVALID_SETTINGS','Use supported bounded Event controls.');
     }
-    if(Object.hasOwn(settings,'actorId')&&!id(settings.actorId))return fail('INVALID_SETTINGS','Select a canonical actor identity.');
+    const setupIssues=[];
+    if(Object.hasOwn(settings,'actorId')&&!id(settings.actorId))setupIssues.push({code:'INVALID_SETTINGS',message:'Select a canonical actor identity.',field:'actorId'});
     let ports;
     if(operation==='draft-event-source')ports=[pin('in','draft','input',true),pin('scope','data','input',true),pin('out','data','output')];
     else if(operation==='event-normalize')ports=settings.mode==='progression'?[pin('events','data','input',true),pin('clock','data','input'),pin('out','data','output')]:[pin('source','data','input',true),pin('entities','data','input',true),pin('candidates','data','input',true),pin('out','data','output')];
@@ -56,15 +57,19 @@ function resolve(node,options={}) {
     else if(operation==='item-use-trigger')ports=[pin('source','data','input',true),pin('entities','data','input',true),...(settings.mode==='candidates'?[pin('candidates','data','input',true)]:[]),pin('out','data','output')];
     else if(operation==='confirm-events')ports=[pin('events','data','input',true),pin('decisions','data','input',true),pin('out','data','output')];
     else ports=[pin('events','data','input',true),pin('holders','data','input',true),pin('events','data','output'),pin('holders','data','output')];
-    if(Object.hasOwn(settings,'itemId')&&!id(settings.itemId))return fail('INVALID_SETTINGS','Select a canonical item identity.');
-    if(operation==='item-mention-trigger'&&(!Array.isArray(settings.aliases)||!settings.aliases.length||settings.aliases.length>32||settings.aliases.some(alias=>typeof alias!=='string'||!alias.trim()||alias.length>2048)))return fail('INVALID_SETTINGS','Provide 1–32 bounded literal aliases.');
+    if(Object.hasOwn(settings,'itemId')&&!id(settings.itemId))setupIssues.push({code:'INVALID_SETTINGS',message:'Select a canonical item identity.',field:'itemId'});
+    if(operation==='item-mention-trigger') {
+        if(!Array.isArray(settings.aliases)||settings.aliases.length>32||settings.aliases.some(alias=>typeof alias!=='string'||!alias.trim()||alias.length>2048))return fail('INVALID_SETTINGS','Provide bounded literal aliases.');
+        if(!settings.aliases.length)setupIssues.push({code:'INVALID_SETTINGS',message:'Provide at least one literal alias.',field:'aliases'});
+    }
+    if(setupIssues.length&&!options.authoring)return {ok:false,error:setupIssues[0]};
     const requestBound=operation==='item-use-trigger'?settings.mode==='extract'?1:0:base.requestBound;
     const modelRole=operation==='item-use-trigger'&&settings.mode==='extract'?'eventExtract':base.modelRole;
-    return {ok:true,data:{descriptor:{...base,phase,input:ports[0]?.kind??base.input,requestBound,modelRole},ports,settings}};
+    return {ok:true,data:{descriptor:{...base,phase,input:ports[0]?.kind??base.input,requestBound,modelRole},ports,settings,setupIssues}};
 }
 export function describeEvent(node,options={}) {
     const result=resolve(node,options);if(!result.ok)return result;
-    return {ok:true,data:{descriptor:result.data.descriptor,ports:result.data.ports}};
+    return {ok:true,data:{descriptor:result.data.descriptor,ports:result.data.ports,...(options.authoring?{setupIssues:result.data.setupIssues}:{})}};
 }
 function inputsFor(raw,ports,operation) {
     const cloned=cloneJsonValue(raw);if(!cloned.ok)return cloned;

@@ -12,16 +12,20 @@ export interface AddSystemCommand {
         x: number;
         y: number;
     };
-    inputs: Record<string, Endpoint>;
-    outputs: {
+    inputs?: Record<string, Endpoint>;
+    outputs?: {
         outputPortId: string;
         destination: Endpoint;
     }[];
-    parameterOverrides: Record<string, unknown>;
+    parameterOverrides?: Record<string, unknown>;
     guidance?: {
         outputPortId: string;
         destination: GuidanceDestination;
     };
+}
+export interface SystemAssistanceCommand extends Omit<AddSystemCommand, 'definition' | 'snapshots'> {
+    instanceId: string;
+    expectedInstanceRef: import('./types').DefinitionRef;
 }
 export type SystemPreview = {
     kind: 'template';
@@ -82,6 +86,7 @@ export interface AddSystemSpec {
         snapshots?: SnapshotTable;
     }[]): Result<SystemPicker>;
 }
+export function prepareSystemAssistance(root: NativeGraph3, input: unknown): Result<PreparedSystemEdit>;
 export function prepareAddSystem(root: NativeGraph3, input: unknown): Result<PreparedSystemEdit>;
 export function projectGuidanceMerges(root: NativeGraph3): Result<GuidanceMerges>;
 export function projectSystemAuthoring(root: NativeGraph3, library: {

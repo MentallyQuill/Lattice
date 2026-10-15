@@ -153,19 +153,31 @@ The node shelf groups tools into **Input, Shaping, Surface, Transpose, Derive, I
 
 Choose **Graph → Add node…**, double-click empty canvas, or right-click empty canvas to search. Search understands names, purposes, and aliases as well as installed subgraphs. Type **Text Rules**, for example, and drag the result to an empty place on the canvas.
 
-![Searching for Text Rules, dropping it on the canvas, and completing its configuration](images/search-and-place.gif)
+![Searching for Text Rules, placing it immediately, and opening its Details](images/search-and-place.gif)
 
-*Drop chooses the position. When Configure node opens, check its settings and click Create node to finish.*
+*Drop places the node at that position. Select it to edit its settings in Details.*
 
 ![A Text Rules search result with its floating placement label](images/shelf-drag.png)
 
 *The floating label shows what you are about to add. Escape or releasing outside the canvas cancels placement.*
 
-Some tools are ready to add directly; others need required settings first. For Text Rules, dropping opens **Configure Text Rules**. The node is not added until you choose **Create node**. Cancel keeps the graph unchanged. The same settings remain available in Details after creation.
+Every available tool places immediately, including tools that still need an actor, a helper, a model, or authorized story data. Placement starts no workflow and makes no model request. Select the placed node to edit its settings in **Details**. One Undo removes the placement; later settings saves have their own Undo steps.
 
-![Configure Text Rules dialog before creating the node](images/node-creation.png)
+![Text Rules settings in Details after placement](images/node-creation.png)
 
-*Choose the input and rule options, then Create node. Read the guide later from the selected node's ? button.*
+*Edit the input and rules on the placed node. Read its guide from the ? button beside its name.*
+
+A red border and wrench marked **Setup Required** mean settings are missing. Click the badge to open the reasons in Details. You can save one valid field while other required fields remain empty. Invalid JSON or other unfinished text stays in the editor until corrected; it does not replace the saved setting. Closing Details keeps the node.
+
+![Prompted Memory placed with its Setup Required badge and declared pins](images/node-setup-required.png)
+
+*Prompted Memory is already on the canvas while its Actor id is empty.*
+
+![The placed Prompted Memory shows its missing setting and inputs in Details](images/node-setup-details.png)
+
+After the last missing setting is saved, an unconnected required pin shows a plug and **Input Required**. Connect the named input to continue. These badges describe current authoring requirements; running still checks the requested path and current access before doing work.
+
+![Prompted Memory shows Input Required after its Actor id and model connection are configured](images/node-input-required.png)
 
 ![Node search opened over the canvas](images/node-search.png)
 
@@ -698,18 +710,21 @@ Existing placed copies keep their exact saved contents when a library entry is u
 
 Use **Workflow → Add system…** when composing a saved story system into the whole workflow. Save your wrapper with Add to Subgraphs first if it is not on the shelf. Add system always targets Main, even if you are viewing a body tab.
 
-![Add system dialog with the saved body and typed connection choices](images/add-system.png)
+![Add system chooser showing a saved revision ready to place](images/add-system.png)
 
-*Choose the system, its inputs, and where its outputs will go, then preview the connections.*
+*Choose a saved revision, then Add system. Its inputs and exposed settings do not need to be configured first.*
 
-1. Choose **Saved system**.
-2. Bind required inputs to compatible sources. Optional inputs may remain **Unused**.
-3. Adjust exposed **JSON override** settings if needed; empty fields use the saved values.
-4. For a system that guides the reply, choose its **Guidance output** and **Main merge destination**. Select an existing Compose Guidance merge, or **Create Compose Guidance → Generate Reply** when that generator input is empty.
-5. Bind other used outputs to compatible destinations. A system that only stages state changes can participate without prompt text.
-6. Choose **Preview connections**, inspect the result, then **Add system**. The body opens editable in a tab; one Undo removes the addition and its new connections.
+1. Choose **Saved system**, then **Add system**. The exact saved revision is copied into an editable local instance, and its body opens in a tab. Saved exposed values are its initial settings. One Undo removes this placement.
+2. Return to **Main** and right-click the placed wrapper. Choose **Configure system connections…** to edit exposed **JSON override** settings and configure connections. You can also edit the local body's nodes in their Details.
+3. Bind required inputs to compatible sources when ready. **Setup Required** identifies missing effective settings; **Input Required** identifies required connections.
+4. For reply guidance, explicitly choose its **Guidance output** and **Main merge destination**. Use an existing Compose Guidance merge, or **Create Compose Guidance → Generate Reply** when that generator input is empty. Bind any other used outputs to compatible destinations.
+5. Choose **Preview connections**, inspect the result, then **Apply configuration**. This changes the existing instance and has a separate Undo step. **Cancel** retains the placed instance and changes no connections. If the document changes after preview, reopen the assistant and preview again.
 
-Existing occupied pins are not silently replaced. Choose a legal merge or a free destination. Connections decide participation and influence; a placed block with no useful output path is not automatically added to the reply.
+![Connection assistance previews guidance for an already placed system](images/system-connections.png)
+
+*The preview configures this existing instance. It does not insert another copy.*
+
+Occupied pins are not silently replaced. Choose a legal merge or a free destination. Connections decide participation and influence; placing a system does not automatically inject guidance into the reply. A system that only stages state changes can participate through its staged terminals without adding prompt text.
 
 ![A system's Run this system checkbox in Details](images/system-settings.png)
 

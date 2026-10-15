@@ -8,16 +8,14 @@ async function launchWithoutChat(page){
  });
 }
 
-async function submitAutomaticRead(page,before,phase){
- const configuration=page.getByRole('dialog',{name:'Configure node',exact:true});
- await expect(configuration).toBeVisible();
- await expect(configuration.getByLabel('Workflow data document',{exact:true})).toHaveValue('lattice-default-notes');
- await expect(configuration.getByLabel('Node stage',{exact:true})).toHaveValue(phase);
- expect(await page.evaluate(()=>Object.keys(window.canvasHarness.graph.nodes))).toEqual(before);
+async function assertAutomaticRead(page,before,phase){
+ await expect(page.getByRole('dialog',{name:'Configure node',exact:true})).toHaveCount(0);
+ await expect.poll(()=>page.evaluate(()=>Object.keys(window.canvasHarness.graph.nodes).length)).toBe(before.length+1);
+ const added=await page.evaluate(before=>Object.values(window.canvasHarness.graph.nodes).filter(node=>!before.includes(node.id)),before);
+ expect(added).toHaveLength(1);expect(added[0]).toMatchObject({operation:'read-file',targetId:'lattice-default-notes',phase});
+ expect(await page.evaluate(before=>before.every(id=>!!window.canvasHarness.graph.nodes[id]),before)).toBe(true);
  await expect(page.getByRole('dialog',{name:'Workflow Data',exact:true})).toHaveCount(0);
  expect(await page.evaluate(()=>({chatId:window.canvasHarness.context.chatId,chat:window.canvasHarness.context.chat,metadata:window.canvasHarness.context.chatMetadata,calls:window.canvasHarness.providerCalls()}))).toEqual({chatId:null,chat:[],metadata:{},calls:0});
- await configuration.getByRole('button',{name:'Create node',exact:true}).click();
- await expect(configuration).toHaveCount(0);
 }
 
 async function addFromSearch(page,operation,label){
@@ -31,7 +29,7 @@ async function addFromSearch(page,operation,label){
  await page.getByRole('combobox',{name:'Search nodes and subgraphs',exact:true}).fill(label);
  await page.locator(`[data-choice="operation:${operation}"]`).click();
  await expect(page.getByRole('dialog',{name:'Add node',exact:true})).toHaveCount(0);
- if(operation==='read-file')await submitAutomaticRead(page,before,'pre');
+ if(operation==='read-file')await assertAutomaticRead(page,before,'pre');
  else await expect(page.getByRole('dialog',{name:'Configure node',exact:true})).toHaveCount(0);
  await expect.poll(()=>page.evaluate(()=>Object.keys(window.canvasHarness.graph.nodes).length)).toBe(before.length+1);
  return page.evaluate(before=>Object.values(window.canvasHarness.graph.nodes).find(node=>!before.includes(node.id)),before);
@@ -44,7 +42,7 @@ async function readHistory(page,before,read){
  expect(await page.evaluate(id=>window.canvasHarness.graph.nodes[id],read.id)).toEqual(read);
 }
 
-test('automatic data targets need no active chat or setup, with Read File prefilled creation',async({page})=>{
+test('automatic data targets place immediately without active chat or setup',async({page})=>{
  await launchWithoutChat(page);
  for(const [operation,label,key,targetId,phase] of [['story-clock','Story Clock','clockId','lattice-default-clock','pre'],['read-file','Read File','targetId','lattice-default-notes','pre'],['commit-outcomes','Outcome Commit','targetId','lattice-default-outcomes','post']]){
   const before=await page.evaluate(()=>Object.keys(window.canvasHarness.graph.nodes));
@@ -66,7 +64,7 @@ test('automatic reads added beside a response node retain its effective response
  await page.evaluate(async id=>{const h=window.canvasHarness;h.canvas.select({kind:'node',id});await h.settle();},outcomes.id);
  const before=await page.evaluate(()=>Object.keys(window.canvasHarness.graph.nodes));
  await page.locator('.pc-family-row[data-family="Input"]').click();await page.locator('[data-shelf-choice="operation:read-file"]').click();
- await submitAutomaticRead(page,before,'post');
+ await assertAutomaticRead(page,before,'post');
  await expect.poll(()=>page.evaluate(()=>Object.values(window.canvasHarness.graph.nodes).filter(node=>node.operation==='read-file').length)).toBe(1);
  const read=await page.evaluate(()=>Object.values(window.canvasHarness.graph.nodes).find(node=>node.operation==='read-file'));expect(read.phase).toBe('post');expect(read.targetId).toBe('lattice-default-notes');
  await readHistory(page,before,read);

@@ -18,7 +18,7 @@ export interface TimeNodeExecution {
 }
 export const TIME_OPERATIONS: Record<TimeOperationId, TimeOperationDescriptor>;
 /** Native controls, schema 3/runtime 2, and actual named ports. Both phases reserve zero requests. */
-export function describeTimeNode(node: NativeNode | Record<string, unknown>, options?: { phase?: WorkflowPhase }): Result<OperationDescription>;
+export function describeTimeNode(node: NativeNode | Record<string, unknown>, options?: { phase?: WorkflowPhase; authoring?: boolean }): Result<OperationDescription>;
 /** Story Clock: out = detached accepted clock from the trusted root capability.
  * Advance Time inputs: clock + proposal, optional schedules + consumed ledger arrays.
  * Outputs: clock (effective projection), occurrences (ordered attributed records), remainder

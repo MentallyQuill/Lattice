@@ -1,7 +1,8 @@
+import { inspectDefinitionGraph } from './graph-validation.js?v=0.27.3';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.3';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.3';
 import { OPERATIONS, operationFor, phaseForNode } from './catalog.js?v=0.27.3';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, validateDefinition } from './definitions.js?v=0.27.3';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata } from './definitions.js?v=0.27.3';
 const limit = 2000000;
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const pick = (value, keys) => Object.fromEntries(keys.filter(key => Object.hasOwn(value, key)).map(key => [key, value[key]]));
@@ -31,11 +32,11 @@ function instanceParameterTargets(node, snapshots) {
 }
 function definitionReferences(node, snapshots) {
     if (!node || typeof node !== 'object' || Array.isArray(node)) return [];
-    const refs = node.type === 'subgraph' ? [node.definition] : node.type === 'workflow' && node.operation === 'for-each' ? [node.helper] : [];
+    const refs = node.type === 'subgraph' ? [node.definition] : node.type === 'workflow' && node.operation === 'for-each' ? [Object.hasOwn(node, 'helper') ? node.helper : OPERATIONS['for-each'].defaults.helper] : [];
     if (node.type === 'subgraph') for (const parameter of instanceParameterTargets(node, snapshots)) {
         if (parameter.target?.operation === 'for-each' && parameter.controlId === 'helper') refs.push(parameter.value);
     }
-    return refs;
+    return refs.filter(ref=>!(ref?.id==='' && ref.version===1 && ref.semanticHash==='' && Object.keys(ref).length===3));
 }
 function portableProjection(snapshots) {
     const projected = new Map(), active = new Set();
@@ -182,7 +183,7 @@ export function selectSubgraphClosure(definition, snapshots = {}) {
             pending.push(table.data[childKey]);
         }
     }
-    const validation = validateDefinition(top.data, selected);
+    const validation = inspectDefinitionGraph(top.data, selected);
     if (!validation.ok) return validation;
     delete selected[topKey];
     return cloneDefinitionData({ definition: validation.data.definition, definitions: selected });
@@ -199,7 +200,7 @@ export function exportSubgraph(definition, snapshots = {}) {
         const definition = context.definition(item);
         return [definitionRefKey(definition), definition];
     }));
-    const validation = validateDefinition(portable, definitions);
+    const validation = inspectDefinitionGraph(portable, definitions);
     if (!validation.ok) throw new Error(validation.error.message);
     const envelope = { kind: 'lattice-subgraph', schema: 1, minRuntime: 2, definition: portable, definitions };
     if (new TextEncoder().encode(JSON.stringify(envelope)).byteLength > limit) throw new Error('Subgraph JSON must be at most 2,000,000 UTF-8 bytes.');
@@ -219,7 +220,7 @@ export function parseSubgraph(json) {
             const portable = context.definition(item);
             return [definitionRefKey(portable), portable];
         }));
-        const validation = validateDefinition(definition, definitions);
+        const validation = inspectDefinitionGraph(definition, definitions);
         return validation.ok ? { ok: true, data: { definition: validation.data.definition, definitions } } : validation;
     } catch { return fail('DEFINITION_DATA', 'Malformed subgraph package containers.'); }
 }

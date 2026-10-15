@@ -42,7 +42,7 @@ test('an unselected node edits its own profile using keyword search and restores
     await fixture(page);
     await expect(bar(page)).toContainText('Reasoning NanoGPT');
     await expect(picker(page).locator('.node-model-meta')).toHaveText('reasoning-model');
-    await expect(picker(page, 'scene')).toHaveCount(0);
+    await expect(bar(page, 'scene')).toHaveCount(0);
     await expect(bar(page, 'inherited')).toContainText('Fast compact');
     await bar(page).click();
     const results = picker(page).getByRole('option'); await expect(results.first()).toContainText('Active SillyTavern model');
@@ -111,7 +111,7 @@ test('new model nodes select the active host option and operation mode changes r
     await expect(bar(page, node.id)).toContainText('Active SillyTavern model');
     await page.locator('.pc-node-native[data-id="compact"] .pc-native-heading').click();
     await chooseControl(page, 'Method', 'select');
-    await expect(picker(page, 'compact')).toHaveCount(0);
+    await expect(bar(page, 'compact')).toHaveCount(0);
     await page.getByRole('button', { name: 'Undo', exact: true }).click(); await expect(bar(page, 'compact')).toBeVisible();
 });
 test('profile popup stays bounded and scrolls independently under a nonidentity camera and narrow viewport', async ({ page }) => {
@@ -194,9 +194,9 @@ test('unified model nodes and configured model modes expose independent active p
         await h.activate(graph); await h.view({ x: 210, y: 45, zoom: .78 }); h.canvas.select(null);
         return ids;
     });
-    await expect(page.locator('.pc-node-profile')).toHaveCount(11);
+    await expect(page.locator('.pc-node-profile .profile-bar')).toHaveCount(11);
     for (const node of ids) {
-        if (!node.model) { await expect(picker(page, node.id)).toHaveCount(0); continue; }
+        if (!node.model) { await expect(bar(page, node.id)).toHaveCount(0); continue; }
         await expect(bar(page, node.id)).toContainText('Active SillyTavern model');
         await expect(picker(page, node.id).locator('.node-model-meta')).toHaveText('active-host-model');
     }
@@ -211,7 +211,7 @@ test('unified model nodes and configured model modes expose independent active p
     const extract = ids.find(node => node.operation === 'extract' && node.model);
     await page.locator(`.pc-node-native[data-id="${extract.id}"] .pc-native-heading`).click();
     await chooseControl(page, 'Mode', 'literal');
-    await expect(picker(page, extract.id)).toHaveCount(0);
+    await expect(bar(page, extract.id)).toHaveCount(0);
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
     await expect(bar(page, extract.id)).toContainText('Active SillyTavern model');
     await page.screenshot({ path: testInfo.outputPath('unified-model-profiles.png') });

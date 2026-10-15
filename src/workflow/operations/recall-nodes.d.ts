@@ -23,7 +23,7 @@ export interface RecallNodeExecution {
  countTokens?:(text:string)=>{tokens:number}|Promise<{tokens:number}>;
 }
 export const RECALL_OPERATIONS:Record<RecallOperationId,RecallOperationDescriptor>;
-export function describeRecallNode(node:NativeNode|Record<string,unknown>,options?:{phase?:WorkflowPhase}):Result<OperationDescription>;
+export function describeRecallNode(node:NativeNode|Record<string,unknown>,options?:{phase?:WorkflowPhase;authoring?:boolean}):Result<OperationDescription>;
 /** Recall accepts explicit Data records, presence and configured source/event inputs.
  * Filters are deterministic actor/partner/tag/record identity and recency, with record/character/token
  * bounds. Outputs private Guidance on out, selected records on records and private omission metadata

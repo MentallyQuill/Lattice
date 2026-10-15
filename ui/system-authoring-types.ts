@@ -20,6 +20,7 @@ export interface SystemDraft {
 }
 export interface AddSystemView extends SystemPicker {
     key: string;
+    mode?: 'assist';
     error?: string;
 }
 export interface AddSystemActions {
@@ -28,5 +29,5 @@ export interface AddSystemActions {
         connections: string[];
         changes: SystemPreview[];
     }>;
-    submit(key: string): unknown;
+    submit(key: string, choiceKey?: string): unknown;
 }

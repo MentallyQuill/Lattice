@@ -3,7 +3,7 @@ import { cloneJsonValue } from './operations/json-data.js?v=0.27.3';
 import { freeze } from './record-data.js?v=0.27.3';
 import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.3';
 import { validateNodeModifiers } from './modifiers.js?v=0.27.3';
-import { ARTIFACT_KINDS, operationFor, describeOperation, portsForNode, phaseForNode } from './catalog.js?v=0.27.3';
+import { ARTIFACT_KINDS, operationFor, describeAuthoredOperation, portsForNode, phaseForNode } from './catalog.js?v=0.27.3';
 import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, describeExposedParameter, nodeBindingOverrideKey, artifactAddressKey } from './definition-data.js?v=0.27.3';
 import { samePath, safeId } from './composition-edit.js?v=0.27.3';
 
@@ -87,8 +87,12 @@ function inspectScope(graph, { definition, snapshots = {} } = {}) {
             if (graph.mode !== 'native-unified' && checked.data.body.mode !== graph.mode) return fail('WRONG_PHASE', 'The instance phase differs from its container.', id);
             continue;
         }
-        const described = describeOperation(graph, node);
+        const described = describeAuthoredOperation(graph, node);
         if (!described.ok) return { ...described, error: { ...described.error, nodeId: id } };
+        if(node.operation==='for-each' && !described.data.setupIssues.some(issue=>issue.field==='helper')) {
+            const helper=exactSnapshot(node.helper ?? operationFor(node).defaults.helper,snapshots);
+            if(!helper.ok)return {...helper,error:{...helper.error,nodeId:id}};
+        }
         describedNodes.set(id, described.data);
         const modifiers=validateNodeModifiers(node,described.data.ports.filter(port=>port.direction==='output'));
         if(!modifiers.ok)return {...modifiers,error:{...modifiers.error,nodeId:id}};
@@ -268,7 +272,15 @@ function inspectSnapshots(value) {
  * @returns {import('./types').Result<import('./types').DefinitionDiagnostics>}
  */
 export function validateDefinition(definition, snapshots = {}) {
-    return inspectDefinition(definition, snapshots, false);
+    const checked=inspectDefinition(definition,snapshots,true);
+    if(!checked.ok)return checked;
+    const {expansion,...diagnostics}=checked.data;
+    for(const unit of expansion.primitives) for(const issue of unit.setupIssues??[]) {
+        // Exposed settings are a caller contract; only internal configuration is required here.
+        const exposed=issue.field && definition.parameters.some(parameter=>parameter.target.nodeId===unit.address.nodeId && samePath(parameter.target.instancePath,unit.address.instancePath) && parameter.target.controlId===issue.field);
+        if(!exposed)return {ok:false,error:{...issue,nodeId:unit.address.nodeId,address:unit.address}};
+    }
+    return {ok:true,data:diagnostics};
 }
 
 /** Read-only library display inventory from the same checked definition expansion.
@@ -329,6 +341,35 @@ export function prepareDefinitionRegistry(snapshots) {
     registryTables.set(registry.snapshots, registry);
     return { ok: true, data: registry };
 }
+const helperSetupExpansions = new WeakMap();
+/** Inspect referenced helper settings from admitted snapshots, without compiling or running them. */
+function withHelperSetup(expansion, expansions) {
+    const retained=helperSetupExpansions.get(expansion);
+    if(retained && [...retained.dependencies].every(([key,value])=>expansions.get(key)===value))return retained.value;
+    const memo=new Map(),active=new Set(),dependencies=new Map();
+    const issueFor=ref=>{
+        const key=definitionRefKey(ref);
+        if(memo.has(key))return memo.get(key);
+        if(active.has(key))return {code:'ITERATION_CYCLE',message:'Iteration helpers cannot recursively invoke an active pinned helper.',field:'helper'};
+        const helper=expansions.get(key);dependencies.set(key,helper);if(!helper)return null;
+        active.add(key);
+        let issue=null;
+        for(const unit of helper.primitives) {
+            const ownIssue=unit.setupIssues?.[0] ?? (unit.node.operation==='for-each'?issueFor(unit.node.helper):null);
+            if(ownIssue){issue={...ownIssue,field:'helper',message:'Iteration helper '+unit.node.id+': '+ownIssue.message};break;}
+        }
+        active.delete(key);memo.set(key,issue);return issue;
+    };
+    let changed=false;
+    const primitives=expansion.primitives.map(unit=>{
+        if(unit.node.operation!=='for-each'||unit.setupIssues?.length)return unit;
+        const issue=issueFor(unit.node.helper);if(!issue)return unit;
+        changed=true;return {...unit,setupIssues:[issue]};
+    });
+    const value=changed?{...expansion,primitives}:expansion;
+    helperSetupExpansions.set(expansion,{dependencies,value});
+    return value;
+}
 /** Owned diagnostics are qualified by the whole registry, including local presentation/bindings. */
 export function inspectPreparedDefinition(registry, ref) {
     const owned = preparedRegistries.get(registry);
@@ -337,7 +378,7 @@ export function inspectPreparedDefinition(registry, ref) {
     const key = definitionRefKey(ref), snapshot = registry.snapshots[key];
     if (!snapshot) return fail('DEFINITION_REF', 'The exact definition is absent from the admitted registry.');
     if (owned.inspections.has(key)) return owned.inspections.get(key);
-    const ownExpansion = owned.expansions.get(key), parameterDescriptors = {};
+    const ownExpansion = withHelperSetup(owned.expansions.get(key),owned.expansions), parameterDescriptors = {};
     for (const parameter of snapshot.parameters) {
         const unit = ownExpansion.primitives.find(unit => unit.address.nodeId === parameter.target.nodeId && JSON.stringify(unit.address.instancePath) === JSON.stringify(parameter.target.instancePath));
         const descriptor = describeExposedParameter(unit.node, parameter.target.controlId);
@@ -376,7 +417,7 @@ export function inspectExpandedGraph(graph) {
         if (occurrences.length !== 1 || !samePath(occurrences[0].instancePath, owner.instancePath)) return fail('LOCAL_COPY_OWNERSHIP', 'Each owned ID must have one exact live instance path.');
         for (let depth = 1; depth < owner.instancePath.length; depth++) if (!owners.some(entry => samePath(entry.instancePath, owner.instancePath.slice(0, depth)))) return fail('LOCAL_COPY_OWNERSHIP', 'Every private child requires privately owned ancestor paths.');
     }
-    return expanded;
+    return {ok:true,data:withHelperSetup(expanded.data,preparedRegistries.get(preparedRegistry.data).expansions)};
 }
 
 function expandChecked(root, snapshots, rootDefinition) {
@@ -445,7 +486,7 @@ function expandChecked(root, snapshots, rootDefinition) {
             }
             if (operation) {
                 const requestBound = typeof operation.requestBound === 'function' ? operation.requestBound(node) : operation.requestBound;
-                const unit = { address: at, node, phase: operation.phase, enabled, systemDisabled: !ancestorEnabled, requestBound: ancestorEnabled ? requestBound : 0, inputPorts: ports.filter(port => port.direction === 'input'), outputPorts: ports.filter(port => port.direction === 'output'), terminal: operation.terminal };
+                const unit = { address: at, node, setupIssues: scope.data.describedNodes.get(node.id).setupIssues, phase: operation.phase, enabled, systemDisabled: !ancestorEnabled, requestBound: ancestorEnabled ? requestBound : 0, inputPorts: ports.filter(port => port.direction === 'input'), outputPorts: ports.filter(port => port.direction === 'output'), terminal: operation.terminal };
                 // A pinned legacy phase remains an explicit stage contract. Only an
                 // undeclared, compatible unified operation can inherit a later stage.
                 if (root.mode === 'native-unified') stageCapabilities.set(nodeAddressKey(at), {

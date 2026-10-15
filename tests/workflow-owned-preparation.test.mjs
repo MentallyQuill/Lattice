@@ -195,3 +195,15 @@ test('warm source artifacts preserve factory mutation preconditions and raw clon
  assert.equal(prepareGraphArtifacts(raw).ok,false);
  assert.equal(prepareNativeConnectionEdit(raw,{kind:'create',operation:'text',graphPoint:{x:0,y:0}}).ok,true,'raw validation/clone fallback remains compatible');
 });
+import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definitions.js?v=0.27.3';
+test('incomplete helper diagnostics preserve expansion identity across unchanged admitted registries',()=>{
+ const pin=raw=>{const result=computeDefinitionIdentity(raw);assert.equal(result.ok,true,JSON.stringify(result));return {...result.data.materializedDefinition,semanticHash:result.data.semanticHash};};
+ const helper=pin({id:'setup-helper',version:1,name:'Helper',parameters:[],interface:[],body:{schema:3,runtime:2,mode:'native-pre',nodes:{memory:{id:'memory',type:'workflow',operation:'prompted-memory'}},wires:{}}});
+ const ref={id:helper.id,version:helper.version,semanticHash:helper.semanticHash};
+ const owner=pin({id:'setup-owner',version:1,name:'Owner',parameters:[],interface:[],body:{schema:3,runtime:2,mode:'native-pre',nodes:{each:{id:'each',type:'workflow',operation:'for-each',helper:ref}},wires:{}}});
+ const registry=validation.prepareDefinitionRegistry({[definitionRefKey(helper)]:helper,[definitionRefKey(owner)]:owner}).data;
+ const first=validation.inspectPreparedDefinition(registry,owner).data.expansion;
+ assert.equal(first.primitives[0].setupIssues[0].field,'helper');
+ const recombined=validation.prepareDefinitionRegistry({...registry.snapshots}).data;
+ assert.equal(validation.inspectPreparedDefinition(recombined,owner).data.expansion,first);
+});

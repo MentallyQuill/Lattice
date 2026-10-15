@@ -39,10 +39,14 @@ function resolve(node, options) {
         if (!checked.ok) return fail('INVALID_SETTINGS', 'Controls require bounded JSON data.');
         settings[key] = checked.data.value;
     }
+    const setupIssues=[];
     let ports, descriptor = { ...base, phase, controlDescriptors: { ...base.controlDescriptors } };
     if (operation === 'for-each') {
         const helper=settings.helper;
-        if(!plain(helper)||Object.keys(helper).length!==3||typeof helper.id!=='string'||!helper.id.trim()||helper.id.length>128||!Number.isSafeInteger(helper.version)||helper.version<1||!/^sha256:[0-9a-f]{64}$/.test(helper.semanticHash)||!Number.isSafeInteger(settings.limit)||settings.limit<1||settings.limit>128||!Number.isSafeInteger(settings.requestBoundPerIteration)||settings.requestBoundPerIteration<0||settings.requestBoundPerIteration>16||!['map','projected-state'].includes(settings.mode))return fail('INVALID_SETTINGS','For Each requires a pinned helper, 1–128 iterations and 0–16 requests per iteration.');
+        const emptyHelper=plain(helper)&&Object.keys(helper).length===3&&helper.id===''&&helper.version===1&&helper.semanticHash==='';
+        if(!plain(helper)||Object.keys(helper).length!==3||typeof helper.id!=='string'||(!emptyHelper&&!helper.id.trim())||helper.id.length>128||!Number.isSafeInteger(helper.version)||helper.version<1||(!emptyHelper&&!/^sha256:[0-9a-f]{64}$/.test(helper.semanticHash))||!Number.isSafeInteger(settings.limit)||settings.limit<1||settings.limit>128||!Number.isSafeInteger(settings.requestBoundPerIteration)||settings.requestBoundPerIteration<0||settings.requestBoundPerIteration>16||!['map','projected-state'].includes(settings.mode))return fail('INVALID_SETTINGS','For Each requires a pinned helper, 1–128 iterations and 0–16 requests per iteration.');
+        if(emptyHelper)setupIssues.push({code:'INVALID_SETTINGS',message:'Select an exact pinned iteration helper.',field:'helper'});
+        if(setupIssues.length&&!options.authoring)return {ok:false,error:setupIssues[0]};
         if(!validIterationRoleOverrides(settings.roleOverrides))return fail('INVALID_SETTINGS','For Each role overrides require up to 64 named roles with only bounded profile/model selectors.');
         descriptor={...descriptor,requestBound:settings.limit*settings.requestBoundPerIteration};
         ports=[pin('in','data','input',true),pin('state','data','input',settings.mode==='projected-state'),pin('out','data','output'),pin('state','data','output')];
@@ -62,10 +66,10 @@ function resolve(node, options) {
         descriptor = { ...descriptor, input: settings.artifactKind, output: settings.artifactKind };
         ports = [pin('in', settings.artifactKind, 'input', true), pin('condition', 'data', 'input', true), ...['yes', 'no', 'unresolved'].map(id => pin(id, settings.artifactKind, 'output'))];
     }
-    return { ok: true, data: { descriptor, ports, settings } };
+    return { ok: true, data: { descriptor, ports, settings, setupIssues } };
 }
 export function describeControl(node, options = {}) {
-    try { const result = resolve(node, options); if (!result.ok) return result; const { descriptor, ports } = result.data; return { ok: true, data: { descriptor, ports } }; }
+    try { const result = resolve(node, options); if (!result.ok) return result; const { descriptor, ports, setupIssues } = result.data; return { ok: true, data: { descriptor, ports, ...(options.authoring?{setupIssues}:{}) } }; }
     catch { return fail('INVALID_SETTINGS', 'Control settings could not be inspected.'); }
 }
 async function executeControlRaw(node, inputs, local = {}) {

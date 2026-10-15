@@ -13,25 +13,22 @@ async function choose(page, family, operation, phase) {
     const before = await page.evaluate(() => structuredClone(window.canvasHarness.graph.nodes));
     await page.locator(`[data-family="${family}"]`).click();
     await page.locator(`[data-shelf-choice="operation:${operation}"]`).click();
-    if (operation === 'json-decode') {
-        const dialog = page.getByRole('dialog', { name: 'Configure node', exact: true });
-        await expect(dialog).toBeVisible();
-        expect(await page.evaluate(() => window.canvasHarness.graph.nodes)).toEqual(before);
-        await dialog.getByLabel('Node stage', { exact: true }).selectOption(phase);
-        await dialog.getByRole('button', { name: 'Create node', exact: true }).click();
-        await expect(dialog).toBeHidden();
-    }
+    await expect(page.getByRole('dialog', { name: 'Configure node', exact: true })).toHaveCount(0);
     await expect.poll(() => page.evaluate(operation => Object.values(window.canvasHarness.graph.nodes).filter(node => node.operation === operation).length, operation)).toBe(1);
     const id = await page.evaluate(operation => Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === operation).id, operation);
+    const placed = await page.evaluate(() => structuredClone(window.canvasHarness.graph.nodes));
+    expect(Object.keys(placed)).toHaveLength(Object.keys(before).length + 1);
+    for (const [previousId, node] of Object.entries(before)) expect(placed[previousId]).toEqual(node);
     await page.evaluate(async id => {
         const h = window.canvasHarness, node = h.graph.nodes[id];
         await h.view({ x: 280 - node.x, y: 80 - node.y, zoom: 1 });
     }, id);
     await page.locator(`.pc-node[data-id="${id}"]`).click();
-    if (['memory', 'json-decode'].includes(operation)) {
-        await page.getByLabel('Workflow stage', { exact: true }).selectOption(phase);
-        await expect.poll(() => page.evaluate(id => window.canvasHarness.graph.nodes[id].phase, id)).toBe(phase);
-    }
+    const details = page.getByRole('region', { name: 'Node details', exact: true });
+    await expect(details).toBeVisible();
+    const stage = details.getByLabel('Workflow stage', { exact: true });
+    if (await stage.count()) await stage.selectOption(phase);
+    await expect.poll(() => page.evaluate(id => window.canvasHarness.graph.nodes[id].phase, id)).toBe(phase);
     return id;
 }
 

@@ -43,3 +43,6 @@ export function validateRecallQueueProposal(raw:unknown):Result<RecallQueuePropo
  * Factories are captured user/chat/workflow/actor scopes; actor changes require another session.
  */
 export function createRecallState(ports:RecallStatePorts):Result<RecallState>;
+
+/** Bounded physical-key controls independent of actor/memory selection. */
+export function validateRecallHotkey(raw: unknown): Result<RecallQueueProposal['hotkey']>;

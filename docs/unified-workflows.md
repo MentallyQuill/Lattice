@@ -87,7 +87,7 @@ Copying a report does not make it valid evidence for deletion. Review the retain
 
 Keep one **On Send → Generate Reply → Review / Publish** path. It can cross static subgraphs: the connections become typed inputs and outputs while the enclosing workflow still owns one activation and reply.
 
-Package item effects, weather, or relationship state as separate bodies. Choose **Workflow → Add system…**, select a saved body, bind inputs and destinations, and **Preview connections** before adding. It targets Main even when a body tab is focused. For Guidance, choose an existing Compose merge or create one when Generate Reply’s guidance input is empty. Occupied inputs require an explicit choice. A state-only system can stage changes without adding prompt text.
+Package item effects, weather, or relationship state as separate bodies. Choose **Workflow → Add system…** and place a saved body's editable instance immediately. It targets Main even when a body tab is focused. Use the placed wrapper's **Configure system connections…** action to bind inputs and destinations and preview the connection changes. For Guidance, choose an existing Compose merge or create one when Generate Reply’s guidance input is empty. Occupied inputs require an explicit choice. A state-only system can stage changes without adding prompt text.
 
 Compose combines Guidance sections in your chosen order. Each row’s **Kind**, **Required input**, and **Skipped source** controls its behavior. Use optional Guidance with **Omit section** when a system may skip. Completed connected material replaces the Text fallback; an unconnected optional input retains it. Required or unresolved sources keep their dependency rules. An omitted `{{section:Name}}` renders empty in a template.
 
@@ -173,7 +173,7 @@ Supply a unique target ID, display name, format, visibility, and initial templat
 
 Initial templates seed unsaved content. Updating a template does not overwrite saved data. For an existing authorization, use **Load initial template** before editing that template. **Remove authorization** revokes workflow access.
 
-Automatic-source nodes can be placed directly. Other tools may open **Configure node** for required controls, stage, or saved helper. Cancel leaves the graph unchanged. You can edit remaining controls in Details. Connect a valid node where its output is needed for it to run.
+All available nodes place directly, including nodes with missing settings or an unselected helper. A red border and **Setup Required** wrench lead to the relevant Details fields; complete them progressively. **Input Required** identifies missing required wiring. You can save an unfinished workflow and run a complete independent branch; an unfinished dependency blocks its requested run before any work begins.
 
 **Read File** returns serialized Text, parsed Data, and a live reference. Connect that exact reference to Write to File for the same target and actor scope. A filename or copied reference cannot authorize a save. Use JSON Decode, Select Fields, or Collection to choose a nested list.
 

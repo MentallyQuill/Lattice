@@ -18,8 +18,10 @@ async function setup(page) {
         await h.view({ x: 90, y: 80, zoom: .7 });
     });
 }
+async function authoredGraph(page) { return page.evaluate(() => { const graph = structuredClone(window.canvasHarness.graph); delete graph.updatedAt; return graph; }); }
 async function menu(page, group, name) { await page.getByRole('menuitem', { name: group, exact: true }).click(); await page.getByRole('menuitem', { name, exact: true }).click(); }
 async function openAdd(page) { await menu(page, 'Workflow', 'Add system…'); await expect(page.getByRole('dialog', { name: 'Add system', exact: true })).toBeVisible(); }
+async function openAssistance(page, instanceId) { await page.locator('.pc-graph-tabs [role="tab"]').first().click(); await page.locator(`.pc-node[data-id="${instanceId}"] .pc-native-heading`).click({ button: 'right' }); await page.getByRole('menuitem', { name: 'Configure system connections…', exact: true }).click(); await expect(page.getByRole('dialog', { name: 'Configure system connections', exact: true })).toBeVisible(); }
 async function preview(page) { await page.getByLabel('System Guidance output', { exact: true }).selectOption('guidance'); await page.getByLabel('Guidance merge destination', { exact: true }).selectOption('merge'); await page.getByRole('button', { name: 'Preview connections', exact: true }).click(); await expect(page.getByText('Connection preview', { exact: true })).toBeVisible(); await expect(page.getByText(/Template:[\s\S]*section:Weather/)).toBeVisible(); }
 test('Add system from pinned child previews an effective template merge, supports edit/skip/history and saves opened tabs', async ({ page }) => {
     await setup(page);
@@ -31,20 +33,29 @@ test('Add system from pinned child previews an effective template merge, support
     await page.setViewportSize({ width: 760, height: 650 });
     await page.screenshot({ path: '.tmp/workflow-systems/screenshots/add-system-selection-narrow.png' });
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await preview(page);
-    await page.screenshot({ path: '.tmp/workflow-systems/screenshots/add-system-preview-wide.png' });
-    await page.setViewportSize({ width: 760, height: 650 });
-    await page.screenshot({ path: '.tmp/workflow-systems/screenshots/add-system-preview-narrow.png' });
-    await page.setViewportSize({ width: 1440, height: 1000 });
+    await expect(page.getByRole('button', { name: 'Add system', exact: true })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Preview connections', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Add system', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Add system', exact: true })).toHaveCount(0);
     const instanceId = await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).find(n => n.type === 'subgraph' && n.id !== 'origin').id);
-    await expect(page.locator('.pc-graph-tabs [role="tab"][aria-selected="true"]')).toContainText('Weather');
+    const placed = await authoredGraph(page);
+    await openAssistance(page, instanceId);
+    await preview(page);
+    await page.screenshot({ path: '.tmp/workflow-systems/screenshots/add-system-preview-wide.png' });
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    expect(await authoredGraph(page)).toEqual(placed);
+    await openAssistance(page, instanceId); await preview(page);
+    await page.getByRole('button', { name: 'Apply configuration', exact: true }).click();
+    expect(await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).filter(n => n.type === 'subgraph').length)).toBe(2);
+    await page.getByRole('button', { name: 'Undo', exact: true }).click();
+    expect(await authoredGraph(page)).toEqual(placed);
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
     expect(await page.evaluate(() => Object.keys(window.canvasHarness.graph.nodes))).toEqual(before);
-    await expect(page.locator('.pc-graph-tabs [role="tab"][aria-selected="true"]')).toContainText('Weather');
-    expect(await page.evaluate(() => window.canvasHarness.canvas.graph.nodes.compose?.enabled !== undefined)).toBe(false);
     await page.getByRole('button', { name: 'Redo', exact: true }).click();
+    await page.getByRole('button', { name: 'Redo', exact: true }).click();
+    await page.locator('.pc-graph-tabs [role="tab"]').first().click();
+    await page.locator(`.pc-node[data-id="${instanceId}"] .pc-native-heading`).dblclick();
+    await expect(page.locator('.pc-graph-tabs [role="tab"][aria-selected="true"]')).toContainText('Weather');
     await page.locator('.pc-node[data-id="compose"] .pc-native-heading').click();
     await page.getByLabel('Section 1 text', { exact: true }).fill('Clear weather after rain.');
     await page.getByRole('button', { name: 'Save Sections', exact: true }).click();
@@ -78,7 +89,7 @@ test('Add system from pinned child previews an effective template merge, support
 
 test('two successive Add system commands from child tabs place separate vacant Main wrappers',async({page})=>{
  await setup(page);await page.locator('.pc-node[data-id="origin"] .pc-native-heading').dblclick();
- for(let i=0;i<2;i++){await openAdd(page);await preview(page);await page.getByRole('button',{name:'Add system',exact:true}).click();await expect(page.getByRole('dialog',{name:'Add system',exact:true})).toHaveCount(0);}
+ for(let i=0;i<2;i++){await openAdd(page);await page.getByRole('button',{name:'Add system',exact:true}).click();await expect(page.getByRole('dialog',{name:'Add system',exact:true})).toHaveCount(0);}
  await page.locator('.pc-graph-tabs [role="tab"]').first().click();
  const boxes=await page.locator('.pc-node.pc-node-subgraph').evaluateAll(nodes=>nodes.map(node=>{const b=node.getBoundingClientRect();return {id:node.dataset.id,x:b.x,y:b.y,right:b.right,bottom:b.bottom};}));expect(boxes).toHaveLength(3);
  for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){const a=boxes[i],b=boxes[j];expect(a.right<=b.x||a.x>=b.right||a.bottom<=b.y||a.y>=b.bottom).toBe(true);}

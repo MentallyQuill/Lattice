@@ -1,41 +1,19 @@
 import {parseControlInput} from './control-input-contracts.js?v=0.27.3';
 import {prepareIterationBindings} from './iteration-bindings.js?v=0.27.3';
 import {projectNodeControls} from './node-control-projection.js?v=0.27.3';
-import {OPERATIONS,operationDefaults,describeOperation,phaseForNode} from '../workflow/catalog.js?v=0.27.3';
+import {OPERATIONS,operationDefaults,describeOperation,describeAuthoredOperation,phaseForNode} from '../workflow/catalog.js?v=0.27.3';
 import {cloneDefinitionData,definitionRefKey} from '../workflow/definition-data.js?v=0.27.3';
 import {prepareDefinitionRegistry,inspectPreparedDefinition} from '../workflow/graph-validation.js?v=0.27.3';
 import {freeze} from '../workflow/record-data.js?v=0.27.3';
 import {workflowDataPresetFor} from '../workflow/workflow-data-defaults.js?v=0.27.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
-const pin=(id,kind,direction,required=false,label=id)=>({id,label,kind,direction,required,cardinality:'one'});
-const input=(id,kind='data',required=true,label=id)=>pin(id,kind,'input',required,label),output=(id,kind='data',label=id)=>pin(id,kind,'output',false,label);
-const factories={
- 'decision':controls=>[input('in',controls.inputKind,true,'State'),output('out','data','Decision')],
- 'advance-time':()=>[input('clock','data',true,'Previous Story Clock'),input('proposal','data',true,'Explicit time proposal'),input('schedules','data',false,'Authored schedules (optional)'),input('consumed','data',false,'Settled occurrence IDs (optional)'),output('clock','data','Projected Story Clock'),output('occurrences','data','Ordered due events'),output('remainder','data','Remaining duration'),output('report','data','Time projection report')],
- 'read-file':()=>[output('text','text','Contents'),output('document','data','Parsed document'),output('reference','data','Live file reference')],
- 'story-clock':()=>[output('out','data','Accepted Story Clock')],
- 'time-trigger':()=>[input('previous','data',true,'Previous Story Clock'),input('destination','data',true,'Projected Story Clock'),input('consumed','data',false,'Settled occurrence IDs (optional)'),output('occurrences','data','Ordered due events'),output('report','data','Time trigger report')],
- 'for-each':controls=>[input('in'),input('state','data',controls.mode==='projected-state'),output('out'),output('state')],
- 'scene-presence':()=>[input('in'),output('out')],
- 'character-direction':()=>[input('presence'),input('data','data',false),output('out','guidance')],
- 'actor-context':()=>[input('presence'),output('out','context')],
- 'prompted-memory':()=>[input('presence'),input('event'),output('out')],
- 'item-mention-trigger':()=>[input('source'),input('entities'),input('state','data',false),output('out'),output('state')],
- 'item-use-trigger':controls=>[input('source'),input('entities'),...(controls.mode==='extract'?[]:[input('candidates')]),output('out')],
- 'parse-effect-library':controls=>[input('in',controls.format==='data'?'data':'text'),output('out')],
- 'recall':controls=>[input('records','data',false),input('presence','data',false),...(controls.activation?.includes('keyword')?[input('source','data',false)]:[]),...(controls.activation?.includes('event')?[input('events','data',false)]:[]),output('out','guidance'),output('records'),output('report')],
- 'hotkey-arm':()=>[output('proposal')],
- 'commit-outcomes':()=>[input('outcomes'),output('receipt')],
-};
-/** Discovery only: accurate declared pins, with no manufactured executable settings or identities. */
-export function deferredNodeDescription(operation,controls={}){const factory=factories[operation],base=OPERATIONS[operation];return factory&&base?{descriptor:base,ports:factory({...base.defaults,...controls})}:null;}
+/** Declared authoring pins remain available before executable settings are complete. */
+export function deferredNodeDescription(operation,controls={}){try{const result=describeAuthoredOperation({schema:3,runtime:2,mode:'native-unified'},{type:'workflow',...operationDefaults(operation,{mode:controls.mode}),...controls});return result.ok?result.data:null;}catch{return null;}}
 export function nodeNeedsConfiguration(operation,controls={}){
- if(['decision','advance-time','json-decode','extract','model-call','format','read-file','write-file','project-document','smart-compactor','pattern','filter-text','repair','compose','text-rules','select-fields','style-transfer','format-transfer','terminology-map','context','state','condition','join','collect','confidence-gate','revise-draft','collection','context-join'].includes(operation))return true;
- if(!Object.hasOwn(factories,operation))return false;
- const preset=workflowDataPresetFor(operation),checked=cloneDefinitionData(controls,{operation}),base=OPERATIONS[operation];
- if(!preset||!checked.ok||!controls||Array.isArray(controls)||typeof controls!=='object'||Object.keys(controls).some(key=>!base.controls.includes(key)))return true;
- const node={type:'workflow',...operationDefaults(operation),...checked.data};
- return node[preset.controlKey]!==preset.targetId||!describeOperation({schema:3,runtime:2,mode:'native-unified'},node).ok;
+ const checked=cloneDefinitionData(controls,{operation}),base=OPERATIONS[operation];
+ if(!base||!checked.ok||!controls||Array.isArray(controls)||typeof controls!=='object'||Object.keys(controls).some(key=>!base.controls.includes(key)))return true;
+ try{return !describeOperation({schema:3,runtime:2,mode:'native-unified'},
+  {type:'workflow',...operationDefaults(operation,{mode:controls.mode}),...checked.data}).ok;}catch{return true;}
 }
 /** Explicit configuration starts from the current effective stage; fixed operations and stage-specific helper containers lock it. */
 export function configuredCreationStage(operation,mode,effectivePhase,inDefinition=false,controls={}){

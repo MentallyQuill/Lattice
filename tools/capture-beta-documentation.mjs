@@ -321,14 +321,8 @@ try {
         const rain = await page.getByLabel('Saved system', { exact: true }).locator('option').evaluateAll(options => options.find(o => o.textContent.includes('Eight-hour rain'))?.value);
         if (!rain) throw Error('Saved weather system missing');
         await page.getByLabel('Saved system', { exact: true }).selectOption(rain);
-        for (const input of await page.locator('.pc-system-dialog select[aria-label^=\"System input\"]').all()) {
-            const clock = await input.locator('option').evaluateAll(options => options.find(o => o.value && o.textContent.includes('Story Clock'))?.value);
-            if (clock) await input.selectOption(clock);
-        }
-        await page.getByLabel('System Guidance output', { exact: true }).selectOption('output-1');
-        await page.getByLabel('Guidance merge destination', { exact: true }).selectOption('compose');
-        await page.getByRole('button', { name: 'Preview connections', exact: true }).click();
-        await expect(page.getByText('Connection preview', { exact: true })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Add system', exact: true })).toBeEnabled();
+        await expect(page.getByRole('button', { name: 'Preview connections', exact: true })).toHaveCount(0);
         await screenshot('add-system', '.pc-system-dialog'); await page.keyboard.press('Escape');
         await heading('wand').dblclick();
         const wandFocus = '.pc-node-native:is([data-id="wand-library"], [data-id="wand-pick"], [data-id="wand-guidance-material"], [data-id="wand-guidance"], [data-id="wand-outcome-commit"])';
@@ -353,6 +347,73 @@ try {
         await page.setViewportSize({ width: 1440, height: 900 });
     }
 
+    if (!only || only === 'system-placement') {
+        await page.setViewportSize({ width: 1440, height: 1000 });
+        await load('hero');
+        await menu('Workflow', 'Add system…');
+        const rain = await page.getByLabel('Saved system', { exact: true }).locator('option').evaluateAll(options => options.find(o => o.textContent.includes('Eight-hour rain'))?.value);
+        if (!rain) throw Error('Saved weather system missing');
+        await page.getByLabel('Saved system', { exact: true }).selectOption(rain);
+        await expect(page.getByRole('button', { name: 'Add system', exact: true })).toBeEnabled();
+        await expect(page.getByRole('button', { name: 'Preview connections', exact: true })).toHaveCount(0);
+        await screenshot('add-system', '.pc-system-dialog');
+        const beforeIds = await page.evaluate(() => Object.keys(window.canvasHarness.graph.nodes));
+        await page.getByRole('button', { name: 'Add system', exact: true }).click();
+        await expect(page.getByRole('dialog', { name: 'Add system', exact: true })).toHaveCount(0);
+        const instanceId = await page.evaluate(ids => Object.values(window.canvasHarness.graph.nodes).find(node => !ids.includes(node.id) && node.type === 'subgraph')?.id, beforeIds);
+        await check('Saved system placed before any connection preview', !!instanceId);
+        await page.locator('.pc-graph-tabs [role="tab"]').first().click();
+        await fit(.8);
+        await heading(instanceId).click({ button: 'right' });
+        await page.getByRole('menuitem', { name: 'Configure system connections…', exact: true }).click();
+        for (const input of await page.locator('.pc-system-dialog select[aria-label^="System input"]').all()) {
+            const clock = await input.locator('option').evaluateAll(options => options.find(o => o.value && o.textContent.includes('Story Clock'))?.value);
+            if (clock) await input.selectOption(clock);
+        }
+        await page.getByLabel('System Guidance output', { exact: true }).selectOption('output-1');
+        await page.getByLabel('Guidance merge destination', { exact: true }).selectOption('compose');
+        await page.getByRole('button', { name: 'Preview connections', exact: true }).click();
+        await expect(page.getByText('Connection preview', { exact: true })).toBeVisible();
+        await screenshot('system-connections', '.pc-system-dialog');
+        await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+        await check('Cancel connection assistance retains the placed system', await page.evaluate(id => window.canvasHarness.graph.nodes[id]?.type === 'subgraph', instanceId));
+
+        await load('starter');
+        const host = page.locator('.pc-canvas-host');
+        const position = await host.evaluate(element => {
+            const box = element.getBoundingClientRect();
+            for (let y = 80; y < box.height - 80; y += 90) for (let x = 80; x < box.width - 80; x += 90) {
+                const hit = document.elementFromPoint(box.left + x, box.top + y);
+                if (hit?.closest('.pc-canvas-host') === element && !hit.closest('.pc-node')) return { x, y };
+            }
+            throw Error('No empty canvas position for placement demonstration.');
+        });
+        await host.dblclick({ position });
+        await page.getByRole('combobox', { name: 'Search nodes and subgraphs', exact: true }).fill('Prompted Memory');
+        await page.locator('[data-choice="operation:prompted-memory"]').click();
+        await expect(page.getByRole('dialog', { name: 'Configure node', exact: true })).toHaveCount(0);
+        const memoryId = await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).find(node => node.operation === 'prompted-memory')?.id);
+        await check('Prompted Memory places with its real empty Actor setting', await page.evaluate(id => window.canvasHarness.graph.nodes[id]?.actorId === '', memoryId));
+        await fit(1, '.pc-node-native[data-id="' + memoryId + '"]'); await select(memoryId);
+        const badge = page.locator('.pc-node-profile[data-id="' + memoryId + '"] .pc-node-readiness');
+        await expect(badge).toHaveAttribute('data-readiness', 'setup');
+        const focus = ['.pc-node-native[data-id="' + memoryId + '"]', '.pc-node-profile[data-id="' + memoryId + '"] .pc-node-decoration-stack', '.pc-node-profile[data-id="' + memoryId + '"] .profile-bar'];
+        await screenshot('node-setup-required', focus);
+        await badge.click();
+        await expect(page.locator('.pc-node-readiness-issues')).toContainText('Setup Required');
+        await screenshot('node-setup-details', '.pc-node-details');
+        const actor = page.getByLabel('Actor id', { exact: true });
+        await actor.fill('character:rowan.png'); await actor.press('Tab');
+        const picker = page.locator('.pc-node-profile[data-id="' + memoryId + '"]');
+        await picker.locator('.profile-bar').click();
+        await picker.getByRole('combobox').fill('Story narrator');
+        await picker.getByRole('option').filter({ has: page.locator('.profile-name').getByText('Story narrator', { exact: true }) }).click();
+        await expect(badge).toHaveAttribute('data-readiness', 'input');
+        await screenshot('node-input-required', focus);
+        await check('Readiness editing makes no model request', await page.evaluate(() => window.canvasHarness.providerCalls() === 0));
+        await page.setViewportSize({ width: 1440, height: 900 });
+    }
+
     if (!only || only === 'shelf') {
         await load(); await editingView();
         await animation('search-and-place', async () => {
@@ -366,13 +427,14 @@ try {
             await point(choice); await page.mouse.down(); await frame(4);
             const area = await page.locator('.pc-canvas-host').boundingBox();
             await move(area.x + 500, area.y + 240, 24); await screenshot('shelf-drag'); await frame(5); await page.mouse.up(); await frame(8);
-            const configuration = page.getByRole('dialog', { name: 'Configure node', exact: true });
-            await expect(configuration).toBeVisible();
-            await screenshot('node-creation', '.pc-configure-node');
-            await frame(12);
-            await click(configuration.getByRole('button', { name: 'Create node', exact: true }));
-            await expect(configuration).toHaveCount(0);
+            await expect(page.getByRole('dialog', { name: 'Configure node', exact: true })).toHaveCount(0);
             await check('Shelf drag creates exactly one Text Rules node', await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).filter(n => n.operation === 'text-rules').length === 1));
+            const placedId = await page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).find(n => n.operation === 'text-rules').id);
+            const detailsToggle = page.getByRole('button', { name: 'Toggle Details Panel', exact: true });
+            if (await detailsToggle.getAttribute('aria-pressed') !== 'true') await click(detailsToggle);
+            await select(placedId);
+            await screenshot('node-creation', '.pc-node-details');
+            await frame(12);
         });
     }
     if (!only || only === 'connect') {

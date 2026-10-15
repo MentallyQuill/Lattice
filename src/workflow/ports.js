@@ -1,7 +1,7 @@
 import { ownJsonData } from './semantic-json-data.js?v=0.27.3';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.3';
 import { cloneWorkflowDocument } from './document.js?v=0.27.3';
-import { operationFor, describeOperation, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.27.3';
+import { operationFor, describeAuthoredOperation, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.27.3';
 import { INTROSPECTION_NATIVE_OPERATIONS, introspectionDefaults } from './introspection/native.js?v=0.27.3';
 export { portsForNode } from './catalog.js?v=0.27.3';
 
@@ -116,14 +116,14 @@ export function prepareNodeControlChange(graph, command) {
 /** Internal mutation of a detached checked scope; callers own admission and full-root finish. */
 export function applyDeclaredNodeControlChange(context, command) {
     const candidate = context.scope, node = Object.hasOwn(candidate.nodes, command.nodeId) && candidate.nodes[command.nodeId];
-    const described = describeOperation(context.metadata(), node);
+    const described = describeAuthoredOperation(context.metadata(), node);
     if (!described.ok) return described;
     let defaults, declaredControls=described.data.descriptor.controls;
     const changesMode=Object.hasOwn(INTROSPECTION_NATIVE_OPERATIONS,node.operation) && Object.hasOwn(command.controls,'mode') && command.controls.mode!==node.mode;
     if(changesMode) {
         if(!INTROSPECTION_NATIVE_OPERATIONS[node.operation].modes.includes(command.controls.mode))return fail('INVALID_SETTINGS','Choose a supported Introspection mode.');
         defaults=introspectionDefaults(node.operation,command.controls.mode);
-        const next=describeOperation(context.metadata(),{...node,...defaults});
+        const next=describeAuthoredOperation(context.metadata(),{...node,...defaults});
         if(!next.ok)return next;
         declaredControls=next.data.descriptor.controls;
     }

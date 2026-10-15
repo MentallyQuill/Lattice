@@ -7,6 +7,7 @@ import { checkedCandidateArtifacts } from '../src/workflow/checked-candidate.js?
 import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.27.3';
 import * as preparation from '../src/ui/workspace-preparation.js?v=0.27.3';
 import * as history from '../src/history.js?v=0.27.3';
+import { findVacantNodePoint, nodePlacementFootprint } from '../src/ui/node-placement-geometry.js?v=0.27.3';
 
 test('actual shelf placement measures only the new checked card and commits final coordinates once', async () => {
     const root = starterGraph('unified-basic'); history.reset(root);
@@ -14,7 +15,7 @@ test('actual shelf placement measures only the new checked card and commits fina
     const capture = captureGraphEditContext(root, () => context).data;
     const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
     const start = source.indexOf('function prepareShelfNodeCreation('), end = source.indexOf('\n}', start) + 2;
-    let measured, cancellations = 0;
+    let measured, cancellations = 0, cachedBounds = 0;
     const env = {
         prepareNativeCreation: (_, command) => prepareNativeConnectionEdit(root, {...command,viewPath:[]}),
         prepareNodePlacementCard: preparation.prepareNodePlacementCard, checkedCandidateArtifacts,
@@ -22,15 +23,17 @@ test('actual shelf placement measures only the new checked card and commits fina
         prepareWorkspaceViews: () => assert.fail('Placement must not prepare workflow, run, profile and all-card projections'),
         workspaceInputs: () => assert.fail('Placement must not consult host binding preparation'),
         scopeCommand: () => ({viewPath:[]}),
-        canvas: {cancelGesture(){cancellations++;}, nodeLayer:{}, host:{getBoundingClientRect:()=>({left:10,top:20,width:1000,height:800})},toGraph:(x,y)=>({x:x-10,y:y-20})},
+        findVacantNodePoint, nodePlacementFootprint, editorDraw:{nodes:root.nodes},
+        canvas: {view:{zoom:1}, cancelGesture(){cancellations++;}, nodeLayer:{}, host:{getBoundingClientRect:()=>({left:10,top:20,width:1000,height:800})},toGraph:(x,y)=>({x:x-10,y:y-20}),visualBoundsOf(node){cachedBounds++;return {x:node.x,y:node.y,w:260,h:100};}},
         measureNodeCard: (_, card) => {measured=card;return {width:240,height:100};},
     };
     const place = Function('env', 'with(env){'+source.slice(start,end)+';return prepareShelfNodeCreation;}')(env);
     const result = place(capture, {kind:'create',operation:'scene-context'});
     assert.equal(result.ok,true,JSON.stringify(result));
     assert.equal(cancellations,1); assert.equal(measured.title,'Scene Context');
+    assert.equal(cachedBounds,Object.keys(root.nodes).length,'Existing cards reuse their cached visual bounds');
     const id = result.data.addedNodeIds[0];
-    assert.equal(result.data.candidate.nodes[id].x,380); assert.equal(result.data.candidate.nodes[id].y,350);
+    assert.equal(result.data.candidate.nodes[id].x,380); assert.equal(result.data.candidate.nodes[id].y,362);
     assert.deepEqual(root,original,'Measuring and repreparing cannot mutate the active root');
     const committed = commitPreparedGraph(root,{...result.data,context:capture});
     assert.equal(committed.ok,true,JSON.stringify(committed)); assert.equal(root.nodes[id].x,380);

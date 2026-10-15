@@ -157,8 +157,8 @@ function oneUndo(f, before) {
 
 
 const remaining=['smart-compactor','pattern','filter-text','repair','compose','text-rules','select-fields','style-transfer','format-transfer','terminology-map','context','state','condition','join','collect','confidence-gate','revise-draft','collection','context-join'];
-test('all remaining covered friendly controls require configured creation and preserve actual command stage',()=>{
- for(const operation of remaining) assert.equal(nodeNeedsConfiguration(operation),true,operation);
+test('valid-default friendly controls need no setup and preserve actual command stage',()=>{
+ for(const operation of remaining) assert.equal(nodeNeedsConfiguration(operation),false,operation);
  for(const [operation,controls,phase,locked] of [['style-transfer',{inputKind:'text'},'pre',false],['style-transfer',{inputKind:'draft'},'post',true],['compose',{outputKind:'guidance'},'pre',true],['text-rules',{inputKind:'draft'},'post',true],['pattern',{},'post',true]]){
   assert.deepEqual(configuredCreationStage(operation,'native-unified','pre',false,controls),{phase,phaseLocked:locked});
  }
@@ -180,16 +180,6 @@ test('shared inspector imports current unsaved rows, blocks Save while open, ret
   assert.equal(calls,0);assert.deepEqual(f.root.nodes.node.rules,[{id:'saved',pattern:'old'}]);
   await click(form.host,'Import Rules table');input(form.host,'Import action','add','change');input(form.host,'Table data','Expression\tID\nthird\tz');await click(form.host,'Review import');await click(form.host,'Confirm import');
   await click(form.host,'Save Rules');assert.equal(calls,1);assert.deepEqual(f.root.nodes.node.rules,[{id:'x',pattern:'new'},{id:'y',pattern:'again'},{id:'z',pattern:'third'}]);
- }finally{await form.close();}
-});
-test('actual Extract Create cannot bypass an open invalid import through Advanced JSON and repairs through ordinary creation once',async()=>{
- const f=controller(),before=structuredClone(f.root),{form,pending}=await createPanel(f,'extract');
- try{
-  await click(form.host,'Import Literal patterns table');input(form.host,'Table data','Literal,ID\none,same\ntwo,same');input(form.host,'Map literal column','Literal','change');input(form.host,'Map id column','ID','change');await click(form.host,'Review import');
-  await click(form.host,'Configuration format');await click(form.host,'Create node');assert.equal(f.preparations(),0);
-  await click(form.host,'Configuration format');assert.equal(form.host.querySelector('[aria-label="Table data"]').value,'Literal,ID\none,same\ntwo,same');
-  input(form.host,'Table data','Literal,ID\none,one\ntwo,two');await click(form.host,'Review import');await click(form.host,'Confirm import');assert.equal(f.preparations(),0);
-  await click(form.host,'Create node');const prepared=await pending;assert.equal(prepared.ok,true,JSON.stringify(prepared));assert.equal(f.environment.commitNodeCreation(f.token,prepared).ok,true);assert.equal(f.commits(),1);oneUndo(f,before);
  }finally{await form.close();}
 });
 
@@ -229,34 +219,6 @@ test('import Add rebases the actual unsaved term grammar across inspector remoun
  try{await click(form.host,'Use Rules terms');input(form.host,'Rules','local');input(form.host,'Rules input format','plain','change');await click(form.host,'Import Rules table');input(form.host,'Table data','Expression\nadded');input(form.host,'Map pattern column','Expression','change');input(form.host,'Import action','add','change');await inspectorRemount(form,view);await click(form.host,'Review import');
   const confirm=[...form.host.querySelectorAll('button')].find(b=>b.textContent==='Confirm import');assert.equal(confirm.disabled,false);await click(form.host,'Confirm import');await click(form.host,'Save Rules');
   assert.deepEqual(f.root.nodes.node.rules,[{id:'saved',pattern:'local'},{id:'pattern-1',pattern:'added'}]);
- }finally{await form.close();}
-});
-
-
-test('Configure Pattern can cancel a retained import over an invalid Advanced JSON base without losing either draft',async()=>{
- const f=controller(),before=structuredClone(f.root),{form,pending}=await createPanel(f,'pattern',{...settings('pattern'),mode:'literal'});
- const button=label=>[...form.host.querySelectorAll('button')].find(b=>b.textContent.trim()===label);
- const source='Expression\tID\nnew\timport-id';
- try{
-  await click(form.host,'Import Rules table');input(form.host,'Table delimiter','\t','change');input(form.host,'Import action','add','change');input(form.host,'Table data',source);
-  input(form.host,'Map pattern column','Expression','change');input(form.host,'Map id column','ID','change');
-  await click(form.host,'Configuration format');const controls=JSON.parse(form.host.querySelector('[aria-label="Node controls JSON"]').value);
-  controls.rules=[{id:'x',pattern:''}];input(form.host,'Node controls JSON',JSON.stringify(controls));
-  await click(form.host,'Configuration format');
-  assert.match(form.host.textContent,/Repair the current Rules entry before importing/);
-  assert.equal(form.host.querySelector('[aria-label="Table data"]').disabled,true);assert.equal(button('Review import').disabled,true);assert.equal(button('Confirm import').disabled,true);
-  assert.equal(button('Create node').disabled,true);assert.equal(button('Cancel import').disabled,false,'Invalid ordinary base must leave the editable import escape action available');
-  await click(form.host,'Cancel import');
-  assert.equal(form.host.querySelector('[aria-label="Table import"]'),null);assert.equal(form.host.querySelector('[aria-label="Pattern 1 expression"]').value,'','Ordinary Rules editor returns with the exact invalid expression for repair');assert.equal(form.host.querySelector('[aria-label="Pattern 1 ID"]').value,'x');
-  assert.equal(button('Import Rules table').disabled,true);
-  await click(form.host,'Configuration format');const retained=JSON.parse(form.host.querySelector('[aria-label="Node controls JSON"]').value);
-  assert.deepEqual(retained.rules,[{id:'x',pattern:''}]);assert.equal(retained.mode,'literal');
-  retained.rules=[{id:'x',pattern:'repaired'}];input(form.host,'Node controls JSON',JSON.stringify(retained));await click(form.host,'Configuration format');
-  await click(form.host,'Import Rules table');
-  assert.equal(form.host.querySelector('[aria-label="Table data"]').value,source);assert.equal(form.host.querySelector('[aria-label="Table delimiter"]').value,'\t');
-  assert.equal(form.host.querySelector('[aria-label="Import action"]').value,'add');assert.equal(form.host.querySelector('[aria-label="Map pattern column"]').value,'Expression');assert.equal(form.host.querySelector('[aria-label="Map id column"]').value,'ID');
-  assert.equal(f.preparations(),0);assert.equal(f.commits(),0);assert.deepEqual(f.root,before);
-  await click(form.host,'Cancel import');await click(form.host,'Cancel');await pending;
  }finally{await form.close();}
 });
 
@@ -310,24 +272,6 @@ for (const operation of ['pattern', 'extract']) {
    await inspectorRemount(form,view);assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,unfinished);
    await click(form.host,'Use '+label+' rows');assert.equal(form.host.querySelector('[aria-label="'+label+' input format"]').value,'json');
    assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,unfinished);
-  }finally{await form.close();}
- });
- test(operation+' Configure remount preserves Plain and CSV then creates explicit JSON identity once',async()=>{
-  const f=controller(),before=structuredClone(f.root),{form,pending}=await createPanel(f,operation);
-  try{
-   await click(form.host,'Use '+label+' terms');input(form.host,label,'[red, blue]');input(form.host,label+' input format','plain','change');
-   await click(form.host,'Configuration format');await click(form.host,'Configuration format');
-   assert.equal(form.host.querySelector('[aria-label="'+label+' input format"]')?.value,'plain');
-   assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,'[red, blue]');
-   input(form.host,label+' input format','csv','change');input(form.host,label,'"red, blue",green');
-   await click(form.host,'Configuration format');await click(form.host,'Configuration format');
-   assert.equal(form.host.querySelector('[aria-label="'+label+' input format"]').value,'csv');
-   assert.equal(form.host.querySelector('[aria-label="'+label+'"]').value,'"red, blue",green');
-   await click(form.host,'Use '+label+' rows');await click(form.host,'Edit '+label+' as JSON');
-   input(form.host,label,'[{"unfinished":');await click(form.host,'Create node');assert.equal(f.preparations(),0);assert.deepEqual(f.root,before);
-   input(form.host,label,JSON.stringify([record('created-id','Mara')]));await click(form.host,'Create node');
-   const prepared=await pending;assert.equal(prepared.ok,true,JSON.stringify(prepared));assert.equal(f.environment.commitNodeCreation(f.token,prepared).ok,true);
-   const node=Object.values(f.root.nodes)[0];assert.deepEqual(node[key],[record('created-id','Mara')]);assert.equal(f.commits(),1);assert.equal(node.phase,'post');oneUndo(f,before);
   }finally{await form.close();}
  });
 }

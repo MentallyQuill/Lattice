@@ -6,7 +6,7 @@ export interface ConfiguredCreationCommand {kind?:string;operation:string;contro
 export interface ConfiguredCreationView {key:string;operation:string;title:string;controls:string;fields?:import('../../ui/detail-types').DetailControl[];phase:WorkflowPhase;phaseLocked:boolean;targets:ConfiguredCreationOptions['targets'];helpers:IterationHelperChoice[]}
 /** Pure honest discovery metadata; no executable identities or capabilities are manufactured. */
 export function deferredNodeDescription(operation:string,controls?:Record<string,unknown>):OperationDescription|null;
-/** Covered friendly controls expose configured forms before their ordinary creation transaction. */
+/** Reports incomplete operation settings; never determines whether placement is allowed. */
 export function nodeNeedsConfiguration(operation:string,controls?:Record<string,unknown>):boolean;
 export function configuredCreationStage(operation:string,mode:NativeWorkflowMode,effectivePhase?:WorkflowPhase,inDefinition?:boolean,controls?:Record<string,unknown>):{phase:WorkflowPhase;phaseLocked:boolean};
 export function iterationHelperChoices(root:NativeGraph3,profiles?:{id:string;name:string}[]):IterationHelperChoice[];

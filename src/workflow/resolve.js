@@ -2,7 +2,7 @@ import { prepareGraphArtifacts, inspectGraphArtifacts, graphArtifactsFor } from 
 import { resolveSystemNode } from './system-capabilities.js?v=0.27.3';
 import { inspectExpandedGraph, nodeAddressKey, safeWorkflowData } from './graph-validation.js?v=0.27.3';
 import { artifactAddressKey } from './definition-data.js?v=0.27.3';
-import { operationFor } from './catalog.js?v=0.27.3';
+import { operationFor, describeOperation } from './catalog.js?v=0.27.3';
 import { freeze } from './record-data.js?v=0.27.3';
 
 const fail = (code, message, address) => ({ ok: false, error: { code, message, ...(address ? { nodeId: address.nodeId, address } : {}) } });
@@ -53,6 +53,11 @@ function selectClosure(index, target) {
     const included = new Set();
     const visit = unit => { const key = nodeAddressKey(unit.address); if (included.has(key)) return; included.add(key); if (unit.systemDisabled) return; for (const at of dependencies.get(key)) visit(byKey.get(nodeAddressKey(at))); };
     starts.forEach(visit);
+    // Settings for the entire selected dependency closure precede input/effect preparation.
+    for (const unit of plan.primitives) if (included.has(nodeAddressKey(unit.address)) && !unit.systemDisabled && unit.setupIssues?.length) {
+        const issue=unit.setupIssues[0];
+        return {ok:false,error:{...issue,nodeId:unit.address.nodeId,address:unit.address}};
+    }
     for (const edge of plan.unresolvedEdges ?? []) if (included.has(nodeAddressKey(edge.to)) && !byKey.get(nodeAddressKey(edge.to)).systemDisabled) return fail('MISSING_INPUT', 'Connect the selected system output producer.', index.mappings.get(artifactAddressKey(edge.from))?.instance ?? edge.from);
     const containsIncluded = (instance, activeOnly = false) => plan.primitives.some(unit => (!activeOnly || !unit.systemDisabled) && included.has(nodeAddressKey(unit.address)) && unit.address.instancePath.length > instance.instancePath.length && instance.instancePath.every((id, i) => unit.address.instancePath[i] === id) && unit.address.instancePath[instance.instancePath.length] === instance.nodeId);
     for (const mapping of plan.boundaryMappings) if (target === undefined && mapping.direction === 'input' && mapping.required && containsIncluded(mapping.instance, true) && !mapping.source) return fail('MISSING_INPUT', 'Connect the required instance input.', mapping.instance);
@@ -104,6 +109,11 @@ export function resolveWorkflow(root, options = {}) {
     if (!validOptions(options)) return fail('INVALID_TARGET', 'Expected plain planning options.');
     const expanded = inspectExpandedGraph(root); if (!expanded.ok) return expanded;
     const index = indexExpansion(expanded.data), selection = selectClosure(index, options.target); if (!selection.ok) return selection;
+    // Recheck strict operation settings after selection; an authoring inventory is never execution authority.
+    for(const unit of expanded.data.primitives) if(selection.data.included.has(nodeAddressKey(unit.address))&&!unit.systemDisabled) {
+        const strict=describeOperation({schema:3,runtime:2,mode:'native-unified'}, {...unit.node,phase:unit.phase});
+        if(!strict.ok)return {...strict,error:{...strict.error,nodeId:unit.address.nodeId,address:unit.address}};
+    }
     const { plan, terminals } = index, { included, containsIncluded, resolvedTarget, callBound, ordered, dependencies } = selection.data, target = options.target;
     const primitives = ordered.map(unit => {
         const resolved = resolveSystemNode(unit.node, unit.address).data;

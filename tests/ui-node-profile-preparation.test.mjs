@@ -128,5 +128,5 @@ test('unified deterministic modes and host operations omit profile bars', () => 
         assert.equal(created.ok, true, operation + ':' + JSON.stringify(controls) + ' ' + JSON.stringify(created.error));
         root = created.data.candidate;
     }
-    assert.deepEqual(fixture(root).rows(), []);
+    assert.deepEqual(fixture(root).rows().filter(row=>row.hasProfile!==false), [],'Deterministic readiness rows never offer profile bars');
 });
