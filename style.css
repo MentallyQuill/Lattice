@@ -573,15 +573,15 @@
 @media (prefers-reduced-motion: reduce) { :root :is(.pc-root, .pc-settings-block) input.pc-enable-input::before { transition: none; } }
 
 /* The host drawer shares Lattice's controls without inheriting workspace layout. */
-:root .pc-settings-block { color: var(--pc-text); font: 14px/1.4 var(--pc-font, system-ui, sans-serif); color-scheme: dark; }
-:root[data-pc-light="1"] .pc-settings-block { color-scheme: light; }
-:root .pc-settings-block * { box-sizing: border-box; text-shadow: none; }
-:root .pc-settings-block .pc-settings-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 8px 10px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-panel-solid); color: var(--pc-text); box-shadow: none; }
+:root .pc-settings-content { color-scheme: dark; }
+:root[data-pc-light="1"] .pc-settings-content { color-scheme: light; }
+:root .pc-settings-content, :root .pc-settings-content * { box-sizing: border-box; text-shadow: none; }
 .pc-settings-brand { display: inline-flex; align-items: center; gap: 8px; }
-.pc-settings-brand b { font: 600 18px/1 'Bricolage Grotesque', sans-serif; }
 .pc-settings-logo { display: block; flex: 0 0 22px; width: 22px; height: 22px; background: var(--pc-accent); mask: var(--pc-settings-logo) center / contain no-repeat; }
+.pc-settings-brand .pc-settings-logo { flex-basis: 1em; width: 1em; height: 1em; background: currentColor; }
+.pc-settings-enabled .pc-settings-brand .pc-settings-logo { background: #e18a24; }
 :root .pc-settings-block .inline-drawer-content { margin: 0; padding: 0; }
-.pc-settings-content { display: flex; flex-direction: column; gap: 12px; padding: 12px 0; }
+.pc-settings-content { display: flex; flex-direction: column; gap: 12px; padding: 12px 0; color: var(--pc-text); font: 14px/1.4 var(--pc-font, system-ui, sans-serif); }
 .pc-settings-controls { overflow: hidden; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); }
 :root .pc-settings-block .pc-settings-toggle { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 68px; margin: 0; padding: 12px; color: inherit; cursor: pointer; }
 .pc-settings-toggle + .pc-settings-toggle { border-top: 1px solid var(--pc-border); }

@@ -77,6 +77,7 @@ function addSendbarButton() {
 }
 function paintSendbar() {
     const status = sendWorkflowState(), active = isEnabled();
+    document.getElementById('pc-settings')?.classList.toggle('pc-settings-enabled', active);
     const label = document.getElementById('pc-enable-label'); if (label) label.textContent = status.enableLabel;
     for (const [id, on] of [['pc-enabled', active], ['pc-sendbar-opt', settings().ui.sendbarButton !== false]]) {
         const checkbox = document.getElementById(id); if (!checkbox) continue;
