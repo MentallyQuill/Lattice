@@ -1,13 +1,13 @@
 /**
  * Lattice: the theme picker and colour editor.
  *
- * One editor, shown in two places: the extension settings drawer and the
- * palette button in the canvas header. Colours change live as you pick them.
+ * Opened from the workspace's Theme and colours menu. Colours change live
+ * as you pick them.
  */
 
-import { safe } from './state.js?v=0.27.4';
-import * as T from './theme.js?v=0.27.4';
-import { ARTIFACT_KINDS, ARTIFACT_PIN_NAMES, createArtifactGlyph } from './ui/artifact-glyph.js?v=0.27.4';
+import { safe } from './state.js?v=0.27.5';
+import * as T from './theme.js?v=0.27.5';
+import { ARTIFACT_KINDS, ARTIFACT_PIN_NAMES, createArtifactGlyph } from './ui/artifact-glyph.js?v=0.27.5';
 
 const make = (tag, cls, text) => {
     const n = document.createElement(tag);
@@ -18,7 +18,7 @@ const make = (tag, cls, text) => {
 
 const editors = new Set();
 
-/** Redraw every open editor (the drawer and the popover can both be open). */
+/** Redraw every connected editor. */
 function refreshAll() {
     for (const box of [...editors]) {
         if (!box.isConnected) { editors.delete(box); continue; }

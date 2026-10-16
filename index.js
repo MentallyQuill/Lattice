@@ -1,10 +1,9 @@
 /** Lattice launcher and host integration. The workflow never replaces SillyTavern's prompt. */
-import { MODULE, settings, save, ctx, safe, activeWorkflow, documentSession, onWorkflowActivated } from './src/state.js?v=0.27.4';
-import { getNativeWorkflowController, initializeNativeWorkflowController, workflowSignature, sendWorkflowState } from './src/run.js?v=0.27.4';
-import * as UI from './src/ui.js?v=0.27.4';
-import { applyTheme } from './src/theme.js?v=0.27.4';
-import { renderThemeEditor } from './src/theme-editor.js?v=0.27.4';
-import { presentDiagnostic } from './src/ui/diagnostics.js?v=0.27.4';
+import { MODULE, settings, save, ctx, safe, activeWorkflow, documentSession, onWorkflowActivated } from './src/state.js?v=0.27.5';
+import { getNativeWorkflowController, initializeNativeWorkflowController, workflowSignature, sendWorkflowState } from './src/run.js?v=0.27.5';
+import * as UI from './src/ui.js?v=0.27.5';
+import { applyTheme } from './src/theme.js?v=0.27.5';
+import { presentDiagnostic } from './src/ui/diagnostics.js?v=0.27.5';
 const logoUrl = new URL('./assets/lattice-logo.svg', import.meta.url).href;
 
 globalThis.latticeGenerationInterceptor = async (chat, contextSize, abort, type) => {
@@ -29,14 +28,34 @@ function addLauncher() {
     const host = document.getElementById('extensions_settings2') ?? document.getElementById('extensions_settings');
     if (!host || document.getElementById('pc-settings')) return;
     const block = document.createElement('div'); block.id = 'pc-settings'; block.className = 'pc-settings-block';
-    block.innerHTML = '<div class="inline-drawer"><div class="inline-drawer-toggle inline-drawer-header"><b>Lattice</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div><div class="inline-drawer-content"><label class="checkbox_label" for="pc-enabled"><input id="pc-enabled" type="checkbox"><span id="pc-enable-label"></span></label><div class="pc-settings-hint">When enabled, Send follows the open unified workflow. Review the captured Draft before publishing changes. SillyTavern builds its normal prompt.</div><label class="checkbox_label" for="pc-sendbar-opt"><input id="pc-sendbar-opt" type="checkbox"><span>Show Lattice in the chat bar</span></label><div id="pc-theme-editor"></div><button id="pc-open-btn" class="menu_button">Open Lattice</button></div></div>';
+    block.style.setProperty('--pc-settings-logo', `url("${logoUrl}")`);
+    block.innerHTML = `<div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header pc-settings-header">
+            <span class="pc-settings-brand"><span class="pc-settings-logo" aria-hidden="true"></span><b>Lattice</b></span>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content"><div class="pc-settings-content">
+            <div class="pc-settings-controls">
+                <label class="pc-settings-toggle" for="pc-enabled">
+                    <span class="pc-settings-copy"><strong id="pc-enable-label">Enable Lattice</strong><small id="pc-enabled-hint">Use the open workflow when you send a message.</small></span>
+                    <span class="pc-settings-toggle-control"><input id="pc-enabled" class="pc-enable-input" type="checkbox" role="switch" aria-labelledby="pc-enable-label" aria-describedby="pc-enabled-hint"><span class="pc-enable-state" aria-hidden="true">Off</span></span>
+                </label>
+                <label class="pc-settings-toggle" for="pc-sendbar-opt">
+                    <span class="pc-settings-copy"><strong id="pc-sendbar-label">Chat-bar shortcut</strong><small id="pc-sendbar-hint">Show Lattice beside the message box.</small></span>
+                    <span class="pc-settings-toggle-control"><input id="pc-sendbar-opt" class="pc-enable-input" type="checkbox" role="switch" aria-label="Show Lattice in the chat bar" aria-describedby="pc-sendbar-hint"><span class="pc-enable-state" aria-hidden="true">Off</span></span>
+                </label>
+            </div>
+            <div class="pc-settings-workflow"><span>Current workflow</span><strong id="pc-settings-workflow-name"></strong></div>
+            <button id="pc-open-btn" class="pc-settings-open" type="button"><span class="pc-settings-logo" aria-hidden="true"></span><span>Open Lattice</span><span class="pc-settings-open-arrow" aria-hidden="true">→</span></button>
+        </div></div>
+    </div>`;
     host.append(block);
     const enabled = block.querySelector('#pc-enabled'); enabled.checked = isEnabled();
     enabled.addEventListener('change', () => { settings().enabled = enabled.checked; updateState(); });
     const show = block.querySelector('#pc-sendbar-opt'); show.checked = settings().ui.sendbarButton !== false;
     show.addEventListener('change', () => { settings().ui.sendbarButton = show.checked; updateState(); addSendbarButton(); });
     block.querySelector('#pc-open-btn').addEventListener('click', () => UI.open());
-    renderThemeEditor(block.querySelector('#pc-theme-editor')); paintSendbar();
+    paintSendbar();
 }
 function addSendbarButton() {
     const existing = document.getElementById('pc-sendbar');
@@ -59,7 +78,15 @@ function addSendbarButton() {
 function paintSendbar() {
     const status = sendWorkflowState(), active = isEnabled();
     const label = document.getElementById('pc-enable-label'); if (label) label.textContent = status.enableLabel;
-    const checkbox = document.getElementById('pc-enabled'); if (checkbox) checkbox.checked = active;
+    for (const [id, on] of [['pc-enabled', active], ['pc-sendbar-opt', settings().ui.sendbarButton !== false]]) {
+        const checkbox = document.getElementById(id); if (!checkbox) continue;
+        checkbox.checked = on;
+        const row = checkbox.closest('.pc-settings-toggle');
+        row?.classList.toggle('pc-on', on);
+        const state = row?.querySelector('.pc-enable-state'); if (state) state.textContent = on ? 'On' : 'Off';
+    }
+    const workflowName = document.getElementById('pc-settings-workflow-name');
+    if (workflowName) workflowName.textContent = activeWorkflow()?.name || 'No workflow open';
     const button = document.getElementById('pc-sendbar'); if (!button) return;
     button.classList.toggle('pc-sendbar-on', active);
     button.classList.toggle('pc-sendbar-nograph', active && !status.automatic);

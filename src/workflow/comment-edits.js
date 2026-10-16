@@ -1,9 +1,9 @@
-import { cloneDefinitionData, definitionRefKey } from './definitions.js?v=0.27.4';
-import { cloneWorkflowDocument } from './document.js?v=0.27.4';
-import { graphSemanticSignature } from './ports.js?v=0.27.4';
-import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.4';
-import { safeId, definitionChain, ownsDefinitionPath } from './composition-edit.js?v=0.27.4';
-import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.4';
+import { cloneDefinitionData, definitionRefKey } from './definitions.js?v=0.27.5';
+import { cloneWorkflowDocument } from './document.js?v=0.27.5';
+import { graphSemanticSignature } from './ports.js?v=0.27.5';
+import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.5';
+import { safeId, definitionChain, ownsDefinitionPath } from './composition-edit.js?v=0.27.5';
+import { isCommentFrame } from '../canvas/comment-frames.js?v=0.27.5';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

@@ -1,7 +1,7 @@
 const activeMenus = new WeakMap();
 let nextMenuId = 0;
 
-import { menuIconPaths as iconPaths } from './menu-icons.js?v=0.27.4';
+import { menuIconPaths as iconPaths } from './menu-icons.js?v=0.27.5';
 
 function svgIcon(document, path, className) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

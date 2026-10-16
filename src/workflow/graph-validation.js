@@ -1,12 +1,12 @@
-import { expandedRunTargets } from './run-targets.js?v=0.27.4';
-import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.4';
-import { cloneJsonValue } from './operations/json-data.js?v=0.27.4';
-import { freeze } from './record-data.js?v=0.27.4';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.4';
-import { validateNodeModifiers } from './modifiers.js?v=0.27.4';
-import { ARTIFACT_KINDS, operationFor, describeAuthoredOperation, portsForNode, phaseForNode } from './catalog.js?v=0.27.4';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, describeExposedParameter, nodeBindingOverrideKey, artifactAddressKey } from './definition-data.js?v=0.27.4';
-import { samePath, safeId } from './composition-edit.js?v=0.27.4';
+import { expandedRunTargets } from './run-targets.js?v=0.27.5';
+import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.5';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.5';
+import { freeze } from './record-data.js?v=0.27.5';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.5';
+import { validateNodeModifiers } from './modifiers.js?v=0.27.5';
+import { ARTIFACT_KINDS, operationFor, describeAuthoredOperation, portsForNode, phaseForNode } from './catalog.js?v=0.27.5';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, describeExposedParameter, nodeBindingOverrideKey, artifactAddressKey } from './definition-data.js?v=0.27.5';
+import { samePath, safeId } from './composition-edit.js?v=0.27.5';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const idText = value => typeof value === 'string' && value.length > 0;

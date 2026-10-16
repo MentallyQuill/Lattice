@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 test('example thumbnails project the 30 remastered lessons in curriculum order', async () => {
-    const api = await import('../src/ui/example-catalog.js?v=0.27.4').catch(error => {
+    const api = await import('../src/ui/example-catalog.js?v=0.27.5').catch(error => {
         if (error.code !== 'ERR_MODULE_NOT_FOUND') throw error;
         return {};
     });
@@ -23,8 +23,8 @@ test('example thumbnails project the 30 remastered lessons in curriculum order',
 });
 
 test('thumbnails preserve native authored positions, named typed wires, labels and comment notes', async () => {
-    const { listWorkflowExamples } = await import('../src/workflow/examples.js?v=0.27.4');
-    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.4');
+    const { listWorkflowExamples } = await import('../src/workflow/examples.js?v=0.27.5');
+    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.5');
     const examples = listWorkflowExamples(), before = structuredClone(examples), tiles = projectWorkflowExamples();
     for (const [index, example] of examples.entries()) {
         const preview = tiles[index].thumbnail;
@@ -57,7 +57,7 @@ test('thumbnails preserve native authored positions, named typed wires, labels a
 });
 
 test('stable example revisions reuse immutable thumbnail projections', async () => {
-    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.4');
+    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.5');
     const first = projectWorkflowExamples(), again = projectWorkflowExamples();
     assert.equal(again, first);
     assert.equal(Object.isFrozen(first), true);
@@ -66,8 +66,8 @@ test('stable example revisions reuse immutable thumbnail projections', async () 
 });
 
 test('the warm catalog cache is checked before package admission and carries precomputed search text', async () => {
-    const { REMASTERED_WORKFLOW_EXAMPLE_DATA: WORKFLOW_EXAMPLE_DATA } = await import('../src/workflow/remastered-example-data.js?v=0.27.4');
-    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.4');
+    const { REMASTERED_WORKFLOW_EXAMPLE_DATA: WORKFLOW_EXAMPLE_DATA } = await import('../src/workflow/remastered-example-data.js?v=0.27.5');
+    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.5');
     const entry = WORKFLOW_EXAMPLE_DATA[0], descriptor = Object.getOwnPropertyDescriptor(entry, 'goal');
     const parse = JSON.parse; let parses = 0;
     entry.goal = `${entry.goal} Catalog cache probe.`;
@@ -89,9 +89,9 @@ test('the warm catalog cache is checked before package admission and carries pre
 });
 
 test('dynamic getter sources bypass admission and projection caches across corruption and repair', async () => {
-    const { REMASTERED_WORKFLOW_EXAMPLE_DATA: WORKFLOW_EXAMPLE_DATA } = await import('../src/workflow/remastered-example-data.js?v=0.27.4');
-    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.4');
-    const { workflowExampleCatalogRevision } = await import('../src/workflow/examples.js?v=0.27.4');
+    const { REMASTERED_WORKFLOW_EXAMPLE_DATA: WORKFLOW_EXAMPLE_DATA } = await import('../src/workflow/remastered-example-data.js?v=0.27.5');
+    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.5');
+    const { workflowExampleCatalogRevision } = await import('../src/workflow/examples.js?v=0.27.5');
     const node = Object.values(WORKFLOW_EXAMPLE_DATA[0].packages[0].graph.nodes).find(item => item.type === 'workflow');
     const descriptor = Object.getOwnPropertyDescriptor(node, 'operation'); let operation = descriptor.value;
     Object.defineProperty(node, 'operation', { configurable: true, enumerable: true, get() { return operation; } });
@@ -114,8 +114,8 @@ test('dynamic getter sources bypass admission and projection caches across corru
 });
 
 test('a malformed primary retains its diagnostic tile while the other previews stay usable', async () => {
-    const { REMASTERED_WORKFLOW_EXAMPLE_DATA: WORKFLOW_EXAMPLE_DATA } = await import('../src/workflow/remastered-example-data.js?v=0.27.4');
-    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.4');
+    const { REMASTERED_WORKFLOW_EXAMPLE_DATA: WORKFLOW_EXAMPLE_DATA } = await import('../src/workflow/remastered-example-data.js?v=0.27.5');
+    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.5');
     const entry = WORKFLOW_EXAMPLE_DATA[0], node = Object.values(entry.packages[0].graph.nodes).find(node => node.type === 'workflow');
     const operation = node.operation;
     try {
@@ -135,8 +135,8 @@ test('a malformed primary retains its diagnostic tile while the other previews s
 });
 
 test('lesson instructions are detached from authored data and immutable in catalog tiles', async () => {
-    const { listWorkflowExamples, listWorkflowExampleResults } = await import('../src/workflow/examples.js?v=0.27.4');
-    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.4');
+    const { listWorkflowExamples, listWorkflowExampleResults } = await import('../src/workflow/examples.js?v=0.27.5');
+    const { projectWorkflowExamples } = await import('../src/ui/example-catalog.js?v=0.27.5');
     const examples = listWorkflowExamples(), results = listWorkflowExampleResults(), tiles = projectWorkflowExamples();
     assert.ok(examples.every(entry => entry.lesson?.focus && entry.lesson.requirements.length && entry.lesson.steps.length && entry.lesson.checkpoints.length));
     assert.deepEqual(tiles[0].lesson, examples[0].lesson);
@@ -148,8 +148,8 @@ test('lesson instructions are detached from authored data and immutable in catal
 });
 
 test('group thumbnails retain readable preparation and response frames around their member cards', async () => {
-    const {listWorkflowExamples} = await import('../src/workflow/examples.js?v=0.27.4');
-    const {projectWorkflowExamples} = await import('../src/ui/example-catalog.js?v=0.27.4');
+    const {listWorkflowExamples} = await import('../src/workflow/examples.js?v=0.27.5');
+    const {projectWorkflowExamples} = await import('../src/ui/example-catalog.js?v=0.27.5');
     const example = listWorkflowExamples().find(example => Object.keys(example.graph.groups).length), preview = projectWorkflowExamples().find(tile => tile.id === example.id).thumbnail;
     assert.equal(preview.groups.length, Object.keys(example.graph.groups).length);
     for (const group of preview.groups) {

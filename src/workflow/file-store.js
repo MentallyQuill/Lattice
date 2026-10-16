@@ -1,7 +1,7 @@
-import { cloneJsonValue } from './operations/json-data.js?v=0.27.4';
-import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.27.4';
-import {documentHistoryHeader,inspectDocumentHistory,validateDocumentHistory,lookupDocumentHistory,prepareDocumentCheckpoint} from './document-history.js?v=0.27.4';
-import {artifactVisibility} from './artifact-privacy.js?v=0.27.4';
+import { cloneJsonValue } from './operations/json-data.js?v=0.27.5';
+import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.27.5';
+import {documentHistoryHeader,inspectDocumentHistory,validateDocumentHistory,lookupDocumentHistory,prepareDocumentCheckpoint} from './document-history.js?v=0.27.5';
+import {artifactVisibility} from './artifact-privacy.js?v=0.27.5';
 
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;

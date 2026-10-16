@@ -1,4 +1,4 @@
-import { workflowDocumentSnapshot } from '../workflow/document-file.js?v=0.27.4';
+import { workflowDocumentSnapshot } from '../workflow/document-file.js?v=0.27.5';
 
 /** One active document, exact activation identity and successful save checkpoint. */
 export function createWorkflowDocumentSession() {

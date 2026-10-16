@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { computeDefinitionIdentity, definitionRefKey } from '../../src/workflow/definitions.js?v=0.27.4';
-import { expandRecordAddress } from '../../src/workflow/record-data.js?v=0.27.4';
+import { computeDefinitionIdentity, definitionRefKey } from '../../src/workflow/definitions.js?v=0.27.5';
+import { expandRecordAddress } from '../../src/workflow/record-data.js?v=0.27.5';
 
 export const draft = text => ({ kind: 'draft', text, source: { originalText: text } });
 export const data = value => ({ kind: 'data', value });

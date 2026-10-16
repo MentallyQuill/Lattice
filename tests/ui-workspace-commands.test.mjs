@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.4';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.27.5';
 import { prepareWorkspaceViews, projectEditorDraw } from '../src/ui/workspace-preparation.js';
 import { createGraphViewSession } from '../src/ui/graph-view-session.js';
 import { operationFor } from '../src/workflow/catalog.js';
@@ -18,7 +18,7 @@ import { captureRelocatedSubgraphViews } from '../src/ui/subgraph-view-state.js'
 import { prepareCommentEdit } from '../src/workflow/comment-edits.js';
 import { makeClip, makeDefinitionClip, readClip, prepareClipPaste } from '../src/workflow/clipboard.js';
 import { prepareQualifiedScopeEdit } from '../src/workflow/definition-library.js';
-import * as H from '../src/history.js?v=0.27.4';
+import * as H from '../src/history.js?v=0.27.5';
 import { definitionRefKey } from '../src/workflow/definition-data.js';
 import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');

@@ -1,10 +1,10 @@
-import { artifactVisibility } from '../artifact-privacy.js?v=0.27.4';
-import { cloneJsonValue } from './json-data.js?v=0.27.4';
-import { decodeJson } from './json-decode.js?v=0.27.4';
-import { formatRecords } from './format-records.js?v=0.27.4';
-import { prepareDocumentMutation } from './document-mutations.js?v=0.27.4';
-import { freeze } from '../record-data.js?v=0.27.4';
-import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.27.4';
+import { artifactVisibility } from '../artifact-privacy.js?v=0.27.5';
+import { cloneJsonValue } from './json-data.js?v=0.27.5';
+import { decodeJson } from './json-decode.js?v=0.27.5';
+import { formatRecords } from './format-records.js?v=0.27.5';
+import { prepareDocumentMutation } from './document-mutations.js?v=0.27.5';
+import { freeze } from '../record-data.js?v=0.27.5';
+import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.27.5';
 
 const references = new WeakMap();
 const fail=(code,message)=>({ok:false,error:{code,message}});

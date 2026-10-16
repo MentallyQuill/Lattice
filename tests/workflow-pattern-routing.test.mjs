@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { runWorkflowForHost } from '../src/workflow/runtime.js?v=0.27.4';
-import { getPatternReportBinding } from '../src/workflow/operations/pattern-engine.js?v=0.27.4';
+import { runWorkflowForHost } from '../src/workflow/runtime.js?v=0.27.5';
+import { getPatternReportBinding } from '../src/workflow/operations/pattern-engine.js?v=0.27.5';
 import { routingGraph, hostHarness, fourteen, retained, unit, recorded, target, node, wire } from './helpers/pattern-routing-fixtures.mjs';
 
 test('fourteen Pattern hits select and execute Filter once before final review with zero model work', async () => {

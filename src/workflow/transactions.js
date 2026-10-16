@@ -1,10 +1,10 @@
-import { prepareGraphArtifacts, inspectGraphArtifacts, safeGraphArtifactData } from './graph-artifacts.js?v=0.27.4';
-import { checkedCandidateSnapshot, consumeCheckedCandidate, checkedCandidateArtifacts } from './checked-candidate.js?v=0.27.4';
-import { freeze } from './record-data.js?v=0.27.4';
-import { commitGraphDocument, GRAPH_DOCUMENT_FIELDS, graphHistoryStamp } from '../history.js?v=0.27.4';
-import { graphDocumentSignature, graphSemanticSignature } from './ports.js?v=0.27.4';
-import { safeWorkflowData } from './contracts.js?v=0.27.4';
-import { definitionChain, ownsDefinitionPath } from './composition-edit.js?v=0.27.4';
+import { prepareGraphArtifacts, inspectGraphArtifacts, safeGraphArtifactData } from './graph-artifacts.js?v=0.27.5';
+import { checkedCandidateSnapshot, consumeCheckedCandidate, checkedCandidateArtifacts } from './checked-candidate.js?v=0.27.5';
+import { freeze } from './record-data.js?v=0.27.5';
+import { commitGraphDocument, GRAPH_DOCUMENT_FIELDS, graphHistoryStamp } from '../history.js?v=0.27.5';
+import { graphDocumentSignature, graphSemanticSignature } from './ports.js?v=0.27.5';
+import { safeWorkflowData } from './contracts.js?v=0.27.5';
+import { definitionChain, ownsDefinitionPath } from './composition-edit.js?v=0.27.5';
 
 const contexts = new WeakMap();
 const changes = new WeakMap();

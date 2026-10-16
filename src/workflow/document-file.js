@@ -1,11 +1,11 @@
-import { workflowRunTargets } from './run-targets.js?v=0.27.4';
-import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.4';
-import { own } from './record-data.js?v=0.27.4';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.4';
-import { OPERATIONS, operationFor, phaseForNode } from './catalog.js?v=0.27.4';
-import { introspectionDefaults } from './introspection/native.js?v=0.27.4';
-import { parseWorkflow } from './packages.js?v=0.27.4';
-import { createViewState } from '../ui/view-state.js?v=0.27.4';
+import { workflowRunTargets } from './run-targets.js?v=0.27.5';
+import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.5';
+import { own } from './record-data.js?v=0.27.5';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.5';
+import { OPERATIONS, operationFor, phaseForNode } from './catalog.js?v=0.27.5';
+import { introspectionDefaults } from './introspection/native.js?v=0.27.5';
+import { parseWorkflow } from './packages.js?v=0.27.5';
+import { createViewState } from '../ui/view-state.js?v=0.27.5';
 
 const LIMIT = 2000000;
 const fail = (code, message) => ({ ok: false, error: { code, message } });

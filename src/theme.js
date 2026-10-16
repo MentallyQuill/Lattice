@@ -1,7 +1,7 @@
 /** Lattice workspace themes and explicit user overrides. */
 
-import { settings, save, safe } from './state.js?v=0.27.4';
-import { ARTIFACT_KINDS, ARTIFACT_PIN_COLORS } from './ui/artifact-glyph.js?v=0.27.4';
+import { settings, save, safe } from './state.js?v=0.27.5';
+import { ARTIFACT_KINDS, ARTIFACT_PIN_COLORS } from './ui/artifact-glyph.js?v=0.27.5';
 
 /** The roles, in the order the editor lists them. */
 export const ROLES = [

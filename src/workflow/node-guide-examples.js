@@ -1,11 +1,11 @@
-import { OPERATIONS, operationDefaults, operationFor, phaseForNode } from './catalog.js?v=0.27.4';
-import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.27.4';
-import { exportWorkflow, parseWorkflow } from './packages.js?v=0.27.4';
-import { validateWorkflow } from './contracts.js?v=0.27.4';
-import { inspectExpandedGraph } from './graph-validation.js?v=0.27.4';
-import { starterGraph } from './starters.js?v=0.27.4';
-import { getNodeGuideFixtures } from './node-guide-fixtures.js?v=0.27.4';
-import { definitionRefKey } from './definition-data.js?v=0.27.4';
+import { OPERATIONS, operationDefaults, operationFor, phaseForNode } from './catalog.js?v=0.27.5';
+import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.27.5';
+import { exportWorkflow, parseWorkflow } from './packages.js?v=0.27.5';
+import { validateWorkflow } from './contracts.js?v=0.27.5';
+import { inspectExpandedGraph } from './graph-validation.js?v=0.27.5';
+import { starterGraph } from './starters.js?v=0.27.5';
+import { getNodeGuideFixtures } from './node-guide-fixtures.js?v=0.27.5';
+import { definitionRefKey } from './definition-data.js?v=0.27.5';
 
 const HOST_REQUIREMENT = 'Use a practice SillyTavern chat and your usual working model connection. Enable Lattice before Send; Review / Publish lets you accept or reject the proposed reply.';
 let examples, lessons;

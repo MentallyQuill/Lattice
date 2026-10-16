@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { installMock } from './mock.js';
-import * as state from '../src/state.js?v=0.27.4';
-import { starterGraph } from '../src/workflow/starters.js?v=0.27.4';
-import { validateWorkflow } from '../src/workflow/contracts.js?v=0.27.4';
-import { sendWorkflowState } from '../src/run.js?v=0.27.4';
+import * as state from '../src/state.js?v=0.27.5';
+import { starterGraph } from '../src/workflow/starters.js?v=0.27.5';
+import { validateWorkflow } from '../src/workflow/contracts.js?v=0.27.5';
+import { sendWorkflowState } from '../src/run.js?v=0.27.5';
 
 test('new unified starter has explicit native boundary and a checked review terminal', () => {
     const graph = starterGraph('unified-basic'); assert.equal(graph.mode, 'native-unified');

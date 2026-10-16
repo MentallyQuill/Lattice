@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { installMock } from './mock.js';
-import * as S from '../src/state.js?v=0.27.4';
-import * as H from '../src/history.js?v=0.27.4';
-import { sendWorkflowState } from '../src/run.js?v=0.27.4';
-import { starterGraph } from '../src/workflow/starters.js?v=0.27.4';
+import * as S from '../src/state.js?v=0.27.5';
+import * as H from '../src/history.js?v=0.27.5';
+import { sendWorkflowState } from '../src/run.js?v=0.27.5';
+import { starterGraph } from '../src/workflow/starters.js?v=0.27.5';
 
 test('Send follows the active unified document while replacement preserves Enable Lattice', () => {
     installMock();

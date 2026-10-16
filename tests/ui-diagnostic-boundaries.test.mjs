@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { presentDiagnostic, diagnosticText } from '../src/ui/diagnostics.js?v=0.27.4';
-import { createWorkflowDocumentController } from '../src/ui/document-controller.js?v=0.27.4';
-import { createWorkflowDocumentSession } from '../src/ui/document-session.js?v=0.27.4';
+import { presentDiagnostic, diagnosticText } from '../src/ui/diagnostics.js?v=0.27.5';
+import { createWorkflowDocumentController } from '../src/ui/document-controller.js?v=0.27.5';
+import { createWorkflowDocumentSession } from '../src/ui/document-session.js?v=0.27.5';
 import { JSDOM } from 'jsdom';
-import { showContextMenu } from '../src/ui/context-menu.js?v=0.27.4';
-import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.27.4';
-import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.4';
+import { showContextMenu } from '../src/ui/context-menu.js?v=0.27.5';
+import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.27.5';
+import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.27.5';
 
 const controllerSource = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 const runSource = await readFile(new URL('../src/run.js', import.meta.url), 'utf8');

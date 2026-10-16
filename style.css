@@ -1,4 +1,4 @@
-@import url('./dist/lattice.css?v=0.27.4');
+@import url('./dist/lattice.css?v=0.27.5');
 
 /* Current Lattice workspace. Explicit themes may replace these color roles. */
 :root {
@@ -564,13 +564,40 @@
 .pc-enable.pc-on .pc-enable-logo { background: var(--pc-accent); }
 .pc-enable-caption { font-size: 10px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
 .pc-enable-state { min-width: 20px; color: var(--pc-muted); font-size: 10px; font-weight: 650; text-transform: uppercase; }
-.pc-enable.pc-on .pc-enable-state { color: var(--pc-accent); }
-.pc-root .pc-enable-input { appearance: none; position: relative; display: block; flex: 0 0 44px; width: 44px; min-width: 44px; height: 24px; margin: 0; padding: 0; border: 1px solid transparent; border-radius: 4px; background: color-mix(in srgb, var(--pc-text) 28%, var(--pc-panel-solid)); box-shadow: none; outline: none; transform: none; filter: none; cursor: pointer; }
-.pc-root .pc-enable-input::before { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 16px; border: 0; border-radius: 4px; background: var(--pc-panel-solid); box-shadow: none; clip-path: none; transform: translateX(0); transition: transform 120ms ease; }
-.pc-root .pc-enable-input:checked { background: var(--pc-accent); border-color: var(--pc-accent); }
-.pc-root .pc-enable-input:checked::before { transform: translateX(18px); }
-.pc-root .pc-enable-input:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 3px; }
-@media (prefers-reduced-motion: reduce) { .pc-root .pc-enable-input::before { transition: none; } }
+:is(.pc-enable, .pc-settings-toggle).pc-on .pc-enable-state { color: var(--pc-accent); }
+:root :is(.pc-root, .pc-settings-block) input.pc-enable-input { appearance: none; position: relative; display: block; flex: 0 0 44px; width: 44px; min-width: 44px; height: 24px; margin: 0; padding: 0; border: 1px solid transparent; border-radius: 4px; background: color-mix(in srgb, var(--pc-text) 28%, var(--pc-panel-solid)); box-shadow: none; outline: none; transform: none; filter: none; cursor: pointer; }
+:root :is(.pc-root, .pc-settings-block) input.pc-enable-input::before { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 16px; border: 0; border-radius: 4px; background: var(--pc-panel-solid); box-shadow: none; clip-path: none; transform: translateX(0); transition: transform 120ms ease; }
+:root :is(.pc-root, .pc-settings-block) input.pc-enable-input:checked { background: var(--pc-accent); border-color: var(--pc-accent); }
+:root :is(.pc-root, .pc-settings-block) input.pc-enable-input:checked::before { transform: translateX(18px); }
+:root :is(.pc-root, .pc-settings-block) input.pc-enable-input:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { :root :is(.pc-root, .pc-settings-block) input.pc-enable-input::before { transition: none; } }
+
+/* The host drawer shares Lattice's controls without inheriting workspace layout. */
+:root .pc-settings-block { color: var(--pc-text); font: 14px/1.4 var(--pc-font, system-ui, sans-serif); color-scheme: dark; }
+:root[data-pc-light="1"] .pc-settings-block { color-scheme: light; }
+:root .pc-settings-block * { box-sizing: border-box; text-shadow: none; }
+:root .pc-settings-block .pc-settings-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 8px 10px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-panel-solid); color: var(--pc-text); box-shadow: none; }
+.pc-settings-brand { display: inline-flex; align-items: center; gap: 8px; }
+.pc-settings-brand b { font: 600 18px/1 'Bricolage Grotesque', sans-serif; }
+.pc-settings-logo { display: block; flex: 0 0 22px; width: 22px; height: 22px; background: var(--pc-accent); mask: var(--pc-settings-logo) center / contain no-repeat; }
+:root .pc-settings-block .inline-drawer-content { margin: 0; padding: 0; }
+.pc-settings-content { display: flex; flex-direction: column; gap: 12px; padding: 12px 0; }
+.pc-settings-controls { overflow: hidden; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); }
+:root .pc-settings-block .pc-settings-toggle { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 68px; margin: 0; padding: 12px; color: inherit; cursor: pointer; }
+.pc-settings-toggle + .pc-settings-toggle { border-top: 1px solid var(--pc-border); }
+.pc-settings-toggle:hover { background: color-mix(in srgb, var(--pc-text) 4%, transparent); }
+.pc-settings-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pc-settings-copy strong { font-size: 13px; font-weight: 600; }
+.pc-settings-copy small { color: var(--pc-muted); font-size: 12px; line-height: 1.4; }
+.pc-settings-toggle-control { display: flex; align-items: center; flex: 0 0 auto; gap: 7px; }
+.pc-settings-workflow { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 0 12px; }
+.pc-settings-workflow > span { color: var(--pc-muted); font-size: 11px; }
+.pc-settings-workflow strong { overflow-wrap: anywhere; font-size: 12px; font-weight: 500; }
+:root .pc-settings-block button.pc-settings-open { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 42px; margin: 0; padding: 8px 12px; border: 1px solid var(--pc-accent); border-radius: 4px; background: var(--pc-accent); color: var(--pc-on-accent); font: 600 13px/1.4 var(--pc-font, system-ui, sans-serif); box-shadow: none; filter: none; cursor: pointer; }
+.pc-settings-open .pc-settings-logo { flex-basis: 20px; width: 20px; height: 20px; background: currentColor; }
+.pc-settings-open-arrow { margin-left: auto; font-size: 18px; font-weight: 400; }
+:root .pc-settings-block button.pc-settings-open:hover { background: color-mix(in srgb, var(--pc-accent) 88%, var(--pc-text)); }
+:root .pc-settings-block button.pc-settings-open:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 3px; }
 .pc-root .pc-node-title { flex: 1 1 auto; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc-root .pc-node-head { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--pc-border); }
 .pc-root .pc-node-body { padding: 7px 9px; font-size: 12px; line-height: 1.4; color: var(--pc-muted); max-height: 120px; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
