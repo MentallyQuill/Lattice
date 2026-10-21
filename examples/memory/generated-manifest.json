@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "release": "foundation-028",
+  "lessons": [
+    34,
+    35
+  ],
+  "files": [
+    {
+      "path": "examples/memory/34-split-lore-chapter-into-passages.lattice.json",
+      "bytes": 9575,
+      "sha256": "b0a04bff81191be07294f2e318fa69c8c7d6b3f42888b70f45973e2ed247ec7a"
+    },
+    {
+      "path": "examples/memory/34-split-lore-chapter-into-passages.lattice-document.json",
+      "bytes": 9506,
+      "sha256": "7868310a027eb3d6da1b188a9ab13463024723b51c45ffb3a4e39295f0504982"
+    },
+    {
+      "path": "examples/memory/fixtures/harbor-lore-chapter.txt",
+      "bytes": 907,
+      "sha256": "70280d7764cc9114eae4dad1ae4096a253ec971515de9e8b60c726a74f51867c"
+    },
+    {
+      "path": "examples/memory/35-group-replies-into-three-turn-passages.lattice.json",
+      "bytes": 8851,
+      "sha256": "67554c7c5900e7056cfc6ee570779af339c4925ef2677adc21e9f5508d1a6bcd"
+    },
+    {
+      "path": "examples/memory/35-group-replies-into-three-turn-passages.lattice-document.json",
+      "bytes": 8782,
+      "sha256": "1626b74ac51cf4db67cbf1ce228a336cd179280441c2034d7b873109fd99552b"
+    },
+    {
+      "path": "examples/memory/fixtures/thirteen-turn-harbor-chat.jsonl",
+      "bytes": 6834,
+      "sha256": "a46684167cda450b9d5a03bedb318f848497d99dca096662d9893141b297102b"
+    },
+    {
+      "path": "examples/memory/fixtures/thirteen-turn-harbor-chat-protected.jsonl",
+      "bytes": 7001,
+      "sha256": "a0fa74fe3a0dfef6dcfd650142d8ea4a5ae90301a6246f1f78b1c88f93b094a9"
+    },
+    {
+      "path": "src/workflow/memory-example-data.js",
+      "bytes": 31281,
+      "sha256": "c018353bbc7141abb41853758be902c29e329f6c736711ad1b07dcc5ed7aa646"
+    },
+    {
+      "path": "src/workflow/memory-node-guide-data.js",
+      "bytes": 187,
+      "sha256": "5c1815f9ec25450b4491f44e2c080262bc6358be7fadcdb7146d1dcd018d65b8"
+    },
+    {
+      "path": "src/workflow/memory-example-fixtures.js",
+      "bytes": 16246,
+      "sha256": "2bc2b4afba9ef019687c3d3b8309c1b185b63d536bc6cc7aa32306b4425129fa"
+    }
+  ]
+}

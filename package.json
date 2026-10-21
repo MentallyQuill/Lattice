@@ -13,10 +13,12 @@
     "build": "vite build",
     "check:types": "svelte-check --tsconfig ./tsconfig.json",
     "check:assets": "node tools/check-assets.mjs",
-    "check": "npm run test && npm run check:types && npm run build && npm run check:assets && npm run test:browser",
+    "check": "npm run check:examples-memory && npm run test && npm run check:types && npm run build && npm run check:assets && npm run test:browser",
     "benchmark": "node tools/benchmark-canvas.mjs",
     "capture": "node tools/capture-workbench.mjs",
-    "smoke:install": "node tools/smoke-install.mjs"
+    "smoke:install": "node tools/smoke-install.mjs",
+    "examples:memory": "node tools/build-memory-examples.mjs",
+    "check:examples-memory": "node tools/build-memory-examples.mjs --check"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",

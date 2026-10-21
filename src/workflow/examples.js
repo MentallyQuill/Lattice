@@ -1,10 +1,13 @@
+import {MEMORY_WORKFLOW_EXAMPLE_DATA} from './memory-example-data.js?v=0.27.5';
+import {remapExampleMetadata,inspectSingletonMetadata} from './example-metadata.js?v=0.27.5';
 import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.27.5';
 import { UNIFIED_WORKFLOW_EXAMPLE_DATA } from './unified-example-data.js?v=0.27.5';
 import { parseWorkflow } from './packages.js?v=0.27.5';
 import { cloneWorkflowDocument } from './document.js?v=0.27.5';
 import { validateWorkflow } from './contracts.js?v=0.27.5';
 
-const ALL_WORKFLOW_EXAMPLES = [...REMASTERED_WORKFLOW_EXAMPLE_DATA, ...UNIFIED_WORKFLOW_EXAMPLE_DATA];
+const visibleExamples=()=>[...REMASTERED_WORKFLOW_EXAMPLE_DATA,...MEMORY_WORKFLOW_EXAMPLE_DATA];
+const allExamples=()=>[...visibleExamples(),...UNIFIED_WORKFLOW_EXAMPLE_DATA];
 const lessonMetadata = lesson => lesson ? structuredClone(lesson) : undefined;
 let sequence = 0;
 const fail = (code, message) => ({ ok: false, error: { code, message } });
@@ -71,21 +74,21 @@ function admitExamplePackages(entry) {
     let result;
     try {
         if (!Array.isArray(entry.packages) || !entry.packages.length) result = fail('MALFORMED_EXAMPLE', 'That workflow example has no primary package.');
-        const graphs = [];
+        const graphs = [],metadata=[];
         if (!result) for (const envelope of entry.packages) {
             const parsed = parseWorkflow(JSON.stringify(envelope));
             if (!parsed.ok) { result = parsed; break; }
             const validation = validateWorkflow(parsed.data);
             if (!validation.ok) { result = validation; break; }
-            graphs.push(deepFreeze(parsed.data));
+            graphs.push(deepFreeze(parsed.data));metadata.push(parsed.exampleMetadata);
         }
-        result ??= { ok: true, data: deepFreeze(graphs) };
+        result ??= { ok: true, data: deepFreeze(graphs), metadata:deepFreeze(metadata) };
     } catch { result = fail('MALFORMED_EXAMPLE', 'That workflow example contains malformed local package data.'); }
     result = deepFreeze(result);
     if (revision !== null) admissionCache.set(entry, { revision, result });
     return result;
 }
-function independentCopy(source) {
+function independentCopy(source,metadata) {
     const cloned = cloneWorkflowDocument(source);
     if (!cloned.ok) return cloned;
     const graph = cloned.data;
@@ -117,12 +120,14 @@ function independentCopy(source) {
     graph.runTargets = graph.runTargets.map(target=>target.instancePath.length ? {...target,instancePath:[nodes[target.instancePath[0]],...target.instancePath.slice(1)]} : {...target,nodeId:nodes[target.nodeId]});
     graph.id = id;
     graph.createdAt = graph.updatedAt = Date.now();
-    return cloneWorkflowDocument(graph);
+    const result=cloneWorkflowDocument(graph);
+    if(result.ok&&metadata){const checked=inspectSingletonMetadata(remapExampleMetadata(metadata,{nodes}),result.data);if(!checked.ok)return checked;result.exampleMetadata=checked.data;}
+    return result;
 }
 
 /** Read independent primary graph data from the local portable example catalog. */
 export function listWorkflowExamples() {
-    return REMASTERED_WORKFLOW_EXAMPLE_DATA.map(entry => {
+    return visibleExamples().map(entry => {
         const { id, number, title, goal, lesson } = entry, admitted = admitExamplePackages(entry);
         if (!admitted.ok) throw new Error(`${title}: ${admitted.error.message}`);
         return { id, number, title, goal, lesson: lessonMetadata(lesson), graph: structuredClone(admitted.data[0]) };
@@ -134,7 +139,7 @@ export function listWorkflowExamples() {
  * @returns {import('./examples').WorkflowExampleResult[]}
  */
 export function listWorkflowExampleResults() {
-    return REMASTERED_WORKFLOW_EXAMPLE_DATA.map(entry => {
+    return visibleExamples().map(entry => {
         const { id, number, title, goal } = entry, admitted = admitExamplePackages(entry);
         const result = detachedResult(admitted);
         return { id, number, title, goal, lesson: lessonMetadata(entry.lesson), result: result.ok ? { ok: true, data: result.data[0] } : result };
@@ -143,7 +148,7 @@ export function listWorkflowExampleResults() {
 
 /** Exact bounded revision for plain value-only JSON sources; unsafe shapes are uncacheable. */
 export function workflowExampleCatalogRevision() {
-    return sourceRevision(REMASTERED_WORKFLOW_EXAMPLE_DATA);
+    return sourceRevision(visibleExamples());
 }
 
 /** Prepare detached local roots. Saving, activation and running belong to the caller.
@@ -151,17 +156,18 @@ export function workflowExampleCatalogRevision() {
  * @returns {import('./types').Result<{graph: import('./types').NativeGraph3, companions: import('./types').NativeGraph3[]}>}
  */
 export function installWorkflowExample(id) {
-    const entry = ALL_WORKFLOW_EXAMPLES.find(entry => entry.id === id);
+    const entry = allExamples().find(entry => entry.id === id);
     if (!entry) return fail('UNKNOWN_EXAMPLE', 'That workflow example is unavailable.');
     const admitted = admitExamplePackages(entry);
     if (!admitted.ok) return detachedResult(admitted);
-    const prepared = [];
+    const prepared = [];let exampleMetadata;
     for (const graph of admitted.data) {
-        const result = independentCopy(graph);
+        const result = independentCopy(graph,admitted.metadata[prepared.length]);
         if (!result.ok) return result;
         const validation = validateWorkflow(result.data);
         if (!validation.ok) return validation;
+        if(!prepared.length)exampleMetadata=result.exampleMetadata;
         prepared.push(result.data);
     }
-    return { ok: true, data: { graph: prepared[0], companions: prepared.slice(1) } };
+    return { ok: true, data: { graph: prepared[0], companions: prepared.slice(1),...(exampleMetadata?{exampleMetadata}:{}) } };
 }

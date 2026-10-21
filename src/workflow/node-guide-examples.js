@@ -1,3 +1,5 @@
+import {MEMORY_WORKFLOW_EXAMPLE_DATA} from './memory-example-data.js?v=0.27.5';
+import {MEMORY_NODE_GUIDE_DATA} from './memory-node-guide-data.js?v=0.27.5';
 import { OPERATIONS, operationDefaults, operationFor, phaseForNode } from './catalog.js?v=0.27.5';
 import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.27.5';
 import { exportWorkflow, parseWorkflow } from './packages.js?v=0.27.5';
@@ -134,8 +136,9 @@ const guideKey = node => node.type === 'workflow' ? node.operation : node.commen
 function lessonFor(key) {
     // This index contains bundled source constants only. Admit a selected bundle
     // before reading it for presentation; unopened lessons do no planner work.
-    lessons ??= [...REMASTERED_WORKFLOW_EXAMPLE_DATA].sort((a, b) => Object.keys(a.packages[0].graph.nodes).length - Object.keys(b.packages[0].graph.nodes).length || a.number - b.number);
-    for (const entry of lessons) {
+    lessons ??= [...REMASTERED_WORKFLOW_EXAMPLE_DATA,...MEMORY_WORKFLOW_EXAMPLE_DATA].sort((a, b) => Object.keys(a.packages[0].graph.nodes).length - Object.keys(b.packages[0].graph.nodes).length || a.number - b.number);
+    const preferred=MEMORY_NODE_GUIDE_DATA[key];
+    for (const entry of preferred?[...lessons].sort((a,b)=>Number(b.id===preferred.lessonId)-Number(a.id===preferred.lessonId)):lessons) {
         const raw = entry.packages[0].graph;
         if (![raw, ...Object.values(raw.definitions ?? {}).map(definition => definition.body)].some(graph => Object.values(graph.nodes).some(node => guideKey(node) === key))) continue;
         let graph = admittedLessons.get(entry);

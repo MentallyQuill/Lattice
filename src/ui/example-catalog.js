@@ -1,3 +1,4 @@
+import {getNodeGuideFixtures} from '../workflow/node-guide-fixtures.js?v=0.27.5';
 import { listWorkflowExampleResults, workflowExampleCatalogRevision } from '../workflow/examples.js?v=0.27.5';
 import { prepareWorkflowThumbnail } from './workspace-preparation.js?v=0.27.5';
 import { nodeCards } from '../canvas/presentation.js?v=0.27.5';
@@ -23,7 +24,7 @@ export function projectWorkflowExamples() {
     const examples = listWorkflowExampleResults();
     const tiles = examples.map(example => {
         const searchable = [example.number, example.title, example.goal, JSON.stringify(example.lesson ?? {})];
-        const tile = { id: example.id, number: example.number, title: example.title, goal: example.goal, lesson: example.lesson };
+        const tile = { id: example.id, number: example.number, title: example.title, goal: example.goal, lesson: example.lesson,fixtures:getNodeGuideFixtures(example.id) };
         const withSearch = thumbnail => ({ ...tile, searchText: [...searchable, ...(thumbnail?.nodes.map(node => node.title) ?? [])].join(' ').toLocaleLowerCase() });
         if (!example.result.ok) return { ...withSearch(null), thumbnail: null, issue: diagnosticText(example.result.error, { action: 'open this example' }) };
         try { const thumbnail = projectThumbnail(example.result.data); return { ...withSearch(thumbnail), thumbnail, issue: '' }; }

@@ -77,6 +77,7 @@
                 <p class="pc-example-focus"><strong>{selected.lesson.difficulty}</strong> · {selected.lesson.focus}</p>
                 <h4>Learn</h4><ul>{#each selected.lesson.learn as item}<li>{item}</li>{/each}</ul>
                 <h4>Setup</h4><ul>{#each selected.lesson.requirements as item}<li>{item}</li>{/each}</ul>
+                {#if selected.fixtures?.length}<div class="pc-example-fixtures"><h4>Practice files</h4><p>Download these files for a disposable practice chat. Downloading leaves your chat unchanged.</p><ul>{#each selected.fixtures as fixture (fixture.name)}<li><a class="pc-btn" download={fixture.name} href={'data:text/plain;charset=utf-8,'+encodeURIComponent(fixture.content)}>Download {fixture.name}</a></li>{/each}</ul></div>{/if}
                 <h4>Try the lesson</h4><ol>{#each selected.lesson.steps as item}<li>{item}</li>{/each}</ol>
                 <h4>Checkpoints</h4><ul>{#each selected.lesson.checkpoints as item}<li data-checkpoint><strong>{item.node} → {item.port}</strong><span>{item.expect}</span></li>{/each}</ul>
                 <h4>Experiments</h4><ul>{#each selected.lesson.experiments as item}<li><strong>{item.change}</strong><span>{item.expect}</span></li>{/each}</ul>

@@ -1,0 +1,295 @@
+{
+  "kind": "lattice-document",
+  "schema": 2,
+  "minRuntime": 3,
+  "graph": {
+    "id": "memory-lesson-34",
+    "name": "Lore passages",
+    "description": "Split an included lore chapter at useful boundaries and inspect exact source spans without making a model call.",
+    "schema": 4,
+    "runtime": 3,
+    "mode": "native-unified",
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      }
+    ],
+    "nodes": {
+      "send": {
+        "id": "send",
+        "type": "workflow",
+        "operation": "on-send",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "On Send",
+        "alias": "On Send",
+        "x": 1300,
+        "y": 460,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null
+      },
+      "generate": {
+        "id": "generate",
+        "type": "workflow",
+        "operation": "generate-reply",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Generate Reply · SillyTavern",
+        "alias": "Generate Reply · SillyTavern",
+        "x": 1700,
+        "y": 532,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "budgetTokens": 768,
+        "injectionRole": "system",
+        "injectionPosition": "in-chat",
+        "injectionDepth": 0
+      },
+      "review": {
+        "id": "review",
+        "type": "workflow",
+        "operation": "review-publish",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Review / Publish",
+        "alias": "Review / Publish",
+        "x": 2100,
+        "y": 532,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null
+      },
+      "chapter": {
+        "id": "chapter",
+        "type": "workflow",
+        "operation": "file-input",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "File Input",
+        "alias": "File Input · saved lore chapter",
+        "x": 100,
+        "y": 532,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "fileName": "harbor-lore-chapter.txt",
+        "content": "# The harbor archive\n\nThe west bindery faces Sable Quay. Rain from the broken gutter once reached the map drawers. Mara and Ivo move loose sheets to the drying boards and label their original places before carrying anything away.\n\n## The tower route\n\nThe old tower stair has a rotten tread. Pell closes that route and marks the sound platform beside it. Visitors use the platform to see the storm chart; a plan to repair the stair does not mean the repair has happened.\n\n## Conservators and visitors\n\nA family sign shows 👨‍👩‍👧‍👦 beside a sample label, and the handwritten word café uses a combining accent. Keep these graphemes intact when comparing small passage sizes. The long conservation note records why weights remain beside damp paper, why a source label stays with its sheet, and why an attractive paraphrase must never replace the original evidence of where an item was found.\n",
+        "loaded": true
+      },
+      "passages": {
+        "id": "passages",
+        "type": "workflow",
+        "operation": "chunk",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Chunk",
+        "alias": "Chunk · lore passages",
+        "x": 500,
+        "y": 556,
+        "w": 300,
+        "h": 168,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "inputMode": "text",
+        "strategy": "paragraph",
+        "sizeUnit": "utf16",
+        "targetSize": 256,
+        "overlap": 0,
+        "turnsPerChunk": 3,
+        "separator": "\n\n",
+        "sentenceLocale": "en",
+        "tokenizerBinding": {},
+        "maxTokenizerCalls": 4096,
+        "maxChunks": 32
+      },
+      "render": {
+        "id": "render",
+        "type": "workflow",
+        "operation": "format",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Format",
+        "alias": "Format · passage text",
+        "x": 900,
+        "y": 604,
+        "w": 300,
+        "h": 168,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "inputMode": "records",
+        "format": "text",
+        "jsonShape": "records",
+        "mapping": "select",
+        "fields": [
+          {
+            "name": "text",
+            "path": [
+              "text"
+            ]
+          }
+        ],
+        "schema": "",
+        "columns": [],
+        "separator": "\n\n",
+        "trailingSeparator": false
+      },
+      "guidance": {
+        "id": "guidance",
+        "type": "workflow",
+        "operation": "compose",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Compose",
+        "alias": "Compose · passage guidance",
+        "x": 1300,
+        "y": 664,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "mode": "join",
+        "outputKind": "guidance",
+        "template": "",
+        "sections": [
+          {
+            "name": "Memory",
+            "text": ""
+          }
+        ],
+        "separator": "\n\n",
+        "budgetTokens": 0
+      },
+      "lesson-note": {
+        "id": "lesson-note",
+        "type": "note",
+        "enabled": true,
+        "title": "Lesson instructions",
+        "x": 100,
+        "y": 0,
+        "w": 900,
+        "h": 380,
+        "content": "Split an included lore chapter at useful boundaries and inspect exact source spans without making a model call.\n\nChunk segmentation is independent of scheduling and history retention. This source is an included file snapshot, not a live lorebook or chat grant.\nParagraph boundaries and deliberate overlap retain exact snapshot spans; complete graphemes are never cut.\nToken sizing requires your actual tokenizer binding. A manifest alone cannot authorize omission of saved chat.\n\nOpen this workflow and inspect File Input · saved lore chapter. Opening and Preview make no request or save.\nRun read-only to Chunk · lore passages. Compare each text with its half-open span in the snapshot.\nIncrease overlap from 0 and inspect repeated text alongside the unchanged union of original spans.\nBind an exact tokenizer, select token sizing, target size 512 and overlap 64; keep maxTokenizerCalls at 4096 and inspect actual count.\nCompare paragraph with fixed strategy. Optionally Send after checking the bounded Compose · passage guidance output.\n\nRead-only: T0/E0/IR0/IW0/N0. Optional Send: N1. One included snapshot read; no writes or coverage lookups. UTF-16 mode uses 0 tokenizer calls; the optional token experiment allows at most 4,096 exact local tokenizer calls.",
+        "commentFrame": true,
+        "moveContents": false
+      }
+    },
+    "wires": {
+      "edge-1": {
+        "id": "edge-1",
+        "route": "wire",
+        "from": "send",
+        "fromPort": "activation",
+        "to": "generate",
+        "toPort": "activation"
+      },
+      "edge-2": {
+        "id": "edge-2",
+        "route": "wire",
+        "from": "generate",
+        "fromPort": "draft",
+        "to": "review",
+        "toPort": "draft"
+      },
+      "edge-3": {
+        "id": "edge-3",
+        "route": "wire",
+        "from": "chapter",
+        "fromPort": "out",
+        "to": "passages",
+        "toPort": "in"
+      },
+      "edge-4": {
+        "id": "edge-4",
+        "route": "wire",
+        "from": "passages",
+        "fromPort": "out",
+        "to": "render",
+        "toPort": "in"
+      },
+      "edge-5": {
+        "id": "edge-5",
+        "route": "wire",
+        "from": "render",
+        "fromPort": "text",
+        "to": "guidance",
+        "toPort": "section.Memory"
+      },
+      "edge-6": {
+        "id": "edge-6",
+        "route": "wire",
+        "from": "guidance",
+        "fromPort": "out",
+        "to": "generate",
+        "toPort": "guidance"
+      }
+    },
+    "groups": {},
+    "roles": {},
+    "portals": {},
+    "definitions": {}
+  },
+  "exampleMetadata": {
+    "schema": 1,
+    "id": "lesson-34",
+    "title": "Split a lore chapter into useful passages",
+    "rootKey": "generation",
+    "role": "generation",
+    "resourceRequirements": [],
+    "checkpoints": [
+      {
+        "node": "Chunk · lore passages",
+        "port": "out",
+        "expect": "Raw passage records preserve complete graphemes and fit the selected size.",
+        "target": {
+          "rootKey": "generation",
+          "hops": [],
+          "nodeId": "passages"
+        }
+      },
+      {
+        "node": "Chunk · lore passages",
+        "port": "manifest",
+        "expect": "Half-open spans refer to this saved snapshot; overlap never increases original coverage.",
+        "target": {
+          "rootKey": "generation",
+          "hops": [],
+          "nodeId": "passages"
+        }
+      },
+      {
+        "node": "Chunk · lore passages",
+        "port": "report",
+        "expect": "Inspect the actual unit, passage count and tokenizer work.",
+        "target": {
+          "rootKey": "generation",
+          "hops": [],
+          "nodeId": "passages"
+        }
+      },
+      {
+        "node": "Compose · passage guidance",
+        "port": "out",
+        "expect": "These rendered passages causally reach native Guidance.",
+        "target": {
+          "rootKey": "generation",
+          "hops": [],
+          "nodeId": "guidance"
+        }
+      }
+    ]
+  }
+}

@@ -73,3 +73,7 @@ Four genuine regressions were observed before the implementation: wrong document
 Nine document cases and nine affected document/session/controller/package/admission test files pass. Application types report zero errors/warnings; all95legacy artifact/data hashes remain unchanged. This extends the existing singleton serializer/session route and imports no multi-root system or maintenance framework.
 
 The actual two-lesson generator, example metadata/fixtures, merged32entry catalog, addressed Chunk guides, visible source-setup action, complete installed user journeys and release acceptance remain pending. The document core results do not claim F04/F09 complete by themselves.
+
+## Singleton lessons and catalog component verification
+
+The foundation branch now generates only stable lessons34/35. The visible catalog contains32entries; all32hidden compatibility entries remain available. New portable/editable files retain descriptive lesson metadata and exact checkpoints through install ID remapping, save/reopen and recovery. Installed fixture bytes are embedded and downloadable in lesson details. Ten focused catalog/guide/generation testfiles and19document/state/package testfiles pass; types have0errors/0warnings. Generation `--check` reports no drift and95legacy hashes remain unchanged. These are component checks: actual installed native journeys, explicit source/tokenizer setup, provider smoke and release packaging remain open.

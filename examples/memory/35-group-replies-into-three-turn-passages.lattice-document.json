@@ -1,0 +1,297 @@
+{
+  "kind": "lattice-document",
+  "schema": 2,
+  "minRuntime": 3,
+  "graph": {
+    "id": "memory-lesson-35",
+    "name": "Three-turn passages",
+    "description": "Group older verified assistant turns and their paired user material while keeping the newest ten turns raw.",
+    "schema": 4,
+    "runtime": 3,
+    "mode": "native-unified",
+    "runTargets": [
+      {
+        "instancePath": [],
+        "nodeId": "review"
+      }
+    ],
+    "nodes": {
+      "send": {
+        "id": "send",
+        "type": "workflow",
+        "operation": "on-send",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "On Send",
+        "alias": "On Send",
+        "x": 1300,
+        "y": 495,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null
+      },
+      "generate": {
+        "id": "generate",
+        "type": "workflow",
+        "operation": "generate-reply",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Generate Reply · SillyTavern",
+        "alias": "Generate Reply · SillyTavern",
+        "x": 1700,
+        "y": 567,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "budgetTokens": 768,
+        "injectionRole": "system",
+        "injectionPosition": "in-chat",
+        "injectionDepth": 0
+      },
+      "review": {
+        "id": "review",
+        "type": "workflow",
+        "operation": "review-publish",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Review / Publish",
+        "alias": "Review / Publish",
+        "x": 2100,
+        "y": 567,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null
+      },
+      "history": {
+        "id": "history",
+        "type": "workflow",
+        "operation": "scene-context",
+        "enabled": true,
+        "title": "Scene Context",
+        "alias": "Scene Context · older than recent ten",
+        "x": 100,
+        "y": 495,
+        "w": 300,
+        "h": 196,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "recentMessages": 12,
+        "includeCharacter": false,
+        "visibilityMode": "public",
+        "selection": "before-window",
+        "activationMode": "root",
+        "keepRecentAssistantTurns": 10,
+        "maxMessages": 1000,
+        "maxTextUnits": 100000
+      },
+      "passages": {
+        "id": "passages",
+        "type": "workflow",
+        "operation": "chunk",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Chunk",
+        "alias": "Chunk · three-turn passages",
+        "x": 500,
+        "y": 519,
+        "w": 300,
+        "h": 168,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "inputMode": "context",
+        "strategy": "assistant-turns",
+        "sizeUnit": "utf16",
+        "targetSize": 2048,
+        "overlap": 0,
+        "turnsPerChunk": 3,
+        "separator": "\n\n",
+        "sentenceLocale": "en",
+        "tokenizerBinding": {},
+        "maxTokenizerCalls": 4096,
+        "maxChunks": 32
+      },
+      "render": {
+        "id": "render",
+        "type": "workflow",
+        "operation": "format",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Format",
+        "alias": "Format · passage text",
+        "x": 900,
+        "y": 615,
+        "w": 300,
+        "h": 168,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "inputMode": "records",
+        "format": "text",
+        "jsonShape": "records",
+        "mapping": "select",
+        "fields": [
+          {
+            "name": "text",
+            "path": [
+              "text"
+            ]
+          }
+        ],
+        "schema": "",
+        "columns": [],
+        "separator": "\n\n",
+        "trailingSeparator": false
+      },
+      "guidance": {
+        "id": "guidance",
+        "type": "workflow",
+        "operation": "compose",
+        "operationVersion": 1,
+        "enabled": true,
+        "title": "Compose",
+        "alias": "Compose · older passage guidance",
+        "x": 1300,
+        "y": 699,
+        "w": 300,
+        "h": 140,
+        "profileId": null,
+        "model": null,
+        "modelRole": null,
+        "mode": "join",
+        "outputKind": "guidance",
+        "template": "",
+        "sections": [
+          {
+            "name": "Memory",
+            "text": ""
+          }
+        ],
+        "separator": "\n\n",
+        "budgetTokens": 0
+      },
+      "lesson-note": {
+        "id": "lesson-note",
+        "type": "note",
+        "enabled": true,
+        "title": "Lesson instructions",
+        "x": 100,
+        "y": 0,
+        "w": 900,
+        "h": 415,
+        "content": "Group older verified assistant turns and their paired user material while keeping the newest ten turns raw.\n\nScene Context chooses the eligible history window; Chunk groups that current selection. The retained recent window is independent of passage size.\nThe host proves selected source identities and user/assistant pairing. Descriptive imported Context cannot supply that proof.\nThis focused preparation is read-only and makes no summary call or omission acknowledgement.\n\nBefore sending another reply, inspect Scene Context · older than recent ten: before-window, keepRecentAssistantTurns: 10.\nRun read-only to Chunk · three-turn passages; inspect the three oldest eligible assistant turns and their paired users.\nCompare Chunk out with manifest. It should contain one three-turn record for the supplied thirteen-turn fixture.\nUse only two verified older turns and inspect the explicit smaller final group. With five eligible turns, expect groups of 3 and 2.\nIn the failure exercise replace the live Context with descriptive imported Context and inspect CHUNK_TURN_SOURCE_REQUIRED.\n\nRead-only preparation T0/E0/IR0/IW0/N0; optional Send N1. At most one bounded history page, no document or metadata writes, 0 tokenizer calls and no coverage lookups.",
+        "commentFrame": true,
+        "moveContents": false
+      }
+    },
+    "wires": {
+      "edge-1": {
+        "id": "edge-1",
+        "route": "wire",
+        "from": "send",
+        "fromPort": "activation",
+        "to": "generate",
+        "toPort": "activation"
+      },
+      "edge-2": {
+        "id": "edge-2",
+        "route": "wire",
+        "from": "generate",
+        "fromPort": "draft",
+        "to": "review",
+        "toPort": "draft"
+      },
+      "edge-3": {
+        "id": "edge-3",
+        "route": "wire",
+        "from": "history",
+        "fromPort": "out",
+        "to": "passages",
+        "toPort": "in"
+      },
+      "edge-4": {
+        "id": "edge-4",
+        "route": "wire",
+        "from": "history",
+        "fromPort": "manifest",
+        "to": "passages",
+        "toPort": "sourceManifest"
+      },
+      "edge-5": {
+        "id": "edge-5",
+        "route": "wire",
+        "from": "passages",
+        "fromPort": "out",
+        "to": "render",
+        "toPort": "in"
+      },
+      "edge-6": {
+        "id": "edge-6",
+        "route": "wire",
+        "from": "render",
+        "fromPort": "text",
+        "to": "guidance",
+        "toPort": "section.Memory"
+      },
+      "edge-7": {
+        "id": "edge-7",
+        "route": "wire",
+        "from": "guidance",
+        "fromPort": "out",
+        "to": "generate",
+        "toPort": "guidance"
+      }
+    },
+    "groups": {},
+    "roles": {},
+    "portals": {},
+    "definitions": {}
+  },
+  "exampleMetadata": {
+    "schema": 1,
+    "id": "lesson-35",
+    "title": "Group replies into three-turn passages",
+    "rootKey": "generation",
+    "role": "generation",
+    "resourceRequirements": [],
+    "checkpoints": [
+      {
+        "node": "Scene Context · older than recent ten",
+        "port": "out",
+        "expect": "The thirteen-turn fixture selects its oldest three verified turn groups; newest ten remain raw.",
+        "target": {
+          "rootKey": "generation",
+          "hops": [],
+          "nodeId": "history"
+        }
+      },
+      {
+        "node": "Chunk · three-turn passages",
+        "port": "out",
+        "expect": "Whole assistant turns retain their verified paired user messages, grouped in threes, followed by a smaller final group.",
+        "target": {
+          "rootKey": "generation",
+          "hops": [],
+          "nodeId": "passages"
+        }
+      },
+      {
+        "node": "Chunk · three-turn passages",
+        "port": "manifest",
+        "expect": "Inspect exact original dependencies; this is not a processing or omission acknowledgement.",
+        "target": {
+          "rootKey": "generation",
+          "hops": [],
+          "nodeId": "passages"
+        }
+      }
+    ]
+  }
+}

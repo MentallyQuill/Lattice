@@ -1,3 +1,4 @@
+import {MEMORY_EXAMPLE_FIXTURES} from './memory-example-fixtures.js?v=0.27.5';
 // Generated from the exact UTF-8 text/JSON files in examples/remastered/fixtures.
 // These demonstration bytes grant no host authorization or accepted native memory.
 const CONTENTS = {
@@ -52,5 +53,6 @@ const LESSON_FIXTURES = {
 /** Only setup data needed by the selected lesson; results are detached plain DTOs. */
 export function getNodeGuideFixtures(lessonId) {
     const names = typeof lessonId === "string" && Object.hasOwn(LESSON_FIXTURES, lessonId) ? LESSON_FIXTURES[lessonId] : [];
-    return names.map(name => ({ name, content: CONTENTS[name] }));
+    const memoryNames=typeof lessonId==='string'&&Object.hasOwn(MEMORY_EXAMPLE_FIXTURES.lessonFixtures,lessonId)?MEMORY_EXAMPLE_FIXTURES.lessonFixtures[lessonId]:[];
+    return [...names.map(name => ({name,content:CONTENTS[name]})),...memoryNames.map(name=>({name,content:MEMORY_EXAMPLE_FIXTURES.contents[name]}))];
 }

@@ -1,8 +1,9 @@
-const exampleCount = 30;
+const exampleNumbers=[...Array.from({length:30},(_,i)=>i+1),34,35];
+const exampleCount = 32;
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-test('example thumbnails project the 30 remastered lessons in curriculum order', async () => {
+test('example thumbnails project the 32 foundation lessons in curriculum order', async () => {
     const api = await import('../src/ui/example-catalog.js?v=0.27.5').catch(error => {
         if (error.code !== 'ERR_MODULE_NOT_FOUND') throw error;
         return {};
@@ -10,8 +11,8 @@ test('example thumbnails project the 30 remastered lessons in curriculum order',
     assert.equal(typeof api.projectWorkflowExamples, 'function', 'The native package thumbnail projection is available');
     const tiles = api.projectWorkflowExamples();
     assert.equal(tiles.length, exampleCount);
-    assert.deepEqual(tiles.map(entry => entry.id), Array.from({length: 30}, (_, index) => `lesson-${String(index + 1).padStart(2, '0')}`));
-    assert.deepEqual(tiles.map(tile => tile.number), Array.from({ length: exampleCount }, (_, index) => index + 1));
+    assert.deepEqual(tiles.map(entry => entry.id), exampleNumbers.map(number=>`lesson-${String(number).padStart(2,'0')}`));
+    assert.deepEqual(tiles.map(tile => tile.number), exampleNumbers);
     assert.equal(tiles[0].title, 'Follow a reply from Send to Review');
     assert.equal(tiles[29].title, 'A relationship that changes slowly over weeks');
     for (const tile of tiles) {
@@ -123,7 +124,7 @@ test('a malformed primary retains its diagnostic tile while the other previews s
         let tiles;
         assert.doesNotThrow(() => { tiles = projectWorkflowExamples(); }, 'A malformed example must not abort the workspace catalog');
         assert.equal(tiles.length, exampleCount);
-        assert.deepEqual(tiles.map(tile => tile.number), Array.from({ length: exampleCount }, (_, index) => index + 1));
+        assert.deepEqual(tiles.map(tile => tile.number), exampleNumbers);
         assert.equal(tiles[0].title, 'Follow a reply from Send to Review');
         assert.equal(tiles[0].thumbnail, null);
         assert.match(tiles[0].issue, /node type|supported|workflow version/i);
