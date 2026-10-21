@@ -1,5 +1,5 @@
 import { FOUNDATION_RELEASE, deferredFoundationControl } from './foundation-release.js?v=0.27.5';
-import { CHUNK_OPERATION, describeChunk } from './operations/chunk.js?v=0.27.5';
+import { CHUNK_OPERATION, describeChunk } from './operations/chunk-contract.js?v=0.27.5';
 import { graphSatisfies } from './workflow-versions.js?v=0.27.5';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.5';
 import { RECALL_OPERATIONS, describeRecallNode } from './operations/recall-nodes.js?v=0.27.5';

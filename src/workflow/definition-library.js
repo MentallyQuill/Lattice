@@ -1,3 +1,4 @@
+import {graphVersionSupported} from './workflow-versions.js?v=0.27.5';
 import {semanticJsonCommandOptions} from './semantic-json-data.js?v=0.27.5';
 import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, describeExposedParameter, nodeBindingOverrideKey, validateDefinition } from './definitions.js?v=0.27.5';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.5';
@@ -33,7 +34,7 @@ export function prepareQualifiedScopeEdit(root, input, mutateSavedScope) {
     const original = copied.data;
     const artifacts = prepareGraphArtifacts(root); if (!artifacts.ok) return artifacts;
     const normalized = cloneWorkflowDocument(original, { checkedArtifacts: artifacts.data }); if (!normalized.ok) return normalized;
-    if (original.schema !== 3 || original.runtime !== 2) return fail('UNSUPPORTED_VERSION', 'Qualified edits require schema 3 and runtime 2.');
+    if (!graphVersionSupported(original.schema,original.runtime)) return fail('UNSUPPORTED_VERSION', 'Qualified edits require a supported document version.');
     const path = [...command.viewPath], chain = path.length ? definitionChain(original, path) : [];
     if (!chain) return fail('INVALID_INSTANCE', 'The containing graph path does not exist.');
     const definition = chain.at(-1)?.definition;

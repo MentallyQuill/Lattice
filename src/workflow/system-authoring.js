@@ -1,3 +1,4 @@
+import {graphVersionSupported} from './workflow-versions.js?v=0.27.5';
 import { cloneDefinitionData, definitionRefKey } from './definitions.js?v=0.27.5';
 import { prepareNativeConnectionEdit } from './connection-edits.js?v=0.27.5';
 import { makeLocalCopy, prepareNativeNodeEdit } from './definition-library.js?v=0.27.5';
@@ -36,7 +37,7 @@ function prepareSystemEdit(root, input, existing) {
         if (!admitted.ok) return admitted;
         const original = inspectGraphArtifacts(admitted.data).snapshot;
         const c = parsedCommand.data;
-        if (original.schema !== 3 || original.runtime !== 2 || original.mode !== 'native-unified')
+        if (!graphVersionSupported(original.schema,original.runtime) || original.mode !== 'native-unified')
             return fail('WRONG_PHASE', 'Add systems to a unified Main workflow.');
         const wrapper = existing && original.nodes[c.instanceId];
         if (existing && (wrapper?.type !== 'subgraph' || definitionRefKey(wrapper.definition) !== definitionRefKey(c.expectedInstanceRef)))

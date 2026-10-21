@@ -1,3 +1,4 @@
+import {graphVersionSupported} from './workflow-versions.js?v=0.27.5';
 import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from './definitions.js?v=0.27.5';
 import { cloneWorkflowDocument } from './document.js?v=0.27.5';
 import { validateGraphStructure } from './contracts.js?v=0.27.5';
@@ -56,7 +57,7 @@ export function prepareSubgraphNodeDeletion(root, input) {
     if (!validIds(command.nodeIds) || !validIds(command.groupIds ?? []) || !command.nodeIds.length && !command.groupIds?.length) return fail('INVALID_SELECTION', 'Select existing unique nodes or groups.');
     const copied = cloneWorkflowDocument(root); if (!copied.ok) return copied;
     const checked = validateGraphStructure(root); if (!checked.ok) return checked;
-    if (root.schema !== 3 || root.runtime !== 2) return fail('UNSUPPORTED_VERSION', 'Subgraph authoring requires schema 3 and runtime 2.');
+    if (!graphVersionSupported(root.schema,root.runtime)) return fail('UNSUPPORTED_VERSION', 'Subgraph authoring requires a supported document version.');
     const candidate = copied.data, path = [...command.viewPath], chain = path.length ? definitionChain(root, path) : [];
     if (!chain) return fail('INVALID_INSTANCE', 'The containing graph path does not exist.');
     const definition = chain.at(-1)?.definition;

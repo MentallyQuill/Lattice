@@ -1,3 +1,4 @@
+import {graphVersionSupported} from './workflow-versions.js?v=0.27.5';
 import { prepareGraphArtifacts, inspectGraphArtifacts, safeGraphArtifactData } from './graph-artifacts.js?v=0.27.5';
 import { checkedCandidateSnapshot, consumeCheckedCandidate, checkedCandidateArtifacts } from './checked-candidate.js?v=0.27.5';
 import { freeze } from './record-data.js?v=0.27.5';
@@ -37,7 +38,7 @@ export function captureGraphEditContext(root, readContext) {
         if (!validContext(current)) return fail('INVALID_CONTEXT', 'Provide the active session ID, instance path and read-only state.');
         if (current.readOnly) return fail('READ_ONLY_VIEW', 'This graph view is read-only.');
         if (current.viewPath.length) {
-            if (root.schema !== 3 || root.runtime !== 2 || !definitionChain(root, current.viewPath)) return fail('UNSUPPORTED_VIEW', 'The qualified graph view does not exist.');
+            if (!graphVersionSupported(root.schema,root.runtime) || !definitionChain(root, current.viewPath)) return fail('UNSUPPORTED_VIEW', 'The qualified graph view does not exist.');
             if (!ownsDefinitionPath(root, current.viewPath)) return fail('READ_ONLY_DEFINITION', 'Make a local copy before editing this definition.');
         }
         const token = Object.freeze({});
