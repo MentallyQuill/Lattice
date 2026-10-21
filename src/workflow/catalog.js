@@ -1,3 +1,4 @@
+import { FOUNDATION_RELEASE } from './foundation-release.js?v=0.27.5';
 import { CHUNK_OPERATION, describeChunk } from './operations/chunk.js?v=0.27.5';
 import { graphSatisfies } from './workflow-versions.js?v=0.27.5';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.5';
@@ -191,6 +192,21 @@ export function describeAuthoredOperation(graph, node) {
     const result = describeNode(graph, node, true);
     return result.ok ? { ok: true, data: { ...result.data, setupIssues: result.data.setupIssues ?? [] } } : result;
 }
+const SCENE_SOURCE_DEFAULTS={selection:'recent',activationMode:'root',keepRecentAssistantTurns:10,maxMessages:1000,maxTextUnits:100000};
+function describeSceneSource(graph,node,phase){
+ if(phase!=='pre')return failure('WRONG_PHASE','Scene Context reads in preparation.');
+ const deferred=FOUNDATION_RELEASE.deferredSceneControls.some(key=>ownMetadata(node,key)!==undefined);
+ const extended=deferred||Object.keys(SCENE_SOURCE_DEFAULTS).some(key=>ownMetadata(node,key)!==undefined);
+ if(graph.runtime!==3||graph.schema!==4)return extended?failure('UNSUPPORTED_VERSION','Source reader controls require schema 4 and runtime 3.'):null;
+ const settings={...OPERATIONS['scene-context'].defaults,...SCENE_SOURCE_DEFAULTS};
+ for(const key of Object.keys(settings)){const value=ownMetadata(node,key);if(value!==undefined)settings[key]=value;}
+ if(deferred||!FOUNDATION_RELEASE.sourceSelections.includes(settings.selection)||settings.activationMode!=='root')
+  return failure('UNSUPPORTED_FOUNDATION_CAPABILITY','This release supports recent and before-window source preparation. Background events, cursors and processing frontiers are unavailable.');
+ if(!Number.isSafeInteger(settings.recentMessages)||settings.recentMessages<0||settings.recentMessages>16384||!Number.isSafeInteger(settings.keepRecentAssistantTurns)||settings.keepRecentAssistantTurns<0||settings.keepRecentAssistantTurns>8192||!Number.isSafeInteger(settings.maxMessages)||settings.maxMessages<1||settings.maxMessages>1000||!Number.isSafeInteger(settings.maxTextUnits)||settings.maxTextUnits<1||settings.maxTextUnits>100000||typeof settings.includeCharacter!=='boolean')
+  return failure('INVALID_SETTINGS','Use supported bounded source reader controls.');
+ const base=OPERATIONS['scene-context'],descriptor={...base,minimumSchema:4,minimumRuntime:3,dynamicPorts:true,controls:Object.keys(settings),defaults:{...base.defaults,...SCENE_SOURCE_DEFAULTS},controlDescriptors:{...base.controlDescriptors,...Object.fromEntries(Object.entries(SCENE_SOURCE_DEFAULTS).map(([key,value])=>[key,controlDescriptor('scene-context',key,value)])),selection:{type:'enum',values:[...FOUNDATION_RELEASE.sourceSelections],default:'recent'},activationMode:{type:'enum',values:['root'],default:'root'},recentMessages:{type:'integer',min:0,max:16384,default:12},maxTextUnits:{type:'integer',min:1,max:100000,default:100000},maxMessages:{type:'integer',min:1,max:1000,default:1000},keepRecentAssistantTurns:{type:'integer',min:0,max:8192,default:10}}};
+ return {ok:true,data:{descriptor,ports:['out','records','manifest','report'].map(id=>({id,label:id,kind:id==='out'?'context':'data',direction:'output',required:false,cardinality:'one',...(id==='records'?{semanticShape:'record-list/v1'}:id==='manifest'?{semanticShape:'source-manifest/v1'}:{})}))}};
+}
 function describeNode(graph, node, authoring) {
     try {
         const own = (value, key) => {
@@ -205,7 +221,9 @@ function describeNode(graph, node, authoring) {
         if (id === 'scene-context' && !['actor','public'].includes(own(node,'visibilityMode') === undefined ? 'actor' : own(node,'visibilityMode'))) return failure('INVALID_SETTINGS','Scene Context visibility must be actor or public.');
         const version = own(node, 'operationVersion');
         if (version !== undefined && version !== 1) return failure('UNKNOWN_OPERATION', 'Unknown workflow operation version.');
+        if((FOUNDATION_RELEASE.deferredNodeControls[id]??[]).some(key=>ownMetadata(node,key)!==undefined))return failure('UNSUPPORTED_FOUNDATION_CAPABILITY','This workflow uses maintenance or history replacement controls that are unavailable in the foundation release.');
         if (Object.hasOwn(LIFECYCLE_OPERATIONS, id) && own(graph, 'mode') !== 'native-unified') return failure('WRONG_PHASE', 'Lifecycle nodes require a unified workflow.');
+        if(id==='scene-context'){const scene=describeSceneSource(graph,node,phaseForNode(graph,node));if(scene)return scene;}
         if (newOperation(id)) {
             if (!graphSatisfies({schema:own(graph,'schema'),runtime:own(graph,'runtime')}, OPERATIONS[id])) return failure('UNSUPPORTED_VERSION', 'This operation requires schema 3 and runtime 2.');
             const phase = phaseForNode(graph, node);
@@ -242,7 +260,7 @@ export function semanticControlsForNode(node, operation = operationFor(node)) {
         if (!Object.keys(controls.roleOverrides ?? {}).length) delete controls.roleOverrides;
         else controls.roleOverrides = Object.fromEntries(Object.entries(controls.roleOverrides).map(([role,binding]) => [role,{...(Object.hasOwn(binding,'model') ? {model:binding.model} : {}),...(binding.profileId === ACTIVE_PROFILE_ID ? {profileId:ACTIVE_PROFILE_ID} : {})}]));
     }
-    if (node.operation === 'scene-context' && controls.visibilityMode === 'actor') delete controls.visibilityMode;
+    if(node.operation==='scene-context'){for(const key of Object.keys(SCENE_SOURCE_DEFAULTS))if(node[key]!==undefined)controls[key]=node[key];if(controls.visibilityMode==='actor')delete controls.visibilityMode;}
     if (Object.hasOwn(TRANSPOSE_OPERATIONS, node.operation) && controls.inputKind === 'draft') delete controls.inputKind;
     if (['read-file','write-file'].includes(node.operation) && controls.actorScope === 'selected') delete controls.actorScope;
     if (['read-file','write-file'].includes(node.operation) && controls.actorId === '') delete controls.actorId;

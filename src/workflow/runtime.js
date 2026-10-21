@@ -53,7 +53,7 @@ async function executeNode(node,inputs,op,local) {
     if(node.operation==='chunk')return executeChunk(node,inputs,local);
     if(op.hostOperation||local.executeHostOperation&&['scene-context','reply-snapshot','prompt-source'].includes(node.operation)) {
         if(!local.root&&!isScopedSystemOperation(node)||!local.executeHostOperation)return failure('HOST_OPERATION_REQUIRED','This operation requires its owned root host adapter.',node.id);
-        return local.executeHostOperation(node,inputs,{phase:local.phase,rootMode:local.rootMode,root:local.root,address:local.address,inputStates:local.inputStates,request:local.request,getRequestBindings:local.getRequestBindings,...(local.signal?{signal:local.signal}:{})});
+        return local.executeHostOperation(node,inputs,{phase:local.phase,rootMode:local.rootMode,root:local.root,address:local.address,inputStates:local.inputStates,request:local.request,getRequestBindings:local.getRequestBindings,...(local.sourceProofs?{sourceProofs:local.sourceProofs}:{}),...(local.signal?{signal:local.signal}:{})});
     }
     if(Object.hasOwn(LIFECYCLE_OPERATIONS,node.operation))return executeLifecycleNode(node,inputs,local);
     if(Object.hasOwn(FILE_OPERATIONS,node.operation))return executeFileNode(node,inputs,local);
@@ -219,7 +219,7 @@ async function executeWorkflow(original,ports,hooks={}) {
             if(nativeBoundary&&unit!==nativeBoundary&&unit.phase==='post')stageState=unitStates.get(addressKey(nativeBoundary.address))??{status:'unresolved',reason:{code:'NATIVE_BOUNDARY_UNRESOLVED',message:'The owned native boundary has not completed.'}};
             else if(unit===nativeBoundary)stageState=unit.dependencies.map(at=>unitStates.get(addressKey(at))).find(state=>state?.status==='unresolved');
             const held=stageState?.status==='unresolved'?stageState:Object.values(inputStates).find(state=>state.status==='unresolved');
-            const skipped=stageState?.status==='skipped'||unit.inputPorts.some(port=>port.required&&inputStates[port.id]?.status==='skipped');
+            const skipped=prepared.graph.runtime===3&&node.operation==='scene-context'&&node.activationMode==='events'&&!inputs.trigger||stageState?.status==='skipped'||unit.inputPorts.some(port=>port.required&&inputStates[port.id]?.status==='skipped');
             if(unit.systemDisabled||held||skipped){const status=unit.systemDisabled?'skipped':held?'unresolved':'skipped',state={status,reason:unit.systemDisabled?{code:'SYSTEM_DISABLED',message:'The enclosing system is disabled.'}:held?.reason??stageState?.reason??{code:'INPUT_SKIPPED',message:'A required branch input was skipped.'}};if(held&&!unit.systemDisabled)unresolved=true;
                 for(const port of unit.outputPorts){outputStates.set(artifactKey({...unit.address,portId:port.id}),state);recorder.capture({address:unit.address,direction:'output',portId:port.id,state});}
                 unitStates.set(key,state);emit('node-settled',{address:unit.address,status,reason:state.reason});continue;
@@ -228,13 +228,13 @@ async function executeWorkflow(original,ports,hooks={}) {
             if(unit.requestBound&&op.modelRole&&!bindings.has(key)&&!lazyBinding){const bound=await bindUnit(unit,op);if(!bound.ok)return finish(bound);binding=bound.data;}
             emit('node-phase',{address:unit.address,phase:'executing'});observe(ports.onStage,freezeArtifact(structuredClone(node)),unit.address);
             const authorizeInputs=async(selectedNode,selectedInputs,address,capability)=>{
-                if(prepared.graph.mode!=='native-unified'||typeof hooks.authorizeModelInputs!=='function')return {ok:true};
+                if(prepared.graph.mode!=='native-unified'&&prepared.graph.runtime!==3||typeof hooks.authorizeModelInputs!=='function')return {ok:true};
                 let checked;try{checked=await hooks.authorizeModelInputs({node:selectedNode,address,inputs:selectedInputs,capability});}catch{return failure('ACTOR_SCOPE_FAILED','The auxiliary model scope could not be authorized.',selectedNode.id);}
                 if(stopped())return failure('ABORTED','Workflow was stopped.',selectedNode.id);
                 return checked?.ok===true?checked:checked?.ok===false?checked:failure('ACTOR_SCOPE_FAILED','The auxiliary model scope was not authorized.',selectedNode.id);
             };
             const retainScopedOutput=async(payload)=>{
-                if(prepared.graph.mode!=='native-unified'||typeof hooks.retainScopedOutput!=='function')return {ok:true,data:{retained:true}};
+                if(prepared.graph.mode!=='native-unified'&&prepared.graph.runtime!==3||typeof hooks.retainScopedOutput!=='function')return {ok:true,data:{retained:true}};
                 let retained;try{retained=await hooks.retainScopedOutput(payload);}catch{return failure('ACTOR_SCOPE_FAILED','The private artifact scope could not be retained.',payload.node?.id??node.id);}
                 if(stopped())return failure('ABORTED','Workflow was stopped.',payload.node?.id??node.id);
                 return retained?.ok===true&&retained.data?.retained===true?retained:retained?.ok===false?retained:failure('ACTOR_SCOPE_FAILED','The private artifact scope was not retained.',payload.node?.id??node.id);
@@ -324,13 +324,13 @@ async function executeWorkflow(original,ports,hooks={}) {
                     childCalls++;
                     return childLocal.request({...options,capability,binding:childBindings.get(capability),modelRole:role,childAddress:child.address});
                 };
-                try{return await executeNode(childNode,childInputs,childOp,{...ports,...childLocal,iterateHelper:childIterate,isRecoveredIterationResult:result=>recovered.has(result),binding:undefined,request:childRequest,getRequestCount:()=>childCalls,executeIntrospection:hooks.executeIntrospection,executeHostOperation:undefined});}
+                try{return await executeNode(childNode,childInputs,childOp,{...ports,...childLocal,iterateHelper:childIterate,isRecoveredIterationResult:result=>recovered.has(result),binding:undefined,request:childRequest,getRequestCount:()=>childCalls,executeIntrospection:hooks.executeIntrospection,executeHostOperation:undefined,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});}
                 finally{childOpen=false;childBindings.clear();childAuthorizers.delete(childKey);}
             };
             // Custom adapters retain the same bounded request capability after mandatory helper preflight.
             const recovered=new WeakSet(),compiled=helperPrograms.get(key),iterateHelper=typeof ports.iterateHelper==='function'?ports.iterateHelper:compiled?async(invocation,helperPorts)=>{const result=await executeCompiledIteration(compiled,invocation,{executeUnit:executeHelperUnit,request:helperPorts.request,signal:ports.signal,retainScopedOutput:payload=>retainScopedOutput({...payload,inputs:payload.seed?inputs:payload.inputs})});if(result?.ok===true)recovered.add(result);return result;}:ports.iterateHelper;
             // Static instances inherit owned host capabilities; repeated helpers use their separate bounded adapter.
-            const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,rootMode:prepared.graph.mode,binding,request,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0 || isScopedSystemOperation(node) && typeof hooks.executeHostOperation==='function',address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings});
+            const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,rootMode:prepared.graph.mode,binding,request,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0 || isScopedSystemOperation(node) && typeof hooks.executeHostOperation==='function',address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});
             // Native generation authors the public story from scoped portrayal guidance; it never publishes guidance verbatim.
             const result=preserveArtifactPrivacy(rawResult,node.operation==='generate-reply'?{}:inputs);
             operationOpen=false;

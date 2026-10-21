@@ -8,7 +8,7 @@ import { freeze } from './record-data.js?v=0.27.5';
 const fail = (code, message, address, inputPortId) => ({ ok: false, error: { code, message, ...(address ? { nodeId: address.nodeId, address } : {}), ...(inputPortId ? { inputPortId } : {}) } });
 const planners = new WeakMap();
 const validOptions = options => safeWorkflowData(options) && options && typeof options === 'object' && !Array.isArray(options);
-function indexExpansion(plan) {
+function indexExpansion(plan,graph) {
     const byKey = new Map(plan.primitives.map(unit => [nodeAddressKey(unit.address), unit]));
     const terminals = plan.primitives.filter(unit => unit.terminal).map(unit => ({ kind: 'terminal', address: unit.address }));
     const dependencies = new Map(plan.primitives.map(unit => [nodeAddressKey(unit.address), []]));
@@ -20,7 +20,7 @@ function indexExpansion(plan) {
     }
     const mappings = new Map();
     for (const mapping of plan.boundaryMappings) for (const key of [artifactAddressKey({ ...mapping.instance, portId: mapping.portId }), artifactAddressKey(mapping.boundary)]) if (!mappings.has(key)) mappings.set(key, mapping);
-    return { plan, byKey, terminals, dependencies, incoming, disabled, mappings,
+    return { plan, graph, byKey, terminals, dependencies, incoming, disabled, mappings,
         pins: new Map(plan.pins.filter(pin => pin.direction === 'output').map(pin => [artifactAddressKey(pin.address), pin])),
     };
 }
@@ -65,7 +65,7 @@ function selectClosure(index, target, strict = true) {
         for (const unit of plan.primitives) if (included.has(nodeAddressKey(unit.address))) {
             if (unit.systemDisabled) continue;
             if (!unit.enabled || index.disabled.has(nodeAddressKey(unit.address))) return fail('DISABLED_OPERATION', 'A selected dependency is disabled.', unit.address);
-            for (const port of unit.inputPorts) if (port.required && !index.incoming.has(artifactAddressKey({ ...unit.address, portId: port.id }))) return fail('MISSING_INPUT', 'Connect the required input artifact.', unit.address, port.id);
+            for (const port of unit.inputPorts) if (port.required && !(index.graph.schema===4&&index.graph.runtime===3&&unit.node.operation==='scene-context'&&unit.node.activationMode==='events'&&port.id==='trigger') && !index.incoming.has(artifactAddressKey({ ...unit.address, portId: port.id }))) return fail('MISSING_INPUT', 'Connect the required input artifact.', unit.address, port.id);
         }
     }
     const selected = plan.primitives.filter(unit => included.has(nodeAddressKey(unit.address)));
@@ -113,7 +113,7 @@ function selectClosure(index, target, strict = true) {
 export function prepareWorkflowAttempt(root, options = {}) {
     if (!validOptions(options)) return fail('INVALID_TARGET', 'Expected plain planning options.');
     const expanded = inspectExpandedGraph(root); if (!expanded.ok) return expanded;
-    const index = indexExpansion(expanded.data), selection = selectClosure(index, options.target, false); if (!selection.ok) return selection;
+    const index = indexExpansion(expanded.data,root), selection = selectClosure(index, options.target, false); if (!selection.ok) return selection;
     const { plan, terminals } = index, { included, containsIncluded, resolvedTarget, callBound, ordered, dependencies } = selection.data, target = options.target;
     const primitives = ordered.map(unit => {
         const resolved = resolveSystemNode(unit.node, unit.address).data;
@@ -147,7 +147,7 @@ export function prepareWorkflowPlanner(root, artifacts) {
     const admitted = artifacts === undefined ? { ok: true, data: inspectGraphArtifacts(prepared.data) } : graphArtifactsFor(root, artifacts);
     if (!admitted.ok) return admitted;
     const { checked, snapshot } = admitted.data;
-    const index = indexExpansion(checked.data);
+    const index = indexExpansion(checked.data,snapshot);
     const inventory = freeze({ workflowId: index.plan.workflowId, phase: index.plan.phase, primitives: index.plan.primitives, pins: index.plan.pins, hierarchy: index.plan.hierarchy, terminals: index.terminals });
     // Keys come only from the finite admitted inventory, never arbitrary caller input.
     const summaries = new Map(), policies = new Map();

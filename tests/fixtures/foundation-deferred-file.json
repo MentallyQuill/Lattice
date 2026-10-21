@@ -1,0 +1,74 @@
+{
+  "kind": "lattice-workflow",
+  "schema": 3,
+  "minRuntime": 3,
+  "graph": {
+    "id": "foundation-retained-control",
+    "schema": 4,
+    "runtime": 3,
+    "mode": "native-unified",
+    "nodes": {
+      "text": {
+        "id": "text",
+        "type": "workflow",
+        "operation": "text",
+        "text": "Supported root"
+      }
+    },
+    "wires": {},
+    "definitions": {
+      "[\"deferred-file-helper\",1,\"sha256:497e2cd2fb516d6229a1f354b891ebe48df436980ec165d4629482a6b53a0550\"]": {
+        "id": "deferred-file-helper",
+        "version": 1,
+        "semanticHash": "sha256:497e2cd2fb516d6229a1f354b891ebe48df436980ec165d4629482a6b53a0550",
+        "name": "Deferred File class",
+        "interface": [
+          {
+            "id": "out",
+            "label": "Out",
+            "direction": "output",
+            "kind": "text",
+            "required": false,
+            "cardinality": "one",
+            "boundaryNodeId": "exit"
+          }
+        ],
+        "parameters": [],
+        "body": {
+          "schema": 4,
+          "runtime": 3,
+          "mode": "native-pre",
+          "nodes": {
+            "read": {
+              "id": "read",
+              "type": "workflow",
+              "operation": "read-file",
+              "operationVersion": 1,
+              "modelRole": null,
+              "targetId": "notes",
+              "schema": "",
+              "columns": [],
+              "effectClass": "derived-maintenance"
+            },
+            "exit": {
+              "id": "exit",
+              "type": "subgraph-output",
+              "interfacePortId": "out"
+            }
+          },
+          "wires": {
+            "out": {
+              "id": "out",
+              "route": "wire",
+              "from": "read",
+              "fromPort": "text",
+              "to": "exit",
+              "toPort": "in"
+            }
+          }
+        }
+      }
+    },
+    "runTargets": []
+  }
+}

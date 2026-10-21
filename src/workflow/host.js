@@ -1,3 +1,9 @@
+import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.27.5';
+import {cloneJsonValue} from './operations/json-data.js?v=0.27.5';
+import {captureNativeCharacterProjection} from './native-source-projections.js?v=0.27.5';
+import {createNativeSourceRegistry} from './native-source-registry.js?v=0.27.5';
+import {createSourceReader,inspectSourcePage} from './source-reader.js?v=0.27.5';
+import {createSourceProofRegistry} from './source-provenance.js?v=0.27.5';
 import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.27.5';
 import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.5';
 import { sha256Text } from './definition-data.js?v=0.27.5';
@@ -81,6 +87,34 @@ const actorTransportWatch = (c,actorId,chatId) => {
     } catch {return null;}
 };
 const sameActorTransportWatch=(captured,current)=>!!captured&&!!current&&captured.characters===current.characters&&captured.chat===current.chat&&captured.wrapper===current.wrapper&&captured.data===current.data&&captured.stamp===current.stamp&&captured.actorRefs.length===current.actorRefs.length&&captured.actorRefs.every((entry,index)=>entry===current.actorRefs[index])&&captured.refs.length===current.refs.length&&captured.refs.every((entry,index)=>entry===current.refs[index]);
+// Final dispatch watch for actual retained source captures. Only own data is read;
+// no context, user, identity-adapter, actor-grant or frontier callback runs here.
+const sourceTransportWatch=(c,captures,pendingSources,chatId)=>{
+    try{
+        const own=(value,key)=>{const property=value&&Object.getOwnPropertyDescriptor(value,key);if(!property)return undefined;if(!property.enumerable||!Object.hasOwn(property,'value'))throw Error();return property.value;};
+        const json=value=>{const checked=cloneJsonValue(value);if(!checked.ok)throw Error();return checked.data.value;};
+        const chat=own(c,'chat'),metadata=own(c,'chatMetadata');if(!Array.isArray(chat)||chat.length>16384||!metadata)throw Error();
+        const capturesList=[...captures],extra=[...pendingSources.values()].map(entry=>({nativeChat:entry.chat,references:entry.refs}));
+        const all=[...capturesList,...extra];let length=0;
+        for(const captured of all){if(chat!==captured.nativeChat||captured.metadata&&metadata!==captured.metadata||captured.references.length>chat.length)throw Error();for(let i=0;i<captured.references.length;i++)if(own(chat,String(i))!==captured.references[i])throw Error();length=Math.max(length,captured.references.length);}
+        const refs=Array.from({length},(_,i)=>own(chat,String(i))),messages=normalizeNativeSourceMessages(refs);if(!messages.ok)throw Error();
+        const sources=own(metadata,'latticeSources'),pageRoot=own(metadata,'latticeSourcePages'),registries=[];
+        for(const captured of capturesList){
+            if(chatId!==captured.scope.chatId)throw Error();const header=json(own(sources,captured.scope.userId));if(header.revision!==captured.revision)throw Error();
+            const branch=Object.values(header.branchStates).find(value=>value.sourceEpoch===captured.sourceEpoch&&same(value.scope,captured.scope));if(!branch)throw Error();
+            const pages=own(pageRoot,captured.scope.userId);registries.push([header,branch.pageIds.map(id=>json(own(pages,id)))]);
+        }
+        const selected=own(c,'characterId'),watchCharacter=capturesList.some(captured=>captured.watchCharacter),characters=watchCharacter?own(c,'characters'):null,wrapper=characters&&own(characters,String(selected)),data=wrapper&&(own(wrapper,'data')??wrapper),characterKeys=[...new Set(capturesList.flatMap(captured=>captured.characterKeys))];
+        const fieldValues={};
+        if(watchCharacter)for(const [name,material]of [['wrapper',wrapper],['data',data]]){
+            const keys=[...(name==='wrapper'?['avatar']:[]),...(name==='data'||wrapper===data?characterKeys:[]),'visibility','visibleTo','actorId'];
+            const fields={};for(const key of keys){const value=own(material,key);if(value!==undefined)fields[key]=json(value);}
+            const scoped=own(own(material,'scope'),'actorId');if(scoped!==undefined)fields.scopeActorId=json(scoped);fieldValues[name]=fields;
+        }
+        return {chat,metadata,characters,wrapper,data,refs,stamp:JSON.stringify([chatId,chat.length,selected,messages.data.map(message=>message.fingerprint),registries,fieldValues])};
+    }catch{return null;}
+};
+const sameSourceTransportWatch=(captured,current)=>!!captured&&!!current&&captured.chat===current.chat&&captured.metadata===current.metadata&&captured.characters===current.characters&&captured.wrapper===current.wrapper&&captured.data===current.data&&captured.stamp===current.stamp&&captured.refs.length===current.refs.length&&captured.refs.every((entry,index)=>entry===current.refs[index]);
 const characterVisibility = c => {
     const wrapper=c.characters?.[c.characterId],data=wrapper?.data??wrapper;
     const wrapperStamp=visibilityStamp(wrapper),dataStamp=visibilityStamp(data);
@@ -191,10 +225,12 @@ export function createNativeWorkflowController(ports) {
     const transportUserId=typeof ports.transportUserId==='function'?ports.transportUserId:null;
     const documentCatalog=ports.documentCatalog??createChatDocumentCatalog({getContext:context,getUserId:()=>ports.userId?.()});
     const persistenceVerifier=ports.persistenceVerifier??createNativePersistenceVerifier({getContext:context,getUserId:()=>ports.userId?.()});
+    let sourceRegistry=ports.sourceRegistry;
+    const getSourceRegistry=()=>sourceRegistry??=createNativeSourceRegistry({getContext:context,getUserId:()=>ports.userId?.(),persistenceVerifier,...(typeof ports.getBranchId==='function'?{getBranchId:ports.getBranchId}:{}),...(typeof ports.onSourcesInvalidated==='function'?{onInvalidated:ports.onSourcesInvalidated}:{})});
     const fileBarriers=new Map();
     const documentHistory=createNativeDocumentHistory({catalog:documentCatalog,context,userId:()=>ports.userId?.(),actorId:()=>{const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);return actor.ok?actor.data.actorId:null;},isBusy:()=>applying||active!==null||ports.isBusy?.()===true,barriers:fileBarriers,persistenceVerifier,onApplied:()=>cancel('Workflow history checkpoint applied')});
     const outcomeCache=createNativeOutcomeCache({...(typeof ports.random==='function'?{random:ports.random}:{})});
-    function releaseRun(run) {if(!run||run.resourcesReleased)return;run.resourcesReleased=true;run.guidanceComposition?.clear();run.modelScopes?.clear();run.modelAddresses=new WeakMap();recall.releaseRun(run);run.memorySession?.release();run.memorySession=null;run.storySession?.release();run.storySession=null;run.draftEvidence?.release();run.draftEvidence=null;run.draftSources?.clear();delete run.nativeContext;for(const session of run.fileSessions?.values()??[])session.release();run.fileSessions?.clear();run.fileSession?.release();run.fileSession=null;run.actorContext?.release();run.actorContext=null;for(const session of run.actorMemorySessions?.values()??[])session.release();run.actorMemorySessions?.clear();run.stagedFiles.length=0;run.memoryIntents.clear();run.memoryTerminals.clear();}
+    function releaseRun(run) {if(!run||run.resourcesReleased)return;run.resourcesReleased=true;run.sourceProofs?.clear();run.sourceActorService?.release();run.sourceActorService=null;run.actorArtifactOwners=new WeakMap();for(const reader of run.sourceReaders??[])reader.release();run.sourceReaders?.clear();run.sourcePages?.clear();run.sourceCaptures?.clear();run.guidanceComposition?.clear();run.modelScopes?.clear();run.modelAddresses=new WeakMap();recall.releaseRun(run);run.memorySession?.release();run.memorySession=null;run.storySession?.release();run.storySession=null;run.draftEvidence?.release();run.draftEvidence=null;run.draftSources?.clear();delete run.nativeContext;for(const session of run.fileSessions?.values()??[])session.release();run.fileSessions?.clear();run.fileSession?.release();run.fileSession=null;run.actorContext?.release();run.actorContext=null;for(const session of run.actorMemorySessions?.values()??[])session.release();run.actorMemorySessions?.clear();run.stagedFiles.length=0;run.memoryIntents.clear();run.memoryTerminals.clear();}
     let epoch=0, active=null, result=null, automaticResult=null, applying=false, internalEvents=0, unsubscribe=null;
     let generationSequence=0, generation={dryRun:false,type:'normal'};
     const activityListeners=new Set();
@@ -276,7 +312,7 @@ export function createNativeWorkflowController(ports) {
         return {ok:true};
     };
     const fresh=(run)=>run.epoch===epoch && (typeof ports.getDocumentToken!=='function' || run.documentToken===ports.getDocumentToken()) && !run.controller.signal.aborted && same(run.identity,identity(context())) && run.signature===workflowSignature(run.originalGraph) && userFresh(run) && (!run.native || (ports.isEnabled?.() !== false && ports.getGraph?.('unified')===run.originalGraph));
-    const userFresh=run=>!run.unified&&!run.hostUnified || run.userId===ports.userId?.();
+    const userFresh=run=>!run.unified&&!run.hostUnified&&run.graph?.runtime!==3 || run.userId===ports.userId?.();
     const promptFresh = run => [...(run.promptSources?.values() ?? [])].every(entry => {
         const current = promptSourceFingerprint(context(), entry.node);
         return current.ok && current.data === entry.fingerprint;
@@ -287,10 +323,12 @@ export function createNativeWorkflowController(ports) {
         catch {return false;}
     };
     const playerSourceFresh=run=>{try{return !run.playerSourceCurrent||run.playerSourceCurrent()===true;}catch{return false;}};
-    const sourceFresh=run=>playerSourceFresh(run) && memoryFresh(run) && promptFresh(run) && [...(run.pendingSources?.values()??[])].every(validSource) && [...(run.sceneSources??[])].every(entry=>entry.text!==null && sourceText(entry.chat)===entry.text && (entry.characterVisibility===undefined || (entry.characterVisibility!==null && characterVisibility(context())===entry.characterVisibility)) && (entry.characterSnapshots??[]).every(captured=>characterText(snapshotContext(context(),{chat:entry.chat,node:captured.node}))===captured.text));
+    const sourceFresh=run=>[...(run.sourcePages??[])].every(page=>inspectSourcePage(page).ok) && playerSourceFresh(run) && memoryFresh(run) && promptFresh(run) && [...(run.pendingSources?.values()??[])].every(validSource) && [...(run.sceneSources??[])].every(entry=>entry.text!==null && sourceText(entry.chat)===entry.text && (entry.characterVisibility===undefined || (entry.characterVisibility!==null && characterVisibility(context())===entry.characterVisibility)) && (entry.characterSnapshots??[]).every(captured=>characterText(snapshotContext(context(),{chat:entry.chat,node:captured.node}))===captured.text));
     const start=(graph,native=false,abortPrimary=null,target)=>{
         cancel('Superseded by a new workflow');
         const run={epoch,runId:token(),controller:new AbortController(),originalGraph:graph,documentToken:ports.getDocumentToken?.(),native,abortPrimary,pending:true,target,mode:target===undefined?'root':'target',pendingSources:new Map(),sceneSources:[],promptSources:new Map(),bindingContexts:new Map(),modelAddresses:new WeakMap(),modelScopes:new Map(),bindingChecks:[],reviewHandles:[],memoryTerminals:new Map(),memoryIntents:new Map(),memorySession:null,invalidMemoryEvidence:false,fileSession:null,fileSessions:new Map(),fileReferences:new WeakMap(),actorContext:null,guidanceComposition:createNativeGuidanceComposition(),actorMemorySessions:new Map(),stagedFiles:[],retainResources:false,resourcesReleased:false};
+        run.sourcePages=new Set();run.sourceCaptures=new Set();run.sourceReaders=new Set();run.actorArtifactOwners=new WeakMap();run.sourceProofs=createSourceProofRegistry({signal:run.controller.signal,isCurrent:()=>fresh(run)&&!run.resourcesReleased});
+        run.sourceCapability=Object.freeze({authorizeSource:artifact=>run.sourceProofs.authorizeSource(artifact),authorizePairing:(artifact,manifest)=>run.sourceProofs.authorizePairing(artifact,manifest),validateCurrent:artifact=>run.sourceProofs.validateCurrent(artifact)});
         active=run;publishActivity();return run;
     };
     function prepareRun(run,plan,controls,options) {
@@ -299,7 +337,7 @@ export function createNativeWorkflowController(ports) {
         run.graph={id:captured.id,name:captured.name,schema:captured.schema,runtime:captured.runtime,mode:captured.mode};
         run.workflowDataDefaults=plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled).flatMap(unit=>unit.systemDefaults??[]);
         run.workflowDataNodes=Object.fromEntries([...plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled).map(unit=>unit.node),...(controls.workflowDataNodes??[])].map((node,index)=>[index,node]));
-        run.signature=workflowSignature(captured);run.identity=identity(context());run.hostUnified=captured.mode==='native-unified';if(run.hostUnified&&!run.unified)run.userId=ports.userId?.();
+        run.signature=workflowSignature(captured);run.identity=identity(context());run.hostUnified=captured.mode==='native-unified';if((run.hostUnified||captured.runtime===3)&&!run.unified)run.userId=ports.userId?.();
         if(run.unified){
             const selected=plan.primitives.filter(unit=>unit.included);
             if(selected.filter(unit=>unit.node.operation==='generate-reply').length!==1)return fail('NATIVE_BOUNDARY_REQUIRED','One selected native generation boundary is required.');
@@ -326,7 +364,7 @@ export function createNativeWorkflowController(ports) {
     }
     function scopedActors(run){
         if(run.actorContext)return {ok:true,data:run.actorContext};
-        if(!run.hostUnified)return fail('ROOT_ONLY','Actor authority requires an owned unified workflow.');
+        if(!run.hostUnified&&run.graph?.runtime!==3)return fail('ROOT_ONLY','Actor authority requires an owned unified workflow.');
         const captured=createNativeActorContext({context,userId:()=>ports.userId?.(),signal:run.controller.signal,isCurrent:()=>fresh(run)&&(!run.unified||nativePrefixFresh(run))&&(!run.effectEntry||acceptedSourceFresh(run.effectEntry)&&sourceFresh(run)),...(typeof ports.selectIntrospectionActor==='function'?{selectActor:ports.selectIntrospectionActor}:{}),
             authorizePresence:(exact,request)=>run.recallCaptured?recall.authorizePresence(run,exact,{actorId:request.actorId}):fail('ACTOR_PRESENCE_UNVERIFIED','This run has no retained scene presence.'),
             authorizeHolderEvent:(exact,request)=>run.recallCaptured?recall.authorizeHolderEvent(run,exact,request):fail('ACTOR_TRIGGER_UNVERIFIED','This run has no ordered live holder trigger.'),
@@ -338,15 +376,39 @@ export function createNativeWorkflowController(ports) {
             }});
         if(captured.ok)run.actorContext=captured.data;return captured;
     }
+    // Swipe replaces a message outside the acknowledged source prefix. Source actor
+    // grants use that exact prefix; post Actor Context continues to use the full chat.
+    function sourceActors(run){
+        if(!run.unified||!run.nativeCapture?.target)return scopedActors(run);
+        if(run.sourceActorService)return {ok:true,data:run.sourceActorService};
+        const captured=createNativeActorContext({context:()=>({...context(),chat:run.nativeCapture.refs}),userId:()=>ports.userId?.(),signal:run.controller.signal,isCurrent:()=>fresh(run)&&nativePrefixFresh(run)&&!run.resourcesReleased,...(typeof ports.selectIntrospectionActor==='function'?{selectActor:ports.selectIntrospectionActor}:{}),authorizePresence:()=>fail('ACTOR_PRESENCE_UNVERIFIED','A source prefix grants no scene presence.')});
+        if(captured.ok)run.sourceActorService=captured.data;return captured;
+    }
+    function authorizeArtifactActors(run,inputs,defaultService){
+        if(!run.sourceActorService)return defaultService.authorizeModelInputs(inputs);
+        let selected=null;
+        for(const artifact of Object.values(inputs)){
+            const mark=artifactVisibility(artifact);if(mark.kind==='public')continue;
+            const owner=run.actorArtifactOwners.get(artifact);if(mark.kind!=='actor-private'||!owner)return fail('ACTOR_MODEL_SCOPE','Private inputs require their exact current artifact owner.');
+            // A failed owner is terminal: labels and another session cannot regrant it.
+            const checked=owner.authorizeModelInputs({input:artifact});if(!checked.ok)return checked;
+            if(!checked.data.scope||selected&&(!same(selected.data.scope,checked.data.scope)))return fail('ACTOR_MODEL_SCOPE','Private inputs require the same actual actor.');
+            selected??={...checked,owner};
+        }
+        return selected??{ok:true,data:{scope:null}};
+    }
     function retainActorOutput(run,payload){
+        if(run.graph?.runtime===3){const retained=run.sourceProofs.retainOutput(payload);if(!retained.ok)return retained;if(typeof ports.sourceTriggers?.retainOutput==='function'){const cause=ports.sourceTriggers.retainOutput(payload);if(!cause?.ok)return cause??fail('SOURCE_TRIGGER_RETENTION_REQUIRED','The exact trigger cause must remain current.');}}
         const composed=run.guidanceComposition.retain(payload);if(!composed.ok)return composed;
         const mark=artifactVisibility(payload.artifact);if(mark.kind==='public'||mark.kind==='hidden')return {ok:true,data:{retained:true}};
         const scoped=scopedActors(run);if(!scoped.ok)return scoped;
+        if(run.graph?.runtime===3&&payload.node.operation==='scene-context'){const grant=run.sourceActorGrant;if(!grant)return fail('SOURCE_ACTOR_UNAUTHORIZED','The current selected actor is required.');const retained=grant.service.retainScopedArtifact(payload.artifact,grant.exact);if(retained.ok)run.actorArtifactOwners.set(payload.artifact,grant.service);return retained;}
         if(['actor-context','character-direction','prompted-memory'].includes(payload.node.operation)){
             const checked=scoped.data.authorizeEventInputs(payload.node,payload.inputs);if(!checked.ok)return checked;const captured=scoped.data.captureScopedResult(payload.rawResult,checked.data.grant);if(!captured.ok)return captured;
-            if(payload.node.operation==='character-direction')return scoped.data.retainGuidance(payload);
+            if(payload.node.operation==='character-direction'){const retained=scoped.data.retainGuidance(payload);if(retained.ok)run.actorArtifactOwners.set(payload.artifact,scoped.data);return retained;}
         }
-        return scoped.data.retainScopedOutput(payload.inputs,payload.artifact,payload);
+        if(run.sourceActorService&&Object.values(payload.inputs).some(input=>run.actorArtifactOwners.get(input)===run.sourceActorService)){const checked=authorizeArtifactActors(run,payload.inputs,scoped.data);if(!checked.ok)return checked;if(!checked.data.grant)return fail('ACTOR_ARTIFACT_SCOPE','Private output requires its captured actor.');const owner=checked.owner??scoped.data,retained=owner.retainScopedArtifact(payload.artifact,checked.data.grant);if(retained.ok)run.actorArtifactOwners.set(payload.artifact,owner);return retained;}
+        const retained=scoped.data.retainScopedOutput(payload.inputs,payload.artifact,payload);if(retained.ok)run.actorArtifactOwners.set(payload.artifact,scoped.data);return retained;
     }
     function scopedMemory(run) {
         if(run.memorySession)return {ok:true,data:run.memorySession};
@@ -489,8 +551,9 @@ export function createNativeWorkflowController(ports) {
         const stopped=()=>run.controller.signal.aborted||run.resourcesReleased||run.epoch!==epoch;
         if(stopped())return fail('ABORTED','The auxiliary request scope has closed.');
         if(!fresh(run)||!sourceFresh(run)||run.unified&&!nativePrefixFresh(run))return fail('STALE_SOURCE','The captured source changed before auxiliary dispatch.');
+        if(!run.hostUnified&&run.graph?.runtime===3&&Object.values(payload.inputs).every(artifact=>artifactVisibility(artifact).kind==='public'))return {ok:true};
         const scoped=scopedActors(run);if(!scoped.ok)return scoped;
-        const checked=scoped.data.authorizeModelInputs(payload.inputs);if(!checked.ok)return checked;
+        const checked=authorizeArtifactActors(run,payload.inputs,scoped.data);if(!checked.ok)return checked;
         // Data authorization can run host callbacks; validate captured event authority last.
         const event=scoped.data.authorizeEventInputs(payload.node,payload.inputs);if(!event.ok)return event;
         if(stopped())return fail('ABORTED','The auxiliary request scope has closed.');
@@ -501,23 +564,31 @@ export function createNativeWorkflowController(ports) {
         const key=run.modelAddresses.get(request.binding),scope=run.modelScopes.get(key);
         if(run.hostUnified&&(!scope||scope.capability!=='text-completion'))return fail('ACTOR_SCOPE_FAILED','Use this run’s exact authorized auxiliary inputs.');
         const mark=scope?artifactVisibility(scope.inputs):null,actorId=scope&&['character-direction','prompted-memory'].includes(scope.node.operation)?scope.node.actorId:mark?.kind==='actor-private'?mark.actorId:null;
-        if(actorId&&!transportUserId)return fail('ACTOR_SCOPE_FAILED','Private transport requires the native read-only user authority.');
+        const watchSources=run.sourceCaptures.size>0;
+        if((actorId||watchSources)&&!transportUserId)return fail('ACTOR_SCOPE_FAILED','Source transport requires the native read-only user authority.');
         const beforeSend=checkBinding=>{
             if(typeof checkBinding!=='function')return fail('BINDING_CHANGED','The native transport binding check is unavailable.');
             if(scope){
-                const initial=actorId?context():null,captured=actorId?actorTransportWatch(initial,actorId,identity(initial).chatId):null;
+                const initial=actorId||watchSources?context():null,initialChatId=initial?identity(initial).chatId:null,captured=actorId?actorTransportWatch(initial,actorId,initialChatId):null,sourceWatch=watchSources?sourceTransportWatch(initial,run.sourceCaptures,run.pendingSources,initialChatId):null;
+                if(watchSources&&!sourceWatch)return fail('STALE_SOURCE','The retained native sources cannot be watched before transmission.');
                 if(actorId&&!captured)return fail('ACTOR_CONTEXT_CHANGED','The live actor source cannot be checked before transmission.');
                 const checked=authorizeModelScope(run,scope);if(!checked.ok)return checked;
+                if(!sourceFresh(run))return fail('STALE_SOURCE','The captured source changed before auxiliary dispatch.');
                 // Acquire the current wrapper last, then run only own-data comparisons
                 // and local lifecycle checks; no user/source/binding callbacks follow.
                 const current=context(),chatId=identity(current).chatId;
-                if(actorId){let userId;try{userId=transportUserId();}catch{return fail('ACTOR_SCOPE_FAILED','The native read-only user authority is unavailable.');}if(typeof userId!=='string'||userId!==run.userId)return fail('ACTOR_CONTEXT_CHANGED','The private transport user scope changed.');}
+                if(actorId||watchSources){let userId;try{userId=transportUserId();}catch{return fail('ACTOR_SCOPE_FAILED','The native read-only user authority is unavailable.');}if(typeof userId!=='string'||userId!==run.userId)return fail('ACTOR_CONTEXT_CHANGED','The private transport user scope changed.');}
                 const binding=checkBinding(current);if(!binding.ok)return binding;
                 if(actorId&&!sameActorTransportWatch(captured,actorTransportWatch(current,actorId,chatId)))return fail('ACTOR_CONTEXT_CHANGED','The live actor source changed before transmission.');
+                if(watchSources&&!sameSourceTransportWatch(sourceWatch,sourceTransportWatch(current,run.sourceCaptures,run.pendingSources,chatId)))return fail('STALE_SOURCE','The retained native sources changed before transmission.');
                 return run.controller.signal.aborted||run.resourcesReleased||run.epoch!==epoch?fail('ABORTED','The auxiliary request scope has closed.'):checked;
             }
-            if(!fresh(run)||!sourceFresh(run)||run.unified&&!nativePrefixFresh(run))return fail('STALE_SOURCE','The captured source changed before auxiliary dispatch.');
-            const binding=checkBinding(context());if(!binding.ok)return binding;
+            const initial=watchSources?context():null,sourceWatch=watchSources?sourceTransportWatch(initial,run.sourceCaptures,run.pendingSources,identity(initial).chatId):null;
+            if(watchSources&&!sourceWatch||!fresh(run)||!sourceFresh(run)||run.unified&&!nativePrefixFresh(run))return fail('STALE_SOURCE','The captured source changed before auxiliary dispatch.');
+            const current=context(),chatId=identity(current).chatId;
+            if(watchSources){let userId;try{userId=transportUserId();}catch{return fail('ACTOR_SCOPE_FAILED','The native read-only user authority is unavailable.');}if(userId!==run.userId)return fail('STALE_SOURCE','The source user scope changed before transmission.');}
+            const binding=checkBinding(current);if(!binding.ok)return binding;
+            if(watchSources&&!sameSourceTransportWatch(sourceWatch,sourceTransportWatch(current,run.sourceCaptures,run.pendingSources,chatId)))return fail('STALE_SOURCE','The retained native sources changed before transmission.');
             return run.controller.signal.aborted||run.resourcesReleased||run.epoch!==epoch?fail('ABORTED','The auxiliary request scope has closed.'):{ok:true};
         };
         return requestModel(request,context,{beforeSend});
@@ -545,7 +616,7 @@ export function createNativeWorkflowController(ports) {
             reuseNativeOutcome:outcome=>run.storySession?run.storySession.reuseNativeOutcome(outcome):{ok:true,data:null},
             retainNativeOutcome:async payload=>run.storySession?run.storySession.retainNativeOutcome(payload):{ok:true}}:{}),
             onStage:ports.onStage,onEvent:event=>{observe(ports.onEvent,event);observe(options.onEvent,event);},
-        },{prepare:(plan,controls)=>prepareRun(run,plan,controls,options),executeIntrospection:(node,inputs,operationPorts)=>introspect(run,node,inputs,operationPorts),...(run.unified||Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{executeHostOperation:(node,inputs,operationPorts)=>nativeOperation(run,node,inputs,operationPorts,options)}:{}),authorizeModelInputs:payload=>{const checked=authorizeModelScope(run,payload);if(checked.ok)run.modelScopes.set(addressKey(payload.address),Object.freeze({node:payload.node,inputs:payload.inputs,capability:payload.capability}));return checked;},retainScopedOutput:payload=>retainActorOutput(run,payload),retainRecallProvenance:payload=>run.recallCaptured?recall.retain(run,payload):{ok:true,data:{retained:true}},settle:transport=>settleRun(run,transport)});}
+        },{getSourceProofs:()=>run.sourceCapability,prepare:(plan,controls)=>prepareRun(run,plan,controls,options),executeIntrospection:(node,inputs,operationPorts)=>introspect(run,node,inputs,operationPorts),...(run.unified||run.graph?.runtime===3||Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{executeHostOperation:(node,inputs,operationPorts)=>nativeOperation(run,node,inputs,operationPorts,options)}:{}),authorizeModelInputs:payload=>{const checked=authorizeModelScope(run,payload);if(checked.ok)run.modelScopes.set(addressKey(payload.address),Object.freeze({node:payload.node,inputs:payload.inputs,capability:payload.capability}));return checked;},retainScopedOutput:payload=>retainActorOutput(run,payload),retainRecallProvenance:payload=>run.recallCaptured?recall.retain(run,payload):{ok:true,data:{retained:true}},settle:transport=>settleRun(run,transport)});}
         finally {delete run.cancel;run.bindingContexts.clear();run.modelScopes.clear();run.modelAddresses=new WeakMap();if(!run.retainResources)releaseRun(run);}
         if(!value.ok||run.mode==='target') {releaseRun(run);run.pendingSources.clear();run.sceneSources.length=0;run.promptSources.clear();run.bindingChecks=[];for(const [id,entry]of candidates)if(entry.run===run)candidates.delete(id);for(const [id,entry]of sources)if(entry.run===run)sources.delete(id);if(run.native)clear();}
         else run.pendingSources.clear();
@@ -651,6 +722,38 @@ export function createNativeWorkflowController(ports) {
         run.storySession=createNativeStoryState({files:files.data,scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:()=>fresh(run)&&playerSourceFresh(run)&&(!run.unified||nativePrefixFresh(run))&&(!run.effectEntry||acceptedSourceFresh(run.effectEntry)&&sourceFresh(run)),turnId,sourceForEvent,playerSource:{sourceId:turnId,revision:turnId,sceneId:run.identity.chatId,watch:'player-message',text:player.mes,visibility:'public'},cache:outcomeCache});
         return {ok:true,data:run.storySession};
     }
+    function sourceScene(run,node,inputs,operationPorts,options){
+        let cause;
+        if(node.activationMode==='events'){
+            if(!inputs.trigger)return {ok:true,outputStates:Object.fromEntries(['out','records','manifest','cursor','report'].map(id=>[id,{status:'skipped',reason:{code:'INPUT_SKIPPED',message:'A trigger is required.'}}]))};
+            if(typeof ports.sourceTriggers?.authorizeTrigger!=='function')return fail('SOURCE_TRIGGER_CAPABILITY_REQUIRED','An exact current host event trigger is required.');
+            if(typeof ports.sourceTriggers.retainReader!=='function'||typeof ports.sourceTriggers.retainOutput!=='function')return fail('SOURCE_TRIGGER_RETENTION_REQUIRED','The current trigger cause must be retained privately.');
+            const authorized=ports.sourceTriggers.authorizeTrigger(inputs.trigger,{node,address:operationPorts.address,signal:run.controller.signal});if(!authorized?.ok)return authorized??fail('SOURCE_TRIGGER_UNAUTHORIZED','The trigger could not be authorized.');cause=authorized.data;if(!cause||typeof cause.isCurrent!=='function'||!cause.cause||typeof cause.cause!=='object'||!Object.isFrozen(cause.cause)||Reflect.ownKeys(cause.cause).length!==0||cause.isCurrent()!==true)return fail('SOURCE_TRIGGER_UNAUTHORIZED','The exact current private trigger cause is required.');
+        }
+        const state=getSourceRegistry().inspect();if(!state.ok)return state;
+        let grant=null;
+        if(node.visibilityMode!=='public'){
+            const service=sourceActors(run);if(!service.ok)return service;
+            if(!run.sourceActorGrant){const captured=service.data.authorizeSelectedActor();if(!captured.ok)return captured;const exact=captured.data.grant;run.sourceActorGrant={exact,service:service.data,handle:Object.freeze({actorId:captured.data.scope.actorId,scope:state.data.scope,isCurrent:()=>fresh(run)&&service.data.checkActorGrant(exact).ok})};}
+            grant=run.sourceActorGrant.handle;
+        }
+        const current=()=>fresh(run)&&!run.resourcesReleased&&(!cause||cause.isCurrent()===true)&&(!run.unified||nativePrefixFresh(run));
+        const c=context(),chat=run.unified?run.nativeCapture.refs:options.chat??c.chat;
+        const captured=getSourceRegistry().capture({chat,scope:state.data.scope,selector:{roles:['user','assistant'],visibilityMode:node.visibilityMode??'actor',includeCharacter:node.includeCharacter!==false},...(run.unified?{allowPrefixAppend:()=>nativePrefixFresh(run)&&!run.nativeFailed&&run.nativeOwner===generation}:{}),signal:run.controller.signal,isCurrent:current});if(!captured.ok)return captured;
+        const character=node.includeCharacter===false?{ok:true,data:null}:captureNativeCharacterProjection({getContext:context,getUserId:()=>ports.userId?.(),scope:state.data.scope,getActorGrant:()=>grant,isCurrent:current,signal:run.controller.signal});if(!character.ok)return character;
+        const reader=createSourceReader({exposeCursor:false,...(cause?{getTriggerCause:()=>cause}:{}),getCharacterProjection:()=>character.data,signal:run.controller.signal,isCurrent:current,getActorGrant:()=>grant,...(typeof ports.getConfirmedSourceFrontier==='function'?{getConfirmedFrontier:query=>ports.getConfirmedSourceFrontier(query,{node,address:operationPorts.address,workflowId:run.graph.id})}:{})});run.sourceReaders.add(reader);
+        const selection=node.selection??'recent',request={selection,maxMessages:node.maxMessages??1000,maxTextUnits:node.maxTextUnits??100000,...(selection==='recent'?{recentMessages:node.recentMessages??12}:{}),...(selection==='range'?{range:{firstSourceId:node.firstSourceId,lastSourceId:node.lastSourceId}}:{}),...(selection==='before-window'?{keepRecentAssistantTurns:node.keepRecentAssistantTurns??10}:{}),...(selection==='since-cursor'?{...(inputs.cursor?{cursor:inputs.cursor.value}:{}),...(node.confirmed?{confirmed:true}:{}),...(node.protectRecentWindow?{upperBoundary:{keepRecentAssistantTurns:node.keepRecentAssistantTurns??10}}:{}),...(node.allowAppendRebase?{allowAppendRebase:true}:{})}:{})};
+        const page=reader.selectSourcePage(captured.data,request);if(!page.ok)return page;
+        if(cause&&typeof ports.sourceTriggers.retainReader!=='function')return fail('SOURCE_TRIGGER_RETENTION_REQUIRED','The current trigger cause must be retained privately.');
+        if(cause){const retained=ports.sourceTriggers.retainReader(page.data,cause);if(!retained?.ok)return retained??fail('SOURCE_TRIGGER_UNAUTHORIZED','The trigger cause could not be retained.');}
+        const view=inspectSourcePage(page.data);if(!view.ok)return view;
+        // Readability, including absent/empty fields, determines source dependencies.
+        // Restricted public-mode cards must never expose their prose to this watch.
+        const wrapper=Object.getOwnPropertyDescriptor(c.characters??{},String(c.characterId))?.value,data=Object.getOwnPropertyDescriptor(wrapper??{},'data')?.value??wrapper;
+        const publicReadable=material=>{const visibility=nativeVisibility(material),disclosure=contextDisclosure(material);return visibility.ok&&!visibility.data.present&&disclosure.ok&&(!disclosure.data.present||disclosure.data.visibility.kind==='public');};
+        const characterKeys=grant!==null||node.includeCharacter!==false&&publicReadable(wrapper)&&publicReadable(data)?['name','description','personality','scenario']:[];
+        run.sourcePages.add(page.data);run.sourceCaptures.add({nativeChat:c.chat,metadata:c.chatMetadata,references:[...chat],scope:state.data.scope,sourceEpoch:captured.data.sourceEpoch,revision:captured.data.revision,watchCharacter:node.includeCharacter!==false||grant!==null,characterKeys});const registered=run.sourceProofs.registerReaderResult(page.data.result,page.data);return registered.ok?page.data.result:registered;
+    }
     async function nativeOperation(run,node,inputs,operationPorts,options) {
         if(operationPorts.root!==true&&!isScopedSystemOperation(node))return fail('HOST_OPERATION_REQUIRED','Nested operations require the trusted static system capability.');
         if(!fresh(run) || run.unified&&!nativePrefixFresh(run))return fail('STALE_RUN','Native workflow source changed.');
@@ -739,6 +842,7 @@ export function createNativeWorkflowController(ports) {
             if(run.recallCaptured&&node.operation==='read-file'&&result.ok&&read?.ok&&result.outputs?.reference?.value===read.data.fileRef){const snapshot=read.data.snapshot;let recordValue;try{recordValue=JSON.parse(snapshot.content);}catch{}const originalStored=context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId],storedFingerprint=originalStored===undefined?null:JSON.stringify(originalStored);const captured=recall.capture(run,result,{kind:'file',recordValue,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&files.visibility(snapshot.targetId).ok&&(context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId]===undefined?null:JSON.stringify(context().chatMetadata.latticeDocuments[run.userId][snapshot.targetId]))===storedFingerprint});if(!captured.ok)return captured;}
             return result;
         }
+        if(node.operation==='scene-context'&&run.graph?.runtime===3)return sourceScene(run,node,inputs,operationPorts,options);
         if(['scene-context','reply-snapshot','prompt-source'].includes(node.operation)) {
             const snapshot=selectedSnapshot(run,operationPorts.phase,node,options);
             if(snapshot?.ok===false)return snapshot;
@@ -933,7 +1037,9 @@ export function createNativeWorkflowController(ports) {
         unsubscribe=()=>{cancel('Controller disposed');for(const [event,fn]of subscriptions)(c.eventSource.removeListener ?? c.eventSource.off)?.call(c.eventSource,event,fn);unsubscribe=null;recall.dispose();};
         return unsubscribe;
     }
-    const controller={beforeGenerate,runTarget,apply,reject,previewStoryHistoryCheckpoint:documentHistory.preview,applyStoryHistoryCheckpoint:documentHistory.apply,inspectStoryHistory:documentHistory.inspect,syncRecall:recall.sync,statusRecall:recall.status,queueRecall:recall.queue,cancelRecall:recall.cancel,captureRecall:recall.captureQueueCommand,changeRecallQueues:recall.changeQueues,resetRecallDocument:recall.resetDocument,subscribeRecall:recall.subscribe,settlementStatus,retryPersistence,candidateStatus,cancel,activity,subscribeActivity,lastResult:()=>result,lastAutomaticResult:()=>automaticResult,subscribe,dispose:()=>{if(unsubscribe)unsubscribe();else recall.dispose();activityListeners.clear();}};
+    /** @type {import('./types').NativeSourceControllerActions} */
+    const sourceActions={inspectSources:()=>getSourceRegistry().inspect(),setupSources:controls=>{cancel('Source setup');const state=getSourceRegistry().inspect();return state.ok?getSourceRegistry().synchronize({expectedRevision:state.data.revision,cause:'enroll'},controls):Promise.resolve(state);},reconcileSources:controls=>{cancel('Source reconciliation');const state=getSourceRegistry().inspect();return state.ok?getSourceRegistry().synchronize({expectedRevision:state.data.revision,cause:'explicit-reconcile'},controls):Promise.resolve(state);},verifySources:controls=>{cancel('Source verification');return getSourceRegistry().verifyPending(controls);},resetSourceEpoch:(command,controls)=>{cancel('Source epoch reset');return getSourceRegistry().resetSourceEpoch(command,controls);}};
+    const controller={...sourceActions,beforeGenerate,runTarget,apply,reject,previewStoryHistoryCheckpoint:documentHistory.preview,applyStoryHistoryCheckpoint:documentHistory.apply,inspectStoryHistory:documentHistory.inspect,syncRecall:recall.sync,statusRecall:recall.status,queueRecall:recall.queue,cancelRecall:recall.cancel,captureRecall:recall.captureQueueCommand,changeRecallQueues:recall.changeQueues,resetRecallDocument:recall.resetDocument,subscribeRecall:recall.subscribe,settlementStatus,retryPersistence,candidateStatus,cancel,activity,subscribeActivity,lastResult:()=>result,lastAutomaticResult:()=>automaticResult,subscribe,dispose:()=>{if(unsubscribe)unsubscribe();else recall.dispose();sourceRegistry?.release();activityListeners.clear();}};
     retentionInspectors.set(controller,()=>{
         const runs=new Set([active,...[...sources.values(),...candidates.values()].map(entry=>entry.run)].filter(Boolean));
         const recordings=new Set([result?.recording,automaticResult?.result.recording,...[...runs].map(run=>run.publicResult?.recording),...[...candidates.values()].map(entry=>entry.applied?.recording)].filter(Boolean));

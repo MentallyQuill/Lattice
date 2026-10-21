@@ -4,6 +4,8 @@ export interface ChunkTokenizerBinding { tokenizerId:string;version:string;model
 /** Host supplied read-only tokenizer; its selected identity must exactly equal the authored binding. */
 export interface ChunkTokenizer { binding:ChunkTokenizerBinding;countTokens(text:string,options:{binding:ChunkTokenizerBinding;signal?:AbortSignal}):Promise<{tokens:number}>|{tokens:number}; }
 export interface ChunkExecutionOptions { phase?:WorkflowPhase;address?:NodeAddress;signal?:AbortSignal;chunkTokenizer?:ChunkTokenizer;
+/** Installed exclusively by runtime/host; copied JSON cannot supply proofs. */
+sourceProofs?:import('../types').PrivateSourceCapability;
 /** Captured execution identity only; sourceRefs stay empty and this grants no source authority. */
 chunkScope?:import('../source-manifests').Scope; }
 export const CHUNK_DEFAULTS: Readonly<ChunkSettings>;
@@ -26,5 +28,5 @@ export interface ChunkRecord {
 export interface ChunkReport {
  schemaVersion:1;recordType:'chunk-report';status:'complete'|'empty';strategy:ChunkSettings['strategy'];
  inputUnits:number;outputCount:number;overlapUnits:number;tokenizerCalls:number;actualCalls:0;unmappedCount:number;
- tokenizerBinding?:ChunkTokenizerBinding;diagnostics:{code:string;message:string}[];
+ tokenizerBinding?:ChunkTokenizerBinding;diagnostics:{code:string;message:string;count?:number}[];
 }

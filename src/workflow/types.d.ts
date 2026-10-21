@@ -206,7 +206,14 @@ export interface OperationExecutionContext {
     request: import('./operations/control-nodes').IterationRequest;
 }
 /** Trusted root host transport with static system delegation; public execution never obtains this capability. */
+export interface PrivateSourceCapability {
+ authorizeSource:import('./source-provenance').SourceProofRegistry['authorizeSource'];
+ authorizePairing:import('./source-provenance').SourceProofRegistry['authorizePairing'];
+ validateCurrent:import('./source-provenance').SourceProofRegistry['validateCurrent'];
+}
 export interface HostOperationExecutionContext extends OperationExecutionContext {
+ /** Internal runtime3 host capability. Never supplied by public execution ports or DTOs. */
+ readonly sourceProofs?:PrivateSourceCapability;
     /** Detached current request references; exact binding identities remain private host authority. */
     getRequestBindings(): ReadonlyArray<Readonly<{ address: NodeAddress; binding: Binding; capability: 'text-completion'; role: string; iteration?: IterationProvenance }>>;
 }
@@ -296,4 +303,19 @@ export interface WorkflowRunOptions {
     chunkTokenizer?: import('./operations/chunk').ChunkTokenizer;
     /** Host-captured descriptive identity for authored Text; never source or omission authority. */
     chunkScope?: import('./source-manifests').Scope;
+}
+
+/** Internal trusted controller actions; never invoked by readers or portable node data. */
+export interface NativeSourceControllerActions {
+ inspectSources():Result<import('./native-source-registry').NativeSourceRegistryStatus>;
+ setupSources(controls?:{signal?:AbortSignal}):Promise<Result<import('./native-source-registry').NativeSourceRegistryCommit>>;
+ reconcileSources(controls?:{signal?:AbortSignal}):Promise<Result<import('./native-source-registry').NativeSourceRegistryCommit>>;
+ verifySources(controls?:{signal?:AbortSignal}):Promise<Result<import('./native-source-registry').NativeSourceRegistryCommit>>;
+ resetSourceEpoch(command:{expectedRevision:string;reason:'identity-ambiguity'|'unrecoverable-pending-save';confirmRebuild:true},controls?:{signal?:AbortSignal}):Promise<Result<import('./native-source-registry').NativeSourceRegistryCommit>>;
+}
+/** Internal future On Event/Cadence service. cause is a frozen empty opaque token; private state stays in its owner WeakMap. IDs in trigger JSON never establish cause authority. */
+export interface NativeSourceTriggerAuthority {
+ authorizeTrigger(exact:DataArtifact,request:{node:NativeNode;address:NodeAddress;signal:AbortSignal}):Result<{readonly cause:object;isCurrent():boolean}>;
+ retainReader(page:import('./source-reader').SourcePage,cause:{readonly cause:object;isCurrent():boolean}):Result<unknown>;
+ retainOutput(payload:ScopedOutputRetention):Result<unknown>;
 }
