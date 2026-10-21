@@ -7,3 +7,8 @@ dist/lattice.css -text
 # Keep embedded guide setup data identical to portable fixture files.
 examples/remastered/fixtures/*.txt text eol=lf
 examples/remastered/fixtures/*.json text eol=lf
+
+# Foundation manifest hashes and embedded setup downloads use exact LF bytes.
+examples/memory/** text eol=lf
+src/workflow/memory-*-data.js text eol=lf
+src/workflow/memory-example-fixtures.js text eol=lf

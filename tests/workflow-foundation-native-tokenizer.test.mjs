@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createNativeWorkflowController} from '../src/workflow/host.js';import {installWorkflowExample} from '../src/workflow/examples.js';
+const binding={tokenizerId:'fixture-exact-graphemes',version:'1',model:'fixture-model'};
+const fixture=tokenizer=>{let calls=0;const context={chatId:'practice',chat:[],chatMetadata:{},characters:[],characterId:0,groupId:null};const controller=createNativeWorkflowController({context:()=>context,userId:()=> 'user',countTokens:async()=>{throw Error('Approximate guidance count must never be used for Chunk.');},...(tokenizer?{chunkTokenizer:{binding:structuredClone(binding),countTokens:async text=>{calls++;return {tokens:[...text].length};}}}:{})});const graph=installWorkflowExample('lesson-34').data.graph,chunk=Object.values(graph.nodes).find(n=>n.operation==='chunk');chunk.sizeUnit='tokens';chunk.tokenizerBinding=structuredClone(binding);return {controller,graph,chunk,calls:()=>calls};};
+test('native foundation Chunk uses only the exact supplied tokenizer and exposes detached setup identity',async()=>{
+ const f=fixture(true);try{const target={workflowId:f.graph.id,instancePath:[],nodeId:f.chunk.id,portId:'out'},result=await f.controller.runTarget(f.graph,target);assert.equal(result.ok,true,JSON.stringify(result.error));assert.ok(f.calls()>0);assert.equal(typeof f.controller.inspectChunkTokenizer,'function');const view=f.controller.inspectChunkTokenizer();assert.equal(view.ok,true);assert.deepEqual(view.data.binding,binding);view.data.binding.model='copied';assert.deepEqual(f.controller.inspectChunkTokenizer().data.binding,binding);}finally{f.controller.dispose();}
+});
+test('native foundation missing exact tokenizer fails atomically and never uses the approximate counter',async()=>{
+ const f=fixture(false);try{const result=await f.controller.runTarget(f.graph,{workflowId:f.graph.id,instancePath:[],nodeId:f.chunk.id,portId:'out'});assert.equal(result.ok,false);assert.equal(result.error.code,'TOKEN_COUNT_FAILED');assert.equal(f.calls(),0);assert.equal(f.controller.inspectChunkTokenizer().ok,false);}finally{f.controller.dispose();}
+});

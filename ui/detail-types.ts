@@ -73,6 +73,8 @@ export interface NodeDetailsView extends DetailSelection {
     alias: string; compact: boolean; enabled: boolean; readOnly: boolean; canPresent: boolean;
     controls: DetailControl[]; model: DetailModelBinding | null; helperBindings?: DetailHelperBindings | null;
     workflowData?: WorkflowDataView | null;
+    sourceSetup?:import('../src/ui/native-source-setup').NativeSourceSetupView;
+    tokenizerSetup?:{available:boolean;binding?:import('../src/workflow/operations/chunk').ChunkTokenizerBinding;issue?:string};
     modifiers?: { items: DetailModifier[]; options: DetailModifierOption[]; editable: boolean; outputPortId: string } | null;
     fileInput?: { fileName: string; loaded: boolean };
     boundary?: { id: string; label: string; direction: 'input' | 'output'; kind: string; required: boolean; kinds: string[] };
@@ -80,6 +82,8 @@ export interface NodeDetailsView extends DetailSelection {
     status?: string; issues?: string[];
 }
 export interface NodeDetailsActions {
+    sourceSetup?:(selection:DetailSelection,key:string,action:'setup'|'verify'|'reconcile')=>Promise<import('../src/workflow/types').Result<unknown>>;
+    refreshSourceSetup?:(selection:DetailSelection)=>DetailEditResponse;
     openReadinessIssue?: (selection: DetailSelection, issue: import('./readiness-types').ReadinessIssue) => void;
     queueRecall?:(selection:DetailSelection)=>DetailEditResponse;
     cancelRecall?:(selection:DetailSelection)=>DetailEditResponse;

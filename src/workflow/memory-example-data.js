@@ -15,13 +15,13 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Inspect the included harbor-lore-chapter.txt snapshot. No index, model helper, document write or subscription is required.",
-        "For the optional token experiment, bind the exact tokenizer used for the intended model."
+        "For the optional token experiment, inspect Exact token sizing in Chunk details. It identifies an available exact tokenizer or clearly reports that this host lacks one. Character estimates are never used."
       ],
       "steps": [
         "Open this workflow and inspect File Input · saved lore chapter. Opening and Preview make no request or save.",
         "Run read-only to Chunk · lore passages. Compare each text with its half-open span in the snapshot.",
         "Increase overlap from 0 and inspect repeated text alongside the unchanged union of original spans.",
-        "Bind an exact tokenizer, select token sizing, target size 512 and overlap 64; keep maxTokenizerCalls at 4096 and inspect actual count.",
+        "If Chunk details lists an available exact tokenizer, use its binding, select Tokens, target size 512 and overlap 64; inspect the actual count. When unavailable, keep UTF-16; choosing Tokens with no matching binding must fail atomically.",
         "Compare paragraph with fixed strategy. Optionally Send after checking the bounded Compose · passage guidance output."
       ],
       "experiments": [
@@ -282,7 +282,7 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
               "y": 0,
               "w": 900,
               "h": 380,
-              "content": "Split an included lore chapter at useful boundaries and inspect exact source spans without making a model call.\n\nChunk segmentation is independent of scheduling and history retention. This source is an included file snapshot, not a live lorebook or chat grant.\nParagraph boundaries and deliberate overlap retain exact snapshot spans; complete graphemes are never cut.\nToken sizing requires your actual tokenizer binding. A manifest alone cannot authorize omission of saved chat.\n\nOpen this workflow and inspect File Input · saved lore chapter. Opening and Preview make no request or save.\nRun read-only to Chunk · lore passages. Compare each text with its half-open span in the snapshot.\nIncrease overlap from 0 and inspect repeated text alongside the unchanged union of original spans.\nBind an exact tokenizer, select token sizing, target size 512 and overlap 64; keep maxTokenizerCalls at 4096 and inspect actual count.\nCompare paragraph with fixed strategy. Optionally Send after checking the bounded Compose · passage guidance output.\n\nRead-only: T0/E0/IR0/IW0/N0. Optional Send: N1. One included snapshot read; no writes or coverage lookups. UTF-16 mode uses 0 tokenizer calls; the optional token experiment allows at most 4,096 exact local tokenizer calls.",
+              "content": "Split an included lore chapter at useful boundaries and inspect exact source spans without making a model call.\n\nChunk segmentation is independent of scheduling and history retention. This source is an included file snapshot, not a live lorebook or chat grant.\nParagraph boundaries and deliberate overlap retain exact snapshot spans; complete graphemes are never cut.\nToken sizing requires your actual tokenizer binding. A manifest alone cannot authorize omission of saved chat.\n\nOpen this workflow and inspect File Input · saved lore chapter. Opening and Preview make no request or save.\nRun read-only to Chunk · lore passages. Compare each text with its half-open span in the snapshot.\nIncrease overlap from 0 and inspect repeated text alongside the unchanged union of original spans.\nIf Chunk details lists an available exact tokenizer, use its binding, select Tokens, target size 512 and overlap 64; inspect the actual count. When unavailable, keep UTF-16; choosing Tokens with no matching binding must fail atomically.\nCompare paragraph with fixed strategy. Optionally Send after checking the bounded Compose · passage guidance output.\n\nRead-only: T0/E0/IR0/IW0/N0. Optional Send: N1. One included snapshot read; no writes or coverage lookups. UTF-16 mode uses 0 tokenizer calls; the optional token experiment allows at most 4,096 exact local tokenizer calls.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -421,10 +421,10 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Import thirteen-turn-harbor-chat.jsonl into an explicitly disposable practice chat through the normal host import. For the protected/unpaired exercise, separately import thirteen-turn-harbor-chat-protected.jsonl; its public system barrier must never be guessed into a pair.",
-        "Require the host selected-source/pairing capability. Imported IDs and timestamps create no accepted-reply or coverage authority."
+        "Require the host selected-source/pairing capability. Explicit source setup makes one metadata save and readback; ordinary read-only preparation makes no save. Imported IDs and timestamps create no accepted-reply or coverage authority."
       ],
       "steps": [
-        "Before sending another reply, inspect Scene Context · older than recent ten: before-window, keepRecentAssistantTurns: 10.",
+        "Before sending another reply, inspect Scene Context · older than recent ten: before-window, keepRecentAssistantTurns: 10. In its details, choose Set up chat sources once; this explicitly saves source identities and verifies persisted chat. After reopening, choose Verify saved sources. Reconcile sources explicitly after edits if required.",
         "Run read-only to Chunk · three-turn passages; inspect the three oldest eligible assistant turns and their paired users.",
         "Compare Chunk out with manifest. It should contain one three-turn record for the supplied thirteen-turn fixture.",
         "Use only two verified older turns and inspect the explicit smaller final group. With five eligible turns, expect groups of 3 and 2.",
@@ -526,7 +526,7 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
               "title": "On Send",
               "enabled": true,
               "x": 1300,
-              "y": 495,
+              "y": 530,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -542,7 +542,7 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
               "title": "Generate Reply · SillyTavern",
               "enabled": true,
               "x": 1700,
-              "y": 567,
+              "y": 602,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -562,7 +562,7 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
               "title": "Review / Publish",
               "enabled": true,
               "x": 2100,
-              "y": 567,
+              "y": 602,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -577,7 +577,7 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
               "title": "Scene Context",
               "enabled": true,
               "x": 100,
-              "y": 495,
+              "y": 530,
               "w": 300,
               "h": 196,
               "profileId": null,
@@ -601,7 +601,7 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
               "title": "Chunk",
               "enabled": true,
               "x": 500,
-              "y": 519,
+              "y": 554,
               "w": 300,
               "h": 168,
               "profileId": null,
@@ -628,7 +628,7 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
               "title": "Format",
               "enabled": true,
               "x": 900,
-              "y": 615,
+              "y": 650,
               "w": 300,
               "h": 168,
               "profileId": null,
@@ -660,7 +660,7 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
               "title": "Compose",
               "enabled": true,
               "x": 1300,
-              "y": 699,
+              "y": 734,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -687,8 +687,8 @@ export const MEMORY_WORKFLOW_EXAMPLE_DATA = [
               "x": 100,
               "y": 0,
               "w": 900,
-              "h": 415,
-              "content": "Group older verified assistant turns and their paired user material while keeping the newest ten turns raw.\n\nScene Context chooses the eligible history window; Chunk groups that current selection. The retained recent window is independent of passage size.\nThe host proves selected source identities and user/assistant pairing. Descriptive imported Context cannot supply that proof.\nThis focused preparation is read-only and makes no summary call or omission acknowledgement.\n\nBefore sending another reply, inspect Scene Context · older than recent ten: before-window, keepRecentAssistantTurns: 10.\nRun read-only to Chunk · three-turn passages; inspect the three oldest eligible assistant turns and their paired users.\nCompare Chunk out with manifest. It should contain one three-turn record for the supplied thirteen-turn fixture.\nUse only two verified older turns and inspect the explicit smaller final group. With five eligible turns, expect groups of 3 and 2.\nIn the failure exercise replace the live Context with descriptive imported Context and inspect CHUNK_TURN_SOURCE_REQUIRED.\n\nRead-only preparation T0/E0/IR0/IW0/N0; optional Send N1. At most one bounded history page, no document or metadata writes, 0 tokenizer calls and no coverage lookups.",
+              "h": 450,
+              "content": "Group older verified assistant turns and their paired user material while keeping the newest ten turns raw.\n\nScene Context chooses the eligible history window; Chunk groups that current selection. The retained recent window is independent of passage size.\nThe host proves selected source identities and user/assistant pairing. Descriptive imported Context cannot supply that proof.\nThis focused preparation is read-only and makes no summary call or omission acknowledgement.\n\nBefore sending another reply, inspect Scene Context · older than recent ten: before-window, keepRecentAssistantTurns: 10. In its details, choose Set up chat sources once; this explicitly saves source identities and verifies persisted chat. After reopening, choose Verify saved sources. Reconcile sources explicitly after edits if required.\nRun read-only to Chunk · three-turn passages; inspect the three oldest eligible assistant turns and their paired users.\nCompare Chunk out with manifest. It should contain one three-turn record for the supplied thirteen-turn fixture.\nUse only two verified older turns and inspect the explicit smaller final group. With five eligible turns, expect groups of 3 and 2.\nIn the failure exercise replace the live Context with descriptive imported Context and inspect CHUNK_TURN_SOURCE_REQUIRED.\n\nRead-only preparation T0/E0/IR0/IW0/N0; optional Send N1. At most one bounded history page, no document or metadata writes, 0 tokenizer calls and no coverage lookups.",
               "commentFrame": true,
               "moveContents": false
             }

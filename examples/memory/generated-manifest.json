@@ -8,13 +8,13 @@
   "files": [
     {
       "path": "examples/memory/34-split-lore-chapter-into-passages.lattice.json",
-      "bytes": 9575,
-      "sha256": "b0a04bff81191be07294f2e318fa69c8c7d6b3f42888b70f45973e2ed247ec7a"
+      "bytes": 9677,
+      "sha256": "e3fdc790a8bf5c4bf0db5d4153913e4830cac6f27ab6a745c7c2ded458553d4d"
     },
     {
       "path": "examples/memory/34-split-lore-chapter-into-passages.lattice-document.json",
-      "bytes": 9506,
-      "sha256": "7868310a027eb3d6da1b188a9ab13463024723b51c45ffb3a4e39295f0504982"
+      "bytes": 9608,
+      "sha256": "7aa0bcc524cad9bdcbb8321eb54d7fb4c9f0ebc79323a08ec5ba1a85eb85d679"
     },
     {
       "path": "examples/memory/fixtures/harbor-lore-chapter.txt",
@@ -23,13 +23,13 @@
     },
     {
       "path": "examples/memory/35-group-replies-into-three-turn-passages.lattice.json",
-      "bytes": 8851,
-      "sha256": "67554c7c5900e7056cfc6ee570779af339c4925ef2677adc21e9f5508d1a6bcd"
+      "bytes": 9069,
+      "sha256": "a4294d729dd70d5cf46f8f2f1b82ab192f601fa3d4dbf778d33beca4c985b2dd"
     },
     {
       "path": "examples/memory/35-group-replies-into-three-turn-passages.lattice-document.json",
-      "bytes": 8782,
-      "sha256": "1626b74ac51cf4db67cbf1ce228a336cd179280441c2034d7b873109fd99552b"
+      "bytes": 9000,
+      "sha256": "68c66d863ed3cd86fadf6a21475573cb21a545896e6c8cb2cae36f1e4c3f2440"
     },
     {
       "path": "examples/memory/fixtures/thirteen-turn-harbor-chat.jsonl",
@@ -43,8 +43,8 @@
     },
     {
       "path": "src/workflow/memory-example-data.js",
-      "bytes": 31281,
-      "sha256": "c018353bbc7141abb41853758be902c29e329f6c736711ad1b07dcc5ed7aa646"
+      "bytes": 32142,
+      "sha256": "79be93e031fb97c564134e699e2b1ff5f4ee93117d89320d808a18c382b8b8c2"
     },
     {
       "path": "src/workflow/memory-node-guide-data.js",

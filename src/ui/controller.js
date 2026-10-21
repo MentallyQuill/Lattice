@@ -1,3 +1,4 @@
+import {createNativeSourceSetup} from './native-source-setup.js?v=0.27.5';
 import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.27.5';
 import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.5';
 import { prepareAddSystem, prepareSystemAssistance, projectSystemAuthoring } from '../workflow/system-authoring.js?v=0.27.5';
@@ -158,6 +159,7 @@ const workflowSession = createWorkflowSession({ runtime: () => workflowRuntime.g
     workflowState = state;
     if (isOpen() && !documentTransition) { if (authorityChanged) refreshWorkflowPreparation(); if (!openingWorkspace) updateWorkflowProjection(); }
 } });
+const nativeSourceSetup=createNativeSourceSetup({controller:()=>workflowRuntime.getNativeWorkflowController?.(),documentToken:()=>documentSession.capture(),changed:()=>{if(isOpen())updateWorkflowProjection();}});
 const receiveAutomaticWorkflow = () => workflowSession.receiveAutomatic(workflowRuntime.getNativeWorkflowController?.()?.lastAutomaticResult?.());
 function storySetup() {
     const catalog = workflowRuntime.getStoryDocumentCatalog?.();
@@ -506,6 +508,8 @@ function updateWorkflowProjection() {
         canvas.setPreviewTarget(address && editor.view.identity.kind !== 'library' && address.workflowId === current.id && JSON.stringify(address.instancePath) === JSON.stringify(editor.view.identity.instancePath ?? []) ? address.nodeId : null);
     }
     if (panels.nodeDetails) {
+        if(panels.nodeDetails.operation==='scene-context'&&current?.runtime===3&&graphViews.readEditor().view.identity.kind!=='library')panels.nodeDetails={...panels.nodeDetails,sourceSetup:nativeSourceSetup.snapshot()};
+        if(panels.nodeDetails.operation==='chunk'){const tokenizer=workflowRuntime.getNativeWorkflowController?.()?.inspectChunkTokenizer?.();panels.nodeDetails={...panels.nodeDetails,tokenizerSetup:tokenizer?.ok?{available:true,binding:tokenizer.data.binding}:{available:false,issue:tokenizer?.error?.message??'Exact Chunk tokenizer unavailable. Use UTF-16 sizing.'}};}
         const cause = diagnostics?.nodes.find(node => node.key === JSON.stringify([panels.nodeDetails.address.workflowId, panels.nodeDetails.address.instancePath, panels.nodeDetails.address.nodeId]));
         panels.nodeDetails = { ...panels.nodeDetails, runDiagnostic: cause ? { code: cause.error.code, message: cause.error.message, ...(cause.inputPortId ? { inputPortId: cause.inputPortId } : {}) } : undefined };
     }
@@ -578,6 +582,7 @@ export function open() {
     renderAll({ canvasReady: true });
 }
 export function close() {
+    nativeSourceSetup.cancel();
     workflowActivityUnsubscribe?.(); workflowActivityUnsubscribe = null;
     cancelConfiguredNode();
     documentCommands?.cancelReplacement();
@@ -657,6 +662,7 @@ function build() {
     });
     root = workbench.root; hookHistory();
     onWorkflowActivated(({ graph }) => {
+        nativeSourceSetup.cancel();
         documentTransition = true; workflowSession.syncDocument(); documentTransition = false;
         if (isOpen()) { current = graph; setCanvasGraph(); renderAll({ canvasReady: true }); }
     });
@@ -667,7 +673,7 @@ function build() {
     }); installRecoveryLifecycle();
     const nativeContext = ctx();
     for (const name of ['CHAT_CHANGED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_DELETED', 'MESSAGE_SWIPED', 'MESSAGE_SENT', 'GENERATION_STARTED', 'GENERATION_ENDED', 'GENERATION_STOPPED']) {
-        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { cancelConfiguredNode(); refreshStoryDocuments(); } } });
+        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { nativeSourceSetup.cancel(); cancelConfiguredNode(); refreshStoryDocuments(); } if(current?.runtime===3)updateWorkflowProjection(); } });
     }
     for (const name of ['CHATCOMPLETION_MODEL_CHANGED', 'CHATCOMPLETION_SOURCE_CHANGED', 'MAIN_API_CHANGED', 'CONNECTION_PROFILE_LOADED', 'CONNECTION_PROFILE_CREATED', 'CONNECTION_PROFILE_UPDATED', 'CONNECTION_PROFILE_DELETED', 'OAI_PRESET_CHANGED_AFTER', 'PRESET_CHANGED', 'PRESET_DELETED', 'PRESET_RENAMED', 'SETTINGS_LOADED_AFTER', 'EXTENSION_SETTINGS_LOADED']) {
         if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => refreshNodeProfileMetadata());
@@ -1853,6 +1859,8 @@ const nodeGuideActions = {
     },
 };
 const nodeDetailsActions = {
+    refreshSourceSetup(selection){const captured=detailCapture(selection,true);if(!captured.ok)return captured;updateWorkflowProjection();return {ok:true};},
+    async sourceSetup(selection,key,action){const captured=detailCapture(selection,true);if(!captured.ok)return captured;const editor=graphViews.readEditor();if(editor.view.identity.kind==='library'||editor.prepared.effectiveNodes[selection.address.nodeId]?.operation!=='scene-context'||current?.runtime!==3)return {ok:false,error:{code:'SOURCE_SETUP_UNAVAILABLE',message:'Select a current runtime3 Scene Context node.'}};return nativeSourceSetup.execute(key,action);},
     openReadinessIssue(selection, issue) { return openReadinessDetails(selection, issue); },
     queueRecall(selection){const captured=detailCapture(selection,true);return captured.ok?recallActions.change([selection.address.nodeId],'queue'):captured;},
     cancelRecall(selection){const captured=detailCapture(selection,true);return captured.ok?recallActions.change([selection.address.nodeId],'cancel'):captured;},

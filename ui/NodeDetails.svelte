@@ -12,6 +12,7 @@
     import { presentDiagnostics } from '../src/ui/diagnostics.js';
     import { onDestroy, untrack } from 'svelte';
     import DetailControlEditor from './DetailControl.svelte';
+    import NativeSourceSetup from './NativeSourceSetup.svelte';
     import RecallDetails from './RecallDetails.svelte';
     import ModifierStack from './ModifierStack.svelte';
     import WorkflowData from './WorkflowData.svelte';
@@ -458,6 +459,11 @@
         </fieldset>
     {/if}
     {#if !view.boundary}
+        {#if view.tokenizerSetup}<fieldset class="pc-detail-group" data-chunk-tokenizer-setup><legend>Exact token sizing</legend>
+            {#if view.tokenizerSetup.available && view.tokenizerSetup.binding}<p>Available: {view.tokenizerSetup.binding.tokenizerId} · {view.tokenizerSetup.binding.version} · {view.tokenizerSetup.binding.model}</p><button type="button" disabled={view.readOnly||!actions.editControl} onclick={()=>{const control=view?.controls.find(control=>control.key==='tokenizerBinding');if(control)editControl(control,view?.tokenizerSetup?.binding);}}>Use available tokenizer binding</button>
+            {:else}<p>{view.tokenizerSetup.issue}</p><small>Tokens stops without output when its exact binding is unavailable. Character estimates are never used for Chunk.</small>{/if}
+        </fieldset>{/if}
+        {#if view.sourceSetup}<NativeSourceSetup model={view.sourceSetup} selection={selection(view)} {actions} disabled={view.readOnly} />{/if}
         {#if view.workflowData}<WorkflowData model={view.workflowData} selection={selection(view)} {actions} disabled={view.readOnly} idPrefix={idPrefix + '-workflow-data'} />{/if}
         <fieldset class="pc-detail-group pc-detail-main" data-operation-controls>
             {#if view.fileInput}

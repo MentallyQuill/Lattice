@@ -1,3 +1,4 @@
+import {createNativeSourceSetup} from '../src/ui/native-source-setup.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {describeOperation,describeAuthoredOperation} from '../src/workflow/catalog.js?v=0.27.5';
@@ -35,4 +36,8 @@ for(const [label,extra] of [
 });
 test('foundation source reader exposes no deferred cursor or event ports',()=>{
  const f=fixture();try{const result=describeOperation(f.graph,f.graph.nodes.scene);assert.equal(result.ok,true);assert.deepEqual(result.data.ports.map(p=>p.id),['out','records','manifest','report']);}finally{f.controller.dispose();}
+});
+
+test('explicit UI source setup calls the actual native save and readback only after the current action',async()=>{
+ const f=fixture(),document={};try{const setup=createNativeSourceSetup({controller:()=>f.controller,documentToken:()=>document}),view=setup.snapshot();assert.equal(view.status,'setup-required');assert.deepEqual(f.counts(),{saves:0,reads:0});assert.equal((await setup.execute(view.key,'setup')).ok,true);assert.deepEqual(f.counts(),{saves:1,reads:1});assert.equal(setup.snapshot().status,'acknowledged');}finally{f.controller.dispose();}
 });
