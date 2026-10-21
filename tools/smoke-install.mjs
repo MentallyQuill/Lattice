@@ -5,6 +5,8 @@ import { join, resolve, extname, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
+const foundationLesson=process.argv.find(arg=>arg.startsWith('--foundation-lesson='))?.split('=')[1];
+if(foundationLesson&&!['34','35'].includes(foundationLesson))throw Error('Select foundation lesson34 or35.');
 const install = await mkdtemp(join(tmpdir(), 'lattice-install-'));
 for (const name of ['manifest.json', 'index.js', 'style.css', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'src', 'dist', 'assets']) await cp(join(root, name), join(install, name), { recursive: true });
 // Only the host mock accompanies the install; no developer UI source or dependencies.
@@ -60,9 +62,15 @@ const publicHostModule = `
         return true;
     }
 `;
+let foundationStored=null;const foundationIO={saves:0,reads:0};
 const server = createServer(async (request, response) => {
     try {
         const pathname = new URL(request.url, 'http://localhost').pathname;
+        if(foundationLesson==='35'&&request.method==='POST'&&['/__foundation__/save','/api/chats/get'].includes(pathname)){
+            let body='';for await(const chunk of request){body+=chunk;if(Buffer.byteLength(body)>2000000)throw Error('Oversized synthetic fixture request');}
+            if(pathname==='/__foundation__/save'){const value=JSON.parse(body);if(value.chatId!=='foundation-install-practice-35'||!Array.isArray(value.chat))throw Error('Invalid synthetic practice chat');foundationStored=value;foundationIO.saves++;response.writeHead(200,{'Content-Type':'application/json'}).end('{}');return;}
+            if(!foundationStored)throw Error('No explicitly saved synthetic chat');foundationIO.reads++;response.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify([{chat_metadata:foundationStored.metadata},...foundationStored.chat]));return;
+        }
         if (pathname === '/scripts/user.js') { response.writeHead(200, { 'Content-Type': 'text/javascript' }).end("export function getCurrentUserHandle(){return 'default-user';}"); return; }
         if (pathname === '/script.js') { response.writeHead(200, { 'Content-Type': 'text/javascript' }).end(publicHostModule); return; }
         const path = resolve(install, '.' + pathname);
@@ -74,6 +82,7 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const browser = await chromium.launch();
 try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    if(foundationLesson)await page.addInitScript(()=>{window.showOpenFilePicker=undefined;window.showSaveFilePicker=undefined;});
     const errors = [], missing = [], requests = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('response', response => { if (response.status() >= 400) missing.push(response.url()); });
@@ -100,5 +109,11 @@ try {
     if (requests.some(url => new URL(url).hostname !== '127.0.0.1')) throw Error('Production smoke made an external request');
     const apiRequests = requests.filter(url => new URL(url).pathname.startsWith('/api/')).length;
     if (apiRequests) throw Error('Production smoke made an unexpected host API/model request');
-    console.log(JSON.stringify({ apiRequests, install, nodeModules: false, developerUiSource: false, requests: requests.length, errors, missing, ...result }, null, 2));
+    const journey=foundationLesson?await (await import('./foundation-install-journey.mjs')).runFoundationInstallJourney(page,{lesson:Number(foundationLesson),root}):undefined;
+    if(errors.length||missing.length||requests.some(url=>new URL(url).hostname!=='127.0.0.1'))throw Error(JSON.stringify({errors,missing}));
+    if(foundationLesson==='34'&&requests.some(url=>new URL(url).pathname.startsWith('/api/')))throw Error('Text journey made an unexpected API call');
+    if(foundationLesson==='35'&&(foundationIO.saves!==1||foundationIO.reads<1))throw Error('Expected one explicit source setup save/readback: '+JSON.stringify(foundationIO));
+    const journeyApiRequests=requests.filter(url=>new URL(url).pathname.startsWith('/api/')).length-apiRequests;
+    if(foundationLesson==='35'&&requests.filter(url=>new URL(url).pathname.startsWith('/api/')).some(url=>new URL(url).pathname!=='/api/chats/get'))throw Error('Unexpected synthetic native API boundary');
+    console.log(JSON.stringify({ startupApiRequests:apiRequests, journeyApiRequests, journey, foundationIO, install, nodeModules: false, developerUiSource: false, requests: requests.length, errors, missing, ...result }, null, 2));
 } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }

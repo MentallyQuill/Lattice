@@ -1,4 +1,4 @@
-const exampleCount=30, lastExampleTitle='A relationship that changes slowly over weeks';
+const exampleCount=32, lastExampleTitle='Group replies into three-turn passages';
 import { test, expect } from '@playwright/test';
 
 async function load(page) {

@@ -36,9 +36,20 @@ Locked dependency installation succeeded (97 packages; package/lock inputs uncha
 | Gate | Current evidence |
 | --- | --- |
 | F01 preservation/restore | PASS as scoped above; retain all required local archive artifacts |
-| F02 scope/dependency inventory | Active; worktree/base verified, transfer map and capability selection pending |
-| F03 legacy compatibility | 95-file baseline captured; 30 visible and 32 hidden entries confirmed; candidate compatibility checks still pending |
-| F04–F16 | Not verified for the foundation candidate |
+| F02 scope/dependency inventory | Explicit34/35manifest and bounded maintenance-free closure implemented; final later-delta/installed audit remains |
+| F03 legacy compatibility |95legacy artifact hashes unchanged;32visible/32hidden; final release compatibility check remains |
+| F04 package/document lifecycle | Both compiled installed UI journeys pass save/reopen/export/reimport against a synthetic host |
+| F05 inert open | Startup/open/catalog/preview make0modelcalls; source save/readback occurs only through explicit setup in35 |
+| F06/F07 lessons | Component and installed synthetic journeys pass; real-host acceptance remains open |
+| F08 isolation | Focused private-proof/currentness/cancellation/source-setup checks pass; real-host verification remains |
+| F09 editor | Runtime3edit guards and source-control projection fixed through actual failures; desktop/narrow synthetic UI verified |
+| F10 native generation | Real-host/provider smoke remains open; previous local8000host is offline |
+| F11 deferred surface | Catalog/runtime/import fences and focused cases pass; final installed audit remains |
+| F12 catalog/guides |32visible and two selected generated lessons/embedded fixture downloads; focused consumer checks pass |
+| F13 build/package | Current0.27.5development candidate builds;802versionedimports and cleaninstall pass;0.28finalcandidate not yet packaged |
+| F14 regressions | Affected focused checks pass; required release sweep remains |
+| F15 latency/cost | Synthetic installed34prepare128ms/35prepare517ms;35setup69ms with1save/1readback;0paidcalls. Real-host Send unmeasured |
+| F16 final review | Not started; foundation goal remains active |
 
 The earlier full-memory component tests, latest14native locator/ACK checks, declaration/app type checks and2checkpoint evidence remain preserved. They do not substitute for foundation installed acceptance. Paid calls0; native foundation lesson proofs0; capstone soaks are deferred. A bounded Text Chunk transfer is verified below. No version bump, release package, whole-branch review closure or main push has been performed.
 
@@ -85,3 +96,7 @@ Scene Context details now exposes explicit chat source setup, saved verification
 ## Installed production UI: lesson34
 
 A clean installed distribution with no developer UI or node_modules completes lesson34 through ordinary catalog, Run to here, overlap edit, Save As/download, Open, portable export and independent reimport. Four default passages become five with overlap16; record IDs survive deterministic rerun and both file roundtrips. Preparation128ms/rerun94ms; zero model/APIcalls, pageerrors or missingassets. This uses an explicitly synthetic host, so it does not replace the required real-host/provider smoke. The run exposed and fixed four runtime3 editor admission gaps with4RED-to-GREEN cases;9affected files pass, types0/0 and95legacy hashes remain unchanged. Production assetcheck also required separating pure Chunk controls from private execution imports; the self-contained UI check now passes with802versioned installed imports.
+
+## Installed production UI: lesson35
+
+The second clean-install journey uses the actual native controller/registry/verifier against an explicitly synthetic disposable host backend. Source setup is inert until the UI action, then performs one save/readback in69ms. Preparation517ms selects three older pairs and preserves the newest ten raw; changing the window to eight produces groups3/2, and changing passage size to two with the original window produces2/1. Six exact source references, graph values and record identities survive both editable and portable file roundtrips. Raw history is unchanged and modelcalls0. Narrow review caught the static Scene-control projection gap; admitted runtime3 descriptors now expose selection/protected turns and omit inapplicable recent/root-only controls. Thirteen affected UItestfiles pass, types0/0, and95legacy hashes remain unchanged. Real-host/provider verification remains open.

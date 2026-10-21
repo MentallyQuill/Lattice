@@ -234,7 +234,7 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
             let fields = fieldCache.get(fieldKey);
             if (!fields) {
                 const effectiveNode = editor.prepared.effectiveNodes[selectedId] ?? saved;
-                const context = {phase:effective?.phase ?? phaseForNode(graph,saved) ?? 'pre',readOnly:editor.readOnly || library};
+                const context = {phase:effective?.phase ?? phaseForNode(graph,saved) ?? 'pre',readOnly:editor.readOnly || library,descriptor:metadata};
                 const ownControls = projectNodeControls(saved?.operation,saved,context);
                 const effectiveControls = projectNodeControls(saved?.operation,effectiveNode,context);
                 const controls = metadata ? [...ownControls, ...effectiveControls.filter(control=>!ownControls.some(own=>own.key===control.key))].filter(control => {

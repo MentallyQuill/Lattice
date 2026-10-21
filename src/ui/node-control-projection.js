@@ -3,10 +3,10 @@ import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.2
 import { recallControlLabel } from '../workflow/recall-labels.js?v=0.27.5';
 import { resolveControlInputSpec, formatControlInput } from './control-input-contracts.js?v=0.27.5';
 /** Shared detached authoring fields; no graph, host, or execution authority. */
-export function projectNodeControls(operation, controls = {}, { phase, readOnly = false }) {
+export function projectNodeControls(operation, controls = {}, { phase, readOnly = false, descriptor }) {
  const base = OPERATIONS[operation]; if (!base) return [];
- const defaults = ['state','context','memory'].includes(operation) ? introspectionDefaults(operation, controls.mode) : base.defaults;
- const metadata = operationFor({type:'workflow', operation, ...defaults, ...controls}, {phase}) ?? operationFor({type:'workflow', operation, ...defaults}, {phase}) ?? base;
+ const defaults = descriptor?.defaults ?? (['state','context','memory'].includes(operation) ? introspectionDefaults(operation, controls.mode) : base.defaults);
+ const metadata = descriptor ?? operationFor({type:'workflow', operation, ...defaults, ...controls}, {phase}) ?? operationFor({type:'workflow', operation, ...defaults}, {phase}) ?? base;
  const node = {operation, ...defaults, ...controls};
  return Object.entries(metadata.controlDescriptors).filter(([key, descriptor]) => !descriptor.hidden && visibleDetailControl(node, metadata.defaults, key) && (!descriptor.visibleWhen || node[descriptor.visibleWhen.key] === descriptor.visibleWhen.value)).map(([key, descriptor]) => {
   const value = Object.hasOwn(controls, key) ? controls[key] : metadata.defaults[key] ?? descriptor.default;
@@ -22,6 +22,7 @@ export function detailControl(key,label,descriptor,value) {
 const friendlyControlLabel = key => ({ maxTokens: 'Output tokens', budgetTokens: 'Token budget', pins: 'Pinned wording', rules: 'Rules' }[key] ?? key.replace(/([A-Z])/g, char => ' ' + char.toLowerCase()).replace(/^./, char => char.toUpperCase()));
 function visibleDetailControl(node, defaults, key) {
  const value = name => node?.[name] ?? defaults[name];
+ if(node?.operation==='scene-context'&&defaults.selection!==undefined){if(key==='activationMode')return false;if(key==='recentMessages')return value('selection')==='recent';if(key==='keepRecentAssistantTurns')return value('selection')==='before-window';}
  if (node?.operation === 'compose') return key !== 'template' || value('mode') === 'template' ? key !== 'separator' || value('mode') === 'join' : false;
  if (node?.operation === 'text-rules') return key !== 'separator' || value('mode') === 'extract' ? !['scope','protectedLiterals'].includes(key) || value('inputKind') === 'draft' : false;
  if (node?.operation === 'smart-compactor' && key === 'maxTokens') return value('method') === 'compress';

@@ -12106,39 +12106,39 @@ function Xf(e, t, n) {
 }
 //#endregion
 //#region src/ui/node-control-projection.js
-function Zf(e, t = {}, { phase: n, readOnly: r = !1 }) {
-	let i = bf[e];
-	if (!i) return [];
-	let a = [
+function Zf(e, t = {}, { phase: n, readOnly: r = !1, descriptor: i }) {
+	let a = bf[e];
+	if (!a) return [];
+	let o = i?.defaults ?? ([
 		"state",
 		"context",
 		"memory"
-	].includes(e) ? dd(e, t.mode) : i.defaults, o = kf({
+	].includes(e) ? dd(e, t.mode) : a.defaults), s = i ?? kf({
 		type: "workflow",
 		operation: e,
-		...a,
+		...o,
 		...t
 	}, { phase: n }) ?? kf({
 		type: "workflow",
 		operation: e,
-		...a
-	}, { phase: n }) ?? i, s = {
+		...o
+	}, { phase: n }) ?? a, c = {
 		operation: e,
-		...a,
+		...o,
 		...t
 	};
-	return Object.entries(o.controlDescriptors).filter(([e, t]) => !t.hidden && ep(s, o.defaults, e) && (!t.visibleWhen || s[t.visibleWhen.key] === t.visibleWhen.value)).map(([n, i]) => {
-		let a = Object.hasOwn(t, n) ? t[n] : o.defaults[n] ?? i.default, c = ["recall", "hotkey-arm"].includes(e) && i.values ? {
+	return Object.entries(s.controlDescriptors).filter(([e, t]) => !t.hidden && ep(c, s.defaults, e) && (!t.visibleWhen || c[t.visibleWhen.key] === t.visibleWhen.value)).map(([n, i]) => {
+		let a = Object.hasOwn(t, n) ? t[n] : s.defaults[n] ?? i.default, o = ["recall", "hotkey-arm"].includes(e) && i.values ? {
 			...i,
 			valueLabels: Object.fromEntries(i.values.map((e) => [e, Mf(n, e) ?? e]))
 		} : i, l = Wf({
 			operation: e,
-			controls: s,
+			controls: c,
 			key: n,
 			descriptor: i
 		});
 		return {
-			...Qf(n, i.label || $f(n), c, a),
+			...Qf(n, i.label || $f(n), o, a),
 			...tp(e, n),
 			...[
 				"path",
@@ -12183,6 +12183,11 @@ var $f = (e) => ({
 })[e] ?? e.replace(/([A-Z])/g, (e) => " " + e.toLowerCase()).replace(/^./, (e) => e.toUpperCase());
 function ep(e, t, n) {
 	let r = (n) => e?.[n] ?? t[n];
+	if (e?.operation === "scene-context" && t.selection !== void 0) {
+		if (n === "activationMode") return !1;
+		if (n === "recentMessages") return r("selection") === "recent";
+		if (n === "keepRecentAssistantTurns") return r("selection") === "before-window";
+	}
 	return e?.operation === "compose" ? n !== "template" || r("mode") === "template" ? n !== "separator" || r("mode") === "join" : !1 : e?.operation === "text-rules" ? n !== "separator" || r("mode") === "extract" ? !["scope", "protectedLiterals"].includes(n) || r("inputKind") === "draft" : !1 : e?.operation === "smart-compactor" && n === "maxTokens" ? r("method") === "compress" : !0;
 }
 function tp(e, t) {
@@ -18847,7 +18852,7 @@ var $ = (e, t, ...n) => ({
 	summary: t,
 	howTo: n
 }), zv = {
-	"scene-context": $("Scene Context", "Bring a bounded selection of recent chat and character information into the workflow.", "Choose how many recent messages to include and whether to include character information.", "Choose Public for observable material or Actor for the selected character perspective.", "Connect Context to Smart Compactor, Response Plan, or another Context input."),
+	"scene-context": $("Scene Context", "Bring a bounded selection of recent chat and character information into the workflow.", "In runtime 3, choose Recent or Before window. Before window protects the newest assistant turns while reading eligible older pairs.", "Choose Public for observable material or Actor for the selected character perspective.", "For verified runtime-3 sources, explicitly set up chat sources in Details; opening a workflow never saves identities.", "Connect Context to Chunk, Smart Compactor, Response Plan, or another Context input."),
 	"reply-snapshot": $("Reply Snapshot", "Freeze the latest completed assistant reply so proposed edits stay tied to the correct reply.", "Place this source in the Response stage after a supported completed text reply.", "Connect Draft to Text Rules or Pattern, then inspect proposed changes before applying them."),
 	"smart-compactor": $("Smart Compactor", "Fit conversation context into a smaller budget while keeping recent messages and protected wording.", "Connect a Context source and set the target size.", "Choose Select to remove older flexible messages, or Compress to request a summary when needed.", "Set recent-message retention and protected phrases; Compress reserves their tokens and framing before requesting a summary within the remaining allowance. Inspect the budget report and resulting context."),
 	"response-plan": $("Response Plan", "Ask a model for writing direction, constraints, and possible next beats before generating a reply.", "Connect prepared Context and write instructions for the kind of plan you want.", "Choose the model binding and completion limit, then connect Guidance to the generation path.", "Treat suggested events as possibilities and keep the player’s decisions open."),
@@ -18963,6 +18968,10 @@ var $ = (e, t, ...n) => ({
 		moveContents: "Move the contained nodes along with the comment frame when enabled. Turn it off to reposition the frame without moving its nodes."
 	},
 	"scene-context": {
+		selection: "Recent selects a bounded recent message window. Before window selects eligible older turns while keeping the specified newest assistant turns outside this preparation.",
+		keepRecentAssistantTurns: "Number of newest assistant turns excluded from Before window selection. Their paired user messages remain raw; passage size does not change this boundary.",
+		maxMessages: "Maximum source messages in one explicit bounded reader page. This limit never grants processing coverage or authorizes removing history.",
+		maxTextUnits: "Maximum UTF-16 text units in the bounded source page. Inspect the reader report when the selected page reaches this limit.",
 		recentMessages: "Maximum number of recent conversation messages to include in the Context window.",
 		includeCharacter: "Include available selected-character fields as well as messages when enabled.",
 		visibilityMode: "Actor returns the selected-character perspective. Public removes restricted messages and card material before budgeting. Actor mode alone does not grant private actor authority."

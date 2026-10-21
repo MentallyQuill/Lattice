@@ -2,9 +2,10 @@
 const entry = (title, summary, ...howTo) => ({ title, summary, howTo });
 const content = {
     'scene-context': entry('Scene Context', 'Bring a bounded selection of recent chat and character information into the workflow.',
-        'Choose how many recent messages to include and whether to include character information.',
+        'In runtime 3, choose Recent or Before window. Before window protects the newest assistant turns while reading eligible older pairs.',
         'Choose Public for observable material or Actor for the selected character perspective.',
-        'Connect Context to Smart Compactor, Response Plan, or another Context input.'),
+        'For verified runtime-3 sources, explicitly set up chat sources in Details; opening a workflow never saves identities.',
+        'Connect Context to Chunk, Smart Compactor, Response Plan, or another Context input.'),
     'reply-snapshot': entry('Reply Snapshot', 'Freeze the latest completed assistant reply so proposed edits stay tied to the correct reply.',
         'Place this source in the Response stage after a supported completed text reply.',
         'Connect Draft to Text Rules or Pattern, then inspect proposed changes before applying them.'),
@@ -364,6 +365,10 @@ const controls = {
         moveContents: 'Move the contained nodes along with the comment frame when enabled. Turn it off to reposition the frame without moving its nodes.',
     },
     'scene-context': {
+        selection: 'Recent selects a bounded recent message window. Before window selects eligible older turns while keeping the specified newest assistant turns outside this preparation.',
+        keepRecentAssistantTurns: 'Number of newest assistant turns excluded from Before window selection. Their paired user messages remain raw; passage size does not change this boundary.',
+        maxMessages: 'Maximum source messages in one explicit bounded reader page. This limit never grants processing coverage or authorizes removing history.',
+        maxTextUnits: 'Maximum UTF-16 text units in the bounded source page. Inspect the reader report when the selected page reaches this limit.',
         recentMessages: 'Maximum number of recent conversation messages to include in the Context window.',
         includeCharacter: 'Include available selected-character fields as well as messages when enabled.',
         visibilityMode: 'Actor returns the selected-character perspective. Public removes restricted messages and card material before budgeting. Actor mode alone does not grant private actor authority.',
