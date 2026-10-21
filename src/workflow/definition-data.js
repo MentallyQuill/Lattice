@@ -1,3 +1,4 @@
+import { graphVersionSupported } from './workflow-versions.js?v=0.27.5';
 import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.5';
 import { cloneJsonValue } from './operations/json-data.js?v=0.27.5';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.5';
@@ -74,17 +75,18 @@ export function inspectDefinitionMetadata(value, options = {}) {
     if (!record(definition) || !idText(definition.id) || !Number.isSafeInteger(definition.version) || definition.version < 1 || typeof definition.name !== 'string' || (definition.description !== undefined && typeof definition.description !== 'string')) return fail('DEFINITION_METADATA', 'A definition requires an ID, positive exact version and display name.');
     if (definition.semanticHash !== undefined && !/^sha256:[0-9a-f]{64}$/.test(definition.semanticHash)) return fail('DEFINITION_HASH', 'Expected a sha256 hash.');
     const body = definition.body;
-    if (!record(body) || body.schema !== 3 || body.runtime !== 2 || !['native-pre', 'native-post', 'native-unified'].includes(body.mode) || !record(body.nodes) || !record(body.wires)) return fail('DEFINITION_BODY', 'Expected a schema-3/runtime-2 body with an explicit phase.');
+    if (!record(body) || !graphVersionSupported(body.schema, body.runtime) || !['native-pre', 'native-post', 'native-unified'].includes(body.mode) || !record(body.nodes) || !record(body.wires)) return fail('DEFINITION_BODY', 'Expected a schema-3/runtime-2 body with an explicit phase.');
     if (!Array.isArray(definition.interface) || !Array.isArray(definition.parameters)) return fail('DEFINITION_INTERFACE', 'Expected interface and exposed-parameter lists.');
     if (Object.keys(body.nodes).length > 1000 || Object.keys(body.wires).length > 2000) return fail('DEFINITION_LIMIT', 'Definition body exceeds local traversal limits.');
     const portIds = new Set(), boundaries = new Set(), boundaryPorts = {};
     for (const port of definition.interface) {
         if (!record(port) || !idText(port.id) || typeof port.label !== 'string' || !['input', 'output'].includes(port.direction) || !ARTIFACT_KINDS.includes(port.kind) || typeof port.required !== 'boolean' || port.cardinality !== 'one' || !idText(port.boundaryNodeId)) return fail('DEFINITION_INTERFACE', 'Invalid interface port metadata.');
+        if (port.semanticShape !== undefined && (port.kind !== 'data' || typeof port.semanticShape !== 'string' || !port.semanticShape.trim() || port.semanticShape.length > 128)) return fail('DEFINITION_INTERFACE', 'Semantic shape must be a bounded Data annotation.');
         if (portIds.has(port.id) || boundaries.has(port.boundaryNodeId)) return fail('DEFINITION_INTERFACE', 'Interface and boundary mappings must be unique.');
         const node = body.nodes[port.boundaryNodeId];
         if (!Object.hasOwn(body.nodes, port.boundaryNodeId) || !record(node) || node.id !== port.boundaryNodeId || node.interfacePortId !== port.id || node.type !== `subgraph-${port.direction}`) return fail('DEFINITION_INTERFACE', 'Each interface port requires exactly one matching boundary.');
         portIds.add(port.id); boundaries.add(port.boundaryNodeId);
-        boundaryPorts[node.id] = Object.freeze({ id: port.direction === 'input' ? 'out' : 'in', kind: port.kind, direction: port.direction === 'input' ? 'output' : 'input', required: port.direction === 'output', cardinality: 'one' });
+        boundaryPorts[node.id] = Object.freeze({ id: port.direction === 'input' ? 'out' : 'in', kind: port.kind, direction: port.direction === 'input' ? 'output' : 'input', required: port.direction === 'output', cardinality: 'one', ...(port.semanticShape ? {semanticShape:port.semanticShape} : {}) });
     }
     for (const [id, node] of Object.entries(body.nodes)) {
         if (record(node) && ['subgraph-input', 'subgraph-output'].includes(node.type) && (!boundaries.has(id) || node.id !== id)) return fail('DEFINITION_INTERFACE', 'A boundary node has no matching interface port.');
@@ -205,7 +207,7 @@ export function computeDefinitionIdentity(value, options = {}) {
             else return fail('UNKNOWN_OPERATION', 'Cannot hash an unknown node type.');
         }
         const semantic = {
-            interface: draft.interface.map(port => pick(port, ['id', 'kind', 'direction', 'required', 'cardinality', 'boundaryNodeId'])),
+            interface: draft.interface.map(port => pick(port, ['id', 'kind', 'direction', 'required', 'cardinality', 'boundaryNodeId', 'semanticShape'])),
             parameters: draft.parameters.map(parameter => ({ id: parameter.id, target: pick(parameter.target, ['instancePath', 'nodeId', 'controlId']) })),
             body: {
                 schema: draft.body.schema, runtime: draft.body.runtime, mode: draft.body.mode, nodes,

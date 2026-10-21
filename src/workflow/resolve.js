@@ -131,7 +131,7 @@ export function prepareWorkflowAttempt(root, options = {}) {
     };
     let preflight = selectClosure(index, options.target);
     if (preflight.ok) for (const unit of selectedPlan.primitives.filter(unit=>unit.included && !unit.systemDisabled)) {
-        const strict = describeOperation({schema:3,runtime:2,mode:'native-unified'}, {...unit.node,phase:unit.phase});
+        const strict = describeOperation({schema:root.schema,runtime:root.runtime,mode:'native-unified'}, {...unit.node,phase:unit.phase});
         if (!strict.ok) { preflight = {...strict,error:{...strict.error,nodeId:unit.address.nodeId,address:unit.address}}; break; }
     }
     return {ok:true,data:{selection:selectedPlan,preflight:preflight.ok ? {ok:true,data:selectedPlan} : preflight}};

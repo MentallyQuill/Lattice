@@ -44,7 +44,7 @@ function selectFragment(source, expansion, selection, path, snapshots) {
         if (node.type !== 'subgraph') continue;
         const prefix = [...path, id], units = expansion.primitives.filter(unit => pathStartsWith(unit.address.instancePath, prefix));
         const baselineNode = structuredClone(node); delete baselineNode.inGroup;
-        const baseline = inspectExpandedGraph({ schema: 3, runtime: 2, mode: effective.mode, nodes: { [id]: baselineNode }, wires: {}, roles: effective.roles ?? {}, definitions: pool.definitions });
+        const baseline = inspectExpandedGraph({ schema: source.schema, runtime: source.runtime, mode: effective.mode, nodes: { [id]: baselineNode }, wires: {}, roles: effective.roles ?? {}, definitions: pool.definitions });
         if (!baseline.ok) return baseline;
         const differences = [];
         node.nodeBindingOverrides ??= {};

@@ -1,3 +1,4 @@
+import { executeChunk } from './operations/chunk.js?v=0.27.5';
 import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.5';
 import { preserveArtifactPrivacy } from './artifact-privacy.js?v=0.27.5';
 import { compileIterationHelper, executeCompiledIteration } from './iteration-helpers.js?v=0.27.5';
@@ -49,6 +50,7 @@ function planWorkflow(graph,ports) {
 }
 async function executeNode(node,inputs,op,local) {
     const input=inputs.in;
+    if(node.operation==='chunk')return executeChunk(node,inputs,local);
     if(op.hostOperation||local.executeHostOperation&&['scene-context','reply-snapshot','prompt-source'].includes(node.operation)) {
         if(!local.root&&!isScopedSystemOperation(node)||!local.executeHostOperation)return failure('HOST_OPERATION_REQUIRED','This operation requires its owned root host adapter.',node.id);
         return local.executeHostOperation(node,inputs,{phase:local.phase,rootMode:local.rootMode,root:local.root,address:local.address,inputStates:local.inputStates,request:local.request,getRequestBindings:local.getRequestBindings,...(local.signal?{signal:local.signal}:{})});

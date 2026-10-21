@@ -294,7 +294,7 @@ export function materializeInstanceDefinition(graph, command) {
             wires[id] = { id, route: 'wire', ...(port.direction === 'input' ? { from: port.boundaryNodeId, fromPort: 'out', to: wrapperId, toPort: port.id } : { from: wrapperId, fromPort: port.id, to: port.boundaryNodeId, toPort: 'in' }) };
         }
         shell.parameters = shell.parameters.map(parameter => ({ ...parameter, target: { ...parameter.target, instancePath: [wrapperId, ...parameter.target.instancePath] } }));
-        shell.body = { schema: 3, runtime: 2, mode: shell.body.mode, nodes, wires };
+        shell.body = { schema: shell.body.schema, runtime: shell.body.runtime, mode: shell.body.mode, nodes, wires };
         const finished = finalizedDefinition(shell); if (!finished.ok) return finished;
         data.definition = finished.data; data.definitions[definitionRefKey(finished.data)] = finished.data;
     }

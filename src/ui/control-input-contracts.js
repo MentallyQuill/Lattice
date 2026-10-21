@@ -18,7 +18,7 @@ declare('path', 'condition.path confidence-gate.metricPath collection.collection
 declare('rows', 'compose.sections text-rules.rules select-fields.fields format.fields context-join.inputs join.inputs collect.inputs state.updates state.durations');
 declare('questions', 'decision.questions');
 declare('schedules', 'advance-time.schedules');
-declare('value', 'time-trigger.metadata');
+declare('value', 'time-trigger.metadata chunk.tokenizerBinding');
 declare('schema', 'json-decode.schema extract.schema model-call.schema format.schema read-file.schema write-file.schema project-document.schema');
 declare('value', 'condition.value collection.value select-fields.default format.default');
 declare('helper', 'for-each.helper for-each.roleOverrides');
@@ -87,6 +87,7 @@ function compileRecords(spec, entries, currentValue) {
 /** Intrinsic field checks: sibling ranges, identity and scope are checked at Save. */
 function independentFieldCheck(base, value) {
     const invalid = message => fail('INVALID_CONTROL_VALUE', message);
+    if (base === 'chunk.tokenizerBinding') return value && typeof value === 'object' && !Array.isArray(value) && (!Object.keys(value).length || Object.keys(value).length === 3 && ['tokenizerId','version','model'].every(key => typeof value[key] === 'string' && value[key].trim() && value[key].length <= 256)) ? good({value}) : invalid('Use an exact tokenizer ID, version and model binding.');
     if (declarations.get(base) === 'list') {
         const nonblank = base === 'pattern.exemptions' || base.endsWith('.protectedLiterals') || base.startsWith('recall.') || base.endsWith('.fields') || base === 'item-mention-trigger.aliases';
         const limit = listStringBounds.get(base) ?? Infinity;

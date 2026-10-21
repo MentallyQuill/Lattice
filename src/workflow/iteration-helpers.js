@@ -1,3 +1,4 @@
+import { graphVersionSupported } from './workflow-versions.js?v=0.27.5';
 import {cloneDefinitionData,inspectPinnedDefinitionIdentity,definitionRefKey,artifactAddressKey,nodeBindingOverrideKey} from './definition-data.js?v=0.27.5';
 import {inspectDefinitionGraph,nodeAddressKey} from './graph-validation.js?v=0.27.5';
 import {prepareWorkflowPlanner,preparedWorkflowExpansion,resolveWorkflow} from './resolve.js?v=0.27.5';
@@ -50,7 +51,7 @@ export function compileIterationHelper(root,options) {
         const checkedRoot=cloneDefinitionData(root),checkedOptions=cloneDefinitionData(options);
         if(!checkedRoot.ok)return checkedRoot;if(!checkedOptions.ok)return checkedOptions;
         const graph=checkedRoot.data,settings=checkedOptions.data,at=nodeAddress(own(settings,'address'));
-        if(!plain(graph)||graph.schema!==3||graph.runtime!==2||!['native-pre','native-post','native-unified'].includes(graph.mode)||!plain(settings)||!at||at.workflowId!==graph.id||!['pre','post'].includes(settings.phase)||!['map','projected-state'].includes(settings.mode)||!Number.isSafeInteger(settings.requestBoundPerIteration)||settings.requestBoundPerIteration<0||settings.requestBoundPerIteration>16)return fail('INVALID_ITERATION_SETTINGS','Compile a schema 3 pinned helper with an explicit phase, owner address and finite request bound.');
+        if(!plain(graph)||!graphVersionSupported(graph.schema,graph.runtime)||!['native-pre','native-post','native-unified'].includes(graph.mode)||!plain(settings)||!at||at.workflowId!==graph.id||!['pre','post'].includes(settings.phase)||!['map','projected-state'].includes(settings.mode)||!Number.isSafeInteger(settings.requestBoundPerIteration)||settings.requestBoundPerIteration<0||settings.requestBoundPerIteration>16)return fail('INVALID_ITERATION_SETTINGS','Compile a schema 3 pinned helper with an explicit phase, owner address and finite request bound.');
         if(!boundedAddress(at))return fail('ITERATION_ADDRESS_LIMIT','Iteration identities must fit the bounded root request history.');
         if(graph.mode!=='native-unified'&&graph.mode!=='native-'+settings.phase)return fail('ITERATION_PHASE','The root workflow and iteration stage must agree.');
         let roles=graph.roles??{},ownerScope=graph,ownerChain=[];
@@ -95,7 +96,7 @@ function compile(graph,settings,active,work) {
         const nodes={[ITEM_TEXT]:seed(ITEM_TEXT,'text',settings.phase),[ITEM_DATA]:seed(ITEM_DATA,'json-decode',settings.phase),[MOUNT]:{id:MOUNT,type:'subgraph',definition:pinned.data.ref,roleOverrides:mountOverrides,nodeBindingOverrides:mountedNodeBindings(def,graph.definitions,inspected.data.expansion.primitives,settings.roleOverrides)}};
         const wires={itemDecode:wire('itemDecode',ITEM_TEXT,'out',ITEM_DATA,'in'),itemInput:wire('itemInput',ITEM_DATA,'out',MOUNT,'item')};
         if(find('projectedState','input')){nodes[STATE_TEXT]=seed(STATE_TEXT,'text',settings.phase);nodes[STATE_DATA]=seed(STATE_DATA,'json-decode',settings.phase);wires.stateDecode=wire('stateDecode',STATE_TEXT,'out',STATE_DATA,'in');wires.stateInput=wire('stateInput',STATE_DATA,'out',MOUNT,'projectedState');}
-        const mounted={id:graph.id,schema:3,runtime:2,mode:'native-unified',roles:settings.roles,definitions:graph.definitions,nodes,wires};
+        const mounted={id:graph.id,schema:graph.schema,runtime:graph.runtime,mode:'native-unified',roles:settings.roles,definitions:graph.definitions,nodes,wires};
         const planned=prepareWorkflowPlanner(mounted);if(!planned.ok)return planned;
         const expanded=preparedWorkflowExpansion(mounted,planned.data);if(!expanded.ok)return expanded;
         const expansion=expanded.data,scopes=new Map(expansion.scopes.map(scope=>[pathKey(scope.instancePath),scope.graph]));

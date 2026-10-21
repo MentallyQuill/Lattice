@@ -1,3 +1,4 @@
+import { graphVersionSupported } from '../workflow/workflow-versions.js?v=0.27.5';
 import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.5';
 import { ARTIFACT_KINDS, FAMILIES, OPERATIONS, describeAuthoredOperation, operationDefaults } from '../workflow/catalog.js?v=0.27.5';
 import { cloneDefinitionData, definitionRefKey } from '../workflow/definitions.js?v=0.27.5';
@@ -55,6 +56,7 @@ const searchMetadata = cloneDefinitionData({
     'reply-snapshot': { purpose: 'Capture the assistant response before cleanup.', shortcode: 'rs', searchAliases: ['reply-snapshot', 'original reply'] },
     'smart-compactor': { purpose: 'Reduce token usage while preserving protected facts.', shortcode: 'cp', searchAliases: ['smart-compactor', 'compaction'] },
     'response-plan': { purpose: 'Plan the next response with user agency and scene continuity.', shortcode: 'rp', searchAliases: ['response-plan', 'planner'] },
+    chunk: { purpose: 'Divide exact Text into bounded Unicode-safe records without a model or storage write.', shortcode: 'ch', searchAliases: ['chunk', 'paragraph', 'sentence', 'split text'] },
     'filter-text': { purpose: 'Remove or keep matching lines or paragraphs using a fresh Pattern report and Draft permissions.', shortcode: 'ft', searchAliases: ['filter text', 'remove paragraph', 'keep matches', 'delete line'] },
     pattern: { purpose: 'Detect patterns and count occurrences to route a Draft.', shortcode: 'ps', searchAliases: ['pattern', 'literal search', 'whole word', 'regex', 'keyword'] },
     repair: { purpose: 'Revise prose into guarded patches.', shortcode: 'rr', searchAliases: ['prose repair', 'cleanup'] },
@@ -96,7 +98,7 @@ export function prepareNativeSearchCatalog(scope, options = {}) {
     if (!admitted.ok) return admitted;
     const input = admitted.data.scope, settings = admitted.data.options;
     if (!exact(input, ['schema', 'runtime', 'mode', 'workflowId', 'viewPath', 'inDefinition'])
-        || input.schema !== 3 || input.runtime !== 2 || !(input.mode === 'native-unified' || input.inDefinition && ['native-pre', 'native-post'].includes(input.mode))
+        || !graphVersionSupported(input.schema,input.runtime) || !(input.mode === 'native-unified' || input.inDefinition && ['native-pre', 'native-post'].includes(input.mode))
         || !text(input.workflowId) || !Array.isArray(input.viewPath) || input.viewPath.length > 8 || !input.viewPath.every(text)
         || typeof input.inDefinition !== 'boolean' || input.inDefinition !== (input.viewPath.length > 0)
         || !exact(settings, ['checkedLibraryEntries', 'checkedLibraryClosures'])

@@ -1,3 +1,4 @@
+import { graphVersionSupported } from './workflow-versions.js?v=0.27.5';
 import { workflowRunTargets } from './run-targets.js?v=0.27.5';
 import { ownJsonData } from './semantic-json-data.js?v=0.27.5';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.5';
@@ -132,7 +133,7 @@ export function prepareNodeControlChange(graph, command) {
     if (!safeWorkflowData(command, { command: true, controlsOperation: operation }) || !command || typeof command !== 'object' || Array.isArray(command) || typeof command.nodeId !== 'string' || !command.controls || typeof command.controls !== 'object' || Array.isArray(command.controls) || Object.keys(command).some(key => !['nodeId', 'controls', 'removeEdgeIds'].includes(key)) || command.removeEdgeIds !== undefined && (!Array.isArray(command.removeEdgeIds) || command.removeEdgeIds.some(id => typeof id !== 'string'))) return fail('INVALID_SETTINGS', 'Expected declared control changes and explicit incident wire IDs.');
     const normalized = cloneWorkflowDocument(graph);
     if (!normalized.ok) return normalized;
-    if (graph.schema !== 3 || graph.runtime !== 2) return fail('UNSUPPORTED_VERSION', 'Named control editing requires schema 3 and runtime 2.');
+    if (!graphVersionSupported(graph.schema, graph.runtime)) return fail('UNSUPPORTED_VERSION', 'Named control editing requires schema 3 and runtime 2.');
     const candidate = normalized.data;
     const applied = applyDeclaredNodeControlChange({ scope: candidate, metadata: () => candidate }, command);
     if (!applied.ok) return applied;

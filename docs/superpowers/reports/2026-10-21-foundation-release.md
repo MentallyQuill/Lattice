@@ -40,4 +40,12 @@ Locked dependency installation succeeded (97 packages; package/lock inputs uncha
 | F03 legacy compatibility | 95-file baseline captured; 30 visible and 32 hidden entries confirmed; candidate compatibility checks still pending |
 | F04–F16 | Not verified for the foundation candidate |
 
-The earlier full-memory component tests, latest14native locator/ACK checks, declaration/app type checks and2checkpoint evidence remain preserved. They do not substitute for foundation installed acceptance. Paid calls0; native foundation lesson proofs0; capstone soaks are deferred. No foundation product implementation, version bump, release package, review closure or main push has been performed at this point.
+The earlier full-memory component tests, latest14native locator/ACK checks, declaration/app type checks and2checkpoint evidence remain preserved. They do not substitute for foundation installed acceptance. Paid calls0; native foundation lesson proofs0; capstone soaks are deferred. A bounded Text Chunk transfer is verified below. No version bump, release package, whole-branch review closure or main push has been performed.
+
+## First bounded capability: Text Chunk
+
+Transferred only historical Text Chunk/runtime-3 change7542a40 and source DTO dependency385e520, including directly affected authoring/package/control tests. No new maintenance, Job, embedding, retrieval or history-replacement domain was transferred.
+
+A genuine new foundation regression first failed UNKNOWN_OPERATION (1fail/1pass). After transfer, both the actual Chunk catalog/runtime/portable-package handoff and deferred-operation absence checks pass; raw chunks retain exact snapshot offsets, no invented native source references, and zero model calls. Twelve focused affected test files passed in8seconds. Application types report0errors/0warnings. All95 legacy artifact/data-file hashes remain unchanged.
+
+This closes the first Text Chunk handoff only. Live native source grouping, later relevant correctness fixes, singleton lesson packaging/catalog/guides, complete34/35 user journeys, installed assets and the full release acceptance matrix remain unfinished. No latency or readiness claim is inferred for those paths.

@@ -327,9 +327,9 @@ test('Pattern shared admission matches Unicode regex syntax and 128-character la
 });
 
 
-test('exhaustive dynamic catalog projection covers all 33 structured operation families and every declared visibility branch',async()=>{
+test('exhaustive dynamic catalog projection covers all 34 structured operation families and every declared visibility branch',async()=>{
  const {OPERATIONS,operationFor}=await import('../src/workflow/catalog.js');const {projectNodeControls}=await import('../src/ui/node-control-projection.js');const {introspectionDefaults}=await import('../src/workflow/introspection/native.js');
- const expected=['smart-compactor','pattern','filter-text','repair','compose','text-rules','json-decode','select-fields','style-transfer','format-transfer','terminology-map','context','state','condition','join','collect','confidence-gate','for-each','decision','extract','model-call','revise-draft','format','read-file','write-file','project-document','time-trigger','advance-time','item-mention-trigger','collection','recall','hotkey-arm','context-join'].sort(),exposed=new Set(),seen=new Set();
+ const expected=['chunk','smart-compactor','pattern','filter-text','repair','compose','text-rules','json-decode','select-fields','style-transfer','format-transfer','terminology-map','context','state','condition','join','collect','confidence-gate','for-each','decision','extract','model-call','revise-draft','format','read-file','write-file','project-document','time-trigger','advance-time','item-mention-trigger','collection','recall','hotkey-arm','context-join'].sort(),exposed=new Set(),seen=new Set();
  for(const [operation,entry]of Object.entries(OPERATIONS)){
   const dimensions=new Map(Object.entries(entry.controlDescriptors).filter(([,d])=>d.type==='enum').map(([k,d])=>[k,d.values]));
   for(const d of Object.values(entry.controlDescriptors))if(d.visibleWhen){const values=dimensions.get(d.visibleWhen.key)??[entry.defaults[d.visibleWhen.key]];dimensions.set(d.visibleWhen.key,[...new Set([...values,d.visibleWhen.value])]);}

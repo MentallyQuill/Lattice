@@ -1,3 +1,4 @@
+import { graphSatisfies } from './workflow-versions.js?v=0.27.5';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.5';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.5';
 import { cloneWorkflowDocument } from './document.js?v=0.27.5';
@@ -70,6 +71,7 @@ export function prepareWorkflowInsertion(destination, imported, options = {}) {
         if (!source.ok) return source;
         if (viewPath.length && !ownsDefinitionPath(target.data, viewPath)) return fail('READ_ONLY_VIEW', 'Make an explicit local copy of the containing view before insertion.');
         const containingDefinition = viewPath.length ? definitionChain(target.data, viewPath).at(-1).definition : null;
+        if (!graphSatisfies(containingDefinition?.body ?? target.data, {minimumSchema:source.data.schema,minimumRuntime:source.data.runtime})) return fail('UNSUPPORTED_VERSION','The fragment requires a newer containing graph/runtime pair.');
         if ((containingDefinition?.body.mode ?? target.data.mode) !== source.data.mode) return fail('MODE_MISMATCH', 'Paste a fragment compatible with the containing stage.');
         for (const graph of [containingDefinition?.body ?? target.data, source.data]) {
             const items = [...Object.values(graph.nodes), ...Object.values(graph.groups ?? {})];

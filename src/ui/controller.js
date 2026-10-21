@@ -277,7 +277,7 @@ function prepareWorkspaceDocument(change = null) {
     else { workspacePrepared.definitionInfo = {}; workspacePrepared.libraryIssue = diagnosticText(library.error); }
     workspacePrepared.catalogs = new Map();
     for (const view of workspacePrepared.preparedViews) if (view.identity.kind !== 'library') {
-        const catalog = prepareNativeSearchCatalog({schema:3,runtime:2,mode:current.mode,workflowId:current.id,viewPath:view.identity.instancePath ?? [],inDefinition:view.identity.kind === 'instance'}, {checkedLibraryClosures:workspacePrepared.shelfEntries.map(definition=>({definition,snapshots:workspacePrepared.shelfDefinitions}))});
+        const catalog = prepareNativeSearchCatalog({schema:view.savedGraph.schema,runtime:view.savedGraph.runtime,mode:view.savedGraph.mode,workflowId:current.id,viewPath:view.identity.instancePath ?? [],inDefinition:view.identity.kind === 'instance'}, {checkedLibraryClosures:workspacePrepared.shelfEntries.map(definition=>({definition,snapshots:workspacePrepared.shelfDefinitions}))});
         if (catalog.ok) workspacePrepared.catalogs.set(viewIdentityKey(view.identity),catalog.data);
     }
     return true;

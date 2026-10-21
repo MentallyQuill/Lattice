@@ -3,6 +3,7 @@ export type Result<T> = { ok: true; data: T } | { ok: false; error: WorkflowErro
 export interface WorkflowError { code: string; message: string; nodeId?: string; address?: NodeAddress; inputPortId?: string; }
 export type { PatternRule, PatternSettings, PatternOccurrence, PatternMatchReport, PatternReportBinding } from './operations/pattern-engine';
 export type { FilterTextSettings, FilterTextReport } from './operations/filter-text';
+export type { ChunkSettings, ChunkRecord, ChunkReport, ChunkTokenizer, ChunkTokenizerBinding } from './operations/chunk';
 export type ArtifactKind = 'context' | 'draft' | 'patches' | 'candidate' | 'guidance' | 'text' | 'data';
 export type WorkflowPhase = 'pre' | 'post';
 export type WorkflowRunPhase = WorkflowPhase | 'unified';
@@ -18,6 +19,7 @@ export interface PortDescriptor {
     required: boolean;
     /** Inputs accept one binding; outputs may fan out to many consumers. */
     cardinality: 'one';
+    semanticShape?: string;
 }
 export type ControlDescriptor = ({ label?: string; valueLabels?: Record<string, string>; editor?: 'text' | 'json'; exposable?: boolean; maxLength?: number; multiline?: boolean; hidden?: boolean; visibleWhen?: { key: string; value: string | boolean | number }; help?: string } & (
     | { type: 'integer'; min: number; max: number; default: number }
@@ -30,7 +32,7 @@ export type ControlDescriptor = ({ label?: string; valueLabels?: Record<string, 
     | { type: 'object'; max?: number; default: { [key: string]: import('./operations/json-data').JsonValue } }));
 export interface OperationDescriptor {
     id: string; title: string; family: string; phase: WorkflowPhase | 'both' | null;
-    minimumSchema?: 3; input: ArtifactKind | null; output: ArtifactKind | null;
+    minimumSchema?: 3 | 4; minimumRuntime?: 2 | 3; input: ArtifactKind | null; output: ArtifactKind | null;
     controls: string[]; controlDescriptors: Record<string, ControlDescriptor>; defaults: Record<string, unknown>;
     requestCapability?: 'text-completion';
     requestBound: number | ((node: NativeNode) => number); modelRole: string | null; terminal: boolean; dynamicPorts?: boolean;
@@ -70,7 +72,7 @@ export interface BoundaryNode { id: string; type: 'subgraph-input' | 'subgraph-o
 export interface ParameterTarget { instancePath: string[]; nodeId: string; controlId: string; }
 export interface ExposedParameter { id: string; label: string; target: ParameterTarget; }
 export interface DefinitionBody {
-    schema: 3; runtime: 2; mode: NativeWorkflowMode;
+    schema: 3 | 4; runtime: 2 | 3; mode: NativeWorkflowMode;
     nodes: Record<string, NativeNode | SubgraphInstance | BoundaryNode>;
     wires: Record<string, DirectWire | PortalWire>;
     groups?: Record<string, Record<string, unknown>>;
@@ -105,7 +107,7 @@ export interface WorkflowRunTarget { instancePath: string[]; nodeId: string; }
 export type RootWorkflow = NativeGraph3;
 export interface NativeGraph3 extends NativeDocument {
     runTargets?: WorkflowRunTarget[];
-    schema: 3; runtime: 2; wires: Record<string, DirectWire | PortalWire>;
+    schema: 3 | 4; runtime: 2 | 3; wires: Record<string, DirectWire | PortalWire>;
     portals?: Record<string, Portal>;
     definitions?: SnapshotTable;
     /** Full wrapper paths; immutable definition bodies never contain this permission registry. */
@@ -282,7 +284,7 @@ export interface RecordedPreviewSection {
 }
 export interface TerminalReviewHandle { handleId: string; runId: string; terminal: TerminalTarget; }
 interface BoundedRunData { runId: string; ok: boolean; callBound: number; actualCalls: number; recording: Recording; error?: WorkflowError; preview?: true; }
-export type BoundedWorkflowRunResult = BoundedRunData & { schema: 3; runtime: 2; mode: 'root' | 'target' };
+export type BoundedWorkflowRunResult = BoundedRunData & { schema: 3 | 4; runtime: 2 | 3; mode: 'root' | 'target' };
 /** A failed factory can return no recording; consumers preserve their prior bounded record. */
 export interface WorkflowPreparationFailure { schema?: number; runtime?: number; mode: 'root' | 'target'; runId?: string; ok: false; callBound: number; actualCalls: number; error: WorkflowError; recording?: never; }
 export type WorkflowRunResult = BoundedWorkflowRunResult | WorkflowPreparationFailure;
@@ -291,4 +293,7 @@ export interface WorkflowRunOptions {
     target?: WorkflowTarget; onEvent?: (event: RunEvent) => unknown; runId?: string;
     clock?: { now(): number; monotonic(): number }; phase?: WorkflowRunPhase; signal?: AbortSignal; preview?: boolean; dryRun?: boolean;
     iterateHelper?: import('./operations/control-nodes').IterateHelper;
+    chunkTokenizer?: import('./operations/chunk').ChunkTokenizer;
+    /** Host-captured descriptive identity for authored Text; never source or omission authority. */
+    chunkScope?: import('./source-manifests').Scope;
 }

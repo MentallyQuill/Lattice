@@ -6,7 +6,7 @@ import * as guide from '../src/ui/node-guide-content.js';
 
 test('every selectable operation and structural node offers practical guide content', () => {
     const keys = [...Object.keys(OPERATIONS), 'note', 'comment', 'subgraph', 'subgraph-input', 'subgraph-output'];
-    assert.equal(keys.length, 80);
+    assert.equal(keys.length, 81);
     for (const key of keys) {
         const entry = guide.getNodeGuide(key);
         assert.ok(entry, `${key} has a guide`);
@@ -46,13 +46,14 @@ function effectiveDescriptions() {
     const descriptions = [];
     for (const operation of Object.keys(OPERATIONS)) {
         const node = { type: 'workflow', ...operationDefaults(operation), ...configured[operation] };
-        const result = describeOperation(graph, node);
+        const operationGraph = OPERATIONS[operation].minimumRuntime === 3 ? {...graph,schema:4,runtime:3} : graph;
+        const result = describeOperation(operationGraph, node);
         assert.equal(result.ok, true, `${operation}: ${JSON.stringify(result.error)}`);
         descriptions.push(result.data.descriptor);
         // Exercise every accepted enum variation, including controls that alter named pins.
         for (const [key, descriptor] of Object.entries(result.data.descriptor.controlDescriptors)) {
             for (const value of descriptor.values ?? []) {
-                const variant = describeOperation(graph, { ...node, [key]: value });
+                const variant = describeOperation(operationGraph, { ...node, [key]: value });
                 if (variant.ok) descriptions.push(variant.data.descriptor);
             }
         }

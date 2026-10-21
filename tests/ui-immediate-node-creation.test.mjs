@@ -47,7 +47,9 @@ test('every available primitive and preset command is offered without a setup ga
  const catalog=prepareNativeSearchCatalog({schema:3,runtime:2,mode:'native-unified',workflowId:'all-nodes',viewPath:[],inDefinition:false});
  assert.equal(catalog.ok,true,JSON.stringify(catalog.error));
  const choices=catalog.data.choices.filter(choice=>choice.id.startsWith('operation:'));
- assert.equal(choices.length,Object.keys(OPERATIONS).length);
+ assert.equal(choices.length,Object.keys(OPERATIONS).length-1);
+ assert.equal(choices.some(choice=>choice.id==='operation:chunk'),false);
+ const modern=prepareNativeSearchCatalog({schema:4,runtime:3,mode:'native-unified',workflowId:'modern-nodes',viewPath:[],inDefinition:false});assert.equal(modern.ok,true);assert.equal(modern.data.choices.filter(choice=>choice.id.startsWith('operation:')).length,Object.keys(OPERATIONS).length);
  for(const choice of choices){
   assert.equal(choice.requiresConfiguration,undefined,choice.label);
   assert.equal(resolveNativeSearchChoice(catalog.data,choice.id).requiresConfiguration,undefined,choice.label);
@@ -109,4 +111,22 @@ test('library readiness follows its relative wrapper path before selecting a sam
  controllerFunction('openReadinessDetails',env)(selection,{field:'actorId',address:{kind:'library',definitionRef:top,instancePath:['wrapper'],nodeId:'memory'}});
  assert.deepEqual(opened,[['openLibrary',child]]);
  assert.deepEqual(shown,[{view:'child-view',kind:'node',id:'memory'}]);
+});
+
+
+test('Chunk places directly through the real controller in an admitted runtime-3 graph',async()=>{
+ const f=fixture();f.env.current.schema=4;f.env.current.runtime=3;
+ f.env.prepareNativeCreation=(_,command)=>prepareNativeConnectionEdit(f.env.current,command);
+ const result=await f.env.requestNodeCreation(f.capture,{kind:'create',operation:'chunk',graphPoint:{x:80,y:100}});
+ assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.data.candidate.schema,4);assert.equal(result.data.candidate.runtime,3);assert.equal(result.data.candidate.nodes[result.data.addedNodeIds[0]].operation,'chunk');assert.equal(f.configurationCount(),0);
+});
+
+test('workspace controller search catalogs retain the actual root and instance version pairs',()=>{
+ const root={id:'modern-workspace',schema:4,runtime:3,mode:'native-unified',nodes:{},wires:{},definitions:{}};
+ const env={current:root,workspaceIssue:'',workspaceRevision:0,workspacePrepared:null,workspaceInputs:()=>({}),workflowRunTargets:()=>({data:[]}),
+ prepareWorkspaceViews:()=>({ok:true,data:{navigation:[],preparedViews:[{identity:{kind:'root'},savedGraph:root},{identity:{kind:'instance',instancePath:['old']},savedGraph:{schema:3,runtime:2,mode:'native-pre'}}]}}),
+ L:{loadSubgraphLibrary:()=>({ok:true,data:{definitions:{}}}),getSubgraphShelfEntries:()=>({ok:true,data:[]})},prepareLibraryViews:()=>({ok:true,data:{definitionInfo:{},navigation:[],preparedViews:[]}}),prepareNativeSearchCatalog,viewIdentityKey:identity=>identity.kind,diagnosticText:()=>'',toast:()=>{throw Error('unexpected failure');}};
+ assert.equal(controllerFunction('prepareWorkspaceDocument',env)(),true);
+ assert.ok(env.workspacePrepared.catalogs.get('root').choices.some(choice=>choice.id==='operation:chunk'));
+ assert.equal(env.workspacePrepared.catalogs.get('instance').choices.some(choice=>choice.id==='operation:chunk'),false);
 });

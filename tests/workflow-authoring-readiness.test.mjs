@@ -42,7 +42,7 @@ test('selected independent target excludes incomplete settings while included se
 });
 test('all registered defaults with supported phase admit declared authoring controls',()=>{
  for(const operation of Object.keys(OPERATIONS).filter(id=>id!=='reroute')){
-  const graph=empty(),node={id:operation,type:'workflow',...operationDefaults(operation)};
+  const graph={...empty(),...(OPERATIONS[operation].minimumRuntime===3?{schema:4,runtime:3}:{})},node={id:operation,type:'workflow',...operationDefaults(operation)};
   const result=describeAuthoredOperation(graph,node);
   assert.equal(result.ok,true,operation+': '+JSON.stringify(result));
  }

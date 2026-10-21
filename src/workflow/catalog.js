@@ -1,3 +1,5 @@
+import { CHUNK_OPERATION, describeChunk } from './operations/chunk.js?v=0.27.5';
+import { graphSatisfies } from './workflow-versions.js?v=0.27.5';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.5';
 import { RECALL_OPERATIONS, describeRecallNode } from './operations/recall-nodes.js?v=0.27.5';
 import { LIFECYCLE_OPERATIONS, describeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.27.5';
@@ -36,6 +38,7 @@ export const OPERATIONS = {
     'reply-snapshot': descriptor('reply-snapshot', 'Reply Snapshot', 'Input', 'post', null, 'draft'),
     'smart-compactor': descriptor('smart-compactor', 'Smart Compactor', 'Shaping', 'pre', 'context', 'context', { targetTokens: 1200, purpose: '', method: 'select', keepRecent: 2, pins: [], maxTokens: 1024 }, { modelRole: 'Analysis', requestBound: node => node.method === 'compress' ? 1 : 0 }),
     'response-plan': descriptor('response-plan', 'Response Plan', 'Shaping', 'pre', 'context', 'guidance', { instructions: '', maxTokens: 768 }, { modelRole: 'Analysis', requestBound: 1 }),
+    chunk: CHUNK_OPERATION,
     pattern: PATTERN_OPERATION,
     'filter-text': FILTER_TEXT_OPERATION,
     repair: descriptor('repair', 'Repair', 'Surface', 'post', 'draft', 'patches', { mode: 'repair', scope: 'narration', categories: [], caseSensitive: false, strength: 'light', instructions: '', maxTokens: 2048, protectedLiterals: [] }, { modelRole: 'Prose', requestBound: node => ['scan', 'inspect'].includes(node.mode) ? 0 : 1 }),
@@ -73,7 +76,7 @@ OPERATIONS.repair.controlDescriptors.categories.label = 'Policy categories (empt
 for (const [key, label] of Object.entries({ mode: 'Mode', scope: 'Scope', caseSensitive: 'Case sensitive', strength: 'Strength', instructions: 'Instructions', maxTokens: 'Output tokens', protectedLiterals: 'Protected literals' })) OPERATIONS.repair.controlDescriptors[key].label = label;
 const contextJoinDescriptor = source => ({ ...source, controlDescriptors: { inputs: { ...source.controlDescriptors.inputs, label: 'Inputs', editor: 'json', exposable: false } } });
 OPERATIONS['context-join'] = contextJoinDescriptor(describeContextJoin({ type: 'workflow', operation: 'context-join', operationVersion: 1, inputs: [{ id: 'context-1', label: 'Context 1' }, { id: 'context-2', label: 'Context 2' }] }).data.descriptor);
-const newOperation = id => Object.hasOwn(RECALL_OPERATIONS, id) || Object.hasOwn(LIFECYCLE_OPERATIONS, id) || Object.hasOwn(FILE_OPERATIONS, id) || Object.hasOwn(TIME_OPERATIONS, id) || Object.hasOwn(EVENT_OPERATIONS, id) || Object.hasOwn(RANDOM_OPERATIONS, id) || Object.hasOwn(COLLECTION_OPERATIONS, id) || Object.hasOwn(MODEL_OPERATIONS, id) || Object.hasOwn(DECISION_OPERATIONS, id) || Object.hasOwn(CONTROL_OPERATIONS, id) || Object.hasOwn(INPUT_OPERATIONS, id) || Object.hasOwn(PRIMITIVE_OPERATIONS, id) || Object.hasOwn(TRANSPOSE_OPERATIONS, id) || Object.hasOwn(INTROSPECTION_NATIVE_OPERATIONS, id) || id === 'context-join' || id === 'pattern' || id === 'filter-text' || id === 'repair';
+const newOperation = id => id === 'chunk' || Object.hasOwn(RECALL_OPERATIONS, id) || Object.hasOwn(LIFECYCLE_OPERATIONS, id) || Object.hasOwn(FILE_OPERATIONS, id) || Object.hasOwn(TIME_OPERATIONS, id) || Object.hasOwn(EVENT_OPERATIONS, id) || Object.hasOwn(RANDOM_OPERATIONS, id) || Object.hasOwn(COLLECTION_OPERATIONS, id) || Object.hasOwn(MODEL_OPERATIONS, id) || Object.hasOwn(DECISION_OPERATIONS, id) || Object.hasOwn(CONTROL_OPERATIONS, id) || Object.hasOwn(INPUT_OPERATIONS, id) || Object.hasOwn(PRIMITIVE_OPERATIONS, id) || Object.hasOwn(TRANSPOSE_OPERATIONS, id) || Object.hasOwn(INTROSPECTION_NATIVE_OPERATIONS, id) || id === 'context-join' || id === 'pattern' || id === 'filter-text' || id === 'repair';
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 function ownMetadata(value, key) {
     if (!value || typeof value !== 'object' || Array.isArray(value) || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) throw new Error('plain metadata');
@@ -102,6 +105,7 @@ export function phaseForNode(graph, node) {
     } catch { return null; }
 }
 function dynamicDescription(node, phase, authoring = false) {
+    if (node.operation === 'chunk') return describeChunk(node, {phase});
     if (node.operation === 'filter-text') return phase === 'post' ? describeFilterText(node) : failure('INVALID_PHASE', 'Filter Text requires post phase.');
     if (node.operation === 'pattern') return phase === 'post' ? describePattern(node) : failure('INVALID_PHASE', 'Pattern requires post phase.');
     if (Object.hasOwn(RECALL_OPERATIONS, node.operation)) return describeRecallNode(node, { phase, authoring });
@@ -203,7 +207,7 @@ function describeNode(graph, node, authoring) {
         if (version !== undefined && version !== 1) return failure('UNKNOWN_OPERATION', 'Unknown workflow operation version.');
         if (Object.hasOwn(LIFECYCLE_OPERATIONS, id) && own(graph, 'mode') !== 'native-unified') return failure('WRONG_PHASE', 'Lifecycle nodes require a unified workflow.');
         if (newOperation(id)) {
-            if (own(graph, 'schema') !== 3 || own(graph, 'runtime') !== 2) return failure('UNSUPPORTED_VERSION', 'This operation requires schema 3 and runtime 2.');
+            if (!graphSatisfies({schema:own(graph,'schema'),runtime:own(graph,'runtime')}, OPERATIONS[id])) return failure('UNSUPPORTED_VERSION', 'This operation requires schema 3 and runtime 2.');
             const phase = phaseForNode(graph, node);
             if (!phase) return failure('WRONG_PHASE', 'The operation does not support its effective native phase.');
             // Context Join receives only its declared settings; no envelope metadata is runtime Context.
@@ -261,7 +265,7 @@ export function portsForNode(graph, node) {
     }
     if (node?.type === 'subgraph-input' || node?.type === 'subgraph-output') {
         const port = Array.isArray(graph?.interface) ? graph.interface.find(port => port.id === node.interfacePortId && port.boundaryNodeId === node.id) : null;
-        return port ? [{ id: node.type === 'subgraph-input' ? 'out' : 'in', label: port.label, kind: port.kind, direction: node.type === 'subgraph-input' ? 'output' : 'input', required: node.type === 'subgraph-output', cardinality: 'one' }] : [];
+        return port ? [{ id: node.type === 'subgraph-input' ? 'out' : 'in', label: port.label, kind: port.kind, direction: node.type === 'subgraph-input' ? 'output' : 'input', required: node.type === 'subgraph-output', cardinality: 'one', ...(port.semanticShape ? {semanticShape:port.semanticShape} : {}) }] : [];
     }
     const described = describeAuthoredOperation(graph, node);
     return described.ok ? described.data.ports : [];
@@ -275,5 +279,5 @@ export function operationDefaults(id = 'scene-context', { mode } = {}) {
         op = described.data.descriptor;
     }
     if (!op) throw new Error(`Unknown workflow operation: ${id}`);
-    return { operation: id, ...(op.minimumSchema === 3 ? { operationVersion: 1 } : {}), title: op.title, modelRole: op.modelRole, profileId: op.modelRole ? ACTIVE_PROFILE_ID : null, model: null, ...structuredClone(op.defaults), ...(id === 'repair' ? {mode:'inspect',policyVersion:1} : {}) };
+    return { operation: id, ...(op.minimumSchema >= 3 ? { operationVersion: 1 } : {}), title: op.title, modelRole: op.modelRole, profileId: op.modelRole ? ACTIVE_PROFILE_ID : null, model: null, ...structuredClone(op.defaults), ...(id === 'repair' ? {mode:'inspect',policyVersion:1} : {}) };
 }

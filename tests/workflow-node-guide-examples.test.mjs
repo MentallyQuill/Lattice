@@ -11,9 +11,11 @@ import { Worker } from 'node:worker_threads';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
 
 const registry = await import('../src/workflow/node-guide-examples.js').catch(() => ({}));
-test('every operation and structural guide has a detached, complete admitted example', () => {
+test('every published operation and structural guide has a detached, complete admitted example', () => {
     assert.equal(typeof registry.getNodeGuideExample, 'function');
-    const keys = [...Object.keys(OPERATIONS), 'note', 'comment', 'subgraph', 'subgraph-input', 'subgraph-output'];
+    // P01 foundation is deliberately unpublished; Task4/8 must replace this temporary exception with a generated runnable guide.
+    assert.equal(registry.getNodeGuideExample('chunk'), null);
+    const keys = [...Object.keys(OPERATIONS).filter(id=>id!=='chunk'), 'note', 'comment', 'subgraph', 'subgraph-input', 'subgraph-output'];
     assert.equal(keys.length, 80);
     for (const key of keys) {
         const example = registry.getNodeGuideExample(key);

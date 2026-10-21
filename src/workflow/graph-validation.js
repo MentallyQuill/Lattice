@@ -1,3 +1,4 @@
+import { graphVersionSupported, semanticShapeAssignable } from './workflow-versions.js?v=0.27.5';
 import { expandedRunTargets } from './run-targets.js?v=0.27.5';
 import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.27.5';
 import { cloneJsonValue } from './operations/json-data.js?v=0.27.5';
@@ -56,7 +57,7 @@ function controlValid(value, descriptor) {
 /** Validate one checked graph scope and resolve all its portal aliases before edge checks. */
 function inspectScope(graph, { definition, snapshots = {} } = {}) {
     if (!record(graph) || !record(graph.nodes) || !record(graph.wires) || !['groups', 'roles', 'portals', 'definitions'].every(key => record(graph[key] ?? {}))) return fail('MALFORMED_WORKFLOW', 'Expected native graph containers.');
-    if (graph.schema !== 3 || graph.runtime !== 2) return fail('UNSUPPORTED_VERSION', 'Expected schema 3 and runtime 2.');
+    if (!graphVersionSupported(graph.schema, graph.runtime)) return fail('UNSUPPORTED_VERSION', 'Expected schema 3 and runtime 2.');
     if (!['native-pre', 'native-post', 'native-unified'].includes(graph.mode)) return fail('WRONG_PHASE', 'Expected an explicit native workflow phase.');
     if (definition && Object.keys(graph.definitions ?? {}).length) return fail('DEFINITION_REF', 'Bundle all pinned snapshots in the owning table, not inside definition bodies.');
     if (definition && graph.localDefinitionOwners !== undefined) return fail('LOCAL_COPY_OWNERSHIP', 'Ownership registries belong only to the root document.');
@@ -84,6 +85,7 @@ function inspectScope(graph, { definition, snapshots = {} } = {}) {
             const checked = inspectInstance(node, snapshots);
             if (!checked.ok) return checked;
             if (node.localCopy !== undefined && (definition || !record(node.localCopy) || Object.keys(node.localCopy).length !== 1 || node.localCopy.definitionId !== node.definition.id)) return fail('LOCAL_COPY_OWNERSHIP', 'Local-copy ownership belongs to one root instance and its exact definition ID.', id);
+            if (checked.data.body.runtime > graph.runtime) return fail('UNSUPPORTED_VERSION', 'A definition requires a newer containing runtime.', id);
             if (graph.mode !== 'native-unified' && checked.data.body.mode !== graph.mode) return fail('WRONG_PHASE', 'The instance phase differs from its container.', id);
             continue;
         }
@@ -92,6 +94,7 @@ function inspectScope(graph, { definition, snapshots = {} } = {}) {
         if(node.operation==='for-each' && !described.data.setupIssues.some(issue=>issue.field==='helper')) {
             const helper=exactSnapshot(node.helper ?? operationFor(node).defaults.helper,snapshots);
             if(!helper.ok)return {...helper,error:{...helper.error,nodeId:id}};
+            if(helper.data.body.runtime > graph.runtime)return fail('UNSUPPORTED_VERSION','An iteration helper requires a newer containing runtime.',id);
         }
         describedNodes.set(id, described.data);
         const modifiers=validateNodeModifiers(node,described.data.ports.filter(port=>port.direction==='output'));
@@ -128,6 +131,7 @@ function inspectScope(graph, { definition, snapshots = {} } = {}) {
         const source = pin(from, fromPort, 'output'), destination = pin(wire.to, wire.toPort, 'input');
         if (!source || !destination) return fail('INVALID_PORT', 'A wire requires existing output and input ports.');
         if (source.kind !== destination.kind) return fail('ARTIFACT_KIND', 'These ports carry incompatible artifacts.');
+        if (source.kind === 'data' && !semanticShapeAssignable(source.semanticShape, destination.semanticShape)) return fail('SEMANTIC_SHAPE', 'These Data ports carry incompatible semantic shapes.');
         const key = JSON.stringify([wire.to, wire.toPort]);
         if (incoming.has(key)) return fail('AMBIGUOUS_INPUT', 'A named input accepts one binding.');
         incoming.add(key); resolved.push({ ...wire, from, fromPort });
@@ -394,6 +398,7 @@ export function inspectExpandedGraph(graph) {
     const preparedRegistry = prepareDefinitionRegistry(graph.definitions ?? {});
     if (!preparedRegistry.ok) return preparedRegistry;
     const checked = { ok: true, data: preparedRegistry.data.snapshots };
+    if (Object.values(checked.data).some(snapshot => snapshot.body.runtime > graph.runtime)) return fail('UNSUPPORTED_VERSION', 'A bundled definition requires a newer containing runtime.');
     const scope = inspectScope(graph, { snapshots: checked.data });
     if (!scope.ok) return scope;
     // Registry admission already checked expanded topology for every unused snapshot.

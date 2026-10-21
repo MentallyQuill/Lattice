@@ -1,3 +1,4 @@
+import { graphVersionSupported } from './workflow-versions.js?v=0.27.5';
 import { safeWorkflowData, validateNamedGraphStructure } from './graph-validation.js?v=0.27.5';
 import { resolveWorkflow } from './resolve.js?v=0.27.5';
 export { safeWorkflowData } from './graph-validation.js?v=0.27.5';
@@ -13,7 +14,7 @@ function plainDescriptors(value, limit = 20000) {
 export function isWorkflowGraph(graph) {
     try {
         const fields = plainDescriptors(graph);
-        return !!fields && fields.schema?.value === 3 && fields.runtime?.value === 2
+        return !!fields && graphVersionSupported(fields.schema?.value, fields.runtime?.value)
             && ['native-pre', 'native-post', 'native-unified'].includes(fields.mode?.value)
             && !!plainDescriptors(fields.nodes?.value, 1000) && !!plainDescriptors(fields.wires?.value, 2000)
             && ['groups', 'roles', 'portals', 'definitions'].every(key => fields[key]?.value == null || !!plainDescriptors(fields[key].value));
@@ -24,7 +25,7 @@ export function isWorkflowGraph(graph) {
  */
 export function validateGraphStructure(graph) {
     if (!safeWorkflowData(graph) || !record(graph)) return fail('MALFORMED_WORKFLOW', 'Expected a bounded plain workflow graph.');
-    if (graph.schema !== 3 || graph.runtime !== 2) return fail('UNSUPPORTED_VERSION', 'Expected schema 3 and runtime 2.');
+    if (!graphVersionSupported(graph.schema, graph.runtime)) return fail('UNSUPPORTED_VERSION', 'Expected schema 3 and runtime 2, or schema 4 and runtime 3.');
     return validateNamedGraphStructure(graph);
 }
 /** Validate the current named workflow before host or model work. */

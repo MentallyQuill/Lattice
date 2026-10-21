@@ -1,3 +1,4 @@
+import { graphVersionSupported } from './workflow-versions.js?v=0.27.5';
 import { cloneWorkflowDocument } from './document.js?v=0.27.5';
 import { isScopedSystemOperation } from './system-capabilities.js?v=0.27.5';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.5';
@@ -29,7 +30,7 @@ function editScope(root, command, path) {
     if (!safeWorkflowData(command) || !command || typeof command !== 'object' || Array.isArray(command)) return fail('INVALID_COMPOSITION', 'Expected a plain edit command.');
     path ??= command.viewPath ?? [];
     const checked = validateGraphStructure(root); if (!checked.ok) return checked;
-    if (root.schema !== 3) return fail('UNSUPPORTED_VERSION', 'Composition edits require a normalized schema-3 graph.');
+    if (!graphVersionSupported(root.schema,root.runtime)) return fail('UNSUPPORTED_VERSION', 'Composition edits require a normalized schema-3 graph.');
     if (!Array.isArray(path) || path.length > 8 || !path.every(safeId)) return fail('INVALID_INSTANCE', 'Expected a bounded scope path.');
     const chain = path.length ? definitionChain(root, path) : [];
     if (!chain) return fail('INVALID_INSTANCE', 'The containing scope does not exist.');
@@ -107,7 +108,7 @@ export function prepareCreateFromSelection(root, command) {
     const instanceId = command.instanceId ?? ids.next('subgraph');
     if (command.instanceId !== undefined && !ids.claim(instanceId)) return fail('INVALID_INSTANCE', 'The wrapper requires a fresh ID.');
     // The containing scope still owns its role defaults and overrides; inherit them exactly once.
-    const body = { schema: 3, runtime: 2, mode: scope.mode, nodes: {}, wires: {}, portals: {}, groups: {}, roles: {} };
+    const body = { schema: scope.schema, runtime: scope.runtime, mode: scope.mode, nodes: {}, wires: {}, portals: {}, groups: {}, roles: {} };
     for (const id of selected) {
         const node = body.nodes[id] = clone(scope.nodes[id]); Object.assign(node, command.nodePositions?.[id]); delete node.localCopy;
         if (command.nodePresentation?.[id]) {
@@ -119,12 +120,12 @@ export function prepareCreateFromSelection(root, command) {
     }
     const bounds = layoutBounds(Object.values(body.nodes));
     const interfaces = [], inputs = new Map(), outputs = new Map(), addedEdgeIds = [], removedEdgeIds = [];
-    const boundary = (direction, kind, required, label) => {
+    const boundary = (direction, kind, required, label, semanticShape) => {
         const id = ids.next(direction), boundaryNodeId = ids.next(`boundary-${direction}`);
         const peers = interfaces.filter(port => port.direction === direction), baseLabel = label.slice(0, 80);
         let distinctLabel = baseLabel, suffix = 2;
         while (peers.some(port => port.label === distinctLabel)) { const tail = ` (${suffix++})`; distinctLabel = baseLabel.slice(0, 80 - tail.length) + tail; }
-        const port = { id, label: distinctLabel, direction, kind, required, cardinality: 'one', boundaryNodeId };
+        const port = { id, label: distinctLabel, direction, kind, required, cardinality: 'one', boundaryNodeId, ...(semanticShape ? {semanticShape} : {}) };
         interfaces.push(port); body.nodes[boundaryNodeId] = { id: boundaryNodeId, type: `subgraph-${direction}`, interfacePortId: id,
             x: direction === 'input' ? bounds.left - 340 : bounds.right + 80, y: bounds.top + peers.length * 160 }; return port;
     };
@@ -132,7 +133,7 @@ export function prepareCreateFromSelection(root, command) {
     const exposeOutput = source => {
         const key = endpointKey(source); if (outputs.has(key)) return outputs.get(key);
         const descriptor = portsForNode({ ...scope, definitions: candidate.definitions }, scope.nodes[source.nodeId]).find(port => port.id === source.portId && port.direction === 'output');
-        const port = boundary('output', descriptor.kind, false, descriptor.label);
+        const port = boundary('output', descriptor.kind, false, descriptor.label, descriptor.semanticShape);
         bodyWire(source.nodeId, source.portId, port.boundaryNodeId, 'in'); outputs.set(key, port); return port;
     };
     const originalWires = Object.values(scope.wires);
@@ -145,7 +146,7 @@ export function prepareCreateFromSelection(root, command) {
         } else if (toSelected) {
             const descriptor = portsForNode({ ...scope, definitions: candidate.definitions }, scope.nodes[wire.to]).find(port => port.direction === 'input' && port.id === wire.toPort);
             const key = endpointKey(source); let port = inputs.get(key);
-            if (!port) { port = boundary('input', descriptor.kind, descriptor.required, descriptor.label); inputs.set(key, port); scope.wires[wire.id] = { ...wire, to: instanceId, toPort: port.id }; }
+            if (!port) { port = boundary('input', descriptor.kind, descriptor.required, descriptor.label, descriptor.semanticShape); inputs.set(key, port); scope.wires[wire.id] = { ...wire, to: instanceId, toPort: port.id }; }
             else { port.required ||= descriptor.required; delete scope.wires[wire.id]; removedEdgeIds.push(wire.id); }
             bodyWire(port.boundaryNodeId, 'out', wire.to, wire.toPort);
         } else if (fromSelected && wire.route === 'wire') { const port = exposeOutput(source); scope.wires[wire.id] = { ...wire, from: instanceId, fromPort: port.id }; }
@@ -153,7 +154,7 @@ export function prepareCreateFromSelection(root, command) {
     for (const portal of Object.values(scope.portals ?? {})) if (selected.has(portal.source.nodeId)) { const port = exposeOutput(portal.source); portal.source = { nodeId: instanceId, portId: port.id }; }
     for (const id of selected) for (const descriptor of portsForNode({ ...scope, definitions: candidate.definitions }, scope.nodes[id]).filter(port => port.direction === 'input')) {
         if (originalWires.some(wire => wire.to === id && wire.toPort === descriptor.id)) continue;
-        const port = boundary('input', descriptor.kind, descriptor.required, descriptor.label); inputs.set(JSON.stringify(['unbound', id, descriptor.id]), port); bodyWire(port.boundaryNodeId, 'out', id, descriptor.id);
+        const port = boundary('input', descriptor.kind, descriptor.required, descriptor.label, descriptor.semanticShape); inputs.set(JSON.stringify(['unbound', id, descriptor.id]), port); bodyWire(port.boundaryNodeId, 'out', id, descriptor.id);
     }
     for (const id of selected) for (const descriptor of portsForNode({ ...scope, definitions: candidate.definitions }, scope.nodes[id]).filter(port => port.direction === 'output')) {
         const source = { nodeId: id, portId: descriptor.id };
@@ -257,7 +258,7 @@ export function prepareUnpack(root, command) {
         } else if (node.type === 'subgraph') {
             const childPath = [...instancePath, oldId];
             const actualUnits = expanded.data.primitives.filter(unit => pathStartsWith(unit.address.instancePath, childPath));
-            const baseline = inspectExpandedGraph({ id: root.id ?? 'workflow', schema: 3, runtime: 2, mode: scope.mode, roles: clone(materialized.roles), nodes: { [oldId]: clone(originalNode) }, wires: {}, definitions: root.definitions ?? {} });
+            const baseline = inspectExpandedGraph({ id: root.id ?? 'workflow', schema: scope.schema, runtime: scope.runtime, mode: scope.mode, roles: clone(materialized.roles), nodes: { [oldId]: clone(originalNode) }, wires: {}, definitions: root.definitions ?? {} });
             if (!baseline.ok) return baseline;
             const differences = [];
             for (const unit of actualUnits) {
