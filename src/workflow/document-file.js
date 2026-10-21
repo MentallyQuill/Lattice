@@ -1,13 +1,15 @@
+import { deferredFoundationControl } from './foundation-release.js?v=0.27.5';
 import { workflowRunTargets } from './run-targets.js?v=0.27.5';
 import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.5';
 import { own } from './record-data.js?v=0.27.5';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.5';
-import { OPERATIONS, operationFor, phaseForNode } from './catalog.js?v=0.27.5';
+import { OPERATIONS, operationFor, phaseForNode, describeAuthoredOperation } from './catalog.js?v=0.27.5';
 import { introspectionDefaults } from './introspection/native.js?v=0.27.5';
 import { parseWorkflow } from './packages.js?v=0.27.5';
 import { createViewState } from '../ui/view-state.js?v=0.27.5';
 
 const LIMIT = 2000000;
+const deferredControlErrors=new WeakSet();
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const credentialKey = key => /^(api[_-]?key|api[_-]?token|access[_-]?token|token|password|secret|credentials?|authorization|headers?|provider|endpoint|base[_-]?url)$/i.test(key) || ['__proto__', 'prototype', 'constructor'].includes(key);
 function properties(value) {
@@ -44,9 +46,12 @@ function projectGraph(graph, depth = 0) {
     const copy = pick(graph, ['id', 'name', 'description', 'schema', 'runtime', 'mode', 'runTargets']);
     copy.nodes = map(graph.nodes, node => {
         const metadata = pick(node, ['type', 'operation', 'mode']), registered = Object.hasOwn(OPERATIONS, metadata.operation) ? OPERATIONS[metadata.operation] : null;
-        const candidateControls = registered?.family === 'Introspection' ? Object.keys(introspectionDefaults(metadata.operation, metadata.mode)) : registered?.controls ?? [];
+        if(metadata.type==='workflow'&&deferredFoundationControl(node)){const error=new Error();deferredControlErrors.add(error);throw error;}
+        const source=graph.runtime===3&&metadata.type==='workflow'&&metadata.operation==='scene-context'?describeAuthoredOperation(graph,node):null;
+        if(source&&!source.ok)throw new Error(source.error.message);
+        const candidateControls = source?.data.descriptor.controls ?? (registered?.family === 'Introspection' ? Object.keys(introspectionDefaults(metadata.operation, metadata.mode)) : registered?.controls ?? []);
         node = pick(node, ['id', 'type', 'operation', 'operationVersion', 'modifiers', 'enabled', 'inGroup', 'color', ...presentationFields, 'profileId', 'model', 'modelRole', 'artifactKind', 'phase', ...candidateControls, 'content', 'commentFrame', 'moveContents', 'definition', 'parameterOverrides', 'roleOverrides', 'nodeBindingOverrides', 'localCopy', 'interfacePortId', 'protectedLiterals', 'presentation']);
-        const controls = node.type === 'workflow' ? (registered?.family === 'Introspection' ? operationFor(node, { phase: phaseForNode(graph, node), mode: graph.mode })?.controls : registered?.controls) ?? [] : [];
+        const controls = node.type === 'workflow' ? (source?.data.descriptor.controls ?? (registered?.family === 'Introspection' ? operationFor(node, { phase: phaseForNode(graph, node), mode: graph.mode })?.controls : registered?.controls)) ?? [] : [];
         const projected = pick(node, [
             'id', 'type', 'operation', 'operationVersion', 'modifiers', 'enabled', 'inGroup', 'color', ...presentationFields,
             'profileId', 'model', 'modelRole', 'artifactKind', 'phase', ...controls,
@@ -75,7 +80,7 @@ function projectGraph(graph, depth = 0) {
     if (Object.hasOwn(graph, 'definitions')) copy.definitions = map(graph.definitions, definition => {
         const data = pick(definition, ['id', 'version', 'semanticHash', 'name', 'description', 'interface', 'parameters', 'body']);
         return { ...data,
-            interface: list(data.interface, port => pick(port, ['id', 'label', 'direction', 'kind', 'required', 'cardinality', 'boundaryNodeId'])),
+            interface: list(data.interface, port => pick(port, ['id', 'label', 'direction', 'kind', 'required', 'cardinality', 'boundaryNodeId', ...(graph.runtime===3?['semanticShape']:[])])),
             parameters: list(data.parameters, parameter => { const data = pick(parameter, ['id', 'label', 'target']); return { ...data, target: pick(data.target, ['instancePath', 'nodeId', 'controlId']) }; }),
             body: projectGraph(data.body, depth + 1),
         };
@@ -150,11 +155,11 @@ export function serializeWorkflowDocument(graph, workspaceViews = null, options 
             }
             if (!createViewState({ workflowId: projected.id, navigation: [...navigation.values()], persisted: views })) return fail('VIEW_DATA', 'Expected valid retained workspace presentation for this workflow.');
         }
-        const envelope = { kind: 'lattice-document', schema: 1, minRuntime: 2, graph: projected, ...(views ? { workspaceViews: views } : {}) };
+        const envelope = { kind: 'lattice-document', schema: projected.runtime===3?2:1, minRuntime: projected.runtime===3?3:2, graph: projected, ...(views ? { workspaceViews: views } : {}) };
         const json = JSON.stringify(envelope, null, 2);
         if (new TextEncoder().encode(json).byteLength > LIMIT) return fail('MALFORMED_WORKFLOW', 'Workflow JSON must be at most 2,000,000 UTF-8 bytes.');
         return { ok: true, data: { json, recovery: { graph: projected, workspaceViews: views } } };
-    } catch { return fail('MALFORMED_WORKFLOW', 'Malformed workflow authoring containers.'); }
+    } catch(error) { return deferredControlErrors.has(error)?fail('UNSUPPORTED_FOUNDATION_CAPABILITY','Maintenance and history replacement controls are unavailable in the foundation release.'):fail('MALFORMED_WORKFLOW', 'Malformed workflow authoring containers.'); }
 }
 
 /** Validate a candidate before the caller replaces its current document. */
@@ -168,7 +173,7 @@ export function parseWorkflowDocument(json) {
         const portable = parseWorkflow(json);
         return portable.ok ? { ok: true, data: { graph: admitRootMetadata(portable.data), workspaceViews: null } } : portable;
     }
-    if (envelope.kind !== 'lattice-document' || envelope.schema !== 1 || envelope.minRuntime !== 2) return fail('UNSUPPORTED_PACKAGE', 'Expected a Lattice document with schema 1 and minRuntime 2.');
+    if (envelope.kind !== 'lattice-document' || !(envelope.schema===1&&envelope.minRuntime===2&&envelope.graph?.schema===3&&envelope.graph?.runtime===2||envelope.schema===2&&envelope.minRuntime===3&&envelope.graph?.schema===4&&envelope.graph?.runtime===3)) return fail('UNSUPPORTED_PACKAGE', 'Expected matching schema 1/runtime 2 or schema 2/runtime 3 authoring document.');
     const serialized = serializeWorkflowDocument(envelope.graph, envelope.workspaceViews ?? null);
     if (!serialized.ok) return serialized;
     const projected = JSON.parse(serialized.data.json);

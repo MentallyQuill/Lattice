@@ -9,3 +9,14 @@ export const FOUNDATION_RELEASE=Object.freeze({
  deferredSceneControls:Object.freeze(['firstSourceId','lastSourceId','confirmed','protectRecentWindow','allowAppendRebase']),
  multiRootExamples:false,
 });
+
+/** Hook-free reserved-control check shared by admission and authoring projection. */
+export function deferredFoundationControl(node){
+ const operation=node&&Object.getOwnPropertyDescriptor(node,'operation');
+ if(!operation||!Object.hasOwn(operation,'value')||typeof operation.value!=='string'||!Object.hasOwn(FOUNDATION_RELEASE.deferredNodeControls,operation.value))return null;
+ for(const key of FOUNDATION_RELEASE.deferredNodeControls[operation.value]){
+  const value=Object.getOwnPropertyDescriptor(node,key);
+  if(value&&(!Object.hasOwn(value,'value')||value.value!==undefined))return key;
+ }
+ return null;
+}

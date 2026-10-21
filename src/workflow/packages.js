@@ -3,7 +3,7 @@ import { workflowRunTargets } from './run-targets.js?v=0.27.5';
 import { inspectDefinitionGraph } from './graph-validation.js?v=0.27.5';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.5';
 import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.5';
-import { OPERATIONS, operationFor, phaseForNode } from './catalog.js?v=0.27.5';
+import { OPERATIONS, operationFor, phaseForNode, describeAuthoredOperation } from './catalog.js?v=0.27.5';
 import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata } from './definitions.js?v=0.27.5';
 const limit = 2000000;
 const fail = (code, message) => ({ ok: false, error: { code, message } });
@@ -74,6 +74,12 @@ function portableProjection(snapshots) {
     };
     return context;
 }
+function portableControlKeys(graph,node){
+    if(graph.runtime===3&&node.type==='workflow'&&node.operation==='scene-context'){
+        const source=describeAuthoredOperation(graph,node);if(!source.ok)throw new Error(source.error.message);return source.data.descriptor.controls;
+    }
+    return (OPERATIONS[node.operation]?.family==='Introspection'?operationFor(node,{phase:phaseForNode(graph,node),mode:graph.mode}):OPERATIONS[node.operation])?.controls??[];
+}
 function portableNativeDocument(graph, context) {
     const copy = pick(graph, ['id', 'name', 'description', 'schema', 'runtime', 'mode', 'nodes', 'wires', 'groups', 'roles', 'portals', 'definitions', 'template', 'view', 'createdAt', 'updatedAt', 'runTargets']);
     copy.nodes = Object.fromEntries(Object.entries(graph.nodes).map(([id, node]) => [id, pick(node, [
@@ -81,7 +87,7 @@ function portableNativeDocument(graph, context) {
         'profileId', 'model', 'modelRole', 'artifactKind', 'phase', 'alias', ...(node.type === 'note' ? ['content', 'commentFrame', 'moveContents'] : []),
         ...(node.type === 'subgraph' ? ['definition', 'parameterOverrides', 'roleOverrides', 'nodeBindingOverrides'] : []),
         ...(['subgraph-input', 'subgraph-output'].includes(node.type) ? ['interfacePortId'] : []),
-        ...((OPERATIONS[node.operation]?.family === 'Introspection' ? operationFor(node, { phase: phaseForNode(graph, node), mode: graph.mode }) : OPERATIONS[node.operation])?.controls ?? []), ...(node.operation === 'validate-patches' ? ['protectedLiterals'] : []),
+        ...portableControlKeys(graph,node), ...(node.operation === 'validate-patches' ? ['protectedLiterals'] : []),
     ])]));
     for (const [id, node] of Object.entries(copy.nodes)) {
         if (Object.hasOwn(node, 'profileId') && node.profileId !== ACTIVE_PROFILE_ID) node.profileId = null;

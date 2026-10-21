@@ -63,3 +63,13 @@ Ten focused source/Chunk/proof/registry/persistence test files pass. The scoped 
 Historical event/frontier/cursor host assertions were adapted to this release's explicit refusals, preserving ordinary missing-input/legacy behavior. The old-source final-transport mutation tests retain their original physical callback and zero-send assertions, selecting the same first pair with a supported bounded before-window page. Recording lookup in the new fixture uses the existing interned-address decoder. A retained-definition fixture initially normalized away its forbidden flag during export; the raw packet now explicitly retains that flag and asserts the fixture precondition before checking rejection.
 
 The full original tests and advanced implementations remain in the preservation checkpoint. These checks do not close singleton packaging, editor source-setup UI, lesson34/35 installed user journeys, future-dependency review, clean installation, provider smoke, release review or publication. Paid calls remain0.
+
+## Singleton document core: verified
+
+The existing singleton path now uses schema2/minRuntime3 for graph4/runtime3, preserves the actual runtime3 source controls during local and portable projection, and includes those controls in dirty tracking. Runtime3 helper interface semanticShape is retained without changing exact semantic pins. Legacy document/version pairs remain unchanged; crossed version floors reject.
+
+Four genuine regressions were observed before the implementation: wrong document floor, dropped protected-window export settings, missed dirty changes, and helper DEFINITION_HASH after local projection stripped semanticShape. All four now pass. A second four-case regression established that local document save/import could normalize away forbidden File/history controls, including a retained helper. A shared descriptor-only reserved-control check now rejects those before projection, with an explicit unsupported-foundation error and no getter-based control read.
+
+Nine document cases and nine affected document/session/controller/package/admission test files pass. Application types report zero errors/warnings; all95legacy artifact/data hashes remain unchanged. This extends the existing singleton serializer/session route and imports no multi-root system or maintenance framework.
+
+The actual two-lesson generator, example metadata/fixtures, merged32entry catalog, addressed Chunk guides, visible source-setup action, complete installed user journeys and release acceptance remain pending. The document core results do not claim F04/F09 complete by themselves.

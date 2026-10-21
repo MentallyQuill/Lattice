@@ -1,4 +1,4 @@
-import { FOUNDATION_RELEASE } from './foundation-release.js?v=0.27.5';
+import { FOUNDATION_RELEASE, deferredFoundationControl } from './foundation-release.js?v=0.27.5';
 import { CHUNK_OPERATION, describeChunk } from './operations/chunk.js?v=0.27.5';
 import { graphSatisfies } from './workflow-versions.js?v=0.27.5';
 import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.27.5';
@@ -221,7 +221,7 @@ function describeNode(graph, node, authoring) {
         if (id === 'scene-context' && !['actor','public'].includes(own(node,'visibilityMode') === undefined ? 'actor' : own(node,'visibilityMode'))) return failure('INVALID_SETTINGS','Scene Context visibility must be actor or public.');
         const version = own(node, 'operationVersion');
         if (version !== undefined && version !== 1) return failure('UNKNOWN_OPERATION', 'Unknown workflow operation version.');
-        if((FOUNDATION_RELEASE.deferredNodeControls[id]??[]).some(key=>ownMetadata(node,key)!==undefined))return failure('UNSUPPORTED_FOUNDATION_CAPABILITY','This workflow uses maintenance or history replacement controls that are unavailable in the foundation release.');
+        if(deferredFoundationControl(node))return failure('UNSUPPORTED_FOUNDATION_CAPABILITY','This workflow uses maintenance or history replacement controls that are unavailable in the foundation release.');
         if (Object.hasOwn(LIFECYCLE_OPERATIONS, id) && own(graph, 'mode') !== 'native-unified') return failure('WRONG_PHASE', 'Lifecycle nodes require a unified workflow.');
         if(id==='scene-context'){const scene=describeSceneSource(graph,node,phaseForNode(graph,node));if(scene)return scene;}
         if (newOperation(id)) {
