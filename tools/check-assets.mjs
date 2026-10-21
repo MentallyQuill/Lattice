@@ -8,7 +8,7 @@ const version = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8')).ve
 function sources(dir) { return readdirSync(dir, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? sources(join(dir, entry.name)) : entry.name.endsWith('.js') ? [join(dir, entry.name)] : []); }
 const files = [join(root, 'index.js'), ...sources(join(root, 'src'))];
 let imports = 0;
-for (const file of files) for (const match of readFileSync(file, 'utf8').matchAll(/from\s+['"](\.{1,2}\/[^'"]+\.js)(\?v=[^'"]*)?['"]/g)) {
+for (const file of files) for (const match of readFileSync(file, 'utf8').matchAll(/(?:from\s+|import\s*\(\s*)['"](\.{1,2}\/[^'"]+\.js)(\?v=[^'"]*)?['"]/g)) {
     imports++;
     assert.equal(match[2], `?v=${version}`, `version mismatch in ${file}: ${match[1]}`);
     assert.ok(existsSync(resolve(dirname(file), match[1])), `missing installed asset: ${match[1]}`);

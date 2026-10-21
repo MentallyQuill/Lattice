@@ -10,7 +10,7 @@ copyFileSync(new URL('../tools/bump-version.mjs', import.meta.url), join(root, '
 writeFileSync(join(root, 'manifest.json'), JSON.stringify({ version: '0.1.0', js: 'index.js?v=0.1.0' }));
 writeFileSync(join(root, 'index.js'), "import { x } from './src/state.js?v=0.27.5';");
 writeFileSync(join(root, 'src', 'state.js'), 'export const x = 1;');
-writeFileSync(join(root, 'src', 'canvas', 'presentation.js'), "import { x } from '../state.js?v=0.27.5';");
+writeFileSync(join(root, 'src', 'canvas', 'presentation.js'), "import { x } from '../state.js?v=0.27.5';\nconst sourceProof = await import('../state.js?v=0.27.5');\nconst same = await import('../state.js');\nconst isolated = await import('../state.js?v=source-cache-marker');");
 writeFileSync(join(root, 'style.css'), "@import url('./dist/lattice.css?v=0.1.0');");
 writeFileSync(join(root, 'package.json'), JSON.stringify({ version: '0.1.0' }));
 writeFileSync(join(root, 'package-lock.json'), JSON.stringify({ version: '0.1.0', packages: { '': { version: '0.1.0' } } }));
@@ -20,6 +20,9 @@ writeFileSync(join(root, 'tools', 'native-fixture.mjs'), "import { x } from '../
 const result = spawnSync(process.execPath, [join(root, 'tools', 'bump-version.mjs'), '0.2.0'], { encoding: 'utf8' });
 assert.equal(result.status, 0, result.stderr);
 assert.match(readFileSync(join(root, 'src', 'canvas', 'presentation.js'), 'utf8'), /state\.js\?v=0\.2\.0/, 'nested native modules use the same domain URL as the extension entry');
+const production = readFileSync(join(root, 'src', 'canvas', 'presentation.js'), 'utf8');
+assert.equal((production.match(/state\.js\?v=0\.2\.0/g) ?? []).length, 3, 'static and lazy production imports must share the same source-proof module identity');
+assert.ok(production.includes("import('../state.js?v=source-cache-marker')"), 'source cache-isolation markers remain deliberate');
 const browser = readFileSync(join(root, 'tests', 'browser', 'cache.spec.mjs'), 'utf8');
 assert.equal((browser.match(/state\.js\?v=0\.2\.0/g) ?? []).length, 2, 'static and dynamic test imports share the released domain URL');
 assert.ok(browser.includes("import('../../src/helper.js')"), 'unversioned test helpers remain unchanged');

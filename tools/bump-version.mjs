@@ -6,7 +6,7 @@
 // ?v=<version>, and manifest.json loads index.js the same way, so a new
 // version is a new URL and the browser has to fetch it.
 // Every file must use the SAME query for a given module, or the browser loads
-// two copies of it with separate state — this script keeps them in step.
+// two copies of it with separate state â€” this script keeps them in step.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +28,8 @@ const files = ['index.js', ...sources('src')];
 for (const f of files) {
     const p = path.join(root, f);
     const before = fs.readFileSync(p, 'utf8');
-    const after = before.replace(/(from\s+['"])(\.{1,2}\/[^'"?]+\.js)(\?v=[^'"]*)?(['"])/g, `$1$2?v=${v}$4`);
+    const after = before.replace(/(from\s+['"])(\.{1,2}\/[^'"?]+\.js)(\?v=[^'"]*)?(['"])/g, `$1$2?v=${v}$4`)
+        .replace(/(import\s*\(\s*['"])(\.{1,2}\/[^'"?]+\.js)(?:\?v=\d+\.\d+\.\d+)?(['"]\s*\))/g, `$1$2?v=${v}$3`);
     if (after !== before) fs.writeFileSync(p, after);
 }
 // Retain each test/tool's intentional module shape, but migrate existing cache URLs
