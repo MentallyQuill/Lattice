@@ -15,7 +15,7 @@ export function createWorkflowDocumentController(env) {
         if (saving || replacing && !insideReplacement) return cancelled();
         const graph=session.current();if (!graph) return error(failure('No workflow document is open.'));
         const token=session.capture(),workspaceViews=env.views?.() ?? null,snapshot=session.snapshot(graph);
-        const encoded=serializeWorkflowDocument(graph,workspaceViews);if (!encoded.ok) return error(encoded);
+        const encoded=serializeWorkflowDocument(graph,workspaceViews,{exampleMetadata:session.exampleMetadata?.()});if (!encoded.ok) return error(encoded);
         saving=true;changed();
         try {
             const result=await files.save(encoded.data.json,session.source(),{saveAs,suggestedName:(graph.name || 'Untitled')+'.workflow.json'});
@@ -55,10 +55,10 @@ export function createWorkflowDocumentController(env) {
             const result=await candidatePromise;
             if (!current()) return cancelled();
             if (!result.ok) return error(result);
-            const next=result.data, admitted=serializeWorkflowDocument(next.graph,next.workspaceViews ?? null);
+            const next=result.data, admitted=serializeWorkflowDocument(next.graph,next.workspaceViews ?? null,{exampleMetadata:next.exampleMetadata});
             if (!admitted.ok) return error(admitted);
             if (!await guard(token) || !current()) return cancelled();
-            const activated=env.activate(next.graph,{source:next.source ?? null,workspaceViews:next.workspaceViews ?? null,clean});
+            const activated=env.activate(next.graph,{source:next.source ?? null,workspaceViews:next.workspaceViews ?? null,exampleMetadata:admitted.data.recovery.exampleMetadata,clean});
             if (activated?.ok===false) return error(activated);
             if (next.companions?.length) env.retainCompanions?.(next.companions);
             status='';changed();return {ok:true,data:next};
@@ -80,7 +80,7 @@ export function createWorkflowDocumentController(env) {
         example:id=>replace(()=>env.examples(id)),
         recover:id=>replace(()=>{
             const entry=env.recovery().find(value=>value.id===id);
-            return entry?.graph ? {ok:true,data:{graph:structuredClone(entry.graph),workspaceViews:entry.workspaceViews,source:{kind:'recovery',name:entry.name}}} : failure(entry?.issue || 'This previous workflow is unavailable.');
+            return entry?.graph ? {ok:true,data:{graph:structuredClone(entry.graph),workspaceViews:entry.workspaceViews,exampleMetadata:entry.exampleMetadata,source:{kind:'recovery',name:entry.name}}} : failure(entry?.issue || 'This previous workflow is unavailable.');
         }),
         async clearRecent() {try {const result=await files.clearRecent();if (result?.ok===false) return error(result);changed();return {ok:true};}catch{return error({ok:false,error:{code:'RECENT_STORAGE_FAILED',message:'Recent files could not be cleared.'}});}},
         view:()=>{const recent=files.recents();return {name:session.source()?.name || 'Untitled',dirty:session.dirty(),busy:replacing || saving,native:files.native,status:[status,storageWarning].filter(Boolean).join(' '),recents:Array.isArray(recent)?recent:recent?.data ?? [],recovery:env.recovery().filter(entry=>entry.graph?.mode==='native-unified').map(({id,name,issue})=>({id,name,issue}))};},

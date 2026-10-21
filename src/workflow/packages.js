@@ -1,3 +1,4 @@
+import {inspectSingletonMetadata,remapExampleMetadata} from './example-metadata.js?v=0.27.5';
 import { workflowPackageVersion, subgraphPackageVersion, packageVersionMatches, packageVersionSupported } from './workflow-versions.js?v=0.27.5';
 import { workflowRunTargets } from './run-targets.js?v=0.27.5';
 import { inspectDefinitionGraph } from './graph-validation.js?v=0.27.5';
@@ -126,20 +127,23 @@ function portableNativeDocument(graph, context) {
     if (graph.template) copy.template = pick(graph.template, ['id', 'version']);
     return copy;
 }
-function portableGraph(graph) {
-    return structuredClone(portableNativeDocument(graph, portableProjection(graph.definitions ?? {})));
+function portableProjectionResult(graph){
+    const context=portableProjection(graph.definitions??{}),projected=structuredClone(portableNativeDocument(graph,context));
+    const definitions=Object.fromEntries(Object.entries(graph.definitions??{}).map(([key,definition])=>[key,context.reference(definition)]));return {graph:projected,definitions};
 }
+function portableGraph(graph){return portableProjectionResult(graph).graph;}
 /** The caller serializes this envelope for download. No host state is consulted. */
-export function exportWorkflow(graph) {
+export function exportWorkflow(graph, options={}) {
     if (!safeWorkflowData(graph)) throw new Error('Expected a bounded plain workflow graph.');
     const structure = validateGraphStructure(graph);
     if (!structure.ok) throw new Error(structure.error.message);
-    const portable = portableGraph(graph);
+    const projection=portableProjectionResult(graph),portable=projection.graph;
     const targets = workflowRunTargets(graph); if (!targets.ok) throw new Error(targets.error.message);
     portable.runTargets = targets.data;
     const validation = validateGraphStructure(portable);
     if (!validation.ok) throw new Error(validation.error.message);
     const envelope = { kind: 'lattice-workflow', ...workflowPackageVersion(portable), graph: portable };
+    const metadata=Object.getOwnPropertyDescriptor(options,'exampleMetadata');if(metadata&&!Object.hasOwn(metadata,'value'))throw new Error('Use own example metadata.');if(metadata?.value!==undefined){const checked=inspectSingletonMetadata(metadata.value,graph);if(!checked.ok)throw new Error(checked.error.message);const mapped=inspectSingletonMetadata(remapExampleMetadata(checked.data,{definitions:projection.definitions}),portable);if(!mapped.ok)throw new Error(mapped.error.message);envelope.exampleMetadata=mapped.data;}
     if (new TextEncoder().encode(JSON.stringify(envelope)).byteLength > limit) throw new Error('Workflow JSON must be at most 2,000,000 UTF-8 bytes.');
     return envelope;
 }
@@ -160,12 +164,16 @@ export function parseWorkflowFragment(json) {
     const structure = validateGraphStructure(envelope.graph);
     if (!structure.ok) return structure;
     if (!packageVersionMatches(envelope,envelope.graph)) return fail('UNSUPPORTED_PACKAGE','The workflow package and graph version pairs must match.');
-    let portable;
-    try { portable = portableGraph(envelope.graph); } catch { return fail('MALFORMED_WORKFLOW', 'Malformed workflow package containers.'); }
-    const validation = validateGraphStructure(portable);
-    if (!validation.ok) return validation;
-    return { ok: true, data: portable };
+    let metadata,projection;const supplied=Object.hasOwn(envelope,'exampleMetadata');
+    if(supplied){const checked=inspectSingletonMetadata(envelope.exampleMetadata,envelope.graph);if(!checked.ok)return checked;metadata=checked.data;}
+    try { projection=portableProjectionResult(envelope.graph); } catch { return fail('MALFORMED_WORKFLOW', 'Malformed workflow package containers.'); }
+    const portable=projection.graph,validation=validateGraphStructure(portable);if(!validation.ok)return validation;
+    if(supplied){const checked=inspectSingletonMetadata(remapExampleMetadata(metadata,{definitions:projection.definitions}),portable);if(!checked.ok)return checked;metadata=checked.data;}
+    return {ok:true,data:portable,...(supplied?{exampleMetadata:metadata}:{})};
 }
+
+/** Complete portable singleton envelope; legacy parseWorkflow keeps returning just graph data. */
+export function parseWorkflowPackage(json){const parsed=parseWorkflow(json);return parsed.ok?{ok:true,data:{kind:'lattice-workflow',...workflowPackageVersion(parsed.data),graph:parsed.data,...(parsed.exampleMetadata?{exampleMetadata:parsed.exampleMetadata}:{})}}:parsed;}
 
 /** Select a checked exact closure for a standalone export or atomic shelf save.
  * Unrelated snapshots never enter the returned package; no source or saved pin changes.

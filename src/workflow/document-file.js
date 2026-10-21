@@ -1,3 +1,4 @@
+import {inspectSingletonMetadata} from './example-metadata.js?v=0.27.5';
 import { deferredFoundationControl } from './foundation-release.js?v=0.27.5';
 import { workflowRunTargets } from './run-targets.js?v=0.27.5';
 import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.5';
@@ -121,9 +122,10 @@ function admitRootMetadata(graph) {
 }
 
 /** The save checkpoint ignores camera, navigation, timestamps and runtime data. */
-export function workflowDocumentSnapshot(graph, workspaceViews = null) {
+export function workflowDocumentSnapshot(graph, workspaceViews = null, exampleMetadata) {
     if (!graph) return '';
     const document = { graph: projectGraph(graph), workspaceViews: projectViews(workspaceViews, true) };
+    if(exampleMetadata!==undefined){const checked=inspectSingletonMetadata(exampleMetadata,document.graph,{pruneMissing:true});if(!checked.ok)throw new Error(checked.error.message);document.exampleMetadata=checked.data;}
     if (!safeWorkflowData(document)) throw new Error('Expected bounded plain workflow authoring data.');
     return JSON.stringify(canonical(document));
 }
@@ -156,9 +158,10 @@ export function serializeWorkflowDocument(graph, workspaceViews = null, options 
             if (!createViewState({ workflowId: projected.id, navigation: [...navigation.values()], persisted: views })) return fail('VIEW_DATA', 'Expected valid retained workspace presentation for this workflow.');
         }
         const envelope = { kind: 'lattice-document', schema: projected.runtime===3?2:1, minRuntime: projected.runtime===3?3:2, graph: projected, ...(views ? { workspaceViews: views } : {}) };
+        const exampleMetadata=own(options,'exampleMetadata');if(exampleMetadata!==undefined){const checked=inspectSingletonMetadata(exampleMetadata,projected,{pruneMissing:true});if(!checked.ok)return checked;envelope.exampleMetadata=checked.data;}
         const json = JSON.stringify(envelope, null, 2);
         if (new TextEncoder().encode(json).byteLength > LIMIT) return fail('MALFORMED_WORKFLOW', 'Workflow JSON must be at most 2,000,000 UTF-8 bytes.');
-        return { ok: true, data: { json, recovery: { graph: projected, workspaceViews: views } } };
+        return { ok: true, data: { json, recovery: { graph: projected, workspaceViews: views, ...(envelope.exampleMetadata?{exampleMetadata:envelope.exampleMetadata}:{}) } } };
     } catch(error) { return deferredControlErrors.has(error)?fail('UNSUPPORTED_FOUNDATION_CAPABILITY','Maintenance and history replacement controls are unavailable in the foundation release.'):fail('MALFORMED_WORKFLOW', 'Malformed workflow authoring containers.'); }
 }
 
@@ -171,11 +174,11 @@ export function parseWorkflowDocument(json) {
     if (!safeWorkflowData(envelope)) return fail('MALFORMED_WORKFLOW', 'Invalid workflow authoring data.');
     if (envelope.kind === 'lattice-workflow') {
         const portable = parseWorkflow(json);
-        return portable.ok ? { ok: true, data: { graph: admitRootMetadata(portable.data), workspaceViews: null } } : portable;
+        return portable.ok ? { ok: true, data: { graph: admitRootMetadata(portable.data), workspaceViews: null, ...(portable.exampleMetadata?{exampleMetadata:portable.exampleMetadata}:{}) } } : portable;
     }
     if (envelope.kind !== 'lattice-document' || !(envelope.schema===1&&envelope.minRuntime===2&&envelope.graph?.schema===3&&envelope.graph?.runtime===2||envelope.schema===2&&envelope.minRuntime===3&&envelope.graph?.schema===4&&envelope.graph?.runtime===3)) return fail('UNSUPPORTED_PACKAGE', 'Expected matching schema 1/runtime 2 or schema 2/runtime 3 authoring document.');
-    const serialized = serializeWorkflowDocument(envelope.graph, envelope.workspaceViews ?? null);
+    const serialized = serializeWorkflowDocument(envelope.graph, envelope.workspaceViews ?? null,{exampleMetadata:envelope.exampleMetadata});
     if (!serialized.ok) return serialized;
     const projected = JSON.parse(serialized.data.json);
-    return { ok: true, data: { graph: admitRootMetadata(projected.graph), workspaceViews: projected.workspaceViews ?? null } };
+    return { ok: true, data: { graph: admitRootMetadata(projected.graph), workspaceViews: projected.workspaceViews ?? null, ...(projected.exampleMetadata?{exampleMetadata:projected.exampleMetadata}:{}) } };
 }

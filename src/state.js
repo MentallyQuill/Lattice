@@ -1,3 +1,4 @@
+import {inspectSingletonMetadata} from './workflow/example-metadata.js?v=0.27.5';
 /** Current Lattice documents and settings. SillyTavern owns its normal prompt. */
 import { starterGraph } from './workflow/starters.js?v=0.27.5';
 import { exportWorkflow, parseWorkflow } from './workflow/packages.js?v=0.27.5';
@@ -201,8 +202,8 @@ function applySettings(value, next) {
     if (shared.owner !== value) {
         // Ownership persists a new recovery envelope even for an unchanged draft.
         writable.add('recoveryDraft');
-        const recovered = dataRecord(next.recoveryDraft), checked = recovered && admitActiveDocument(recovered.graph);
-        if (checked?.error?.code === 'WRONG_PHASE') writable.add('enabled');
+        const recovered = dataRecord(next.recoveryDraft), checked = admitRecoveryDocument(recovered);
+        if (checked?.error?.code === 'WRONG_PHASE'||recovered?.exampleMetadata!==undefined&&!checked?.ok) writable.add('enabled');
         if (next.recoveryDraft && !checked?.ok || checked?.ok && recovered.workspaceViews != null && !serializeWorkflowDocument(checked.data, recovered.workspaceViews).ok) {
             writable.add('migrationRecovery');
             if (!Object.isExtensible(next.migrationRecovery) || Object.getOwnPropertyDescriptor(next.migrationRecovery, 'length')?.writable !== true) throw new Error('Lattice settings are read-only; previous workflows were not changed.');
@@ -218,8 +219,8 @@ function applySettings(value, next) {
 
 function ownDocument(value, host) {
     if (shared.owner === value) return;
-    const original = value.recoveryDraft, recovered = dataRecord(original), checked = recovered && admitActiveDocument(recovered.graph);
-    if (checked?.error?.code === 'WRONG_PHASE') value.enabled = false;
+    const original = value.recoveryDraft, recovered = dataRecord(original), checked = admitRecoveryDocument(recovered);
+    if (checked?.error?.code === 'WRONG_PHASE'||recovered?.exampleMetadata!==undefined&&!checked?.ok) value.enabled = false;
     if (shared.owner) flushRecovery();
     shared.owner = value;
     shared.recoveryPending = false; shared.settingsSavePending = false; shared.settingsSaveTicket = null;
@@ -233,7 +234,7 @@ function ownDocument(value, host) {
         workspaceViews = null;
     }
     if (original && !recovered) value.migrationRecovery.push({ id: 'previous-recovery-draft', name: 'Previous recovery draft', original, issue: 'The previous recovery draft is unreadable.' });
-    activateDocument(checked?.ok ? checked.data : starterGraph('unified-basic'), { source: checked?.ok ? { kind: 'recovery', name: checked.data.name || 'Recovered workflow' } : null, workspaceViews }, { ownerReplacement: true });
+    activateDocument(checked?.ok ? checked.data : starterGraph('unified-basic'), { source: checked?.ok ? { kind: 'recovery', name: checked.data.name || 'Recovered workflow' } : null, workspaceViews, exampleMetadata:checked?.ok?recovered.exampleMetadata:undefined }, { ownerReplacement: true });
 }
 
 /** Admit saved settings once; camera projections never repeat domain validation. */
@@ -276,7 +277,7 @@ function recoveryTicket() {
     const previous = shared.pendingRecoveryTickets.get(shared.owner);
     return shared.recoveryTicket = {
         owner: shared.owner, captured, graph: captured.graph,
-        workspaceViews: documentSession.workspaceViews(), boundary: shared.ownerBoundary,
+        workspaceViews: documentSession.workspaceViews(), exampleMetadata:documentSession.exampleMetadata?.(), boundary: shared.ownerBoundary,
         recoveryPending: false, savePending: previous?.savePending ?? false, payload: null,
     };
 }
@@ -287,10 +288,10 @@ function releaseTicket(ticket) {
 function publishRecovery(ticket, checkedArtifacts, { retry = false } = {}) {
     ticket.recoveryPending = true; retainTicket(ticket);
     if (!retry || !ticket.payload) {
-        const encoded = serializeWorkflowDocument(ticket.graph, ticket.workspaceViews, { checkedArtifacts });
+        const encoded = serializeWorkflowDocument(ticket.graph, ticket.workspaceViews, { checkedArtifacts, exampleMetadata:ticket.exampleMetadata });
         if (!encoded.ok) { ticket.payload = null; return encoded; }
         const envelope = encoded.data.recovery ?? JSON.parse(encoded.data.json);
-        ticket.payload = { graph: envelope.graph, workspaceViews: envelope.workspaceViews ?? null };
+        ticket.payload = { graph: envelope.graph, workspaceViews: envelope.workspaceViews ?? null,...(envelope.exampleMetadata?{exampleMetadata:envelope.exampleMetadata}:{}) };
     }
     try { ticket.owner.recoveryDraft = ticket.payload; }
     catch { return recoveryIssue('RECOVERY_WRITE', 'The workflow recovery draft could not be stored.'); }
@@ -370,9 +371,14 @@ function admitActiveDocument(graph) {
     return checked.data.mode === 'native-unified' ? checked : { ok: false, error: { code: 'WRONG_PHASE', message: 'Active workflow documents require a unified root. Retired originals are recovery data only.' } };
 }
 
+function admitRecoveryDocument(recovered){
+    if(!recovered)return null;const checked=admitActiveDocument(recovered.graph);if(!checked.ok||recovered.exampleMetadata===undefined)return checked;
+    const metadata=inspectSingletonMetadata(recovered.exampleMetadata,checked.data,{pruneMissing:true});return metadata.ok?checked:metadata;
+}
 function activateDocument(graph, options = {}, { ownerReplacement = false } = {}) {
     const checked = admitActiveDocument(graph);
     if (!checked.ok) return checked;
+    if(options.exampleMetadata!==undefined){const metadata=inspectSingletonMetadata(options.exampleMetadata,graph,{pruneMissing:true});if(!metadata.ok)return metadata;options={...options,exampleMetadata:metadata.data};}
     const previous = documentSession.current();
     if (previous) {
         if (!ownerReplacement) flushRecovery({ onRecoveryIssue: options.onRecoveryIssue });
@@ -486,7 +492,7 @@ export function ungroup(graph, id) {
     delete graph.groups[id]; touchGraph(graph);
 }
 
-export function exportGraph(graph = activeWorkflow()) { return graph ? JSON.stringify(exportWorkflow(graph)) : null; }
+export function exportGraph(graph = activeWorkflow()) { return graph ? JSON.stringify(exportWorkflow(graph,{exampleMetadata:graph===documentSession.current()?documentSession.exampleMetadata?.():undefined})) : null; }
 /** Recovery download only; retired documents never become executable imports. */
 export function exportArchivedWorkflows() {
     const current = settings(), archive = current.archivedWorkflows;
