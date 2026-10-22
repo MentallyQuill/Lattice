@@ -117,5 +117,5 @@ Historical extraction reference: `d7ba79e` has a94-file transitive import closur
 - [x] Prepare version0.28 with existing version tools; regenerate/check deterministic outputs and legacy bytes. Run types, required release regressions, build/assets and clean-install smoke on the actual candidate.
 - [x] Perform one fresh whole-branch review against spec/F01–F16, fix actionable findings with appropriate focused RED-to-GREEN tests, then rerun affected final checks.
 - [x] Inspect every F gate against authoritative current evidence; missing or indirect proof remains incomplete.
-- [ ] Revalidate GitHub main/auth through network-enabled CLI, resolve integration without force/reset of foreign work, complete the authorized normal push and verify published revision and package contents.
-- [ ] Record deferred full-memory checkpoint/restore paths and continuation gaps. Mark only the foundation goal complete after all explicit deliverables are verified.
+- [x] Revalidate GitHub main/auth through network-enabled CLI, resolve integration without force/reset of foreign work, complete the authorized normal push and verify published revision and package contents.
+- [x] Record deferred full-memory checkpoint/restore paths and continuation gaps. Mark only the foundation goal complete after all explicit deliverables are verified.

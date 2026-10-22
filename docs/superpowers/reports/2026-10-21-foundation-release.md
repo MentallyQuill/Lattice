@@ -1,6 +1,6 @@
 # Foundation release execution evidence
 
-Date:2026-10-21. Status: **verification complete; normal main publication is the final step**. The user adopted the [foundation proposal](../specs/2026-10-21-foundation-release-proposal.md) for execution through an active goal. The [implementation plan](../plans/2026-10-21-foundation-release.md) owns bounded delivery steps. This supersedes the all 46 scope only for this release; the full memory program remains preserved and incomplete.
+Date:2026-10-21. Status: **foundation release verified and published to main**. The user adopted the [foundation proposal](../specs/2026-10-21-foundation-release-proposal.md) for execution through an active goal. The [implementation plan](../plans/2026-10-21-foundation-release.md) owns bounded delivery steps. This supersedes the all 46 scope only for this release; the full memory program remains preserved and incomplete.
 
 ## Scope
 
@@ -49,9 +49,9 @@ The runtime import inventory from index/catalog/host/runtime/controller has **19
 | F13 build/package | PASS: final0.28.0 types/build/assets,810imports;505-file ZIP independently extracted/rehashed and both actual native Send replays pass from that exact install |
 | F14 regressions | PASS: one final frozen run375/375Node files and51/51affected browser checks; initial failure lineage retained below |
 | F15 latency/cost | PASS: archive native preparation110ms/555ms; explicit35setup259ms(save8.41ms/read3.79ms); actual provider1288ms; archive Native Send replay1077ms/1416ms. Separate measurements on the disposable fixture; ten seconds remains best effort |
-| F16 final review/integration | Review PASS: three important findings reproduced/fixed, no critical/minor findings; final375/51checks and exact archive smoke green. Main publication pending |
+| F16 final review/integration | PASS: fresh review and fixes closed;375/51checks and exact archive smoke green; source release published normally and all504package inputs/95legacy blobs verified remotely |
 
-The foundation goal remains active. The broader memory program is preserved and incomplete. The final archive is built locally; no main push has been performed. Synthetic installed-host evidence is not counted as actual native/provider proof. The real-provider transport and current native replay are reported separately.
+The foundation goal remains active. The broader memory program is preserved and incomplete. The final archive is built and verified. The [source release commit](https://github.com/MentallyQuill/Lattice/commit/a4f4eaf32f3063d6a62f9f585e098acea09b3395) is published on main through a normal fast-forward with force=false. Synthetic installed-host evidence is not counted as actual native/provider proof. The real-provider transport and current native replay are reported separately.
 
 ## Product behavior and verified fixes
 
@@ -95,6 +95,8 @@ The current uninstrumented release then completes ordinary Send on the actual no
 
 The local archive `.tmp/releases/lattice-0.28.0-foundation.zip` contains505files/4813690bytes with SHA256 `f6ee4c3e5abbff6be033d92f58ef76f6f43d67dc09099267e47062687845e079`. Its canonical content digest is `851033db9cdbe2fc11a3db38f632220993bd45b383a6b8ce7b69ab05e23e4bee`. Runtime sources, compiled UI/assets, manifest/license/notices, public documentation and preserved/included examples are complete. Every ZIP entry has been independently extracted and rehashed; all95baseline hashes match. Developer tools/tests/dependencies, scratch evidence and credentials are excluded. Both34/35 now complete ordinary actual-host Native Send from this exact extraction using the captured real-provider reply, with zero additional paid requests, no missing assets/page errors, one review handle each and unchanged original history. Setup35takes259ms, including observed chat save8.41ms/readback3.79ms; preparation110ms/555ms and replay completions1077ms/1416ms. These replay timings exclude a new provider transport.
 
-## Remaining release work
+## Delivery and continuation
 
-All verification and packaging gates are closed. Commit the verified fixes/evidence and perform the authorized normal nonforce main publication; revalidate the published revision and package inputs. Retain the full-memory checkpoint and continuation gaps. The broader memory program remains incomplete and preserved; future work must incorporate the foundation compatibility/currentness fixes and native fixture-loading discipline before resuming deferred lifecycle or capstones.
+The foundation release is complete. Main was advanced normally through GitHub CLI with `force=false` to source commit [`a4f4eaf`](https://github.com/MentallyQuill/Lattice/commit/a4f4eaf32f3063d6a62f9f585e098acea09b3395). GitHub's published manifest is0.28.0. All504tracked package inputs match the published source tree, and all95legacy blobs match the reviewed main baseline. This evidence closeout changes documentation only; the tested product bytes and ZIP remain unchanged.
+
+The larger memory program remains incomplete and independently recoverable at the checkpoint and local archive paths above. Future work must incorporate the foundation compatibility/currentness fixes and use actual native chat loading before enrollment, then resume deferred lifecycle, retrieval and capstones in bounded steps. No advanced capability or extra lesson was silently shipped to finish this release. No second paid provider call was made; the real-provider capture and final native replay evidence remain explicitly separate.
