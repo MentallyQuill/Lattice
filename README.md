@@ -19,6 +19,18 @@ Your usual SillyTavern model writes the reply. Lattice can prepare guidance for 
 
 *Several story systems can share one workflow. Open a system to inspect its rules, edit it, or switch it off.*
 
+## New in 0.28.0: work with smaller passages
+
+A lore chapter or a long conversation is easier to work with a passage at a time. **Chunk** divides supplied material into smaller pieces. Choose their size, decide how much neighboring passages share, and inspect the result before using it to guide a reply.
+
+Two new lessons bring the examples browser to **32 editable workflows**. **Split a lore chapter into useful passages** includes a chapter you can experiment with. **Group replies into three-turn passages** works with older conversation turns while protecting the newest ones. Both include practice files, and the original conversation stays intact.
+
+![The lore passage lesson open in Lattice, with Chunk settings and its prepared result](docs/images/foundation-chunk.png)
+
+*Change the passage settings and use Run to here to see the result. This preparation makes no model request.*
+
+[Read the 0.28.0 release notes](docs/releases/0.28.0.md) for a short walkthrough and what this release includes.
+
 ## What could you build?
 
 **A broken wand with a 10% chance of chaos magic.** Give ordinary magic a weight of 90 and fixed chaos effects a combined weight of 10: butterflies, sudden frost, whispering shadows. After an actual use is confirmed, Random Pick chooses an effect. The weighted choice needs no model request; models can recognize the action and narrate the consequence. A retained draw is reused for the same event. [Build this version](docs/story-systems.md#a-wand-with-a-10-chaos-chance).
@@ -70,6 +82,8 @@ With SillyTavern installed and your usual model connection working:
 
 Next, choose **File → Open examples…**. Try **Give this scene one clear direction** for a simple editable instruction, or choose a lesson that fits your story. Each lesson explains its setup and model request budget. Model-based lessons need their connections configured; some also need story documents in Workflow Data.
 
+![The examples browser in Lattice 0.28.0, filtered to its two new passage lessons](docs/images/examples-curriculum.png)
+
 Lattice is in beta. Save your workflows and try substantial systems in a separate chat first. Update through SillyTavern’s **Manage Extensions**, then reload.
 
 ## Keep exploring
@@ -84,4 +98,4 @@ Lattice is in beta. Save your workflows and try substantial systems in a separat
 
 Lattice is released under the [MIT license](LICENSE) so the AI roleplay community can use, adapt, and build on this technology, in part or as a whole. See [third-party notices](THIRD_PARTY_NOTICES.md) for included dependencies.
 
-Screenshots and animations show the real editor on a local demonstration host with synthetic story material. The captures make no provider requests; model profiles shown are illustrative.
+The README screenshots and walkthroughs were captured from Lattice 0.28.0 on a local demonstration host with fictional story material. The captures make no provider requests; model profiles shown are illustrative.

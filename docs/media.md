@@ -36,6 +36,7 @@ The node settings captures also support the existing technical reference. The op
 | --- | --- |
 | Orientation and first reply | [Workspace overview](images/workspace-overview.png), [three-node starter](images/unified-starter.png) |
 | Choose a lesson | [Examples browser](images/examples-curriculum.png), [lesson details](images/example-lesson.png) |
+| Prepare passages | [Chunk lesson with settings and result](images/foundation-chunk.png) |
 | Connected processes | [Text and Data connections](images/connecting-nodes.png), [text cleanup](images/text-rules-graph.png), [scene planning](images/scene-planning-graph.png), [context assembly](images/context-assembly.png) |
 | Reusable tools | [Selected nodes](images/selection-subgraph.png), [extracted body](images/created-subgraph.png), [reconnected parent](images/subgraph-parent.png), [placed instance](images/subgraph-instance.png), [body tab](images/subgraph-tab.png), [port settings](images/subgraph-interface.png), [save dialog](images/subgraph-save.png) |
 | Story systems | [Combined workflow](images/beta-overview.png), [system settings](images/system-settings.png), [saved-system chooser](images/add-system.png), [placed-system connection assistance](images/system-connections.png), [wand system body](images/wand-system.png) |
@@ -53,6 +54,8 @@ The node settings captures also support the existing technical reference. The op
 The GIFs show actual gestures, with a cursor overlay because browser screenshots omit the system pointer. They loop at 10 frames per second and pause on the result. The manual provides still images alongside these actions.
 
 ## Capture and check
+
+The 0.28.0 README stills and its two walkthroughs were refreshed on 2026-10-21 from the committed production UI. The `--only=release` take captures the combined workspace, the 32-lesson browser filtered to the two new passage lessons, and a successful zero-model-call Chunk preparation. The `--only=shelf` and `--only=subgraph` takes refresh the README animations. Use `LATTICE_DOC_SHOTS=review-candidate` with the first script for the reply-review still. Selected capture evidence is kept in `docs/release-media/2026-10-21/`.
 
 Use Node.js 24+, the locked project dependencies, an installed Playwright Chromium browser, and FFmpeg on PATH:
 

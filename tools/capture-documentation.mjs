@@ -261,7 +261,7 @@ try {
     await shot('text-rules-details', '.pc-inspector');
     await shot('text-rules-graph');
     await activate('unified-basic');
-    await page.getByRole('checkbox',{name:'Enable Lattice',exact:true}).check();
+    await page.getByRole('switch',{name:'Enable Lattice',exact:true}).check();
     await page.evaluate(async()=>{
         const h=window.canvasHarness,c=h.context;
         Object.assign(c,{chatId:'documentation-unified',characterId:0,groupId:null,characters:[{avatar:'mara.png',data:{name:'Mara'}}],saveChat:async()=>{},updateMessageBlock:async()=>{},swipe:{refresh:async()=>{}}});

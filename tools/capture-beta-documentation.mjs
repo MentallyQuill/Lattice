@@ -104,8 +104,8 @@ async function menu(group, command) {
     await page.getByRole('menuitem', { name: command, exact: true }).click();
 }
 async function select(id) { await heading(id).click(); await settle(); }
-async function fit(maxZoom = .95, selector = '.pc-node-native') {
-    await page.evaluate(async ({ maxZoom, selector }) => {
+async function fit(maxZoom = .95, selector = '.pc-node-native', commit = false) {
+    await page.evaluate(async ({ maxZoom, selector, commit }) => {
         const h = window.canvasHarness, c = h.canvas;
         c.fit(); await h.settle();
         const area = c.host.getBoundingClientRect(), v = c.view;
@@ -116,8 +116,10 @@ async function fit(maxZoom = .95, selector = '.pc-node-native') {
         const width = Math.max(...boxes.map(b => b.x + b.w)) - left, height = Math.max(...boxes.map(b => b.y + b.h)) - top;
         const zoom = Math.min(maxZoom, (area.width - 210) / width, (area.height - 100) / height);
         Object.assign(v, { zoom, x: 165 + (area.width - 210 - width * zoom) / 2 - left * zoom, y: (area.height - height * zoom) / 2 - top * zoom });
-        c.applyTransform(); await h.settle();
-    }, { maxZoom, selector });
+        c.applyTransform();
+        if (commit) c.hooks.onViewCommit?.();
+        await h.settle();
+    }, { maxZoom, selector, commit });
 }
 async function load(kind = 'structured') {
     // Each take starts with a fresh panel layout; previous demonstrations may
@@ -226,6 +228,46 @@ try {
     page.on('pageerror', e => evidence.errors.push(e.message));
     page.on('console', msg => { if (msg.type() === 'error') evidence.errors.push(msg.text()); });
     page.on('response', r => { if (r.status() >= 400) evidence.errors.push('HTTP ' + r.status() + ': ' + r.url()); });
+
+    if (only === 'release') {
+        await check('Release version is 0.28.0', evidence.version === '0.28.0');
+        await page.setViewportSize({ width: 1680, height: 1050 });
+        await load('hero'); await select('compose');
+        await page.getByRole('button', { name: 'Collapse preview', exact: true }).click();
+        await fit(.95); await screenshot('beta-overview');
+        await load('starter'); await select('review-publish');
+        await menu('File', 'Open examples…');
+        const examples = page.getByRole('dialog', { name: 'Examples', exact: true });
+        await expect(examples).toHaveAttribute('aria-busy', 'false');
+        await check('Release catalog contains 32 lessons', await examples.locator('.pc-example-tile').count() === 32);
+        await examples.locator('.pc-example-details-button[data-example-id="lesson-34"]').click();
+        await expect(examples.getByRole('link', { name: 'Download harbor-lore-chapter.txt', exact: true })).toBeVisible();
+        await examples.locator('.pc-example-details > header button').click();
+        await examples.getByLabel('Search lessons', { exact: true }).fill('passages');
+        await expect(examples.locator('.pc-example-tile')).toHaveCount(2);
+        await screenshot('examples-curriculum', ['.pc-examples-filters', '.pc-example-tile']);
+        await examples.locator('.pc-example-details-button[data-example-id="lesson-34"]').click();
+        await examples.getByRole('button', { name: 'Open independent copy', exact: true }).click();
+        const guard = page.getByRole('dialog', { name: 'Save workflow changes?', exact: true });
+        await Promise.race([
+            guard.waitFor({ state: 'visible', timeout: 5000 }),
+            page.waitForFunction(() => window.canvasHarness.S.documentSession.exampleMetadata()?.id === 'lesson-34'),
+        ]);
+        if (await guard.isVisible()) await guard.getByRole('button', { name: "Don't Save", exact: true }).click();
+        await page.waitForFunction(() => window.canvasHarness.S.documentSession.exampleMetadata()?.id === 'lesson-34');
+        const chunkId = await page.evaluate(() => Object.values(window.canvasHarness.S.activeWorkflow().nodes).find(node => node.operation === 'chunk').id);
+        await run(chunkId);
+        const composeId = await page.evaluate(() => Object.values(window.canvasHarness.S.activeWorkflow().nodes).find(node => node.operation === 'compose').id);
+        await run(composeId);
+        await page.getByRole('button', { name: 'Pin preview', exact: true }).click();
+        await select(chunkId);
+        const divider = page.getByRole('separator', { name: 'Resize preview', exact: true });
+        await divider.focus();
+        for (let step = 0; step < 5; step++) await divider.press('Shift+ArrowDown');
+        await fit(.95, '.pc-node-native:is([data-id="chapter"], [data-id="passages"], [data-id="render"])', true);
+        await screenshot('foundation-chunk');
+        await check('Release captures made no provider requests', await page.evaluate(() => window.canvasHarness.providerCalls()) === 0);
+    }
 
     if (!only || only === 'manual') {
         await page.setViewportSize({ width: 1440, height: 1000 });

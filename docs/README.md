@@ -4,6 +4,8 @@ Choose a route based on what you want to do. The [project README](../README.md) 
 
 ## Start using Lattice
 
+[What’s new in 0.28.0](releases/0.28.0.md) introduces the two new passage lessons and explains how to try them.
+
 1. [Quick start](lattice-workspace.md) — install the extension in SillyTavern, send your first reply, review it, and save your workflow.
 2. [Operator’s manual](operators-manual.md) — learn the canvas, node settings, Preview, connections, subgraphs, and file commands through illustrated instructions.
 3. [32 example workflows](examples.md) — choose a lesson, configure its requirements, and try a complete workflow in a practice chat.

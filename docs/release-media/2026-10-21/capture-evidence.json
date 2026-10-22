@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-21",
+  "version": "0.28.0",
+  "runtimeSourceCommit": "a4f4eaf32f3063d6a62f9f585e098acea09b3395",
+  "compiledUiSha256": "5eeb034945ec5cd8316e9c59c4ba02ae382c9452adba195c78904d3488f84067",
+  "host": "local documentation harness with production compiled UI and fictional practice material",
+  "providerRequests": 0,
+  "captures": {
+    "release": {
+      "status": "passed",
+      "version": "0.28.0",
+      "checks": [
+        {
+          "label": "Release version is 0.28.0",
+          "value": true
+        },
+        {
+          "label": "Release catalog contains 32 lessons",
+          "value": true
+        },
+        {
+          "label": "Successful deterministic preview",
+          "value": true
+        },
+        {
+          "label": "Successful deterministic preview",
+          "value": true
+        },
+        {
+          "label": "Release captures made no provider requests",
+          "value": true
+        },
+        {
+          "label": "No auxiliary model requests",
+          "value": true
+        }
+      ],
+      "errors": [],
+      "blockedRequests": []
+    },
+    "shelf": {
+      "status": "passed",
+      "version": "0.28.0",
+      "checks": [
+        {
+          "label": "Shelf drag creates exactly one Text Rules node",
+          "value": true
+        },
+        {
+          "label": "No auxiliary model requests",
+          "value": true
+        }
+      ],
+      "errors": [],
+      "blockedRequests": []
+    },
+    "subgraph": {
+      "status": "passed",
+      "version": "0.28.0",
+      "checks": [
+        {
+          "label": "Three processing nodes selected",
+          "value": true
+        },
+        {
+          "label": "Extraction creates typed input and output boundaries",
+          "value": true
+        },
+        {
+          "label": "Parent wires reconnect through the wrapper",
+          "value": true
+        },
+        {
+          "label": "No auxiliary model requests",
+          "value": true
+        }
+      ],
+      "errors": [],
+      "blockedRequests": []
+    },
+    "review": {
+      "status": "passed",
+      "screenshots": 1,
+      "errors": [],
+      "blockedRequests": [],
+      "auxiliaryCalls": 0
+    }
+  },
+  "media": [
+    {
+      "path": "docs/images/beta-overview.png",
+      "bytes": 99256,
+      "sha256": "b09835795bfc5dc6d9ec9beaa3a03666d4c2c8b8aa26a17228b09ed6567be165"
+    },
+    {
+      "path": "docs/images/create-subgraph.gif",
+      "bytes": 429123,
+      "sha256": "381386c022f36e070dccdc58116a78cc14b53fe7c3e40e51a786dd0e03925af0"
+    },
+    {
+      "path": "docs/images/examples-curriculum.png",
+      "bytes": 25186,
+      "sha256": "7c2b765b2c1eff6ab14494dec7b67b1114966f1fcce0dfd743d675660e62270c"
+    },
+    {
+      "path": "docs/images/foundation-chunk.png",
+      "bytes": 127820,
+      "sha256": "716f1938da1e696d35e77086fab37fc2e5e42ce7b6bbe5a77d3db1f85f18aa48"
+    },
+    {
+      "path": "docs/images/review-candidate.png",
+      "bytes": 17427,
+      "sha256": "fc4fc0faaf28576ac53a47131c2eecd5f03343c3cc329682213b408887a689c6"
+    },
+    {
+      "path": "docs/images/search-and-place.gif",
+      "bytes": 394633,
+      "sha256": "04502f5c4efd2c97b1baebc0e4303b4aed5f10b24be012aaa696df7016ba8275"
+    }
+  ]
+}

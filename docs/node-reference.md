@@ -50,6 +50,7 @@ Model calls below are maximum auxiliary calls **per execution of that operation*
 | Input | [Scene Context](#scene-context) | Pre | Source → Context | 0 |
 | Input | [Reply Snapshot](#reply-snapshot) | Post | Source → Draft | 0 |
 | Shaping | [Smart Compactor](#smart-compactor) | Pre | Context → Context | 0–1 |
+| Derive | [Chunk](#chunk) | Both; runtime 3 | Text/Context + optional source manifest → passages/manifest/report | 0 |
 | Shaping | [Context Join](#context-join) | Pre | Context × 2–16 → Context | 0 |
 | Shaping | [Response Plan](#response-plan) | Pre | Context → Guidance | 1 |
 | Shaping | [Compose](#compose) | Both | Optional Data + typed Text/Guidance sections → Text or Guidance | 0 |
@@ -159,6 +160,20 @@ Freeze the latest completed text-only assistant reply and its chat/message/swipe
 **Connect:** Reply Snapshot → Text Rules for deterministic cleanup, or Generate Reply → Pattern → Branch → Filter Text → Join → Review / Publish for keyword filtering. An older, unfinished, tool/intermediate, or media reply is not a supported repair target.
 
 ## Shaping
+
+### Chunk
+
+Divide supplied text or selected conversation context into passages. Chunk makes no model requests, writes no story data, and leaves the original chat history intact. Start with [the two passage lessons](examples.md#foundation-passage-lessons) for complete editable workflows.
+
+**Inputs:** `in` accepts Text or Context according to **Input mode**. The optional `sourceManifest` input carries a compatible source manifest; imported identifiers alone do not grant native source authority.
+
+**Outputs:** `out` contains passage records with stable identities, text and exact source spans; `manifest` describes the derivation; `report` records the preparation and its bounds. These are Data outputs. Render or compose their text explicitly before connecting it to Guidance.
+
+**Controls:** choose paragraph, sentence, fixed-size, or assistant-turn grouping. Text sizing uses UTF-16 length by default, with explicit target size and overlap. Assistant-turn grouping requires Context input, a declared turns-per-passage count, and zero overlap. Set the maximum passage count to bound output. Exact token sizing requires an identified matching tokenizer; when the host lacks it, Details reports the missing capability and token mode fails without partial output. It never substitutes an estimated token count.
+
+**Conversation sources:** lesson 35 uses Scene Context's **Before window** selection and explicit verified chat-source setup. **Keep recent assistant turns** selects the protected recent window independently of Chunk's passage size. Only verified eligible older pairs can be grouped; that selection does not authorize removing or replacing raw chat messages.
+
+Chunk requires schema 4/runtime 3. Use a current passage lesson as the authoring starting point. Existing runtime-2 workflows retain their saved semantics and are not silently upgraded.
 
 ### Smart Compactor
 
