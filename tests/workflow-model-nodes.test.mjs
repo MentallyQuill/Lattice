@@ -96,6 +96,27 @@ test('model extraction checks quoted evidence and keeps its semantic claims prop
     const invalid = await models.executeModelNode(node('extract'), { source }, { phase: 'post', request: async () => ({ ok: true, data: { text: JSON.stringify([{ ...records[0], evidence: [{ start: 0, end: 5, quote: 'ghost' }] }]), finish: 'stop' } }) });
     assert.equal(invalid.error.code, 'INVALID_EVIDENCE');
 });
+
+test('model extraction supplies zero-based exclusive UTF-16 evidence offsets including an astral-character example', async () => {
+    let prompt;
+    const result = must(await models.executeModelNode(node('extract', { inputKind: 'text' }), { source: { kind: 'text', text: 'A 🧭 key.' } }, { phase: 'post', request: async request => {
+        prompt = JSON.parse(request.messages[1].content);
+        return { ok: true, data: { text: '[{"id":"key","label":"Key","text":"A key","classification":"observation","evidence":[{"start":5,"end":8,"quote":"key"}]}]', finish: 'stop' } };
+    } }));
+    assert.deepEqual(prompt.evidenceOffsets, { unit: 'UTF-16 code units', base: 0, endExclusive: true, example: { source: 'A 🧭 key.', start: 5, end: 8, quote: 'key' } });
+    assert.deepEqual(result.artifact.value.records[0].evidence, [{ start: 5, end: 8, quote: 'key' }]);
+    assert.equal(result.artifact.value.records[0].status, 'proposed');
+});
+
+test('captured GLM extraction with an end offset extending into punctuation is refused without repairing evidence', async () => {
+    const source = { kind: 'text', text: 'Mira carries a brass key.' };
+    const raw = '[{"id":"brass-key","label":"Key","text":"The carried object is a brass key.","classification":"observation","evidence":[{"start":15,"end":25,"quote":"brass key"}]}]';
+    const result = await models.executeModelNode(node('extract', { inputKind: 'text' }), { source }, { phase: 'post', request: async () => ({ ok: true, data: { text: raw, finish: 'stop' } }) });
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, 'INVALID_EVIDENCE');
+    assert.equal(result.artifact, undefined);
+    assert.equal(source.text, 'Mira carries a brass key.');
+});
 test('Enrich retains record identity and evidence while labeling model additions as generated proposals', async () => {
     const data = { kind: 'data', visibility: { kind: 'public' }, value: { type: 'extracted-records', sourceRefs: [{ kind: 'draft', revisionId: 'r1' }], records: [{ id: 'wand', label: 'Wand', text: 'Broken wand', classification: 'observation', status: 'proposed', evidence: [{ start: 0, end: 11, quote: 'Broken wand' }] }] } };
     const output = must(await models.executeModelNode(node('enrich', { instructions: 'Expand details' }), { data, context: { kind: 'context', messages: [{ id: 'm1', role: 'assistant', text: 'The wand is ashwood.' }] } }, { phase: 'post', request: async () => ({ ok: true, data: { text: '[{"id":"wand","details":"Ashwood grain and a fractured tip."}]', finish: 'stop' } }) }));

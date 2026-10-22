@@ -2,11 +2,53 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createProviderTestGuard, createRequestBoundary, runProviderTestSession, createReservationBridge, productionModulePath } from '../tools/provider-test-guard.mjs';
+import {createServer} from 'node:net';
+import {spawn} from 'node:child_process';
+const nativeBoundary=await import('../tools/native-model-host-boundary.mjs').catch(()=>({}));
 const model = 'fixture-plain';
 const owned = [{role:'system',content:'Synthetic fixture only.'},{role:'user',content:'A synthetic blue lantern.'}];
 const options = { live:true, host:'http://127.0.0.1:8000', priorAttempts:0, maxAttempts:3, approvedModels:[model], fixtureLabels:['bounded auxiliary request'] };
 const request = {binding:{model},messages:owned,maxTokens:1024};
 const response = {ok:true,data:{text:'Fixture answer',finish:'stop',usage:{prompt_tokens:20,completion_tokens:3}}};
+
+test('native model check refuses an occupied port without connecting to the existing host',async()=>{
+    assert.equal(typeof nativeBoundary.assertLoopbackPortFree,'function');
+    let connections=0;const occupied=createServer(()=>connections++);
+    await new Promise(resolve=>occupied.listen(0,'127.0.0.1',resolve));
+    try{await assert.rejects(nativeBoundary.assertLoopbackPortFree(`http://127.0.0.1:${occupied.address().port}`),/occupied/i);assert.equal(connections,0);}
+    finally{await new Promise(resolve=>occupied.close(resolve));}
+});
+
+test('native model check only allows required local lifecycle routes, never auxiliary provider or proxy APIs',()=>{
+    assert.equal(typeof nativeBoundary.allowNativeLocalRequest,'function');
+    const host='http://127.0.0.1:4293';
+    for(const path of ['/api/vector/insert','/api/vector/query','/api/backends/chat-completions/generate','/api/unknown','/proxy/https://api.nanogpt.com/v1/chat/completions'])for(const method of ['GET','POST'])assert.equal(nativeBoundary.allowNativeLocalRequest({url:host+path,method},host),false,path);
+    assert.equal(nativeBoundary.allowNativeLocalRequest({url:'https://api.nanogpt.com/v1/chat/completions',method:'POST'},host),false);
+    assert.equal(nativeBoundary.allowNativeLocalRequest({url:host+'/api/chats/save',method:'POST'},host),true);
+    assert.equal(nativeBoundary.allowNativeLocalRequest({url:host+'/api/chats/save?extra=true',method:'POST'},host),false);
+    assert.equal(nativeBoundary.allowNativeLocalRequest({url:host+'/api/chats/save',method:'GET'},host),false);
+    assert.equal(nativeBoundary.allowNativeLocalRequest({url:host+'/scripts/extensions/third-party/Lattice/index.js?v=0.28.0',method:'GET'},host),true);
+    assert.equal(nativeBoundary.allowNativeLocalRequest({url:host+'/lib.js',method:'GET'},host),true);
+    assert.equal(nativeBoundary.allowNativeLocalRequest({url:host+'/sounds/message.mp3',method:'GET'},host),true);
+    assert.equal(nativeBoundary.allowNativeLocalRequest({url:host+'/locales/lang.json',method:'GET'},host),true);
+});
+
+test('native model startup requires its child listening announcement and rejects early exit',async()=>{
+    assert.equal(typeof nativeBoundary.waitForOwnedNativeHost,'function');
+    const child=spawn(process.execPath,['-e',"console.log('SillyTavern is listening on IPv4: 127.0.0.1:4293');setTimeout(()=>{},30000)"],{windowsHide:true,stdio:['ignore','pipe','pipe']});
+    try{await nativeBoundary.waitForOwnedNativeHost(child,'http://127.0.0.1:4293',2000);assert.equal(child.exitCode,null);}
+    finally{child.kill();}
+    const exited=spawn(process.execPath,['-e','process.exit(1)'],{windowsHide:true,stdio:['ignore','pipe','pipe']});
+    await assert.rejects(nativeBoundary.waitForOwnedNativeHost(exited,'http://127.0.0.1:4293',2000),/exited/i);
+});
+
+test('native replay accepts legacy arrays and its own ledgers, rejecting absent or failed selected responses',()=>{
+    assert.equal(typeof nativeBoundary.readReplayCompletion,'function');
+    const complete={outcome:'complete',finish:'stop',output:'Synthetic captured reply.'};
+    assert.equal(nativeBoundary.readReplayCompletion([complete],0).output,'Synthetic captured reply.');
+    assert.equal(nativeBoundary.readReplayCompletion({attempts:[complete]},0).output,'Synthetic captured reply.');
+    for(const [document,index]of [[[],0],[{attempts:[complete]},1],[[complete],-1],[[{...complete,outcome:'failed'}],0],[[{...complete,finish:'length'}],0]])assert.throws(()=>nativeBoundary.readReplayCompletion(document,index),/captured|replay/i);
+});
 function probe(config = options, reply = response) {
     let executions = 0;
     const guard = createProviderTestGuard(config);

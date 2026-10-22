@@ -46,7 +46,7 @@ test('ordinary cold and warm opening defer example preparation until the Example
     await page.getByRole('menuitem', { name: 'Open examples…', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Examples', exact: true });
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator('.pc-example-tile')).toHaveCount(30);
+    await expect(dialog.locator('.pc-example-tile')).toHaveCount(32);
     expect(await page.evaluate(() => window.openWork.examples)).toBe(1);
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
 });
@@ -140,7 +140,7 @@ test('deferred example errors remain sanitized and the popup retry restores all 
     await expect(dialog.locator('.pc-example-tile')).toHaveCount(0);
     await page.evaluate(() => { window.openWork.failExamples = false; });
     await dialog.getByRole('button', { name: 'Reload examples', exact: true }).click();
-    await expect(dialog.locator('.pc-example-tile')).toHaveCount(30);
+    await expect(dialog.locator('.pc-example-tile')).toHaveCount(32);
     expect(await page.evaluate(() => window.openWork.examples)).toBe(2);
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
 });

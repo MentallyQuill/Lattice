@@ -26,6 +26,15 @@ node tests/introspection-types.test.mjs
 
 `npm run test` discovers the repository's unit files through [tools/test-all.mjs](../tools/test-all.mjs). `npm run check:types` checks Svelte and TypeScript consumers, and `npm run test:browser` exercises the actual built UI with the mock host. Browser tests require installed Playwright Chromium. Tests and capture fixtures use synthetic story data; they are not live-provider validation.
 
+For a native model check, [tools/verify-model-host.mjs](../tools/verify-model-host.mjs) uses an existing disposable SillyTavern installation and data/config fixture on loopback port 4293. It waits for native startup, creates and reloads a fictional test chat, then captures chat and metadata at each request boundary. Use a fixture with Lattice installed through SillyTavern's Git extension manager; overlay the candidate module when testing an unpublished fix. Never point it at your ordinary user data.
+
+```powershell
+node tools/verify-model-host.mjs --hostRoot F:/SillyTavern/SillyTavern --fixture C:/temp/lattice-test --output .tmp/revision-replay --case revision --replay C:/temp/captured-ledger.json
+node tools/verify-model-host.mjs --hostRoot F:/SillyTavern/SillyTavern --fixture C:/temp/lattice-test --output .tmp/extraction-live --case extract --live
+```
+
+The checker refuses an occupied port and waits for its own server process. Browser traffic uses an explicit local-route allowlist; the reserved generation payload is the only provider route. Replay accepts both an attempt array and the checker's own ledger wrapper, and makes zero provider requests. Live mode permits one NanoGPT `z-ai/glm-5.2:thinking` request using the fixture's configured credential, persists its reservation before transport, and makes no automatic retry. The default completion cap is the node's normal 2,048 tokens; `--maxTokens` accepts 1–4,096. A thinking model can exhaust a smaller cap before producing its answer; truncated output remains a failure. Output directories must be new. Retain failed outputs and the ledger, and remove any test-only credential copy after the server stops.
+
 | Location | Responsibility |
 | --- | --- |
 | `ui/*.svelte` | Workbench, nodes, shelf, Details, Preview, and manager presentation |
@@ -42,8 +51,9 @@ node tests/introspection-types.test.mjs
 | `src/workflow/examples.js`, `src/workflow/remastered-example-data.js`, `src/workflow/unified-example-data.js` | Validated curriculum/earlier unified recipes and independent-copy opening |
 | `src/ui/example-catalog.js`, `ui/ExamplesBrowser.svelte` | Actual-package thumbnail projection and compact example picker |
 | `tools/build-remastered-examples.mjs`, `tools/remastered/` | Generate the 30 numbered curriculum lessons, fixtures and bundled runtime data |
+| `tools/build-memory-examples.mjs`, `src/workflow/memory-example-data.js` | Generate the two additional passage lessons and their practice files |
 | `tools/build-unified-examples.mjs` | Regenerate earlier unified packages retained for existing example IDs |
-| `examples/remastered/`, `examples/unified/` | Thirty visible curriculum lessons and earlier independent unified packages |
+| `examples/remastered/`, `examples/memory/`, `examples/unified/` | Thirty-two visible curriculum lessons and earlier independent unified packages |
 | `workflows/subgraphs/`, `examples/library/subgraphs/` | Retained stage-specific reusable processing packages |
 | `tests/browser/` | Mock host and production UI acceptance fixtures |
 

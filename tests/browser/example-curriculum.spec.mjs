@@ -16,10 +16,10 @@ async function launch(page) {
 test('curriculum search, difficulty and lesson details teach before independent opening', async ({page}) => {
     const dialog = await launch(page);
     const original = await page.evaluate(() => JSON.stringify(window.canvasHarness.graph));
-    await expect(dialog.locator('.pc-example-tile')).toHaveCount(30);
+    await expect(dialog.locator('.pc-example-tile')).toHaveCount(32);
     await dialog.getByLabel('Search lessons').fill('Story Clock');
     expect(await dialog.locator('.pc-example-tile').count()).toBeGreaterThan(0);
-    expect(await dialog.locator('.pc-example-tile').count()).toBeLessThan(30);
+    expect(await dialog.locator('.pc-example-tile').count()).toBeLessThan(32);
     await dialog.getByLabel('Search lessons').fill('');
     await dialog.getByLabel('Difficulty').selectOption('Capstone');
     await expect(dialog.locator('.pc-example-tile')).toHaveCount(4);
