@@ -38,7 +38,7 @@ The 500-card synchronous release median decreased 203.3 to 197.8 ms, but settled
 
 **Conclusion:** retain the two small guards for their clear pan/zoom scripting reduction. The tested offscreen-paint implementation is excluded because its incremental evidence was mixed. Further work on frame consistency and drag release requires a separate measured change; the current evidence does not promise a physical-GPU FPS improvement.
 
-Final raw evidence: [paired baseline](artifacts/high-resolution-2026-10-11/final-baseline-4k/viewport-performance-results.json) and [guard-only implementation](artifacts/high-resolution-2026-10-11/final-guards-4k/viewport-performance-results.json).
+Final raw evidence: [paired baseline](artifacts/high-resolution-2026-10-11/final-baseline-4k/results.json) and [guard-only implementation](artifacts/high-resolution-2026-10-11/final-guards-4k/results.json).
 
 Across the final pair and seven historical clean cohorts, **265 measured gestures, 11,660 frame intervals and 49 warmups** completed with zero provider calls, page errors, HTTP errors or blocked external requests, and passing retained-DOM/geometry checks. Failed diagnostics are excluded from these totals.
 
@@ -126,9 +126,9 @@ All seven historical cohorts completed with **175 measured gestures and 7,700 fr
 
 Historical raw evidence:
 
-- Initial cohorts: [baseline](artifacts/high-resolution-2026-10-11/baseline-4k/viewport-performance-results.json), [prototype](artifacts/high-resolution-2026-10-11/optimized-4k/viewport-performance-results.json), [prototype with painting disabled](artifacts/high-resolution-2026-10-11/optimized-no-culling-4k/viewport-performance-results.json).
-- Reverse-order 10-card pan: [prototype](artifacts/high-resolution-2026-10-11/repeat-small-pan-optimized/viewport-performance-results.json), [baseline](artifacts/high-resolution-2026-10-11/repeat-small-pan-baseline/viewport-performance-results.json).
-- Reverse-order 500-card zoom: [prototype](artifacts/high-resolution-2026-10-11/repeat-large-zoom-optimized/viewport-performance-results.json), [completed baseline](artifacts/high-resolution-2026-10-11/repeat-large-zoom-baseline/viewport-performance-results.json).
+- Initial cohorts: [baseline](artifacts/high-resolution-2026-10-11/baseline-4k/results.json), [prototype](artifacts/high-resolution-2026-10-11/optimized-4k/results.json), [prototype with painting disabled](artifacts/high-resolution-2026-10-11/optimized-no-culling-4k/results.json).
+- Reverse-order 10-card pan: [prototype](artifacts/high-resolution-2026-10-11/repeat-small-pan-optimized/results.json), [baseline](artifacts/high-resolution-2026-10-11/repeat-small-pan-baseline/results.json).
+- Reverse-order 500-card zoom: [prototype](artifacts/high-resolution-2026-10-11/repeat-large-zoom-optimized/results.json), [completed baseline](artifacts/high-resolution-2026-10-11/repeat-large-zoom-baseline/results.json).
 
 ## Excluded diagnostic runs
 
