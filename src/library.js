@@ -1,10 +1,11 @@
+import {referencedDefinitionKeys} from './workflow/retired-workflows.js?v=0.28.0';
+import {partitionFoundationLibrary} from './workflow/foundation-library.js?v=0.28.0';
 /** Validated reusable Lattice subgraphs; persistence never edits placed snapshots. */
-import { settings, save } from './state.js?v=0.27.5';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey } from './workflow/definitions.js?v=0.27.5';
-import { selectSubgraphClosure } from './workflow/packages.js?v=0.27.5';
-import { validateGraphStructure } from './workflow/contracts.js?v=0.27.5';
-import { installDefinition, createRevision, removeLibraryEntry } from './workflow/definition-library.js?v=0.27.5';
-const subgraphCaches = new WeakMap();
+import { settings, save } from './state.js?v=0.28.0';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey } from './workflow/definitions.js?v=0.28.0';
+import { selectSubgraphClosure } from './workflow/packages.js?v=0.28.0';
+import { installDefinition, createRevision, removeLibraryEntry } from './workflow/definition-library.js?v=0.28.0';
+const subgraphCaches = new WeakMap(),retainedLibraryCaches=new WeakMap();
 const libraryFailure = (code, message) => Object.freeze({ ok: false, error: Object.freeze({ code, message }) });
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
 const reference = definition => ({ id: definition.id, version: definition.version, semanticHash: definition.semanticHash });
@@ -22,19 +23,9 @@ function shelfEntries(library) {
  */
 export function loadSubgraphLibrary() {
     const s = settings(), property = Object.getOwnPropertyDescriptor(s, 'subgraphLibrary');
-    const copied = property && 'value' in property ? cloneDefinitionData(property.value) : libraryFailure('DEFINITION_DATA', 'The saved subgraph library must be plain data.');
-    let result = copied;
-    if (copied.ok) {
-        const library = copied.data;
-        if (!record(library) || Object.keys(library).some(key => !['definitions', 'entries'].includes(key)) || !record(library.definitions) || library.entries !== undefined && !record(library.entries)) result = libraryFailure('DEFINITION_DATA', 'Expected saved definitions and optional shelf entries.');
-        else {
-            const checked = validateGraphStructure({ schema: 3, runtime: 2, mode: 'native-unified', nodes: {}, wires: {}, definitions: library.definitions });
-            result = checked.ok ? Object.freeze({ ok: true, data: library }) : libraryFailure(checked.error.code, checked.error.message);
-            if (result.ok && library.entries !== undefined && Object.entries(library.entries).some(([id, ref]) => !safeId(id) || !record(ref)
-                || Object.keys(ref).length !== 3 || Object.keys(ref).some(key => !['id', 'version', 'semanticHash'].includes(key)) || ref.id !== id
-                || !Object.hasOwn(library.definitions, definitionRefKey(ref)))) result = libraryFailure('DEFINITION_REF', 'Shelf entries must pin an existing exact saved revision.');
-        }
-    } else result = libraryFailure(copied.error.code, copied.error.message);
+    const partition = property && 'value' in property ? partitionFoundationLibrary(property.value) : libraryFailure('DEFINITION_DATA', 'The saved subgraph library must be plain data.');
+    const result=partition.ok?Object.freeze({ok:true,data:partition.data,...(partition.unavailable.length?{unavailable:partition.unavailable}:{})}):libraryFailure(partition.error.code,partition.error.message);
+    if(partition.ok)retainedLibraryCaches.set(s,partition.raw);else retainedLibraryCaches.delete(s);
     subgraphCaches.set(s, result);
     return result;
 }
@@ -51,21 +42,25 @@ export function getSubgraphShelfEntries() {
 }
 
 function changeSubgraphLibrary(prepare) {
-    const loaded = loadSubgraphLibrary(); if (!loaded.ok) return loaded;
-    const result = prepare(loaded.data); if (!result.ok || !result.data.changed) return result;
-    const s = settings();
-    // Persist a separate copy. No root touch, history step, run cancellation or authority change.
-    try { s.subgraphLibrary = structuredClone(result.data.library); }
-    catch { return libraryFailure('LIBRARY_READ_ONLY', 'The saved subgraph library is read-only.'); }
-    subgraphCaches.set(s, Object.freeze({ ok: true, data: result.data.library }));
-    save(); return result;
+    const loaded=loadSubgraphLibrary();if(!loaded.ok)return loaded;
+    const s=settings(),raw=retainedLibraryCaches.get(s),result=prepare(loaded.data,raw);if(!result.ok||!result.data.changed)return result;
+    const cold=Object.fromEntries(Object.entries(raw.definitions).filter(([key])=>!Object.hasOwn(loaded.data.definitions,key)));
+    const removed=new Set(Object.keys(loaded.data.definitions).filter(key=>!Object.hasOwn(result.data.library.definitions,key)));
+    if(removed.size&&Object.values(cold).some(definition=>[...referencedDefinitionKeys(definition,raw.definitions)].some(key=>removed.has(key))))return libraryFailure('DEFINITION_IN_USE','A retained unavailable revision still pins this definition. Hide its shelf entry instead of removing the saved revision.');
+    for(const item of Object.values(result.data.library.definitions))if(Object.values(cold).some(saved=>saved.id===item.id&&saved.version===item.version&&definitionRefKey(saved)!==definitionRefKey(item)))return libraryFailure('DEFINITION_CONFLICT','An unavailable saved revision already occupies this version. Save a new revision or use a fresh ID.');
+    const entries=result.data.library.entries,rawHeads=shelfEntries(raw),coldHeads=Object.fromEntries(Object.entries(rawHeads).filter(([,ref])=>Object.hasOwn(cold,definitionRefKey(ref))));
+    const merged={definitions:{...cold,...result.data.library.definitions},...(entries!==undefined?{entries:{...coldHeads,...entries}}:{})};
+    const checked=partitionFoundationLibrary(merged);if(!checked.ok)return checked;
+    try{s.subgraphLibrary=structuredClone(checked.raw);}catch{return libraryFailure('LIBRARY_READ_ONLY','The saved subgraph library is read-only.');}
+    subgraphCaches.set(s,Object.freeze({ok:true,data:checked.data,...(checked.unavailable.length?{unavailable:checked.unavailable}:{})}));retainedLibraryCaches.set(s,checked.raw);
+    save();return {...result,data:{...result.data,library:checked.data}};
 }
 
 export function installSubgraphDefinition(definition, snapshots = {}) {
     return changeSubgraphLibrary(library => preserveEntries(library, installDefinition(library, definition, snapshots), true));
 }
 export function reviseSubgraphDefinition(draft, snapshots = {}) {
-    return changeSubgraphLibrary(library => preserveEntries(library, createRevision(library, draft, snapshots), true));
+    return changeSubgraphLibrary((library,raw) => preserveEntries(library, createRevision(library, draft, snapshots,{minimumVersion:Math.max(0,...Object.values(raw.definitions).filter(item=>item.id===draft?.id).map(item=>item.version))}), true));
 }
 export function removeSubgraphDefinition(ref) {
     return changeSubgraphLibrary(library => preserveEntries(library, removeLibraryEntry(library, ref)));
@@ -86,13 +81,14 @@ export function saveSubgraphDefinition(draft, snapshots = {}, targetId = null) {
     const admitted = cloneDefinitionData({ draft, snapshots, targetId }); if (!admitted.ok) return admitted;
     const input = admitted.data;
     if (!record(input.draft) || !safeId(input.draft.id) || input.targetId !== null && !safeId(input.targetId)) return libraryFailure('DEFINITION_DATA', 'Expected a definition draft and optional shelf entry ID.');
-    return changeSubgraphLibrary(library => {
+    return changeSubgraphLibrary((library,raw) => {
         const entries = shelfEntries(library);
         if (input.targetId !== null && !Object.hasOwn(entries, input.targetId)) return libraryFailure('MISSING_DEFINITION', 'The selected shelf entry no longer exists.');
-        if (input.targetId === null && Object.values(library.definitions).some(definition => definition.id === input.draft.id)) return libraryFailure('DEFINITION_CONFLICT', 'A new shelf entry requires a fresh definition ID.');
+        if (input.targetId === null && Object.values(raw.definitions).some(definition => definition.id === input.draft.id)) return libraryFailure('DEFINITION_CONFLICT', 'A new shelf entry requires a fresh definition ID.');
         const id = input.targetId ?? input.draft.id;
         const available = { ...library.definitions, ...input.snapshots };
-        const versions = Object.values(available).filter(item => item?.id === id).map(item => item.version);
+        const reserved = { ...raw.definitions, ...available };
+        const versions = Object.values(reserved).filter(item => item?.id === id).map(item => item.version);
         const candidate = { ...input.draft, id, version: Math.max(0, ...versions) + 1 }; delete candidate.semanticHash;
         const identity = computeDefinitionIdentity(candidate); if (!identity.ok) return identity;
         const closure = selectSubgraphClosure({ ...identity.data.materializedDefinition, semanticHash: identity.data.semanticHash }, available); if (!closure.ok) return closure;

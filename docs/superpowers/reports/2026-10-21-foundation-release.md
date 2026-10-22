@@ -4,7 +4,7 @@ Date:2026-10-21. Status: **active; release not complete**. The user adopted the 
 
 ## Scope
 
-Proposed0.28 release: exactly 32 visible lessons, preserving existing 30 and adding stable lesson 34/35; Chunk plus the complete necessary reader/runtime/singleton-editor/packaging closure. New maintenance/Job/retrieval/history-replacement/multi-root systems and other new lessons remain unreleased. Existing supported behavior, including Recall/search, remains a compatibility requirement.
+Candidate 0.28.0 release: exactly 32 visible lessons, preserving existing 30 and adding stable lesson 34/35; Chunk plus the complete necessary reader/runtime/singleton-editor/packaging closure. New maintenance/Job/retrieval/history-replacement/multi-root systems and other new lessons remain unreleased. Existing supported behavior, including Recall/search, remains a compatibility requirement.
 
 ## Preservation: verified
 
@@ -23,80 +23,64 @@ Proposed0.28 release: exactly 32 visible lessons, preserving existing 30 and add
 
 Supplementary artifacts stay local at `C:/Users/Keptin/.codex/worktrees/memory-examples-028/SillyCanvas/.tmp/foundation-preservation-2026-10-21/`. Keep this directory intact before archiving/removing the source worktree. It contains ARTIFACTS.sha256, the manifests/index, RESTORE.md, restore.py, inventory/index/patches, native evidence and restoration reports. [Restore guide](../handoffs/2026-10-21-foundation-preservation.md).
 
-## Extraction audit: preliminary
+## Current candidate and dependency audit
 
-GitHub CLI authenticated successfully; remote mainc0a994ba2b250d24ca8c7114a4e77865e03ab855 matched localorigin/main on2026-10-21 and identifies package0.27.5. Native managed worktreefoundation-release-028 created at that exact revision; new branchcodex/foundation-release-028. Foreign dirtyF:/git/SillyCanvas is untouched.
+The isolated branch `codex/foundation-release-028` starts at published main `c0a994ba2b250d24ca8c7114a4e77865e03ab855` (0.27.5). The unrelated dirty `F:/git/SillyCanvas` checkout and original full-memory worktree remain untouched. GitHub main was reverified through network-enabled `gh` at that same base before final review preparation.
 
-A static transitive import audit of historicald7ba79e catalog/host/runtime found94JSfiles,0missingimports and0new maintenance/Job/embedding/index/search/history-policy domain imports. This provides a plausible extraction reference; it does not prove current contract behavior, correct later fix transfer, baseline tests, or foundation readiness. Relevant historical references:7542a40Text Chunk,d7ba79esource-backedChunk,46c42f2record transforms. A preliminary transfer map now records 180 source/type paths: 140 retain-main, 22 existing-file ports and 18 new files needing review. Fifty paths differ in the later full-memory build and require scoped correctness review where relevant. The bounded transfers below are implemented and verified. Singleton document/catalog/packaging decisions and relevant later deltas remain under review.
+The candidate is version **0.28.0**. One central release policy selects lessons 34/35, Chunk, supported recent/before-window sources, and singleton generation documents. Deferred operations, controls, nested definitions and raw package fields fail admission before IO. Exactly 32 visible lessons and all 32 hidden compatibility IDs remain available; all 95 baseline artifact/data-file hashes are unchanged. Ten generated outputs plus their ownership manifest are deterministic. The generator refuses modified owned exports and unexpected manifest ownership.
 
-Locked dependency installation succeeded (97 packages; package/lock inputs unchanged). Six focused existing test files passed: workflow contracts, unified contracts, package round trips, scoped examples, catalog freshness and node-guide examples. Application type check passed with zero errors and zero warnings. A legacy baseline records 95 artifact/data-file hashes, 30 visible catalog entries and 32 hidden compatibility entries. These are clean-base results, not acceptance of the future foundation implementation.
+The runtime import inventory from index/catalog/host/runtime/controller has **198 JavaScript files, zero missing imports and zero deferred domain files**. The file-level transfer map records retained-main, cache-version-only, selected semantic, and new dependency decisions. Historical references 7542a40, 385e520 and d7ba79e supplied the narrow Chunk/source foundation. Relevant later immutable-parent, actual receiver and final-cancellation guards were reproduced and transferred separately. No durable maintenance or multi-root framework was imported. Inventory counts are static closure evidence, not a claim of complete native acceptance.
 
 ## Acceptance status
 
 | Gate | Current evidence |
 | --- | --- |
-| F01 preservation/restore | PASS as scoped above; retain all required local archive artifacts |
-| F02 scope/dependency inventory | Explicit34/35manifest and bounded maintenance-free closure implemented; final later-delta/installed audit remains |
-| F03 legacy compatibility |95legacy artifact hashes unchanged;32visible/32hidden; final release compatibility check remains |
-| F04 package/document lifecycle | Both compiled installed UI journeys pass save/reopen/export/reimport against a synthetic host |
-| F05 inert open | Startup/open/catalog/preview make0modelcalls; source save/readback occurs only through explicit setup in35 |
-| F06/F07 lessons | Component and installed synthetic journeys pass; real-host acceptance remains open |
-| F08 isolation | Focused private-proof/currentness/cancellation/source-setup checks pass; real-host verification remains |
-| F09 editor | Runtime3edit guards and source-control projection fixed through actual failures; desktop/narrow synthetic UI verified |
-| F10 native generation | Real-host/provider smoke remains open; previous local8000host is offline |
-| F11 deferred surface | Catalog/runtime/import fences and focused cases pass; final installed audit remains |
-| F12 catalog/guides |32visible and two selected generated lessons/embedded fixture downloads; focused consumer checks pass |
-| F13 build/package | Current0.27.5development candidate builds;802versionedimports and cleaninstall pass;0.28finalcandidate not yet packaged |
-| F14 regressions | Affected focused checks pass; required release sweep remains |
-| F15 latency/cost | Synthetic installed34prepare128ms/35prepare517ms;35setup69ms with1save/1readback;0paidcalls. Real-host Send unmeasured |
-| F16 final review | Not started; foundation goal remains active |
+| F01 preservation/restore | PASS: independently restored 14,705 entries, zero missing/hash failures; retain all three local archives |
+| F02 scope/dependency inventory | Bounded closure and file-level decisions recorded; fresh whole-branch review pending |
+| F03 legacy compatibility | 95 exact hashes unchanged; original 30 lessons and 32 hidden IDs retained; affected compatibility checks pass |
+| F04 document lifecycle | Both installed compiled UI journeys pass editable Save As/Open and portable export/independent reimport on a synthetic host |
+| F05 inert open | Startup/open/catalog/preview make zero model calls; source save/readback requires explicit setup |
+| F06/F07 lessons | Component and installed synthetic journeys pass; actual SillyTavern journeys remain open |
+| F08 isolation | 53 source-host cases pass, including copied-proof refusal, actor/user changes, final-dispatch guards and cancellation; real-host check open |
+| F09 editor | Runtime3 editing, canonical source controls, explicit setup, keyboard/narrow and document browser checks pass |
+| F10 native generation | OPEN: real provider Native Send smoke not run; zero paid calls |
+| F11 deferred surface | Shared catalog/import/runtime fences, nested retention and mixed-library compatibility checks pass; final review pending |
+| F12 catalog/guides | Exactly 32 visible lessons; Chunk guide and two selected lessons have embedded downloadable practice files |
+| F13 build/package | 0.28.0 builds; 810 versioned local imports and self-contained UI pass; clean installed bundle passes; final distributable archive pending |
+| F14 regressions | Full Node sweep 368/374 initially; all six failed files fixed and focused rechecks pass. Browser suite 50/51 initially; stale picker assertion fixed and its recheck passes |
+| F15 latency/cost | Synthetic installed34 prepare127ms/rerun94ms;35 setup67ms/prepare518ms, one save/readback. Real-provider Send unmeasured; ten seconds is best effort |
+| F16 final review/integration | Fresh whole-branch review, real-host gate, package and normal main integration remain open |
 
-The earlier full-memory component tests, latest14native locator/ACK checks, declaration/app type checks and2checkpoint evidence remain preserved. They do not substitute for foundation installed acceptance. Paid calls0; native foundation lesson proofs0; capstone soaks are deferred. A bounded Text Chunk transfer is verified below. No version bump, release package, whole-branch review closure or main push has been performed.
+The foundation goal remains active. The broader memory program is preserved and incomplete. No final release archive or main push has been performed. Synthetic installed-host evidence is not counted as actual native/provider proof.
 
-## First bounded capability: Text Chunk
+## Product behavior and verified fixes
 
-Transferred only historical Text Chunk/runtime-3 change7542a40 and source DTO dependency385e520, including directly affected authoring/package/control tests. No new maintenance, Job, embedding, retrieval or history-replacement domain was transferred.
+**Chunk and native sources.** Text passages preserve exact offsets and deterministic identities. Before-window selection groups the oldest three verified user/assistant pairs in the supplied 13-turn fixture while preserving the newest ten as raw history. The branded original SourceReader output owns pairing authority; copied JSON or IDs cannot recreate it. The supported producer omits the deferred cursor instead of cloning a branded output. Currentness checks retain source, actor, user, physical receiver and late cancellation boundaries.
 
-A genuine new foundation regression first failed UNKNOWN_OPERATION (1fail/1pass). After transfer, both the actual Chunk catalog/runtime/portable-package handoff and deferred-operation absence checks pass; raw chunks retain exact snapshot offsets, no invented native source references, and zero model calls. Twelve focused affected test files passed in8seconds. Application types report0errors/0warnings. All95 legacy artifact/data-file hashes remain unchanged.
+**Singleton documents.** Exact graph3/runtime2 and graph4/runtime3 pairs use their existing singleton serializers with appropriate portable/editable version floors. Runtime3 source fields participate in projection and dirty tracking; helper semantic shapes retain exact pins. Bounded own-JSON example metadata is descriptive, includes precise checkpoints and remaps root IDs/references on installation. Portable invalid checkpoints refuse; ordinary local topology edits prune obsolete descriptive checkpoints. Invalid activation preserves the current document and history.
 
-This closes the first Text Chunk handoff only. Live native source grouping, later relevant correctness fixes, singleton lesson packaging/catalog/guides, complete34/35 user journeys, installed assets and the full release acceptance matrix remain unfinished. No latency or readiness claim is inferred for those paths.
+**Source and tokenizer setup.** Scene details exposes explicit setup, verification and reconciliation using the actual native controller. Display is inert. Captured document/chat/revision ownership and AbortController reject stale actions and late delivery. Chunk accepts only an identified exact tokenizer capability, forwarded into the runtime. The standard host supplies no exact binding by default, so details truthfully reports it unavailable and offers UTF-16; the guidance estimator never substitutes for exact token counts. The accepted proposal section5 permits this clear unavailable/error boundary.
 
-## Native source component and foundation admission fences
+**Editor/runtime closure.** Four runtime2-only guards caused an actual installed overlap edit failure; shared exact-version admission fixed them without weakening ownership or pins. An initial generic draw-descriptor override then hid Prompt Source Form. The final fix derives graph-specific canonical metadata only for runtime3 Scene; other operations retain canonical controls. Twelve affected UI files and types pass.
 
-The actual native controller fixture first failed because setupSources was absent. The audited maintenance-free source/reader/proof closure from d7ba79e now groups the oldest three verified assistant/user pairs in a thirteen-turn fixture, protects the newest ten, retains six exact source references and makes zero model calls. The focused case passed in about436ms, with one explicit setup metadata save and one verification read. This is component evidence; generated lesson35 and installed-browser/provider proof remain pending.
+**Mixed saved library.** The shelf validates supported revisions using the appropriate runtime, quarantines only explicitly deferred rows and their dependents, and keeps raw unavailable definitions/heads unchanged through supported edits. Cold rows grant no identity or execution authority. Revision floors include retained versions, Save New ID checks retained IDs, and deleting a supported dependency pinned by unavailable data refuses before writes. Ordinary corruption still fails. Four new regressions and ten affected files pass, including all 32 hidden-ID installs. Library-view Save As preserves its actual schema/runtime.
 
-The central foundation-release selection now declares lessons34/35, Chunk, deferred operations and settings, supported recent/before-window readers and no multi-root examples. Event/cursor/range/frontier controls reject before native IO. The reader producer omits the cursor from its original branded result, preserving exact identity rather than cloning a pointer-shaped replacement. Direct and retained-snapshot File/history controls refuse through the shared catalog admission path.
+**Installed module identity.** Chunk's pure authoring contract is separate from its executor, keeping the UI bundle self-contained and the native proof domain singular. Version tooling migrates static, lazy and numeric URL-constructor imports while preserving intentional isolation markers. Actual RED/GREEN regressions cover both missing migration forms. The final installed asset audit covers 810 versioned imports.
 
-The original immutable-parent fix5dfa394 was reproduced (caller mutation could remove freshness checks), then applied and verified. Relevant later native persistence behavior was ported without importing the maintenance-store/actor IO framework: the original actual receiver and cancellation state are checked immediately before native save/header/fetch dispatch. Five genuine receiver/cancellation RED cases plus two preexisting controls become7/7PASS; unchanged actual receivers still acknowledge.
+## Verification lineage
 
-Ten focused source/Chunk/proof/registry/persistence test files pass. The scoped host suite passes53cases, including current-source/actor/user changes after awaited callbacks, native swipe handling, final transport mutation, accessors and privacy. Eight affected admission/package/editor compatibility files pass. Application types remain0errors/0warnings; all95legacy artifact/data hashes match. Static catalog/host/runtime import closure is95JSfiles, with0missingimports and0deferred-domain imports.
+The completed broad Node run is recorded as `release-028-node-all.log`: 368 of 374 files initially passed. The six failures were one real Prompt Source control projection regression, a close-fixture cancellation dependency, two stale catalog expectations and two stale explicit proof-observer URL versions. Final focused evidence: `release-028-regression-fixes-focused.log` seven files pass; `release-028-source-host-final.log` all 53 cases pass; `release-028-canonical-controls-final.log` 12 files pass. This does not claim a same-run 374/374 result. The unchanged existing geometry/execution files completed in the broad run and were not repeatedly rerun.
 
-Historical event/frontier/cursor host assertions were adapted to this release's explicit refusals, preserving ordinary missing-input/legacy behavior. The old-source final-transport mutation tests retain their original physical callback and zero-send assertions, selecting the same first pair with a supported bounded before-window page. Recording lookup in the new fixture uses the existing interned-address decoder. A retained-definition fixture initially normalized away its forbidden flag during export; the raw packet now explicitly retains that flag and asserts the fixture precondition before checking rejection.
+The affected browser suite completed 50/51 in `release-028-browser-final.log`; the remaining narrow picker assertion expected lesson30's old graph name after successfully activating35. Its corrected literal lesson35 graph name passes in `release-028-browser-picker-recheck.log`. Other document/file-menu/details/guide/input-source journeys pass. Final type check has zero errors/warnings; build and asset checks pass.
 
-The full original tests and advanced implementations remain in the preservation checkpoint. These checks do not close singleton packaging, editor source-setup UI, lesson34/35 installed user journeys, future-dependency review, clean installation, provider smoke, release review or publication. Paid calls remain0.
+## Installed production-bundle journeys
 
-## Singleton document core: verified
+`release-028-final-installed34.log` installs the distribution without developer UI or node_modules, opens lesson34 through the catalog, downloads the fixture, produces four default passages and five with overlap16, reruns deterministically, and completes editable and portable file roundtrips. Preparation127ms/rerun94ms; zero host API/model calls, page errors or missing assets. The public curriculum screenshot was captured from this actual 32-entry picker.
 
-The existing singleton path now uses schema2/minRuntime3 for graph4/runtime3, preserves the actual runtime3 source controls during local and portable projection, and includes those controls in dirty tracking. Runtime3 helper interface semanticShape is retained without changing exact semantic pins. Legacy document/version pairs remain unchanged; crossed version floors reject.
+`release-028-final-installed35.log` uses the actual native source controller/registry/verifier against an explicitly synthetic disposable backend. Explicit setup makes exactly one save and one readback in67ms. Preparation518ms yields groups[3]; protected-window8 yields[3,2]; passage size2 with the original window yields[2,1]. Six exact source references, graph values, record identities and raw history survive both file roundtrips. Zero model calls, page errors or missing assets.
 
-Four genuine regressions were observed before the implementation: wrong document floor, dropped protected-window export settings, missed dirty changes, and helper DEFINITION_HASH after local projection stripped semanticShape. All four now pass. A second four-case regression established that local document save/import could normalize away forbidden File/history controls, including a retained helper. A shared descriptor-only reserved-control check now rejects those before projection, with an explicit unsupported-foundation error and no getter-based control read.
+Desktop and 390px source/tokenizer controls have been visually checked. These installed journeys prove production packaging and UI handoffs, but do not substitute for the real-host/provider gate. The previously used localhost8000 was offline. A local SillyTavern1.19.0 installation was found at `F:/SillyTavern/SillyTavern`; isolated actual-host validation is next. No personal chat or capstone campaign is authorized by this release scope.
 
-Nine document cases and nine affected document/session/controller/package/admission test files pass. Application types report zero errors/warnings; all95legacy artifact/data hashes remain unchanged. This extends the existing singleton serializer/session route and imports no multi-root system or maintenance framework.
+## Remaining release work
 
-The actual two-lesson generator, example metadata/fixtures, merged32entry catalog, addressed Chunk guides, visible source-setup action, complete installed user journeys and release acceptance remain pending. The document core results do not claim F04/F09 complete by themselves.
-
-## Singleton lessons and catalog component verification
-
-The foundation branch now generates only stable lessons34/35. The visible catalog contains32entries; all32hidden compatibility entries remain available. New portable/editable files retain descriptive lesson metadata and exact checkpoints through install ID remapping, save/reopen and recovery. Installed fixture bytes are embedded and downloadable in lesson details. Ten focused catalog/guide/generation testfiles and19document/state/package testfiles pass; types have0errors/0warnings. Generation `--check` reports no drift and95legacy hashes remain unchanged. These are component checks: actual installed native journeys, explicit source/tokenizer setup, provider smoke and release packaging remain open.
-
-## Explicit source and tokenizer setup boundary
-
-Scene Context details now exposes explicit chat source setup, saved verification and reconciliation. Display performs no IO; the current action uses the actual native controller save/readback. Controls reject a replaced document/chat and cancellation aborts pending delivery. Chunk details identifies a supplied exact tokenizer or reports its absence with UTF-16 as the available choice. The native handoff carries only the supplied exact capability, never the ordinary guidance estimator. Component checks:10focused files PASS8.1s, types0/0,95legacy hashes unchanged. Real installed journeys and paid smoke remain unverified; the former local host8000is offline and installation location has been requested.
-
-## Installed production UI: lesson34
-
-A clean installed distribution with no developer UI or node_modules completes lesson34 through ordinary catalog, Run to here, overlap edit, Save As/download, Open, portable export and independent reimport. Four default passages become five with overlap16; record IDs survive deterministic rerun and both file roundtrips. Preparation128ms/rerun94ms; zero model/APIcalls, pageerrors or missingassets. This uses an explicitly synthetic host, so it does not replace the required real-host/provider smoke. The run exposed and fixed four runtime3 editor admission gaps with4RED-to-GREEN cases;9affected files pass, types0/0 and95legacy hashes remain unchanged. Production assetcheck also required separating pure Chunk controls from private execution imports; the self-contained UI check now passes with802versioned installed imports.
-
-## Installed production UI: lesson35
-
-The second clean-install journey uses the actual native controller/registry/verifier against an explicitly synthetic disposable host backend. Source setup is inert until the UI action, then performs one save/readback in69ms. Preparation517ms selects three older pairs and preserves the newest ten raw; changing the window to eight produces groups3/2, and changing passage size to two with the original window produces2/1. Six exact source references, graph values and record identities survive both editable and portable file roundtrips. Raw history is unchanged and modelcalls0. Narrow review caught the static Scene-control projection gap; admitted runtime3 descriptors now expose selection/protected turns and omit inapplicable recent/root-only controls. Thirteen affected UItestfiles pass, types0/0, and95legacy hashes remain unchanged. Real-host/provider verification remains open.
+Complete one fresh whole-branch review and fix actionable findings with witnessed RED/GREEN checks. Run the two real-host lesson journeys and one finite owned native provider Send with a pre-call ledger. Package and inspect the exact versioned distribution, close every F01–F16 gate against direct evidence, revalidate remote main, then perform the authorized ordinary nonforce integration and verify publication. Preserve the full-memory checkpoint and list continuation gaps; do not claim its deferred work complete.

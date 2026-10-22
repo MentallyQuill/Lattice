@@ -1,5 +1,5 @@
-import { own, dense, plain, freeze } from '../workflow/record-data.js?v=0.27.5';
-import { recognizeRecordedText } from '../workflow/retained-text.js?v=0.27.5';
+import { own, dense, plain, freeze } from '../workflow/record-data.js?v=0.28.0';
+import { recognizeRecordedText } from '../workflow/retained-text.js?v=0.28.0';
 
 const TEXT_BUDGET = 65536;
 const projections = new WeakMap();

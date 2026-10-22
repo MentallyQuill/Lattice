@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {createNativeWorkflowController} from '../../src/workflow/host.js?v=0.27.5';
-import {createChatDocumentCatalog} from '../../src/workflow/document-catalog.js?v=0.27.5';
-import {operationDefaults} from '../../src/workflow/catalog.js?v=0.27.5';
+import {createNativeWorkflowController} from '../../src/workflow/host.js?v=0.28.0';
+import {createChatDocumentCatalog} from '../../src/workflow/document-catalog.js?v=0.28.0';
+import {operationDefaults} from '../../src/workflow/catalog.js?v=0.28.0';
 const pause=()=>new Promise(r=>setTimeout(r,5));
 export const mara='character:mara.png',elias='character:elias.png';
 export function actorHostGraph(mode='direction'){

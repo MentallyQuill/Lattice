@@ -6,7 +6,7 @@ Choose a route based on what you want to do. The [project README](../README.md) 
 
 1. [Quick start](lattice-workspace.md) — install the extension in SillyTavern, send your first reply, review it, and save your workflow.
 2. [Operator’s manual](operators-manual.md) — learn the canvas, node settings, Preview, connections, subgraphs, and file commands through illustrated instructions.
-3. [30 example workflows](examples.md) — choose a lesson, configure its requirements, and try a complete workflow in a practice chat.
+3. [32 example workflows](examples.md) — choose a lesson, configure its requirements, and try a complete workflow in a practice chat.
 
 For a particular node, click its **?** button in the editor. Its guide explains the purpose, settings, connections, and examples beside your work.
 

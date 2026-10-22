@@ -5,7 +5,7 @@
     import type { WorkflowView } from './types';
     type ShelfChoice = { id: string; label: string; family: string; phase: string; shortcode?: string; purpose?: string; searchAliases?: readonly string[]; disabledReason?: string; definitionRef?: { id: string; version: number; semanticHash: string } };
     type ClientPoint = { x: number; y: number };
-    let { view, insertionContextKey, choices = [], choose, shelfSubgraph, readOnly = false }: { view?: WorkflowView; insertionContextKey?: string; choices?: readonly ShelfChoice[]; choose?: (id: string, at?: ClientPoint) => void; shelfSubgraph?: (id: string, action: 'delete' | 'open') => void; readOnly?: boolean } = $props();
+    let { view, insertionContextKey, choices = [], choose, shelfSubgraph, readOnly = false, notice = '' }: { view?: WorkflowView; insertionContextKey?: string; choices?: readonly ShelfChoice[]; choose?: (id: string, at?: ClientPoint) => void; shelfSubgraph?: (id: string, action: 'delete' | 'open') => void; readOnly?: boolean; notice?:string } = $props();
     let shelf: HTMLElement;
     let menuPanel = $state<HTMLDivElement>(null!);
     let family = $state(''), search = $state(false), query = $state('');
@@ -233,6 +233,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d={item.icon} /></svg><span>{item.name}</span>
         </button>
     {/each}
+    {#if notice}<p class="pc-shelf-library-notice" role="status">{notice}</p>{/if}
 </nav>
 {#snippet rows(shown: Entry[], searching: boolean)}
         {#each shown as entry, index (entry.family + entry.id)}
@@ -266,6 +267,7 @@
 {/if}
 {#if dragPreview}<div class="pc-shelf-drag-preview" aria-hidden="true" style:--pc-family={familyColor(dragPreview.family)} style:left={`${dragPreview.x + 12}px`} style:top={`${dragPreview.y + 12}px`}>{dragPreview.title}</div>{/if}
 <style>
+    .pc-shelf-library-notice {max-width:172px;padding:6px;margin:0;font-size:11px;line-height:1.4;color:var(--pc-muted);overflow-wrap:anywhere;}
     .pc-shelf-entries { display: contents; }
     .pc-shelf-reason { display: block; white-space: normal; font-size: 10px; line-height: 1.4; font-weight: normal; color: var(--pc-muted, #a1a59b); }
     .pc-shelf-empty { margin: 8px; color: var(--pc-muted, #a1a59b); font-size: 11px; line-height: 1.5; }

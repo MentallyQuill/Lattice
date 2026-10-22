@@ -50,7 +50,7 @@ export interface WorkbenchView {
     nodeDetails?: NodeDetailsView | null; outputPreview?: OutputPreviewView | null; runDetails?: RunDetailsView | null; runMeter?: RunMeterView | null;
     commentDetails?: { comment: CommentFrameData; selection: DetailSelection } | null;
     addSystem?: AddSystemView | null; portalManager?: PortalManagerView | null; subgraphSave?: SubgraphSaveView | null;
-    nativeSearch?: NodeSearchView | null; nativePinMenu?: PinMenuView | null; nativeChoices?: readonly SearchChoice[];
+    nativeSearch?: NodeSearchView | null; nativePinMenu?: PinMenuView | null; nativeChoices?: readonly SearchChoice[]; libraryNotice?:string;
     importReview?: ImportReviewView | null;
     documentPrompt?: DocumentPromptView | null;
     recall?: RecallProjection;

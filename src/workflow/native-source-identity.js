@@ -1,8 +1,8 @@
-import {cloneJsonValue} from './operations/json-data.js?v=0.27.5';
-import {sha256Text} from './definition-data.js?v=0.27.5';
-import {parseVisibility} from './source-manifests.js?v=0.27.5';
-import {artifactVisibility} from './artifact-privacy.js?v=0.27.5';
-import {freeze} from './record-data.js?v=0.27.5';
+import {cloneJsonValue} from './operations/json-data.js?v=0.28.0';
+import {sha256Text} from './definition-data.js?v=0.28.0';
+import {parseVisibility} from './source-manifests.js?v=0.28.0';
+import {artifactVisibility} from './artifact-privacy.js?v=0.28.0';
+import {freeze} from './record-data.js?v=0.28.0';
 const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&[Object.prototype,null].includes(Object.getPrototypeOf(v));
 const own=(v,k)=>{if(!plain(v))throw Error();const p=Object.getOwnPropertyDescriptor(v,k);if(p&&(!p.enumerable||!Object.hasOwn(p,'value')))throw Error();return p?.value;};
 const canonical=v=>v===null||typeof v!=='object'?JSON.stringify(v):Array.isArray(v)?'['+v.map(canonical).join(',')+']':'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}';

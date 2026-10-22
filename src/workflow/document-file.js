@@ -1,13 +1,13 @@
-import {inspectSingletonMetadata} from './example-metadata.js?v=0.27.5';
-import { deferredFoundationControl } from './foundation-release.js?v=0.27.5';
-import { workflowRunTargets } from './run-targets.js?v=0.27.5';
-import { graphArtifactsFor } from './graph-artifacts.js?v=0.27.5';
-import { own } from './record-data.js?v=0.27.5';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.5';
-import { OPERATIONS, operationFor, phaseForNode, describeAuthoredOperation } from './catalog.js?v=0.27.5';
-import { introspectionDefaults } from './introspection/native.js?v=0.27.5';
-import { parseWorkflow } from './packages.js?v=0.27.5';
-import { createViewState } from '../ui/view-state.js?v=0.27.5';
+import {inspectSingletonMetadata} from './example-metadata.js?v=0.28.0';
+import { deferredFoundationControl } from './foundation-release.js?v=0.28.0';
+import { workflowRunTargets } from './run-targets.js?v=0.28.0';
+import { graphArtifactsFor } from './graph-artifacts.js?v=0.28.0';
+import { own } from './record-data.js?v=0.28.0';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.28.0';
+import { OPERATIONS, operationFor, phaseForNode, describeAuthoredOperation } from './catalog.js?v=0.28.0';
+import { introspectionDefaults } from './introspection/native.js?v=0.28.0';
+import { parseWorkflow } from './packages.js?v=0.28.0';
+import { createViewState } from '../ui/view-state.js?v=0.28.0';
 
 const LIMIT = 2000000;
 const deferredControlErrors=new WeakSet();

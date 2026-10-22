@@ -1,7 +1,7 @@
-import { safeGraphArtifactData } from './graph-artifacts.js?v=0.27.5';
-import { workflowRunTargets } from './run-targets.js?v=0.27.5';
-import { prepareCheckedCandidate } from './checked-candidate.js?v=0.27.5';
-import { graphSemanticSignature, graphDocumentSignature } from './ports.js?v=0.27.5';
+import { safeGraphArtifactData } from './graph-artifacts.js?v=0.28.0';
+import { workflowRunTargets } from './run-targets.js?v=0.28.0';
+import { prepareCheckedCandidate } from './checked-candidate.js?v=0.28.0';
+import { graphSemanticSignature, graphDocumentSignature } from './ports.js?v=0.28.0';
 
 /** Pure dual-precondition boundary shared by composition and immutable definition revisions. */
 export function prepareGraphCandidate(original, candidate, addedEdgeIds = [], removedEdgeIds = [], sourceRoot = original) {

@@ -1,10 +1,10 @@
-import { artifactVisibility } from '../artifact-privacy.js?v=0.27.5';
-import { parseRuntimeContext } from './context-data.js?v=0.27.5';
-import { cloneJsonValue } from './json-data.js?v=0.27.5';
-import { safeUsage } from '../record-data.js?v=0.27.5';
-import { decodeJson } from './json-decode.js?v=0.27.5';
-import { prepareReferenceDraft, alignReferenceCandidate } from './reference-draft.js?v=0.27.5';
-import { createDraftRevision, appendDraftSections, snapshotDraft, readDraftBody } from '../draft-revisions.js?v=0.27.5';
+import { artifactVisibility } from '../artifact-privacy.js?v=0.28.0';
+import { parseRuntimeContext } from './context-data.js?v=0.28.0';
+import { cloneJsonValue } from './json-data.js?v=0.28.0';
+import { safeUsage } from '../record-data.js?v=0.28.0';
+import { decodeJson } from './json-decode.js?v=0.28.0';
+import { prepareReferenceDraft, alignReferenceCandidate } from './reference-draft.js?v=0.28.0';
+import { createDraftRevision, appendDraftSections, snapshotDraft, readDraftBody } from '../draft-revisions.js?v=0.28.0';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const done = (artifact, reports = []) => {

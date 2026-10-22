@@ -1,3 +1,4 @@
+import {UNIFIED_WORKFLOW_EXAMPLE_DATA} from '../src/workflow/unified-example-data.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
@@ -27,4 +28,8 @@ test('foundation generated manifest owns only the two lessons and exact fixture 
 
 test('foundation catalog exposes both turn fixtures as installed setup downloads',async()=>{
  const {projectWorkflowExamples}=await import('../src/ui/example-catalog.js');const tile=projectWorkflowExamples().find(entry=>entry.id==='lesson-35');assert.equal(tile.fixtures?.length,2);assert.equal(tile.fixtures[0].content,readFileSync('examples/memory/fixtures/thirteen-turn-harbor-chat.jsonl','utf8'));
+});
+
+test('foundation retains installation of every previously hidden compatibility ID',()=>{
+ assert.equal(UNIFIED_WORKFLOW_EXAMPLE_DATA.length,32);for(const entry of UNIFIED_WORKFLOW_EXAMPLE_DATA){const installed=installWorkflowExample(entry.id);assert.equal(installed.ok,true,entry.id+': '+JSON.stringify(installed.error));}
 });

@@ -32,7 +32,7 @@ Your usual SillyTavern model writes the reply. Lattice can prepare guidance for 
 | **A narrator with an editorial team** | Have a model plan the scene, let SillyTavern write it, then ask an editor to polish the prose or add useful notes. Choose a connection for each job. |
 | **Memories you can bring back deliberately** | Queue a character’s stored memories from the canvas or a shortcut, or use an authored story trigger. Inspect what reached the reply. |
 
-These are systems you can author with the supplied tools and lessons. [Story systems](docs/story-systems.md) explains the setup and limits; [30 example workflows](docs/examples.md) offer editable starting points.
+These are systems you can author with the supplied tools and lessons. [Story systems](docs/story-systems.md) explains the setup and limits; [32 example workflows](docs/examples.md) offer editable starting points.
 
 ## Build it by connecting the pieces
 
@@ -76,7 +76,7 @@ Lattice is in beta. Save your workflows and try substantial systems in a separat
 
 - [Quick start](docs/lattice-workspace.md) — installation, your first reply, and saving your work.
 - [Operator’s manual](docs/operators-manual.md) — illustrated instructions for the editor and day-to-day use.
-- [Example workflows](docs/examples.md) — choose among 30 lessons.
+- [Example workflows](docs/examples.md) — choose among 32 lessons.
 - [Unified workflows](docs/unified-workflows.md) — combine models, memories, documents, clocks, and story rules.
 - [Model setup and troubleshooting](docs/native-workflows.md) — connections, request limits, and save status.
 - [Documentation](docs/README.md) — routes for readers, workflow authors, and developers, including the detailed [node reference](docs/node-reference.md).

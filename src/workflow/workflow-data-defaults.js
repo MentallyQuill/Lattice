@@ -1,7 +1,7 @@
-import { validateStoryClock } from './story-time.js?v=0.27.5';
-import { cloneJsonValue } from './operations/json-data.js?v=0.27.5';
-import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.27.5';
-import { freeze } from './record-data.js?v=0.27.5';
+import { validateStoryClock } from './story-time.js?v=0.28.0';
+import { cloneJsonValue } from './operations/json-data.js?v=0.28.0';
+import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.28.0';
+import { freeze } from './record-data.js?v=0.28.0';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const own = (value, key) => {

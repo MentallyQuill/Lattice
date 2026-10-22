@@ -1,5 +1,5 @@
-import {inspectSingletonMetadata} from '../workflow/example-metadata.js?v=0.27.5';
-import { workflowDocumentSnapshot } from '../workflow/document-file.js?v=0.27.5';
+import {inspectSingletonMetadata} from '../workflow/example-metadata.js?v=0.28.0';
+import { workflowDocumentSnapshot } from '../workflow/document-file.js?v=0.28.0';
 
 /** One active document, exact activation identity and successful save checkpoint. */
 export function createWorkflowDocumentSession() {

@@ -190,7 +190,7 @@
                 <div class="pc-workspace-run"><RunMeter view={view.runMeter ?? null} open={() => { overlay = 'run-details'; }} /></div>
                 <div class="pc-canvas-host" aria-label="Node canvas" bind:this={canvasHost}></div>
                 {#if view.nativeDiagnostic}<div class="pc-native-diagnostic"><DiagnosticMessage issue={view.nativeDiagnostic} /></div>{/if}
-                <div hidden={!shelfOpen}><NodeShelf view={view.workflow} {insertionContextKey} choices={view.nativeChoices} choose={actions.chooseNative} shelfSubgraph={actions.shelfSubgraph} readOnly={view.readOnly} bind:this={shelf} /></div>
+                <div hidden={!shelfOpen}><NodeShelf view={view.workflow} {insertionContextKey} choices={view.nativeChoices} choose={actions.chooseNative} shelfSubgraph={actions.shelfSubgraph} notice={view.libraryNotice} readOnly={view.readOnly} bind:this={shelf} /></div>
             </div>
         </div>
         {#if view.inspectorOpen}{#key view.graphViews?.active.key ?? view.graphId}<DetailsDivider width={detailsWidth} max={detailsMax} start={resizeStart} preview={(width) => detailsDraft = width} change={commitDetails} />{/key}{/if}

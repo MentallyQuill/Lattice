@@ -1,12 +1,12 @@
-import { safeWorkflowData, validateWorkflow } from './contracts.js?v=0.27.5';
-import { cloneWorkflowDocument } from './document.js?v=0.27.5';
-import { semanticControlsForNode, operationFor } from './catalog.js?v=0.27.5';
-import { exportWorkflow, parseWorkflow } from './packages.js?v=0.27.5';
-import { prepareClipPaste } from './clipboard.js?v=0.27.5';
-import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.5';
-import { graphHistoryStamp } from '../history.js?v=0.27.5';
-import { safeGraphArtifactData } from './graph-artifacts.js?v=0.27.5';
-import { graphDocumentSignature } from './ports.js?v=0.27.5';
+import { safeWorkflowData, validateWorkflow } from './contracts.js?v=0.28.0';
+import { cloneWorkflowDocument } from './document.js?v=0.28.0';
+import { semanticControlsForNode, operationFor } from './catalog.js?v=0.28.0';
+import { exportWorkflow, parseWorkflow } from './packages.js?v=0.28.0';
+import { prepareClipPaste } from './clipboard.js?v=0.28.0';
+import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.28.0';
+import { graphHistoryStamp } from '../history.js?v=0.28.0';
+import { safeGraphArtifactData } from './graph-artifacts.js?v=0.28.0';
+import { graphDocumentSignature } from './ports.js?v=0.28.0';
 
 const LIFECYCLE = ['on-send', 'generate-reply', 'review-publish'];
 const fail = (code, message) => ({ ok: false, error: { code, message } });

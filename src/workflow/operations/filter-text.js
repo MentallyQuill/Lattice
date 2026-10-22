@@ -1,10 +1,10 @@
-import { getPatternReportBinding } from './pattern-engine.js?v=0.27.5';
-import { literalCoverage } from './pattern-matching.js?v=0.27.5';
-import { prepareReferenceDraft } from './reference-draft.js?v=0.27.5';
-import { readDraftBody, createDraftDeletionRevision } from '../draft-revisions.js?v=0.27.5';
-import { cloneJsonValue } from './json-data.js?v=0.27.5';
-import { own, plain, freeze } from '../record-data.js?v=0.27.5';
-import { artifactVisibility } from '../artifact-privacy.js?v=0.27.5';
+import { getPatternReportBinding } from './pattern-engine.js?v=0.28.0';
+import { literalCoverage } from './pattern-matching.js?v=0.28.0';
+import { prepareReferenceDraft } from './reference-draft.js?v=0.28.0';
+import { readDraftBody, createDraftDeletionRevision } from '../draft-revisions.js?v=0.28.0';
+import { cloneJsonValue } from './json-data.js?v=0.28.0';
+import { own, plain, freeze } from '../record-data.js?v=0.28.0';
+import { artifactVisibility } from '../artifact-privacy.js?v=0.28.0';
 
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 const invalidSettings = () => failure('INVALID_FILTER_SETTINGS', 'Use canonical Filter action, unit, scope and bounded nonblank protections.');

@@ -1,8 +1,8 @@
-import { graphVersionSupported } from '../workflow/workflow-versions.js?v=0.27.5';
-import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.27.5';
-import { ARTIFACT_KINDS, FAMILIES, OPERATIONS, describeAuthoredOperation, operationDefaults } from '../workflow/catalog.js?v=0.27.5';
-import { cloneDefinitionData, definitionRefKey } from '../workflow/definitions.js?v=0.27.5';
-import { selectSubgraphClosure } from '../workflow/packages.js?v=0.27.5';
+import { graphVersionSupported } from '../workflow/workflow-versions.js?v=0.28.0';
+import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.28.0';
+import { ARTIFACT_KINDS, FAMILIES, OPERATIONS, describeAuthoredOperation, operationDefaults } from '../workflow/catalog.js?v=0.28.0';
+import { cloneDefinitionData, definitionRefKey } from '../workflow/definitions.js?v=0.28.0';
+import { selectSubgraphClosure } from '../workflow/packages.js?v=0.28.0';
 
 const registries = new WeakMap();
 const choiceViews = new WeakMap();

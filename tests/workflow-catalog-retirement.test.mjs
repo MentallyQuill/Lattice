@@ -20,11 +20,11 @@ test('the sole starter installs detached unified roots without assigning or armi
     assert.equal(library.createLibraryWorkflow, undefined);
 });
 
-test('the example catalog contains exactly 30 independent remastered unified roots', async () => {
+test('the example catalog contains the original thirty and two foundation unified roots', async () => {
     const examples = listWorkflowExamples(), results = listWorkflowExampleResults();
-    assert.equal(examples.length, 30);
-    assert.equal(results.length, 30);
-    assert.deepEqual(examples.map(example => example.id), Array.from({length:30},(_,index)=>'lesson-'+String(index+1).padStart(2,'0')));
+    assert.equal(examples.length, 32);
+    assert.equal(results.length, 32);
+    assert.deepEqual(examples.map(example => example.id), [...Array.from({length:30},(_,index)=>'lesson-'+String(index+1).padStart(2,'0')),'lesson-34','lesson-35']);
     assert.ok(examples.every(example => example.graph.mode === 'native-unified'));
     assert.ok(results.every(example => example.result.ok));
     examples[0].graph.name = 'Edited catalog copy';

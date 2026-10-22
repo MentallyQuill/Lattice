@@ -1,9 +1,9 @@
-import { ownData, inspectCapabilities, fail, freeze, parseRecord, makeRecord } from './contracts.js?v=0.27.5';
-import { reflect, internalize, express } from './analysis.js?v=0.27.5';
-import { shapeContext, advanceState } from './context-state.js?v=0.27.5';
-import { parseRuntimeContext } from '../operations/context-data.js?v=0.27.5';
-import { PROGRESSION_STATE_MODES, describeProgressionState, executeProgressionState } from '../operations/progression-nodes.js?v=0.27.5';
-import { validVisibilityMetadata } from '../artifact-privacy.js?v=0.27.5';
+import { ownData, inspectCapabilities, fail, freeze, parseRecord, makeRecord } from './contracts.js?v=0.28.0';
+import { reflect, internalize, express } from './analysis.js?v=0.28.0';
+import { shapeContext, advanceState } from './context-state.js?v=0.28.0';
+import { parseRuntimeContext } from '../operations/context-data.js?v=0.28.0';
+import { PROGRESSION_STATE_MODES, describeProgressionState, executeProgressionState } from '../operations/progression-nodes.js?v=0.28.0';
+import { validVisibilityMetadata } from '../artifact-privacy.js?v=0.28.0';
 
 const MODES = { reflect: ['character','recall','scene'], internalize: ['experience','pattern','recovery'], express: ['behavior','attention','inner-voice'], context: ['assemble','perspective','focus'], memory: ['read','recall','commit'], state: ['value','curve','track',...PROGRESSION_STATE_MODES] };
 const COMMON = ['mode'];

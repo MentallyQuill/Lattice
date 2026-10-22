@@ -1,11 +1,11 @@
 /** Run-local exact output bindings. Nothing in these handles is portable authority. */
-import {inspectSourcePage} from './source-reader.js?v=0.27.5';
-import {preserveArtifactPrivacy,validVisibilityMetadata,artifactVisibility} from './artifact-privacy.js?v=0.27.5';
-import {freeze,plain,own} from './record-data.js?v=0.27.5';
-import {sameSourceIdentity} from './operations/source-spans.js?v=0.27.5';
-import {canonicalContextData,inspectContextData} from './operations/context-data.js?v=0.27.5';
-import {cloneJsonValue} from './operations/json-data.js?v=0.27.5';
-import {sha256Text} from './definition-data.js?v=0.27.5';
+import {inspectSourcePage} from './source-reader.js?v=0.28.0';
+import {preserveArtifactPrivacy,validVisibilityMetadata,artifactVisibility} from './artifact-privacy.js?v=0.28.0';
+import {freeze,plain,own} from './record-data.js?v=0.28.0';
+import {sameSourceIdentity} from './operations/source-spans.js?v=0.28.0';
+import {canonicalContextData,inspectContextData} from './operations/context-data.js?v=0.28.0';
+import {cloneJsonValue} from './operations/json-data.js?v=0.28.0';
+import {sha256Text} from './definition-data.js?v=0.28.0';
 const sourceHandles=new WeakMap(),pairingHandles=new WeakMap(),derivations=new WeakMap();
 const fail=code=>({ok:false,error:{code,message:'An exact current retained reader output is required.'}});
 const good=data=>({ok:true,data});

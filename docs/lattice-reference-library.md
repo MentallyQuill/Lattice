@@ -72,6 +72,10 @@ A paragraph crossing dialogue, editing spans, protected text, or exemptions bloc
 
 Draft Text Rules needs existing permissions or an explicit scope setup. It translates the edit back to the original source. Whole scope cannot expand permissions already present, including an empty span list.
 
+## Foundation compatibility
+
+Runtime-3 helpers can share the saved shelf with existing runtime-2 revisions. A helper that needs unreleased capabilities stays stored, along with its exact dependency references and shelf pointer, while compatible entries remain available. The shelf reports how many saved revisions are unavailable. Editing another entry does not convert or remove those originals. A saved dependency still pinned by an unavailable revision cannot be deleted; hiding a shelf entry retains its immutable snapshots.
+
 ## Categories and maintenance
 
 The category editor takes source category IDs, one per line. The [canonical policy](../data/ai-slop-policy.json) lists labels and entries. Its wording is data; the browser policy module is generated from it and checked against the source.

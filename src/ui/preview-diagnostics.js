@@ -1,5 +1,5 @@
-import { presentDiagnostic, presentDiagnostics } from './diagnostics.js?v=0.27.5';
-import { addressKey, nodeAddress } from '../workflow/record-data.js?v=0.27.5';
+import { presentDiagnostic, presentDiagnostics } from './diagnostics.js?v=0.28.0';
+import { addressKey, nodeAddress } from '../workflow/record-data.js?v=0.28.0';
 
 /** Display-only state: no host reads, model calls, or recovery authority. */
 export function previewDiagnostics({ workflow, state, target, selectedKey, sections, library, enabled, title }) {

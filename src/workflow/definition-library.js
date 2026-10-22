@@ -1,15 +1,15 @@
-import {graphVersionSupported} from './workflow-versions.js?v=0.27.5';
-import {semanticJsonCommandOptions} from './semantic-json-data.js?v=0.27.5';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, describeExposedParameter, nodeBindingOverrideKey, validateDefinition } from './definitions.js?v=0.27.5';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.27.5';
-import { inspectGraphArtifacts, prepareGraphArtifacts } from './graph-artifacts.js?v=0.27.5';
-import { cloneWorkflowDocument } from './document.js?v=0.27.5';
-import { ARTIFACT_KINDS, describeAuthoredOperation, operationFor } from './catalog.js?v=0.27.5';
-import { applyDeclaredNodeControlChange, graphDocumentSignature } from './ports.js?v=0.27.5';
-import { selectSubgraphClosure } from './packages.js?v=0.27.5';
-import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.5';
-import { compositionIds, definitionChain, ownershipEntries, ownsDefinitionPath, samePath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.27.5';
-import { inspectExpandedGraph } from './graph-validation.js?v=0.27.5';
+import {graphVersionSupported} from './workflow-versions.js?v=0.28.0';
+import {semanticJsonCommandOptions} from './semantic-json-data.js?v=0.28.0';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, describeExposedParameter, nodeBindingOverrideKey, validateDefinition } from './definitions.js?v=0.28.0';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.28.0';
+import { inspectGraphArtifacts, prepareGraphArtifacts } from './graph-artifacts.js?v=0.28.0';
+import { cloneWorkflowDocument } from './document.js?v=0.28.0';
+import { ARTIFACT_KINDS, describeAuthoredOperation, operationFor } from './catalog.js?v=0.28.0';
+import { applyDeclaredNodeControlChange, graphDocumentSignature } from './ports.js?v=0.28.0';
+import { selectSubgraphClosure } from './packages.js?v=0.28.0';
+import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.28.0';
+import { compositionIds, definitionChain, ownershipEntries, ownsDefinitionPath, samePath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.28.0';
+import { inspectExpandedGraph } from './graph-validation.js?v=0.28.0';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -199,12 +199,13 @@ export function installDefinition(library, definition, snapshots = {}) {
     return { ok: true, data: { library: frozen.data, ref: reference(validation.data.definition), changed: addedDefinitionKeys.length > 0, addedDefinitionKeys } };
 }
 
-export function createRevision(library, draft, snapshots = {}) {
+export function createRevision(library, draft, snapshots = {}, {minimumVersion=0} = {}) {
+    if(!Number.isSafeInteger(minimumVersion)||minimumVersion<0)return fail('DEFINITION_METADATA','Use a valid reserved revision floor.');
     if (!safeWorkflowData(library) || !record(library) || !record(library.definitions) || !safeWorkflowData(draft) || !record(draft) || !safeWorkflowData(snapshots) || !record(snapshots)) return fail('DEFINITION_DATA', 'Expected a library, editable definition draft and plain pinned snapshots.');
     const merged = mergeSnapshots(library.definitions, snapshots);
     if (!merged.ok) return merged;
     const versions = Object.values(merged.data).filter(item => item?.id === draft.id).map(item => item.version);
-    const version = Math.max(0, ...versions) + 1;
+    const version = Math.max(minimumVersion, ...versions) + 1;
     if (!Number.isSafeInteger(version)) return fail('DEFINITION_METADATA', 'Definition version limit reached.');
     const candidate = { ...structuredClone(draft), version }; delete candidate.semanticHash;
     const identity = computeDefinitionIdentity(candidate);

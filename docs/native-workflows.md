@@ -30,7 +30,7 @@ Each request uses the tool’s own instructions and connected material. Lattice 
 
 ## Model-backed examples
 
-The [30 lessons](examples.md) explain their additional request budgets. **Plan, write, polish, and annotate one reply** connects editorial jobs. **Give one present character their own direction** checks participation before private portrayal. **Give every clue its own explanation** runs a model helper over a list with a finite limit.
+The [32 lessons](examples.md) explain their additional request budgets. **Plan, write, polish, and annotate one reply** connects editorial jobs. **Give one present character their own direction** checks participation before private portrayal. **Give every clue its own explanation** runs a model helper over a list with a finite limit.
 
 The normal SillyTavern reply is an additional request. Fixed selection, context already within budget, or an edit with no permitted text can avoid extra requests. Inspect the trace for actual requests; failed attempts may still spend tokens. Lattice does not retry implicitly.
 

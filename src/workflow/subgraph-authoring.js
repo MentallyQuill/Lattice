@@ -1,11 +1,11 @@
-import {graphVersionSupported} from './workflow-versions.js?v=0.27.5';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from './definitions.js?v=0.27.5';
-import { cloneWorkflowDocument } from './document.js?v=0.27.5';
-import { validateGraphStructure } from './contracts.js?v=0.27.5';
-import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.27.5';
-import { definitionChain, ownershipEntries, ownsDefinitionPath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.27.5';
-import { reconcileOwners } from './definition-library.js?v=0.27.5';
-import { operationFor } from './catalog.js?v=0.27.5';
+import {graphVersionSupported} from './workflow-versions.js?v=0.28.0';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from './definitions.js?v=0.28.0';
+import { cloneWorkflowDocument } from './document.js?v=0.28.0';
+import { validateGraphStructure } from './contracts.js?v=0.28.0';
+import { prepareGraphCandidate } from './prepared-graph-edit.js?v=0.28.0';
+import { definitionChain, ownershipEntries, ownsDefinitionPath, pathStartsWith, safeId, prunePrivateSnapshots } from './composition-edit.js?v=0.28.0';
+import { reconcileOwners } from './definition-library.js?v=0.28.0';
+import { operationFor } from './catalog.js?v=0.28.0';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);

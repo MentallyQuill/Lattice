@@ -97,7 +97,7 @@ Select a wrapper and use **Details → Run this system** to include or skip the 
 
 Ordinary nodes, including native sources, Memory, State, Recall, and the reply lifecycle, can run inside static bodies. Their actor, target, and source checks still apply. State can use the enclosing workflow’s captured memory. Nested Memory Commit waits for acceptance, and Recall distinguishes reused instances. **For Each** has a separate helper contract: it cannot run host operations, and State needs an explicit snapshot.
 
-Try the [combined wand, weather, and relationship example](combined-system-example.md). It uses one clock, public item/weather guidance, and private relationship state. The eight-hour wait is an agreed story action. Apply stages three independent saves; Reject and Preview leave the saved starting data intact. It is separate from the 30 lessons.
+Try the [combined wand, weather, and relationship example](combined-system-example.md). It uses one clock, public item/weather guidance, and private relationship state. The eight-hour wait is an agreed story action. Apply stages three independent saves; Reject and Preview leave the saved starting data intact. It is separate from the 32 lessons.
 
 ## Choose a different model for each job
 
@@ -308,3 +308,11 @@ Current imports retain saved definitions and supported controls; additive import
 | Recall did not activate | Check Enable Lattice, selected actor, presence, source/records, budgets, queue policy, and pending claims. |
 
 See [model setup](native-workflows.md) for provider and budget limits, or click a node’s **?** guide for its controls. The complete [node reference](node-reference.md) supplies detailed contracts. [Design records](README.md#workflow-design-records) retain broader proposals and open choices.
+
+## Passage preparation in the foundation release
+
+The [two foundation lessons](examples.md#foundation-passage-lessons) start runtime-3 singleton workflows. Chunk accepts exact Text snapshots or current verified Context and emits a raw record array plus separate manifest and report outputs. Text supports paragraph, sentence and fixed segmentation with bounded overlap; assistant-turn grouping keeps verified user/assistant pairs whole. Changing input modes uses the normal atomic wire-review flow.
+
+Source setup is explicit in Scene Context Details. A before-window reader protects a chosen number of recent assistant turns; passage size only groups the older selected material. Setup saves and verifies source identities, while ordinary read-only preparation makes no model request or metadata write. Source changes, unavailable pairing and cancellation stop affected work. The resulting records do not replace raw chat history or create omission authority.
+
+Chunk token sizes use only an explicitly matching exact tokenizer. Details reports an unavailable tokenizer clearly; UTF-16 and verified assistant-turn modes remain available. The ordinary guidance estimator is never used for Chunk token sizing.

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.27.5';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.28.0';
 
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function controllerFunction(name, env) {
@@ -64,13 +64,14 @@ test('graph navigation flushes the cancelled source camera before changing the a
 });
 
 test('close flushes the final cancelled camera before deactivating the view session', () => {
-    const f = persistenceFixture();
+    const f = persistenceFixture();let sourceCancels=0;f.env.nativeSourceSetup={cancel(){sourceCancels++;}};
     f.env.pendingDocumentPrompt = null; f.env.documentCommands = null;
     f.env.chooseDocumentPrompt = controllerFunction('chooseDocumentPrompt', f.env);
     f.env.workflowActivityUnsubscribe = null;
     f.env.workbench = { update() {} };
     Object.assign(f.env, { canvas: { cancelGesture() { f.session.updateView({ camera: { x: 45, y: -20, zoom: 1.2 } }); f.persist(false, true); } }, persistGraphViews: f.persist, cancelConfiguredNode() {}, cancelImportReview() {}, document: { removeEventListener() {} }, receiveAutomaticWorkflow() {}, documentTransition: false, workflowSession: { cancel() {} }, rootRunEpoch: 0, uiEpoch: 0, nativeWireBridge: null, root: { classList: { remove() {} } } });
     controllerFunction('close', f.env)();
+    assert.equal(sourceCancels,1);
     assert.equal(f.env.graphViews, null); assert.equal(f.scheduled.size, 0);
     assert.deepEqual(f.stored.views.views[1].camera, { x: 45, y: -20, zoom: 1.2 });
     assert.equal(f.session.readEditContext().readOnly, true); assert.equal(f.saves(), 1);

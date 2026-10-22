@@ -1,7 +1,7 @@
-import { graphVersionSupported } from './workflow-versions.js?v=0.27.5';
-import { safeWorkflowData, validateNamedGraphStructure } from './graph-validation.js?v=0.27.5';
-import { resolveWorkflow } from './resolve.js?v=0.27.5';
-export { safeWorkflowData } from './graph-validation.js?v=0.27.5';
+import { graphVersionSupported } from './workflow-versions.js?v=0.28.0';
+import { safeWorkflowData, validateNamedGraphStructure } from './graph-validation.js?v=0.28.0';
+import { resolveWorkflow } from './resolve.js?v=0.28.0';
+export { safeWorkflowData } from './graph-validation.js?v=0.28.0';
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 function plainDescriptors(value, limit = 20000) {

@@ -1,14 +1,14 @@
-# Thirty example workflows
+# Example workflows
 
 [Documentation](README.md) · [Quick start](lattice-workspace.md) · [Operator’s manual](operators-manual.md)
 
-Choose **File → Open examples…** to browse 30 lessons. Search by story goal or tool, filter by difficulty, and read a lesson’s requirements, steps, checkpoints, and model request budget before opening it.
+Choose **File → Open examples…** to browse 32 lessons. Search by story goal or tool, filter by difficulty, and read a lesson’s requirements, steps, checkpoints, and model request budget before opening it.
 
 ![Examples browser with search, difficulty filters, and lesson details](images/examples-curriculum.png)
 
-Opening a lesson makes an independent editable copy after offering to save modified work. It does not request a model or change **Enable Lattice**. Instructions stay with the copy in its description, comments, and named nodes. The portable files are also in [examples/remastered](../examples/remastered/).
+Opening a lesson makes an independent editable copy after offering to save modified work. It does not request a model or change **Enable Lattice**. Instructions stay with the copy in its description, comments, and named nodes. The original portable files are in [examples/remastered](../examples/remastered/); the two foundation files are in [examples/memory](../examples/memory/).
 
-Every lesson includes **On Send → Generate Reply → Review / Publish**. You can open any lesson directly; earlier lessons explain useful techniques rather than adding installation requirements. Foundations covers 1–8, Composition 9–17, Advanced 18–26, and Capstone 27–30.
+Every lesson includes **On Send → Generate Reply → Review / Publish**. You can open any lesson directly; earlier lessons explain useful techniques rather than adding installation requirements. Foundations covers 1–8, Composition 9–17, Advanced 18–26, and Capstone 27–30. Foundation lessons 34 and 35 add passage preparation. Their stable numbers are retained; lessons 31–33 are not part of this release.
 
 ## Set up a practice copy
 
@@ -55,8 +55,22 @@ Extra model requests are additional to the normal reply. Helper iteration, autho
 | 28 | The soul-stealing sword: an event ledger and a threshold | Count unique confirmed kills and test the 100-soul threshold. |
 | 29 | One kiss, two private perspectives | Confirm a shared event and separately permit each private reflection. |
 | 30 | A relationship that changes slowly over weeks | Inspect directed values, cooldowns, caps, and decay over story time. |
+| 34 | Split a lore chapter into useful passages | Segment an included file snapshot, inspect exact spans and overlap, and compose guidance with zero helper model calls. |
+| 35 | Group replies into three-turn passages | Explicitly verify practice-chat sources, protect the newest ten turns, and group older user/assistant pairs. |
 
 For a story-first introduction to the advanced lessons, read [Story systems](story-systems.md). Click a node’s **?** button when you need help with its settings.
+
+## Foundation passage lessons
+
+Start from lesson 34 or 35 when authoring Chunk or verified source preparation. These workflows use runtime 3; existing runtime-2 files keep their saved semantics and are not upgraded automatically.
+
+Lesson 34 includes its lore chapter as a File Input snapshot. **Run to here** on Chunk makes no model request or storage write. Change overlap and compare the record text, half-open input spans and report. **Exact token sizing** in Details identifies an available exact tokenizer or explains that the host lacks one. Without a matching exact tokenizer, keep UTF-16 sizing; token mode fails without partial output and never substitutes a character estimate.
+
+For lesson 35, open its details in the catalog and download `thirteen-turn-harbor-chat.jsonl` for a disposable practice chat. The protected fixture adds a public system barrier for the pairing exercise. Import the chat through SillyTavern's normal chat import, then open the lesson. In **Scene Context → Details → Verified chat sources**, choose **Set up chat sources**. This explicit action saves source identities in the active chat and verifies the persisted result. Opening the lesson, downloading a practice file and inspecting source status perform no setup write or model call. After reopening a native chat, use **Verify saved sources**; use **Reconcile sources** explicitly after edits when required.
+
+With the thirteen-turn fixture, **Before window** and **Keep recent assistant turns = 10** select the three oldest eligible pairs. Chunk size three produces one record; size two produces records of two and one. Changing the protected window to eight selects five older turns, independently of passage size. The newest raw history stays intact. Imported identifiers cannot replace native pairing proof, and these manifests do not authorize removing history.
+
+Both lessons can feed their bounded rendered passages into ordinary Send. That optional Send uses your normal model connection and request budget. Source setup, read-only preparation and native generation are separate actions. There is no background memory worker or history replacement in these lessons.
 
 ## Sources, fixtures and acceptance
 

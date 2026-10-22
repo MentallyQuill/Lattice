@@ -1,12 +1,13 @@
-import { OPERATIONS, operationFor } from '../workflow/catalog.js?v=0.27.5';
-import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.27.5';
-import { recallControlLabel } from '../workflow/recall-labels.js?v=0.27.5';
-import { resolveControlInputSpec, formatControlInput } from './control-input-contracts.js?v=0.27.5';
+import { OPERATIONS, operationFor, describeAuthoredOperation } from '../workflow/catalog.js?v=0.28.0';
+import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.28.0';
+import { recallControlLabel } from '../workflow/recall-labels.js?v=0.28.0';
+import { resolveControlInputSpec, formatControlInput } from './control-input-contracts.js?v=0.28.0';
 /** Shared detached authoring fields; no graph, host, or execution authority. */
-export function projectNodeControls(operation, controls = {}, { phase, readOnly = false, descriptor }) {
+export function projectNodeControls(operation, controls = {}, { phase, readOnly = false, graph }) {
  const base = OPERATIONS[operation]; if (!base) return [];
- const defaults = descriptor?.defaults ?? (['state','context','memory'].includes(operation) ? introspectionDefaults(operation, controls.mode) : base.defaults);
- const metadata = descriptor ?? operationFor({type:'workflow', operation, ...defaults, ...controls}, {phase}) ?? operationFor({type:'workflow', operation, ...defaults}, {phase}) ?? base;
+ const defaults = ['state','context','memory'].includes(operation) ? introspectionDefaults(operation, controls.mode) : base.defaults;
+ const described=operation==='scene-context'&&graph?.schema===4&&graph?.runtime===3?describeAuthoredOperation(graph,{type:'workflow',operation,...defaults,...controls}):null;
+ const metadata = (described?.ok?described.data.descriptor:null) ?? operationFor({type:'workflow', operation, ...defaults, ...controls}, {phase}) ?? operationFor({type:'workflow', operation, ...defaults}, {phase}) ?? base;
  const node = {operation, ...defaults, ...controls};
  return Object.entries(metadata.controlDescriptors).filter(([key, descriptor]) => !descriptor.hidden && visibleDetailControl(node, metadata.defaults, key) && (!descriptor.visibleWhen || node[descriptor.visibleWhen.key] === descriptor.visibleWhen.value)).map(([key, descriptor]) => {
   const value = Object.hasOwn(controls, key) ? controls[key] : metadata.defaults[key] ?? descriptor.default;

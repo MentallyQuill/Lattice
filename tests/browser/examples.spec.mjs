@@ -125,7 +125,7 @@ test('narrow picker has two columns and its last long-name tile opens by keyboar
     await last.press('Enter');
     await finishExampleChoice(page);
     await expect(dialog).toBeHidden();
-    await expect.poll(() => page.evaluate(() => window.canvasHarness.graph.name)).toBe('30. ' + lastExampleTitle);
+    await expect.poll(() => page.evaluate(() => window.canvasHarness.graph.name)).toBe('Three-turn passages');
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
 });
 

@@ -1,5 +1,5 @@
-import { readDraftBody } from '../draft-revisions.js?v=0.27.5';
-import { cloneJsonValue } from './json-data.js?v=0.27.5';
+import { readDraftBody } from '../draft-revisions.js?v=0.28.0';
+import { cloneJsonValue } from './json-data.js?v=0.28.0';
 
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);

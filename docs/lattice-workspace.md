@@ -34,7 +34,7 @@ Choose **File → Open examples… → Give this scene one clear direction**. Se
 
 Follow the connections from Text through Compose to Generate Reply’s guidance input. Right-click Compose and choose **Run to here** to inspect the guidance in Preview. Then send your next player message and review the result.
 
-Opening a lesson creates an editable copy. It makes no model request and does not change **Enable Lattice**. Each of the [30 lessons](examples.md) states its setup and request budget. For model-based lessons, choose each model tool’s connection on its grey bar; **For Each** helpers have separate bindings in Details.
+Opening a lesson creates an editable copy. It makes no model request and does not change **Enable Lattice**. Each of the [32 lessons](examples.md) states its setup and request budget. For model-based lessons, choose each model tool’s connection on its grey bar; **For Each** helpers have separate bindings in Details.
 
 Click a node’s **?** button for its guide. It explains the job, settings, connections, and examples without leaving the editor.
 

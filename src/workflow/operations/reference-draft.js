@@ -1,5 +1,5 @@
-import { snapshotDraft, retainDraftAuthority, readDraftBody } from '../draft-revisions.js?v=0.27.5';
-import { validatePatches } from '../repair.js?v=0.27.5';
+import { snapshotDraft, retainDraftAuthority, readDraftBody } from '../draft-revisions.js?v=0.28.0';
+import { validatePatches } from '../repair.js?v=0.28.0';
 
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 const authenticated = new WeakSet();

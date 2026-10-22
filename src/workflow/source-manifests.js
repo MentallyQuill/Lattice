@@ -1,6 +1,6 @@
 /** Pure descriptive DTO admission. Success never establishes host authority. */
-import {cloneJsonValue} from './operations/json-data.js?v=0.27.5';
-import {freeze,plain} from './record-data.js?v=0.27.5';
+import {cloneJsonValue} from './operations/json-data.js?v=0.28.0';
+import {freeze,plain} from './record-data.js?v=0.28.0';
 const invalid = () => freeze({ok:false,error:{code:'INVALID_SOURCE_DTO',message:'Expected bounded source metadata with the required fields.'}});
 const id = value => typeof value === 'string' && value.length > 0;
 const object = value => plain(value) && !Array.isArray(value);

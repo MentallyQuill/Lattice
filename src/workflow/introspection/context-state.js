@@ -1,7 +1,7 @@
-import { executeContextJoin } from '../operations/context-join.js?v=0.27.5';
-import { parseRuntimeContext, canonicalContextData } from '../operations/context-data.js?v=0.27.5';
-import { compactContext } from '../compactor.js?v=0.27.5';
-import { fail, freeze, ownData, parseRecord, makeRecord, sameIdentity, validateEvidence, inspectCapabilities } from './contracts.js?v=0.27.5';
+import { executeContextJoin } from '../operations/context-join.js?v=0.28.0';
+import { parseRuntimeContext, canonicalContextData } from '../operations/context-data.js?v=0.28.0';
+import { compactContext } from '../compactor.js?v=0.28.0';
+import { fail, freeze, ownData, parseRecord, makeRecord, sameIdentity, validateEvidence, inspectCapabilities } from './contracts.js?v=0.28.0';
 
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const id = value => typeof value === 'string' && value.trim().length > 0 && value.length <= 128;

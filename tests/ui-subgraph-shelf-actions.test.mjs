@@ -6,7 +6,7 @@ import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 import { effectiveInstanceWorkflow } from './fixtures/workflow-effective-instance.mjs';
 import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definitions.js';
 import { materializeInstanceDefinition } from '../src/workflow/definition-library.js';
-import * as library from '../src/library.js?v=0.27.5';
+import * as library from '../src/library.js?v=0.28.0';
 
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function actual(name, env) {
@@ -119,4 +119,11 @@ test('actual shelf deletion refreshes externally replaced settings and rejects a
     assert.deepEqual(f.host.extensionSettings.lattice.subgraphLibrary, replaced);
     assert.equal(library.getSubgraphShelfEntries().data[0].version, f.advanced.version);
     assert.equal(f.saves(), 1); assert.equal(f.refreshes(), 0);
+});
+
+test('runtime3 library view Save As keeps the containing version and exact saved closure',()=>{
+ const snapshots={},finalize=draft=>{const checked=computeDefinitionIdentity(draft,{snapshots});assert.equal(checked.ok,true,JSON.stringify(checked.error));const item={...checked.data.materializedDefinition,semanticHash:checked.data.semanticHash};snapshots[definitionRefKey(item)]=item;return item;},ref=item=>({id:item.id,version:item.version,semanticHash:item.semanticHash});
+ const leaf=finalize({id:'passage-leaf',version:1,name:'Passage leaf',interface:[],parameters:[],body:{schema:4,runtime:3,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'A'},chunk:{id:'chunk',type:'workflow',operation:'chunk'}},wires:{input:{id:'input',route:'wire',from:'text',fromPort:'out',to:'chunk',toPort:'in'}}}}),outer=finalize({id:'passage-outer',version:1,name:'Outer',interface:[],parameters:[],body:{schema:4,runtime:3,mode:'native-unified',nodes:{part:{id:'part',type:'subgraph',definition:ref(leaf)}},wires:{}}});
+ const env={pendingSubgraphSave:null,current:{id:'active'},materializeInstanceDefinition,crypto:{randomUUID:()=> 'runtime3'},workspacePrepared:{libraryDefinitions:snapshots},graphViews:{readEditor:()=>({prepared:{savedGraph:outer.body,definitionRef:ref(outer)},view:{identity:{kind:'library',instancePath:[]}}})},captureEditor:()=>({ok:true,data:{}}),definitionRefKey,L:{getSubgraphShelfEntries:()=>({ok:true,data:[]})},workbench:{update(){}},toast(){}};
+ assert.equal(actual('openSubgraphSave',env)('part').ok,true);assert.equal(env.pendingSubgraphSave.definition.body.runtime,3);
 });
