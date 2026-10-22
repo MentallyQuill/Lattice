@@ -23,7 +23,7 @@ export function createWorkflowDocumentSession() {
             return token;
         },
         current: () => graph,
-        exampleMetadata:()=>exampleMetadata===undefined?undefined:structuredClone(exampleMetadata),
+        exampleMetadata:()=>{if(exampleMetadata===undefined)return undefined;const current=inspectSingletonMetadata(exampleMetadata,graph,{pruneMissing:true});if(!current.ok)throw new Error(current.error.message);return structuredClone(current.data);},
         source(next) { if (arguments.length) { source = next; notify('source'); } return source; },
         workspaceViews(next) { if (arguments.length) { workspaceViews = next; notify('views'); } return workspaceViews; },
         capture: () => token,

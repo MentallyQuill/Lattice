@@ -1,6 +1,6 @@
 # Foundation release execution evidence
 
-Date:2026-10-21. Status: **active; release not complete**. The user adopted the [foundation proposal](../specs/2026-10-21-foundation-release-proposal.md) for execution through an active goal. The [implementation plan](../plans/2026-10-21-foundation-release.md) owns bounded delivery steps. This supersedes the all 46 scope only for this release; the full memory program remains preserved and incomplete.
+Date:2026-10-21. Status: **verification complete; normal main publication is the final step**. The user adopted the [foundation proposal](../specs/2026-10-21-foundation-release-proposal.md) for execution through an active goal. The [implementation plan](../plans/2026-10-21-foundation-release.md) owns bounded delivery steps. This supersedes the all 46 scope only for this release; the full memory program remains preserved and incomplete.
 
 ## Scope
 
@@ -36,22 +36,22 @@ The runtime import inventory from index/catalog/host/runtime/controller has **19
 | Gate | Current evidence |
 | --- | --- |
 | F01 preservation/restore | PASS: independently restored 14,705 entries, zero missing/hash failures; retain all three local archives |
-| F02 scope/dependency inventory | Bounded closure and file-level decisions recorded; fresh whole-branch review pending |
+| F02 scope/dependency inventory | PASS: bounded198-file runtime closure and file-level decisions reviewed; no missing/deferred-domain imports |
 | F03 legacy compatibility | 95 exact hashes unchanged; original 30 lessons and 32 hidden IDs retained; affected compatibility checks pass |
 | F04 document lifecycle | Both installed compiled UI journeys pass editable Save As/Open and portable export/independent reimport on a synthetic host |
 | F05 inert open | Startup/open/catalog/preview make zero model calls; source save/readback requires explicit setup |
-| F06/F07 lessons | Component and installed synthetic journeys pass; actual SillyTavern journeys remain open |
-| F08 isolation | 53 source-host cases pass, including copied-proof refusal, actor/user changes, final-dispatch guards and cancellation; real-host check open |
+| F06/F07 lessons | Both actual SillyTavern1.19.0 full edit/save/reopen/export/reimport journeys pass after native chat loading; lesson35 native captured-response completion also passes |
+| F08 isolation | 53 source-host cases pass after review fixes; actual source setup/readback and native completion preserve the original history; exact guards retained |
 | F09 editor | Runtime3 editing, canonical source controls, explicit setup, keyboard/narrow and document browser checks pass |
-| F10 native generation | OPEN: real provider Native Send smoke not run; zero paid calls |
-| F11 deferred surface | Shared catalog/import/runtime fences, nested retention and mixed-library compatibility checks pass; final review pending |
+| F10 native generation | Complementary proof: one actual NanoGPT request completes; initial continuation failure is diagnosed and corrected; final actual-host captured-response Native Send completes with one review handle and zero auxiliary requests. No second paid Send is claimed |
+| F11 deferred surface | PASS: shared catalog/import/runtime fences, nested retention and mixed-library compatibility; fresh review and full regressions closed |
 | F12 catalog/guides | Exactly 32 visible lessons; Chunk guide and two selected lessons have embedded downloadable practice files |
-| F13 build/package | 0.28.0 builds; 810 versioned local imports and self-contained UI pass; clean installed bundle passes; final distributable archive pending |
-| F14 regressions | Full Node sweep 368/374 initially; all six failed files fixed and focused rechecks pass. Browser suite 50/51 initially; stale picker assertion fixed and its recheck passes |
-| F15 latency/cost | Synthetic installed34 prepare127ms/rerun94ms;35 setup67ms/prepare518ms, one save/readback. Real-provider Send unmeasured; ten seconds is best effort |
-| F16 final review/integration | Fresh whole-branch review, real-host gate, package and normal main integration remain open |
+| F13 build/package | PASS: final0.28.0 types/build/assets,810imports;505-file ZIP independently extracted/rehashed and both actual native Send replays pass from that exact install |
+| F14 regressions | PASS: one final frozen run375/375Node files and51/51affected browser checks; initial failure lineage retained below |
+| F15 latency/cost | PASS: archive native preparation110ms/555ms; explicit35setup259ms(save8.41ms/read3.79ms); actual provider1288ms; archive Native Send replay1077ms/1416ms. Separate measurements on the disposable fixture; ten seconds remains best effort |
+| F16 final review/integration | Review PASS: three important findings reproduced/fixed, no critical/minor findings; final375/51checks and exact archive smoke green. Main publication pending |
 
-The foundation goal remains active. The broader memory program is preserved and incomplete. No final release archive or main push has been performed. Synthetic installed-host evidence is not counted as actual native/provider proof.
+The foundation goal remains active. The broader memory program is preserved and incomplete. The final archive is built locally; no main push has been performed. Synthetic installed-host evidence is not counted as actual native/provider proof. The real-provider transport and current native replay are reported separately.
 
 ## Product behavior and verified fixes
 
@@ -79,8 +79,22 @@ The affected browser suite completed 50/51 in `release-028-browser-final.log`; t
 
 `release-028-final-installed35.log` uses the actual native source controller/registry/verifier against an explicitly synthetic disposable backend. Explicit setup makes exactly one save and one readback in67ms. Preparation518ms yields groups[3]; protected-window8 yields[3,2]; passage size2 with the original window yields[2,1]. Six exact source references, graph values, record identities and raw history survive both file roundtrips. Zero model calls, page errors or missing assets.
 
-Desktop and 390px source/tokenizer controls have been visually checked. These installed journeys prove production packaging and UI handoffs, but do not substitute for the real-host/provider gate. The previously used localhost8000 was offline. A local SillyTavern1.19.0 installation was found at `F:/SillyTavern/SillyTavern`; isolated actual-host validation is next. No personal chat or capstone campaign is authorized by this release scope.
+Desktop and 390px source/tokenizer controls have been visually checked. These installed journeys prove production packaging and UI handoffs, but do not substitute for the real-host/provider gate. The previously used localhost8000 was offline. Actual-host validation now uses SillyTavern1.19.0 at `F:/SillyTavern/SillyTavern` with a disposable data directory and no copied personal chats. No personal chat or capstone campaign is authorized by this release scope.
+
+## Fresh review and actual native closure
+
+One read-only fresh-context reviewer examined the whole branch c0a994b..18bde55. Three important findings were witnessed failing and fixed: ordinary Send invalidated an otherwise valid source acknowledgement; legacy runtime2 Scene helpers used the root runtime3 reader; and deleting a descriptive checkpoint left stale portable-export metadata. Six focused regressions cover those fixes, repeated Send and cancellation. Eighteen affected files and types pass. The fix preserves actual save/readback for a tightly bounded owned append, carries the admitted containing runtime into dispatch, and prunes current local metadata without weakening external portable validation. No critical or minor findings were reported; every deferred-judgment item has a ledger ruling.
+
+The real-host source fixture is saved and reloaded through SillyTavern's actual chat loader before enrollment. Both complete native lessons now pass the same ordinary catalog/edit/file paths used by the installed synthetic checks, with108ms/561ms preparation and unchanged raw history. The earlier first native continuation correctly refused an older unnormalized fixture reply whose swipe_id changed from absent to0 during rendering. A disposable-only diagnostic confirmed all user/document/graph/owner/reference checks remained valid and isolated that prefix change. The diagnostic was removed; no source guard was relaxed.
+
+The one bounded real provider request used NanoGPT `z-ai/glm-5.2:thinking`, cap1024, with a persisted reservation before transport and no retry. It returned a complete stop reply in1288ms, using1131prompt/44completion tokens. Its initial full native continuation failed as described above. An additional real-host event trace exposed a separate post-reply dry-run inspection race. Two genuine regressions first failed, then passed after keeping inspection separate from actual generation ownership and returning before clearing owned guidance. All28native lifecycle cases and the affected53source cases pass.
+
+The current uninstrumented release then completes ordinary Send on the actual normalized host using that captured provider reply:1410ms,28messages, all26original messages preserved, one review handle, zero auxiliary requests, and zero additional paid calls. This is a deterministic external-response replay, not another real-provider call on final source. The unchanged provider transport was exercised once; the local ownership correction is verified through regressions and actual native replay. The plan permits deterministic external transport where appropriate, and the ledger records this complementary-evidence ruling and its limits.
+
+## Versioned distribution
+
+The local archive `.tmp/releases/lattice-0.28.0-foundation.zip` contains505files/4813690bytes with SHA256 `f6ee4c3e5abbff6be033d92f58ef76f6f43d67dc09099267e47062687845e079`. Its canonical content digest is `851033db9cdbe2fc11a3db38f632220993bd45b383a6b8ce7b69ab05e23e4bee`. Runtime sources, compiled UI/assets, manifest/license/notices, public documentation and preserved/included examples are complete. Every ZIP entry has been independently extracted and rehashed; all95baseline hashes match. Developer tools/tests/dependencies, scratch evidence and credentials are excluded. Both34/35 now complete ordinary actual-host Native Send from this exact extraction using the captured real-provider reply, with zero additional paid requests, no missing assets/page errors, one review handle each and unchanged original history. Setup35takes259ms, including observed chat save8.41ms/readback3.79ms; preparation110ms/555ms and replay completions1077ms/1416ms. These replay timings exclude a new provider transport.
 
 ## Remaining release work
 
-Complete one fresh whole-branch review and fix actionable findings with witnessed RED/GREEN checks. Run the two real-host lesson journeys and one finite owned native provider Send with a pre-call ledger. Package and inspect the exact versioned distribution, close every F01–F16 gate against direct evidence, revalidate remote main, then perform the authorized ordinary nonforce integration and verify publication. Preserve the full-memory checkpoint and list continuation gaps; do not claim its deferred work complete.
+All verification and packaging gates are closed. Commit the verified fixes/evidence and perform the authorized normal nonforce main publication; revalidate the published revision and package inputs. Retain the full-memory checkpoint and continuation gaps. The broader memory program remains incomplete and preserved; future work must incorporate the foundation compatibility/currentness fixes and native fixture-loading discipline before resuming deferred lifecycle or capstones.

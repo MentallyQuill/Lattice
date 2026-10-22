@@ -232,7 +232,7 @@ export function createNativeWorkflowController(ports) {
     const outcomeCache=createNativeOutcomeCache({...(typeof ports.random==='function'?{random:ports.random}:{})});
     function releaseRun(run) {if(!run||run.resourcesReleased)return;run.resourcesReleased=true;run.sourceProofs?.clear();run.sourceActorService?.release();run.sourceActorService=null;run.actorArtifactOwners=new WeakMap();for(const reader of run.sourceReaders??[])reader.release();run.sourceReaders?.clear();run.sourcePages?.clear();run.sourceCaptures?.clear();run.guidanceComposition?.clear();run.modelScopes?.clear();run.modelAddresses=new WeakMap();recall.releaseRun(run);run.memorySession?.release();run.memorySession=null;run.storySession?.release();run.storySession=null;run.draftEvidence?.release();run.draftEvidence=null;run.draftSources?.clear();delete run.nativeContext;for(const session of run.fileSessions?.values()??[])session.release();run.fileSessions?.clear();run.fileSession?.release();run.fileSession=null;run.actorContext?.release();run.actorContext=null;for(const session of run.actorMemorySessions?.values()??[])session.release();run.actorMemorySessions?.clear();run.stagedFiles.length=0;run.memoryIntents.clear();run.memoryTerminals.clear();}
     let epoch=0, active=null, result=null, automaticResult=null, applying=false, internalEvents=0, unsubscribe=null;
-    let generationSequence=0, generation={dryRun:false,type:'normal'};
+    let generationSequence=0, generation={dryRun:false,type:'normal'}, generationInvocationDryRun=false;
     const activityListeners=new Set();
     const activity=()=>active ? Object.freeze({busy:true,graph:active.originalGraph,graphId:Object.getOwnPropertyDescriptor(active.originalGraph ?? {},'id')?.value,runId:active.runId,native:active.native,documentToken:active.documentToken}) : null;
     const publishActivity=()=>{const value=activity();for(const listener of activityListeners)observe(listener,value);};
@@ -722,7 +722,7 @@ export function createNativeWorkflowController(ports) {
         run.storySession=createNativeStoryState({files:files.data,scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:()=>fresh(run)&&playerSourceFresh(run)&&(!run.unified||nativePrefixFresh(run))&&(!run.effectEntry||acceptedSourceFresh(run.effectEntry)&&sourceFresh(run)),turnId,sourceForEvent,playerSource:{sourceId:turnId,revision:turnId,sceneId:run.identity.chatId,watch:'player-message',text:player.mes,visibility:'public'},cache:outcomeCache});
         return {ok:true,data:run.storySession};
     }
-    function sourceScene(run,node,inputs,operationPorts,options){
+    async function sourceScene(run,node,inputs,operationPorts,options){
         let cause;
         if(node.activationMode==='events'){
             if(!inputs.trigger)return {ok:true,outputStates:Object.fromEntries(['out','records','manifest','cursor','report'].map(id=>[id,{status:'skipped',reason:{code:'INPUT_SKIPPED',message:'A trigger is required.'}}]))};
@@ -730,7 +730,12 @@ export function createNativeWorkflowController(ports) {
             if(typeof ports.sourceTriggers.retainReader!=='function'||typeof ports.sourceTriggers.retainOutput!=='function')return fail('SOURCE_TRIGGER_RETENTION_REQUIRED','The current trigger cause must be retained privately.');
             const authorized=ports.sourceTriggers.authorizeTrigger(inputs.trigger,{node,address:operationPorts.address,signal:run.controller.signal});if(!authorized?.ok)return authorized??fail('SOURCE_TRIGGER_UNAUTHORIZED','The trigger could not be authorized.');cause=authorized.data;if(!cause||typeof cause.isCurrent!=='function'||!cause.cause||typeof cause.cause!=='object'||!Object.isFrozen(cause.cause)||Reflect.ownKeys(cause.cause).length!==0||cause.isCurrent()!==true)return fail('SOURCE_TRIGGER_UNAUTHORIZED','The exact current private trigger cause is required.');
         }
-        const state=getSourceRegistry().inspect();if(!state.ok)return state;
+        let state=getSourceRegistry().inspect();if(!state.ok)return state;
+        if(state.data.status==='unverified'&&run.unified&&run.nativeType==='normal'&&run.nativeOwner===generation&&fresh(run)&&nativePrefixFresh(run)){
+            const synchronized=await getSourceRegistry().synchronizeNativeAppend(run.nativeCapture.refs,{signal:run.controller.signal});if(!synchronized.ok)return synchronized;
+            if(!fresh(run)||!nativePrefixFresh(run))return fail('STALE_SOURCE','The owned Send source changed during verification.');
+            state=getSourceRegistry().inspect();if(!state.ok)return state;
+        }
         let grant=null;
         if(node.visibilityMode!=='public'){
             const service=sourceActors(run);if(!service.ok)return service;
@@ -842,7 +847,7 @@ export function createNativeWorkflowController(ports) {
             if(run.recallCaptured&&node.operation==='read-file'&&result.ok&&read?.ok&&result.outputs?.reference?.value===read.data.fileRef){const snapshot=read.data.snapshot;let recordValue;try{recordValue=JSON.parse(snapshot.content);}catch{}const originalStored=context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId],storedFingerprint=originalStored===undefined?null:JSON.stringify(originalStored);const captured=recall.capture(run,result,{kind:'file',recordValue,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&files.visibility(snapshot.targetId).ok&&(context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId]===undefined?null:JSON.stringify(context().chatMetadata.latticeDocuments[run.userId][snapshot.targetId]))===storedFingerprint});if(!captured.ok)return captured;}
             return result;
         }
-        if(node.operation==='scene-context'&&run.graph?.runtime===3)return sourceScene(run,node,inputs,operationPorts,options);
+        if(node.operation==='scene-context'&&operationPorts.runtime===3)return sourceScene(run,node,inputs,operationPorts,options);
         if(['scene-context','reply-snapshot','prompt-source'].includes(node.operation)) {
             const snapshot=selectedSnapshot(run,operationPorts.phase,node,options);
             if(snapshot?.ok===false)return snapshot;
@@ -870,7 +875,10 @@ export function createNativeWorkflowController(ports) {
         return ready;
     }
     async function beforeGenerate(chat,_contextSize,abort,type='normal') {
-        clear();type=type||'normal';
+        type=type||'normal';
+        // Prompt inspection cannot replace the real generation owner or clear its guidance.
+        if(generationInvocationDryRun)return {ok:true,skipped:true};
+        clear();
         if(generation.aborted) {abort?.(true);return notify(fail('ABORTED','The native generation was stopped before workflow preparation.'));}
         if(generation.dryRun || !['normal','swipe','regenerate','continue'].includes(type)) {if(active)cancel('Overlapping background generation');return {ok:true,skipped:true};}
         if(ports.isEnabled?.()===false)return {ok:true,skipped:true};
@@ -998,8 +1006,8 @@ export function createNativeWorkflowController(ports) {
         const c=context(),events=c.eventTypes ?? c.event_types ?? {},subscriptions=[];
         const on=(name,fn)=>{if(events[name] && c.eventSource?.on){c.eventSource.on(events[name],fn);subscriptions.push([events[name],fn]);}};
         on('GENERATION_STARTED',(type,options,dryRun)=>{
+            generationInvocationDryRun=!!dryRun;if(dryRun)return;
             generation={overlap:!!active?.unified && !active.nativeResolved,observed:true,id:++generationSequence,startedAt:Date.now(),type:type || 'normal',dryRun:!!dryRun,aborted:!!options?.signal?.aborted,originalTail:{message:context().chat?.at(-1),text:context().chat?.at(-1)?.mes}};
-            if(dryRun)return;
             cancel('Generation started');
             const owner=generation;
             if(options?.signal)options.signal.addEventListener('abort',()=>{if(generation===owner){generation.aborted=true;cancel('Generation aborted');}},{once:true});

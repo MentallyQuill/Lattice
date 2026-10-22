@@ -492,7 +492,7 @@ function expandChecked(root, snapshots, rootDefinition) {
             }
             if (operation) {
                 const requestBound = typeof operation.requestBound === 'function' ? operation.requestBound(node) : operation.requestBound;
-                const unit = { address: at, node, setupIssues: scope.data.describedNodes.get(node.id).setupIssues, phase: operation.phase, enabled, systemDisabled: !ancestorEnabled, requestBound: ancestorEnabled ? requestBound : 0, inputPorts: ports.filter(port => port.direction === 'input'), outputPorts: ports.filter(port => port.direction === 'output'), terminal: operation.terminal };
+                const unit = { address: at, node, schema: graph.schema, runtime: graph.runtime, setupIssues: scope.data.describedNodes.get(node.id).setupIssues, phase: operation.phase, enabled, systemDisabled: !ancestorEnabled, requestBound: ancestorEnabled ? requestBound : 0, inputPorts: ports.filter(port => port.direction === 'input'), outputPorts: ports.filter(port => port.direction === 'output'), terminal: operation.terminal };
                 // A pinned legacy phase remains an explicit stage contract. Only an
                 // undeclared, compatible unified operation can inherit a later stage.
                 if (root.mode === 'native-unified') stageCapabilities.set(nodeAddressKey(at), {

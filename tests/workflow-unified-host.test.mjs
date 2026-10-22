@@ -484,3 +484,12 @@ test('identical document replacement cannot publish a late automatic result over
     release();await nextTurn();assert.equal(f.controller.lastAutomaticResult(),automatic);assert.equal(f.results.length,1);
     assert.equal(f.controller.candidateStatus(fresh.reviewHandles[0]).ok,true);
 });
+
+
+test('a post-reply native dry-run Start cannot replace the owned generation waiting to settle',async()=>{
+ const f=nativeFixture(unifiedGraph({guidance:true,revise:false}));try{assert.equal((await f.start()).awaitingNative,true);addReply(f);await f.c.eventSource.emit('MESSAGE_RECEIVED',1,'normal');f.setBusy(false);await f.c.eventSource.emit('GENERATION_ENDED',2);await f.c.eventSource.emit('GENERATION_STARTED','normal',{},true);const result=await settled(f);assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.reviewHandles.length,1);assert.equal(f.requests(),0);}finally{f.controller.dispose();}
+});
+
+test('a dry-run interceptor leaves owned native guidance and continuation intact',async()=>{
+ const f=nativeFixture(unifiedGraph({guidance:true,revise:false}));try{assert.equal((await f.start()).awaitingNative,true);const guidance=JSON.stringify(f.c.extensionPrompts);assert.ok(Object.values(f.c.extensionPrompts).some(p=>p.value));await f.c.eventSource.emit('GENERATION_STARTED','normal',{},true);assert.deepEqual(await f.controller.beforeGenerate(f.c.chat,8192,()=>assert.fail('Inspection must not abort generation'),'normal'),{ok:true,skipped:true});assert.equal(JSON.stringify(f.c.extensionPrompts),guidance);addReply(f);await f.c.eventSource.emit('MESSAGE_RECEIVED',1,'normal');f.setBusy(false);await f.c.eventSource.emit('GENERATION_ENDED',2);assert.equal((await settled(f)).ok,true);assert.equal(f.requests(),0);}finally{f.controller.dispose();}
+});

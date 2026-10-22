@@ -159,6 +159,13 @@ export function createNativeSourceRegistry(ports){
    const view=freeze({...snapshot,selector,selectorHash:digest(selector),entries:live.messages.slice(0,length).map((m,i)=>({sourceId:active[i].sourceId,revision:active[i].revision,ordinal:i,text:m.text,role:m.role,protocol:m.protocol,name:m.name,settled:m.settled,visibility:m.visibility,visibleTo:m.visibleTo,selectionDigest:m.selectionDigest}))});
    if(!inspectCurrent())return fail('SOURCE_REGISTRY_STALE');snapshots.set(snapshot,{view,inspect:inspectCurrent});return {ok:true,data:snapshot};
   }catch(e){return error(e);}},
+  /** Only the owned normal Send path may extend an already acknowledged exact prefix.
+   * The new user (and optionally the preceding settled reply) still require a real save/readback. */
+  synchronizeNativeAppend(chat,rawControls={}){try{
+   const live=read(),prior=ack?.live,refs=nativeReferences(chat),added=prior?live.messages.slice(prior.messages.length):[];
+   if(pending||!prior||ack.version!==version||refs.length!==live.messages.length||!refs.every((message,i)=>message===live.messages[i].message)||added.length<1||added.length>2||!same(prior,{...live,messages:live.messages.slice(0,prior.messages.length)})||added.at(-1).role!=='user'||added.some(m=>m.protocol!=='chat'||!m.settled)||added.length===2&&added[0].role!=='assistant')return Promise.resolve(fail('SOURCE_REGISTRY_UNVERIFIED'));
+   return synchronize({cause:'host-change',expectedRevision:live.header.revision},rawControls);
+  }catch(e){return Promise.resolve(error(e));}},
   synchronize:(command,controls)=>synchronize(command,controls),
   resetSourceEpoch:(command,controls)=>synchronize(command,controls,true),
   async verifyPending(rawControls={}){if(busy)return fail('SOURCE_REGISTRY_BUSY');busy=true;try{const signal=controls(rawControls);if(!pending){

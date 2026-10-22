@@ -60,9 +60,9 @@ Historical extraction reference: `d7ba79e` has a94-file transitive import closur
 
 - [x] Use native managed worktree tools to create/attach a separate foundation checkout from exact reviewed main. Keep preserved WIP untouched.
 - [x] Provision existing locked dependencies, verify baseline types and appropriate existing tests before modifying product code.
-- [ ] Compare historical Chunk/source references with reviewed main and current contract fixes. Build a file-level dependency map for catalog/runtime/ports, source registry/readers/proofs, singleton document/editor support, lesson factories and fixtures. Exclude durable-lifecycle domains; record shared-file decisions instead of wholesale copying.
+- [x] Compare historical Chunk/source references with reviewed main and current contract fixes. Build a file-level dependency map for catalog/runtime/ports, source registry/readers/proofs, singleton document/editor support, lesson factories and fixtures. Exclude durable-lifecycle domains; record shared-file decisions instead of wholesale copying.
 - [x] Record exact existing 30/compatibility package hashes and current operation/settings/port surface as the compatibility baseline.
-- [ ] If separation requires unfinished durable lifecycle or comparable new architecture, preserve evidence and report the decision boundary; do not silently widen scope.
+- [x] If separation requires unfinished durable lifecycle or comparable new architecture, preserve evidence and report the decision boundary; do not silently widen scope.
 
 ## Task 3: Transfer and fence the foundation capability (F05/F08/F11/F14)
 
@@ -73,10 +73,10 @@ Historical extraction reference: `d7ba79e` has a94-file transitive import closur
 **Consumes:** Exact audited closure and main compatibility baseline.
 **Produces:** Supported Chunk/readers through genuine native source authority; excluded operations/settings cannot dispatch.
 
-- [ ] Write and observe failing focused admission/Chunk tests against the clean candidate. Assert supported Chunk graph4/runtime3 admission; legacy compatibility; rejection of each excluded operation and excluded maintenance/history port or mode, including nested/retained definitions and direct import.
-- [ ] Transfer the smallest selected implementation and relevant later correctness fixes. Keep full currentness, source pairing, spans, privacy, tokenizer and atomic limits. Do not import the unfinished Job or maintenance domains to satisfy missing symbols.
-- [ ] Verify meaningful focused RED-to-GREEN behavior, source change/revocation controls and foreign/copy-proof refusals; close affected authoring/type checks.
-- [ ] Commit this independently testable capability with its evidence. Preserve already passing groups until a shared edit justifies rerunning them.
+- [x] Write and observe failing focused admission/Chunk tests against the clean candidate. Assert supported Chunk graph4/runtime3 admission; legacy compatibility; rejection of each excluded operation and excluded maintenance/history port or mode, including nested/retained definitions and direct import.
+- [x] Transfer the smallest selected implementation and relevant later correctness fixes. Keep full currentness, source pairing, spans, privacy, tokenizer and atomic limits. Do not import the unfinished Job or maintenance domains to satisfy missing symbols.
+- [x] Verify meaningful focused RED-to-GREEN behavior, source change/revocation controls and foreign/copy-proof refusals; close affected authoring/type checks.
+- [x] Commit this independently testable capability with its evidence. Preserve already passing groups until a shared edit justifies rerunning them.
 
 ## Task 4: Complete singleton documents and explicit subset generation (F04/F09/F12/F13)
 
@@ -87,11 +87,11 @@ Historical extraction reference: `d7ba79e` has a94-file transitive import closur
 **Consumes:** Task3-supported runtime, exact lesson 34/35 factories, unchanged legacy examples.
 **Produces:** Actually discoverable/importable/editable two-lesson increment, complete installed fixture/guide paths, deterministic subset outputs.
 
-- [ ] Pin one authoritative selection to `[34,35]`; assertions require32 visible entries with stable existing IDs/order, reserved new IDs, complete fixtures and real guide/checkpoint addresses.
-- [ ] Observe failing tests for missing catalog consumers, subset/check determinism, direct unsupported set import, singleton round-trip and modified-owned-output deletion refusal.
-- [ ] Implement only the required singleton path and release generation/catalog/guide integration. Generated subset must not import capstone/Job factories. Preserve mixed saved-library data when reporting unsupported definitions.
-- [ ] Verify opening, navigation, import and preview are inert; save/reopen/export/reimport preserve fields, view and exact executable semantics. Validate wire-mode changes atomically and keyboard/narrow layout behavior.
-- [ ] Commit the complete authoring/catalog slice after its focused checks; preserve original30 bytes.
+- [x] Pin one authoritative selection to `[34,35]`; assertions require32 visible entries with stable existing IDs/order, reserved new IDs, complete fixtures and real guide/checkpoint addresses.
+- [x] Observe failing tests for missing catalog consumers, subset/check determinism, direct unsupported set import, singleton round-trip and modified-owned-output deletion refusal.
+- [x] Implement only the required singleton path and release generation/catalog/guide integration. Generated subset must not import capstone/Job factories. Preserve mixed saved-library data when reporting unsupported definitions.
+- [x] Verify opening, navigation, import and preview are inert; save/reopen/export/reimport preserve fields, view and exact executable semantics. Validate wire-mode changes atomically and keyboard/narrow layout behavior.
+- [x] Commit the complete authoring/catalog slice after its focused checks; preserve original30 bytes.
 
 ## Task 5: Close lesson 34, then lesson 35 (F06/F07/F08/F10/F15)
 
@@ -100,11 +100,11 @@ Historical extraction reference: `d7ba79e` has a94-file transitive import closur
 **Consumes:** Generated packages and supported editor/native runtime from Tasks3/4.
 **Produces:** Separate closed acceptance records for each lesson, measured costs/timings and supported native Send proof.
 
-- [ ] Lesson34 first: assert actual snapshot offsets/graphemes/overlap, empty versus whitespace, exact token settings/unavailable tokenizer, oversized atomic refusal and zero auxiliary model/write/index work. Complete import/edit/save/reopen/Send/cancel behavior.
-- [ ] Lesson35 next: use real enrolled13-turn disposable history, select oldest3 while newest10 remain raw; verify ordered paired groups, explicit partial final group, empty/protected/unpaired inputs and CHUNK_TURN_SOURCE_REQUIRED from copied descriptive Context.
-- [ ] Verify changes/swipes/chat/branch/user switches revoke affected capture; source changes after async delivery do not revive old authority. No fabricated OnEvent receipt or omission grant.
-- [ ] Run one bounded native provider Send smoke for the supported ordinary-generation integration, with finite pre-call request ledger and isolated disposable chat. Record actual transport/model/request/result and timings; no capstone or personal-chat campaign.
-- [ ] Close each lesson before proceeding; fix only the first observed failing boundary and immediate handoff rather than repeatedly running the whole stack.
+- [x] Lesson34 first: assert actual snapshot offsets/graphemes/overlap, empty versus whitespace, exact token settings/unavailable tokenizer, oversized atomic refusal and zero auxiliary model/write/index work. Complete import/edit/save/reopen/Send/cancel behavior.
+- [x] Lesson35 next: use real enrolled13-turn disposable history, select oldest3 while newest10 remain raw; verify ordered paired groups, explicit partial final group, empty/protected/unpaired inputs and CHUNK_TURN_SOURCE_REQUIRED from copied descriptive Context.
+- [x] Verify changes/swipes/chat/branch/user switches revoke affected capture; source changes after async delivery do not revive old authority. No fabricated OnEvent receipt or omission grant.
+- [x] Run one bounded native provider Send smoke for the supported ordinary-generation integration, with finite pre-call request ledger and isolated disposable chat. Record actual transport/model/request/result and timings; no capstone or personal-chat campaign.
+- [x] Close each lesson before proceeding; fix only the first observed failing boundary and immediate handoff rather than repeatedly running the whole stack.
 
 ## Task 6: Build, review, verify and integrate (F01–F16)
 
@@ -113,9 +113,9 @@ Historical extraction reference: `d7ba79e` has a94-file transitive import closur
 **Consumes:** Complete foundation candidate and focused acceptance records.
 **Produces:** Reviewed, verified0.28 distributable and normal nonforce main integration, without claiming the full memory program complete.
 
-- [ ] Audit installed source/assets and fixtures from the same release selection. Preserve already shipped dependencies; exclude deferred imports/assets/public guides. Validate source import closure and ordinary installation path, not just the UI bundle.
-- [ ] Prepare version0.28 with existing version tools; regenerate/check deterministic outputs and legacy bytes. Run types, required release regressions, build/assets and clean-install smoke on the actual candidate.
-- [ ] Perform one fresh whole-branch review against spec/F01–F16, fix actionable findings with appropriate focused RED-to-GREEN tests, then rerun affected final checks.
-- [ ] Inspect every F gate against authoritative current evidence; missing or indirect proof remains incomplete.
+- [x] Audit installed source/assets and fixtures from the same release selection. Preserve already shipped dependencies; exclude deferred imports/assets/public guides. Validate source import closure and ordinary installation path, not just the UI bundle.
+- [x] Prepare version0.28 with existing version tools; regenerate/check deterministic outputs and legacy bytes. Run types, required release regressions, build/assets and clean-install smoke on the actual candidate.
+- [x] Perform one fresh whole-branch review against spec/F01–F16, fix actionable findings with appropriate focused RED-to-GREEN tests, then rerun affected final checks.
+- [x] Inspect every F gate against authoritative current evidence; missing or indirect proof remains incomplete.
 - [ ] Revalidate GitHub main/auth through network-enabled CLI, resolve integration without force/reset of foreign work, complete the authorized normal push and verify published revision and package contents.
 - [ ] Record deferred full-memory checkpoint/restore paths and continuation gaps. Mark only the foundation goal complete after all explicit deliverables are verified.

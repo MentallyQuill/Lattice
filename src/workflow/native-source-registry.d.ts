@@ -79,6 +79,8 @@ export interface NativeSourceSnapshotView {
 }
 export interface NativeSourceRegistry {
  inspect():Result<NativeSourceRegistryStatus>;
+ /** Trusted owned Send only: verified prefix plus new user, optionally preceded by its settled reply. */
+ synchronizeNativeAppend(chat:readonly NativeSourceMessage[],controls?:{signal?:AbortSignal}):Promise<Result<NativeSourceRegistryCommit>>;
  synchronize(command:{expectedRevision:string|null;cause:'enroll'|'host-change'|'explicit-reconcile'},controls?:{signal?:AbortSignal}):Promise<Result<NativeSourceRegistryCommit>>;
  /** chat must be the exact native array or a dense prefix of exact native objects. */
  capture(options:{chat:readonly NativeSourceMessage[];scope:Scope;selector:JsonValue;signal?:AbortSignal;isCurrent:()=>boolean;allowPrefixAppend?:()=>boolean}):Result<NativeSourceSnapshot>;

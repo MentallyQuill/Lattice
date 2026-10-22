@@ -128,6 +128,8 @@ export interface RunPlan {
     units: RunUnit[]; hierarchy: RunHierarchyEntry[]; terminals: TerminalTarget[]; callBound: number;
 }
 export interface ResolvedPrimitive {
+    /** Exact admitted containing graph versions, including legacy nested definitions. */
+    schema: number; runtime: number;
     setupIssues?: SetupIssue[];
     systemDefaults?: import('./workflow-data-defaults').WorkflowDataPreset[]; systemDisabled?: boolean;
     address: NodeAddress; node: NativeNode; phase: WorkflowPhase; enabled: boolean; terminal: boolean; included: boolean;
