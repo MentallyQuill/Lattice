@@ -1,4 +1,4 @@
-@import url('./dist/lattice.css?v=0.28.0');
+@import url('./dist/lattice.css?v=0.28.1');
 
 /* Current Lattice workspace. Explicit themes may replace these color roles. */
 :root {
@@ -668,12 +668,31 @@
 :root[data-pc-preset="ember"] .pc-root .pc-node-native.pc-trace-cancelled { outline: 1px dashed var(--pc-warn); outline-offset: 1px; }
 
 /* Chat launcher lives with the left-side chat controls. */
-#pc-sendbar.pc-chat-launcher { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 var(--bottomFormBlockSize, 36px); width: var(--bottomFormBlockSize, 36px); height: var(--bottomFormBlockSize, 36px); min-width: 0; padding: 2px; margin: 0; border: 0; border-radius: 3px; background: transparent; color: var(--SmartThemeBodyColor, #dcdcd2); opacity: 0.7; transition: opacity var(--animation-duration-2x, 200ms); box-shadow: none; cursor: pointer; }
+#pc-sendbar.pc-chat-launcher { display: inline-flex; position: relative; overflow: visible; align-items: center; justify-content: center; flex: 0 0 var(--bottomFormBlockSize, 36px); width: var(--bottomFormBlockSize, 36px); height: var(--bottomFormBlockSize, 36px); min-width: 0; padding: 2px; margin: 0; border: 0; border-radius: 3px; background: transparent; color: var(--SmartThemeBodyColor, #dcdcd2); opacity: 0.7; transition: opacity var(--animation-duration-2x, 200ms); box-shadow: none; cursor: pointer; }
 /* Center the painted mass of the rotated, layered logo within the host control. */
 #pc-sendbar.pc-chat-launcher .pc-chat-launcher-icon { display: block; flex: 0 0 30px; width: 30px; height: 30px; background: currentColor; mask: var(--pc-launcher-logo) center / contain no-repeat; transform: translate(-2px, -2px); pointer-events: none; }
 #pc-sendbar.pc-chat-launcher:hover:where(:not(body.pc-node-held *)) { opacity: 1; filter: brightness(1.2); background: color-mix(in srgb, var(--SmartThemeBodyColor, #dcdcd2) 7%, transparent); }
 #pc-sendbar.pc-chat-launcher.pc-sendbar-on { color: var(--pc-accent); opacity: 1; }
 #pc-sendbar.pc-chat-launcher:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
+#pc-sendbar .pc-chat-progress { position: absolute; bottom: calc(100% + 5px); left: 0; z-index: 10; display: flex; align-items: center; gap: 7px; width: max-content; max-width: calc(100vw - 16px); padding: 5px 7px; border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor, #dcdcd2) 15%, transparent); border-radius: 3px; background: var(--SmartThemeBlurTintColor, #202020f2); color: var(--SmartThemeBodyColor, #dcdcd2); font: 11px/1.2 var(--mainFontFamily, sans-serif); opacity: 1; pointer-events: none; }
+#pc-sendbar .pc-chat-progress[hidden] { display: none; }
+#pc-sendbar .pc-chat-progress-pixels { display: grid; grid-template-rows: repeat(3, 4px); grid-auto-columns: 4px; grid-auto-flow: column; gap: 2px; flex: none; }
+#pc-sendbar .pc-chat-progress-pixel { display: block; width: 4px; height: 4px; border-radius: 1px; background: #576069; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="completed"] { background: #8aad96; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="queued"] { background: #8b959d; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="running"], #pc-sendbar .pc-chat-progress-pixel[data-status="cancelling"] { background: var(--pc-accent, #e18a24); box-shadow: 0 0 3px var(--pc-accent, #e18a24); }
+#pc-sendbar .pc-chat-progress-pixel[data-status="failed"], #pc-sendbar .pc-chat-progress-pixel[data-status="invalid"] { background: #d76a74; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="blocked"] { background: #9a727c; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="stale"] { background: #b19b67; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="cancelled"] { background: #8e8296; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="not-run"], #pc-sendbar .pc-chat-progress-pixel[data-status="skipped"] { background: #434a50; }
+#pc-sendbar .pc-chat-progress-percent { min-width: 4ch; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#pc-sendbar .pc-chat-progress-fading { animation: pc-chat-progress-fade 3s linear forwards; animation-delay: var(--pc-chat-progress-fade-elapsed, 0ms); }
+@keyframes pc-chat-progress-fade { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+    #pc-sendbar .pc-chat-progress-pixel[data-status="running"] { animation: pc-chat-progress-pulse 1.2s ease-in-out infinite; }
+    @keyframes pc-chat-progress-pulse { 50% { opacity: .65; } }
+}
 
 /* Colorblind-friendly themes retain type names and add matching pin/wire cues. */
 :root[data-pc-accessible="1"] .pc-root { --pc-raised: var(--pc-block); }

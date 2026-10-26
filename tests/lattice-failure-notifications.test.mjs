@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {presentDiagnostic} from '../src/ui/diagnostics.js';
+const source=fs.readFileSync(new URL('../src/run.js', import.meta.url),'utf8');
+const start=source.indexOf('onResult: ');const expression=start<0?source.trim():source.slice(start+'onResult: '.length,source.indexOf('\n    });',start)).trim().replace(/,$/,'');
+function fixture(){const calls=[],events=[],kinds=[];const scope={console:{info(){}},presentDiagnostic,safe:fn=>{try{return fn();}catch{}},toastr:{error(...args){calls.push(args);kinds.push('error');},info(...args){calls.push(args);kinds.push('info');}},document:{dispatchEvent(event){events.push(event.type);}},CustomEvent:class{constructor(type){this.type=type;}}};return {calls,events,kinds,onResult:vm.runInNewContext('('+expression+')',scope)};}
+const automatic={kind:'send',phase:'unified',runId:'synthetic'};
+test('automatic schema failure visibly reports safe code and node, and persists with an accurate fallback caveat',()=>{const f=fixture();f.onResult({ok:false,error:{code:'SCHEMA_MISMATCH',message:'PRIVATE source data',nodeId:'assessment'}},automatic);assert.equal(f.calls.length,1);const [message,title,options]=f.calls[0];assert.match(message,/SCHEMA_MISMATCH/);assert.match(message,/assessment/);assert.match(message,/SillyTavern may continue with its normal reply/);assert.doesNotMatch(message,/PRIVATE/);assert.equal(options.timeOut,0);assert.equal(options.extendedTimeOut,0);assert.equal(options.closeButton,true);assert.equal(options.escapeHtml,true);assert.match(title,/Lattice/);assert.deepEqual(f.events,['pc-native-result']);});
+test('manual failure uses catalog copy plus safe code and persistent error',()=>{const f=fixture();f.onResult({ok:false,error:{code:'INVALID_JSON',message:'PRIVATE model text'}},null);assert.equal(f.calls.length,1);assert.match(f.calls[0][0],/not valid JSON/);assert.match(f.calls[0][0],/INVALID_JSON/);assert.doesNotMatch(f.calls[0][0],/PRIVATE|SillyTavern may continue/);assert.equal(f.calls[0][2].timeOut,0);assert.equal(f.events.length,0);});
+test('successful automatic result produces no toast and retains the result event',()=>{const f=fixture();f.onResult({ok:true},automatic);assert.equal(f.calls.length,0);assert.deepEqual(f.events,['pc-native-result']);});
+test('informational cancellation remains neutral, visible and persistent',()=>{const f=fixture();f.onResult({ok:false,error:{code:'ABORTED',message:'Workflow was stopped.'}},automatic);assert.equal(f.calls.length,1);assert.equal(f.kinds[0],'info');assert.match(f.calls[0][0],/Workflow stopped.*ABORTED/);assert.equal(f.calls[0][2].timeOut,0);assert.equal(f.calls[0][2].closeButton,true);assert.deepEqual(f.events,['pc-native-result']);});
+test('arbitrary error code and node text cannot reach the toast',()=>{const f=fixture();f.onResult({ok:false,error:{code:'<secret>',message:'PRIVATE',nodeId:'<script>private</script>'}},automatic);assert.equal(f.calls.length,1);assert.match(f.calls[0][0],/WORKFLOW_FAILED/);assert.doesNotMatch(f.calls[0][0],/secret|private|script|PRIVATE/);});
+

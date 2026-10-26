@@ -16,3 +16,6 @@ test-results/
 playwright-report/
 benchmark-results/
 work/
+
+# Private chat attachments
+.codex-remote-attachments/

@@ -1,36 +1,37 @@
-import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.28.0';
-import {cloneJsonValue} from './operations/json-data.js?v=0.28.0';
-import {captureNativeCharacterProjection} from './native-source-projections.js?v=0.28.0';
-import {createNativeSourceRegistry} from './native-source-registry.js?v=0.28.0';
-import {createSourceReader,inspectSourcePage} from './source-reader.js?v=0.28.0';
-import {createSourceProofRegistry} from './source-provenance.js?v=0.28.0';
-import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.28.0';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.0';
-import { sha256Text } from './definition-data.js?v=0.28.0';
-import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.28.0';
-import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.28.0';
-import { addressKey, safeError } from './record-data.js?v=0.28.0';
-import { cloneWorkflowDocument } from './document.js?v=0.28.0';
-import { prepareWorkflowAttempt, resolveWorkflow } from './resolve.js?v=0.28.0';
-import { projectIntrospectionNode } from './introspection/native.js?v=0.28.0';
-import { executeIntrospection } from './introspection/nodes.js?v=0.28.0';
-import { parseRecord } from './introspection/contracts.js?v=0.28.0';
-import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.28.0';
-import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.28.0';
-import {queryProgressionHistory} from './progression.js?v=0.28.0';
-import { createChatDocumentCatalog } from './document-catalog.js?v=0.28.0';
-import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.28.0';
-import { createNativePersistenceVerifier } from './native-persistence.js?v=0.28.0';
-import { createNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.28.0';
-import { createNativeActorContext } from './native-actor-context.js?v=0.28.0';
-import { createNativeRecallController } from './native-recall.js?v=0.28.0';
-import { createNativeStoryState, createNativeOutcomeCache } from './native-story-state.js?v=0.28.0';
-import { executeTimeNode } from './operations/time-nodes.js?v=0.28.0';
-import { executeRandom } from './operations/random-outcomes.js?v=0.28.0';
-import { executeFileNode } from './operations/file-nodes.js?v=0.28.0';
-import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.28.0';
-import { snapshotPromptSource, promptSourceFingerprint } from './prompt-source.js?v=0.28.0';
-import { createNativeMemoryAdapter, nativeMemoryFingerprint, nativeMemoryScope, nativeVisibility } from './introspection/host-memory.js?v=0.28.0';
+import { randomUuid } from '../random-id.js?v=0.28.1';
+import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.28.1';
+import {cloneJsonValue} from './operations/json-data.js?v=0.28.1';
+import {captureNativeCharacterProjection} from './native-source-projections.js?v=0.28.1';
+import {createNativeSourceRegistry} from './native-source-registry.js?v=0.28.1';
+import {createSourceReader,inspectSourcePage} from './source-reader.js?v=0.28.1';
+import {createSourceProofRegistry} from './source-provenance.js?v=0.28.1';
+import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.28.1';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.1';
+import { sha256Text } from './definition-data.js?v=0.28.1';
+import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.28.1';
+import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.28.1';
+import { addressKey, safeError } from './record-data.js?v=0.28.1';
+import { cloneWorkflowDocument } from './document.js?v=0.28.1';
+import { prepareWorkflowAttempt, resolveWorkflow } from './resolve.js?v=0.28.1';
+import { projectIntrospectionNode } from './introspection/native.js?v=0.28.1';
+import { executeIntrospection } from './introspection/nodes.js?v=0.28.1';
+import { parseRecord } from './introspection/contracts.js?v=0.28.1';
+import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.28.1';
+import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.28.1';
+import {queryProgressionHistory} from './progression.js?v=0.28.1';
+import { createChatDocumentCatalog } from './document-catalog.js?v=0.28.1';
+import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.28.1';
+import { createNativePersistenceVerifier } from './native-persistence.js?v=0.28.1';
+import { createNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.28.1';
+import { createNativeActorContext } from './native-actor-context.js?v=0.28.1';
+import { createNativeRecallController } from './native-recall.js?v=0.28.1';
+import { createNativeStoryState, createNativeOutcomeCache } from './native-story-state.js?v=0.28.1';
+import { executeTimeNode } from './operations/time-nodes.js?v=0.28.1';
+import { executeRandom } from './operations/random-outcomes.js?v=0.28.1';
+import { executeFileNode } from './operations/file-nodes.js?v=0.28.1';
+import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.28.1';
+import { snapshotPromptSource, promptSourceFingerprint } from './prompt-source.js?v=0.28.1';
+import { createNativeMemoryAdapter, nativeMemoryFingerprint, nativeMemoryScope, nativeVisibility } from './introspection/host-memory.js?v=0.28.1';
 
 // Internal review seam: observations contain no authority or retained payload values.
 const retentionInspectors=new WeakMap();
@@ -129,7 +130,7 @@ const sourceText = chat => {
     }
     return JSON.stringify(source);
 };
-const token = () => globalThis.crypto.randomUUID();
+const token = () => randomUuid();
 const generationStamp = value => {
     if(typeof value!=='string' && typeof value!=='number' && !(value instanceof Date))return null;
     const stamp=new Date(value).getTime();return Number.isFinite(stamp)?stamp:null;
@@ -146,6 +147,27 @@ const incompleteStream = (c,index) => {
     return !stream.isFinished || failed;
 };
 const completed = m => !!m && (!m.role || m.role==='assistant') && !['narrator','tool'].includes(m.extra?.type) && m.mes!=='...' && !m.is_user && !m.is_system && !m.is_tool && !m.is_intermediate && !m.extra?.tool_invocations?.length && !m.extra?.tool_calls?.length && !m.extra?.image && !m.extra?.media?.length && !m.extra?.isSmallSys && !m.extra?.is_intermediate && !m.extra?.partial && !m.extra?.unfinished && !(m.gen_started && !m.gen_finished) && typeof m.mes === 'string' && !!m.mes.trim();
+
+// Classify only an already rejected source. Never copy native content into diagnostics.
+const nativeSourceFailure = (tail, generationType) => {
+    let sourceReason = 'SWIPE_HISTORY_REQUIRED';
+    if (generationType === 'normal') sourceReason = 'USER_MESSAGE_REQUIRED';
+    else if (!tail || tail.is_user || tail.is_system || tail.is_tool || tail.role && tail.role !== 'assistant' || ['narrator', 'tool'].includes(tail.extra?.type) || tail.extra?.isSmallSys) sourceReason = 'ASSISTANT_REPLY_REQUIRED';
+    else if (tail.mes === '...' || tail.is_intermediate || tail.extra?.is_intermediate || tail.extra?.partial || tail.extra?.unfinished || tail.gen_started && !tail.gen_finished) sourceReason = 'ASSISTANT_REPLY_INCOMPLETE';
+    else if (tail.extra?.tool_invocations?.length || tail.extra?.tool_calls?.length) sourceReason = 'TOOL_REPLY_UNSUPPORTED';
+    else if (tail.extra?.image || tail.extra?.media?.length) sourceReason = 'MEDIA_REPLY_UNSUPPORTED';
+    else if (typeof tail.mes !== 'string' || !tail.mes.trim()) sourceReason = 'ASSISTANT_TEXT_REQUIRED';
+    const messages = {
+        USER_MESSAGE_REQUIRED: 'Send requires the latest chat message to be a user message. Send a new user message, or generate a new swipe of a completed assistant reply.',
+        ASSISTANT_REPLY_REQUIRED: 'A new swipe requires the latest chat message to be an assistant reply. Select a completed assistant reply or send a new user message.',
+        ASSISTANT_REPLY_INCOMPLETE: 'The latest assistant reply is unfinished. Finish or remove the unfinished reply before generating a new swipe.',
+        ASSISTANT_TEXT_REQUIRED: 'The latest assistant reply has no completed text. Generate a complete reply before requesting a new swipe.',
+        TOOL_REPLY_UNSUPPORTED: 'The latest assistant reply contains tool output. Send a new user message to generate a supported text reply.',
+        MEDIA_REPLY_UNSUPPORTED: 'The latest assistant reply contains media. Send a new user message to generate a supported text reply.',
+        SWIPE_HISTORY_REQUIRED: 'The latest assistant reply has no usable swipe history. Reload the chat and select a completed reply before generating a new swipe.',
+    };
+    return { ok: false, error: { code: 'UNSUPPORTED_NATIVE_SOURCE', message: messages[sourceReason], details: { generationType, sourceReason } } };
+};
 
 /** @typedef {'actor' | 'public'} SceneContextVisibilityMode */
 /** Explicit bounded material only; this never assembles a native prompt or activates lore.
@@ -632,7 +654,7 @@ export function createNativeWorkflowController(ports) {
         if(typeof userId!=='string' || !userId.trim() || userId.length>128)return fail('USER_SCOPE_UNAVAILABLE','A trusted current user handle is required for native continuation.');
         if(!Array.isArray(c.chat) || !c.chat.length)return fail('REPLY_UNAVAILABLE','Native continuation requires a live chat source.');
         const tail=c.chat.at(-1),swipe=run.nativeType==='swipe';
-        if(swipe?!completed(tail)||!Array.isArray(tail.swipes)||!tail.swipes.length:!tail.is_user)return fail('UNSUPPORTED_NATIVE_SOURCE','Send requires a user message; swipe requires the latest completed assistant message.');
+        if(swipe?!completed(tail)||!Array.isArray(tail.swipes)||!tail.swipes.length:!tail.is_user)return nativeSourceFailure(tail,run.nativeType);
         const refs=swipe?c.chat.slice(0,-1):[...c.chat],stamp=sourceText(refs);
         if(stamp===null)return fail('INVALID_CONTEXT_VISIBILITY','Live source visibility is invalid.');
         run.userId=userId;run.nativeOwner=owner;owner.unified=true;owner.claimed=true;

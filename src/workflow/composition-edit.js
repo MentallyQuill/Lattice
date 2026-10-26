@@ -1,4 +1,4 @@
-import { definitionRefKey } from './definition-data.js?v=0.28.0';
+import { definitionRefKey } from './definition-data.js?v=0.28.1';
 
 export const pathKey = path => JSON.stringify(path);
 export const samePath = (left, right) => pathKey(left) === pathKey(right);

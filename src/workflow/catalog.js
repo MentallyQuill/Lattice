@@ -1,25 +1,25 @@
-import { FOUNDATION_RELEASE, deferredFoundationControl } from './foundation-release.js?v=0.28.0';
-import { CHUNK_OPERATION, describeChunk } from './operations/chunk-contract.js?v=0.28.0';
-import { graphSatisfies } from './workflow-versions.js?v=0.28.0';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.28.0';
-import { RECALL_OPERATIONS, describeRecallNode } from './operations/recall-nodes.js?v=0.28.0';
-import { LIFECYCLE_OPERATIONS, describeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.28.0';
-import { FILE_OPERATIONS, describeFileNode } from './operations/file-nodes.js?v=0.28.0';
-import { TIME_OPERATIONS, describeTimeNode } from './operations/time-nodes.js?v=0.28.0';
-import { EVENT_OPERATIONS, describeEvent } from './operations/event-nodes.js?v=0.28.0';
-import { RANDOM_OPERATIONS, describeRandom } from './operations/random-outcomes.js?v=0.28.0';
-import { COLLECTION_OPERATIONS, describeCollection } from './operations/collection-nodes.js?v=0.28.0';
-import { PRIMITIVE_OPERATIONS, describePrimitive } from './operations/nodes.js?v=0.28.0';
-import { describeContextJoin } from './operations/context-join.js?v=0.28.0';
-import { TRANSPOSE_OPERATIONS, describeTransposeMetadata } from './operations/transpose-nodes.js?v=0.28.0';
-import { CLEANUP_MODES, validateCleanupSettings } from './operations/prose-cleanup.js?v=0.28.0';
-import { INTROSPECTION_NATIVE_OPERATIONS, describeNativeIntrospection, introspectionDefaults } from './introspection/native.js?v=0.28.0';
-import { INPUT_OPERATIONS, describeInput } from './operations/input-nodes.js?v=0.28.0';
-import { CONTROL_OPERATIONS, describeControl } from './operations/control-nodes.js?v=0.28.0';
-import { DECISION_OPERATIONS, describeDecision } from './operations/decision-nodes.js?v=0.28.0';
-import { MODEL_OPERATIONS, describeModelNode } from './operations/model-nodes.js?v=0.28.0';
-import { PATTERN_OPERATION, describePattern } from './operations/pattern-nodes.js?v=0.28.0';
-import { FILTER_TEXT_OPERATION, describeFilterText } from './operations/filter-text.js?v=0.28.0';
+import { FOUNDATION_RELEASE, deferredFoundationControl } from './foundation-release.js?v=0.28.1';
+import { CHUNK_OPERATION, describeChunk } from './operations/chunk-contract.js?v=0.28.1';
+import { graphSatisfies } from './workflow-versions.js?v=0.28.1';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.28.1';
+import { RECALL_OPERATIONS, describeRecallNode } from './operations/recall-nodes.js?v=0.28.1';
+import { LIFECYCLE_OPERATIONS, describeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.28.1';
+import { FILE_OPERATIONS, describeFileNode } from './operations/file-nodes.js?v=0.28.1';
+import { TIME_OPERATIONS, describeTimeNode } from './operations/time-nodes.js?v=0.28.1';
+import { EVENT_OPERATIONS, describeEvent } from './operations/event-nodes.js?v=0.28.1';
+import { RANDOM_OPERATIONS, describeRandom } from './operations/random-outcomes.js?v=0.28.1';
+import { COLLECTION_OPERATIONS, describeCollection } from './operations/collection-nodes.js?v=0.28.1';
+import { PRIMITIVE_OPERATIONS, describePrimitive } from './operations/nodes.js?v=0.28.1';
+import { describeContextJoin } from './operations/context-join.js?v=0.28.1';
+import { TRANSPOSE_OPERATIONS, describeTransposeMetadata } from './operations/transpose-nodes.js?v=0.28.1';
+import { CLEANUP_MODES, validateCleanupSettings } from './operations/prose-cleanup.js?v=0.28.1';
+import { INTROSPECTION_NATIVE_OPERATIONS, describeNativeIntrospection, introspectionDefaults } from './introspection/native.js?v=0.28.1';
+import { INPUT_OPERATIONS, describeInput } from './operations/input-nodes.js?v=0.28.1';
+import { CONTROL_OPERATIONS, describeControl } from './operations/control-nodes.js?v=0.28.1';
+import { DECISION_OPERATIONS, describeDecision } from './operations/decision-nodes.js?v=0.28.1';
+import { MODEL_OPERATIONS, describeModelNode } from './operations/model-nodes.js?v=0.28.1';
+import { PATTERN_OPERATION, describePattern } from './operations/pattern-nodes.js?v=0.28.1';
+import { FILTER_TEXT_OPERATION, describeFilterText } from './operations/filter-text.js?v=0.28.1';
 
 /** Native operation metadata. Artifact flow, rather than canvas placement, defines execution. */
 export const FAMILIES = ['Input', 'Shaping', 'Surface', 'Transpose', 'Introspection', 'Derive', 'Events', 'Collections', 'Randomness', 'Recall', 'Output'];
@@ -251,6 +251,7 @@ export function semanticControlsForNode(node, operation = operationFor(node)) {
         if (Array.isArray(controls.sections)) controls.sections = controls.sections.map(section => { const normalized = { ...section }; if (normalized.kind === 'text') delete normalized.kind; if (normalized.required === false) delete normalized.required; if (normalized.onSkipped === 'fallback') delete normalized.onSkipped; return normalized; });
     }
     // Additive editor controls must preserve existing version-1 semantic pins.
+    if (controls.maxRetries === 0) delete controls.maxRetries;
     if (node.operation === 'generate-reply') {
         if (controls.injectionRole === 'system') delete controls.injectionRole;
         if (controls.injectionPosition === 'in-chat') delete controls.injectionPosition;

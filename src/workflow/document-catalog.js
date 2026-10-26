@@ -1,6 +1,7 @@
-import { cloneJsonValue } from './operations/json-data.js?v=0.28.0';
-import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.28.0';
-import { freeze } from './record-data.js?v=0.28.0';
+import { randomUuid } from '../random-id.js?v=0.28.1';
+import { cloneJsonValue } from './operations/json-data.js?v=0.28.1';
+import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.28.1';
+import { freeze } from './record-data.js?v=0.28.1';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const good=data=>({ok:true,data:freeze(data)});
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&[Object.prototype,null].includes(Object.getPrototypeOf(value));
@@ -28,7 +29,7 @@ export function createChatDocumentCatalog(ports){
     if(!plain(ports))throw new Error('Trusted document host ports required');const methods={};
     for(const key of ['getContext','getUserId','saveMetadata']){const property=Object.getOwnPropertyDescriptor(ports,key);if(property&&(!Object.hasOwn(property,'value')||typeof property.value!=='function'))throw new Error('Own host methods required');methods[key]=property?.value;}
     if(typeof methods.getContext!=='function'||typeof methods.getUserId!=='function')throw new Error('Trusted user/chat scope required');
-    const boot=globalThis.crypto.randomUUID(),leases=new WeakMap(),staleAuthority=Symbol('stale document authority');let sequence=0,scope=null,chat=null,metadata=null,signature=null,documents={};
+    const boot=randomUuid(),leases=new WeakMap(),staleAuthority=Symbol('stale document authority');let sequence=0,scope=null,chat=null,metadata=null,signature=null,documents={};
     const bump=()=>{if(++sequence>Number.MAX_SAFE_INTEGER)throw new Error('Epoch exhausted');};
     const refresh=()=>{
         let c,userId,chatId;
@@ -67,7 +68,7 @@ export function createChatDocumentCatalog(ports){
             const storedRoot=own(metadata,'latticeDocuments'),storedUser=plain(storedRoot)?own(storedRoot,captured.scope.userId):null,stored=plain(storedUser)?own(storedUser,value.targetId):null;
             if(stored&&own(stored,'format')!==value.format)return fail('FILE_FORMAT_LOCKED','An existing workflow data document retains its stored format. Choose a new target to convert formats.');
             checkAuthority(captured);
-            return install({...documents,[value.targetId]:{...value,revision:globalThis.crypto.randomUUID()}},captured);
+            return install({...documents,[value.targetId]:{...value,revision:randomUuid()}},captured);
         }catch(error){return expected&&(error===staleAuthority||sequence!==expected.sequence)?staleMutation():fail('INVALID_DOCUMENT_DEFINITION','Use a named logical target, a valid format/template and an explicit public, hidden or actor-private scope.');}
     };
     const removeValue=(targetId,expected)=>{

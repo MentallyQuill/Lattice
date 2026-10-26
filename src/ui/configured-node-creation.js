@@ -1,11 +1,11 @@
-import {parseControlInput} from './control-input-contracts.js?v=0.28.0';
-import {prepareIterationBindings} from './iteration-bindings.js?v=0.28.0';
-import {projectNodeControls} from './node-control-projection.js?v=0.28.0';
-import {OPERATIONS,operationDefaults,describeOperation,describeAuthoredOperation,phaseForNode} from '../workflow/catalog.js?v=0.28.0';
-import {cloneDefinitionData,definitionRefKey} from '../workflow/definition-data.js?v=0.28.0';
-import {prepareDefinitionRegistry,inspectPreparedDefinition} from '../workflow/graph-validation.js?v=0.28.0';
-import {freeze} from '../workflow/record-data.js?v=0.28.0';
-import {workflowDataPresetFor} from '../workflow/workflow-data-defaults.js?v=0.28.0';
+import {parseControlInput} from './control-input-contracts.js?v=0.28.1';
+import {prepareIterationBindings} from './iteration-bindings.js?v=0.28.1';
+import {projectNodeControls} from './node-control-projection.js?v=0.28.1';
+import {OPERATIONS,operationDefaults,describeOperation,describeAuthoredOperation,phaseForNode} from '../workflow/catalog.js?v=0.28.1';
+import {cloneDefinitionData,definitionRefKey} from '../workflow/definition-data.js?v=0.28.1';
+import {prepareDefinitionRegistry,inspectPreparedDefinition} from '../workflow/graph-validation.js?v=0.28.1';
+import {freeze} from '../workflow/record-data.js?v=0.28.1';
+import {workflowDataPresetFor} from '../workflow/workflow-data-defaults.js?v=0.28.1';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 /** Declared authoring pins remain available before executable settings are complete. */
 export function deferredNodeDescription(operation,controls={}){try{const result=describeAuthoredOperation({schema:3,runtime:2,mode:'native-unified'},{type:'workflow',...operationDefaults(operation,{mode:controls.mode}),...controls});return result.ok?result.data:null;}catch{return null;}}

@@ -1,7 +1,7 @@
-import { stateCopy, knownTextCopy } from './diagnostic-states.js?v=0.28.0';
-import { modelCopy, modelVariants } from './diagnostic-model.js?v=0.28.0';
-import { resourceCopy } from './diagnostic-resources.js?v=0.28.0';
-import { workflowCopy } from './diagnostic-workflow.js?v=0.28.0';
+import { stateCopy, knownTextCopy } from './diagnostic-states.js?v=0.28.1';
+import { modelCopy, modelVariants } from './diagnostic-model.js?v=0.28.1';
+import { resourceCopy } from './diagnostic-resources.js?v=0.28.1';
+import { workflowCopy, nativeSourceVariants } from './diagnostic-workflow.js?v=0.28.1';
 
 // Only catalog-owned copy reaches a diagnostic surface. Unknown source text is
 // intentionally omitted, including in the technical disclosure.
@@ -44,13 +44,14 @@ const nativeEnabled = { id: 'send-required', severity: 'info', title: 'Starts wi
 const compactorCopy = new Map(modelVariants.filter(([, , copy]) => ['summary-truncated', 'summary-unverified', 'summary-empty', 'compression-request', 'compactor-settings'].includes(copy.id)).map(([code, , copy]) => [code, copy]));
 const presentedText = new Map();
 presentedText.set(nativeEnabled.message, nativeEnabled);
-for (const copy of [...Object.values(catalog), ...modelVariants.map(rule => rule[2]), ...variants.map(rule => rule[2]), ...knownTextCopy.values()]) {
+for (const copy of [...Object.values(catalog), ...nativeSourceVariants.values(), ...modelVariants.map(rule => rule[2]), ...variants.map(rule => rule[2]), ...knownTextCopy.values()]) {
     // Exact catalog text can cross legacy string boundaries safely. No raw
     // exception or arbitrary interpolated content is accepted by this lookup.
     presentedText.set(copy.message, copy);
 }
 
 export function diagnosticCopy(source, context) {
+    if (source.code === 'UNSUPPORTED_NATIVE_SOURCE' && nativeSourceVariants.has(source.message)) return nativeSourceVariants.get(source.message);
     if (context.enabled && ['MANUAL_NATIVE_TRIGGER_REQUIRED', 'NATIVE_OWNER_MISSING', 'NATIVE_SEND_REQUIRED'].includes(source.code)) return nativeEnabled;
     for (const [code, pattern, copy] of variants) if (source.code === code && pattern.test(source.message)) return copy;
     for (const [code, pattern, copy] of modelVariants) if (source.code === code && pattern.test(source.message)) return copy;

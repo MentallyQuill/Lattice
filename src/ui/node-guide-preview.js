@@ -1,5 +1,5 @@
-import { buildConnectionRoute } from '../canvas/connection-route.js?v=0.28.0';
-import { COMMENT_PADDING, COMMENT_HEADER_HEIGHT } from '../canvas/comment-frames.js?v=0.28.0';
+import { buildConnectionRoute } from '../canvas/connection-route.js?v=0.28.1';
+import { COMMENT_PADDING, COMMENT_HEADER_HEIGHT } from '../canvas/comment-frames.js?v=0.28.1';
 
 /** Routes are measured at the actual named pins, just as in the main canvas. */
 export function nodeGuideWires(connections, anchor) {

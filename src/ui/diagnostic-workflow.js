@@ -50,10 +50,22 @@ export const workflowCopy = {
     MULTIPLE_NATIVE_GENERATIONS: error('native-multiple', 'More than one Generate Reply path', 'A unified workflow supports one Generate Reply boundary. Keep one generation path in the selected workflow.'),
     NATIVE_ACTIVATION_REQUIRED: error('activation-required', 'Generate Reply needs On Send', 'Connect one root On Send activation to Generate Reply. This workflow starts during SillyTavern message generation.'),
     NATIVE_OWNER_MISSING: info('native-start', 'Starts with a message', 'This step starts when you send a message. Enable Lattice, then send a message in SillyTavern to run this workflow.'),
+    UNSUPPORTED_NATIVE_SOURCE: error('native-source', 'Chat source is not supported', 'Send a new user message, or generate a new swipe of the latest completed assistant reply. Lattice did not make a model request for this attempt.'),
     OVERLAPPING_GENERATION: error('generation-overlap', 'Generations overlapped', 'Another generation started before this workflow finished. Wait for the active generation to finish before starting another.'),
     GUIDANCE_OVERFLOW: error('guidance-budget', 'Guidance exceeds the budget', 'The guidance exceeds Token budget at Generate Reply. Reduce the guidance or increase Token budget in Details.'),
     READ_ONLY: local, READ_ONLY_DEFINITION: local,
 };
+// Only exact host-owned messages choose a specific explanation; arbitrary native
+// message text and diagnostic details never become presentation copy.
+export const nativeSourceVariants = new Map([
+    error('native-source-user', 'Send needs a user message', 'Send requires the latest chat message to be a user message. Send a new user message, or generate a new swipe of a completed assistant reply.'),
+    error('native-source-assistant', 'Swipe needs an assistant reply', 'A new swipe requires the latest chat message to be an assistant reply. Select a completed assistant reply or send a new user message.'),
+    error('native-source-incomplete', 'Reply is unfinished', 'The latest assistant reply is unfinished. Finish or remove the unfinished reply before generating a new swipe.'),
+    error('native-source-text', 'Reply needs completed text', 'The latest assistant reply has no completed text. Generate a complete reply before requesting a new swipe.'),
+    error('native-source-tools', 'Tool reply is not supported', 'The latest assistant reply contains tool output. Send a new user message to generate a supported text reply.'),
+    error('native-source-media', 'Media reply is not supported', 'The latest assistant reply contains media. Send a new user message to generate a supported text reply.'),
+    error('native-source-history', 'Swipe history is unavailable', 'The latest assistant reply has no usable swipe history. Reload the chat and select a completed reply before generating a new swipe.'),
+].map(copy => [copy.message, copy]));
 for (const code of ['DANGLING_WIRE', 'INVALID_WIRE', 'INVALID_PORT', 'CONFIGURATION_PORT_CHANGED']) workflowCopy[code] = wire;
 for (const code of ['DEFINITION_REF', 'DEFINITION_HASH', 'DEFINITION_DATA', 'DEFINITION_METADATA', 'DEFINITION_BODY', 'DEFINITION_INTERFACE', 'DEFINITION_PARAMETER', 'INVALID_OVERRIDE', 'LOCAL_COPY_OWNERSHIP']) workflowCopy[code] = subgraph;
 for (const code of ['GRAPH_LIMIT', 'DEFINITION_LIMIT', 'OUTPUT_LIMIT', 'INPUT_LIMIT_EXCEEDED', 'EVIDENCE_LIMIT', 'EFFECT_BUNDLE_LIMIT', 'EFFECT_PREVIEW_LIMIT']) workflowCopy[code] = error('workflow-limit', 'Workflow exceeds a size limit', 'This workflow or its data exceeds a supported size limit. Simplify the selected workflow or reduce its input data.');

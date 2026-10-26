@@ -1,6 +1,6 @@
-import { recognizeRecordedText } from './retained-text.js?v=0.28.0';
-import { createRunState, reduceRunState } from './run-state.js?v=0.28.0';
-import { addressKey, nodeAddress, own, plain, dense, parseRunPlan, freeze, encode, bytes, textBytes, boundedText, safeSource, safeBinding, safeError, expandRecordAddress, safePortState, safeUsage, errorResult, successResult, TOTAL_RECORD_BYTES, ARTIFACT_RECORD_BYTES, RENDERED_TEXT_BYTES } from './record-data.js?v=0.28.0';
+import { recognizeRecordedText } from './retained-text.js?v=0.28.1';
+import { createRunState, reduceRunState } from './run-state.js?v=0.28.1';
+import { addressKey, nodeAddress, own, plain, dense, parseRunPlan, freeze, encode, bytes, textBytes, boundedText, safeSource, safeBinding, safeError, expandRecordAddress, safePortState, safeUsage, errorResult, successResult, TOTAL_RECORD_BYTES, ARTIFACT_RECORD_BYTES, RENDERED_TEXT_BYTES } from './record-data.js?v=0.28.1';
 
 export { TOTAL_RECORD_BYTES, ARTIFACT_RECORD_BYTES, RENDERED_TEXT_BYTES };
 /** @template T @typedef {{ok:true,data:T}|{ok:false,error:{code:string,message:string}}} Result */

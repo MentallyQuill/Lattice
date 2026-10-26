@@ -1,35 +1,36 @@
-import { executeChunk } from './operations/chunk.js?v=0.28.0';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.0';
-import { preserveArtifactPrivacy } from './artifact-privacy.js?v=0.28.0';
-import { compileIterationHelper, executeCompiledIteration } from './iteration-helpers.js?v=0.28.0';
-import { LIFECYCLE_OPERATIONS, executeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.28.0';
-import { FILE_OPERATIONS, executeFileNode } from './operations/file-nodes.js?v=0.28.0';
-import { TIME_OPERATIONS, executeTimeNode } from './operations/time-nodes.js?v=0.28.0';
-import { EVENT_OPERATIONS, executeEvent } from './operations/event-nodes.js?v=0.28.0';
-import { RANDOM_OPERATIONS, executeRandom } from './operations/random-outcomes.js?v=0.28.0';
-import { COLLECTION_OPERATIONS, executeCollection } from './operations/collection-nodes.js?v=0.28.0';
-import { applyTextModifiers } from './modifiers.js?v=0.28.0';
-import { operationFor } from './catalog.js?v=0.28.0';
-import { cloneWorkflowDocument } from './document.js?v=0.28.0';
-import { prepareWorkflowAttempt } from './resolve.js?v=0.28.0';
-import { compactContext, formatContext } from './compactor.js?v=0.28.0';
-import { repairDraft, validatePatches } from './repair.js?v=0.28.0';
-import { scanPatternDraft } from './operations/pattern-engine.js?v=0.28.0';
-import { patternSettingsForNode } from './operations/pattern-nodes.js?v=0.28.0';
-import { filterPatternDraft, filterTextSettingsForNode } from './operations/filter-text.js?v=0.28.0';
-import { graphSemanticSignature } from './ports.js?v=0.28.0';
-import { executePrimitive, PRIMITIVE_OPERATIONS } from './operations/nodes.js?v=0.28.0';
-import { executeInput, INPUT_OPERATIONS } from './operations/input-nodes.js?v=0.28.0';
-import { executeContextJoin } from './operations/context-join.js?v=0.28.0';
-import { executeControl, CONTROL_OPERATIONS } from './operations/control-nodes.js?v=0.28.0';
-import { executeDecision, DECISION_OPERATIONS } from './operations/decision-nodes.js?v=0.28.0';
-import { executeModelNode, MODEL_OPERATIONS } from './operations/model-nodes.js?v=0.28.0';
-import { executeTranspose, TRANSPOSE_OPERATIONS } from './operations/transpose-nodes.js?v=0.28.0';
-import { cleanupDraft, CLEANUP_MODES } from './operations/prose-cleanup.js?v=0.28.0';
-import { executeIntrospection } from './introspection/nodes.js?v=0.28.0';
-import { INTROSPECTION_NATIVE_OPERATIONS, projectIntrospectionNode } from './introspection/native.js?v=0.28.0';
-import { admitRunPlan, createRunRecorder } from './recording.js?v=0.28.0';
-import { addressKey, freeze, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText } from './record-data.js?v=0.28.0';
+import { executeChunk } from './operations/chunk.js?v=0.28.1';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.1';
+import { preserveArtifactPrivacy } from './artifact-privacy.js?v=0.28.1';
+import { normalizeRequestFailure } from './request-failure.js?v=0.28.1';
+import { compileIterationHelper, executeCompiledIteration } from './iteration-helpers.js?v=0.28.1';
+import { LIFECYCLE_OPERATIONS, executeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.28.1';
+import { FILE_OPERATIONS, executeFileNode } from './operations/file-nodes.js?v=0.28.1';
+import { TIME_OPERATIONS, executeTimeNode } from './operations/time-nodes.js?v=0.28.1';
+import { EVENT_OPERATIONS, executeEvent } from './operations/event-nodes.js?v=0.28.1';
+import { RANDOM_OPERATIONS, executeRandom } from './operations/random-outcomes.js?v=0.28.1';
+import { COLLECTION_OPERATIONS, executeCollection } from './operations/collection-nodes.js?v=0.28.1';
+import { applyTextModifiers } from './modifiers.js?v=0.28.1';
+import { operationFor } from './catalog.js?v=0.28.1';
+import { cloneWorkflowDocument } from './document.js?v=0.28.1';
+import { prepareWorkflowAttempt } from './resolve.js?v=0.28.1';
+import { compactContext, formatContext } from './compactor.js?v=0.28.1';
+import { repairDraft, validatePatches } from './repair.js?v=0.28.1';
+import { scanPatternDraft } from './operations/pattern-engine.js?v=0.28.1';
+import { patternSettingsForNode } from './operations/pattern-nodes.js?v=0.28.1';
+import { filterPatternDraft, filterTextSettingsForNode } from './operations/filter-text.js?v=0.28.1';
+import { graphSemanticSignature } from './ports.js?v=0.28.1';
+import { executePrimitive, PRIMITIVE_OPERATIONS } from './operations/nodes.js?v=0.28.1';
+import { executeInput, INPUT_OPERATIONS } from './operations/input-nodes.js?v=0.28.1';
+import { executeContextJoin } from './operations/context-join.js?v=0.28.1';
+import { executeControl, CONTROL_OPERATIONS } from './operations/control-nodes.js?v=0.28.1';
+import { executeDecision, DECISION_OPERATIONS } from './operations/decision-nodes.js?v=0.28.1';
+import { executeModelNode, MODEL_OPERATIONS } from './operations/model-nodes.js?v=0.28.1';
+import { executeTranspose, TRANSPOSE_OPERATIONS } from './operations/transpose-nodes.js?v=0.28.1';
+import { cleanupDraft, CLEANUP_MODES } from './operations/prose-cleanup.js?v=0.28.1';
+import { executeIntrospection } from './introspection/nodes.js?v=0.28.1';
+import { INTROSPECTION_NATIVE_OPERATIONS, projectIntrospectionNode } from './introspection/native.js?v=0.28.1';
+import { admitRunPlan, createRunRecorder } from './recording.js?v=0.28.1';
+import { addressKey, freeze, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText } from './record-data.js?v=0.28.1';
 
 /** Execution identity shared by the host and UI. Canvas presentation never invalidates work. */
 export const workflowSignature = graphSemanticSignature;
@@ -144,7 +145,7 @@ async function executeWorkflow(original,ports,hooks={}) {
     let now,monotonic,started;
     const safeFailure=result=>{const error=safeError(own(result,'error'),safePlan??{units:[],hierarchy:[]},current?.address)??{code:'WORKFLOW_FAILED',message:'Workflow preparation failed; inspect the source, connection and tokenizer.'};return {ok:false,error};};
     const emit=(type,details={})=>{
-        if(closed || (cancelling && !(type==='run-settled'&&details.status==='cancelled')))return;
+        if(closed || (cancelling && !(type==='run-settled'&&details.status==='cancelled') && !(type==='request-settled'&&details.status==='cancelled'&&details.dispatched===false)))return;
         let at=now(),elapsed=monotonic()-started;if(!Number.isFinite(at)||at<0)at=0;if(!Number.isFinite(elapsed)||elapsed<0)elapsed=lastElapsed;lastElapsed=Math.max(lastElapsed,elapsed);
         const event=freeze({runId,seq:seq+1,at,elapsedMs:lastElapsed,type,...details}),accepted=recorder.accept(event);
         if(!accepted.ok)throw new Error('Event admission failed');if(accepted.data.lastSeq!==event.seq)return;
@@ -279,11 +280,11 @@ async function executeWorkflow(original,ports,hooks={}) {
                     // request capability after all of them, immediately before dispatch.
                     let dispatchGuard=!admitted()?requestFailure():await (finalGuard?finalGuard(capability):authorizeInputs(node,inputs,unit.address,capability));
                     if(dispatchGuard.ok&&!admitted())dispatchGuard=requestFailure();
-                    if(!dispatchGuard.ok){emit('request-settled',{address:unit.address,attempt,status:stopped()?'cancelled':'failed',durationMs:0,error:safeError(dispatchGuard.error)});return dispatchGuard;}
+                    if(!dispatchGuard.ok){emit('request-settled',{address:unit.address,attempt,status:stopped()?'cancelled':'failed',durationMs:0,dispatched:false,error:safeError(dispatchGuard.error)});return dispatchGuard;}
                     nodeCalls.set(key,attempt);actualCalls++;
                     let response;
                     try{response=await ports.request({...options,binding:requestBinding,signal:ports.signal});}
-                    catch{response=failure(stopped()?'ABORTED':'REQUEST_FAILED','Auxiliary request failed; no retry was made.',node.id);}
+                    catch(error){response=normalizeRequestFailure(error,{aborted:stopped()});}
                     if(closed||!operationOpen)return requestFailure();
                     if(!response||typeof response.ok!=='boolean'||(!response.ok&&!response.error))response=failure('INVALID_RESPONSE','Auxiliary request returned an invalid result.',node.id);
                     if(stopped())response=failure('ABORTED','Ignore the stopped request result.',node.id);
@@ -297,6 +298,12 @@ async function executeWorkflow(original,ports,hooks={}) {
                 }finally{requestInFlight=false;}
             };
             const request=trackedRequest;
+            const onRetry=details=>{
+                if(!admitted()||requestInFlight||(nodeCalls.get(key)??0)<1||!plain(details))return;
+                const reasonCode=own(details,'reasonCode'),delayMs=own(details,'delayMs');
+                if(!['INVALID_JSON','SCHEMA_MISMATCH','REQUEST_FAILED'].includes(reasonCode)||typeof delayMs!=='number'||!Number.isFinite(delayMs)||delayMs<0||delayMs>30000)return;
+                emit('node-retry',{address:unit.address,reasonCode,delayMs,nextAttempt:(nodeCalls.get(key)??0)+1,maxAttempts:unit.requestBound});
+            };
             const executeHelperUnit=async(child,childInputs,childLocal)=>{
                 const childNode=child.node,childOp=operationFor(childNode,{phase:childLocal.phase,mode:prepared.graph.mode});
                 if(!childOp||childOp.rootOnly||childOp.hostOperation||childOp.nativeBoundary||childOp.terminal||childOp.requiresStateInDefinition&&!childInputs.state)return failure('ITERATION_AUTHORITY','Helpers cannot acquire root authority.',node.id);
@@ -321,16 +328,17 @@ async function executeWorkflow(original,ports,hooks={}) {
                         childBindings.set(capability,selected.data);
                     }
                     if(typeof childLocal.request!=='function')return failure('REQUEST_MISSING','The helper requires its bounded per-iteration request capability.',node.id);
-                    childCalls++;
-                    return childLocal.request({...options,capability,binding:childBindings.get(capability),modelRole:role,childAddress:child.address});
+                    const before=nodeCalls.get(key)??0;childCalls++;
+                    try{return await childLocal.request({...options,capability,binding:childBindings.get(capability),modelRole:role,childAddress:child.address});}
+                    finally{childCalls+=(nodeCalls.get(key)??0)-before-1;}
                 };
-                try{return await executeNode(childNode,childInputs,childOp,{...ports,...childLocal,iterateHelper:childIterate,isRecoveredIterationResult:result=>recovered.has(result),binding:undefined,request:childRequest,getRequestCount:()=>childCalls,executeIntrospection:hooks.executeIntrospection,executeHostOperation:undefined,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});}
+                try{return await executeNode(childNode,childInputs,childOp,{...ports,...childLocal,iterateHelper:childIterate,isRecoveredIterationResult:result=>recovered.has(result),binding:undefined,request:childRequest,onRetry:details=>{if(childOpen&&childCalls>0&&childCalls<child.requestBound)onRetry(details);},getRequestCount:()=>childCalls,executeIntrospection:hooks.executeIntrospection,executeHostOperation:undefined,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});}
                 finally{childOpen=false;childBindings.clear();childAuthorizers.delete(childKey);}
             };
             // Custom adapters retain the same bounded request capability after mandatory helper preflight.
             const recovered=new WeakSet(),compiled=helperPrograms.get(key),iterateHelper=typeof ports.iterateHelper==='function'?ports.iterateHelper:compiled?async(invocation,helperPorts)=>{const result=await executeCompiledIteration(compiled,invocation,{executeUnit:executeHelperUnit,request:helperPorts.request,signal:ports.signal,retainScopedOutput:payload=>retainScopedOutput({...payload,inputs:payload.seed?inputs:payload.inputs})});if(result?.ok===true)recovered.add(result);return result;}:ports.iterateHelper;
             // Static instances inherit owned host capabilities; repeated helpers use their separate bounded adapter.
-            const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,operationRuntime:unit.runtime,rootMode:prepared.graph.mode,binding,request,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0 || isScopedSystemOperation(node) && typeof hooks.executeHostOperation==='function',address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});
+            const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,operationRuntime:unit.runtime,rootMode:prepared.graph.mode,binding,request,onRetry,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0 || isScopedSystemOperation(node) && typeof hooks.executeHostOperation==='function',address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});
             // Native generation authors the public story from scoped portrayal guidance; it never publishes guidance verbatim.
             const result=preserveArtifactPrivacy(rawResult,node.operation==='generate-reply'?{}:inputs);
             operationOpen=false;

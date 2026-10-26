@@ -1,5 +1,5 @@
-import { computeDefinitionIdentity, definitionRefKey, validateDefinition } from '../definitions.js?v=0.28.0';
-import { exportSubgraph, parseSubgraph } from '../packages.js?v=0.28.0';
+import { computeDefinitionIdentity, definitionRefKey, validateDefinition } from '../definitions.js?v=0.28.1';
+import { exportSubgraph, parseSubgraph } from '../packages.js?v=0.28.1';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const primitive = (id, operation, settings = {}) => ({ id, type: 'workflow', operation, operationVersion: 1, ...settings });

@@ -72,6 +72,14 @@ export function safeError(raw, inventory, fallbackAddress) {
     if (!plain(raw) || typeof own(raw, 'code') !== 'string' || typeof own(raw, 'message') !== 'string') return undefined;
     const code = boundedText(own(raw, 'code'), 128), message = boundedText(own(raw, 'message'), 2048);
     const result = { code, message, ...(code !== own(raw, 'code') || message !== own(raw, 'message') ? { truncated: true } : {}) };
+    if (code === 'UNSUPPORTED_NATIVE_SOURCE') {
+        const details = own(raw, 'details');
+        if (plain(details)) {
+            const generationType = own(details, 'generationType'), sourceReason = own(details, 'sourceReason');
+            const allowed = generationType === 'normal' ? sourceReason === 'USER_MESSAGE_REQUIRED' : generationType === 'swipe' && ['ASSISTANT_REPLY_REQUIRED', 'ASSISTANT_REPLY_INCOMPLETE', 'ASSISTANT_TEXT_REQUIRED', 'TOOL_REPLY_UNSUPPORTED', 'MEDIA_REPLY_UNSUPPORTED', 'SWIPE_HISTORY_REQUIRED'].includes(sourceReason);
+            if (allowed) result.details = { generationType, sourceReason };
+        }
+    }
     const explicit = nodeAddress(own(raw, 'address')), fallback = nodeAddress(fallbackAddress);
     const admitted = address => !inventory || [...inventory.units, ...inventory.hierarchy.filter(entry => entry.kind === 'instance')].some(entry => entry.included && addressKey(entry.address) === addressKey(address));
     const address = explicit && admitted(explicit) ? explicit : fallback && admitted(fallback) ? fallback : null;

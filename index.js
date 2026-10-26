@@ -1,10 +1,12 @@
 /** Lattice launcher and host integration. The workflow never replaces SillyTavern's prompt. */
-import { MODULE, settings, save, ctx, safe, activeWorkflow, documentSession, onWorkflowActivated } from './src/state.js?v=0.28.0';
-import { getNativeWorkflowController, initializeNativeWorkflowController, workflowSignature, sendWorkflowState } from './src/run.js?v=0.28.0';
-import * as UI from './src/ui.js?v=0.28.0';
-import { applyTheme } from './src/theme.js?v=0.28.0';
-import { presentDiagnostic } from './src/ui/diagnostics.js?v=0.28.0';
+import { MODULE, settings, save, ctx, safe, activeWorkflow, documentSession, onWorkflowActivated } from './src/state.js?v=0.28.1';
+import { getNativeWorkflowController, initializeNativeWorkflowController, workflowSignature, sendWorkflowState, subscribeWorkflowRunEvents } from './src/run.js?v=0.28.1';
+import * as UI from './src/ui.js?v=0.28.1';
+import { applyTheme } from './src/theme.js?v=0.28.1';
+import { presentDiagnostic } from './src/ui/diagnostics.js?v=0.28.1';
+import { createChatProgress } from './src/ui/chat-progress.js?v=0.28.1';
 const logoUrl = new URL('./assets/lattice-logo.svg', import.meta.url).href;
+let chatProgress;
 
 globalThis.latticeGenerationInterceptor = async (chat, contextSize, abort, type) => {
     await initializeNativeWorkflowController();
@@ -59,9 +61,9 @@ function addLauncher() {
 }
 function addSendbarButton() {
     const existing = document.getElementById('pc-sendbar');
-    if (settings().ui.sendbarButton === false) { existing?.remove(); return true; }
+    if (settings().ui.sendbarButton === false) { chatProgress?.mount(null); existing?.remove(); return true; }
     const bar = document.getElementById('leftSendForm'); if (!bar) return false;
-    if (existing) { if (existing.parentElement !== bar) bar.append(existing); paintSendbar(); return true; }
+    if (existing) { if (existing.parentElement !== bar) bar.append(existing); chatProgress?.mount(existing); paintSendbar(); return true; }
     const button = document.createElement('button');
     button.id = 'pc-sendbar'; button.className = 'pc-chat-launcher interactable'; button.type = 'button'; button.setAttribute('aria-label', 'Open Lattice');
     const logo = document.createElement('span'); logo.className = 'pc-chat-launcher-icon'; logo.style.setProperty('--pc-launcher-logo', `url("${logoUrl}")`); logo.setAttribute('aria-hidden', 'true'); button.append(logo);
@@ -73,6 +75,7 @@ function addSendbarButton() {
     });
     button.addEventListener('mouseenter', paintSendbar);
     bar.append(button);
+    chatProgress?.mount(button);
     paintSendbar(); return true;
 }
 function paintSendbar() {
@@ -91,9 +94,14 @@ function paintSendbar() {
     const button = document.getElementById('pc-sendbar'); if (!button) return;
     button.classList.toggle('pc-sendbar-on', active);
     button.classList.toggle('pc-sendbar-nograph', active && !status.automatic);
-    button.title = (active ? status.enabledText : status.offText) + '\nClick to open. Right-click to enable or disable.';
+    const progress = button.querySelector('.pc-chat-progress:not([hidden])');
+    button.title = (progress?.title ? progress.title + '\n' : '') + (active ? status.enabledText : status.offText) + '\nClick to open. Right-click to enable or disable.';
 }
 function mountLauncher() {
+    chatProgress ??= createChatProgress({ document,
+        subscribeActivity: listener => getNativeWorkflowController().subscribeActivity(listener),
+        subscribeEvents: subscribeWorkflowRunEvents,
+    });
     let attempts = 0;
     const mount = () => {
         addLauncher(); const bar = addSendbarButton();
@@ -118,8 +126,8 @@ function addSlashCommand() {
 }
 function boot() {
     try {
-        const context = ctx(); settings(); void initializeNativeWorkflowController();
-        globalThis.addEventListener?.('unload', () => getNativeWorkflowController().dispose(), { once: true });
+        const context = ctx(); settings(); mountLauncher(); void initializeNativeWorkflowController();
+        globalThis.addEventListener?.('unload', () => { chatProgress?.dispose(); getNativeWorkflowController().dispose(); }, { once: true });
         const snapshot = () => {
             const graph = activeWorkflow();
             return { token: documentSession.capture(), signature: JSON.stringify([settings().enabled, workflowSignature(graph)]) };
@@ -138,13 +146,13 @@ function boot() {
             const event = context.eventTypes?.[name];
             if (event) context.eventSource.on(event, () => { UI.refreshIfOpen(); paintSendbar(); });
         }
-        mountLauncher(); addSlashCommand();
+        addSlashCommand();
         globalThis.lattice = { open: UI.open, close: UI.close, toggle: UI.toggle };
         console.log('[' + MODULE + '] ready');
     } catch (error) {
         console.error('[Lattice] failed to start', error);
         const issue = presentDiagnostic(error, { action: 'open Lattice' });
-        safe(() => globalThis.toastr?.[issue.severity]?.(issue.message, 'Lattice could not open'));
+        safe(() => globalThis.toastr?.[issue.severity]?.(issue.message, 'Lattice could not open', { timeOut: 0, extendedTimeOut: 0, closeButton: true, tapToDismiss: false, escapeHtml: true }));
     }
 }
 if (globalThis.SillyTavern?.getContext) boot();

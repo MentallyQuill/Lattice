@@ -1,6 +1,6 @@
-import { inspectExpandedGraph, safeWorkflowData } from './graph-validation.js?v=0.28.0';
-import { graphDocumentSignature } from './ports.js?v=0.28.0';
-import { freeze } from './record-data.js?v=0.28.0';
+import { inspectExpandedGraph, safeWorkflowData } from './graph-validation.js?v=0.28.1';
+import { graphDocumentSignature } from './ports.js?v=0.28.1';
+import { freeze } from './record-data.js?v=0.28.1';
 
 const artifacts = new WeakMap(), latest = new WeakMap();
 // Fingerprints and structuredClone must see every admitted authored property.
