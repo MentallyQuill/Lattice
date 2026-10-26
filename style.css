@@ -676,16 +676,16 @@
 #pc-sendbar.pc-chat-launcher:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
 #pc-sendbar .pc-chat-progress { position: absolute; bottom: calc(100% + 5px); left: 0; z-index: 10; display: flex; align-items: center; gap: 7px; width: max-content; max-width: calc(100vw - 16px); padding: 5px 7px; border: 1px solid color-mix(in srgb, var(--SmartThemeBodyColor, #dcdcd2) 15%, transparent); border-radius: 3px; background: var(--SmartThemeBlurTintColor, #202020f2); color: var(--SmartThemeBodyColor, #dcdcd2); font: 11px/1.2 var(--mainFontFamily, sans-serif); opacity: 1; pointer-events: none; }
 #pc-sendbar .pc-chat-progress[hidden] { display: none; }
-#pc-sendbar .pc-chat-progress-pixels { display: grid; grid-template-rows: repeat(3, 4px); grid-auto-columns: 4px; grid-auto-flow: column; gap: 2px; flex: none; }
-#pc-sendbar .pc-chat-progress-pixel { display: block; width: 4px; height: 4px; border-radius: 1px; background: #576069; }
-#pc-sendbar .pc-chat-progress-pixel[data-status="completed"] { background: #8aad96; }
-#pc-sendbar .pc-chat-progress-pixel[data-status="queued"] { background: #8b959d; }
-#pc-sendbar .pc-chat-progress-pixel[data-status="running"], #pc-sendbar .pc-chat-progress-pixel[data-status="cancelling"] { background: var(--pc-accent, #e18a24); box-shadow: 0 0 3px var(--pc-accent, #e18a24); }
-#pc-sendbar .pc-chat-progress-pixel[data-status="failed"], #pc-sendbar .pc-chat-progress-pixel[data-status="invalid"] { background: #d76a74; }
-#pc-sendbar .pc-chat-progress-pixel[data-status="blocked"] { background: #9a727c; }
-#pc-sendbar .pc-chat-progress-pixel[data-status="stale"] { background: #b19b67; }
-#pc-sendbar .pc-chat-progress-pixel[data-status="cancelled"] { background: #8e8296; }
-#pc-sendbar .pc-chat-progress-pixel[data-status="not-run"], #pc-sendbar .pc-chat-progress-pixel[data-status="skipped"] { background: #434a50; }
+#pc-sendbar .pc-chat-progress-pixels { display: block; overflow: visible; flex: none; }
+#pc-sendbar .pc-chat-progress-pixel { fill: #576069; background: #576069; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="completed"] { fill: #8aad96; background: #8aad96; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="queued"] { fill: #8b959d; background: #8b959d; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="running"], #pc-sendbar .pc-chat-progress-pixel[data-status="cancelling"] { fill: var(--pc-accent, #e18a24); background: var(--pc-accent, #e18a24); filter: drop-shadow(0 0 1.5px var(--pc-accent, #e18a24)); }
+#pc-sendbar .pc-chat-progress-pixel[data-status="failed"], #pc-sendbar .pc-chat-progress-pixel[data-status="invalid"] { fill: #d76a74; background: #d76a74; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="blocked"] { fill: #9a727c; background: #9a727c; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="stale"] { fill: #b19b67; background: #b19b67; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="cancelled"] { fill: #8e8296; background: #8e8296; }
+#pc-sendbar .pc-chat-progress-pixel[data-status="not-run"], #pc-sendbar .pc-chat-progress-pixel[data-status="skipped"] { fill: #434a50; background: #434a50; }
 #pc-sendbar .pc-chat-progress-percent { min-width: 4ch; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 #pc-sendbar .pc-chat-progress-fading { animation: pc-chat-progress-fade 3s linear forwards; animation-delay: var(--pc-chat-progress-fade-elapsed, 0ms); }
 @keyframes pc-chat-progress-fade { from { opacity: 1; } to { opacity: 0; } }
@@ -748,12 +748,12 @@
 :root[data-pc-preset="signal"] .pc-root :is(.pc-run-status, .pc-run-error, .pc-preview-error, .pc-diagnostic, .pc-preview-status) { color: var(--pc-text); }
 :root[data-pc-preset="signal"] .pc-root .pc-run-details li { border-color: var(--pc-border); }
 :root[data-pc-preset="signal"] .pc-root .pc-run-details li[data-status="failed"] { border-color: var(--pc-error); background: var(--pc-block); }
-:root[data-pc-preset="signal"] .pc-root .pc-run-pixel { background: var(--pc-muted); box-shadow: none; }
-:root[data-pc-preset="signal"] .pc-root .pc-run-pixel[data-status="not-run"] { background: var(--pc-border); }
+:root[data-pc-preset="signal"] .pc-root .pc-run-pixel { fill: var(--pc-muted); background: var(--pc-muted); box-shadow: none; filter: none; }
+:root[data-pc-preset="signal"] .pc-root .pc-run-pixel[data-status="not-run"] { fill: var(--pc-border); background: var(--pc-border); }
 :root[data-pc-preset="signal"] .pc-root .pc-run-pixel[data-status="failed"],
-:root[data-pc-preset="signal"] .pc-root .pc-run-pixel[data-status="invalid"] { background: var(--pc-error); transform: rotate(45deg); border-radius: 0; }
+:root[data-pc-preset="signal"] .pc-root .pc-run-pixel[data-status="invalid"] { fill: var(--pc-error); background: var(--pc-error); transform: rotate(45deg); transform-box: fill-box; transform-origin: center; border-radius: 0; }
 :root[data-pc-preset="signal"] .pc-root .pc-run-pixel[data-status="running"],
-:root[data-pc-preset="signal"] .pc-root .pc-run-pixel[data-status="cancelling"] { background: var(--pc-flow); }
+:root[data-pc-preset="signal"] .pc-root .pc-run-pixel[data-status="cancelling"] { fill: var(--pc-flow); background: var(--pc-flow); }
 :root[data-pc-accessible="1"] .pc-root .pc-run-meter:focus-visible { outline-color: var(--pc-accent); }
 :root[data-pc-preset="signal"] .pc-root .pc-comment-frame { --frame-color: var(--pc-muted) !important; }
 :root[data-pc-preset="signal"] .pc-root .pc-example-preview .pc-example-comment rect { stroke: var(--pc-muted) !important; }

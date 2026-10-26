@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { JSDOM } from 'jsdom';
 import { compile } from 'svelte/compiler';
+import { alignPixelGrid } from '../src/ui/pixel-grid.js';
 const css = (await readFile(new URL('../style.css', import.meta.url), 'utf8')).replace(/^@import[^;]*;/m, '');
 const dom = new JSDOM(`<style>button { border: 2px solid red; background: black; padding: 2px; font-size: 20px; }</style><style>${css}</style><div class="pc-root pc-open"><button class="pc-flat-menu">File</button><div class="pc-workspace-menu-panel"><button>Open</button></div><div class="pc-node-native"><div class="pc-native-row pc-native-row-in"><span class="pc-native-pin-label">Data</span><div class="pc-port pc-port-in"></div></div></div></div>`);
 dom.window.document.documentElement.dataset.pcOwn = '1';
@@ -87,17 +88,20 @@ test('Ember Details, portal manager and subgraph saves consume host surfaces wit
     }
 });
 
-test('ordinary run panels inherit theme tokens while semantic feedback retains its colors', async () => {
+test('ordinary run panels inherit theme tokens while semantic feedback retains its colors', async t => {
     for (const name of ['RunDetails', 'RunMeter']) {
         const source = await readFile(new URL('../ui/' + name + '.svelte', import.meta.url), 'utf8');
         const componentCss = compile(source, { filename: name + '.svelte', generate: 'client', css: 'external' }).css.code;
         const scopedClass = componentCss.match(/\.svelte-[a-z0-9]+/)[0].slice(1);
         const markup = name === 'RunDetails'
             ? '<section class="pc-run-details"><header><span class="pc-run-status" data-status="empty">Ready</span><span class="pc-run-status" data-status="failed">Failed</span><span class="pc-run-status" data-status="completed">Completed</span></header><div class="pc-run-summary">Summary</div><ol><li data-status="completed"><button><span>▱</span>Stage</button><small>Elapsed</small><details><summary>Reported usage</summary></details></li><li data-status="failed">Issue</li></ol></section>'
-            : '<button class="pc-run-meter"><span class="pc-run-meter-label">Ready</span><span class="pc-run-meter-elapsed">1.0s</span><span class="pc-run-pixel" data-status="completed"></span><span class="pc-run-pixel" data-status="failed"></span></button>';
+            : '<button class="pc-run-meter"><span class="pc-run-meter-label">Ready</span><span class="pc-run-meter-elapsed">1.0s</span><svg class="pc-run-meter-pixels"><rect class="pc-run-pixel" data-status="completed"></rect><rect class="pc-run-pixel" data-status="failed"></rect></svg></button>';
         const fixture = new JSDOM(`<style>${componentCss}</style><style>${css}</style><div class="pc-root">${markup}</div>`);
         const root = fixture.window.document.documentElement; root.dataset.pcOwn = '1'; root.dataset.pcPreset = 'ember';
         for (const element of fixture.window.document.querySelectorAll('.pc-root *')) element.classList.add(scopedClass);
+        const grid = fixture.window.document.querySelector('.pc-run-meter-pixels');
+        const alignment = grid ? alignPixelGrid(grid) : null;
+        t.after(() => { alignment?.destroy(); fixture.window.close(); });
         const computed = selector => fixture.window.getComputedStyle(fixture.window.document.querySelector(selector));
         const borderRule = (selector, property) => [...fixture.window.document.styleSheets[0].cssRules].find(rule => rule.selectorText?.includes(selector) && rule.style.getPropertyValue(property))?.style.getPropertyValue(property);
         if (name === 'RunDetails') {
@@ -119,7 +123,10 @@ test('ordinary run panels inherit theme tokens while semantic feedback retains i
             assert.equal(borderRule('.pc-run-meter', 'border'), '1px solid var(--pc-border)', 'Compiled meter keeps its 1px border and inherited color');
             assert.equal(computed('[data-status="completed"]').backgroundColor, 'rgb(138, 173, 150)');
             assert.equal(computed('[data-status="failed"]').backgroundColor, 'rgb(215, 106, 116)');
-            assert.equal(computed('.pc-run-pixel').width, '4px');
+            assert.equal(computed('[data-status="completed"]').fill, 'rgb(138, 173, 150)');
+            assert.equal(computed('[data-status="failed"]').fill, 'rgb(215, 106, 116)');
+            assert.equal(grid.querySelector('rect').getAttribute('width'), '4');
+            assert.equal(grid.querySelector('rect').getAttribute('height'), '4');
         }
     }
 });

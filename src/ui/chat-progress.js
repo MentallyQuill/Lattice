@@ -1,4 +1,5 @@
 import { createRunState, reduceRunState, projectRunRows } from '../workflow/run-state.js?v=0.28.1';
+import { alignPixelGrid } from './pixel-grid.js?v=0.28.1';
 
 /** Retain live run progress independently of the optional chat launcher. */
 export function createChatProgress({ document, subscribeActivity, subscribeEvents }) {
@@ -7,13 +8,14 @@ export function createChatProgress({ document, subscribeActivity, subscribeEvent
     root.hidden = true;
     root.setAttribute('role', 'status');
     root.setAttribute('aria-live', 'polite');
-    const pixels = document.createElement('span');
-    pixels.className = 'pc-chat-progress-pixels';
+    const pixels = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    pixels.setAttribute('class', 'pc-chat-progress-pixels');
     pixels.setAttribute('aria-hidden', 'true');
     const percent = document.createElement('span');
     percent.className = 'pc-chat-progress-percent';
     percent.setAttribute('aria-hidden', 'true');
     root.append(pixels, percent);
+    const alignment = alignPixelGrid(pixels);
     let state = null, disposed = false, fadeStarted = null, fadeTimer = null;
 
     function fade() {
@@ -46,11 +48,12 @@ export function createChatProgress({ document, subscribeActivity, subscribeEvent
             rows = [...rows.slice(0, 35), { status }];
         }
         pixels.replaceChildren(...rows.map(row => {
-            const pixel = document.createElement('span');
-            pixel.className = 'pc-chat-progress-pixel';
+            const pixel = document.createElementNS(pixels.namespaceURI, 'rect');
+            pixel.setAttribute('class', 'pc-chat-progress-pixel');
             pixel.dataset.status = row.status;
             return pixel;
         }));
+        alignment.update();
     }
 
     const unsubscribeActivity = subscribeActivity(activity => {
@@ -81,11 +84,13 @@ export function createChatProgress({ document, subscribeActivity, subscribeEvent
             root.remove();
             if (fadeStarted !== null) root.style.setProperty('--pc-chat-progress-fade-elapsed', -(Date.now() - fadeStarted) + 'ms');
             button?.append(root);
+            alignment.update();
         },
         dispose() {
             if (disposed) return;
             disposed = true;
             clearTimeout(fadeTimer);
+            alignment.destroy();
             unsubscribeActivity(); unsubscribeEvents(); root.remove();
         },
     };
