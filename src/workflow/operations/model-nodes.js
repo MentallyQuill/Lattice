@@ -1,10 +1,13 @@
-import { artifactVisibility } from '../artifact-privacy.js?v=0.28.0';
-import { parseRuntimeContext } from './context-data.js?v=0.28.0';
-import { cloneJsonValue } from './json-data.js?v=0.28.0';
-import { safeUsage } from '../record-data.js?v=0.28.0';
-import { decodeJson } from './json-decode.js?v=0.28.0';
-import { prepareReferenceDraft, alignReferenceCandidate } from './reference-draft.js?v=0.28.0';
-import { createDraftRevision, appendDraftSections, snapshotDraft, readDraftBody } from '../draft-revisions.js?v=0.28.0';
+import { artifactVisibility } from '../artifact-privacy.js?v=0.28.1';
+import { parseRuntimeContext } from './context-data.js?v=0.28.1';
+import { cloneJsonValue } from './json-data.js?v=0.28.1';
+import { safeUsage } from '../record-data.js?v=0.28.1';
+import { normalizeRequestFailure } from '../request-failure.js?v=0.28.1';
+import { retryModelNode } from './model-retry.js?v=0.28.1';
+import { decodeJson } from './json-decode.js?v=0.28.1';
+import { decodeModelJson } from './model-json.js?v=0.28.1';
+import { prepareReferenceDraft, alignReferenceCandidate } from './reference-draft.js?v=0.28.1';
+import { createDraftRevision, appendDraftSections, snapshotDraft, readDraftBody } from '../draft-revisions.js?v=0.28.1';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const done = (artifact, reports = []) => {
@@ -38,15 +41,16 @@ const registration = (id, title, input, output, defaults, controls, requestBound
 });
 const instructionsControl = control('instructions', 'Instructions', 'text');
 const tokensControl = control('maxTokens', 'Completion limit', 'number', { min: 1, max: 65536 });
+const retriesControl = control('maxRetries', 'Maximum retries', 'number', { min: 0, max: 2 });
 export const MODEL_OPERATIONS = {
     'combine': registration('combine', 'Combine', 'draft', 'draft', { mode: 'append', sectionId: 'notes', separator: '\n\n' }, [control('mode', 'Mode', 'enum', { options: ['append'] }), control('sectionId', 'Section identity', 'text'), control('separator', 'Separator', 'text')], 0, 'post'),
     'append': registration('append', 'Append', 'draft', 'draft', { sectionId: 'notes', separator: '\n\n' }, [control('sectionId', 'Section identity', 'text'), control('separator', 'Separator', 'text')], 0, 'post'),
     'render-notes': registration('render-notes', 'Render Notes', 'data', 'text', { title: 'Scene notes', format: 'html' }, [control('title', 'Title', 'text'), control('format', 'Presentation', 'enum', { options: ['html', 'text'] })], 0),
-    'enrich': registration('enrich', 'Enrich', 'data', 'data', { instructions: '', maxTokens: 2048 }, [instructionsControl, tokensControl], 1),
+    'enrich': registration('enrich', 'Enrich', 'data', 'data', { instructions: '', maxTokens: 2048, maxRetries: 0 }, [instructionsControl, tokensControl, retriesControl], 1),
     'draft-text': registration('draft-text', 'Draft Text', 'draft', 'text', { view: 'body' }, [control('view', 'Text view', 'enum', { options: ['body', 'assembled'] })], 0, 'post'),
-    'extract': registration('extract', 'Extract', 'draft', 'data', { inputKind: 'draft', mode: 'model', instructions: '', schema: '', patterns: [], caseSensitive: true, match: 'substring', maxTokens: 2048 }, [control('inputKind', 'Source', 'enum', { options: ['draft', 'text'] }), control('mode', 'Mode', 'enum', { options: ['model', 'literal'] }), instructionsControl, control('schema', 'Record schema', 'json'), control('patterns', 'Literal patterns', 'json'), control('caseSensitive', 'Case sensitive', 'boolean', { visibleWhen: { key: 'mode', value: 'literal' } }), control('match', 'Match', 'enum', { options: ['substring', 'word'], valueLabels: { substring: 'Substring', word: 'Word' }, visibleWhen: { key: 'mode', value: 'literal' } }), tokensControl], 1),
-    'model-call': registration('model-call', 'Model Call', 'text', 'text', { instructions: '', outputKind: 'text', schema: '', maxTokens: 2048 }, [instructionsControl, control('outputKind', 'Output', 'enum', { options: ['text', 'data'] }), control('schema', 'Output schema', 'json'), tokensControl], 1),
-    'revise-draft': registration('revise-draft', 'Revise Draft', 'draft', 'draft', { instructions: '', scope: 'authorized', protectedLiterals: [], maxTokens: 2048 }, [instructionsControl, control('scope', 'Editable scope', 'enum', { options: ['authorized', 'whole', 'narration', 'dialogue'] }), control('protectedLiterals', 'Protected literals', 'lines'), tokensControl], 1, 'post'),
+    'extract': registration('extract', 'Extract', 'draft', 'data', { inputKind: 'draft', mode: 'model', instructions: '', schema: '', patterns: [], caseSensitive: true, match: 'substring', maxTokens: 2048, maxRetries: 0 }, [control('inputKind', 'Source', 'enum', { options: ['draft', 'text'] }), control('mode', 'Mode', 'enum', { options: ['model', 'literal'] }), instructionsControl, control('schema', 'Record schema', 'json'), control('patterns', 'Literal patterns', 'json'), control('caseSensitive', 'Case sensitive', 'boolean', { visibleWhen: { key: 'mode', value: 'literal' } }), control('match', 'Match', 'enum', { options: ['substring', 'word'], valueLabels: { substring: 'Substring', word: 'Word' }, visibleWhen: { key: 'mode', value: 'literal' } }), tokensControl, retriesControl], 1),
+    'model-call': registration('model-call', 'Model Call', 'text', 'text', { instructions: '', outputKind: 'text', schema: '', maxTokens: 2048, maxRetries: 0 }, [instructionsControl, control('outputKind', 'Output', 'enum', { options: ['text', 'data'] }), control('schema', 'Output schema', 'json'), tokensControl, retriesControl], 1),
+    'revise-draft': registration('revise-draft', 'Revise Draft', 'draft', 'draft', { instructions: '', scope: 'authorized', protectedLiterals: [], maxTokens: 2048, maxRetries: 0 }, [instructionsControl, control('scope', 'Editable scope', 'enum', { options: ['authorized', 'whole', 'narration', 'dialogue'] }), control('protectedLiterals', 'Protected literals', 'lines'), tokensControl, retriesControl], 1, 'post'),
 };
 function resolve(node, options = {}) {
     try {
@@ -58,6 +62,7 @@ function resolve(node, options = {}) {
         const cloned = cloneJsonValue(settings);
         if (!cloned.ok) return fail('INVALID_SETTINGS', 'Controls require bounded own JSON data.');
         const value = cloned.data.value;
+        if (Object.hasOwn(value, 'maxRetries') && (!Number.isSafeInteger(value.maxRetries) || value.maxRetries < 0 || value.maxRetries > 2)) return fail('INVALID_SETTINGS', 'Maximum retries must be an integer from 0 to 2.');
         if (node.operation === 'revise-draft' && (typeof value.instructions !== 'string' || value.instructions.length > 10000 || !['authorized', 'whole', 'narration', 'dialogue'].includes(value.scope) || !Array.isArray(value.protectedLiterals) || value.protectedLiterals.length > 128 || value.protectedLiterals.some(pin => typeof pin !== 'string' || !pin.trim() || pin.length > 2048) || !Number.isSafeInteger(value.maxTokens) || value.maxTokens < 1 || value.maxTokens > 65536)) return fail('INVALID_SETTINGS', 'Use bounded instructions, supported scope, protected literals and completion limit.');
         if (node.operation === 'model-call' && (typeof value.instructions !== 'string' || value.instructions.length > 10000 || !['text', 'data'].includes(value.outputKind) || typeof value.schema !== 'string' || !Number.isSafeInteger(value.maxTokens) || value.maxTokens < 1 || value.maxTokens > 65536 || value.outputKind === 'text' && value.schema !== '')) return fail('INVALID_SETTINGS', 'Use bounded instructions, completion limit and optional Data schema.');
         if (node.operation === 'extract' && (!['draft', 'text'].includes(value.inputKind) || !['model', 'literal'].includes(value.mode) || typeof value.caseSensitive !== 'boolean' || !['substring', 'word'].includes(value.match) || typeof value.instructions !== 'string' || value.instructions.length > 10000 || typeof value.schema !== 'string' || !Array.isArray(value.patterns) || value.patterns.length > 64 || value.patterns.some(pattern => !pattern || typeof pattern !== 'object' || Array.isArray(pattern) || Object.keys(pattern).some(key => !['id', 'literal', 'label'].includes(key)) || typeof pattern.id !== 'string' || !pattern.id.trim() || pattern.id.length > 128 || typeof pattern.literal !== 'string' || !pattern.literal.trim() || pattern.literal.length > 2048 || typeof pattern.label !== 'string' || pattern.label.length > 2048) || new Set(value.patterns.map(pattern => pattern.id)).size !== value.patterns.length || !Number.isSafeInteger(value.maxTokens) || value.maxTokens < 1 || value.maxTokens > 65536)) return fail('INVALID_SETTINGS', 'Extraction requires a supported source/mode and bounded unique literal patterns.');
@@ -75,7 +80,7 @@ function resolve(node, options = {}) {
         const phase = options.phase ?? node.phase ?? (base.phase === 'both' ? 'pre' : base.phase);
         if (!['pre', 'post'].includes(phase) || base.phase !== 'both' && base.phase !== phase || node.phase !== undefined && node.phase !== phase) return fail('INVALID_PHASE', 'Operation conflicts with its effective phase.');
         const ports = ['combine', 'append'].includes(node.operation) ? [port('draft', 'Draft', 'input', 'draft', true), port('section', 'Optional section', 'input', 'text'), port('out', 'Assembled Draft', 'output', 'draft')] : node.operation === 'render-notes' ? [port('data', 'Player-visible records', 'input', 'data', true), port('out', 'Notes', 'output', 'text')] : node.operation === 'enrich' ? [port('data', 'Records', 'input', 'data', true), port('context', 'Context', 'input', 'context'), port('out', 'Enriched records', 'output', 'data')] : node.operation === 'draft-text' ? [port('draft', 'Draft', 'input', 'draft', true), port('out', 'Text view', 'output', 'text')] : node.operation === 'extract' ? [port('source', 'Source', 'input', value.inputKind, true), port('context', 'Context', 'input', 'context'), port('out', 'Records', 'output', 'data')] : node.operation === 'model-call' ? [port('prompt', 'Request', 'input', 'text', true), port('context', 'Context', 'input', 'context'), port('data', 'Evidence', 'input', 'data'), port('out', 'Output', 'output', value.outputKind)] : [port('draft', 'Draft', 'input', 'draft', true), port('context', 'Context', 'input', 'context'), port('reference', 'References', 'input', 'data'), port('out', 'Revised Draft', 'output', 'draft')];
-        return { ok: true, data: { descriptor: { ...structuredClone(base), phase, ...(node.operation === 'extract' ? { input: value.inputKind, requestBound: value.mode === 'literal' ? 0 : 1, modelRole: value.mode === 'literal' ? null : 'Prose' } : {}), ...(node.operation === 'model-call' ? { output: value.outputKind } : {}) }, ports, settings: value, parsedSchema, nodeId: node.id } };
+        return { ok: true, data: { descriptor: { ...structuredClone(base), phase, ...(base.requestBound ? { requestBound: 1 + value.maxRetries } : {}), ...(node.operation === 'extract' ? { input: value.inputKind, requestBound: value.mode === 'literal' ? 0 : 1 + value.maxRetries, modelRole: value.mode === 'literal' ? null : 'Prose' } : {}), ...(node.operation === 'model-call' ? { output: value.outputKind } : {}) }, ports, settings: value, parsedSchema, nodeId: node.id } };
     } catch { return fail('INVALID_SETTINGS', 'Node and controls require own plain data.'); }
 }
 export function describeModelNode(node, options = {}) {
@@ -116,7 +121,10 @@ function publicRequestFailure(raw) {
     const knownFinish = typeof error.finish === 'string' && ['stop', 'eos_token', 'eos', 'stop_sequence', 'end_turn', 'complete', 'completed', 'length', 'max_tokens', 'max_output_tokens', 'tool_calls', 'function_call', 'content_filter', 'refusal', 'error', 'unknown'].includes(error.finish.toLowerCase());
     return { ok: false, error: {
         code: error.code,
-        message: Object.hasOwn(messages, error.code) ? messages[error.code] : 'The model request failed; no retry was made.',
+        message: Object.hasOwn(messages, error.code) ? messages[error.code] : 'The model request failed.',
+        ...(error.code === 'REQUEST_FAILED' && error.retryable === true ? { retryable: true } : {}),
+        ...(Number.isSafeInteger(error.status) && error.status >= 100 && error.status <= 599 ? { status: error.status } : {}),
+        ...(Number.isSafeInteger(error.retryAfterMs) && error.retryAfterMs >= 0 ? { retryAfterMs: error.retryAfterMs } : {}),
         ...(Object.hasOwn(error, 'finish') ? { finish: knownFinish ? error.finish.toLowerCase() : null } : {}),
         ...(Object.keys(counters).length ? { usage: counters } : {}),
     } };
@@ -124,10 +132,11 @@ function publicRequestFailure(raw) {
 async function requestOne(messages, settings, execution) {
     if (execution.signal?.aborted) return fail('ABORTED', 'Model operation cancelled.');
     if (typeof execution.request !== 'function') return fail('INVALID_PORTS', 'A verified text request capability is required.');
+    if (execution.modelJsonCorrection) messages = [...messages, { role: 'system', content: execution.modelJsonCorrection }];
     if (messages.some(message => message.content.length > 500000) || messages.reduce((sum, message) => sum + message.content.length, 0) > 500000) return fail('PROMPT_LIMIT', 'Model prompt exceeds its bounded size.');
     let result;
     try { result = await execution.request({ messages: freeze(messages), maxTokens: settings.maxTokens, ...(execution.binding === undefined ? {} : { binding: execution.binding }), ...(execution.signal ? { signal: execution.signal } : {}) }); }
-    catch { return fail(execution.signal?.aborted ? 'ABORTED' : 'REQUEST_FAILED', 'Model request failed; no retry was made.'); }
+    catch (error) { return normalizeRequestFailure(error, { aborted: execution.signal?.aborted }); }
     if (execution.signal?.aborted) return fail('ABORTED', 'Ignore the cancelled late completion.');
     try {
         result = own(result);
@@ -143,6 +152,12 @@ async function requestOne(messages, settings, execution) {
         const counters = tokenCounters(usage.data.value);
         return { ok: true, data: { text: data.text, finish: data.finish, ...(Object.keys(counters).length ? { usage: counters } : {}) } };
     } catch { return fail('INVALID_RESPONSE', 'Response requires own data properties.'); }
+}
+function decodeResponseJson(text, options, noteFormatFailure) {
+    const decoded = decodeModelJson(text, options);
+    // The decoder also uses INVALID_JSON for envelope limits; those never retry.
+    if (!decoded.ok && text.length <= 100000 && new TextEncoder().encode(text).byteLength <= 262144) noteFormatFailure(decoded.error.code);
+    return decoded;
 }
 function checkRecords(artifact) {
     const value = artifact.value;
@@ -163,7 +178,9 @@ export async function executeModelNode(node, namedInputs, execution = {}) {
     const { settings, ports, nodeId, parsedSchema } = described.data;
     const checked = inputsFor(namedInputs, ports);
     if (!checked.ok) return checked;
-    const inputs = checked.data;
+    return retryModelNode(settings.maxRetries ?? 0, local, (attemptExecution, noteFormatFailure) => executeModelNodeOnce({ operation: described.data.descriptor.id }, checked.data, { settings, nodeId, parsedSchema }, attemptExecution, noteFormatFailure));
+}
+async function executeModelNodeOnce(node, inputs, { settings, nodeId, parsedSchema }, local, noteFormatFailure) {
     const visibility = materialVisibility(inputs);
     if (['combine', 'append'].includes(node.operation)) {
         if (visibility.kind !== 'public') return fail('PRIVATE_MATERIAL', 'Public reply assembly cannot include private material.');
@@ -192,13 +209,13 @@ export async function executeModelNode(node, namedInputs, execution = {}) {
             { role: 'user', content: JSON.stringify({ records: records.data.records, context: inputs.context ?? null, instructions: settings.instructions }) },
         ], settings, local);
         if (!response.ok) return response;
-        const decoded = decodeJson(response.data.text);
+        const decoded = decodeResponseJson(response.data.text, {}, noteFormatFailure);
         if (!decoded.ok) return decoded;
         const additions = decoded.data.value;
         if (!Array.isArray(additions) || additions.length !== records.data.records.length || additions.some(addition => !addition || typeof addition !== 'object' || Array.isArray(addition) || Object.keys(addition).length !== 2 || !Object.hasOwn(addition, 'id') || !Object.hasOwn(addition, 'details') || typeof addition.id !== 'string' || typeof addition.details !== 'string' || !addition.details.trim() || addition.details.length > 10000 || !records.data.records.some(record => record.id === addition.id)) || new Set(additions.map(addition => addition.id)).size !== additions.length) return fail('INVALID_ENRICHMENT', 'Enrichment must provide one bounded detail for each existing record identity.');
         if (records.data.records.some(record => (record.additions?.length ?? 0) >= 64)) return fail('ENRICHMENT_LIMIT', 'Record additions are bounded; history is never truncated.');
         const enriched = records.data.records.map(record => ({ ...record, additions: [...(record.additions ?? []), { text: additions.find(addition => addition.id === record.id).details, classification: 'generated-proposal', originNodeId: nodeId }] }));
-        return done(freeze({ kind: 'data', value: { ...records.data, type: 'enriched-records', records: enriched }, visibility }), [{ code: 'MODEL_ENRICHMENT', actualCalls: 1, count: enriched.length, finish: response.data.finish }]);
+        return done(freeze({ kind: 'data', value: { ...records.data, type: 'enriched-records', records: enriched }, visibility }), [{ code: 'MODEL_ENRICHMENT', actualCalls: 1, count: enriched.length, finish: response.data.finish }, ...decoded.data.report]);
     }
     if (node.operation === 'draft-text') return done(freeze({ kind: 'text', text: settings.view === 'assembled' ? inputs.draft.text : readDraftBody(inputs.draft).data.text, provenance: { type: settings.view === 'assembled' ? 'draft-assembled-view' : 'draft-view', ...sourceReference(inputs.draft) }, visibility }), [{ code: 'DRAFT_TEXT_VIEW', actualCalls: 0, publicationAuthority: false }]);
     if (node.operation === 'extract' && settings.mode === 'literal') {
@@ -228,12 +245,12 @@ export async function executeModelNode(node, namedInputs, execution = {}) {
             { role: 'user', content: JSON.stringify({ source: text, context: inputs.context ?? null, instructions: settings.instructions, evidenceOffsets: { unit: 'UTF-16 code units', base: 0, endExclusive: true, example: { source: 'A 🧭 key.', start: 5, end: 8, quote: 'key' } }, ...(parsedSchema === undefined ? {} : { schema: parsedSchema }) }) },
         ], settings, local);
         if (!response.ok) return response;
-        const decoded = decodeJson(response.data.text, { mode: 'parse', ...(parsedSchema === undefined ? {} : { schema: parsedSchema }) });
+        const decoded = decodeResponseJson(response.data.text, { mode: 'parse', ...(parsedSchema === undefined ? {} : { schema: parsedSchema }) }, noteFormatFailure);
         if (!decoded.ok) return decoded;
         const records = decoded.data.value;
         if (!Array.isArray(records) || records.length > 256 || records.some(record => !record || typeof record !== 'object' || Array.isArray(record) || Object.keys(record).length !== 5 || !['id', 'label', 'text', 'classification', 'evidence'].every(key => Object.hasOwn(record, key)) || typeof record.id !== 'string' || !record.id.trim() || record.id.length > 256 || typeof record.label !== 'string' || record.label.length > 2048 || typeof record.text !== 'string' || !record.text.trim() || record.text.length > 10000 || !['observation', 'claim', 'interpretation'].includes(record.classification)) || new Set(records.map(record => record.id)).size !== records.length) return fail('INVALID_EXTRACTION', 'Extraction requires bounded uniquely identified records of the specified shape.');
         if (records.some(record => !Array.isArray(record.evidence) || !record.evidence.length || record.evidence.length > 64 || record.evidence.some(evidence => !evidence || typeof evidence !== 'object' || Array.isArray(evidence) || Object.keys(evidence).length !== 3 || !['start', 'end', 'quote'].every(key => Object.hasOwn(evidence, key)) || !Number.isSafeInteger(evidence.start) || !Number.isSafeInteger(evidence.end) || evidence.start < 0 || evidence.end <= evidence.start || evidence.end > text.length || typeof evidence.quote !== 'string' || evidence.quote !== text.slice(evidence.start, evidence.end)))) return fail('INVALID_EVIDENCE', 'Each extraction requires exact bounded quoted source evidence.');
-        return done(freeze({ kind: 'data', value: { type: 'extracted-records', records: records.map(record => ({ ...record, status: 'proposed' })), sourceRefs: [sourceReference(inputs.source)] }, visibility }), [{ code: 'MODEL_EXTRACTION', actualCalls: 1, count: records.length, semanticAssessment: 'proposed', finish: response.data.finish }]);
+        return done(freeze({ kind: 'data', value: { type: 'extracted-records', records: records.map(record => ({ ...record, status: 'proposed' })), sourceRefs: [sourceReference(inputs.source)] }, visibility }), [{ code: 'MODEL_EXTRACTION', actualCalls: 1, count: records.length, semanticAssessment: 'proposed', finish: response.data.finish }, ...decoded.data.report]);
     }
     if (node.operation === 'model-call') {
         if (typeof inputs.prompt.text !== 'string' || inputs.prompt.text.length > 100000) return fail('INVALID_INPUT', 'Request requires bounded Text.');
@@ -244,9 +261,9 @@ export async function executeModelNode(node, namedInputs, execution = {}) {
         if (!response.ok) return response;
         const metadata = { code: 'MODEL_CALL', actualCalls: 1, nodeId, finish: response.data.finish, ...(response.data.usage === undefined ? {} : { usage: response.data.usage }) };
         if (settings.outputKind === 'text') return done(freeze({ kind: 'text', text: response.data.text, visibility }), [metadata]);
-        const decoded = decodeJson(response.data.text, { mode: 'parse', ...(parsedSchema === undefined ? {} : { schema: parsedSchema }) });
+        const decoded = decodeResponseJson(response.data.text, { mode: 'parse', ...(parsedSchema === undefined ? {} : { schema: parsedSchema }) }, noteFormatFailure);
         if (!decoded.ok) return decoded;
-        return done(freeze({ kind: 'data', value: decoded.data.value, visibility }), [metadata]);
+        return done(freeze({ kind: 'data', value: decoded.data.value, visibility }), [metadata, ...decoded.data.report]);
     }
     if (visibility.kind !== 'public') return fail('PRIVATE_MATERIAL', 'Private evidence requires a private destination; generic public revision cannot disclose it.');
     const prepared = prepareReferenceDraft(inputs.draft, { scope: settings.scope, protectedLiterals: settings.protectedLiterals });

@@ -19,6 +19,10 @@ Your usual SillyTavern model writes the reply. Lattice can prepare guidance for 
 
 *Several story systems can share one workflow. Open a system to inspect its rules, edit it, or switch it off.*
 
+## New in 0.28.1: recover model steps
+
+Choose up to two retries on individual model nodes, inspect each attempt in run details, and receive persistent failure notices. Structured output tolerates complete JSON fences while retaining strict validation. Mobile startup also works on LAN HTTP connections. [Read the 0.28.1 release notes](docs/releases/0.28.1.md) for retry limits and update instructions.
+
 ## New in 0.28.0: work with smaller passages
 
 A lore chapter or a long conversation is easier to work with a passage at a time. **Chunk** divides supplied material into smaller pieces. Choose their size, decide how much neighboring passages share, and inspect the result before using it to guide a reply.

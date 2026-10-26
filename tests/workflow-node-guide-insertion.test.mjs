@@ -154,7 +154,7 @@ test('legacy publication replacement remains useful when added to the native sta
 
 
 test('allocator callbacks cannot refresh a stale guide insertion base or history generation', async t => {
-    const history = await import('../src/history.js?v=0.28.0');
+    const history = await import('../src/history.js?v=0.28.1');
     for (const change of ['document', 'coordinates', 'reset', 'undo']) await t.test(change, () => {
         const destination = starterGraph('unified-basic'); history.track(destination);
         let calls = 0;
@@ -201,9 +201,9 @@ test('guide insertion rejects root, option and example getters without evaluatin
 });
 
 test('rewired guide candidate is bound to its original root and commits as one undo step', async () => {
-    const history = await import('../src/history.js?v=0.28.0');
-    const { captureGraphEditContext, commitPreparedGraph } = await import('../src/workflow/transactions.js?v=0.28.0');
-    const { checkedCandidateSnapshot } = await import('../src/workflow/checked-candidate.js?v=0.28.0');
+    const history = await import('../src/history.js?v=0.28.1');
+    const { captureGraphEditContext, commitPreparedGraph } = await import('../src/workflow/transactions.js?v=0.28.1');
+    const { checkedCandidateSnapshot } = await import('../src/workflow/checked-candidate.js?v=0.28.1');
     const destination = starterGraph('unified-basic'), before = structuredClone(destination);
     history.track(destination);
     const context = captureGraphEditContext(destination, () => ({sessionId: 'guide', viewPath: [], readOnly: false}));

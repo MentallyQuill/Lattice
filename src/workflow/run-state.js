@@ -1,4 +1,4 @@
-import { addressKey, nodeAddress, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText, freeze, expandRecordAddress, dense } from './record-data.js?v=0.28.0';
+import { addressKey, nodeAddress, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText, freeze, expandRecordAddress, dense } from './record-data.js?v=0.28.1';
 
 /** @typedef {{runId:string,lastSeq:number,status:string,plan:object|null,nodes:object[],elapsedMs:number,at:number|null}} RunState */
 /** Explicit initialization; invalid identity is a programmer boundary error. */
@@ -38,7 +38,8 @@ export function reduceRunState(previous, raw) {
         if (!previous || !plain(raw) || own(raw, 'runId') !== previous.runId) return previous;
         const seq = own(raw, 'seq'), at = own(raw, 'at'), elapsedMs = own(raw, 'elapsedMs'), type = own(raw, 'type');
         if (!Number.isSafeInteger(seq) || seq <= previous.lastSeq || !number(at) || !number(elapsedMs) || elapsedMs < previous.elapsedMs || terminal(previous.status)) return previous;
-        if (previous.status === 'cancelling' && !(type === 'run-settled' && own(raw, 'status') === 'cancelled')) return previous;
+        const undispatchedCancellation = type === 'request-settled' && own(raw, 'dispatched') === false && own(raw, 'status') === 'cancelled';
+        if (previous.status === 'cancelling' && !(type === 'run-settled' && own(raw, 'status') === 'cancelled') && !undispatchedCancellation) return previous;
         let next = { ...previous, lastSeq: seq, at, elapsedMs }, nodes = previous.nodes;
         if (type === 'plan') {
             if (previous.status !== 'empty' || seq !== 1) return previous;
@@ -69,7 +70,7 @@ export function reduceRunState(previous, raw) {
             if (!previous.plan) return previous;
             const address = nodeAddress(own(raw, 'address')); if (!address) return previous;
             const index = nodes.findIndex(node => addressKey(node.address) === addressKey(address));
-            if (index < 0 || !nodes[index].included || terminal(nodes[index].status) || ['blocked', 'not-run', 'cancelling'].includes(nodes[index].status)) return previous;
+            if (index < 0 || !nodes[index].included || terminal(nodes[index].status) || ['blocked', 'not-run'].includes(nodes[index].status) || nodes[index].status === 'cancelling' && !undispatchedCancellation) return previous;
             let node = { ...nodes[index] };
             if (type === 'node-phase') {
                 const phase = own(raw, 'phase'); if (!['binding', 'executing'].includes(phase) || node.status === 'running') return previous;
@@ -83,6 +84,10 @@ export function reduceRunState(previous, raw) {
                 const binding = safeBinding(own(raw, 'binding'));
                 if (node.status !== 'running' || node.request?.status === 'running' || !binding || !Object.keys(binding).length) return previous;
                 node.binding = binding;
+            } else if (type === 'node-retry') {
+                const reasonCode = own(raw, 'reasonCode'), delayMs = own(raw, 'delayMs'), nextAttempt = own(raw, 'nextAttempt'), maxAttempts = own(raw, 'maxAttempts');
+                if (node.status !== 'running' || !node.request || !['completed', 'failed'].includes(node.request.status) || node.request.dispatched === false || !['INVALID_JSON', 'SCHEMA_MISMATCH', 'REQUEST_FAILED'].includes(reasonCode) || !number(delayMs) || delayMs > 30000 || !Number.isSafeInteger(nextAttempt) || nextAttempt !== node.attempts + 1 || nextAttempt > node.requestBound || maxAttempts !== node.requestBound) return previous;
+                node.subphase = 'retrying';
             } else if (type === 'request-start') {
                 const attempt = own(raw, 'attempt'), maxTokens = own(raw, 'maxTokens'), inputTokens = own(raw, 'inputTokens');
                 if (node.status !== 'running' || (node.request && node.request.status === 'running') || !Number.isSafeInteger(attempt) || attempt !== node.attempts + 1 || attempt > node.requestBound || !number(maxTokens) || (inputTokens !== undefined && inputTokens !== null && !number(inputTokens))) return previous;
@@ -90,13 +95,14 @@ export function reduceRunState(previous, raw) {
                 const capability=own(raw,'capability');if(['text-completion','typed-decision'].includes(capability))node.request.capability=capability;
                 const iteration=safeIteration(own(raw,'iteration'));if(iteration)node.request.iteration=iteration;
             } else if (type === 'request-settled') {
-                const attempt = own(raw, 'attempt'), status = own(raw, 'status'), durationMs = own(raw, 'durationMs');
-                if (!node.request || node.request.status !== 'running' || attempt !== node.request.attempt || !['completed', 'failed', 'cancelled'].includes(status) || !number(durationMs)) return previous;
-                node.request = { ...node.request, status, durationMs };
+                const attempt = own(raw, 'attempt'), status = own(raw, 'status'), durationMs = own(raw, 'durationMs'), dispatched = own(raw, 'dispatched');
+                if (!node.request || node.request.status !== 'running' || attempt !== node.request.attempt || !['completed', 'failed', 'cancelled'].includes(status) || !number(durationMs) || dispatched !== undefined && typeof dispatched !== 'boolean' || dispatched === false && (status === 'completed' || durationMs !== 0 || own(raw, 'finish') !== undefined || own(raw, 'usage') !== undefined)) return previous;
+                if (dispatched === false) node.attempts--;
+                node.request = { ...node.request, status, durationMs, dispatched: dispatched ?? true };
                 const finish = own(raw, 'finish'); if (typeof finish === 'string' || finish === null) node.request.finish = boundedText(finish, 128) ?? null;
                 const usage = safeUsage(own(raw, 'usage')); if (usage !== undefined) node.request.usage = usage;
                 const error = safeError(own(raw, 'error'), previous.plan, address); if (error) node.request.error = error;
-                node.subphase = 'executing';
+                node.subphase = node.status === 'cancelling' ? 'cancelling' : 'executing';
             } else if (type === 'node-settled') {
                 const status = own(raw, 'status'); if (!['completed', 'skipped', 'unresolved', 'failed', 'cancelled'].includes(status) || (node.status !== 'running' && !(status === 'failed' && node.subphase === 'binding') && !(['skipped','unresolved'].includes(status)&&untouched(node)&&node.dependencies.every(dependency=>nodes.some(item=>addressKey(item.address)===addressKey(dependency)&&['completed','skipped','unresolved'].includes(item.status)))))) return previous;
                 node = settleNode(node, status, elapsedMs);

@@ -235,7 +235,7 @@ export interface SourceSummary {
 export type ReportedUsage = Partial<Record<'inputTokens' | 'outputTokens' | 'totalTokens' | 'promptTokens' | 'completionTokens' | 'input_tokens' | 'output_tokens' | 'total_tokens' | 'prompt_tokens' | 'completion_tokens' | 'cached_tokens' | 'reasoning_tokens', number>>;
 export interface RequestSummary {
     attempt: number; status: 'running' | 'completed' | 'failed' | 'cancelled'; maxTokens: number;
-    inputTokens: number | null; capability?: 'text-completion' | 'typed-decision'; startedAt: number; durationMs?: number; finish?: string | null; usage?: ReportedUsage | null; error?: SafeRunError; iteration?: IterationProvenance;
+    inputTokens: number | null; capability?: 'text-completion' | 'typed-decision'; startedAt: number; durationMs?: number; dispatched?: boolean; finish?: string | null; usage?: ReportedUsage | null; error?: SafeRunError; iteration?: IterationProvenance;
 }
 export interface IterationProvenance { index: number; helper: DefinitionRef; childAddress?: NodeAddress; childOmitted?: true; }
 interface EventClock { runId: string; seq: number; at: number; elapsedMs: number; }
@@ -245,12 +245,13 @@ export type RunEvent = EventClock & (
     | { type: 'run-settled'; status: RunSettlement; error?: SafeRunError; failedAddress?: NodeAddress }
     | { type: 'node-phase'; address: NodeAddress; phase: 'binding' | 'executing'; binding?: BindingSummary }
     | { type: 'node-binding'; address: NodeAddress; binding: BindingSummary }
+    | { type: 'node-retry'; address: NodeAddress; reasonCode: 'INVALID_JSON' | 'SCHEMA_MISMATCH' | 'REQUEST_FAILED'; delayMs: number; nextAttempt: number; maxAttempts: number }
     | { type: 'request-start'; address: NodeAddress; attempt: number; maxTokens: number; inputTokens?: number | null; capability?: 'text-completion' | 'typed-decision'; iteration?: IterationProvenance }
-    | { type: 'request-settled'; address: NodeAddress; attempt: number; status: 'completed' | 'failed' | 'cancelled'; durationMs: number; finish?: string | null; usage?: ReportedUsage | null; error?: SafeRunError }
+    | { type: 'request-settled'; address: NodeAddress; attempt: number; status: 'completed' | 'failed' | 'cancelled'; durationMs: number; dispatched?: boolean; finish?: string | null; usage?: ReportedUsage | null; error?: SafeRunError }
     | { type: 'node-settled'; address: NodeAddress; status: 'completed' | 'skipped' | 'unresolved' | 'failed' | 'cancelled'; error?: SafeRunError; reason?: SafeRunError }
 );
 export interface RunNodeState extends RunUnit {
-    status: RunStatus; subphase: 'binding' | 'executing' | 'request' | 'cancelling' | null;
+    status: RunStatus; subphase: 'binding' | 'executing' | 'request' | 'retrying' | 'cancelling' | null;
     attempts: number; request: RequestSummary | null; startedAt: number | null; settledAt: number | null; durationMs: number | null;
     binding?: BindingSummary; error?: SafeRunError; reason?: SafeRunError; metadataTruncated?: boolean;
 }
@@ -302,6 +303,8 @@ export interface WorkflowRunOptions {
     target?: WorkflowTarget; onEvent?: (event: RunEvent) => unknown; runId?: string;
     clock?: { now(): number; monotonic(): number }; phase?: WorkflowRunPhase; signal?: AbortSignal; preview?: boolean; dryRun?: boolean;
     iterateHelper?: import('./operations/control-nodes').IterateHelper;
+    /** Host delay adapter; returning false stops the retry. */
+    retryDelay?: (delayMs: number, signal?: AbortSignal) => boolean | void | Promise<boolean | void>;
     chunkTokenizer?: import('./operations/chunk').ChunkTokenizer;
     /** Host-captured descriptive identity for authored Text; never source or omission authority. */
     chunkScope?: import('./source-manifests').Scope;

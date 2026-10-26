@@ -1,16 +1,23 @@
 /** Current Lattice host facade. SillyTavern owns native reply generation. */
-import { ctx, safe, settings, activeWorkflow, onWorkflowActivated, documentSession} from './state.js?v=0.28.0';
-import { validateWorkflow } from './workflow/contracts.js?v=0.28.0';
-import { createNativeWorkflowController } from './workflow/host.js?v=0.28.0';
-import { bindingStatus } from './workflow/connections.js?v=0.28.0';
-import { createChatDocumentCatalog } from './workflow/document-catalog.js?v=0.28.0';
-import { createRecallShortcutRegistry } from './ui/recall-shortcuts.js?v=0.28.0';
-import { createNativePersistenceVerifier } from './workflow/native-persistence.js?v=0.28.0';
-import { diagnosticText, presentDiagnostic } from './ui/diagnostics.js?v=0.28.0';
-export { runWorkflow, workflowSignature } from './workflow/runtime.js?v=0.28.0';
-export { createNativeWorkflowController, snapshotContext, snapshotReply } from './workflow/host.js?v=0.28.0';
+import { ctx, safe, settings, activeWorkflow, onWorkflowActivated, documentSession} from './state.js?v=0.28.1';
+import { validateWorkflow } from './workflow/contracts.js?v=0.28.1';
+import { createNativeWorkflowController } from './workflow/host.js?v=0.28.1';
+import { bindingStatus } from './workflow/connections.js?v=0.28.1';
+import { createChatDocumentCatalog } from './workflow/document-catalog.js?v=0.28.1';
+import { createRecallShortcutRegistry } from './ui/recall-shortcuts.js?v=0.28.1';
+import { createNativePersistenceVerifier } from './workflow/native-persistence.js?v=0.28.1';
+import { diagnosticText, presentDiagnostic } from './ui/diagnostics.js?v=0.28.1';
+export { runWorkflow, workflowSignature } from './workflow/runtime.js?v=0.28.1';
+export { createNativeWorkflowController, snapshotContext, snapshotReply } from './workflow/host.js?v=0.28.1';
 
 let controller, helpers, userHelpers, nativeUserReader, initialization, documentCatalog, persistenceVerifier, recallShortcuts, recallEvents;
+const workflowRunListeners = new Set();
+/** Passive runtime observers; progress never owns workflow execution. */
+export function subscribeWorkflowRunEvents(listener) {
+    if (typeof listener !== 'function') return () => {};
+    workflowRunListeners.add(listener);
+    return () => workflowRunListeners.delete(listener);
+}
 const currentUser = () => userHelpers?.getCurrentUserHandle?.();
 // The immutable native export reads the current handle without invoking graph or
 // request hooks. Private transport uses this separate passive authority last.
@@ -39,6 +46,11 @@ export function sendWorkflowState() {
 export function getNativeWorkflowController() {
     if (controller) return controller;
     controller = createNativeWorkflowController({
+        onEvent: event => {
+            for (const listener of workflowRunListeners) {
+                try { Promise.resolve(listener(event)).catch(() => {}); } catch { /* An observer cannot interrupt the run. */ }
+            }
+        },
         getDocumentToken: () => documentSession.capture(),
         registerRecallHotkey: request => { recallShortcuts ??= createRecallShortcutRegistry(globalThis.document,{changed:()=>safe(()=>globalThis.document.dispatchEvent(new CustomEvent('pc-recall-state')))}); return recallShortcuts.register(request); },
         context: ctx, userId: currentUser, transportUserId, documentCatalog: getStoryDocumentCatalog(), persistenceVerifier: getNativePersistenceVerifier(),
@@ -48,7 +60,22 @@ export function getNativeWorkflowController() {
         syncMesToSwipe: (...args) => helpers?.syncMesToSwipe(...args), syncSwipeToMes: (...args) => helpers?.syncSwipeToMes(...args),
         bindingStatus,
         countTokens: async text => { const count = ctx().getTokenCountAsync; if (typeof count === 'function') { const tokens = await count(text); if (Number.isFinite(tokens) && tokens >= 0) return { tokens, method: 'host-tokenizer' }; } return { tokens: Math.ceil(text.length / 4), method: 'character-estimate' }; },
-        onResult: (result, origin) => { if (!result.ok) { const issue = presentDiagnostic(result.error, { action: 'run the workflow' }); safe(() => globalThis.toastr?.[issue.severity]?.(issue.message, 'Lattice workflow')); } if (origin) safe(() => globalThis.document?.dispatchEvent(new CustomEvent('pc-native-result'))); },
+        onResult: (result, origin) => {
+            if (!result.ok && !result.skipped && !result.superseded) {
+                const issue = presentDiagnostic(result.error, { action: 'run the workflow' });
+                const rawCode = result.error?.code;
+                const code = typeof rawCode === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(rawCode) ? rawCode : 'WORKFLOW_FAILED';
+                const rawNode = result.error?.address?.nodeId ?? result.error?.nodeId;
+                const location = typeof rawNode === 'string' && /^[A-Za-z0-9_.:-]{1,128}$/.test(rawNode) ? ' at ' + rawNode : '';
+                const automatic = origin?.kind === 'send' && origin?.phase === 'unified';
+                const message = automatic
+                    ? `Workflow stopped (${code}${location}). SillyTavern may continue with its normal reply. Open Lattice for details.`
+                    : `${issue.message} (${code}${location})`;
+                const severity = ['info', 'warning'].includes(issue.severity) ? issue.severity : 'error';
+                safe(() => globalThis.toastr?.[severity]?.(message, 'Lattice workflow', { timeOut: 0, extendedTimeOut: 0, closeButton: true, tapToDismiss: false, escapeHtml: true }));
+            }
+            if (origin) safe(() => globalThis.document?.dispatchEvent(new CustomEvent('pc-native-result')));
+        },
     });
     onWorkflowActivated(() => { controller.cancel('Workflow document replaced'); controller.resetRecallDocument(documentSession.capture()); });
     controller.subscribeRecall(() => safe(() => globalThis.document?.dispatchEvent(new CustomEvent('pc-recall-state'))));

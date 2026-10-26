@@ -1,4 +1,4 @@
-import { inspectExpandedGraph, nodeAddressKey, safeWorkflowData } from './graph-validation.js?v=0.28.0';
+import { inspectExpandedGraph, nodeAddressKey, safeWorkflowData } from './graph-validation.js?v=0.28.1';
 const fail = () => ({ok:false,error:{code:'INVALID_RUN_TARGETS',message:'Workflow outputs must name existing terminal operations by exact instance path.'}});
 /** Internal checked-expansion reader; never broadens explicit empty enrollment. */
 export function expandedRunTargets(root, plan) {

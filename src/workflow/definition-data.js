@@ -1,9 +1,9 @@
-import { graphVersionSupported } from './workflow-versions.js?v=0.28.0';
-import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.28.0';
-import { cloneJsonValue } from './operations/json-data.js?v=0.28.0';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.28.0';
-import { validateNodeModifiers } from './modifiers.js?v=0.28.0';
-import { ARTIFACT_KINDS, operationFor, portsForNode, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.28.0';
+import { graphVersionSupported } from './workflow-versions.js?v=0.28.1';
+import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.28.1';
+import { cloneJsonValue } from './operations/json-data.js?v=0.28.1';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.28.1';
+import { validateNodeModifiers } from './modifiers.js?v=0.28.1';
+import { ARTIFACT_KINDS, operationFor, portsForNode, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.28.1';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -182,7 +182,7 @@ export function computeDefinitionIdentity(value, options = {}) {
                         delete node[controlId];
                         continue;
                     }
-                    if ((node.operation === 'compose' && controlId === 'budgetTokens' && control.data.default === 0) || (node.operation === 'for-each' && controlId === 'roleOverrides' && !Object.keys(control.data.default ?? {}).length) || (node.operation === 'scene-context' && controlId === 'visibilityMode' && control.data.default === 'actor') || (node.operation === 'format' && controlId === 'jsonShape' && control.data.default === 'records') || (['read-file','write-file'].includes(node.operation) && ((controlId === 'actorScope' && control.data.default === 'selected') || (controlId === 'actorId' && control.data.default === '')))) {
+                    if ((controlId === 'maxRetries' && control.data.default === 0) || (node.operation === 'compose' && controlId === 'budgetTokens' && control.data.default === 0) || (node.operation === 'for-each' && controlId === 'roleOverrides' && !Object.keys(control.data.default ?? {}).length) || (node.operation === 'scene-context' && controlId === 'visibilityMode' && control.data.default === 'actor') || (node.operation === 'format' && controlId === 'jsonShape' && control.data.default === 'records') || (['read-file','write-file'].includes(node.operation) && ((controlId === 'actorScope' && control.data.default === 'selected') || (controlId === 'actorId' && control.data.default === '')))) {
                         delete node[controlId];
                         continue;
                     }

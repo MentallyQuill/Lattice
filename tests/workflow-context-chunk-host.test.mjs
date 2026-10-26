@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {registerHooks} from 'node:module';
-import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.28.0';
-import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.28.0';
-import {inspectSourceProof} from '../src/workflow/source-provenance.js?v=0.28.0';
-import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.28.0';
-const hostURL=new URL('../src/workflow/host.js?context-chunk-host-test',import.meta.url).href,proofURL=new URL('../src/workflow/source-provenance.js?v=0.28.0',import.meta.url).href;
+import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.28.1';
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.28.1';
+import {inspectSourceProof} from '../src/workflow/source-provenance.js?v=0.28.1';
+import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.28.1';
+const hostURL=new URL('../src/workflow/host.js?context-chunk-host-test',import.meta.url).href,proofURL=new URL('../src/workflow/source-provenance.js?v=0.28.1',import.meta.url).href;
 const observed=[];globalThis.latticeContextChunkObservation=observed;
 const adapter='data:text/javascript,'+encodeURIComponent(`import {createSourceProofRegistry as real} from ${JSON.stringify(proofURL)};export function createSourceProofRegistry(options){const service=real(options);return Object.freeze({...service,retainOutput(payload){const result=service.retainOutput(payload);if(result.ok&&payload.node.operation==='chunk')globalThis.latticeContextChunkObservation.push({payload,service,proof:service.authorizeSource(payload.artifact)});return result;}});}`);
 const hook=registerHooks({resolve(specifier,context,next){return context.parentURL===hostURL&&specifier.startsWith('./source-provenance.js')?{url:adapter,shortCircuit:true}:next(specifier,context);}});

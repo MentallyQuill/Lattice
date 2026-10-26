@@ -1,4 +1,4 @@
-import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.28.0';
+import { cloneJsonValue } from '../workflow/operations/json-data.js?v=0.28.1';
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 
 /** Apply one immutable edit to exact own keys or explicit array indices. */

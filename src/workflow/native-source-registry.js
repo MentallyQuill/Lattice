@@ -1,8 +1,8 @@
-import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.28.0';
-import {cloneJsonValue} from './operations/json-data.js?v=0.28.0';
-import {sha256Text} from './definition-data.js?v=0.28.0';
-import {parseScope,canonicalSourceSetKey} from './source-manifests.js?v=0.28.0';
-import {freeze} from './record-data.js?v=0.28.0';
+import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.28.1';
+import {cloneJsonValue} from './operations/json-data.js?v=0.28.1';
+import {sha256Text} from './definition-data.js?v=0.28.1';
+import {parseScope,canonicalSourceSetKey} from './source-manifests.js?v=0.28.1';
+import {freeze} from './record-data.js?v=0.28.1';
 const fail=code=>({ok:false,error:{code,message:'The native source registry requires explicit current, verified setup.'}});
 const good=data=>({ok:true,data:freeze(data)});
 const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&[Object.prototype,null].includes(Object.getPrototypeOf(v));

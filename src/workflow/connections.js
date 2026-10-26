@@ -1,7 +1,9 @@
-import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME, activeModelMetadata } from './model-profiles.js?v=0.28.0';
+import { randomUuid } from '../random-id.js?v=0.28.1';
+import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME, activeModelMetadata } from './model-profiles.js?v=0.28.1';
+import { normalizeRequestFailure } from './request-failure.js?v=0.28.1';
 const fail = (code, message) => ({ok:false,error:{code,message}});
 const resolved = new WeakMap();
-const fingerprint = () => globalThis.crypto.randomUUID();
+const fingerprint = () => randomUuid();
 const safeSignature = value => JSON.stringify(value, (key,item) => /secret|password|api.?key|custom_headers|authorization/i.test(key) ? undefined : item);
 const ENDPOINT_FIELDS = {custom:'custom_url',vertexai:'vertexai_region',zai:'zai_endpoint',siliconflow:'siliconflow_endpoint',minimax:'minimax_endpoint',pollinations:'pollinations_endpoint'};
 // These installed CC sources can use a named or inherited reverse proxy.
@@ -151,8 +153,8 @@ export async function requestModel({binding,messages,maxTokens,signal},contextOr
         text ||= choice?.message?.content ?? choice?.text ?? raw?.response ?? nativeText ?? raw?.results?.[0]?.text ?? raw?.content ?? raw?.text ?? (typeof raw === 'string' ? raw : '');
         if (typeof text !== 'string' || !text.trim()) return fail('EMPTY_OUTPUT', 'The auxiliary request returned no text.');
         return {ok:true,data:{text,usage,finish}};
-    } catch {
-        return fail(signal?.aborted ? 'ABORTED' : 'REQUEST_FAILED', 'The auxiliary request failed. Inspect the fixed connection; no retry was made.');
+    } catch (error) {
+        return normalizeRequestFailure(error, { aborted: signal?.aborted === true });
     }
 }
 export function resolveBinding(node, graph, context) {

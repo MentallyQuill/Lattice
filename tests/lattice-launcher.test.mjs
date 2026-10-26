@@ -12,13 +12,30 @@ function actual(name, env) {
 function fixture(left = true, automatic = false) {
     const dom = new JSDOM('<form id="send_form">' + (left ? '<div id="leftSendForm"><div id="options_button"></div></div>' : '') + '<textarea id="send_textarea"></textarea><div id="rightSendForm"><div id="send_but"></div></div></form>');
     const saved = { enabled: false, ui: {} }; let opens = 0, updates = 0;
+    const progressMounts = [];
     const env = { document: dom.window.document, settings: () => saved, isEnabled: () => saved.enabled,
         UI: { open() { opens++; } }, updateState() { updates++; env.paintSendbar(); }, safe: fn => fn(),
         logoUrl: new URL('../assets/lattice-logo.svg', import.meta.url).href,
+        chatProgress: { mount(button) { progressMounts.push(button); } },
         sendWorkflowState: () => ({ automatic, offText: 'Workflows off', enabledText: 'Lattice enabled', enableLabel: 'Enable Lattice' }) };
     env.paintSendbar = actual('paintSendbar', env);
-    return { dom, saved, env, mount: actual('addSendbarButton', env), opens: () => opens, updates: () => updates };
+    return { dom, saved, env, progressMounts, mount: actual('addSendbarButton', env), opens: () => opens, updates: () => updates };
 }
+
+test('chat progress follows launcher mounting, hiding and re-enabling', () => {
+    const f = fixture();
+    f.mount();
+    const button = f.env.document.getElementById('pc-sendbar');
+    assert.equal(f.progressMounts.at(-1), button);
+    f.saved.ui.sendbarButton = false;
+    f.mount();
+    assert.equal(f.progressMounts.at(-1), null);
+    assert.equal(button.isConnected, false);
+    f.saved.ui.sendbarButton = true;
+    f.mount();
+    assert.equal(f.progressMounts.at(-1), f.env.document.getElementById('pc-sendbar'));
+    assert.notEqual(f.progressMounts.at(-1), button);
+});
 
 test('chat launcher uses the Lattice logo on the left without submitting or generating', () => {
     const f = fixture(); assert.equal(f.mount(), true);

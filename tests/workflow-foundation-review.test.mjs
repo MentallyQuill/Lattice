@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {installMock} from './mock.js';
-import * as S from '../src/state.js?v=0.28.0';
-import {createWorkflowDocumentController} from '../src/ui/document-controller.js?v=0.28.0';
-import {parseWorkflowDocument} from '../src/workflow/document-file.js?v=0.28.0';
-import {installWorkflowExample} from '../src/workflow/examples.js?v=0.28.0';
-import {createNativeWorkflowController} from '../src/workflow/host.js?v=0.28.0';
-import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.28.0';
-import {prepareCreateFromSelection} from '../src/workflow/composition.js?v=0.28.0';
-import {expandRecordAddress} from '../src/workflow/record-data.js?v=0.28.0';
+import * as S from '../src/state.js?v=0.28.1';
+import {createWorkflowDocumentController} from '../src/ui/document-controller.js?v=0.28.1';
+import {parseWorkflowDocument} from '../src/workflow/document-file.js?v=0.28.1';
+import {installWorkflowExample} from '../src/workflow/examples.js?v=0.28.1';
+import {createNativeWorkflowController} from '../src/workflow/host.js?v=0.28.1';
+import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.28.1';
+import {prepareCreateFromSelection} from '../src/workflow/composition.js?v=0.28.1';
+import {expandRecordAddress} from '../src/workflow/record-data.js?v=0.28.1';
 function sourceHost(graph){
  let saved,saves=0,reads=0;const listeners=new Map();
  const c={chatId:'foundation-send',getCurrentChatId:()=> 'foundation-send',characterId:0,groupId:null,characters:[{avatar:'practice.png',name:'Practice',chat:'foundation-send',data:{name:'Practice'}}],chat:Array.from({length:26},(_,i)=>({name:i%2?'Practice':'User',mes:(i%2?'Assistant':'User')+' passage '+(Math.floor(i/2)+1)+'.',is_user:i%2===0,is_system:false,extra:{}})),chatMetadata:{},extensionPrompts:{},getRequestHeaders:()=>({'Content-Type':'application/json'}),eventTypes:Object.fromEntries(['GENERATION_STARTED','GENERATION_STOPPED','GENERATION_ENDED','MESSAGE_RECEIVED','MESSAGE_SENT','CHAT_CHANGED'].map(n=>[n,n]))};
