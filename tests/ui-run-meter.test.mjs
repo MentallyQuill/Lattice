@@ -13,6 +13,83 @@ globalThis.document = dom.window.document;
 for (const key of ['Node', 'Element', 'Text', 'Comment', 'Document', 'HTMLElement', 'HTMLButtonElement', 'MutationObserver']) Object.defineProperty(globalThis, key, { configurable: true, value: dom.window[key] });
 const clientURL = new URL('../node_modules/svelte/src/index-client.js', import.meta.url).href;
 const { mount, unmount, flushSync } = await import(clientURL);
+const pixelGrid = await import('../src/ui/pixel-grid.js').catch(() => ({}));
+
+test('pixel grid uses equal physical cell and gap sizes at fractional device scales', () => {
+    assert.equal(typeof pixelGrid.alignPixelGrid, 'function');
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    for (let index = 0; index < 36; index++) svg.append(document.createElementNS(svg.namespaceURI, 'rect'));
+    const alignment = pixelGrid.alignPixelGrid(svg);
+    try {
+        for (const ratio of [1, 1.25, 1.5, 1.75, 2, 2.625]) {
+            Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: ratio });
+            alignment.update();
+            const cell = Math.round(4 * ratio), gap = Math.round(2 * ratio);
+            const width = 12 * cell + 11 * gap + 2, height = 3 * cell + 2 * gap + 2;
+            assert.equal(svg.getAttribute('viewBox'), `-1 -1 ${width} ${height}`, 'one transparent device pixel protects each outer edge from viewport clipping');
+            assert.equal(Number.parseFloat(svg.style.width), width / ratio);
+            assert.equal(Number.parseFloat(svg.style.height), height / ratio);
+            assert.equal(svg.getAttribute('shape-rendering'), 'crispEdges');
+            assert.equal(svg.getAttribute('preserveAspectRatio'), 'none');
+            [...svg.children].forEach((rect, index) => {
+                assert.equal(rect.getAttribute('x'), String(Math.floor(index / 3) * (cell + gap)));
+                assert.equal(rect.getAttribute('y'), String(index % 3 * (cell + gap)));
+                assert.equal(rect.getAttribute('width'), String(cell));
+                assert.equal(rect.getAttribute('height'), String(cell));
+            });
+        }
+    } finally {
+        alignment.destroy();
+        Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 1 });
+    }
+});
+
+test('pixel grid follows child and device-scale changes until its action is destroyed', async () => {
+    const originalMatchMedia = window.matchMedia;
+    const queries = [];
+    window.matchMedia = media => {
+        const listeners = new Set();
+        const query = {
+            media, listeners,
+            addEventListener(type, listener) { assert.equal(type, 'change'); listeners.add(listener); },
+            removeEventListener(type, listener) { assert.equal(type, 'change'); listeners.delete(listener); },
+            change() { for (const listener of [...listeners]) listener(); },
+        };
+        queries.push(query);
+        return query;
+    };
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const appendPixel = () => svg.append(document.createElementNS(svg.namespaceURI, 'rect'));
+    appendPixel();
+    const alignment = pixelGrid.alignPixelGrid(svg);
+    try {
+        assert.equal(queries.at(-1)?.media, '(resolution: 1dppx)');
+        appendPixel(); appendPixel(); appendPixel();
+        await Promise.resolve();
+        assert.equal(svg.getAttribute('viewBox'), '-1 -1 12 18', 'new columns are aligned after the Svelte keyed list changes');
+        Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 1.25 });
+        window.dispatchEvent(new window.Event('resize'));
+        assert.equal(svg.getAttribute('viewBox'), '-1 -1 15 23');
+        assert.equal(queries.at(-1).media, '(resolution: 1.25dppx)');
+        assert.equal(queries[0].listeners.size, 0, 'the old resolution listener is released');
+        Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 1.5 });
+        queries.at(-1).change();
+        assert.equal(svg.getAttribute('viewBox'), '-1 -1 17 26', 'a zoom change does not require a resize event');
+        assert.equal(queries.at(-1).media, '(resolution: 1.5dppx)');
+        alignment.destroy();
+        assert.ok(queries.every(query => query.listeners.size === 0), 'destroy releases every resolution listener');
+        Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 2 });
+        window.dispatchEvent(new window.Event('resize'));
+        appendPixel(); appendPixel(); appendPixel();
+        await Promise.resolve();
+        alignment.update();
+        assert.equal(svg.getAttribute('viewBox'), '-1 -1 17 26', 'destroyed grids stop reacting to all update sources');
+    } finally {
+        alignment.destroy();
+        window.matchMedia = originalMatchMedia;
+        Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: 1 });
+    }
+});
 
 async function fixture() {
     const directory = await mkdtemp(join(tmpdir(), 'lattice-run-meter-'));
@@ -23,7 +100,7 @@ async function fixture() {
             const source = await readFile(new URL('../ui/RunMeter.svelte', import.meta.url), 'utf8');
             const compiled = compile(source, { filename: 'RunMeter.svelte', generate: 'client', css: 'injected' });
             assert.deepEqual(compiled.warnings.filter(warning => warning.code.startsWith('a11y')), []);
-            const code = compiled.js.code.replace(/(['"])(svelte(?:\/[^'"]*)?)\1/g, (_, quote, specifier) => JSON.stringify(specifier === 'svelte' ? clientURL : import.meta.resolve(specifier)));
+            const code = compiled.js.code.replace(/(['"])(svelte(?:\/[^'"]*)?|\.\.\/src\/ui\/pixel-grid\.js)\1/g, (_, quote, specifier) => JSON.stringify(specifier === 'svelte' ? clientURL : specifier.startsWith('.') ? new URL(specifier, import.meta.url).href : import.meta.resolve(specifier)));
             const output = join(directory, 'RunMeter.mjs'); await writeFile(output, code);
             const component = (await import(pathToFileURL(output).href)).default;
             mounted = mount(component, { target: host, props: { view, open } }); flushSync(); return host;

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { RunMeterView } from './run-meter-types';
+    import { alignPixelGrid } from '../src/ui/pixel-grid.js';
     let { view, open }: { view: RunMeterView | null; open?: () => void } = $props();
     const label = (status: string) => status === 'empty' ? 'Ready' : status === 'not-run' ? 'Not run' : status.charAt(0).toUpperCase() + status.slice(1);
     const priority = ['cancelling', 'running', 'failed', 'blocked', 'cancelled', 'invalid', 'stale', 'queued', 'waiting', 'not-run'];
@@ -22,11 +23,11 @@
     {#if view.elapsedMs !== null && Number.isFinite(view.elapsedMs) && view.elapsedMs >= 0}
         <span class="pc-run-meter-elapsed" data-run-elapsed>{(view.elapsedMs / 1000).toFixed(1)}s</span>
     {/if}
-    <span class="pc-run-meter-pixels" aria-hidden="true">
+    <svg class="pc-run-meter-pixels" aria-hidden="true" use:alignPixelGrid>
         {#each pixels as pixel (pixel.key)}
-            <span class="pc-run-pixel" data-run-pixel data-status={pixel.status} title={pixel.title}></span>
+            <rect class="pc-run-pixel" data-run-pixel data-status={pixel.status} {...{ title: pixel.title }}><title>{pixel.title}</title></rect>
         {/each}
-    </span>
+    </svg>
 </button>
 {/if}
 
@@ -37,16 +38,16 @@
     .pc-run-meter:disabled { cursor: default; }
     .pc-run-meter-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pc-run-meter-elapsed { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--pc-muted); }
-    .pc-run-meter-pixels { display: grid; grid-template-rows: repeat(3, 4px); grid-auto-columns: 4px; grid-auto-flow: column; gap: 2px; flex: none; }
-    .pc-run-pixel { width: 4px; height: 4px; border-radius: 1px; background: #576069; }
-    .pc-run-pixel[data-status="completed"] { background: #8aad96; }
-    .pc-run-pixel[data-status="queued"] { background: #8b959d; }
-    .pc-run-pixel[data-status="running"], .pc-run-pixel[data-status="cancelling"] { background: var(--SmartThemeQuoteColor, #e18a24); box-shadow: 0 0 3px var(--SmartThemeQuoteColor, #e18a24); }
-    .pc-run-pixel[data-status="failed"], .pc-run-pixel[data-status="invalid"] { background: #d76a74; }
-    .pc-run-pixel[data-status="blocked"] { background: #9a727c; }
-    .pc-run-pixel[data-status="stale"] { background: #b19b67; }
-    .pc-run-pixel[data-status="cancelled"] { background: #8e8296; }
-    .pc-run-pixel[data-status="not-run"] { background: #434a50; }
+    .pc-run-meter-pixels { display: block; flex: none; overflow: visible; }
+    .pc-run-pixel { background: #576069; fill: #576069; }
+    .pc-run-pixel[data-status="completed"] { background: #8aad96; fill: #8aad96; }
+    .pc-run-pixel[data-status="queued"] { background: #8b959d; fill: #8b959d; }
+    .pc-run-pixel[data-status="running"], .pc-run-pixel[data-status="cancelling"] { background: var(--SmartThemeQuoteColor, #e18a24); fill: var(--SmartThemeQuoteColor, #e18a24); filter: drop-shadow(0 0 3px var(--SmartThemeQuoteColor, #e18a24)); }
+    .pc-run-pixel[data-status="failed"], .pc-run-pixel[data-status="invalid"] { background: #d76a74; fill: #d76a74; }
+    .pc-run-pixel[data-status="blocked"] { background: #9a727c; fill: #9a727c; }
+    .pc-run-pixel[data-status="stale"] { background: #b19b67; fill: #b19b67; }
+    .pc-run-pixel[data-status="cancelled"] { background: #8e8296; fill: #8e8296; }
+    .pc-run-pixel[data-status="not-run"] { background: #434a50; fill: #434a50; }
     @media (prefers-reduced-motion: no-preference) {
         .pc-run-pixel[data-status="running"] { animation: pc-meter-pulse 1.2s ease-in-out infinite; }
         @keyframes pc-meter-pulse { 50% { opacity: .65; } }
