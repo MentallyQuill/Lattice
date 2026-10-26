@@ -12,6 +12,12 @@ const PROXY_SOURCES = new Set(['claude','openai','mistralai','makersuite','verte
 const LOSSY_CC_SOURCES = new Set(['claude','makersuite','vertexai']);
 const COMPLETE_REASONS = new Set(['stop','eos_token','eos','stop_sequence','end_turn','complete','completed']);
 const TC_MODELS = {ooba:'custom_model',generic:'generic_model',mancer:'mancer_model',togetherai:'togetherai_model',infermaticai:'infermaticai_model',dreamgen:'dreamgen_model',openrouter:'openrouter_model',vllm:'vllm_model',aphrodite:'aphrodite_model',ollama:'ollama_model',featherless:'featherless_model',tabby:'tabby_model',llamacpp:'llamacpp_model'};
+function completionText(raw,binding,context) {
+    const nativeText=Array.isArray(raw?.message?.content)?raw.message.content.filter(part=>part.type==='text'&&typeof part.text==='string').map(part=>part.text).join(''):undefined;
+    let text=binding.api==='openai'&&binding.source==='cohere'?nativeText:undefined;
+    if(text===undefined){try{text=context.extractMessageFromData?.(raw,binding.api);}catch{/* Provider fallback below. */}}
+    return text||(raw?.choices?.[0]?.message?.content??raw?.choices?.[0]?.text??raw?.response??nativeText??raw?.results?.[0]?.text??raw?.content??raw?.text??(typeof raw==='string'?raw:''));
+}
 function presetByName(context, api, name) {
     if (!name) return {};
     const manager = context.getPresetManager?.(api);
@@ -84,7 +90,7 @@ function requestStateWatch(context,binding){
     }catch{return null;}
 }
 /** Send owned messages through the selected fixed or active route without activation. */
-export async function requestModel({binding,messages,maxTokens,signal},contextOrGetter,transport = {}) {
+export async function requestModel({binding,messages,maxTokens,signal,onDiagnosticResponse},contextOrGetter,transport = {}) {
     const getContext = typeof contextOrGetter === 'function' ? contextOrGetter : () => contextOrGetter;
     if (signal?.aborted) return fail('ABORTED', 'The request was stopped.');
     if (!Number.isSafeInteger(maxTokens) || maxTokens <= 0 || maxTokens > 65536 || !Array.isArray(messages) || !messages.length || messages.length > 1000 || messages.some(message=>!message || !['system','user','assistant','tool'].includes(message.role) || typeof message.content !== 'string')) return fail('INVALID_REQUEST', 'Provide owned messages and a positive bounded completion limit.');
@@ -139,18 +145,22 @@ export async function requestModel({binding,messages,maxTokens,signal},contextOr
         }
         if (signal?.aborted) return fail('ABORTED', 'The request was stopped before transmission.');
         const raw = active ? await sendRequest.call(receiver,overrides,false,signal) : await sendRequest.call(receiver,fixedProfileId,messages,maxTokens,{stream:false,extractData:false,includePreset:tc,includeInstruct:true,signal},overrides);
-        const choice = raw?.choices?.[0];
         if (signal?.aborted) return fail('ABORTED', 'The request was stopped; ignore its late output.');
         const {finish,usage} = completionEvidence(raw,binding);
         const reason = typeof finish === 'string' ? finish.toLowerCase() : '';
-        if (['length','max_tokens','max_output_tokens'].includes(reason)) return {ok:false,error:{code:'TRUNCATED_OUTPUT',message:'The request reached its completion limit.',finish,usage}};
-        if (!COMPLETE_REASONS.has(reason)) return {ok:false,error:{code:'COMPLETION_UNVERIFIED',message:'The host response does not expose a verified complete text result; keep the original.',finish:typeof finish === 'string' ? finish : null,usage}};
-        const nativeText = Array.isArray(raw?.message?.content) ? raw.message.content.filter(part=>part.type === 'text' && typeof part.text === 'string').map(part=>part.text).join('') : undefined;
-        let text = binding.api === 'openai' && binding.source === 'cohere' ? nativeText : undefined;
-        if (text === undefined) {
-            try { text = context.extractMessageFromData?.(raw,binding.api); } catch { /* Provider fallback below. */ }
+        const completionFailure=['length','max_tokens','max_output_tokens'].includes(reason)?{ok:false,error:{code:'TRUNCATED_OUTPUT',message:'The request reached its completion limit.',finish,usage}}:!COMPLETE_REASONS.has(reason)?{ok:false,error:{code:'COMPLETION_UNVERIFIED',message:'The host response does not expose a verified complete text result; keep the original.',finish:typeof finish === 'string' ? finish : null,usage}}:null;
+        if(completionFailure){
+            // The runtime owns this optional short-lived callback. Failed text never
+            // enters the public Result, provider payload, or ordinary progress.
+            if(typeof onDiagnosticResponse==='function')try{
+                const text=completionText(raw,binding,context);
+                if(!signal?.aborted&&typeof text==='string'){
+                    const pending=onDiagnosticResponse(Object.freeze({text}));if(pending?.then)Promise.resolve(pending).catch(()=>{});
+                }
+            }catch{/* Diagnostics never replace the original completion failure. */}
+            return completionFailure;
         }
-        text ||= choice?.message?.content ?? choice?.text ?? raw?.response ?? nativeText ?? raw?.results?.[0]?.text ?? raw?.content ?? raw?.text ?? (typeof raw === 'string' ? raw : '');
+        const text=completionText(raw,binding,context);
         if (typeof text !== 'string' || !text.trim()) return fail('EMPTY_OUTPUT', 'The auxiliary request returned no text.');
         return {ok:true,data:{text,usage,finish}};
     } catch (error) {

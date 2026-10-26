@@ -182,6 +182,10 @@ export function computeDefinitionIdentity(value, options = {}) {
                         delete node[controlId];
                         continue;
                     }
+                    if (node.operation === 'review-publish' && controlId === 'autoApply' && control.data.default === false) {
+                        delete node[controlId];
+                        continue;
+                    }
                     if ((controlId === 'maxRetries' && control.data.default === 0) || (node.operation === 'compose' && controlId === 'budgetTokens' && control.data.default === 0) || (node.operation === 'for-each' && controlId === 'roleOverrides' && !Object.keys(control.data.default ?? {}).length) || (node.operation === 'scene-context' && controlId === 'visibilityMode' && control.data.default === 'actor') || (node.operation === 'format' && controlId === 'jsonShape' && control.data.default === 'records') || (['read-file','write-file'].includes(node.operation) && ((controlId === 'actorScope' && control.data.default === 'selected') || (controlId === 'actorId' && control.data.default === '')))) {
                         delete node[controlId];
                         continue;

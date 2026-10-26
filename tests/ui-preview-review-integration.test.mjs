@@ -253,6 +253,28 @@ test('actual automatic zero-call unified Send provenance remains visible without
     finally { await leaf.close(); }
 });
 
+test('an automatically applied host result keeps its accepted reply visible without offering Reject reply', async () => {
+    const f = adapter();
+    try {
+        await f.run();
+        const original = f.runtime.lastAutomaticResult();
+        const applied = await f.runtime.apply(original.result.reviewHandles[0]);
+        assert.equal(applied.ok, true);
+        const accepted = { origin: original.origin, result: { ...applied, automaticallyApplied: true } };
+        f.runtime.lastAutomaticResult = () => accepted;
+        f.env.workflowSession.receiveAutomatic(accepted);
+        assert.equal(f.env.panels.outputPreview.review, null);
+        const leaf = await previewFixture(f.env.panels.outputPreview, f.actions);
+        try {
+            assert.equal(leaf.host.querySelector('[data-preview-apply]'), null);
+            assert.equal([...leaf.host.querySelectorAll('button')].some(button => button.textContent === 'Reject reply'), false);
+            assert.match(leaf.host.textContent, /Revised reply applied as a new swipe/);
+            assert.equal(f.message.swipe_id, 1);
+            assert.equal(f.counters.reject, 0);
+        } finally { await leaf.close(); }
+    } finally { f.runtime.dispose(); }
+});
+
 test('Apply routes the authenticated current unified Review / Publish handle to native publication', async () => {
     const f = adapter(); await f.run();
     const selector = structuredClone(f.env.panels.outputPreview.review.selector);

@@ -1,6 +1,6 @@
 import { executeChunk } from './operations/chunk.js?v=0.28.1';
 import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.1';
-import { preserveArtifactPrivacy } from './artifact-privacy.js?v=0.28.1';
+import { artifactVisibility, preserveArtifactPrivacy } from './artifact-privacy.js?v=0.28.1';
 import { normalizeRequestFailure } from './request-failure.js?v=0.28.1';
 import { compileIterationHelper, executeCompiledIteration } from './iteration-helpers.js?v=0.28.1';
 import { LIFECYCLE_OPERATIONS, executeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.28.1';
@@ -42,6 +42,14 @@ const complete = finish => ['stop','eos_token','eos','stop_sequence','end_turn',
 const artifactKey = address => JSON.stringify([address.workflowId,address.instancePath,address.nodeId,address.portId]);
 const versionMetadata = value => typeof value==='number' && Number.isFinite(value) ? value : undefined;
 const observe = (observer,...args) => { try { const pending=observer?.(...args); if(pending && typeof pending.then==='function')Promise.resolve(pending).catch(()=>{}); } catch {/* Observers never own execution. */} };
+/** Scope comes from the final host authorization, never request/provider disclosure claims. */
+function diagnosticVisibility(node,inputs,authorized) {
+    const scope=own(own(authorized,'data'),'scope'),actorId=own(scope,'actorId');
+    const actor=typeof actorId==='string'&&!!actorId.trim()&&actorId.length<=256?{kind:'actor-private',actorId}:undefined;
+    // Reflect can consume host-owned implicit state absent from its public Context pin.
+    if(!node||scope!==undefined&&scope!==null&&!actor||node.operation==='reflect'&&!inputs.state&&!actor||['character-direction','prompted-memory'].includes(node.operation)&&!actor)return {kind:'hidden'};
+    return artifactVisibility({inputs,...(actor?{visibility:actor}:{})});
+}
 
 function planWorkflow(graph,ports) {
     const normalized=cloneWorkflowDocument(graph);if(!normalized.ok)return normalized;
@@ -139,6 +147,7 @@ export async function runWorkflow(graph,ports={}) { return executeWorkflow(graph
 export async function runWorkflowForHost(graph,ports={},hooks={}) { return executeWorkflow(graph,ports,hooks); }
 
 async function executeWorkflow(original,ports,hooks={}) {
+    const diagnosticObserver=own(ports,'onDiagnostic');
     const schema=versionMetadata(own(original,'schema')),runtime=versionMetadata(own(original,'runtime')),mode=ports.target===undefined?'root':'target';
     const artifacts=new Map(),outputStates=new Map(),unitStates=new Map(),bindings=new Map(),requestBindings=new Map(),bindingReports=new Map(),nodeCalls=new Map(),helperPrograms=new Map(),terminals=[];
     let runId,recorder,plan,safePlan,current,callBound=0,actualCalls=0,seq=0,lastElapsed=0,cancelling=false,closed=false,removeAbort=()=>{};
@@ -240,8 +249,14 @@ async function executeWorkflow(original,ports,hooks={}) {
                 if(stopped())return failure('ABORTED','Workflow was stopped.',payload.node?.id??node.id);
                 return retained?.ok===true&&retained.data?.retained===true?retained:retained?.ok===false?retained:failure('ACTOR_SCOPE_FAILED','The private artifact scope was not retained.',payload.node?.id??node.id);
             };
-            const childAuthorizers=new Map();
-            let operationOpen=true,requestInFlight=false;
+            const childAuthorizers=new Map(),childDiagnosticScopes=new Map();
+            let operationOpen=true,requestInFlight=false,lastDiagnosticResponse;
+            const onModelValidation=error=>{
+                if(typeof diagnosticObserver!=='function'||!operationOpen||closed||stopped()||!lastDiagnosticResponse?.completed)return;
+                const projected=safeError(error);if(!projected)return;
+                const {attempt}=lastDiagnosticResponse;lastDiagnosticResponse.completed=false;
+                observe(diagnosticObserver,freeze({type:'validation',address:unit.address,attempt,error:projected}));
+            };
             const requestFailure=()=>failure(closed||!operationOpen?'REQUEST_SCOPE_CLOSED':stopped()?'ABORTED':'CALL_LIMIT',closed||!operationOpen?'This operation request scope has closed.':stopped()?'Workflow was stopped.':'Workflow request limit reached.',node.id);
             const admitted=()=>!closed&&operationOpen&&!stopped()&&actualCalls<callBound&&(nodeCalls.get(key)??0)<unit.requestBound;
             const trackedRequest=async(options)=>{
@@ -282,10 +297,16 @@ async function executeWorkflow(original,ports,hooks={}) {
                     if(dispatchGuard.ok&&!admitted())dispatchGuard=requestFailure();
                     if(!dispatchGuard.ok){emit('request-settled',{address:unit.address,attempt,status:stopped()?'cancelled':'failed',durationMs:0,dispatched:false,error:safeError(dispatchGuard.error)});return dispatchGuard;}
                     nodeCalls.set(key,attempt);actualCalls++;
-                    let response;
-                    try{response=await ports.request({...options,binding:requestBinding,signal:ports.signal});}
+                    let response,diagnosticCompletion,diagnosticRequestOpen=true;
+                    const onDiagnosticResponse=typeof diagnosticObserver==='function'?value=>{
+                        if(!diagnosticRequestOpen||closed||!operationOpen||stopped())return;
+                        const text=own(value,'text');if(typeof text==='string')diagnosticCompletion=text;
+                    }:undefined;
+                    try{response=await ports.request({...options,binding:requestBinding,signal:ports.signal,onDiagnosticResponse});}
                     catch(error){response=normalizeRequestFailure(error,{aborted:stopped()});}
+                    finally{diagnosticRequestOpen=false;}
                     if(closed||!operationOpen)return requestFailure();
+                    const diagnosticData=typeof diagnosticObserver==='function'&&own(response,'ok')===true?own(response,'data'):undefined;
                     if(!response||typeof response.ok!=='boolean'||(!response.ok&&!response.error))response=failure('INVALID_RESPONSE','Auxiliary request returned an invalid result.',node.id);
                     if(stopped())response=failure('ABORTED','Ignore the stopped request result.',node.id);
                     else if(response.ok){
@@ -294,6 +315,15 @@ async function executeWorkflow(original,ports,hooks={}) {
                         else if(!complete(response.data.finish))response={ok:false,error:{code:'COMPLETION_UNVERIFIED',message:'Auxiliary output has no verified completion evidence.',usage:response.data.usage,finish:response.data.finish??null}};
                     }
                     const metadata=response.ok?response.data:response.error,usage=metadata?.usage;
+                    if(typeof diagnosticObserver==='function'&&!stopped()){
+                        lastDiagnosticResponse={attempt,completed:response.ok};
+                        // Project diagnostic scope only after transport; no new callbacks
+                        // may enter the final authorization-to-dispatch boundary.
+                        const diagnosticScope=node.operation==='for-each'?childDiagnosticScopes.get(childAddress&&addressKey(childAddress)):{node,inputs};
+                        const visibility=diagnosticVisibility(diagnosticScope?.node,diagnosticScope?.inputs,dispatchGuard);
+                        const text=own(diagnosticData,'text')??diagnosticCompletion;
+                        if(!stopped())observe(diagnosticObserver,freeze({type:'response',address:unit.address,attempt,...(typeof text==='string'?{text}:{}),visibility,...(metadata?.finish!==undefined?{finish:boundedText(metadata.finish,128)??null}:{}),...(safeUsage(usage)!==undefined?{usage:safeUsage(usage)}:{}),...(!response.ok?{error:safeError(response.error)}:{})}));
+                    }
                     emit('request-settled',{address:unit.address,attempt,status:stopped()?'cancelled':response.ok?'completed':'failed',durationMs:Math.max(0,monotonic()-started-requestStarted),...(metadata?.finish!==undefined?{finish:boundedText(metadata.finish,128)??null}:{}),...(safeUsage(usage)!==undefined?{usage:safeUsage(usage)}:{}),...(!response.ok?{error:safeError(response.error)}:{})});return response;
                 }finally{requestInFlight=false;}
             };
@@ -309,6 +339,7 @@ async function executeWorkflow(original,ports,hooks={}) {
                 if(!childOp||childOp.rootOnly||childOp.hostOperation||childOp.nativeBoundary||childOp.terminal||childOp.requiresStateInDefinition&&!childInputs.state)return failure('ITERATION_AUTHORITY','Helpers cannot acquire root authority.',node.id);
                 let childOpen=true,childCalls=0;const childBindings=new Map(),recovered=new WeakSet();
                 const childKey=addressKey(child.address);childAuthorizers.set(childKey,capability=>childOpen?authorizeInputs(childNode,childInputs,child.address,capability):failure('REQUEST_SCOPE_CLOSED','The helper request scope has closed.',childNode.id));
+                if(typeof diagnosticObserver==='function')childDiagnosticScopes.set(childKey,{node:childNode,inputs:childInputs});
                 const childIterate=childLocal.iterateHelper?async(...args)=>{const result=await childLocal.iterateHelper(...args);if(result?.ok===true)recovered.add(result);return result;}:undefined;
                 const childRequest=async(options)=>{
                     const capability='text-completion';
@@ -332,13 +363,14 @@ async function executeWorkflow(original,ports,hooks={}) {
                     try{return await childLocal.request({...options,capability,binding:childBindings.get(capability),modelRole:role,childAddress:child.address});}
                     finally{childCalls+=(nodeCalls.get(key)??0)-before-1;}
                 };
-                try{return await executeNode(childNode,childInputs,childOp,{...ports,...childLocal,iterateHelper:childIterate,isRecoveredIterationResult:result=>recovered.has(result),binding:undefined,request:childRequest,onRetry:details=>{if(childOpen&&childCalls>0&&childCalls<child.requestBound)onRetry(details);},getRequestCount:()=>childCalls,executeIntrospection:hooks.executeIntrospection,executeHostOperation:undefined,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});}
-                finally{childOpen=false;childBindings.clear();childAuthorizers.delete(childKey);}
+                try{const result=await executeNode(childNode,childInputs,childOp,{...ports,...childLocal,iterateHelper:childIterate,isRecoveredIterationResult:result=>recovered.has(result),binding:undefined,request:childRequest,onModelValidation,onRetry:details=>{if(childOpen&&childCalls>0&&childCalls<child.requestBound)onRetry(details);},getRequestCount:()=>childCalls,executeIntrospection:hooks.executeIntrospection,executeHostOperation:undefined,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});if(!result?.ok)onModelValidation(result?.error);return result;}
+                finally{childOpen=false;childBindings.clear();childAuthorizers.delete(childKey);childDiagnosticScopes.delete(childKey);}
             };
             // Custom adapters retain the same bounded request capability after mandatory helper preflight.
             const recovered=new WeakSet(),compiled=helperPrograms.get(key),iterateHelper=typeof ports.iterateHelper==='function'?ports.iterateHelper:compiled?async(invocation,helperPorts)=>{const result=await executeCompiledIteration(compiled,invocation,{executeUnit:executeHelperUnit,request:helperPorts.request,signal:ports.signal,retainScopedOutput:payload=>retainScopedOutput({...payload,inputs:payload.seed?inputs:payload.inputs})});if(result?.ok===true)recovered.add(result);return result;}:ports.iterateHelper;
             // Static instances inherit owned host capabilities; repeated helpers use their separate bounded adapter.
-            const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,operationRuntime:unit.runtime,rootMode:prepared.graph.mode,binding,request,onRetry,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0 || isScopedSystemOperation(node) && typeof hooks.executeHostOperation==='function',address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});
+            const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,operationRuntime:unit.runtime,rootMode:prepared.graph.mode,binding,request,onRetry,onModelValidation,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0 || isScopedSystemOperation(node) && typeof hooks.executeHostOperation==='function',address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});
+            if(!rawResult?.ok)onModelValidation(rawResult?.error);
             // Native generation authors the public story from scoped portrayal guidance; it never publishes guidance verbatim.
             const result=preserveArtifactPrivacy(rawResult,node.operation==='generate-reply'?{}:inputs);
             operationOpen=false;

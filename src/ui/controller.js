@@ -48,6 +48,7 @@ import { readNodePresentation } from './node-palette.js?v=0.28.1';
 import { showContextMenu } from './context-menu.js?v=0.28.1';
 import { createWorkflowDocumentController } from './document-controller.js?v=0.28.1';
 import { createWorkflowFileAccess } from './workflow-file-access.js?v=0.28.1';
+import { createDiagnosticHistoryController } from './diagnostic-history-controller.js?v=0.28.1';
 import { readTextFile } from './file-input.js?v=0.28.1';
 import { prepareWorkspaceViews, prepareNodePlacementCard, prepareLibraryViews, projectEditorDraw, initialWorkspaceCamera, projectWorkspacePanels, projectNodeProfiles } from './workspace-preparation.js?v=0.28.1';
 import { prepareWorkflowProjection, projectPreparedWorkflow, createWorkflowSession } from './workflow-surface.js?v=0.28.1';
@@ -62,6 +63,7 @@ import { measureNodeCard } from '../../dist/lattice-ui.js?v=0.28.1';
 import { findVacantNodePoint, nodePlacementFootprint } from './node-placement-geometry.js?v=0.28.1';
 
 let workbench = null;
+let diagnosticHistoryUi = null;
 let root = null;
 let canvas = null;
 let current = null;      // graph in view
@@ -634,7 +636,12 @@ function setCanvasGraph({ cancelRun = true } = {}) {
 function stillEditing(graph, epoch) { return isOpen() && current === graph && uiEpoch === epoch; }
 function mkBtn(icon, title, fn, cls = '') { const button = el('button', 'pc-btn menu_button ' + cls); button.type = 'button'; button.innerHTML = '<i class="fa-solid ' + icon + '"></i>'; button.title = title; button.addEventListener('click', fn); return button; }
 function build() {
-    if (root) return;
+    if (root) { diagnosticHistoryUi?.sync(); return; }
+    diagnosticHistoryUi = createDiagnosticHistoryController({
+        history: workflowRuntime.getWorkflowDiagnosticHistory(), scope: workflowRuntime.getWorkflowDiagnosticScope,
+        enabled: workflowRuntime.workflowDiagnosticLoggingEnabled, setEnabled: workflowRuntime.setWorkflowDiagnosticLogging,
+        download: downloadGraphViewJSON, changed: () => workbench?.update({ diagnosticHistory: diagnosticHistoryUi?.snapshot() }),
+    });
     let publishedCameraMode = null;
     workbench = createWorkbench({
         captureExampleContext,
@@ -654,7 +661,7 @@ function build() {
         },
         mode: mode => canvas.setMode(mode), zoom: factor => { const rect = canvas.host.getBoundingClientRect(); canvas.zoomBy(factor, rect.left + rect.width / 2, rect.top + rect.height / 2); }, fitSelection: () => canvas.fitSelection(),
         resizeStart: () => canvas?.cancelGesture(), resizeDetails,
-        graphViewActions, nodeDetails: nodeDetailsActions, nodeGuide: nodeGuideActions, commentDetails: commentDetailsActions, outputPreview: outputPreviewActions, runDetails: runDetailsActions,
+        graphViewActions, nodeDetails: nodeDetailsActions, nodeGuide: nodeGuideActions, commentDetails: commentDetailsActions, outputPreview: outputPreviewActions, runDetails: runDetailsActions, diagnosticHistory: diagnosticHistoryUi.actions,
         chooseNative: chooseNativeNode, managePortals: () => openPortalManager(), shelfSubgraph: shelfSubgraphAction,
         addSystem: { close() { pendingAddSystem = null; workbench.update({ addSystem: null }); }, preview: previewAddSystem, submit: submitAddSystem },
         subgraphSave: { close() { pendingSubgraphSave = null; workbench.update({ subgraphSave: null }); }, save: saveSubgraphToShelf },
@@ -663,6 +670,7 @@ function build() {
         acceptImport: acceptImportReview, cancelImport: cancelImportReview, prepareImportAgain,
     });
     root = workbench.root; hookHistory();
+    workbench.update({ diagnosticHistory: diagnosticHistoryUi.snapshot() }); diagnosticHistoryUi.sync();
     onWorkflowActivated(({ graph }) => {
         nativeSourceSetup.cancel();
         documentTransition = true; workflowSession.syncDocument(); documentTransition = false;
@@ -675,7 +683,7 @@ function build() {
     }); installRecoveryLifecycle();
     const nativeContext = ctx();
     for (const name of ['CHAT_CHANGED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_DELETED', 'MESSAGE_SWIPED', 'MESSAGE_SENT', 'GENERATION_STARTED', 'GENERATION_ENDED', 'GENERATION_STOPPED']) {
-        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { nativeSourceSetup.cancel(); cancelConfiguredNode(); refreshStoryDocuments(); } if(current?.runtime===3)updateWorkflowProjection(); } });
+        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (name === 'CHAT_CHANGED') void diagnosticHistoryUi?.refresh(); if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { nativeSourceSetup.cancel(); cancelConfiguredNode(); refreshStoryDocuments(); } if(current?.runtime===3)updateWorkflowProjection(); } });
     }
     for (const name of ['CHATCOMPLETION_MODEL_CHANGED', 'CHATCOMPLETION_SOURCE_CHANGED', 'MAIN_API_CHANGED', 'CONNECTION_PROFILE_LOADED', 'CONNECTION_PROFILE_CREATED', 'CONNECTION_PROFILE_UPDATED', 'CONNECTION_PROFILE_DELETED', 'OAI_PRESET_CHANGED_AFTER', 'PRESET_CHANGED', 'PRESET_DELETED', 'PRESET_RENAMED', 'SETTINGS_LOADED_AFTER', 'EXTENSION_SETTINGS_LOADED']) {
         if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => refreshNodeProfileMetadata());
@@ -684,6 +692,7 @@ function build() {
     const panes = safe(() => JSON.parse(globalThis.localStorage?.getItem('lattice.workspace.panes') || '{}')) || {};
     root.classList.toggle('pc-details-hidden', typeof panes.inspector === 'boolean' ? !panes.inspector : window.innerWidth < 860); syncPaneToggles();
     document.addEventListener('pc-recall-state', () => { if(isOpen())refreshRecallOverview(); });
+    document.addEventListener('pc-diagnostic-history', () => { void diagnosticHistoryUi?.refresh(); });
     document.addEventListener('pc-state', () => { if(isOpen())refreshRecallOverview(); });
     document.addEventListener('pc-theme', () => { if (canvas && isOpen() && !openingWorkspace) { updateWorkflowProjection(); canvas.render(); } });
     canvas = new Canvas(workbench.parts.canvasHost, {

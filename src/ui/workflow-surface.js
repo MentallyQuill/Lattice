@@ -255,6 +255,7 @@ function boundedResult(raw, handles) {
     const error = safeError(raw.error);
     if (error) result.error = { ...error, ...(nodeAddress(own(own(raw, 'error'), 'address')) ? { address: nodeAddress(own(own(raw, 'error'), 'address')) } : {}) };
     const settlement = safeSettlement(own(raw,'settlement')); if (settlement) result.settlement = settlement;
+    for (const key of ['automaticallyApplied', 'appliedLocally']) if (typeof own(raw, key) === 'boolean') result[key] = own(raw, key);
     for (const key of ['preview', 'published', 'fallback']) if (raw[key] !== undefined) result[key] = raw[key];
     return freeze(result);
 }
@@ -284,6 +285,16 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
     function clearAuthority() {
         reviewHandles = [];
         if (result?.recording) result = boundedResult(result, reviewHandles);
+    }
+    function acceptApplied(response, automatic = false) {
+        const settlement = safeSettlement(own(response, 'settlement'));
+        result = boundedResult({ ...result, ...(settlement ? { settlement } : {}), ...(own(response, 'appliedLocally') === true ? { appliedLocally: true } : {}) }, reviewHandles);
+        status = settlement?.status === 'partial' ? 'Reply accepted. Some workflow data could not be saved. Use Retry failed saves for those targets.'
+            : settlement?.status === 'save-unverified' ? 'Reply accepted. Some saves are unconfirmed. Check their save status before writing again.'
+            : settlement?.status === 'settled' ? 'Reply accepted. Workflow data saved. Saving the reply is still unconfirmed.'
+            : automatic ? 'Revised reply applied as a new swipe.' : 'Reply applied locally. Saving is unconfirmed.';
+        if (settlement?.status === 'partial') { availability = 'current'; applyIssue = ''; }
+        else { clearAuthority(); availability = recording ? 'stale' : 'current'; if (!recording) result = null; }
     }
     function adopt(response, cancelled = false, revision) {
         preparationError = null; diagnosticAttempt = null; diagnosticCache = null;
@@ -365,7 +376,9 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
             if (availability !== 'current' && recording?.runId === record.result.recording.runId) return;
             if(displayedAutomatic)retiredAutomatic.add(displayedAutomatic);
             generation++; invocation = null; displayedAutomatic = record; adopt(record.result, false, origin.signature); applyIssue = '';
-            status = `Automatic Send · unified workflow · "${origin.graphName || graph.name}". ${result?.ok ? 'Review the result.' : diagnosticText(record.result.error || { code: 'WORKFLOW_FAILED', message: 'Run failed.' })}`; publish();
+            if (result?.ok && result.automaticallyApplied === true && result.appliedLocally === true) acceptApplied(record.result, true);
+            else status = result?.ok ? 'Review the result.' : diagnosticText(record.result.error || { code: 'WORKFLOW_FAILED', message: 'Run failed.' });
+            status = `Automatic Send · unified workflow · "${origin.graphName || graph.name}". ${status}`; publish();
         },
         refreshFreshness(selector) {
             syncDocument();
@@ -419,14 +432,7 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
                 const response = freshness?.persistOnly === true ? await controller.retryPersistence(candidate) : await controller.apply(candidate);
                 if (!settledValid(transaction)) return;
                 if (response.ok) {
-                    const settlement = safeSettlement(own(response,'settlement'));
-                    if (settlement) result = boundedResult({...result,settlement}, reviewHandles);
-                    status = settlement?.status === 'partial' ? 'Reply accepted. Some workflow data could not be saved. Use Retry failed saves for those targets.'
-                        : settlement?.status === 'save-unverified' ? 'Reply accepted. Some saves are unconfirmed. Check their save status before writing again.'
-                        : settlement?.status === 'settled' ? 'Reply accepted. Workflow data saved. Saving the reply is still unconfirmed.'
-                        : 'Reply applied locally. Saving is unconfirmed.';
-                    if (settlement?.status === 'partial') { availability = 'current'; applyIssue = ''; }
-                    else { clearAuthority(); availability = recording ? 'stale' : 'current'; if (!recording) result = null; }
+                    acceptApplied(response);
                 } else { status = diagnosticText(response.error || { code: 'APPLY_FAILED', message: 'Apply failed.' }); }
             } catch {
                 if (valid(transaction)) {
@@ -455,7 +461,7 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
             availability = recording ? 'stale' : 'current'; busy = false; status = ''; applyIssue = ''; publish();
         },
         reject() {
-            const controller = runtime(), published = result?.settlement?.published === true;
+            const controller = runtime(), published = result?.appliedLocally === true || result?.settlement?.published === true;
             if (typeof controller?.reject === 'function') for (const handle of reviewHandles) controller.reject(handle);
             else controller?.cancel('Candidate rejected');
             generation++; invocation = null; clearAuthority();

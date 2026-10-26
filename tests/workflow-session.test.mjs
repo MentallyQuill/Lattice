@@ -110,7 +110,7 @@ function settlementSession(initial, retry) {
     let state,calls=0,retries=0,rejected=[];
     const runtime={runTarget:async()=>({...response(recording),reviewHandles:[handle]}),candidateStatus:()=>({ok:true,...(calls?{persistOnly:true,status:'partial'}:{})}),cancel(){},apply:async()=>{calls++;return {ok:true,appliedLocally:true,settlement:initial};},retryPersistence:async()=>{retries++;return {ok:true,appliedLocally:true,settlement:retry};},reject:selector=>{rejected.push(selector);return {ok:true};}};
     const session=createWorkflowSession({runtime:()=>runtime,current:()=>root,epoch:()=>1,active:()=>true,changed:value=>state=value});
-    return {session,handle,runtime,start:()=>session.receiveAutomatic(automatic(root,{...response(recording),reviewHandles:[handle]})),state:()=>state,calls:()=>calls,retries:()=>retries,rejected};
+    return {session,root,handle,runtime,start:(extra={})=>session.receiveAutomatic(automatic(root,{...response(recording),reviewHandles:[handle],...extra})),state:()=>state,calls:()=>calls,retries:()=>retries,rejected};
 }
 
 test('stale review freshness retains a plain remedy and technical support code', async () => {
@@ -134,6 +134,48 @@ test('an interrupted failed-save retry preserves the accepted reply and does not
     assert.equal(f.state().applyDiagnostic.severity, 'warning');
 });
 const settledReceipt=(status)=>({status,published:true,publication:{appliedLocally:true},receipts:[{intentId:'event',targetId:'file:souls',status:status==='partial'?'failed':status==='save-unverified'?'save-unverified':'confirmed',...(status==='partial'?{error:{code:'WRITE_FAILED',message:'Retry this target.'}}:{})}]});
+test('an automatically applied reply without effects retains accepted state and cannot be rejected as a proposal', () => {
+    const f=settlementSession();
+    f.start({automaticallyApplied:true,appliedLocally:true});
+    const adopted=f.state();
+    f.session.reject();
+    assert.match(f.state().status,/accepted reply remains/i);
+    assert.doesNotMatch(f.state().status,/rejected|Original reply preserved/i);
+    assert.deepEqual(f.rejected,[],'An already accepted reply has no remaining rejection authority');
+    assert.equal(adopted.result.automaticallyApplied,true);
+    assert.equal(adopted.result.appliedLocally,true);
+    assert.equal(adopted.reviewHandles.length,0);
+    assert.equal(adopted.availability,'stale');
+    assert.match(adopted.status,/Revised reply applied as a new swipe/i);
+});
+
+test('automatically applied partial consequences retain only failed-save recovery', async () => {
+    const initial=settledReceipt('partial'),f=settlementSession(initial,settledReceipt('settled'));
+    f.runtime.candidateStatus=()=>({ok:true,persistOnly:true,status:'partial'});
+    f.start({automaticallyApplied:true,appliedLocally:true,settlement:initial});
+    assert.equal(f.state().availability,'current');
+    assert.equal(f.state().reviewHandles.length,1);
+    assert.match(f.state().status,/Reply accepted.*Retry failed saves/i);
+    await f.session.apply(f.handle);
+    assert.equal(f.calls(),0,'Recovery must not republish the reply');
+    assert.equal(f.retries(),1);
+    assert.equal(f.state().reviewHandles.length,0);
+    assert.equal(f.state().result.settlement.status,'settled');
+    assert.equal(f.state().result.automaticallyApplied,true);
+    assert.equal(f.state().result.appliedLocally,true);
+});
+
+test('an unchanged automatic Send keeps its proposed effects available for manual review', () => {
+    const f=settlementSession();f.root.nodes.review.autoApply=true;
+    f.start();
+    assert.equal(f.state().availability,'current');
+    assert.deepEqual(f.state().reviewHandles,[f.handle]);
+    assert.match(f.state().status,/Review the result/i);
+    f.session.reject();
+    assert.deepEqual(f.rejected,[f.handle]);
+    assert.match(f.state().status,/Original reply preserved/i);
+});
+
 test('partial accepted consequence review retains its handle and retries only persistence',async()=>{
     const f=settlementSession(settledReceipt('partial'),settledReceipt('settled'));await f.start();await f.session.apply(f.handle);
     assert.equal(f.state().availability,'current');assert.equal(f.state().reviewHandles.length,1);assert.equal(f.state().result.settlement.status,'partial');assert.match(f.state().status,/could not be saved.*Retry failed saves/i);

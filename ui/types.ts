@@ -5,6 +5,7 @@ import type { StoryDocumentsView, StoryDocumentsActions, ConfigureNodeView, Conf
 import type { GraphViews, GraphViewActions } from './view-types';
 import type { NodeDetailsView, NodeDetailsActions, OutputPreviewView, OutputPreviewActions, RunDetailsView, RunDetailsActions } from './detail-types';
 import type { RunMeterView } from './run-meter-types';
+import type { DiagnosticHistoryView, DiagnosticHistoryActions } from './diagnostic-history-types';
 import type { PortalManagerView, PortalManagerActions } from './manager-types';
 import type { NodeSearchView, NodeSearchActions, PinMenuView, PinMenuActions, SearchChoice } from './native-wire-types';
 import type { DetailSelection, DetailEditResponse } from './detail-types';
@@ -48,6 +49,7 @@ export interface WorkbenchView {
     workflow?: WorkflowView; rootWorkflow?: WorkflowView;
     nativeFlatCanvas?: boolean; nativeDiagnostic?: string; readOnly?: boolean; graphViews?: GraphViews;
     nodeDetails?: NodeDetailsView | null; outputPreview?: OutputPreviewView | null; runDetails?: RunDetailsView | null; runMeter?: RunMeterView | null;
+    diagnosticHistory?: DiagnosticHistoryView | null;
     commentDetails?: { comment: CommentFrameData; selection: DetailSelection } | null;
     addSystem?: AddSystemView | null; portalManager?: PortalManagerView | null; subgraphSave?: SubgraphSaveView | null;
     nativeSearch?: NodeSearchView | null; nativePinMenu?: PinMenuView | null; nativeChoices?: readonly SearchChoice[]; libraryNotice?:string;
@@ -64,6 +66,7 @@ export interface WorkbenchActions {
     nodeGuide?: import('./node-guide-types').NodeGuideActions;
     logoUrl?: string;
     graphViewActions?: GraphViewActions; nodeDetails?: NodeDetailsActions; outputPreview?: OutputPreviewActions; runDetails?: RunDetailsActions;
+    diagnosticHistory?: DiagnosticHistoryActions;
     commentDetails?: { patch: (selection: DetailSelection, patch: CommentPatch) => DetailEditResponse; command: (selection: DetailSelection, command: CommentCommand) => DetailEditResponse };
     addSystem?: AddSystemActions; portalManager?: PortalManagerActions; managePortals?: () => void;
     shelfSubgraph?: (id: string, action: 'delete' | 'open') => void; subgraphSave?: SubgraphSaveActions;

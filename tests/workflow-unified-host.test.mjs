@@ -16,6 +16,34 @@ test('native lifecycle descriptors expose activation and distinct reply metadata
     assert.equal(lifecycle.describeLifecycleNode({ operation: 'generate-reply', operationVersion: 7 }, { phase: 'pre' }).ok, false);
 });
 
+test('Review/Publish exposes automatic revised reply application as an opt-in control', () => {
+    const described = lifecycle.describeLifecycleNode({ id: 'review', type: 'workflow', operation: 'review-publish' }, { phase: 'post' });
+    assert.equal(described.ok, true);
+    assert.ok(described.data.descriptor.controls.includes('autoApply'));
+    assert.equal(described.data.descriptor.defaults.autoApply, false);
+    assert.equal(described.data.descriptor.controlDescriptors.autoApply.type, 'boolean');
+    assert.equal(described.data.descriptor.controlDescriptors.autoApply.default, false);
+    assert.equal(described.data.descriptor.controlDescriptors.autoApply.label, 'Automatically apply revised reply');
+    for (const autoApply of [true, false]) {
+        assert.equal(lifecycle.describeLifecycleNode({ operation: 'review-publish', autoApply }, { phase: 'post' }).ok, true);
+    }
+});
+
+test('Review/Publish rejects automatic apply settings that are not own boolean data', () => {
+    for (const autoApply of [null, 'true', 'false', 0, 1, {}, [], undefined]) {
+        const result = lifecycle.describeLifecycleNode({ operation: 'review-publish', autoApply }, { phase: 'post' });
+        assert.equal(result.ok, false, `Invalid automatic apply setting: ${JSON.stringify(autoApply)}`);
+        assert.equal(result.error.code, 'INVALID_SETTINGS');
+    }
+    let reads = 0;
+    const node = { operation: 'review-publish' };
+    Object.defineProperty(node, 'autoApply', { enumerable: true, get() { reads++; return true; } });
+    const result = lifecycle.describeLifecycleNode(node, { phase: 'post' });
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, 'INVALID_SETTINGS');
+    assert.equal(reads, 0, 'Control validation must not invoke accessors');
+});
+
 test('Review/Publish converts only a checked Draft lineage into a root-source candidate', async () => {
     assert.equal(typeof lifecycle.executeLifecycleNode, 'function');
     const native = { kind: 'draft', text: 'Original.', source: { originalText: 'Original.', token: 'native-token' } };

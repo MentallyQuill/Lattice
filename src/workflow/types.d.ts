@@ -1,6 +1,7 @@
 /** Plain boundary DTOs: never carry host adapters, authenticated bindings or authority. */
 export type Result<T> = { ok: true; data: T } | { ok: false; error: WorkflowError };
-export interface WorkflowError { code: string; message: string; nodeId?: string; address?: NodeAddress; inputPortId?: string; }
+export interface SchemaFinding { path: string; keyword: string; message: string; }
+export interface WorkflowError { code: string; message: string; nodeId?: string; address?: NodeAddress; inputPortId?: string; findings?: SchemaFinding[]; truncated?: boolean; }
 export type { PatternRule, PatternSettings, PatternOccurrence, PatternMatchReport, PatternReportBinding } from './operations/pattern-engine';
 export type { FilterTextSettings, FilterTextReport } from './operations/filter-text';
 export type { ChunkSettings, ChunkRecord, ChunkReport, ChunkTokenizer, ChunkTokenizerBinding } from './operations/chunk';
@@ -224,7 +225,7 @@ export type HostOperationExecutor = (node: NativeNode, inputs: Record<string, Wo
 /** Frozen diagnostic data; authenticated connection objects never enter these DTOs. */
 export type RunStatus = 'empty' | 'waiting' | 'queued' | 'running' | 'cancelling' | 'completed' | 'skipped' | 'unresolved' | 'failed' | 'blocked' | 'not-run' | 'cancelled' | 'invalid' | 'stale';
 export type RunSettlement = 'completed' | 'unresolved' | 'failed' | 'cancelled' | 'invalid' | 'stale';
-export interface SafeRunError { code: string; message: string; truncated?: boolean; }
+export interface SafeRunError { code: string; message: string; truncated?: boolean; findings?: SchemaFinding[]; }
 /** Historical recordings may describe the retired typed transport; active operations use text completion. */
 export interface BindingSummary { capability?: 'text-completion' | 'typed-decision'; provider?: 'jev' | 'laya' | 'compatible'; connectionId?: string; role?: string; profileId?: string | null; model?: string | null; fingerprint?: string; truncated?: boolean; }
 export interface SourceSummary {
@@ -233,6 +234,12 @@ export interface SourceSummary {
     operation?: 'context-join'; inputs?: { portId: string; source: SourceSummary }[];
 }
 export type ReportedUsage = Partial<Record<'inputTokens' | 'outputTokens' | 'totalTokens' | 'promptTokens' | 'completionTokens' | 'input_tokens' | 'output_tokens' | 'total_tokens' | 'prompt_tokens' | 'completion_tokens' | 'cached_tokens' | 'reasoning_tokens', number>>;
+/** Private optional diagnostics for authorized auxiliary requests; never ordinary progress or portable recordings. */
+export interface WorkflowDiagnosticEvent {
+    type: 'response' | 'validation'; address: NodeAddress; attempt: number;
+    text?: string; visibility?: { kind: 'public' | 'actor-private' | 'hidden'; actorId?: string };
+    error?: SafeRunError; finish?: string | null; usage?: ReportedUsage | null;
+}
 export interface RequestSummary {
     attempt: number; status: 'running' | 'completed' | 'failed' | 'cancelled'; maxTokens: number;
     inputTokens: number | null; capability?: 'text-completion' | 'typed-decision'; startedAt: number; durationMs?: number; dispatched?: boolean; finish?: string | null; usage?: ReportedUsage | null; error?: SafeRunError; iteration?: IterationProvenance;
@@ -298,9 +305,11 @@ export type BoundedWorkflowRunResult = BoundedRunData & { schema: 3 | 4; runtime
 /** A failed factory can return no recording; consumers preserve their prior bounded record. */
 export interface WorkflowPreparationFailure { schema?: number; runtime?: number; mode: 'root' | 'target'; runId?: string; ok: false; callBound: number; actualCalls: number; error: WorkflowError; recording?: never; }
 export type WorkflowRunResult = BoundedWorkflowRunResult | WorkflowPreparationFailure;
-export type HostWorkflowRunResult = WorkflowRunResult & { reviewHandles?: TerminalReviewHandle[]; published?: boolean; fallback?: 'native'; };
+export type HostWorkflowRunResult = WorkflowRunResult & { reviewHandles?: TerminalReviewHandle[]; published?: boolean; automaticallyApplied?: boolean; fallback?: 'native'; };
 export interface WorkflowRunOptions {
     target?: WorkflowTarget; onEvent?: (event: RunEvent) => unknown; runId?: string;
+    /** Owner-opted-in sink. Hidden/unknown response scopes must be omitted by its consumer. Failures are passive. */
+    onDiagnostic?: (event: WorkflowDiagnosticEvent) => unknown;
     clock?: { now(): number; monotonic(): number }; phase?: WorkflowRunPhase; signal?: AbortSignal; preview?: boolean; dryRun?: boolean;
     iterateHelper?: import('./operations/control-nodes').IterateHelper;
     /** Host delay adapter; returning false stops the retry. */

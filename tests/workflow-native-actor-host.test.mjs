@@ -3,8 +3,24 @@ import {test} from 'node:test';
 import {registerHooks} from 'node:module';
 import {actorHostFixture as fixture,mara,elias} from './helpers/native-actor-host-fixture.mjs';
 import {operationDefaults} from '../src/workflow/catalog.js?v=0.28.1';
+import {createNativeWorkflowController} from '../src/workflow/host.js?v=0.28.1';
 test('actual native Character Direction scopes a separate system prompt to the participating selected actor',async()=>{
  const f=fixture(),ready=await f.start();assert.equal(ready.ok,true,JSON.stringify(ready.error));assert.equal(f.requests.length,2);const direction=JSON.stringify(f.requests[1].messages);assert.ok(direction.includes('PRIVATE SEA'));assert.equal(direction.includes('PRIVATE FIRE'),false);assert.ok(f.requests[1].messages[0].content.includes('Mara alone'));assert.ok(Object.values(f.c.extensionPrompts).some(p=>p.value==='Mara considers the sea.'));const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal((await f.controller.apply(result.reviewHandles[0])).ok,true);f.controller.dispose();
+});
+
+test('authorized Character Direction completion diagnostics retain the captured private event actor',async()=>{
+ const diagnostics=[];let origin;
+ const f=fixture('direction',{controllerFactory:ports=>createNativeWorkflowController({...ports,createDiagnosticCapture:value=>{origin=value;return {event(){},model:event=>diagnostics.push(event),finish(){},discard(){}};}})});
+ try{
+  const ready=await f.start();assert.equal(ready.ok,true,JSON.stringify(ready.error));
+  const direction=diagnostics.find(event=>event.type==='response'&&event.address.nodeId==='direction');
+  assert.ok(direction,'The authorized auxiliary Character Direction request reaches the private sink.');
+  assert.equal(origin.userId,'default-user');assert.equal(origin.chatId,'Story-2');
+  assert.deepEqual(direction.visibility,{kind:'actor-private',actorId:mara});
+  assert.equal(direction.text,'Mara considers the sea.');
+  assert.equal(JSON.stringify(diagnostics).includes('PRIVATE SEA memory'),false,'Diagnostic output never includes the actor prompt.');
+  assert.equal((await f.complete()).ok,true);
+ }finally{f.controller.dispose();}
 });
 test('actual native paired actor file/model legs isolate private material and settle only after acceptance',async()=>{
  const f=fixture('files'),ready=await f.start();assert.equal(ready.ok,true,JSON.stringify(ready.error));assert.equal(f.requests.length,0);const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(f.requests.length,3);const calls=f.requests.slice(1).map(r=>JSON.stringify(r.messages));assert.ok(calls.some(s=>s.includes('PRIVATE SEA')));assert.ok(calls.some(s=>s.includes('PRIVATE FIRE')));assert.equal(calls.some(s=>s.includes('PRIVATE SEA')&&s.includes('PRIVATE FIRE')),false);assert.equal(f.c.chatMetadata.latticeDocuments,undefined);const accepted=await f.controller.apply(result.reviewHandles[0]);assert.equal(accepted.ok,true,JSON.stringify(accepted.error));assert.equal(accepted.settlement.status,'settled');const saved=f.c.chatMetadata.latticeDocuments['default-user'];assert.ok(saved['mara.md'].content.includes('Mara considers the sea.'));assert.equal(saved['mara.md'].content.includes('FIRE'),false);assert.ok(saved['elias.md'].content.includes('Elias considers the fire.'));assert.equal(saved['elias.md'].content.includes('SEA'),false);assert.equal(f.c.chat[1].mes.includes('PRIVATE'),false);f.controller.dispose();

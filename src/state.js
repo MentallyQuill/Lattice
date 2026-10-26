@@ -67,6 +67,7 @@ function legacyRecord(value) {
 
 function checkSettings(value) {
     const saved = dataRecord(value), metadata = {}, library = dataRecord(saved?.subgraphLibrary);
+    if (saved && Object.hasOwn(saved, 'diagnosticLogging') && typeof saved.diagnosticLogging !== 'boolean') throw new Error('Lattice diagnostic logging must be a boolean preference.');
     if (saved) for (const [key, item] of Object.entries(saved)) if (!['graphs', 'activeGraphId', 'nativeBindings', 'subgraphLibrary', 'workspaceViews', 'migrationRecovery', 'recoveryDraft', 'archivedWorkflows'].includes(key)) metadata[key] = item;
     if (!saved || !safeWorkflowData(metadata) || ![1, 2].includes(saved.schema) || typeof saved.enabled !== 'boolean' || !plain(saved.ui) || !library || !checkRegistry(library.definitions ?? {}) || !safeWorkflowData(Object.fromEntries(Object.entries(library).filter(([key]) => key !== 'definitions')))) throw new Error('Lattice settings must contain plain-data preferences and a current reusable subgraph shelf.');
     if (Object.hasOwn(saved, 'workflowMode')) throw new Error('Lattice settings contain an unsupported workflow mode.');
@@ -243,7 +244,7 @@ export function settings() {
     if (!plain(root)) throw new Error('Lattice: getContext() exposed no extension settings.');
     const property = Object.getOwnPropertyDescriptor(root, MODULE);
     if (!property) {
-        const value = { schema: 2, enabled: false, subgraphLibrary: { definitions: {} }, ui: {}, migrationRecovery: [], recoveryDraft: null };
+        const value = { schema: 2, enabled: false, diagnosticLogging: false, subgraphLibrary: { definitions: {} }, ui: {}, migrationRecovery: [], recoveryDraft: null };
         checkSettings(value);
         root[MODULE] = value; admitted.add(value); ownDocument(value, c);
         return value;

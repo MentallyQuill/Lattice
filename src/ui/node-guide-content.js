@@ -183,10 +183,11 @@ const content = {
         'Connect On Send’s Activation and optional Preparation Guidance.',
         'Set the guidance budget, injection role, position and chat depth in Details. The default is System in chat at depth 0.',
         'Connect Draft through any Response processing and finish at Review / Publish.'),
-    'review-publish': entry('Review / Publish', 'Prepare the owned final Draft and staged effects for explicit review and application.',
+    'review-publish': entry('Review / Publish', 'Prepare the owned final Draft and staged effects for review or automatic application after Send.',
         'Connect the final owned Draft in Response, either in Main or inside a static subgraph.',
         'Run the workflow and inspect its reply and proposed effects in Preview.',
-        'Choose Apply reviewed candidate to accept the root result, or reject it.'),
+        'Choose Apply reviewed candidate to accept the root result, or reject it. Manual review is the default.',
+        'In Details, enable Automatically apply revised reply to add and select a revised reply swipe after a successful Send, preserving the original and accepting its connected story changes. Unchanged replies with story changes still need manual review.'),
     format: entry('Format', 'Validate and serialize explicit records as JSON, JSON Lines, CSV, text, or Markdown.',
         'Choose Records or raw JSON Text input and connect the matching value.',
         'Choose serialization, field mapping, and any schema or CSV columns.',
@@ -612,6 +613,9 @@ const controls = {
         injectionRole: 'Supply the connected Guidance as a System, User or Assistant message. This role applies to the combined guidance supplied to the native reply.',
         injectionPosition: 'Place Guidance before the main prompt, after the main prompt or within the chat at the chosen depth.',
         injectionDepth: 'Chat placement only: 0 places Guidance nearest the newest message; higher values place it farther back in chat. Switching position retains the saved depth.',
+    },
+    'review-publish': {
+        autoApply: 'After a successful Send, automatically add and select the revised reply as a new swipe, preserving the original, and accept its connected story changes. Manual review is the default. An unchanged reply creates no duplicate swipe; proposed story changes still need manual review.',
     },
     format: {
         inputMode: 'Records accepts structured Data. JSON text accepts raw JSON Text and parses it before validation and serialization.',

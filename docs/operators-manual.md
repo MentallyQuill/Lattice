@@ -359,6 +359,12 @@ A path containing the main Generate Reply step needs a real Send; Run to here do
 
 While work is active, a node has a bright ring and **Stop** is available in the workflow bar or Workflow menu. A failed node has a red ring; later nodes may be blocked because their input did not succeed. Click the bottom-left run meter or choose **Workflow → Run details…** to inspect the steps, errors, and actual request usage. Subgraph stages can be expanded there.
 
+To keep evidence for later review, open **Workflow → Run details…** and enable **Save diagnostic logs** before the next run. This is off by default and remembered for your SillyTavern user. **Saved logs** shows the current chat's recent runs, including failed JSON/schema validation, every retained request attempt, retry reasons, and bounded auxiliary model output. Open an entry to inspect it; use **Export logs** to download diagnostic JSON or **Clear logs for this chat** to remove that chat's saved history.
+
+Logs stay in this browser and survive reloads. They may contain private story text, including authorized private model responses; inspect an export before sharing it. Lattice does not collect request prompts, authentication/transport objects, or hidden reasoning for this history. Hidden or unverified response scope is omitted. Native SillyTavern reply text is already in the chat and is not duplicated here.
+
+History retains up to **50 runs and 5 MiB per user across chats**, removing oldest entries first. Individual runs and responses have smaller limits, with truncation/omission notices. Runs are saved when they finish; closing the tab during an unfinished run may leave no saved entry. Turning logging off immediately stops collection while keeping already saved entries available. Storage failures appear in Run details and do not stop the workflow. Logging cannot recover failures from before it was enabled.
+
 ![Run details showing completed steps and actual request usage](images/run-details.png)
 
 *Check what actually ran. This recorded path made zero extra requests.*

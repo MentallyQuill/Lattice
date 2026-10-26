@@ -1,5 +1,5 @@
 /** Current Lattice host facade. SillyTavern owns native reply generation. */
-import { ctx, safe, settings, activeWorkflow, onWorkflowActivated, documentSession} from './state.js?v=0.28.1';
+import { ctx, safe, settings, save, activeWorkflow, onWorkflowActivated, documentSession} from './state.js?v=0.28.1';
 import { validateWorkflow } from './workflow/contracts.js?v=0.28.1';
 import { createNativeWorkflowController } from './workflow/host.js?v=0.28.1';
 import { bindingStatus } from './workflow/connections.js?v=0.28.1';
@@ -7,10 +7,11 @@ import { createChatDocumentCatalog } from './workflow/document-catalog.js?v=0.28
 import { createRecallShortcutRegistry } from './ui/recall-shortcuts.js?v=0.28.1';
 import { createNativePersistenceVerifier } from './workflow/native-persistence.js?v=0.28.1';
 import { diagnosticText, presentDiagnostic } from './ui/diagnostics.js?v=0.28.1';
+import { createDiagnosticHistory } from './workflow/diagnostic-history.js?v=0.28.1';
 export { runWorkflow, workflowSignature } from './workflow/runtime.js?v=0.28.1';
 export { createNativeWorkflowController, snapshotContext, snapshotReply } from './workflow/host.js?v=0.28.1';
 
-let controller, helpers, userHelpers, nativeUserReader, initialization, documentCatalog, persistenceVerifier, recallShortcuts, recallEvents;
+let controller, helpers, userHelpers, nativeUserReader, initialization, documentCatalog, persistenceVerifier, recallShortcuts, recallEvents, diagnosticHistory;
 const workflowRunListeners = new Set();
 /** Passive runtime observers; progress never owns workflow execution. */
 export function subscribeWorkflowRunEvents(listener) {
@@ -22,6 +23,24 @@ const currentUser = () => userHelpers?.getCurrentUserHandle?.();
 // The immutable native export reads the current handle without invoking graph or
 // request hooks. Private transport uses this separate passive authority last.
 const transportUserId = () => nativeUserReader?.();
+/** Operator diagnostics stay in browser storage, outside settings and story data. */
+export function getWorkflowDiagnosticHistory() { return diagnosticHistory ??= createDiagnosticHistory(); }
+export function workflowDiagnosticLoggingEnabled() { return settings().diagnosticLogging === true; }
+export function setWorkflowDiagnosticLogging(enabled) {
+    if (typeof enabled !== 'boolean') throw new Error('Diagnostic logging requires a boolean preference.');
+    settings().diagnosticLogging = enabled;
+    if (!enabled) diagnosticHistory?.discardActive();
+    const saved = save({ recovery: false });
+    if (!saved.ok) throw new Error(saved.error?.message || 'The diagnostic logging preference could not be saved.');
+    safe(() => globalThis.document?.dispatchEvent(new CustomEvent('pc-diagnostic-history')));
+}
+export function getWorkflowDiagnosticScope() {
+    return safe(() => {
+        const c = ctx(), userId = currentUser(), chatId = c.getCurrentChatId?.() ?? c.chatId;
+        if (typeof userId !== 'string' || !userId.trim() || userId.length > 128 || !(typeof chatId === 'string' && chatId.length || typeof chatId === 'number' && Number.isFinite(chatId))) return null;
+        return { userId, chatId, characterId: c.characterId ?? null, groupId: c.groupId ?? null };
+    }, null);
+}
 /** UI authorization and accepted writes share one live user/chat catalog lease. */
 export function getStoryDocumentCatalog() {
     return documentCatalog ??= createChatDocumentCatalog({getContext:ctx,getUserId:currentUser,
@@ -46,6 +65,7 @@ export function sendWorkflowState() {
 export function getNativeWorkflowController() {
     if (controller) return controller;
     controller = createNativeWorkflowController({
+        createDiagnosticCapture: origin => workflowDiagnosticLoggingEnabled() ? getWorkflowDiagnosticHistory().begin(origin) : null,
         onEvent: event => {
             for (const listener of workflowRunListeners) {
                 try { Promise.resolve(listener(event)).catch(() => {}); } catch { /* An observer cannot interrupt the run. */ }
@@ -90,5 +110,5 @@ export function initializeNativeWorkflowController() {
         import('/script.js').then(module => { if (['isGenerating', 'syncMesToSwipe', 'syncSwipeToMes'].every(key => typeof module[key] === 'function')) helpers = module; }),
         import('/scripts/user.js').then(module => { if (typeof module.getCurrentUserHandle === 'function') { userHelpers = module; nativeUserReader = module.getCurrentUserHandle; } }),
     ]);
-    return initialization.then(result=>{current.syncRecall();return result;});
+    return initialization.then(result=>{current.syncRecall();safe(()=>globalThis.document?.dispatchEvent(new CustomEvent('pc-diagnostic-history')));return result;});
 }

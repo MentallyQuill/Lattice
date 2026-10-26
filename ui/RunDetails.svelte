@@ -1,8 +1,10 @@
 <script lang="ts">
     import DiagnosticMessage from './DiagnosticMessage.svelte';
+    import DiagnosticHistory from './DiagnosticHistory.svelte';
     import { presentDiagnostics } from '../src/ui/diagnostics.js';
     import type { RunDetailsActions, RunDetailsView } from './detail-types';
-    let { view, actions = {} }: { view: RunDetailsView | null; actions?: RunDetailsActions } = $props();
+    import type { DiagnosticHistoryActions, DiagnosticHistoryView } from './diagnostic-history-types';
+    let { view, actions = {}, history = null, historyActions }: { view: RunDetailsView | null; actions?: RunDetailsActions; history?: DiagnosticHistoryView | null; historyActions?: DiagnosticHistoryActions } = $props();
     const statusLabel = (status: string) => status === 'not-run' ? 'Not run' : status === 'empty' ? 'Ready' : status.charAt(0).toUpperCase() + status.slice(1);
     const duration = (value: number | null) => value !== null && Number.isFinite(value) && value >= 0 ? (value / 1000).toFixed(2) + 's' : 'Unknown';
     const count = (value: number | null | undefined) => value !== undefined && value !== null && Number.isFinite(value) && value >= 0 ? String(value) : 'Unknown';
@@ -29,6 +31,7 @@
 {:else}
     <p class="pc-run-empty">Enable Lattice and Send with the open workflow, or use Run to here to inspect its processing stages.</p>
 {/if}
+<DiagnosticHistory view={history} actions={historyActions} />
 </section>
 
 <style>

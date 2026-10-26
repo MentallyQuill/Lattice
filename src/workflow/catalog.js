@@ -257,6 +257,7 @@ export function semanticControlsForNode(node, operation = operationFor(node)) {
         if (controls.injectionPosition === 'in-chat') delete controls.injectionPosition;
         if (controls.injectionDepth === 0) delete controls.injectionDepth;
     }
+    if (node.operation === 'review-publish' && controls.autoApply === false) delete controls.autoApply;
     if (node.operation === 'for-each') {
         if (!Object.keys(controls.roleOverrides ?? {}).length) delete controls.roleOverrides;
         else controls.roleOverrides = Object.fromEntries(Object.entries(controls.roleOverrides).map(([role,binding]) => [role,{...(Object.hasOwn(binding,'model') ? {model:binding.model} : {}),...(binding.profileId === ACTIVE_PROFILE_ID ? {profileId:ACTIVE_PROFILE_ID} : {})}]));
@@ -298,5 +299,7 @@ export function operationDefaults(id = 'scene-context', { mode } = {}) {
         op = described.data.descriptor;
     }
     if (!op) throw new Error(`Unknown workflow operation: ${id}`);
-    return { operation: id, ...(op.minimumSchema >= 3 ? { operationVersion: 1 } : {}), title: op.title, modelRole: op.modelRole, profileId: op.modelRole ? ACTIVE_PROFILE_ID : null, model: null, ...structuredClone(op.defaults), ...(id === 'repair' ? {mode:'inspect',policyVersion:1} : {}) };
+    const defaults = structuredClone(op.defaults);
+    if (id === 'review-publish' && defaults.autoApply === false) delete defaults.autoApply;
+    return { operation: id, ...(op.minimumSchema >= 3 ? { operationVersion: 1 } : {}), title: op.title, modelRole: op.modelRole, profileId: op.modelRole ? ACTIVE_PROFILE_ID : null, model: null, ...defaults, ...(id === 'repair' ? {mode:'inspect',policyVersion:1} : {}) };
 }

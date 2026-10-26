@@ -20,7 +20,14 @@ export const LIFECYCLE_OPERATIONS = {
             injectionDepth: { type: 'integer', min: 0, max: 10000, default: 0, label: 'Injection depth', visibleWhen: { key: 'injectionPosition', value: 'in-chat' }, help: 'Chat messages from the end: 0 is nearest the newest message; higher values place guidance farther back.' },
         },
     }),
-    'review-publish': descriptor('review-publish', 'Review / Publish', 'post', 'draft', null, { terminal: true }),
+    'review-publish': descriptor('review-publish', 'Review / Publish', 'post', 'draft', null, {
+        terminal: true,
+        controls: ['autoApply'],
+        defaults: { autoApply: false },
+        controlDescriptors: {
+            autoApply: { type: 'boolean', default: false, label: 'Automatically apply revised reply', help: 'When Send completes successfully, add and select the revised reply as a new swipe, preserving the original, and accept its connected story changes. Unchanged replies with story changes still need manual review.' },
+        },
+    }),
 };
 export function describeLifecycleNode(node, options = {}) {
     if (!plain(node) || !plain(options)) return fail('INVALID_SETTINGS', 'Lifecycle nodes require own plain controls.');
@@ -33,6 +40,7 @@ export function describeLifecycleNode(node, options = {}) {
     const phase = own(options, 'phase') ?? declared ?? value.phase;
     if (phase !== value.phase || declared !== undefined && declared !== phase) return fail('INVALID_PHASE', 'Lifecycle operation conflicts with its generation stage.');
     if (version !== undefined && version !== 1) return fail('INVALID_SETTINGS', 'Lifecycle operation version must be 1.');
+    if (operation === 'review-publish' && Object.hasOwn(node, 'autoApply') && typeof own(node, 'autoApply') !== 'boolean') return fail('INVALID_SETTINGS', 'Automatic reply application must be a boolean.');
     if (operation === 'generate-reply' && (!Number.isSafeInteger(own(node, 'budgetTokens') ?? 768) || (own(node, 'budgetTokens') ?? 768) < 1 || (own(node, 'budgetTokens') ?? 768) > 8192)) return fail('INVALID_SETTINGS', 'Use a guidance budget from 1 to 8,192 tokens.');
     if (operation === 'generate-reply') {
         const role = own(node, 'injectionRole'), position = own(node, 'injectionPosition'), depth = own(node, 'injectionDepth');

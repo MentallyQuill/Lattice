@@ -71,7 +71,19 @@ export const successResult = data => freeze({ ok: true, data });
 export function safeError(raw, inventory, fallbackAddress) {
     if (!plain(raw) || typeof own(raw, 'code') !== 'string' || typeof own(raw, 'message') !== 'string') return undefined;
     const code = boundedText(own(raw, 'code'), 128), message = boundedText(own(raw, 'message'), 2048);
-    const result = { code, message, ...(code !== own(raw, 'code') || message !== own(raw, 'message') ? { truncated: true } : {}) };
+    const result = { code, message, ...(own(raw, 'truncated') === true || code !== own(raw, 'code') || message !== own(raw, 'message') ? { truncated: true } : {}) };
+    const findings = own(raw, 'findings');
+    if (code === 'SCHEMA_MISMATCH' && dense(findings, 128)) {
+        result.findings = [];
+        for (let i = 0; i < Math.min(findings.length, 32); i++) {
+            const finding = own(findings, String(i));
+            if (!plain(finding) || ['path', 'keyword', 'message'].some(key => typeof own(finding, key) !== 'string')) continue;
+            const projected = { path: boundedText(own(finding, 'path'), 1024), keyword: boundedText(own(finding, 'keyword'), 64), message: boundedText(own(finding, 'message'), 512) };
+            if (Object.keys(projected).some(key => projected[key] !== own(finding, key))) result.truncated = true;
+            result.findings.push(projected);
+        }
+        if (findings.length > result.findings.length) result.truncated = true;
+    }
     if (code === 'UNSUPPORTED_NATIVE_SOURCE') {
         const details = own(raw, 'details');
         if (plain(details)) {

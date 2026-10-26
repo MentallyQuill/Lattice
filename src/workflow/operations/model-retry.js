@@ -62,6 +62,9 @@ export async function retryModelNode(maxRetries, execution, run) {
         if (execution.signal?.aborted) return finish(aborted());
         let formatFailure;
         const result = await run({ ...execution, request: tracked, modelJsonCorrection: correction }, code => { if (Object.hasOwn(corrections, code)) formatFailure = code; });
+        if (!result.ok) {
+            try { const pending = execution.onModelValidation?.(result.error); if (pending?.then) Promise.resolve(pending).catch(() => {}); } catch { /* Diagnostics never own retry execution. */ }
+        }
         if (result.ok || attempt === maxAttempts) return finish(result);
         const error = result.error;
         let delayMs;

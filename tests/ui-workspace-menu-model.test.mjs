@@ -5,6 +5,11 @@ const base = {history:{undo:false,redo:false}, camera:{mode:'select'}, selection
 const items = (state, name, panels) => workspaceMenus(state,panels).find(menu=>menu.name===name).groups.flat();
 const item = (state,name,command,panels) => items(state,name,panels).find(entry=>entry.command===command);
 
+test('Run details remains reachable before a first run to configure saved diagnostic logging', () => {
+ const state={...base,runDetails:null,diagnosticHistory:{scopeKey:'chat',enabled:false,loading:false,issue:'',entries:[],selectedId:null}};
+ assert.equal(item(state,'Workflow','run-details').disabled,false);
+});
+
 test('View advertises F for Fit selection and leaves zoom-preserving Center selection unbound',()=>{
  assert.equal(item(base,'View','fit-selection').shortcut,'F');
  assert.equal(item(base,'View','center-selection').shortcut,'');

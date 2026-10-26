@@ -70,6 +70,8 @@ When a useful sequence takes up too much space, turn it into a **subgraph**: one
 
 The usual path is **Send → prepare guidance → SillyTavern reply → process → review**. Select **Review / Publish** and inspect its **Host result** in Preview. **Apply reviewed reply** adds the reviewed version as a new swipe, preserving the original, and accepts that result’s staged story changes. **Reject reply** leaves those proposals unaccepted.
 
+To apply revisions automatically after a successful Send, enable **Automatically apply revised reply** in **Review / Publish → Details**. It adds and selects the revised reply as a new swipe, preserves the original, and accepts the connected story changes with it. Manual review remains the default. An unchanged reply creates no duplicate swipe; any proposed story changes still need manual review.
+
 ![Reply Preview with Apply reviewed reply and Reject reply controls](docs/images/review-candidate.png)
 
 *Reading Preview or using Run to here does not accept story changes. If a save fails, inspect its status before continuing.*

@@ -70,6 +70,10 @@ A subgraph reference pins `{id, version, semanticHash}` to an exact immutable sn
 
 Recordings are bounded historical diagnostics. [recording.js](../src/workflow/recording.js) can truncate or omit retained artifact content; [recorded-preview.js](../src/ui/recorded-preview.js) formats that retained material. A preview can explain what happened, but it is not a complete backup of all inputs or a handle that can authorize a new write.
 
+Optional operator diagnostic history is separate from those in-memory artifact recordings. [diagnostic-history.js](../src/workflow/diagnostic-history.js) projects per-attempt metadata, bounded authorized completion text, validation findings and retry reasons into an IndexedDB history. The host captures its immutable user/chat/workflow origin before observers; the runtime's optional `onDiagnostic` sink carries completion/validation data independently of payload-free progress events. The off-by-default `diagnosticLogging` preference lives in settings, while history content stays outside settings, chat metadata and workflow exports.
+
+Enabling logging grants the authenticated owner diagnostic review of authorized actor-private completions within that exact chat, including after reload. Preserve the trusted actor label, omit hidden/unknown-scope text, and never treat stored logs as model input, source grants, replay data, review handles or write authority. The store bounds active buffers and saved history (50 runs / 5 MiB per user, 256 KiB per run, 32 KiB per response, 32 findings per error); exported files carry a versioned diagnostic envelope. Turning logging off or clearing a chat invalidates pending capture writes. The UI independently guards asynchronous reads, exports and selections when the current scope changes.
+
 ## Authority and settlement
 
 Three different identities matter: the editor document/view, the execution's captured sources, and the storage version. Keep each check when adapting the code.
