@@ -29,6 +29,22 @@ test('Review/Publish exposes automatic revised reply application as an opt-in co
     }
 });
 
+test('Review/Publish exposes effects-only acceptance as an independent opt-in boolean', () => {
+    const described = lifecycle.describeLifecycleNode({ operation: 'review-publish' }, { phase: 'post' });
+    assert.equal(described.ok, true);
+    assert.ok(described.data.descriptor.controls.includes('autoApplyEffects'));
+    assert.equal(described.data.descriptor.defaults.autoApplyEffects, false);
+    assert.equal(described.data.descriptor.controlDescriptors.autoApplyEffects.type, 'boolean');
+    assert.equal(described.data.descriptor.controlDescriptors.autoApplyEffects.default, false);
+    for (const autoApplyEffects of [true, false]) assert.equal(lifecycle.describeLifecycleNode({ operation: 'review-publish', autoApplyEffects }, { phase: 'post' }).ok, true);
+    for (const autoApplyEffects of [null, 'true', 0, {}, [], undefined]) assert.equal(lifecycle.describeLifecycleNode({ operation: 'review-publish', autoApplyEffects }, { phase: 'post' }).error.code, 'INVALID_SETTINGS');
+    let reads = 0;
+    const node = { operation: 'review-publish' };
+    Object.defineProperty(node, 'autoApplyEffects', { enumerable: true, get() { reads++; return true; } });
+    assert.equal(lifecycle.describeLifecycleNode(node, { phase: 'post' }).error.code, 'INVALID_SETTINGS');
+    assert.equal(reads, 0);
+});
+
 test('Review/Publish rejects automatic apply settings that are not own boolean data', () => {
     for (const autoApply of [null, 'true', 'false', 0, 1, {}, [], undefined]) {
         const result = lifecycle.describeLifecycleNode({ operation: 'review-publish', autoApply }, { phase: 'post' });

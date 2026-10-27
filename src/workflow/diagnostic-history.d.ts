@@ -15,12 +15,18 @@ export interface DiagnosticAttempt {
     retry?:{reasonCode:string; delayMs:number; nextAttempt:number};
 }
 export interface DiagnosticLog {version:1; id:string; origin:DiagnosticOrigin; endedAt:number; status:string; error?:DiagnosticError; actualCalls:number; callBound:number; attempts:DiagnosticAttempt[]; truncated?:boolean;}
-export interface DiagnosticCapture {event(event:unknown):void; model(event:unknown):void; finish(result:unknown):Promise<DiagnosticResult<unknown>>; discard():void;}
+export interface DiagnosticCapture {
+    /** Live text-capture lease: false for metadata captures and after revocation or finish. */
+    readonly captureResponses:boolean;
+    event(event:unknown):void; model(event:unknown):void; finish(result:unknown):Promise<DiagnosticResult<unknown>>; discard():void;
+}
 export interface DiagnosticStatus {persistent:boolean|null; issue:string;}
+/** Full completion capture is opt-in at the host; direct callers keep the legacy full default. */
+export interface DiagnosticCaptureOptions {mode:'full'|'metadata';}
 export interface DiagnosticStoreContext {readonly revision:number; wasClearedSince(scopeKey:string,revision:number):boolean; clear(scopeKey:string):void;}
 export interface DiagnosticStore {read(userId:string):Promise<unknown[]>; update(userId:string,transform:(entries:unknown[],context?:DiagnosticStoreContext)=>DiagnosticLog[],options?:{signal?:AbortSignal}):Promise<unknown[]>; revision?(userId:string):Promise<number>; status?():DiagnosticStatus;}
 export interface DiagnosticHistory {
-    begin(origin:DiagnosticOrigin):DiagnosticCapture|null;
+    begin(origin:DiagnosticOrigin,options?:DiagnosticCaptureOptions):DiagnosticCapture|null;
     list(scope:DiagnosticScope):Promise<DiagnosticResult<{entries:DiagnosticLog[]}>>;
     clear(scope:DiagnosticScope):Promise<DiagnosticResult<unknown>>;
     export(scope:DiagnosticScope):Promise<DiagnosticResult<{text:string; fileName:string}>>;

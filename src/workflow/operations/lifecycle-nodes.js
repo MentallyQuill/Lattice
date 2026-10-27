@@ -22,10 +22,11 @@ export const LIFECYCLE_OPERATIONS = {
     }),
     'review-publish': descriptor('review-publish', 'Review / Publish', 'post', 'draft', null, {
         terminal: true,
-        controls: ['autoApply'],
-        defaults: { autoApply: false },
+        controls: ['autoApply', 'autoApplyEffects'],
+        defaults: { autoApply: false, autoApplyEffects: false },
         controlDescriptors: {
-            autoApply: { type: 'boolean', default: false, label: 'Automatically apply revised reply', help: 'When Send completes successfully, add and select the revised reply as a new swipe, preserving the original, and accept its connected story changes. Unchanged replies with story changes still need manual review.' },
+            autoApply: { type: 'boolean', default: false, label: 'Automatically apply revised reply', help: 'When Send completes successfully, add and select the revised reply as a new swipe, preserving the original, and accept its connected story changes.' },
+            autoApplyEffects: { type: 'boolean', default: false, label: 'Automatically accept story changes', help: 'When Send completes successfully with unchanged reply text, accept connected staged story changes against the existing native reply without adding a swipe. Revised replies use the separate automatic reply setting. Manual acceptance is the default.' },
         },
     }),
 };
@@ -41,6 +42,7 @@ export function describeLifecycleNode(node, options = {}) {
     if (phase !== value.phase || declared !== undefined && declared !== phase) return fail('INVALID_PHASE', 'Lifecycle operation conflicts with its generation stage.');
     if (version !== undefined && version !== 1) return fail('INVALID_SETTINGS', 'Lifecycle operation version must be 1.');
     if (operation === 'review-publish' && Object.hasOwn(node, 'autoApply') && typeof own(node, 'autoApply') !== 'boolean') return fail('INVALID_SETTINGS', 'Automatic reply application must be a boolean.');
+    if (operation === 'review-publish' && Object.hasOwn(node, 'autoApplyEffects') && typeof own(node, 'autoApplyEffects') !== 'boolean') return fail('INVALID_SETTINGS', 'Automatic story change acceptance must be a boolean.');
     if (operation === 'generate-reply' && (!Number.isSafeInteger(own(node, 'budgetTokens') ?? 768) || (own(node, 'budgetTokens') ?? 768) < 1 || (own(node, 'budgetTokens') ?? 768) > 8192)) return fail('INVALID_SETTINGS', 'Use a guidance budget from 1 to 8,192 tokens.');
     if (operation === 'generate-reply') {
         const role = own(node, 'injectionRole'), position = own(node, 'injectionPosition'), depth = own(node, 'injectionDepth');

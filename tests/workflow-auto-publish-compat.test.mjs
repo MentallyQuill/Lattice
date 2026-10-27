@@ -22,6 +22,20 @@ const legacySnapshot = () => ({
 const must = result => { assert.equal(result.ok, true, JSON.stringify(result.error)); return result.data; };
 const reference = definition => ({ id: definition.id, version: definition.version, semanticHash: definition.semanticHash });
 
+test('effects-only acceptance defaults preserve legacy pins and omit false saved controls', () => {
+    const node = { id: 'review', type: 'workflow', ...operationDefaults('review-publish') };
+    assert.equal(Object.hasOwn(node, 'autoApplyEffects'), false);
+    assert.equal(operationFor(node).defaults.autoApplyEffects, false);
+    assert.equal(Object.hasOwn(semanticControlsForNode({ ...node, autoApplyEffects: false }), 'autoApplyEffects'), false);
+    for (const explicit of [false, true]) {
+        const candidate = legacySnapshot();
+        if (explicit) candidate.body.nodes.review.autoApplyEffects = false;
+        const identity = must(computeDefinitionIdentity(candidate));
+        assert.equal(identity.semanticHash, LEGACY_HASH);
+        assert.deepEqual(identity.materializedDefinition, legacySnapshot());
+    }
+});
+
 test('new manual terminals omit the additive default while the descriptor retains it', () => {
     const node = { id: 'review', type: 'workflow', ...operationDefaults('review-publish') };
     assert.equal(Object.hasOwn(node, 'autoApply'), false);
@@ -29,6 +43,20 @@ test('new manual terminals omit the additive default while the descriptor retain
     assert.equal(Object.hasOwn(semanticControlsForNode(node), 'autoApply'), false);
     assert.equal(Object.hasOwn(semanticControlsForNode({ ...node, autoApply: false }), 'autoApply'), false);
     assert.equal(semanticControlsForNode({ ...node, autoApply: true }).autoApply, true);
+});
+
+test('enabled effects-only acceptance changes the pin and survives package round trips', () => {
+    const changed = legacySnapshot();
+    changed.body.nodes.review.autoApplyEffects = true;
+    const identity = must(computeDefinitionIdentity(changed));
+    assert.notEqual(identity.semanticHash, LEGACY_HASH);
+    assert.equal(JSON.parse(identity.canonicalContent).body.nodes.review.controls.autoApplyEffects, true);
+    assert.equal(identity.materializedDefinition.body.nodes.review.autoApplyEffects, true);
+    const saved = { ...identity.materializedDefinition, semanticHash: identity.semanticHash };
+    must(validateDefinition(saved));
+    const parsed = must(parseSubgraph(JSON.stringify(exportSubgraph(saved))));
+    assert.equal(parsed.definition.body.nodes.review.autoApplyEffects, true);
+    assert.equal(Object.hasOwn(parsed.definition.body.nodes.review, 'autoApply'), false);
 });
 
 test('omitted and false automatic publication preserve the old pin and saved body', () => {

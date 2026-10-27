@@ -28,7 +28,7 @@ const schemaControl=textControl('','Schema',100000);
 schemaControl.editor='json';
 const controls={
     format:{inputMode:enumControl('records','Input',['records','json-text']),format:enumControl('json','Serialization',formats),jsonShape:enumControl('records','JSON shape',['records','single']),mapping:enumControl('preserve','Fields',['preserve','select']),fields:control('array',[],'Field mapping',{items:'record',max:128,editor:'json'}),schema:schemaControl,columns:control('array',[],'CSV columns',{items:'string',max:128}),separator:textControl('\n','Separator'),trailingSeparator:control('boolean',false,'Trailing separator')},
-    'read-file':{targetId:textControl(workflowDataPresetFor('read-file').targetId,'Data source',256),schema:schemaControl,columns:control('array',[],'CSV columns',{items:'string',max:128})},
+    'read-file':{targetId:textControl(workflowDataPresetFor('read-file').targetId,'Data source',256),bindToChat:control('boolean',false,'Bind derived context to chat'),schema:schemaControl,columns:control('array',[],'CSV columns',{items:'string',max:128})},
     'write-file':{mode:enumControl('append','Mutation',['append','add','add-unique','upsert','update-fields','replace']),collectionPath:textControl('','Collection JSON Pointer'),missingPath:enumControl('error','Missing collection',['error','create']),key:textControl('id','Identity field',256),fieldPolicy:enumControl('merge','Upsert policy',['merge','replace']),fields:control('array',[],'Updated fields',{items:'string',max:128}),schema:schemaControl,columns:control('array',[],'CSV columns',{items:'string',max:128}),separator:textControl('\n','Separator'),emptyPolicy:enumControl('omit','Separator for empty destination',['omit','include']),trailingSeparator:control('boolean',false,'Trailing separator')},
 };
 controls['project-document']={...structuredClone(controls['write-file']),format:enumControl('json','Document format',formats)};controls['project-document'].mode.default='add';
@@ -143,6 +143,8 @@ const capabilityErrorMessages=Object.freeze({
     INVALID_FILE_SNAPSHOT:'The selected target did not provide a valid bounded document snapshot.',
     INVALID_FILE_INTENT:'The host did not provide a valid stable intent identity and evidence.',
     INVALID_FILE_CONTROLS:'The file settlement controls are invalid.',
+    CHAT_SOURCE_REQUIRED:'Derived context requires the captured accepted chat prefix.',
+    BOUND_REPLACE_REQUIRED:'Derived context requires replacement through its exact bound Read File reference.',
     INVALID_FILE_BACKEND_CONFIG:'The selected storage backend configuration is invalid.',
     INVALID_FILE_METADATA:'The selected storage target has invalid metadata.',
     INVALID_FILE_BACKEND_UPDATE:'The selected storage backend rejected the prepared update.',
@@ -235,21 +237,25 @@ export async function executeFileNode(node,namedInputs,execution={}){
     }
     if(operation==='read-file'){
         if(typeof files?.read!=='function')return fail('INVALID_PORTS','Read File requires the trusted files.read capability.');
-        let loaded;try{loaded=response(await files.read(settings.targetId));}catch{return fail(cancelled()?'ABORTED':'FILE_READ_FAILED','The authorized file could not be read.');}
+        let loaded;try{loaded=response(await files.read(settings.targetId,{bindToChat:settings.bindToChat}));}catch{return fail(cancelled()?'ABORTED':'FILE_READ_FAILED','The authorized file could not be read.');}
         if(cancelled())return fail('ABORTED','Ignore the cancelled file read.');
         if(!loaded.ok)return loaded;
         const loadedScope=await actorScope();if(!loadedScope.ok)return loadedScope;
-        let snapshot,fileRef;
+        let snapshot,fileRef,readView;
         try{
             const content=own(loaded.data),checkedSnapshot=cloneJsonValue(content.snapshot),ref=cloneJsonValue(content.fileRef);
             if(!checkedSnapshot.ok||!ref.ok)return fail('INVALID_FILE_RESPONSE','Read File requires bounded document and live reference data.');
             snapshot=checkedSnapshot.data.value;fileRef=content.fileRef;
+            if(content.readView!==undefined){const view=cloneJsonValue(content.readView);if(!view.ok||view.data.value?.targetId!==snapshot.targetId||view.data.value?.revision!==snapshot.revision||view.data.value?.format!==snapshot.format||typeof view.data.value?.content!=='string')return fail('INVALID_FILE_RESPONSE','A reset read view must retain the live target and revision.');readView=view.data.value;}
             if(!snapshot||typeof snapshot!=='object'||!ref.data.value.scope||typeof ref.data.value.scope!=='object'||!id(ref.data.value.scope.userId)||!id(ref.data.value.scope.chatId)||Object.keys(ref.data.value.scope).some(key=>!['userId','chatId','actorId'].includes(key))||Object.hasOwn(ref.data.value.scope,'actorId')&&!id(ref.data.value.scope.actorId)||!Object.isFrozen(fileRef)||Object.keys(ref.data.value).length!==5||snapshot.targetId!==settings.targetId||ref.data.value.kind!=='file-reference'||ref.data.value.backend!=='host-store'||ref.data.value.targetId!==snapshot.targetId||ref.data.value.revision!==snapshot.revision)return fail('INVALID_FILE_RESPONSE','The reference must match the exact target and observed revision.');
         }catch{return fail('INVALID_FILE_RESPONSE','Read File requires an own document/reference result.');}
         const checkedScope=await actorScope(fileRef);if(!checkedScope.ok)return checkedScope;
-        const parsed=parseSnapshot(snapshot,settings,schema);if(!parsed.ok)return parsed;
+        const view=readView??snapshot;
+        const parsed=parseSnapshot(view,settings,schema);if(!parsed.ok)return parsed;
         const value=parsed.data.projectedDocument?.value;
-        let fileVisibility=visibilityOf({value,...(id(fileRef.scope?.actorId)?{visibility:{kind:'actor-private',actorId:fileRef.scope.actorId}}:{})});
+        let storedValue;
+        if(readView){try{if(snapshot.format==='json')storedValue=JSON.parse(snapshot.content);else if(snapshot.format==='jsonl')storedValue=snapshot.content.split('\n').filter(line=>line.trim()).map(line=>JSON.parse(line));}catch{return fail('INVALID_FILE_RESPONSE','A reset view cannot bypass malformed stored structured content.');}}
+        let fileVisibility=visibilityOf({value,storedValue,...(id(fileRef.scope?.actorId)?{visibility:{kind:'actor-private',actorId:fileRef.scope.actorId}}:{})});
         if(typeof local.fileVisibility==='function'){
             let policy;try{policy=response(await local.fileVisibility(freeze({reference:fileRef,snapshot:freeze(snapshot)})));}catch{return fail('FILE_SCOPE_UNAVAILABLE','The file visibility policy could not be checked.');}
             if(cancelled())return fail('ABORTED','File read cancelled during scope validation.');
@@ -261,7 +267,7 @@ export async function executeFileNode(node,namedInputs,execution={}){
         const finalScope=await actorScope(fileRef);if(!finalScope.ok)return finalScope;
         if(settings.actorScope==='presence'&&fileVisibility.kind==='actor-private'&&fileVisibility.actorId!==settings.actorId)return fail('ACTOR_FILE_SCOPE_MISMATCH','The private document belongs to a different actor.');
         fileVisibility=visibilityOf({visibility:fileVisibility,inputs});
-        const produced=output({text:{kind:'text',text:snapshot.content,visibility:fileVisibility},document:{kind:'data',value:{targetId:snapshot.targetId,revision:snapshot.revision,format:snapshot.format,...(value===undefined?{}:{value})},visibility:fileVisibility},...(value===undefined?{}:{value:{kind:'data',value,visibility:fileVisibility}}),reference:{kind:'data',value:fileRef,visibility:fileVisibility}},[{code:'FILE_READ',actualCalls:0,targetId:snapshot.targetId,revision:snapshot.revision}]);
+        const produced=output({text:{kind:'text',text:view.content,visibility:fileVisibility},document:{kind:'data',value:{targetId:snapshot.targetId,revision:snapshot.revision,format:snapshot.format,...(value===undefined?{}:{value})},visibility:fileVisibility},...(value===undefined?{}:{value:{kind:'data',value,visibility:fileVisibility}}),reference:{kind:'data',value:fileRef,visibility:fileVisibility}},[{code:'FILE_READ',actualCalls:0,targetId:snapshot.targetId,revision:snapshot.revision}]);
         if(produced.ok && value===undefined)produced.outputStates={value:{status:'skipped',reason:{code:'FILE_VALUE_UNAVAILABLE',message:'Plain text and Markdown documents have no parsed structured value.'}}};
         if(produced.ok)references.set(fileRef,{snapshot:freeze(snapshot),visibility:freeze(fileVisibility),actorId:settings.actorScope==='presence'?settings.actorId:fileRef.scope.actorId??(fileVisibility.kind==='actor-private'?fileVisibility.actorId:undefined)});
         return produced;
@@ -282,7 +288,7 @@ export async function executeFileNode(node,namedInputs,execution={}){
         const authorizedScope=await actorScope(inputs.reference.value);if(!authorizedScope.ok)return authorizedScope;
         const policy=cloneJsonValue(authorized.data),destination=policy.ok?policy.data.value.destinationVisibility:null;
         if(!validVisibility(destination)||!permits(visibility,destination)||!permits(captured.visibility,destination))return fail('PRIVATE_DESTINATION','Restricted records require a permitted destination preserving actor scope.');
-        intent=response(await local.createIntentId(capturedNode,freeze(evidence)));
+        intent=response(await local.createIntentId(capturedNode,freeze(evidence),inputs.reference.value));
         if(cancelled())return fail('ABORTED','File staging cancelled during identity capture.');
         if(!intent.ok)return intent;
         const identityScope=await actorScope(inputs.reference.value);if(!identityScope.ok)return identityScope;

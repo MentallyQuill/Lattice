@@ -182,7 +182,11 @@ export function computeDefinitionIdentity(value, options = {}) {
                         delete node[controlId];
                         continue;
                     }
-                    if (node.operation === 'review-publish' && controlId === 'autoApply' && control.data.default === false) {
+                    if (node.operation === 'review-publish' && ['autoApply', 'autoApplyEffects'].includes(controlId) && control.data.default === false) {
+                        delete node[controlId];
+                        continue;
+                    }
+                    if (node.operation === 'read-file' && controlId === 'bindToChat' && control.data.default === false) {
                         delete node[controlId];
                         continue;
                     }

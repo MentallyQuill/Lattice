@@ -50,6 +50,20 @@ test('automatic review leaves unchanged native text without a duplicate swipe', 
     } finally { host.controller.dispose(); }
 });
 
+test('effects-only opt-in without staged effects leaves the native reply and review pending', async () => {
+    const graph = revisionGraph({ revise: false, autoApply: false });
+    graph.nodes['review-publish'].autoApplyEffects = true;
+    const host = unifiedRecipeHost(graph, { request: revisedResponse });
+    try {
+        const result = await host.generate('Native reply.');
+        assert.equal(result.ok, true, JSON.stringify(result.error));
+        assert.equal(result.automaticallyApplied, undefined);
+        assert.equal(host.controller.candidateStatus(result.reviewHandles[0]).ok, true);
+        assert.deepEqual(host.c.chat.at(-1).swipes, ['Native reply.']);
+        assert.equal(host.calls(), 0);assert.equal(host.saves(), 0);
+    } finally { host.controller.dispose(); }
+});
+
 test('manual review remains pending until explicitly applied', async () => {
     const graph = revisionGraph();
     delete graph.nodes['review-publish'].autoApply;
@@ -129,6 +143,20 @@ test('multiple automatic review terminals cannot arbitrarily select a candidate'
         assert.deepEqual(host.c.chat.at(-1).swipes, ['Native reply.']);
         assert.equal(result.reviewHandles.length, 2);
         assert.equal(host.controller.candidateStatus(result.reviewHandles[0]).ok, true);
+    } finally { host.controller.dispose(); }
+});
+
+test('mixed automatic reply and effects-only terminals cannot choose an ambiguous review', async () => {
+    const graph = revisionGraph({ revise: false });
+    graph.nodes.secondReview = { id: 'secondReview', type: 'workflow', operation: 'review-publish', autoApplyEffects: true };
+    graph.wires.secondReview = { id: 'secondReview', route: 'wire', from: 'generate-reply', fromPort: 'draft', to: 'secondReview', toPort: 'draft' };
+    graph.runTargets.push({ instancePath: [], nodeId: 'secondReview' });
+    const host = unifiedRecipeHost(graph, { request: revisedResponse });
+    try {
+        const result = await host.generate('Native reply.');
+        assert.equal(result.error.code, 'AUTO_APPLY_AMBIGUOUS');
+        assert.deepEqual(host.c.chat.at(-1).swipes, ['Native reply.']);
+        assert.equal(host.saves(), 0);assert.equal(result.reviewHandles.length, 2);
     } finally { host.controller.dispose(); }
 });
 

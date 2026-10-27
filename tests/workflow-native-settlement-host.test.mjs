@@ -54,10 +54,118 @@ function consequenceFixture(options={}) {
     for(const id of options.twoFiles?['one','two']:['one'])assert.equal(catalog.define({targetId:id+'.txt',name:id,format:'text',content:'Prior',visibility:{kind:'public'}}).ok,true);
     return {...f,graph,catalog,saves:()=>saves,chatSaves:()=>chatSaves,models:()=>models,async complete(){f.results.length=0;const prepared=await f.start();assert.equal(prepared.ok,true,JSON.stringify(prepared.error));addReply(f);const replyIndex=f.c.chat.length-1;await f.c.eventSource.emit('MESSAGE_RECEIVED',replyIndex,'normal');f.setBusy(false);await f.c.eventSource.emit('GENERATION_ENDED',replyIndex+1);return settled(f);}};
 }
+test('automatic effects-only acceptance saves staged files against the existing native swipe',async()=>{
+    const f=consequenceFixture();f.graph.nodes.review.autoApplyEffects=true;
+    try {
+        const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));
+        assert.equal(result.automaticallyApplied,true);assert.equal(result.appliedLocally,true);assert.equal(result.settlement.status,'settled');
+        assert.equal(result.swipeId,0);assert.equal(result.saveAttempted,false);assert.equal(result.settlement.publication.saveAttempted,false);
+        assert.deepEqual(f.c.chat[1].swipes,['Native reply.']);assert.equal(f.c.chat[1].swipe_id,0);assert.equal(f.c.chat[1].mes,'Native reply.');
+        assert.equal(f.chatSaves(),0);assert.equal(f.models(),0);assert.equal(f.saves(),1);
+        assert.equal(f.c.chatMetadata.latticeDocuments['default-user']['one.txt'].content,'Prior\nNative reply.');
+        assert.equal(f.controller.candidateStatus(result.reviewHandles[0]).error.code,'ALREADY_APPLIED');
+        assert.equal((await f.controller.apply(result.reviewHandles[0])).ok,true);assert.equal(f.saves(),1);assert.equal(f.chatSaves(),0);
+    } finally {f.controller.dispose();}
+});
+
 test('native file staging retains review authority and saves only after original-preserving acceptance',async()=>{
     const f=consequenceFixture(),result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(f.saves(),0);assert.equal(f.c.chatMetadata.latticeDocuments,undefined);
     const accepted=await f.controller.apply(result.reviewHandles[0]);assert.equal(accepted.ok,true,JSON.stringify(accepted.error));assert.equal(accepted.settlement.status,'settled');assert.equal(f.saves(),1);assert.equal(f.chatSaves(),1);assert.deepEqual(f.c.chat[1].swipes,['Native reply.','Native reply.']);assert.equal(f.c.chatMetadata.latticeDocuments['default-user']['one.txt'].content,'Prior\nNative reply.');assert.deepEqual(f.c.chatMetadata.unrelated,{keep:true});
     assert.equal((await f.controller.apply(result.reviewHandles[0])).ok,true);assert.equal(f.saves(),1);assert.equal(f.chatSaves(),1);
+});
+
+test('effects-only opt-in leaves changed drafts pending unless automatic reply application is enabled',async()=>{
+    for(const autoApply of [false,true]){
+        const f=consequenceFixture({revise:true});Object.assign(f.graph.nodes.review,{autoApplyEffects:true,autoApply});
+        try {
+            const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));
+            assert.deepEqual(f.c.chat[1].swipes,autoApply?['Native reply.','Rewritten reply.']:['Native reply.']);
+            assert.equal(f.saves(),autoApply?1:0);assert.equal(f.chatSaves(),autoApply?1:0);
+            assert.equal(result.automaticallyApplied,autoApply?true:undefined);assert.equal(result.effectsOnlyApplied,undefined);
+        } finally {f.controller.dispose();}
+    }
+});
+
+test('unchanged staged effects remain manual when effects-only acceptance is false or omitted',async()=>{
+    for(const autoApplyEffects of [false,undefined]){
+        const f=consequenceFixture();f.graph.nodes.review.autoApply=true;
+        if(autoApplyEffects!==undefined)f.graph.nodes.review.autoApplyEffects=autoApplyEffects;
+        try {
+            const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));
+            assert.equal(result.automaticallyApplied,undefined);assert.equal(f.saves(),0);assert.equal(f.chatSaves(),0);
+            assert.equal(f.controller.candidateStatus(result.reviewHandles[0]).ok,true);
+            assert.deepEqual(f.c.chat[1].swipes,['Native reply.']);
+        } finally {f.controller.dispose();}
+    }
+});
+
+test('effects-only persistence recovery retries failed targets without republishing the native reply',async()=>{
+    let conflict=true;
+    const f=consequenceFixture({twoFiles:true,onSave:(selection,c)=>{if(selection.targetId==='one.txt'&&conflict){conflict=false;c.chatMetadata.latticeDocuments['default-user']['two.txt']={targetId:'two.txt',revision:1,format:'text',content:'Concurrent text',receipts:[],scope:{userId:'default-user',chatId:'story'}};}}});
+    f.graph.nodes.review.autoApplyEffects=true;
+    try {
+        const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.settlement.status,'partial');assert.equal(result.automaticallyApplied,true);
+        assert.equal(f.controller.candidateStatus(result.reviewHandles[0]).persistOnly,true);
+        assert.equal(f.saves(),1);assert.equal(f.chatSaves(),0);assert.deepEqual(f.c.chat[1].swipes,['Native reply.']);
+        delete f.c.chatMetadata.latticeDocuments['default-user']['two.txt'];
+        const retried=await f.controller.retryPersistence(result.reviewHandles[0]);assert.equal(retried.ok,true,JSON.stringify(retried.error));assert.equal(retried.settlement.status,'settled');
+        assert.equal(retried.effectsOnlyApplied,true);assert.equal(retried.automaticallyApplied,true);assert.equal(f.saves(),2);assert.equal(f.chatSaves(),0);assert.equal(f.models(),0);
+        assert.deepEqual(f.c.chat[1].swipes,['Native reply.']);assert.equal(f.c.chatMetadata.latticeDocuments['default-user']['one.txt'].revision,1);
+        assert.equal(f.controller.lastAutomaticResult().result.settlement.status,'settled');
+    } finally {f.controller.dispose();}
+});
+
+test('effects-only acceptance preserves uncertain persistence receipts without blind retry writes',async()=>{
+    const f=consequenceFixture({acknowledged:false});f.graph.nodes.review.autoApplyEffects=true;
+    try {
+        const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.settlement.status,'save-unverified');
+        assert.equal(result.effectsOnlyApplied,true);assert.equal(f.saves(),1);assert.equal(f.chatSaves(),0);
+        assert.equal((await f.controller.retryPersistence(result.reviewHandles[0])).error.code,'PERSISTENCE_RECOVERY_UNAVAILABLE');
+        assert.equal((await f.controller.apply(result.reviewHandles[0])).ok,true);assert.equal(f.saves(),1);
+        const read=await f.controller.runTarget(f.graph,{workflowId:'unified',instancePath:[],nodeId:'readone',portId:'text'});
+        assert.equal(read.error.code,'PERSISTENCE_UNKNOWN');assert.deepEqual(f.c.chat[1].swipes,['Native reply.']);
+    } finally {f.controller.dispose();}
+});
+
+test('effects-only acceptance rejects cancelled and stale post-processing before saving',async()=>{
+    for(const change of ['cancel','edit','swipe']){
+        let f;
+        f=consequenceFixture({revise:true,request:async()=>{
+            if(change==='cancel')f.controller.cancel('Synthetic cancellation');
+            else if(change==='edit')f.c.chat[0].mes='Edited covered source';
+            else {f.c.chat[1].swipes.push('Foreign swipe');f.c.chat[1].swipe_id=1;f.c.chat[1].mes='Foreign swipe';}
+            return {ok:true,data:{text:'Native reply.',finish:'stop'}};
+        }});
+        f.graph.nodes.review.autoApplyEffects=true;
+        try {
+            const result=await f.complete();assert.equal(result.ok,false,change);assert.equal(f.saves(),0);assert.equal(f.chatSaves(),0);
+            assert.equal(result.automaticallyApplied,undefined);
+            assert.equal(f.c.chat[1].swipes.length,change==='swipe'?2:1);
+        } finally {f.controller.dispose();}
+    }
+});
+
+test('source changes during effects-only persistence stop later targets and revoke stale recovery',async()=>{
+    let enteredSave,releaseSave;
+    const saving=new Promise(resolve=>enteredSave=resolve),wait=new Promise(resolve=>releaseSave=resolve);
+    const f=consequenceFixture({twoFiles:true,onSave:async selection=>{if(selection.targetId==='one.txt'){enteredSave();await wait;}}});
+    f.graph.nodes.review.autoApplyEffects=true;
+    try {
+        const completing=f.complete();await saving;
+        f.c.chat[0].mes='Changed during persistence';releaseSave();
+        const result=await completing;assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.settlement.status,'partial');
+        assert.equal(f.saves(),1);assert.equal(f.chatSaves(),0);assert.deepEqual(f.c.chat[1].swipes,['Native reply.']);
+        assert.equal(f.c.chatMetadata.latticeDocuments['default-user']['two.txt'],undefined);
+        assert.equal((await f.controller.retryPersistence(result.reviewHandles[0])).error.code,'STALE_SOURCE');assert.equal(f.saves(),1);
+    } finally {releaseSave();f.controller.dispose();}
+});
+
+test('effects-only acceptance authorizes connected memory against the existing native swipe',async()=>{
+    const f=consequenceFixture({memory:true});f.graph.nodes.review.autoApplyEffects=true;
+    try {
+        const result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(result.settlement.status,'settled');
+        assert.equal(result.effectsOnlyApplied,true);assert.equal(f.saves(),1);assert.equal(f.chatSaves(),0);assert.deepEqual(f.c.chat[1].swipes,['Native reply.']);
+    } finally {f.controller.dispose();}
 });
 test('all native file targets preflight before publication and cancellation releases retained review',async()=>{
     const f=consequenceFixture(),result=await f.complete();assert.equal(result.ok,true,JSON.stringify(result.error));f.catalog.remove('one.txt');const accepted=await f.controller.apply(result.reviewHandles[0]);assert.equal(accepted.ok,false);assert.equal(f.chatSaves(),0);assert.equal(f.saves(),0);assert.equal(f.c.chat[1].swipes.length,1);

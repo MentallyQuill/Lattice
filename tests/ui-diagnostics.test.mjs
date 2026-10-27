@@ -352,3 +352,63 @@ test('workflow output selection failures name the management menu without source
   assert.equal(Object.hasOwn(view,'address'),false);assert.equal(Object.hasOwn(view,'action'),false);
  }
 });
+
+test('schema mismatch exposes bounded validator findings while arbitrary exception text stays private', () => {
+    const view = api.presentDiagnostic({ code: 'SCHEMA_MISMATCH', message: 'PRIVATE RESPONSE', findings: [
+        { path: '/responseOptions', keyword: 'minItems', message: 'Expected at least 1 items; got 0.' },
+        { path: '/summary', keyword: 'maxLength', message: 'Expected at most 120 characters; got 155.' },
+    ] });
+    assert.deepEqual(view.findings, [
+        { path: '/responseOptions', keyword: 'minItems', message: 'Expected at least 1 items; got 0.' },
+        { path: '/summary', keyword: 'maxLength', message: 'Expected at most 120 characters; got 155.' },
+    ]);
+    assert.doesNotMatch(JSON.stringify(view), /PRIVATE RESPONSE/);
+    assert.equal(api.presentDiagnostic({ code: 'REQUEST_FAILED', findings: view.findings }).findings, undefined);
+});
+
+test('schema finding presentation rejects malformed rows, bounds fields and never invokes accessors', () => {
+    let reads = 0;
+    const malicious = { path: '/summary', keyword: 'maxLength', message: 'private diary <img src=x> ' + 'x'.repeat(1000) };
+    const accessed = { get path() { reads++; throw Error('private'); }, keyword: 'required', get message() { reads++; return 'private'; } };
+    const rows = [malicious, { path: '/x', keyword: '__proto__', message: 'private' }, { path: '/x', keyword: 'unknown', message: 'private' }, { path: '/' + 'x'.repeat(257), keyword: 'required', message: 'private' }, { path: '/bad\npath', keyword: 'required', message: 'private' }, accessed, { path: '/valid', keyword: 'type', message: 'Expected string; got number. PRIVATE' }];
+    Object.defineProperty(rows, '7', { get() { reads++; throw Error('private'); } });
+    const result = api.presentDiagnostic({ code: 'SCHEMA_MISMATCH', findings: rows });
+    assert.deepEqual(result.findings, [
+        { path: '/summary', keyword: 'maxLength', message: 'String is longer than maximum.' },
+        { path: '/valid', keyword: 'type', message: 'The value has the wrong type.' },
+    ]);
+    assert.doesNotMatch(JSON.stringify(result), /private|img src/i); assert.equal(reads, 0);
+    const many = Array.from({ length: 1000 }, () => ({ path: '/name', keyword: 'required', message: 'Required field is missing.' }));
+    assert.equal(api.presentDiagnostic({ code: 'SCHEMA_MISMATCH', findings: many }).findings.length, 20);
+    const hidden = { code: 'SCHEMA_MISMATCH', get findings() { reads++; throw Error('private'); } };
+    assert.equal(api.presentDiagnostic(hidden).findings, undefined); assert.equal(reads, 0);
+});
+
+test('schema failures at the same node retain different field causes', () => {
+    const base = { code: 'SCHEMA_MISMATCH', message: 'JSON does not match the schema.', nodeId: 'model' };
+    const first = { ...base, findings: [{ path: '/title', keyword: 'required', message: 'Required field is missing.' }] };
+    const second = { ...base, findings: [{ path: '/responseOptions', keyword: 'minItems', message: 'Expected at least 1 items; got 0.' }] };
+    const views = api.presentDiagnostics([first, second, first]);
+    assert.equal(views.length, 2);
+    assert.notEqual(views[0].id, views[1].id);
+});
+
+test('hostile diagnostic array lengths are never coerced', () => {
+    let conversions = 0;
+    const hostile = new Proxy([], { getOwnPropertyDescriptor(target, key) {
+        if (key === 'length') return { value: { valueOf() { conversions++; return 1; } }, writable: true, enumerable: false, configurable: false };
+        return Reflect.getOwnPropertyDescriptor(target, key);
+    } });
+    assert.equal(api.presentDiagnostic({ code: 'SCHEMA_MISMATCH', findings: hostile }).findings, undefined);
+    assert.equal(conversions, 0);
+    assert.deepEqual(api.presentDiagnostics(hostile), []);
+    assert.equal(conversions, 0);
+});
+
+test('revoked arrays in diagnostic inputs are safely omitted', () => {
+    const { proxy, revoke } = Proxy.revocable([], {}); revoke();
+    assert.doesNotThrow(() => api.presentDiagnostic({ code: 'SCHEMA_MISMATCH', findings: proxy }));
+    assert.equal(api.presentDiagnostic({ code: 'SCHEMA_MISMATCH', findings: proxy }).findings, undefined);
+    assert.deepEqual(api.presentDiagnostics(proxy), []);
+    assert.equal(api.presentDiagnostic({ code: 'SCHEMA_MISMATCH', address: { workflowId: 'flow', nodeId: 'step', instancePath: proxy } }).address, undefined);
+});

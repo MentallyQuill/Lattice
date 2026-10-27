@@ -9,6 +9,114 @@ function memoryStore(seed = []) {
 }
 const address = {workflowId:'wf',nodeId:'model',instancePath:[]};
 
+test('metadata-only failures retain bounded diagnostics without completion text', async () => {
+    const store = memoryStore(), history = module.createDiagnosticHistory({store});
+    const capture = history.begin(origin(), {mode:'metadata'});
+    capture.event({type:'plan',plan:{callBound:2,prompt:'PRIVATE_PROMPT'}});
+    capture.event({type:'request-start',address,attempt:1,at:11});
+    capture.model({type:'response',address,attempt:1,text:'PRIVATE_COMPLETION',visibility:{kind:'actor-private',actorId:'actor-a'}});
+    capture.model({type:'validation',address,attempt:1,error:{code:'SCHEMA_MISMATCH',message:'Schema mismatch.',findings:[{path:'/responseOptions',keyword:'minItems',message:'Expected at least 1 item; got 0.',value:'PRIVATE_VALUE'}]}});
+    capture.event({type:'node-retry',address,reasonCode:'SCHEMA_MISMATCH',delayMs:0,nextAttempt:2});
+    await capture.finish({ok:false,actualCalls:1,error:{code:'SCHEMA_MISMATCH',message:'Schema mismatch.',address}});
+    const reloaded = module.createDiagnosticHistory({store});
+    const entry = (await reloaded.list(origin())).data.entries[0];
+    assert.equal(entry.status,'failed');
+    assert.equal(entry.actualCalls,1);
+    assert.equal(entry.callBound,2);
+    assert.equal(entry.error.code,'SCHEMA_MISMATCH');
+    assert.deepEqual(entry.attempts[0].validationError.findings,[{path:'/responseOptions',keyword:'minItems',message:'Expected at least 1 item; got 0.'}]);
+    assert.deepEqual(entry.attempts[0].retry,{reasonCode:'SCHEMA_MISMATCH',delayMs:0,nextAttempt:2});
+    assert.equal(JSON.stringify(store.users.get('owner')).includes('PRIVATE_'),false);
+});
+
+test('metadata-only history omits successful, cancelled and stale runs without storage writes', async () => {
+    const store = memoryStore(), history = module.createDiagnosticHistory({store});
+    let writes = 0;
+    const update = store.update.bind(store);
+    store.update = async (...args) => {writes++; return update(...args);};
+    for (const status of ['completed','cancelled','stale']) {
+        const capture = history.begin(origin({runId:status}), {mode:'metadata'});
+        capture.event({type:'run-settled',status});
+        const result = await capture.finish({ok:status === 'completed',error:{code:status === 'cancelled'?'ABORTED':'UNUSED',message:'Run ended.'}});
+        assert.equal(result.data.discarded,true);
+    }
+    assert.equal(writes,0);
+    assert.deepEqual((await history.list(origin())).data.entries,[]);
+});
+
+test('metadata-only response capture never inspects completion text or visibility properties', async () => {
+    const store = memoryStore(), history = module.createDiagnosticHistory({store});
+    const capture = history.begin(origin(),{mode:'metadata'});
+    let inspected = 0;
+    const response = new Proxy({type:'response',address,attempt:1,get text(){inspected++; throw Error('Completion text was read.');},get visibility(){inspected++; throw Error('Visibility was read.');}}, {
+        getOwnPropertyDescriptor(target,key) {
+            if (key === 'text' || key === 'visibility') inspected++;
+            return Reflect.getOwnPropertyDescriptor(target,key);
+        },
+    });
+    capture.model(response);
+    await capture.finish({ok:false,error:{code:'INVALID_JSON',message:'Invalid JSON.'}});
+    assert.equal(inspected,0);
+    const row = (await history.list(origin())).data.entries[0].attempts[0];
+    assert.equal(row.response.text,undefined);
+    assert.match(row.response.omitted,/logging is off/i);
+});
+
+test('metadata-only invalid and unresolved failures retain bounded getter-free findings', async () => {
+    const store = memoryStore(), history = module.createDiagnosticHistory({store});
+    let getters = 0;
+    for (const status of ['invalid','unresolved']) {
+        const capture = history.begin(origin({runId:status}),{mode:'metadata'});
+        const findings = Array.from({length:40},() => ({path:'/'+'😀'.repeat(400),keyword:'type',message:'m'.repeat(1000),get value(){getters++;return 'PRIVATE';}}));
+        capture.event({type:'run-settled',status,error:{code:'SCHEMA_MISMATCH',message:'Mismatch.',findings},failedAddress:address});
+        await capture.finish({ok:false});
+    }
+    const entries = (await history.list(origin())).data.entries;
+    assert.deepEqual(entries.map(entry=>entry.status).sort(),['invalid','unresolved']);
+    for (const entry of entries) {
+        assert.equal(entry.error.findings.length,32);
+        assert.equal(entry.error.truncated,true);
+        assert.equal(entry.error.nodeId,'model');
+        for (const finding of entry.error.findings) {
+            assert.ok(Buffer.byteLength(JSON.stringify(finding.path)) <= 512);
+            assert.ok(Buffer.byteLength(JSON.stringify(finding.message)) <= 512);
+        }
+    }
+    assert.equal(getters,0);
+    assert.equal(JSON.stringify(store.users.get('owner')).includes('PRIVATE'),false);
+});
+
+test('invalid explicit capture modes cannot fall back to full response logging', () => {
+    const history = module.createDiagnosticHistory({store:memoryStore()});
+    let getters = 0;
+    for (const options of [{mode:'metdata'}, {}, null, {get mode(){getters++;return 'metadata';}}]) {
+        assert.equal(history.begin(origin(),options),null);
+    }
+    assert.equal(getters,0);
+});
+
+test('metadata-only finish discards a superseded host result even after failure settlement', async () => {
+    const history = module.createDiagnosticHistory({store:memoryStore()});
+    const capture = history.begin(origin(),{mode:'metadata'});
+    capture.event({type:'run-settled',status:'failed',error:{code:'INVALID_JSON',message:'Invalid JSON.'}});
+    assert.equal((await capture.finish({ok:false,superseded:true})).data.discarded,true);
+    assert.deepEqual((await history.list(origin())).data.entries,[]);
+});
+
+test('capture snapshots explicit metadata mode once before response events arrive', async () => {
+    const store = memoryStore(), history = module.createDiagnosticHistory({store});
+    let reads = 0;
+    const options = new Proxy({mode:'metadata'},{getOwnPropertyDescriptor(target,key){
+        if (key === 'mode') return {value:++reads === 1?'metadata':'full',enumerable:true,configurable:true,writable:true};
+        return Reflect.getOwnPropertyDescriptor(target,key);
+    }});
+    const capture = history.begin(origin(),options);
+    capture.model({type:'response',address,attempt:1,text:'PRIVATE_COMPLETION',visibility:{kind:'public'}});
+    await capture.finish({ok:false,error:{code:'INVALID_JSON',message:'Invalid JSON.'}});
+    assert.equal(JSON.stringify(store.users.get('owner')).includes('PRIVATE_COMPLETION'),false);
+    assert.equal(reads,1);
+});
+
 test('settled captures persist detached summaries in the exact owner and chat scope', async () => {
     assert.equal(typeof module.createDiagnosticHistory,'function');
     const store = memoryStore(), history = module.createDiagnosticHistory({store});
@@ -303,9 +411,9 @@ test('discard after transform removes a late injected-store commit without rolli
     assert.equal(history.status().issue,'');
 });
 
-test('clear after a copied transform defeats the late commit and preserves another chat', async () => {
+for (const mode of ['full','metadata']) test(`${mode}: clear after a copied transform defeats the late commit and preserves another chat`, async () => {
     const store = memoryStore(), history = module.createDiagnosticHistory({store});
-    await history.begin(origin({runId:'other',chatId:'other'})).finish({ok:true});
+    await history.begin(origin({runId:'other',chatId:'other'}),{mode}).finish({ok:false,error:{code:'INVALID_JSON',message:'Invalid JSON.'}});
     let release, entered;
     const commitGate = new Promise(resolve => {release = resolve;});
     const transformed = new Promise(resolve => {entered = resolve;});
@@ -315,7 +423,7 @@ test('clear after a copied transform defeats the late commit and preserves anoth
         if (once) {once = false; entered(); await commitGate;}
         store.users.set(id,next); return next;
     };
-    const pending = history.begin(origin({runId:'revoked'})).finish({ok:true});
+    const pending = history.begin(origin({runId:'revoked'}),{mode}).finish({ok:false,error:{code:'INVALID_JSON',message:'Invalid JSON.'}});
     await transformed;
     const clearing = history.clear(origin()); release();
     assert.equal((await pending).data.discarded,true);

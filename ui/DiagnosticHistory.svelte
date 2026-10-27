@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { diagnosticSchemaFindings } from '../src/ui/diagnostics.js';
     import type { DiagnosticHistoryActions, DiagnosticHistoryView } from './diagnostic-history-types';
     import type { DiagnosticError, DiagnosticLog } from '../src/workflow/diagnostic-history';
     let { view, actions }: { view: DiagnosticHistoryView | null; actions?: DiagnosticHistoryActions } = $props();
@@ -11,10 +12,10 @@
 </script>
 
 <section class="pc-diagnostic-history" aria-label="Saved diagnostic logs">
-    <label class="pc-diagnostic-toggle"><input type="checkbox" aria-label="Save diagnostic logs" checked={view?.enabled ?? false} disabled={!view || !actions?.setEnabled} onchange={event => { if (view) actions?.setEnabled(event.currentTarget.checked); }} />Save diagnostic logs</label>
-    <p>Saves recent workflow attempts and model output in this browser. Logs may contain private story text.</p>
-    <p>Turning this on applies to the next run. Turning it off stops collection immediately. Saved logs stay available until cleared or removed by retention limits.</p>
-    <p>Saved when a run finishes, including failures and cancellations. Keeps up to 50 runs and 5 MiB per user; oldest logs are removed first.</p>
+    <label class="pc-diagnostic-toggle"><input type="checkbox" aria-label="Save diagnostic logs" checked={view?.enabled ?? false} disabled={!view || !actions?.setEnabled} onchange={event => { if (view) actions?.setEnabled(event.currentTarget.checked); }} />Save model responses</label>
+    <p>Failure metadata is always retained locally in this browser, including when this switch is off. Model output text requires this opt-in and may contain private story text.</p>
+    <p>Turning this on applies to the next run. Turning it off stops response capture immediately. Saved logs stay available until cleared or removed by retention limits.</p>
+    <p>Successful and cancelled runs are saved only with this switch on. Keeps up to 50 runs and 5 MiB per user; oldest logs are removed first.</p>
     <h4>Saved logs</h4>
     <div class="pc-diagnostic-history-actions">
         <button type="button" data-diagnostic-export disabled={!scopeAvailable || !view?.entries.length || !actions?.export} onclick={() => { if (scopeAvailable && view?.entries.length) actions?.export(view.scopeKey); }}>Export logs</button>
@@ -76,9 +77,10 @@
 </section>
 
 {#snippet errorDetails(error: DiagnosticError, label: string)}
+    {@const findings = diagnosticSchemaFindings(error)}
     <div class="pc-diagnostic-log-error"><p>{label}: {error.code} · {error.message}</p>
         {#if error.truncated}<p class="pc-diagnostic-notice">Error details were truncated.</p>{/if}
-        {#if error.findings?.length}<ul class="pc-diagnostic-findings">{#each error.findings as finding}<li><code>{finding.path || '/'} · {finding.keyword}</code><p>{finding.message}</p></li>{/each}</ul>{/if}
+        {#if findings.length}<ul class="pc-diagnostic-findings">{#each findings as finding}<li><code>{finding.path || '/'} · {finding.keyword}</code><p>{finding.message}</p></li>{/each}</ul>{/if}
     </div>
 {/snippet}
 

@@ -65,7 +65,7 @@ export function sendWorkflowState() {
 export function getNativeWorkflowController() {
     if (controller) return controller;
     controller = createNativeWorkflowController({
-        createDiagnosticCapture: origin => workflowDiagnosticLoggingEnabled() ? getWorkflowDiagnosticHistory().begin(origin) : null,
+        createDiagnosticCapture: origin => getWorkflowDiagnosticHistory().begin(origin, {mode:workflowDiagnosticLoggingEnabled() ? 'full':'metadata'}),
         onEvent: event => {
             for (const listener of workflowRunListeners) {
                 try { Promise.resolve(listener(event)).catch(() => {}); } catch { /* An observer cannot interrupt the run. */ }

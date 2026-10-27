@@ -18,6 +18,7 @@ import { executeIntrospection } from './introspection/nodes.js?v=0.28.1';
 import { parseRecord } from './introspection/contracts.js?v=0.28.1';
 import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.28.1';
 import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.28.1';
+import { createChatPrefixBinding } from './chat-prefix-binding.js?v=0.28.1';
 import {queryProgressionHistory} from './progression.js?v=0.28.1';
 import { createChatDocumentCatalog } from './document-catalog.js?v=0.28.1';
 import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.28.1';
@@ -383,6 +384,7 @@ export function createNativeWorkflowController(ports) {
             if(!matches){observe(()=>run.diagnosticCapture.discard?.());run.diagnosticCapture=null;}
         }
         run.automaticTerminals=new Set(plan.primitives.filter(unit=>unit.included&&unit.enabled!==false&&!unit.systemDisabled&&unit.node.operation==='review-publish'&&unit.node.autoApply===true).map(unit=>addressKey(unit.address)));
+        run.automaticEffectTerminals=new Set(plan.primitives.filter(unit=>unit.included&&unit.enabled!==false&&!unit.systemDisabled&&unit.node.operation==='review-publish'&&unit.node.autoApplyEffects===true).map(unit=>addressKey(unit.address)));
         if(run.unified){
             const selected=plan.primitives.filter(unit=>unit.included);
             if(selected.filter(unit=>unit.node.operation==='generate-reply').length!==1)return fail('NATIVE_BOUNDARY_REQUIRED','One selected native generation boundary is required.');
@@ -521,7 +523,10 @@ export function createNativeWorkflowController(ports) {
         const c=context();
         if(!fresh(run))return fail('STALE_RUN','Workflow source or settings changed.');
         if(phase==='pre') {
-            const chat=run.unified && (options.chat===undefined || options.chat===c.chat)?run.nativeCapture.preChat:options.chat??c.chat;
+            // Derived scene records and planner context must describe the same
+            // accepted prefix, including when ST supplies a clone on swipe.
+            const boundSource=run.unified&&Object.values(run.workflowDataNodes??{}).some(node=>node.operation==='read-file'&&node.bindToChat===true&&node.enabled!==false);
+            const chat=boundSource?run.nativeCapture.refs:run.unified && (options.chat===undefined || options.chat===c.chat)?run.nativeCapture.preChat:options.chat??c.chat;
             let sceneSource=run.sceneSources.find(entry=>entry.chat===chat);
             if(!sceneSource){sceneSource={chat,text:sourceText(chat)};run.sceneSources.push(sceneSource);}
             // Public source selection has no actor authority or actor-selection callback.
@@ -578,7 +583,13 @@ export function createNativeWorkflowController(ports) {
             entry.settlement=createAcceptedNativeSettlement({scope:{userId:run.userId,chatId:run.identity.chatId},originalDraft:run.nativeDraft,signal:run.controller.signal,
                 isCurrent:()=>acceptedSourceFresh(entry)&&sourceFresh(run),release:()=>releaseRun(run),
                 validateFinal:({body,originalBody,effects})=>{acceptedBody=body;for(const effect of effects){if(effect.proposed.kind==='file'){const evidence=run.storySession?run.storySession.validateEvidence(effect.proposed.evidence,body,originalBody,{draftEvidence:run.draftEvidence,finalDraft:entry.finalDraft}):validateNativeFileEvidence(effect.proposed.evidence,body,originalBody,{draftEvidence:run.draftEvidence,finalDraft:entry.finalDraft});if(!evidence.ok)return evidence;}}return {ok:true};},
-                publish:async()=>{const applied=await publishCandidate(entry.handle);if(!applied.ok)return applied;if(run.memorySession&&memoryOutputs.length){const authorized=run.memorySession.authorizeAcceptedPublication({body:acceptedBody,finalText:entry.candidate.text,messageIndex:entry.source.messageIndex,originalSwipeId:entry.source.swipeId,finalSwipeId:applied.swipeId});if(!authorized.ok)return authorized;}return {ok:true,data:{appliedLocally:true,saveAttempted:true,persistence:applied.persistence,swipeId:applied.swipeId}};}});
+                publish:async()=>{
+                    const applied=await publishCandidate(entry.handle);if(!applied.ok)return applied;
+                    // Effects-only acceptance keeps the preflighted original memory source;
+                    // only a new reply revision needs accepted-publication rebasing.
+                    if(run.memorySession&&memoryOutputs.length&&!entry.effectsOnlyPublication){const authorized=run.memorySession.authorizeAcceptedPublication({body:acceptedBody,finalText:entry.candidate.text,messageIndex:entry.source.messageIndex,originalSwipeId:entry.source.swipeId,finalSwipeId:applied.swipeId});if(!authorized.ok)return authorized;}
+                    return {ok:true,data:{appliedLocally:true,saveAttempted:applied.saveAttempted,persistence:applied.persistence,swipeId:applied.swipeId}};
+                }});
             for(const effect of recall.effects(run)){const staged=entry.settlement.stage(effect);if(!staged.ok)return staged;}
             for(const effect of run.stagedFiles){const staged=entry.settlement.stage(effect);if(!staged.ok)return staged;}
             for(const output of memoryOutputs){const intent=output.artifact,record=parseRecord(intent,'commit-intent');
@@ -660,7 +671,7 @@ export function createNativeWorkflowController(ports) {
             selectNativeRandomOutcomes:async payload=>{const state=await scopedStoryState(run);return state.ok?state.data.selectNativeRandomOutcomes(payload):state;},
             reuseNativeOutcome:outcome=>run.storySession?run.storySession.reuseNativeOutcome(outcome):{ok:true,data:null},
             retainNativeOutcome:async payload=>run.storySession?run.storySession.retainNativeOutcome(payload):{ok:true}}:{}),
-            ...(run.diagnosticCapture?{onDiagnostic:event=>observe(()=>run.diagnosticCapture.model?.(event))}:{}),
+            ...(run.diagnosticCapture?{onDiagnostic:event=>observe(()=>run.diagnosticCapture.model?.(event)),diagnosticResponseText:run.diagnosticCapture.captureResponses!==false,isDiagnosticResponseCurrent:()=>run.diagnosticCapture.captureResponses!==false}:{}),
             onStage:ports.onStage,onEvent:event=>{if(run.diagnosticCapture)observe(()=>run.diagnosticCapture.event?.(event));observe(ports.onEvent,event);observe(options.onEvent,event);},
         },{getSourceProofs:()=>run.sourceCapability,prepare:(plan,controls)=>prepareRun(run,plan,controls,options),executeIntrospection:(node,inputs,operationPorts)=>introspect(run,node,inputs,operationPorts),...(run.unified||run.graph?.runtime===3||Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{executeHostOperation:(node,inputs,operationPorts)=>nativeOperation(run,node,inputs,operationPorts,options)}:{}),authorizeModelInputs:payload=>{const checked=authorizeModelScope(run,payload);if(checked.ok)run.modelScopes.set(addressKey(payload.address),Object.freeze({node:payload.node,inputs:payload.inputs,capability:payload.capability}));return checked;},retainScopedOutput:payload=>retainActorOutput(run,payload),retainRecallProvenance:payload=>run.recallCaptured?recall.retain(run,payload):{ok:true,data:{retained:true}},settle:transport=>settleRun(run,transport)});}
         finally {delete run.cancel;run.bindingContexts.clear();run.modelScopes.clear();run.modelAddresses=new WeakMap();if(!run.retainResources)releaseRun(run);}
@@ -742,7 +753,8 @@ export function createNativeWorkflowController(ports) {
             if(!prepared.ok)return prepared;
             run.workflowDataDefaultsPrepared=true;
         }
-        const session=createNativeFileSession({catalog:documentCatalog,scope:{userId:run.userId,chatId:run.identity.chatId,...(actorId?{actorId}:{})},context,userId:()=>ports.userId?.(),persistenceVerifier,signal:run.controller.signal,isCurrent:live,barriers:fileBarriers,workflowId:run.graph.id,getOriginalDraft:()=>run.nativeDraft??{source:{messageIndex:context().chat.length-1,swipeId:context().chat.at(-1)?.swipe_id??0,originalText:context().chat.at(-1)?.mes??''}},validateEvidence:()=>({ok:true}),stage:effect=>{if(!live())return fail('STALE_RUN','The accepted effect source changed.');run.stagedFiles.push(effect);return {ok:true};}});
+        const chatSource=createChatPrefixBinding(run.nativeCapture?.refs??context().chat,sourceText);
+        const session=createNativeFileSession({catalog:documentCatalog,scope:{userId:run.userId,chatId:run.identity.chatId,...(actorId?{actorId}:{})},context,userId:()=>ports.userId?.(),persistenceVerifier,signal:run.controller.signal,isCurrent:live,barriers:fileBarriers,workflowId:run.graph.id,chatSource,maintainHistory:run.unified===true,getOriginalDraft:()=>run.nativeDraft??{source:{messageIndex:context().chat.length-1,swipeId:context().chat.at(-1)?.swipe_id??0,originalText:context().chat.at(-1)?.mes??''}},validateEvidence:()=>({ok:true}),stage:effect=>{if(!live())return fail('STALE_RUN','The accepted effect source changed.');run.stagedFiles.push(effect);return {ok:true};}});
         if(!session.ok)return session;if(!live()){session.data.release();return fail('STALE_RUN','The native file scope changed during capture.');}const captured=Object.freeze({...session.data,actorId,...(actorGrant?{actorGrant,presence:request.presence}:{})});run.fileSessions.set(key,captured);if(key==='selected')run.fileSession=captured;return {ok:true,data:captured};
     }
     async function scopedStoryState(run){
@@ -888,9 +900,9 @@ export function createNativeWorkflowController(ports) {
             const captured=scopedFiles(run,scopeRequest);if(!captured.ok)return captured;
             if(node.operation==='write-file'&&inputs.evidence!==undefined){const state=await scopedStoryState(run);if(!state.ok)return state;}
             const files=captured.data;
-            let read;const result=await executeFileNode(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,authorizeActorFileScope:({actorId,presence,reference})=>{if(actorId!==files.actorId||presence!==files.presence||reference&&run.fileReferences.get(reference)!==files)return fail('ACTOR_FILE_SCOPE_MISMATCH','The present-actor file capture changed.');const scoped=scopedActors(run);if(!scoped.ok)return scoped;const checked=scoped.data.checkActorGrant(files.actorGrant);return checked.ok?{ok:true,data:{actorId}}:checked;},files:{read:async target=>{const visibility=files.visibility(target);if(!visibility.ok)return visibility;read=await files.store.read(target);if(read.ok)run.fileReferences.set(read.data.fileRef,files);return read;},prepare:files.store.prepare},fileVisibility:({reference})=>files.visibility(reference.targetId),authorizeFileWrite:({reference})=>{const mark=files.visibility(reference.targetId);return mark.ok?{ok:true,data:{destinationVisibility:mark.data}}:mark;},createIntentId:(producer,evidence)=>files.intentId(producer,evidence,operationPorts.address),stageFileIntent:files.stage});
+            let read;const result=await executeFileNode(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,authorizeActorFileScope:({actorId,presence,reference})=>{if(actorId!==files.actorId||presence!==files.presence||reference&&run.fileReferences.get(reference)!==files)return fail('ACTOR_FILE_SCOPE_MISMATCH','The present-actor file capture changed.');const scoped=scopedActors(run);if(!scoped.ok)return scoped;const checked=scoped.data.checkActorGrant(files.actorGrant);return checked.ok?{ok:true,data:{actorId}}:checked;},files:{read:async (target,options)=>{const visibility=files.visibility(target);if(!visibility.ok)return visibility;read=await files.store.read(target,options);if(read.ok)run.fileReferences.set(read.data.fileRef,files);return read;},prepare:files.store.prepare},fileVisibility:({reference})=>files.visibility(reference.targetId),authorizeFileWrite:({reference})=>{const mark=files.visibility(reference.targetId);return mark.ok?{ok:true,data:{destinationVisibility:mark.data}}:mark;},createIntentId:(producer,evidence,reference)=>files.intentId(producer,evidence,operationPorts.address,reference),stageFileIntent:files.stage});
             if(node.operation==='read-file'&&result.ok&&artifactVisibility(result.outputs).kind==='actor-private'){const scoped=scopedActors(run);if(!scoped.ok)return scoped;const selected=files.actorGrant?{ok:true,data:{grant:files.actorGrant,scope:{actorId:files.actorId}}}:scoped.data.authorizeSelectedActor();if(!selected.ok)return selected;if(selected.data.scope.actorId!==files.actorId)return fail('ACTOR_FILE_SCOPE_MISMATCH','The private file belongs to a changed native actor.');const retained=scoped.data.captureScopedResult(result,selected.data.grant);if(!retained.ok)return retained;}
-            if(run.recallCaptured&&node.operation==='read-file'&&result.ok&&read?.ok&&result.outputs?.reference?.value===read.data.fileRef){const snapshot=read.data.snapshot;let recordValue;try{recordValue=JSON.parse(snapshot.content);}catch{}const originalStored=context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId],storedFingerprint=originalStored===undefined?null:JSON.stringify(originalStored);const captured=recall.capture(run,result,{kind:'file',recordValue,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&files.visibility(snapshot.targetId).ok&&(context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId]===undefined?null:JSON.stringify(context().chatMetadata.latticeDocuments[run.userId][snapshot.targetId]))===storedFingerprint});if(!captured.ok)return captured;}
+            if(run.recallCaptured&&node.operation==='read-file'&&result.ok&&read?.ok&&result.outputs?.reference?.value===read.data.fileRef){const snapshot=read.data.snapshot;let recordValue;try{recordValue=JSON.parse((read.data.readView??snapshot).content);}catch{}const originalStored=context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId],storedFingerprint=originalStored===undefined?null:JSON.stringify(originalStored);const captured=recall.capture(run,result,{kind:'file',recordValue,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&files.visibility(snapshot.targetId).ok&&(context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId]===undefined?null:JSON.stringify(context().chatMetadata.latticeDocuments[run.userId][snapshot.targetId]))===storedFingerprint});if(!captured.ok)return captured;}
             return result;
         }
         if(node.operation==='scene-context'&&operationPorts.runtime===3)return sourceScene(run,node,inputs,operationPorts,options);
@@ -980,12 +992,15 @@ export function createNativeWorkflowController(ports) {
         return fresh(entry.run)&&promptFresh(entry.run)&&!ports.isBusy?.()&&c.chat===entry.chat&&c.chat.length===s.chatLength&&c.chat.every((item,index)=>item===entry.refs[index])&&c.chat[s.messageIndex]===m&&m.mes===entry.candidate.text&&m.swipe_id===entry.applied.swipeId&&m.swipes?.[s.swipeId]===s.originalText&&sourceText(c.chat.map((item,index)=>index===s.messageIndex?old:item))===entry.prefix;
     }
     async function automaticallyApply(run,value) {
-        const entries=run.reviewHandles.filter(handle=>run.automaticTerminals.has(addressKey(handle.terminal.address))).map(handle=>candidateEntry(handle)).filter(Boolean);
+        const entries=run.reviewHandles.filter(handle=>run.automaticTerminals.has(addressKey(handle.terminal.address))||run.automaticEffectTerminals.has(addressKey(handle.terminal.address))).map(handle=>candidateEntry(handle)).filter(Boolean);
         if(entries.length>1)return {...value,...fail('AUTO_APPLY_AMBIGUOUS','Enable automatic application on only one selected Review / Publish terminal.')};
         const entry=entries[0];
-        // Keep the original selected when the workflow proposes no text change.
-        // Any staged consequences remain available for explicit acceptance.
-        if(!entry||entry.candidate.text===entry.source.originalText)return value;
+        if(!entry)return value;
+        const unchanged=entry.candidate.text===entry.source.originalText;
+        if(unchanged){
+            if(!entry.settlement||!run.automaticEffectTerminals.has(addressKey(entry.terminal.address)))return value;
+            entry.effectsOnlyPublication=true;
+        } else if(!run.automaticTerminals.has(addressKey(entry.terminal.address)))return value;
         automaticApplication=run;
         try {
             const applied=await apply(entry.handle);
@@ -1025,6 +1040,10 @@ export function createNativeWorkflowController(ports) {
         if(applying)return fail('BUSY','A reply application is already in progress.');
         const effective=bindingFresh(entry.run);if(!effective.ok)return applicationResult(effective,entry.run);
         if(!validSource(entry))return applicationResult(fail('STALE_SOURCE','The chat, reply, swipe, or prompt source changed. Run the workflow again.'),entry.run);
+        if(entry.effectsOnlyPublication){
+            entry.applied=freezeArtifact({...entry.run.publicResult,ok:true,appliedLocally:true,effectsOnlyApplied:true,saveAttempted:false,persistence:'not-attempted',swipeId:entry.source.swipeId});
+            return applicationResult(entry.applied,entry.run);
+        }
         const c=context(),m=entry.message,index=entry.source.messageIndex;
         if(typeof c.saveChat!=='function' || typeof c.updateMessageBlock!=='function' || typeof c.swipe?.refresh!=='function' || typeof ports.syncMesToSwipe!=='function' || typeof ports.syncSwipeToMes!=='function')return applicationResult(fail('APPLY_UNAVAILABLE','Required native save, display or swipe synchronization APIs are unavailable.'),entry.run);
         const backup=structuredClone(m); let mutated=false,saveAttempted=false;

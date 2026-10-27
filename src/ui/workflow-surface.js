@@ -255,7 +255,7 @@ function boundedResult(raw, handles) {
     const error = safeError(raw.error);
     if (error) result.error = { ...error, ...(nodeAddress(own(own(raw, 'error'), 'address')) ? { address: nodeAddress(own(own(raw, 'error'), 'address')) } : {}) };
     const settlement = safeSettlement(own(raw,'settlement')); if (settlement) result.settlement = settlement;
-    for (const key of ['automaticallyApplied', 'appliedLocally']) if (typeof own(raw, key) === 'boolean') result[key] = own(raw, key);
+    for (const key of ['automaticallyApplied', 'effectsOnlyApplied', 'appliedLocally']) if (typeof own(raw, key) === 'boolean') result[key] = own(raw, key);
     for (const key of ['preview', 'published', 'fallback']) if (raw[key] !== undefined) result[key] = raw[key];
     return freeze(result);
 }
@@ -291,7 +291,7 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
         result = boundedResult({ ...result, ...(settlement ? { settlement } : {}), ...(own(response, 'appliedLocally') === true ? { appliedLocally: true } : {}) }, reviewHandles);
         status = settlement?.status === 'partial' ? 'Reply accepted. Some workflow data could not be saved. Use Retry failed saves for those targets.'
             : settlement?.status === 'save-unverified' ? 'Reply accepted. Some saves are unconfirmed. Check their save status before writing again.'
-            : settlement?.status === 'settled' ? 'Reply accepted. Workflow data saved. Saving the reply is still unconfirmed.'
+            : settlement?.status === 'settled' ? result.effectsOnlyApplied === true ? 'Workflow data saved. Native reply unchanged.' : 'Reply accepted. Workflow data saved. Saving the reply is still unconfirmed.'
             : automatic ? 'Revised reply applied as a new swipe.' : 'Reply applied locally. Saving is unconfirmed.';
         if (settlement?.status === 'partial') { availability = 'current'; applyIssue = ''; }
         else { clearAuthority(); availability = recording ? 'stale' : 'current'; if (!recording) result = null; }

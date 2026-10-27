@@ -18,7 +18,7 @@ export interface NativeFileSession {
     store:FileStore;
     visibility(targetId:string):Result<DocumentVisibility>;
     lookupHistory(targetId:string,query:import('./document-history').DocumentHistoryQuery):Promise<Result<import('./document-history').DocumentHistoryMatches>>;
-    intentId(node:{id:string},evidence:unknown[],address?:NodeAddress):Promise<Result<string>>;
+    intentId(node:{id:string},evidence:unknown[],address?:NodeAddress,reference?:import('./file-store').FileReference):Promise<Result<string>>;
     stage(prepared:{handle:Parameters<FileStore['preflight']>[0];plan:{targetId:string}},evidence:unknown[]):ReturnType<NativeSettlement['stage']>;
     release():void;
 }
@@ -29,4 +29,4 @@ export interface NativeDocumentHistory {
     inspect(targetId:string):Promise<Result<import('./document-history').ArchiveView>>;
 }
 export function createNativeDocumentHistory(config:{catalog:ChatDocumentCatalog;context:()=>{chat:unknown[];chatId?:string;getCurrentChatId?:()=>string;chatMetadata:Record<string,unknown>};userId:()=>string;actorId:()=>string|null;isBusy:()=>boolean;barriers:Map<string,NativeFileBarrier>;persistenceVerifier:NativePersistenceVerifier;onApplied?:()=>void}):NativeDocumentHistory;
-export function createNativeFileSession(config:{catalog:ChatDocumentCatalog;scope:StorageScope;context:()=>{chat:unknown[];chatId?:string;getCurrentChatId?:()=>string;chatMetadata:Record<string,unknown>};userId:()=>string;persistenceVerifier:NativePersistenceVerifier;signal?:AbortSignal;isCurrent:()=>boolean;barriers?:Map<string,NativeFileBarrier>;workflowId:string;originalDraft?:DraftArtifact;getOriginalDraft?:()=>DraftArtifact;validateEvidence:(evidence:unknown[])=>Result<void>|Promise<Result<void>>;stage:NativeSettlement['stage']}):Result<NativeFileSession>;
+export function createNativeFileSession(config:{catalog:ChatDocumentCatalog;scope:StorageScope;context:()=>{chat:unknown[];chatId?:string;getCurrentChatId?:()=>string;chatMetadata:Record<string,unknown>};userId:()=>string;persistenceVerifier:NativePersistenceVerifier;signal?:AbortSignal;isCurrent:()=>boolean;barriers?:Map<string,NativeFileBarrier>;workflowId:string;chatSource?:import('./chat-prefix-binding').ChatPrefixBinding|null;maintainHistory?:boolean;originalDraft?:DraftArtifact;getOriginalDraft?:()=>DraftArtifact;validateEvidence:(evidence:unknown[])=>Result<void>|Promise<Result<void>>;stage:NativeSettlement['stage']}):Result<NativeFileSession>;

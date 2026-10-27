@@ -60,6 +60,11 @@ export interface NativeNode extends Binding {
     injectionRole?: 'system' | 'user' | 'assistant';
     injectionPosition?: 'before-prompt' | 'in-prompt' | 'in-chat';
     injectionDepth?: number;
+    /** Review / Publish opt-ins; omitted preserves manual acceptance. */
+    autoApply?: boolean;
+    autoApplyEffects?: boolean;
+    /** Read File derives context from the accepted chat prefix; omitted is unbound. */
+    bindToChat?: boolean;
     [key: string]: unknown;
 }
 export interface DirectWire {
@@ -305,11 +310,15 @@ export type BoundedWorkflowRunResult = BoundedRunData & { schema: 3 | 4; runtime
 /** A failed factory can return no recording; consumers preserve their prior bounded record. */
 export interface WorkflowPreparationFailure { schema?: number; runtime?: number; mode: 'root' | 'target'; runId?: string; ok: false; callBound: number; actualCalls: number; error: WorkflowError; recording?: never; }
 export type WorkflowRunResult = BoundedWorkflowRunResult | WorkflowPreparationFailure;
-export type HostWorkflowRunResult = WorkflowRunResult & { reviewHandles?: TerminalReviewHandle[]; published?: boolean; automaticallyApplied?: boolean; fallback?: 'native'; };
+export type HostWorkflowRunResult = WorkflowRunResult & { reviewHandles?: TerminalReviewHandle[]; published?: boolean; automaticallyApplied?: boolean; effectsOnlyApplied?: boolean; fallback?: 'native'; };
 export interface WorkflowRunOptions {
     target?: WorkflowTarget; onEvent?: (event: RunEvent) => unknown; runId?: string;
-    /** Owner-opted-in sink. Hidden/unknown response scopes must be omitted by its consumer. Failures are passive. */
+    /** Passive owner diagnostic sink. Hidden/unknown response scopes must be omitted by its consumer. */
     onDiagnostic?: (event: WorkflowDiagnosticEvent) => unknown;
+    /** False disables response-text capture/extraction while retaining validation diagnostics. Defaults to true. */
+    diagnosticResponseText?: boolean;
+    /** Passive live capture lease checked before diagnostic-only extraction. False or throw revokes text capture. */
+    isDiagnosticResponseCurrent?: () => boolean;
     clock?: { now(): number; monotonic(): number }; phase?: WorkflowRunPhase; signal?: AbortSignal; preview?: boolean; dryRun?: boolean;
     iterateHelper?: import('./operations/control-nodes').IterateHelper;
     /** Host delay adapter; returning false stops the retry. */

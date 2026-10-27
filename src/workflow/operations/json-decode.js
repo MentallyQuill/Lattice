@@ -58,21 +58,21 @@ function jsonEqual(a, b) {
 function schemaFindings(value, schema, path = '', findings = []) {
     if (findings.length >= 128) return findings;
     const add = (keyword, message, at = path) => { if (findings.length < 128) findings.push({path:at,keyword,message}); };
-    if (schema.type && !matchesType(value, schema.type)) add('type',`Expected ${schema.type}.`);
+    if (schema.type && !matchesType(value, schema.type)) add('type',`Expected ${schema.type}; got ${value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value}.`);
     if (schema.enum && !schema.enum.some(item => jsonEqual(value, item))) add('enum','Value is not in enum.');
     if (Object.hasOwn(schema,'const') && !jsonEqual(value,schema.const)) add('const','Value does not equal const.');
     if (typeof value === 'number') {
-        if (Object.hasOwn(schema,'minimum') && value < schema.minimum) add('minimum','Number is below minimum.');
-        if (Object.hasOwn(schema,'maximum') && value > schema.maximum) add('maximum','Number is above maximum.');
+        if (Object.hasOwn(schema,'minimum') && value < schema.minimum) add('minimum',`Expected a number at least ${schema.minimum}.`);
+        if (Object.hasOwn(schema,'maximum') && value > schema.maximum) add('maximum',`Expected a number at most ${schema.maximum}.`);
     }
     if (typeof value === 'string') {
         const length = Array.from(value).length;
-        if (Object.hasOwn(schema,'minLength') && length < schema.minLength) add('minLength','String is shorter than minimum.');
-        if (Object.hasOwn(schema,'maxLength') && length > schema.maxLength) add('maxLength','String is longer than maximum.');
+        if (Object.hasOwn(schema,'minLength') && length < schema.minLength) add('minLength',`Expected at least ${schema.minLength} characters; got ${length}.`);
+        if (Object.hasOwn(schema,'maxLength') && length > schema.maxLength) add('maxLength',`Expected at most ${schema.maxLength} characters; got ${length}.`);
     }
     if (Array.isArray(value)) {
-        if (Object.hasOwn(schema,'minItems') && value.length < schema.minItems) add('minItems','Array has fewer than minimum items.');
-        if (Object.hasOwn(schema,'maxItems') && value.length > schema.maxItems) add('maxItems','Array has more than maximum items.');
+        if (Object.hasOwn(schema,'minItems') && value.length < schema.minItems) add('minItems',`Expected at least ${schema.minItems} items; got ${value.length}.`);
+        if (Object.hasOwn(schema,'maxItems') && value.length > schema.maxItems) add('maxItems',`Expected at most ${schema.maxItems} items; got ${value.length}.`);
         if (schema.items) value.forEach((item,index) => schemaFindings(item,schema.items,`${path}/${index}`,findings));
     }
     if (isObject(value)) {

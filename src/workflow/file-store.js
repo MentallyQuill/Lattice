@@ -2,6 +2,8 @@ import { cloneJsonValue } from './operations/json-data.js?v=0.28.1';
 import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.28.1';
 import {documentHistoryHeader,inspectDocumentHistory,validateDocumentHistory,lookupDocumentHistory,prepareDocumentCheckpoint} from './document-history.js?v=0.28.1';
 import {artifactVisibility} from './artifact-privacy.js?v=0.28.1';
+import {validChatSourceBinding} from './chat-prefix-binding.js?v=0.28.1';
+import {sha256Text} from './definition-data.js?v=0.28.1';
 
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
@@ -25,8 +27,8 @@ function trustedConfig(raw,allowed){
     }catch{return {};}
 }
 function captureCasUpdate(raw){
-    const fields=trustedConfig(raw,['targetId','expectedRevision','expectedContent','projectedDocument','intentId','fingerprint']);
-    if(Object.keys(fields).length!==6)return null;
+    const fields=trustedConfig(raw,['targetId','expectedRevision','expectedContent','projectedDocument','intentId','fingerprint','sourceBinding','expectedBindingFingerprint']);
+    if(Object.keys(fields).length!==(Object.hasOwn(fields,'sourceBinding')?8:6))return null;
     const captured={};
     for(const key of Object.keys(fields)){
         const checked=cloneJsonValue(fields[key]);if(!checked.ok)return null;captured[key]=checked.data.value;
@@ -34,13 +36,14 @@ function captureCasUpdate(raw){
     if(!id(captured.targetId)||!id(captured.intentId)||!revision(captured.expectedRevision)||typeof captured.expectedContent!=='string'||typeof captured.fingerprint!=='string'||!/^sha256:[a-f0-9]{64}$/.test(captured.fingerprint)||!plain(captured.projectedDocument)||typeof captured.projectedDocument.content!=='string'||!['json','jsonl','csv','text','markdown'].includes(captured.projectedDocument.format))return null;
     // Old and new snapshots each have their own read bound; combining both would
     // reject a valid large replacement solely because its content is duplicated.
+    if(Object.hasOwn(captured,'sourceBinding')&&(!validChatSourceBinding(captured.sourceBinding)||!/^sha256:[a-f0-9]{64}$/.test(captured.expectedBindingFingerprint)))return null;
     return freeze(captured);
 }
 const validScope=scope=>plain(scope)&&Object.keys(scope).every(key=>['userId','chatId','actorId'].includes(key))&&id(scope.userId)&&id(scope.chatId)&&(!Object.hasOwn(scope,'actorId')||id(scope.actorId));
 function validSignal(signal){try{return signal===undefined||typeof Object.getOwnPropertyDescriptor(AbortSignal.prototype,'aborted').get.call(signal)==='boolean';}catch{return false;}}
 /** Captured trusted ports own storage; portable DTOs and imported snapshots grant no write capability. */
 export function createFileStore(config) {
-    config=trustedConfig(config,['scope','authorizedTargets','load','compareAndSwap','lookupHistory','inspectHistory','previewCheckpoint','applyCheckpoint','validateEvidence','isCurrent','signal']);
+    config=trustedConfig(config,['scope','authorizedTargets','load','compareAndSwap','lookupHistory','inspectHistory','previewCheckpoint','applyCheckpoint','validateEvidence','isCurrent','signal','bindRead']);
     const refs=new WeakMap(),handles=new WeakMap(),intents=new Map(),uncertain=new Map();
     const scope=own(config.scope),targets=own(config.authorizedTargets);
     const valid=validScope(scope)&&validSignal(config.signal)&&Array.isArray(targets)&&targets.length<=128&&targets.every(id)&&new Set(targets).size===targets.length&&['load','compareAndSwap','validateEvidence','isCurrent'].every(key=>typeof config[key]==='function');
@@ -52,41 +55,49 @@ export function createFileStore(config) {
         catch{return fail('STALE_FILE_SCOPE','The captured file authority could not be verified.');}
         return {ok:true};
     };
-    async function load(targetId){
+    async function load(targetId,options){
         const before=current();if(!before.ok)return before;
         if(!id(targetId)||!targets.includes(targetId))return fail('FILE_TARGET_UNAUTHORIZED','Select and authorize this storage target in the host.');
-        let loaded;try{loaded=result(await config.load(targetId));}catch{return fail('FILE_BACKEND_FAILED','The authorized target could not be read.');}
+        let loaded;try{loaded=result(await config.load(targetId,options));}catch{return fail('FILE_BACKEND_FAILED','The authorized target could not be read.');}
         const after=current();if(!after.ok)return after;if(!loaded.ok)return loaded;
         const value=loaded.data;
         if(!plain(value)||value.targetId!==targetId||!revision(value.revision)||!['json','jsonl','csv','text','markdown'].includes(value.format)||typeof value.content!=='string'||!Array.isArray(value.receipts)||value.receipts.length>256||value.receipts.some(entry=>!plain(entry)||!id(entry.intentId)||typeof entry.fingerprint!=='string'||!/^sha256:[a-f0-9]{64}$/.test(entry.fingerprint)||!revision(entry.revision)))return fail('INVALID_FILE_SNAPSHOT','The backend must provide a bounded revisioned document and receipts.');
         const history=documentHistoryHeader(value.history);if(!history.ok)return history;
         return {ok:true,data:freeze(value)};
     }
-    async function read(targetId){
-        const loaded=await load(targetId);if(!loaded.ok)return loaded;
+    async function read(targetId,options={}){
+        const checked=own(options);if(!plain(checked)||Object.keys(checked).some(key=>key!=='bindToChat')||checked.bindToChat!==undefined&&typeof checked.bindToChat!=='boolean')return fail('INVALID_FILE_CONTROLS','Read controls require a known boolean binding option.');
+        const bound=checked.bindToChat===true;
+        if(bound&&typeof config.bindRead!=='function')return fail('CHAT_SOURCE_REQUIRED','Chat-bound reads require captured host source authority.');
+        const loaded=await load(targetId,{bindToChat:bound});if(!loaded.ok)return loaded;
         const snapshot=freeze({targetId,revision:loaded.data.revision,format:loaded.data.format,content:loaded.data.content});
+        let binding;
+        if(bound){try{binding=result(await config.bindRead(snapshot,loaded.data));}catch{return fail('CHAT_SOURCE_REQUIRED','The accepted source prefix is unavailable.');}if(!binding.ok)return binding;if(!validChatSourceBinding(binding.data?.sourceBinding))return fail('CHAT_SOURCE_REQUIRED','The host source binding is invalid.');}
+        const available=current();if(!available.ok)return available;
         const fileRef=freeze({kind:'file-reference',backend:'host-store',scope:freeze(structuredClone(scope)),targetId,revision:snapshot.revision});
-        refs.set(fileRef,{snapshot,historyEpoch:documentHistoryHeader(loaded.data.history).data.epoch});
-        return {ok:true,data:freeze({snapshot,fileRef})};
+        refs.set(fileRef,{snapshot,historyEpoch:documentHistoryHeader(loaded.data.history).data.epoch,...(binding?{sourceBinding:binding.data.sourceBinding,expectedBindingFingerprint:sha256Text(canonical(loaded.data.sourceBinding??null))}:{})});
+        return {ok:true,data:freeze({snapshot,fileRef,...(binding?.data.readView?{readView:binding.data.readView}:{})})};
     }
     async function prepare(fileRef,settings,options){
         const available=current();if(!available.ok)return available;
         const captured=refs.get(fileRef);if(!captured)return fail('FILE_REFERENCE_UNAUTHORIZED','Use the live reference captured by this authorized Read File.');
         const controls=own(options);if(!plain(controls)||!id(controls.intentId)||!Array.isArray(controls.evidence)||controls.evidence.length>128)return fail('INVALID_FILE_INTENT','Provide a stable intent identity and bounded source evidence.');
-        const mutation=own(settings),projected=prepareDocumentMutation(captured.snapshot,mutation);if(!projected.ok)return projected;
+        const mutation=own(settings);
+        if(captured.sourceBinding&&mutation?.operation!=='replace')return fail('BOUND_REPLACE_REQUIRED','Derived chat context requires a complete replacement through its bound reference.');
+        const projected=prepareDocumentMutation(captured.snapshot,mutation);if(!projected.ok)return projected;
         const plan=freeze(projected.data),evidence=freeze(controls.evidence);
         let fingerprint;
         try{
             // Fingerprint the authored action. Later entries and checkpointing
             // change the current projection without changing an already saved action.
-            const digest=await globalThis.crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical({scope,operation:plan.operation,targetId:plan.targetId,mutation,evidence})));
+            const digest=await globalThis.crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical({scope,operation:plan.operation,targetId:plan.targetId,mutation,evidence,...(captured.sourceBinding?{sourceBinding:captured.sourceBinding}:{})})));
             fingerprint='sha256:'+Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
         }catch{return fail('FILE_FINGERPRINT_FAILED','The prepared intent fingerprint could not be created.');}
         const stillCurrent=current();if(!stillCurrent.ok)return stillCurrent;
         const previous=intents.get(controls.intentId);
         if(previous)return previous.fingerprint===fingerprint?{ok:true,data:previous.prepared}:fail('FILE_INTENT_CONFLICT','The stable intent identity already refers to different proposed content.');
         const handle=Object.freeze({intentId:controls.intentId});
-        const prepared=freeze({handle,plan,status:'staged'}),entry={handle,prepared,plan,evidence,fingerprint,intentId:controls.intentId,snapshot:captured.snapshot,historyEpoch:captured.historyEpoch,receipt:null};
+        const prepared=freeze({handle,plan,status:'staged'}),entry={handle,prepared,plan,evidence,fingerprint,intentId:controls.intentId,snapshot:captured.snapshot,historyEpoch:captured.historyEpoch,sourceBinding:captured.sourceBinding,expectedBindingFingerprint:captured.expectedBindingFingerprint,receipt:null};
         handles.set(handle,entry);intents.set(entry.intentId,entry);
         return {ok:true,data:prepared};
     }
@@ -94,7 +105,8 @@ export function createFileStore(config) {
         const available=current();if(!available.ok)return available;
         const entry=handles.get(handle);if(!entry)return fail('FILE_INTENT_UNAUTHORIZED','Only this captured store can settle its prepared intents.');
         if(uncertain.has(entry.plan.targetId))return fail('PERSISTENCE_UNKNOWN','A prior save for this target is unconfirmed; reconcile persistence before any write.');
-        const first=await load(entry.plan.targetId);if(!first.ok)return first;
+        const first=await load(entry.plan.targetId,{bindToChat:!!entry.sourceBinding});if(!first.ok)return first;
+        if(entry.sourceBinding&&!entry.receipt&&sha256Text(canonical(first.data.sourceBinding??null))!==entry.expectedBindingFingerprint)return fail('FILE_REVISION_CONFLICT','The stored source binding changed after capture.');
         const history=documentHistoryHeader(first.data.history);if(!history.ok)return history;
         if(history.data.epoch!==entry.historyEpoch)return fail('DOCUMENT_HISTORY_CHANGED','The document history changed after capture; read and review a fresh projection.');
         if(entry.receipt)return {ok:true,data:entry.receipt};
@@ -114,8 +126,8 @@ export function createFileStore(config) {
         let validated;try{validated=result(await config.validateEvidence(entry.evidence));}catch{return fail('FILE_EVIDENCE_FAILED','The proposed file evidence could not be validated.');}
         if(!validated.ok)return validated;
         if(validated.data!==undefined)return fail('INVALID_FILE_BACKEND_RESULT','Evidence validation must return Result<void>.');
-        const latest=await load(entry.plan.targetId);if(!latest.ok)return latest;
-        if(latest.data.revision!==first.data.revision||latest.data.content!==first.data.content||latest.data.format!==first.data.format)return fail('FILE_REVISION_CONFLICT','The target changed during evidence validation.');
+        const latest=await load(entry.plan.targetId,{bindToChat:!!entry.sourceBinding});if(!latest.ok)return latest;
+        if(latest.data.revision!==first.data.revision||latest.data.content!==first.data.content||latest.data.format!==first.data.format||entry.sourceBinding&&sha256Text(canonical(latest.data.sourceBinding??null))!==entry.expectedBindingFingerprint)return fail('FILE_REVISION_CONFLICT','The target changed during evidence validation.');
         return {ok:true,data:freeze({intentId:entry.intentId,targetId:entry.plan.targetId,status:'ready',applied:false,acknowledged:false,revision:entry.plan.expectedRevision})};
     }
     async function settle(handle,flags){
@@ -124,12 +136,12 @@ export function createFileStore(config) {
         const ready=await preflight(handle);if(!ready.ok)return ready;
         if(['confirmed','unchanged'].includes(ready.data.status))return {ok:true,data:freeze({...ready.data,applied:false})};
         const entry=handles.get(handle),available=current();if(!available.ok)return available;
-        if(!entry.plan.receipt.changed){
+        if(!entry.plan.receipt.changed&&!entry.sourceBinding){
             entry.receipt=freeze({intentId:entry.intentId,targetId:entry.plan.targetId,status:'unchanged',applied:false,acknowledged:false,revision:entry.plan.expectedRevision});
             return {ok:true,data:entry.receipt};
         }
         let saved;
-        try{saved=result(await config.compareAndSwap(freeze({targetId:entry.plan.targetId,expectedRevision:entry.plan.expectedRevision,expectedContent:entry.snapshot.content,projectedDocument:entry.plan.projectedDocument,intentId:entry.intentId,fingerprint:entry.fingerprint}),{signal:config.signal}));}
+        try{saved=result(await config.compareAndSwap(freeze({targetId:entry.plan.targetId,expectedRevision:entry.plan.expectedRevision,expectedContent:entry.snapshot.content,projectedDocument:entry.plan.projectedDocument,intentId:entry.intentId,fingerprint:entry.fingerprint,...(entry.sourceBinding?{sourceBinding:entry.sourceBinding,expectedBindingFingerprint:entry.expectedBindingFingerprint}:{})}),{signal:config.signal}));}
         catch{uncertain.set(entry.plan.targetId,entry);return {ok:true,data:freeze({intentId:entry.intentId,targetId:entry.plan.targetId,status:'unknown',applied:null,acknowledged:false})};}
         if(!saved.ok){if(saved.error.code==='INVALID_FILE_BACKEND_RESULT')uncertain.set(entry.plan.targetId,entry);return saved;}
         if(!plain(saved.data)||saved.data.applied!==true||typeof saved.data.acknowledged!=='boolean'||!revision(saved.data.revision)){
@@ -170,13 +182,15 @@ export function createChatDocumentBackend(config){
         if(!dataContainer(user))return fail('INVALID_FILE_METADATA','The selected user document namespace is malformed.');
         return {ok:true,data:{context,metadata,namespace,user}};
     }
-    function packet(current,targetId){
+    function packet(current,targetId,options={}){
         if(!id(targetId))return fail('FILE_TARGET_UNAUTHORIZED','A logical target identity is required.');
         const stored=Object.hasOwn(current.user,targetId)?own(field(current.user,targetId)):templates.get(targetId);
         if(!stored)return fail('FILE_NOT_FOUND','Select an existing logical document or an explicit creation template.');
-        if(!plain(stored)||stored.targetId!==targetId||canonical(stored.scope)!==canonical(scope)||!Number.isSafeInteger(stored.revision)||stored.revision<0||typeof stored.content!=='string'||!Array.isArray(stored.receipts)||stored.receipts.length>256||stored.receipts.some(item=>!plain(item)||!id(item.intentId)||!/^sha256:[a-f0-9]{64}$/.test(item.fingerprint)||!revision(item.revision))||!['json','jsonl','csv','text','markdown'].includes(stored.format))return fail('INVALID_FILE_METADATA','The stored document must match its captured target and scope.');
+        const copied=plain(stored)&&canonical(stored.scope)!==canonical(scope);
+        const permittedCopy=copied&&options.bindToChat===true&&templates.has(targetId)&&validScope(stored.scope)&&stored.scope.userId===scope.userId&&stored.scope.chatId!==scope.chatId&&stored.scope.actorId===scope.actorId&&validChatSourceBinding(stored.sourceBinding)&&documentHistoryHeader(stored.history).ok;
+        if(!plain(stored)||stored.targetId!==targetId||copied&&!permittedCopy||!Number.isSafeInteger(stored.revision)||stored.revision<0||typeof stored.content!=='string'||!Array.isArray(stored.receipts)||stored.receipts.length>256||stored.receipts.some(item=>!plain(item)||!id(item.intentId)||!/^sha256:[a-f0-9]{64}$/.test(item.fingerprint)||!revision(item.revision))||!['json','jsonl','csv','text','markdown'].includes(stored.format))return fail('INVALID_FILE_METADATA','The stored document must match its captured target and scope.');
         const header=documentHistoryHeader(stored.history);if(!header.ok)return header;
-        if(header.data.epoch>0){
+        if(header.data.epoch>0&&!permittedCopy){
             const archive=archives(current);if(!archive.ok)return archive;
             const inspected=inspectDocumentHistory({targetId,scope,history:stored.history,pages:archive.data.pages});if(!inspected.ok)return inspected;
             if(inspected.data.pages.some(page=>page.kind==='progression')){
@@ -187,11 +201,13 @@ export function createChatDocumentBackend(config){
         }
         return {ok:true,data:stored};
     }
-    async function load(targetId){
+    async function load(targetId,options={}){
         const current=view();if(!current.ok)return current;
-        const found=packet(current.data,targetId);if(!found.ok)return found;
+        const found=packet(current.data,targetId,options);if(!found.ok)return found;
         const {scope:storedScope,...snapshot}=found.data;
-        return {ok:true,data:own(snapshot)};
+        // A copied packet's content/revision remain the physical CAS baseline.
+        // Its other chat's receipts cannot prove an action in this chat.
+        return {ok:true,data:own({...snapshot,...(canonical(storedScope)!==canonical(scope)?{copiedScope:true,receipts:[],history:{schemaVersion:1,epoch:0,head:null}}:{})})};
     }
     function archives(current){
         const namespace=Object.hasOwn(current.metadata,'latticeDocumentHistory')?field(current.metadata,'latticeDocumentHistory'):{};
@@ -262,10 +278,11 @@ export function createChatDocumentBackend(config){
         const owned=captureCasUpdate(update);if(!plain(owned)||!id(owned.targetId)||!id(owned.intentId)||typeof owned.fingerprint!=='string'||!/^sha256:[a-f0-9]{64}$/.test(owned.fingerprint)||!plain(owned.projectedDocument)||typeof owned.projectedDocument.content!=='string'||!['json','jsonl','csv','text','markdown'].includes(owned.projectedDocument.format))return fail('INVALID_FILE_BACKEND_UPDATE','CAS requires a checked prepared document and bounded receipt.');
         if(controls?.signal?.aborted)return fail('CANCELLED','Logical-document settlement was cancelled.');
         const current=view();if(!current.ok)return current;
-        const found=packet(current.data,owned.targetId);if(!found.ok)return found;
+        const found=packet(current.data,owned.targetId,{bindToChat:!!owned.sourceBinding});if(!found.ok)return found;
         const stored=found.data;
         if(stored.revision!==owned.expectedRevision||stored.content!==owned.expectedContent)return fail('FILE_REVISION_CONFLICT','The logical document changed before its atomic local replacement.');
-        if(stored.format==='json'){
+        if(owned.sourceBinding&&sha256Text(canonical(stored.sourceBinding??null))!==owned.expectedBindingFingerprint)return fail('FILE_REVISION_CONFLICT','The logical source binding changed before replacement.');
+        if(stored.format==='json'&&canonical(stored.scope)===canonical(scope)){
             let previous;try{previous=JSON.parse(stored.content);}catch{}
             if(plain(previous)&&Object.hasOwn(previous,'historyCheckpoint')){
                 let next;try{if(owned.projectedDocument.format==='json')next=JSON.parse(owned.projectedDocument.content);}catch{}
@@ -273,10 +290,13 @@ export function createChatDocumentBackend(config){
                 if(!plain(marker)||Object.keys(marker).length!==2||marker.targetId!==stored.targetId||!header.ok||marker.epoch!==header.data.epoch||!plain(next)||canonical(next.historyCheckpoint)!==canonical(marker))return fail('DOCUMENT_HISTORY_CHANGED','Preserve this document’s checked history marker when updating its active state.');
             }
         }
-        if(stored.revision===Number.MAX_SAFE_INTEGER||stored.receipts.length>=256)return fail('FILE_RECEIPT_LIMIT','Document revision/receipt capacity needs explicit reconciliation.');
+        const activeReceipts=canonical(stored.scope)===canonical(scope)?stored.receipts:[];
+        if(stored.revision===Number.MAX_SAFE_INTEGER||activeReceipts.length>=256)return fail('FILE_RECEIPT_LIMIT','Document revision/receipt capacity needs explicit reconciliation.');
         const nextRevision=stored.revision+1;
-        const next=own({...stored,revision:nextRevision,format:owned.projectedDocument.format,content:owned.projectedDocument.content,receipts:[...stored.receipts,{intentId:owned.intentId,fingerprint:owned.fingerprint,revision:nextRevision}]});
+        const next=own({...stored,scope:structuredClone(scope),revision:nextRevision,format:owned.projectedDocument.format,content:owned.projectedDocument.content,...(owned.sourceBinding?{sourceBinding:owned.sourceBinding}:{}),receipts:[...activeReceipts,{intentId:owned.intentId,fingerprint:owned.fingerprint,revision:nextRevision}]});
         if(!next)return fail('FILE_DOCUMENT_LIMIT','The resulting document and receipts exceed storage admission limits.');
+        if(!owned.sourceBinding)delete next.sourceBinding;
+        if(canonical(stored.scope)!==canonical(scope))delete next.history;
         // No await separates scope/CAS checks from the fresh namespace replacement.
         current.data.metadata.latticeDocuments={...current.data.namespace,[scope.userId]:{...current.data.user,[owned.targetId]:next}};
         let acknowledged=false;

@@ -68,7 +68,7 @@ test('selected saved runs preserve failed validation and retry details beside es
         const selected = f.host.querySelector('[data-diagnostic-selection="run-1"]'); assert.ok(selected);
         assert.match(selected.textContent, /2 of 3 requests/); assert.match(selected.textContent, /Attempt 1/); assert.match(selected.textContent, /Attempt 2/);
         assert.match(selected.textContent, /Transport: Completed/); assert.match(selected.textContent, /Validation: SCHEMA_MISMATCH/);
-        assert.match(selected.textContent, /\/scene\/title/); assert.match(selected.textContent, /required/); assert.match(selected.textContent, /Required property is missing/);
+        assert.match(selected.textContent, /\/scene\/title/); assert.match(selected.textContent, /required/); assert.match(selected.textContent, /Required field is missing/);
         assert.match(selected.textContent, /Retry: SCHEMA_MISMATCH/); assert.match(selected.textContent, /250 ms/); assert.match(selected.textContent, /attempt 2/);
         assert.match(selected.textContent, /Finish: stop/); assert.match(selected.textContent, /inputTokens: 21/); assert.match(selected.textContent, /outputTokens: 9/);
         assert.match(selected.textContent, /Private model output/); assert.match(selected.textContent, /Actor: narrator/);
@@ -133,7 +133,7 @@ test('saved logs remain inspectable while collection is off and explain when a n
         assert.equal(f.host.querySelector('input[aria-label="Save diagnostic logs"]').checked, false);
         assert.ok(f.host.querySelector('[data-diagnostic-selection="run-1"]'));
         assert.match(f.host.textContent, /Turning this on applies to the next run/);
-        assert.match(f.host.textContent, /Turning it off stops collection immediately/);
+        assert.match(f.host.textContent, /Turning it off stops response capture immediately/);
         assert.match(f.host.textContent, /Saved logs stay available until cleared or removed/);
     } finally { await f.close(); }
 });
@@ -150,5 +150,40 @@ test('history shows omission and truncation markers, suppresses hidden text, and
         assert.doesNotMatch(f.host.textContent, /Retained prefix|Hidden response is not retained/);
         f.update(history({ scopeKey: 'user/other-chat', entries: [entry], selectedId: null }));
         assert.equal(f.host.querySelector('[data-diagnostic-selection]'), null, 'a recycled history entry cannot restore the earlier selection');
+    } finally { await f.close(); }
+});
+
+test('response opt-in explains always-retained local failure metadata and opt-in-only successful runs', async () => {
+    const f = await fixture(history());
+    try {
+        assert.match(f.host.querySelector('.pc-diagnostic-toggle').textContent, /Save model responses/);
+        assert.match(f.host.textContent, /Failure metadata is always retained locally.*switch is off/s);
+        assert.match(f.host.textContent, /Model output text.*requires.*opt.in/s);
+        assert.match(f.host.textContent, /Successful and cancelled runs are saved only.*on/s);
+        assert.match(f.host.textContent, /Turning it off stops response capture immediately/);
+        assert.match(f.host.textContent, /Saved logs stay available until cleared or removed/);
+    } finally { await f.close(); }
+});
+
+test('saved schema findings are escaped, bounded and validated before display', async () => {
+    let reads = 0;
+    const error = { code: 'SCHEMA_MISMATCH', message: 'JSON does not match the schema.', findings: [
+        { path: '/<svg onload=alert(1)>', keyword: 'maxLength', message: 'Expected at most 120 characters; got 155.' },
+        { path: '/summary', keyword: 'required', message: 'PRIVATE EXCEPTION <script>boom</script>' },
+        { path: '/' + 'x'.repeat(300), keyword: 'required', message: 'PRIVATE OVERSIZE' },
+        { path: '/hidden', keyword: 'secretKeyword', message: 'PRIVATE UNKNOWN' },
+    ] };
+    const entry = saved({ error, attempts: [] }), f = await fixture(history({ entries: [entry], selectedId: 'run-1' }));
+    try {
+        const findings = f.host.querySelector('.pc-diagnostic-findings');
+        assert.equal(findings.querySelectorAll('li').length, 2);
+        assert.match(findings.textContent, /\/<svg onload=alert\(1\)>/);
+        assert.match(findings.textContent, /Expected at most 120 characters; got 155/);
+        assert.match(findings.textContent, /Required field is missing/);
+        assert.doesNotMatch(findings.textContent, /PRIVATE|boom/);
+        assert.equal(findings.querySelector('svg,script'), null);
+        const accessed = { code: 'SCHEMA_MISMATCH', message: 'JSON does not match the schema.', get findings() { reads++; throw Error('private'); } };
+        f.update(history({ entries: [saved({ error: accessed, attempts: [] })], selectedId: 'run-1' }));
+        assert.equal(reads, 0); assert.equal(f.host.querySelector('.pc-diagnostic-findings'), null);
     } finally { await f.close(); }
 });

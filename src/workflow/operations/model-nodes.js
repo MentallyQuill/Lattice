@@ -132,7 +132,10 @@ function publicRequestFailure(raw) {
 async function requestOne(messages, settings, execution) {
     if (execution.signal?.aborted) return fail('ABORTED', 'Model operation cancelled.');
     if (typeof execution.request !== 'function') return fail('INVALID_PORTS', 'A verified text request capability is required.');
-    if (execution.modelJsonCorrection) messages = [...messages, { role: 'system', content: execution.modelJsonCorrection }];
+    if (execution.modelJsonCorrection) {
+        const { instruction, feedback } = execution.modelJsonCorrection;
+        messages = [...messages, { role: 'system', content: instruction }, ...(feedback ? [{ role: 'user', content: feedback }] : [])];
+    }
     if (messages.some(message => message.content.length > 500000) || messages.reduce((sum, message) => sum + message.content.length, 0) > 500000) return fail('PROMPT_LIMIT', 'Model prompt exceeds its bounded size.');
     let result;
     try { result = await execution.request({ messages: freeze(messages), maxTokens: settings.maxTokens, ...(execution.binding === undefined ? {} : { binding: execution.binding }), ...(execution.signal ? { signal: execution.signal } : {}) }); }

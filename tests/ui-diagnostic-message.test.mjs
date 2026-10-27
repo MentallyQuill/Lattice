@@ -166,3 +166,35 @@ test('Preview names actual confirmed, unverified and unchanged save receipts wit
         assert.deepEqual(view, before, 'display labels must not mutate the underlying settlement');
     } finally { await f.close(); }
 });
+
+test('schema mismatch shows its first safe field finding outside the collapsed technical disclosure', async () => {
+    const f = await fixture('DiagnosticMessage', { issue: { code: 'SCHEMA_MISMATCH', findings: [
+        { path: '/responseOptions', keyword: 'minItems', message: 'Expected at least 1 items; got 0.' },
+        { path: '/summary', keyword: 'maxLength', message: 'Expected at most 120 characters; got 155.' },
+    ] } });
+    try {
+        const finding = f.host.querySelector('[data-diagnostic-finding]');
+        assert.ok(finding);
+        assert.match(finding.textContent, /\/responseOptions.*minItems.*Expected at least 1 items; got 0\./s);
+        assert.equal(finding.closest('details'), null);
+        assert.equal(f.host.querySelector('details').open, false);
+        assert.doesNotMatch(f.host.textContent, /\/summary/);
+    } finally { await f.close(); }
+});
+
+test('DiagnosticMessage escapes field paths and sanitizes direct view findings without reading getters', async () => {
+    const bad = { ...diagnostic, technical: { code: 'SCHEMA_MISMATCH', message: 'Schema mismatch' }, findings: [{ path: '/<img src=x onerror=alert(1)>', keyword: 'required', message: 'private exception <script>boom</script>' }] };
+    const f = await fixture('DiagnosticMessage', { diagnostic: bad });
+    try {
+        const finding = f.host.querySelector('[data-diagnostic-finding]');
+        assert.match(finding.textContent, /\/<img src=x onerror=alert\(1\)>/);
+        assert.match(finding.textContent, /Required field is missing/);
+        assert.doesNotMatch(f.host.textContent, /private exception|boom/);
+        assert.equal(f.host.querySelector('img,script'), null);
+    } finally { await f.close(); }
+    let reads = 0;
+    const accessed = { ...bad, get findings() { reads++; throw Error('private'); } };
+    const g = await fixture('DiagnosticMessage', { diagnostic: accessed });
+    try { assert.equal(reads, 0); assert.equal(g.host.querySelector('[data-diagnostic-finding]'), null); }
+    finally { await g.close(); }
+});

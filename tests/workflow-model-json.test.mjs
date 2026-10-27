@@ -94,6 +94,27 @@ test('wrapped model JSON preserves supported schema validation without coercion'
     }
 });
 
+test('schema diagnostics explain expected bounds and actual types or counts without response values', () => {
+    for (const [input, schema, message] of [
+        ['"PRIVATE RESPONSE"', { type: 'array' }, 'Expected array; got string.'],
+        ['null', { type: 'object' }, 'Expected object; got null.'],
+        ['[]', { type: 'object' }, 'Expected object; got array.'],
+        ['{}', { required: ['missing'] }, 'Required field is missing.'],
+        ['[]', { minItems: 1 }, 'Expected at least 1 items; got 0.'],
+        ['[1,2]', { maxItems: 1 }, 'Expected at most 1 items; got 2.'],
+        ['"😀"', { minLength: 2 }, 'Expected at least 2 characters; got 1.'],
+        ['"😀😀😀"', { maxLength: 2 }, 'Expected at most 2 characters; got 3.'],
+        ['1', { minimum: 2 }, 'Expected a number at least 2.'],
+        ['999987654', { maximum: 2 }, 'Expected a number at most 2.'],
+    ]) {
+        const result = decodeModelJson(input, { schema });
+        assert.equal(result.error?.code, 'SCHEMA_MISMATCH');
+        assert.equal(result.error.findings[0].message, message);
+        assert.equal(JSON.stringify(result).includes('PRIVATE RESPONSE'), false);
+        assert.equal(JSON.stringify(result).includes('999987654'), false);
+    }
+});
+
 test('model JSON bounds the original raw envelope before removing character wrappers', () => {
     const atFenceLimit = '```json\n' + ' '.repeat(99984) + 'null\n```';
     const atBomLimit = '\uFEFF' + ' '.repeat(99995) + 'null';

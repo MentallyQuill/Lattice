@@ -64,6 +64,14 @@ Connections decide dependencies. A Preparation label alone does not put text int
 
 Tools that support both stages expose **Stage → Preparation / Response**. A skipped optional branch can be omitted by Join. An unresolved required branch holds its dependents; uncertainty is not automatically false.
 
+## Recover structured model output
+
+When valid JSON fails a node's schema, Details shows the first failing field and its constraint. For example, `/responseOptions` may need at least one item, or a string may exceed its character limit. These counts refer to characters, not words.
+
+Set **Maximum retries** on a model node to allow recovery. JSON/schema correction is limited to one attempt and shares this allowance with transient request failures. The correction receives bounded field diagnostics alongside the original task and schema. Its replacement must pass the same strict validation; another schema failure stops the node. Each extra request counts against the workflow budget.
+
+Open **Workflow → Run details… → Saved logs** to inspect retained failures and retry reasons. Failed-run metadata is saved locally even with **Save model responses** off. Enable that switch before a run to retain model output text, including authorized private story text, and successful/cancelled runs. Turning it off stops response capture; previously saved logs remain until cleared or evicted. History is scoped to the current user and chat and retains at most 50 runs / 5 MiB per user.
+
 ## Detect and filter a reply
 
 Enter Pattern rules through **Rules → Terms / CSV**. `Elara` creates one rule; `1, 2, 3` and `["1", "2", "3"]` create three string rules. Quote CSV phrases containing commas, such as `"red, blue", green`. Choose Plain text for one literal phrase containing separators. Save validates the entire edit without running it. Regex uses expression rows.
@@ -177,6 +185,10 @@ All available nodes place directly, including nodes with missing settings or an 
 
 **Read File** returns serialized Text, parsed Data, and a live reference. Connect that exact reference to Write to File for the same target and actor scope. A filename or copied reference cannot authorize a save. Use JSON Decode, Select Fields, or Collection to choose a nested list.
 
+For a generated scene summary, enable **Bind derived context to chat** on its Read File node. The host records which conversation prefix the summary describes. Appending messages keeps it usable; editing, deleting, or selecting another swipe in that covered prefix makes the read return the document's initial template for rebuilding. Keep that template empty or neutral, so it cannot reintroduce facts from a later scene. The stored document and its actual revision still protect the replacement from concurrent edits. Ordinary Read File nodes retain their existing behavior.
+
+A two-call scene workflow can read user-maintained foundations and an automatically maintained scene document into Assessment, then give the result to Development before native generation. Keep scene purpose, current activity, current subject, and answered/deferred threads separate. Extract only the retrospective scene object for Format → Write to File; proposed next actions belong in separate planning fields. These notes are model-generated summaries, not mechanically verified story facts. Keep explicit user corrections authoritative and leave unsupported history unknown after a reset.
+
 **Format** validates records or parses raw JSON, maps fields, and serializes the chosen format. It does not infer records from arbitrary prose; use Extract or schema-guided Model Call first. JSON shape **records** produces a list. **single** requires one object and keeps state documents object-shaped.
 
 | Write mode | Change |
@@ -195,6 +207,8 @@ For nested JSON, set **Collection JSON Pointer**, such as `/souls`, and **Missin
 ## Keep acceptance and saving distinct
 
 File, Memory Commit, Clock Commit, Outcome Commit, and accepted-policy Recall effects wait for acceptance. Preview, Run to here, failures, and ordinary model results do not accept them. The response must reach a fresh reviewed result, and its effects must pass checks before publication.
+
+**Automatically accept story changes** on Review / Publish opts an ordinary Send into accepting its connected effects when the native reply text is unchanged. It saves against the selected reply without creating an identical swipe. The option defaults off and is separate from automatic revised-reply publication. Failed, cancelled, stale, ambiguous, and preview runs cannot save automatically. Persistence failures remain available through the existing save-status and retry controls.
 
 Apply checks the source message/swipe, current user/chat/actor, workflow, target references, and relevant versions. Source changes, foreign edits, cancellation, or changed private visibility can invalidate the proposal. Read fresh data and regenerate.
 

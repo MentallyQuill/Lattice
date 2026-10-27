@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { presentDiagnostic } from '../src/ui/diagnostics.js';
+    import { diagnosticSchemaFindings, presentDiagnostic } from '../src/ui/diagnostics.js';
     import type { DiagnosticInput, DiagnosticContext, DiagnosticView, DiagnosticAddress } from './diagnostic-types';
     let { issue, context = {}, diagnostic, reveal }: { issue?: string | DiagnosticInput; context?: DiagnosticContext; diagnostic?: DiagnosticView; reveal?: (address: DiagnosticAddress) => void } = $props();
     let view = $derived(diagnostic ?? presentDiagnostic(issue, context));
+    let finding = $derived(diagnosticSchemaFindings(view)[0]);
     let address = $derived(view.address);
     let navigable = $derived(!!(reveal && address && typeof address.workflowId === 'string' && address.workflowId.trim() && address.workflowId.length <= 256 && typeof address.nodeId === 'string' && address.nodeId.trim() && address.nodeId.length <= 256 && Array.isArray(address.instancePath) && address.instancePath.length <= 8 && address.instancePath.every(part => typeof part === 'string' && part.trim() && part.length <= 256)));
     const severityLabel = (severity: DiagnosticView['severity']) => ({ info: 'Information', warning: 'Warning', error: 'Error' }[severity]);
@@ -11,6 +12,7 @@
 <div class="pc-diagnostic" data-diagnostic={view.id} data-severity={view.severity}>
     <strong><span class="pc-diagnostic-severity">{severityLabel(view.severity)}:</span>{' '}{view.title}</strong>
     <p>{view.message}</p>
+    {#if finding}<p data-diagnostic-finding><code>{finding.path || '/'} · {finding.keyword}</code>: {finding.message}</p>{/if}
     {#if view.technical}<details><summary>Technical details</summary>{#if view.technical.code}<code>{view.technical.code}</code>{/if}{#if view.technical.message}<p>{view.technical.message}</p>{/if}</details>{/if}
     {#if navigable}<button type="button" onclick={() => { if (navigable && address) reveal?.({ ...address, instancePath: [...address.instancePath] }); }}>Show node</button>{/if}
 </div>

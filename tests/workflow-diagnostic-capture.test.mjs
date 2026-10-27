@@ -45,9 +45,9 @@ test('a corrected retry retains the failed attempt validation before the success
     assert.equal(result.callBound, 3);
     assert.deepEqual(diagnostics.map(event => [event.type, event.attempt]), [['response', 1], ['validation', 1], ['response', 2]]);
     assert.equal(diagnostics[1].error.code, 'SCHEMA_MISMATCH');
-    assert.deepEqual(diagnostics[1].error.findings, [{ path: '/name', keyword: 'type', message: 'Expected string.' }]);
+    assert.deepEqual(diagnostics[1].error.findings, [{ path: '/name', keyword: 'type', message: 'Expected string; got number.' }]);
     assert.equal(events.filter(event => event.type === 'node-retry').length, 1);
-    assert.equal(messages[1].length, messages[0].length + 1);
+    assert.equal(messages[1].length, messages[0].length + 2);
 });
 
 test('terminal JSON failures report both original and corrected attempt validation', async () => {
@@ -197,6 +197,17 @@ test('real connection cutoff retains opted-in text privately without forwarding 
     assert.equal(Object.hasOwn(sent[0][4], 'onDiagnosticResponse'), false);
 });
 
+test('metadata response opt-out prevents failed-text extraction in the real connection', async () => {
+    const diagnostics = [];
+    let extractions = 0;
+    const { context, bound } = connectionFixture(async () => ({choices:[{message:{content:'PRIVATE_CUTOFF'},finish_reason:'length'}]}));
+    context.extractMessageFromData = () => {extractions++; return 'PRIVATE_CUTOFF';};
+    const result = await runWorkflow(graph(), {...ports,diagnosticResponseText:false,onDiagnostic:event=>diagnostics.push(event),resolveBinding:()=>bound,request:options=>requestModel(options,context)});
+    assert.equal(result.error.code,'TRUNCATED_OUTPUT');
+    assert.equal(extractions,0);
+    assert.deepEqual(diagnostics,[]);
+});
+
 test('connection failed-text extraction is absent by default and callback failures remain passive', async () => {
     let extractions = 0;
     const { context, bound } = connectionFixture(async () => ({ choices: [{ message: { content: 'FAILED cutoff text' }, finish_reason: 'length' }] }));
@@ -210,6 +221,22 @@ test('connection failed-text extraction is absent by default and callback failur
         assert.equal(JSON.stringify(result).includes('FAILED cutoff text'), false);
     }
     assert.equal(extractions, 2);
+});
+
+test('connection failed-text capability fails closed for accessors, invalid values and throwing callbacks', async () => {
+    let extractions = 0, getters = 0, captured = 0;
+    const { context, bound } = connectionFixture(async () => ({choices:[{message:{content:'PRIVATE_CUTOFF'},finish_reason:'length'}]}));
+    context.extractMessageFromData = () => {extractions++;return 'PRIVATE_CUTOFF';};
+    const request = {binding:bound.data,messages:[{role:'user',content:'Synthetic prompt.'}],maxTokens:20,onDiagnosticResponse:()=>captured++};
+    const accessor = {...request};
+    Object.defineProperty(accessor,'isDiagnosticResponseCurrent',{get(){getters++;return ()=>true;},enumerable:true});
+    for (const input of [accessor,...[false,'true',()=>false,()=>{throw Error('Revoked.');}].map(isDiagnosticResponseCurrent=>({...request,isDiagnosticResponseCurrent}))]) {
+        const result = await requestModel(input,context);
+        assert.equal(result.error.code,'TRUNCATED_OUTPUT');
+    }
+    assert.equal(getters,0);
+    assert.equal(extractions,0);
+    assert.equal(captured,0);
 });
 
 test('connection diagnostic callback never runs for refused, stopped or undispatched requests', async () => {

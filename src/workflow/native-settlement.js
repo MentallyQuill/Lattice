@@ -61,6 +61,7 @@ import { isNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.28
 import { createStagedEffects } from './staged-effects.js?v=0.28.1';
 import { createFileStore, createChatDocumentBackend } from './file-store.js?v=0.28.1';
 import {artifactVisibility} from './artifact-privacy.js?v=0.28.1';
+import {validChatSourceBinding} from './chat-prefix-binding.js?v=0.28.1';
 import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.28.1';
 import { cloneJsonValue } from './operations/json-data.js?v=0.28.1';
 import { validateOccurrences } from './operations/event-data.js?v=0.28.1';
@@ -124,19 +125,27 @@ export function validateNativeFileEvidence(raw,body,originalBody=body,options={}
 }
 /** A catalog lease authorizes logical user/chat documents; no path comes from a graph. */
 export function createNativeFileSession(config) {
-    config=trustedConfig(config,['catalog','scope','context','userId','persistenceVerifier','signal','isCurrent','barriers','workflowId','originalDraft','getOriginalDraft','validateEvidence','stage']);
+    config=trustedConfig(config,['catalog','scope','context','userId','persistenceVerifier','signal','isCurrent','barriers','workflowId','originalDraft','getOriginalDraft','validateEvidence','stage','chatSource','maintainHistory']);
     const scope=cloneJsonValue(config.scope),capture=ownMethod(config.catalog,'capture'),saveAndVerify=ownMethod(config.persistenceVerifier,'saveAndVerify');
     if(!scope.ok||!scope.data.value||!capture||typeof config.context!=='function'||typeof config.userId!=='function'||!saveAndVerify||typeof config.stage!=='function'||typeof config.isCurrent!=='function')return fail('INVALID_NATIVE_FILE_CONFIG','Native file staging requires captured catalog and persistence capabilities.');
     config={...config,scope:scope.data.value};
     let lease;try{lease=capture.call(config.catalog);}catch{return fail('FILE_SCOPE_UNAVAILABLE','The logical document catalog is unavailable.');}if(!lease.ok)return lease;
     if(lease.data.scope.userId!==config.scope.userId||lease.data.scope.chatId!==config.scope.chatId)return fail('STALE_FILE_SCOPE','Document catalog belongs to another user or chat.');
     const definitions=new Map(lease.data.documents.map(doc=>[doc.targetId,doc]));
+    const chatSource=trustedConfig(config.chatSource,['stamp','matches']),stamp=cloneJsonValue(chatSource.stamp),matches=ownMethod(chatSource,'matches');
+    const sourceBinding=stamp.ok&&validChatSourceBinding(stamp.data.value)&&matches?Object.freeze(stamp.data.value):null;
     const current=()=>{try{return config.isCurrent()===true&&lease.data.isCurrent();}catch{return false;}};
     const barrierKey=targetId=>canonical([config.scope.userId,config.scope.chatId,targetId]);
-    const backend=createChatDocumentBackend({scope:{userId:config.scope.userId,chatId:config.scope.chatId},getContext:()=>{const c=config.context(),chatId=c.getCurrentChatId?.()??c.chatId,userId=config.userId();if(!current())throw new Error('Stale logical document authority');return {chat:c.chat,chatId,userId,chatMetadata:c.chatMetadata};},initialDocuments:lease.data.documents.map(({targetId,format,content})=>({targetId,format,content})),saveMetadata:async ()=>{const result=await saveAndVerify.call(config.persistenceVerifier,{kind:'document',targetId:writingTarget},{signal:config.signal});return result.ok&&result.data.acknowledged===true;}});
+    const backend=createChatDocumentBackend({scope:{userId:config.scope.userId,chatId:config.scope.chatId},getContext:()=>{const c=config.context(),chatId=c.getCurrentChatId?.()??c.chatId,userId=config.userId();if(!current())throw new Error('Stale logical document authority');return {chat:c.chat,chatId,userId,chatMetadata:c.chatMetadata};},initialDocuments:lease.data.documents.map(({targetId,format,content})=>({targetId,format,content})),saveMetadata:async selection=>{const result=await saveAndVerify.call(config.persistenceVerifier,selection??{kind:'document',targetId:writingTarget},{signal:config.signal});return result.ok&&result.data.acknowledged===true;}});
     let writingTarget=null;
     const store=createFileStore({scope:{userId:config.scope.userId,chatId:config.scope.chatId},authorizedTargets:[...definitions.keys()],signal:config.signal,isCurrent:current,validateEvidence:config.validateEvidence,
-        load:targetId=>config.barriers?.has(barrierKey(targetId))?Promise.resolve(fail('PERSISTENCE_UNKNOWN','This target has an unconfirmed native save. Reconcile it before another write.')):backend.load(targetId),
+        load:(targetId,options)=>config.barriers?.has(barrierKey(targetId))?Promise.resolve(fail('PERSISTENCE_UNKNOWN','This target has an unconfirmed native save. Reconcile it before another write.')):backend.load(targetId,options),
+        bindRead:(snapshot,stored)=>{
+            if(!sourceBinding||!current())return fail('CHAT_SOURCE_REQUIRED','A captured accepted chat prefix is required for derived context.');
+            const template=definitions.get(snapshot.targetId);if(!template)return fail('FILE_NOT_AUTHORIZED','Select an authorized document.');
+            const valid=!stored.copiedScope&&matches(stored.sourceBinding)===true;
+            return good({sourceBinding,...(valid?{}:{readView:{...snapshot,format:template.format,content:template.content}})});
+        },
         lookupHistory:async(targetId,query)=>{const policy=visibility(targetId);if(!policy.ok)return policy;const result=await backend.lookupHistory(targetId,query);if(!current())return fail('STALE_FILE_SCOPE','Archive authorization changed.');if(!result.ok)return result;if(result.data.privateActorIds.some(actorId=>actorId!==config.scope.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original actor privacy.');const mark=result.data.visibility,destination=policy.data;if(mark.kind!=='public'&&destination.kind!=='hidden'&&!(mark.kind==='actor-private'&&destination.kind==='actor-private'&&mark.actorId===destination.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original document privacy.');return result;},
         compareAndSwap:async (update,controls)=>{writingTarget=update.targetId;try{const result=await backend.compareAndSwap(update,controls);if(result.ok&&!result.data.acknowledged)config.barriers?.set(barrierKey(update.targetId),{intentId:update.intentId,revision:result.data.revision});return result;}finally{writingTarget=null;}}});
     const visibility=targetId=>{
@@ -144,7 +153,33 @@ export function createNativeFileSession(config) {
         if(doc.visibility.kind==='actor-private'&&doc.visibility.actorId!==config.scope.actorId)return fail('PRIVATE_DESTINATION','Select this actor’s authorized private document.');
         return current()?good(doc.visibility):fail('STALE_FILE_SCOPE','Workflow Data authorization changed.');
     };
-    return good(Object.freeze({store,visibility,lookupHistory:async(targetId,query)=>{const policy=visibility(targetId);if(!policy.ok)return policy;const result=await backend.lookupHistory(targetId,query);if(!current())return fail('STALE_FILE_SCOPE','Archive authorization changed.');if(!result.ok)return result;if(result.data.privateActorIds.some(actorId=>actorId!==config.scope.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original actor privacy.');const mark=result.data.visibility;if(mark.kind!=='public'&&policy.data.kind!=='hidden'&&!(mark.kind==='actor-private'&&policy.data.kind==='actor-private'&&mark.actorId===policy.data.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original document privacy.');return result;},release:()=>store.release(),
-        async intentId(node,evidence,address){const checked=cloneJsonValue(evidence);if(!checked.ok)return checked;const identities=checked.data.value.flatMap(value=>Array.isArray(value?.events)?value.events:[value]).map(value=>value?.eventId).filter(Boolean);const source=(config.getOriginalDraft?.()??config.originalDraft)?.source;if(!source)return fail('NATIVE_SOURCE_REQUIRED','A completed native source is required before staging a write.');const data=canonical([config.scope.userId,config.scope.chatId,config.workflowId,...(address?.instancePath?.length?[address.instancePath]:[]),node.id,identities.length?identities:[source.messageIndex,source.swipeId,source.originalText]]);const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(data)));return current()?good('native:'+Array.from(bytes,byte=>byte.toString(16).padStart(2,'0')).join('')):fail('STALE_FILE_SCOPE','Document intent scope changed.');},
+    const boundReferences=new WeakSet();let reads=Promise.resolve();
+    const sessionStore=Object.freeze({...store,read(targetId,options={}){
+        const checked=cloneJsonValue(options),settings=checked.ok?checked.data.value:null;
+        if(!settings||typeof settings!=='object'||Array.isArray(settings)||Object.keys(settings).some(key=>key!=='bindToChat')||settings.bindToChat!==undefined&&typeof settings.bindToChat!=='boolean')return Promise.resolve(fail('INVALID_FILE_CONTROLS','Read controls require a known own boolean binding option.'));
+        options=Object.freeze(settings);
+        const pending=reads.then(async()=>{
+            const policy=visibility(targetId);if(!policy.ok)return policy;
+            if(options?.bindToChat===true){
+                if(!sourceBinding)return fail('CHAT_SOURCE_REQUIRED','A captured accepted chat prefix is required for derived context.');
+                const key=barrierKey(targetId);if(config.barriers?.has(key))return fail('PERSISTENCE_UNKNOWN','Verify the previous native save before reading derived context.');
+                const loaded=await backend.load(targetId,{bindToChat:true});if(!current())return fail('STALE_FILE_SCOPE','Document source changed before history maintenance.');if(!loaded.ok)return loaded;
+                if(config.maintainHistory===true&&!loaded.data.copiedScope&&loaded.data.receipts.length>=240){
+                    const preview=await backend.previewCheckpoint(targetId,policy.data);if(!current())return fail('STALE_FILE_SCOPE','Document source changed during history maintenance.');if(!preview.ok)return preview;
+                    if(preview.data.view.privateActorIds.some(actorId=>actorId!==config.scope.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original actor privacy.');
+                    const mark=preview.data.view.visibility;if(mark.kind!=='public'&&policy.data.kind!=='hidden'&&!(mark.kind==='actor-private'&&policy.data.kind==='actor-private'&&mark.actorId===policy.data.actorId))return fail('PRIVATE_DESTINATION','History maintenance must preserve document privacy.');
+                    if(config.barriers?.has(key))return fail('PERSISTENCE_UNKNOWN','The previous native save remains unconfirmed.');
+                    const barrier=Object.freeze({checkpointPending:true});config.barriers?.set(key,barrier);
+                    let applied;try{applied=await backend.applyCheckpoint(preview.data.handle);}catch{return fail('PERSISTENCE_UNKNOWN','History maintenance could not confirm its persistence outcome.');}
+                    if(!applied.ok){if(config.barriers?.get(key)===barrier)config.barriers.delete(key);return applied;}
+                    if(!applied.data.acknowledged){config.barriers?.set(key,{checkpoint:true,revision:applied.data.revision,epoch:applied.data.epoch,pageIds:applied.data.pageIds,checkpointSignature:applied.data.checkpointSignature});return fail('PERSISTENCE_UNKNOWN','Verify the derived document checkpoint before continuing.');}
+                    if(config.barriers?.get(key)===barrier)config.barriers.delete(key);
+                }
+            }
+            const result=await store.read(targetId,options);if(result.ok&&options?.bindToChat===true)boundReferences.add(result.data.fileRef);return result;
+        });reads=pending.then(()=>undefined,()=>undefined);return pending;
+    }});
+    return good(Object.freeze({store:sessionStore,visibility,lookupHistory:async(targetId,query)=>{const policy=visibility(targetId);if(!policy.ok)return policy;const result=await backend.lookupHistory(targetId,query);if(!current())return fail('STALE_FILE_SCOPE','Archive authorization changed.');if(!result.ok)return result;if(result.data.privateActorIds.some(actorId=>actorId!==config.scope.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original actor privacy.');const mark=result.data.visibility;if(mark.kind!=='public'&&policy.data.kind!=='hidden'&&!(mark.kind==='actor-private'&&policy.data.kind==='actor-private'&&mark.actorId===policy.data.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original document privacy.');return result;},release:()=>store.release(),
+        async intentId(node,evidence,address,reference){const checked=cloneJsonValue(evidence);if(!checked.ok)return checked;const identities=checked.data.value.flatMap(value=>Array.isArray(value?.events)?value.events:[value]).map(value=>value?.eventId).filter(Boolean);const source=(config.getOriginalDraft?.()??config.originalDraft)?.source;if(!source)return fail('NATIVE_SOURCE_REQUIRED','A completed native source is required before staging a write.');const data=canonical([config.scope.userId,config.scope.chatId,config.workflowId,...(address?.instancePath?.length?[address.instancePath]:[]),node.id,...(boundReferences.has(reference)?[sourceBinding]:[]),identities.length?identities:[source.messageIndex,source.swipeId,source.originalText]]);const bytes=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(data)));return current()?good('native:'+Array.from(bytes,byte=>byte.toString(16).padStart(2,'0')).join('')):fail('STALE_FILE_SCOPE','Document intent scope changed.');},
         stage(prepared,evidence){return config.stage({intentId:prepared.handle.intentId,targetId:'file:'+prepared.plan.targetId,proposed:{kind:'file',targetId:prepared.plan.targetId,evidence},preflight:()=>store.preflight(prepared.handle),commit:flags=>store.commit(prepared.handle,flags)});}}));
 }

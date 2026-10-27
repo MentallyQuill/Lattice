@@ -148,6 +148,12 @@ export async function runWorkflowForHost(graph,ports={},hooks={}) { return execu
 
 async function executeWorkflow(original,ports,hooks={}) {
     const diagnosticObserver=own(ports,'onDiagnostic');
+    const diagnosticResponses=typeof diagnosticObserver==='function'&&own(ports,'diagnosticResponseText')!==false;
+    const diagnosticResponseCurrent=own(ports,'isDiagnosticResponseCurrent');
+    const mayCaptureDiagnosticResponse=()=>{
+        if(!diagnosticResponses)return false;
+        try{return diagnosticResponseCurrent===undefined||typeof diagnosticResponseCurrent==='function'&&diagnosticResponseCurrent()===true;}catch{return false;}
+    };
     const schema=versionMetadata(own(original,'schema')),runtime=versionMetadata(own(original,'runtime')),mode=ports.target===undefined?'root':'target';
     const artifacts=new Map(),outputStates=new Map(),unitStates=new Map(),bindings=new Map(),requestBindings=new Map(),bindingReports=new Map(),nodeCalls=new Map(),helperPrograms=new Map(),terminals=[];
     let runId,recorder,plan,safePlan,current,callBound=0,actualCalls=0,seq=0,lastElapsed=0,cancelling=false,closed=false,removeAbort=()=>{};
@@ -298,15 +304,15 @@ async function executeWorkflow(original,ports,hooks={}) {
                     if(!dispatchGuard.ok){emit('request-settled',{address:unit.address,attempt,status:stopped()?'cancelled':'failed',durationMs:0,dispatched:false,error:safeError(dispatchGuard.error)});return dispatchGuard;}
                     nodeCalls.set(key,attempt);actualCalls++;
                     let response,diagnosticCompletion,diagnosticRequestOpen=true;
-                    const onDiagnosticResponse=typeof diagnosticObserver==='function'?value=>{
-                        if(!diagnosticRequestOpen||closed||!operationOpen||stopped())return;
+                    const onDiagnosticResponse=diagnosticResponses?value=>{
+                        if(!diagnosticRequestOpen||closed||!operationOpen||stopped()||!mayCaptureDiagnosticResponse())return;
                         const text=own(value,'text');if(typeof text==='string')diagnosticCompletion=text;
                     }:undefined;
-                    try{response=await ports.request({...options,binding:requestBinding,signal:ports.signal,onDiagnosticResponse});}
+                    try{response=await ports.request({...options,binding:requestBinding,signal:ports.signal,onDiagnosticResponse,isDiagnosticResponseCurrent:diagnosticResponses?mayCaptureDiagnosticResponse:undefined});}
                     catch(error){response=normalizeRequestFailure(error,{aborted:stopped()});}
                     finally{diagnosticRequestOpen=false;}
                     if(closed||!operationOpen)return requestFailure();
-                    const diagnosticData=typeof diagnosticObserver==='function'&&own(response,'ok')===true?own(response,'data'):undefined;
+                    const diagnosticData=mayCaptureDiagnosticResponse()&&own(response,'ok')===true?own(response,'data'):undefined;
                     if(!response||typeof response.ok!=='boolean'||(!response.ok&&!response.error))response=failure('INVALID_RESPONSE','Auxiliary request returned an invalid result.',node.id);
                     if(stopped())response=failure('ABORTED','Ignore the stopped request result.',node.id);
                     else if(response.ok){
@@ -317,6 +323,8 @@ async function executeWorkflow(original,ports,hooks={}) {
                     const metadata=response.ok?response.data:response.error,usage=metadata?.usage;
                     if(typeof diagnosticObserver==='function'&&!stopped()){
                         lastDiagnosticResponse={attempt,completed:response.ok};
+                    }
+                    if(!stopped()&&mayCaptureDiagnosticResponse()){
                         // Project diagnostic scope only after transport; no new callbacks
                         // may enter the final authorization-to-dispatch boundary.
                         const diagnosticScope=node.operation==='for-each'?childDiagnosticScopes.get(childAddress&&addressKey(childAddress)):{node,inputs};
@@ -339,7 +347,7 @@ async function executeWorkflow(original,ports,hooks={}) {
                 if(!childOp||childOp.rootOnly||childOp.hostOperation||childOp.nativeBoundary||childOp.terminal||childOp.requiresStateInDefinition&&!childInputs.state)return failure('ITERATION_AUTHORITY','Helpers cannot acquire root authority.',node.id);
                 let childOpen=true,childCalls=0;const childBindings=new Map(),recovered=new WeakSet();
                 const childKey=addressKey(child.address);childAuthorizers.set(childKey,capability=>childOpen?authorizeInputs(childNode,childInputs,child.address,capability):failure('REQUEST_SCOPE_CLOSED','The helper request scope has closed.',childNode.id));
-                if(typeof diagnosticObserver==='function')childDiagnosticScopes.set(childKey,{node:childNode,inputs:childInputs});
+                if(diagnosticResponses)childDiagnosticScopes.set(childKey,{node:childNode,inputs:childInputs});
                 const childIterate=childLocal.iterateHelper?async(...args)=>{const result=await childLocal.iterateHelper(...args);if(result?.ok===true)recovered.add(result);return result;}:undefined;
                 const childRequest=async(options)=>{
                     const capability='text-completion';

@@ -150,8 +150,11 @@ export function createDiagnosticHistory({store,indexedDB,onChange} = {}) {
     const storageFailed = (write = false) => { if (write) writeFailed = true; const changed = persistent !== false; persistent = false; issue = 'Diagnostic storage is unavailable or failed. Saved logs may be incomplete.'; if (changed) notify(); return errorResult('DIAGNOSTIC_STORAGE_FAILED',issue); };
     const storageReady = (write = false) => { if (write) writeFailed = false; if (writeFailed) return; const changed = persistent !== true || issue !== ''; persistent = true; issue = ''; if (changed) notify(); };
     const history = {
-        begin(raw) {
+        begin(raw, options) {
             const origin = originOf(raw); if (!origin) return null;
+            const mode = options === undefined ? 'full':plain(options) ? own(options,'mode'):undefined;
+            if (!['full','metadata'].includes(mode)) return null;
+            const metadataOnly = mode === 'metadata';
             // Reserve 512 KiB for the single serialized write's bounded eviction rollback.
             const activeForUser = [...captures].filter(capture => capture.origin.userId === origin.userId);
             if (activeForUser.length >= (DIAGNOSTIC_USER_BYTES - 2 * DIAGNOSTIC_RUN_BYTES) / DIAGNOSTIC_RUN_BYTES) {
@@ -182,6 +185,7 @@ export function createDiagnosticHistory({store,indexedDB,onChange} = {}) {
                 return {key,value:attempts.get(key)};
             };
             return {
+                get captureResponses() { return !metadataOnly && capture.valid && !capture.closed; },
                 event(event) {
                     try {
                     if (!capture.valid || capture.closed || !plain(event)) return;
@@ -225,10 +229,15 @@ export function createDiagnosticHistory({store,indexedDB,onChange} = {}) {
                     const found = attemptFor(event); if (!found) return;
                     const row = found.value;
                     if (own(event,'type') === 'validation') { const error = diagnosticError(own(event,'error')); if (error) row.validationError = error; return; }
-                    const visibility = own(event,'visibility'), kind = own(visibility,'kind'), actorId = own(visibility,'actorId');
-                    const allowed = kind === 'public' || kind === 'actor-private' && typeof actorId === 'string' && identity(actorId);
-                    row.response = {visibility:allowed?kind:'hidden',...(kind === 'actor-private' && typeof actorId === 'string' && identity(actorId)?{actorId}:{}),...(!allowed?{omitted:kind === 'hidden'?'Hidden response text omitted.':kind === 'actor-private'?'Response text omitted: missing actor scope.':'Response text omitted: unknown visibility.'}:typeof own(event,'text') === 'string'?{text:boundedText(own(event,'text'),32768)}:{omitted:'No response text supplied.'})};
-                    if (row.response.text !== undefined && row.response.text !== own(event,'text')) row.response.truncated = true;
+                    if (metadataOnly) {
+                        // Decide before even inspecting text descriptors or response visibility.
+                        row.response = {visibility:'hidden',omitted:'Response text omitted: full response logging is off.'};
+                    } else {
+                        const visibility = own(event,'visibility'), kind = own(visibility,'kind'), actorId = own(visibility,'actorId');
+                        const allowed = kind === 'public' || kind === 'actor-private' && typeof actorId === 'string' && identity(actorId);
+                        row.response = {visibility:allowed?kind:'hidden',...(kind === 'actor-private' && typeof actorId === 'string' && identity(actorId)?{actorId}:{}),...(!allowed?{omitted:kind === 'hidden'?'Hidden response text omitted.':kind === 'actor-private'?'Response text omitted: missing actor scope.':'Response text omitted: unknown visibility.'}:typeof own(event,'text') === 'string'?{text:boundedText(own(event,'text'),32768)}:{omitted:'No response text supplied.'})};
+                        if (row.response.text !== undefined && row.response.text !== own(event,'text')) row.response.truncated = true;
+                    }
                     const error = diagnosticError(own(event,'error')); if (error) row.error = error;
                     const finish = own(event,'finish'); if (finish === null || typeof finish === 'string') row.finish = finish === null ? null:boundedText(finish,128);
                     const usage = safeUsage(own(event,'usage')); if (usage !== undefined) row.usage = usage;
@@ -246,7 +255,12 @@ export function createDiagnosticHistory({store,indexedDB,onChange} = {}) {
                     }
                     const error = diagnosticError(own(result,'error')) ?? terminal?.error;
                     if (error && !error.address && terminal?.address) { error.address = terminal.address; error.nodeId = terminal.address.nodeId; }
-                    pendingEntry = freeze(boundRun({version:1,id:origin.runId,origin,endedAt:Date.now(),status:terminal?.status ?? (own(result,'ok') === true ? 'completed':error?.code === 'ABORTED' ? 'cancelled':'failed'),...(error?{error}:{}),actualCalls,callBound,attempts:[...attempts.values()],...(truncated?{truncated:true}:{})}));
+                    const status = terminal?.status ?? (own(result,'ok') === true ? 'completed':error?.code === 'ABORTED' ? 'cancelled':'failed');
+                    if (metadataOnly && (own(result,'superseded') === true || !['failed','invalid','unresolved'].includes(status))) {
+                        capture.release();
+                        return capture.pending = Promise.resolve(successResult({discarded:true}));
+                    }
+                    pendingEntry = freeze(boundRun({version:1,id:origin.runId,origin,endedAt:Date.now(),status,...(error?{error}:{}),actualCalls,callBound,attempts:[...attempts.values()],...(truncated?{truncated:true}:{})}));
                     attempts.clear(); bindings.clear();
                     capture.pending = enqueue(async () => {
                         const discarded = () => successResult({discarded:true,...(capture.omitted?{omitted:capture.omitted}:{})});

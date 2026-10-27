@@ -90,7 +90,14 @@ function requestStateWatch(context,binding){
     }catch{return null;}
 }
 /** Send owned messages through the selected fixed or active route without activation. */
-export async function requestModel({binding,messages,maxTokens,signal,onDiagnosticResponse},contextOrGetter,transport = {}) {
+export async function requestModel(request,contextOrGetter,transport = {}) {
+    const {binding,messages,maxTokens,signal,onDiagnosticResponse}=request;
+    // A diagnostic lease is passive own data, never an accessor on request input.
+    let isDiagnosticResponseCurrent;
+    try {
+        const descriptor=Object.getOwnPropertyDescriptor(request,'isDiagnosticResponseCurrent');
+        isDiagnosticResponseCurrent=descriptor&&!Object.hasOwn(descriptor,'value')?false:descriptor?.value;
+    } catch { isDiagnosticResponseCurrent=false; }
     const getContext = typeof contextOrGetter === 'function' ? contextOrGetter : () => contextOrGetter;
     if (signal?.aborted) return fail('ABORTED', 'The request was stopped.');
     if (!Number.isSafeInteger(maxTokens) || maxTokens <= 0 || maxTokens > 65536 || !Array.isArray(messages) || !messages.length || messages.length > 1000 || messages.some(message=>!message || !['system','user','assistant','tool'].includes(message.role) || typeof message.content !== 'string')) return fail('INVALID_REQUEST', 'Provide owned messages and a positive bounded completion limit.');
@@ -153,8 +160,9 @@ export async function requestModel({binding,messages,maxTokens,signal,onDiagnost
             // The runtime owns this optional short-lived callback. Failed text never
             // enters the public Result, provider payload, or ordinary progress.
             if(typeof onDiagnosticResponse==='function')try{
+                if(isDiagnosticResponseCurrent!==undefined&&(typeof isDiagnosticResponseCurrent!=='function'||isDiagnosticResponseCurrent()!==true))return completionFailure;
                 const text=completionText(raw,binding,context);
-                if(!signal?.aborted&&typeof text==='string'){
+                if(!signal?.aborted&&typeof text==='string'&&(isDiagnosticResponseCurrent===undefined||isDiagnosticResponseCurrent()===true)){
                     const pending=onDiagnosticResponse(Object.freeze({text}));if(pending?.then)Promise.resolve(pending).catch(()=>{});
                 }
             }catch{/* Diagnostics never replace the original completion failure. */}

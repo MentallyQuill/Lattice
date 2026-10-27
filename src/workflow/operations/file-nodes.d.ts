@@ -16,7 +16,7 @@ export interface FileNodeExecution {
     /** Optional trusted read policy may strengthen, never erase, captured actor/record restrictions. */
     fileVisibility?: (capture: { reference: FileReference; snapshot: DocumentSnapshot }) => Result<FileVisibility> | Promise<Result<FileVisibility>>;
     /** Host derives identity from canonical event/source lineage, not a transient revision or model text. */
-    createIntentId?: (node: NativeNode, evidence: JsonValue[]) => Result<string> | Promise<Result<string>>;
+    createIntentId?: (node: NativeNode, evidence: JsonValue[], reference?:FileReference) => Result<string> | Promise<Result<string>>;
     /** Required for every write. Authorizes current user/chat/actor scope and the actual destination. */
     authorizeFileWrite?: (request: {
         reference: FileReference;

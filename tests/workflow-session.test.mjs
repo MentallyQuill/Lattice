@@ -134,6 +134,17 @@ test('an interrupted failed-save retry preserves the accepted reply and does not
     assert.equal(f.state().applyDiagnostic.severity, 'warning');
 });
 const settledReceipt=(status)=>({status,published:true,publication:{appliedLocally:true},receipts:[{intentId:'event',targetId:'file:souls',status:status==='partial'?'failed':status==='save-unverified'?'save-unverified':'confirmed',...(status==='partial'?{error:{code:'WRITE_FAILED',message:'Retry this target.'}}:{})}]});
+test('automatically accepted effects retain applied UI state while describing the unchanged reply', () => {
+    const f=settlementSession();f.root.nodes.review.autoApplyEffects=true;
+    f.start({automaticallyApplied:true,effectsOnlyApplied:true,appliedLocally:true,settlement:settledReceipt('settled')});
+    assert.equal(f.state().result.effectsOnlyApplied,true);
+    assert.equal(f.state().result.automaticallyApplied,true);assert.equal(f.state().result.appliedLocally,true);
+    assert.equal(f.state().reviewHandles.length,0);assert.equal(f.state().availability,'stale');
+    assert.match(f.state().status,/Workflow data saved.*native reply unchanged/i);
+    assert.doesNotMatch(f.state().status,/unconfirmed|new swipe/i);
+    f.session.reject();assert.deepEqual(f.rejected,[]);
+});
+
 test('an automatically applied reply without effects retains accepted state and cannot be rejected as a proposal', () => {
     const f=settlementSession();
     f.start({automaticallyApplied:true,appliedLocally:true});
