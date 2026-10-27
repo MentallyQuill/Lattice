@@ -75,3 +75,16 @@ test('all affected operation families expose their real controls without horizon
  }
  expect(errors).toEqual([]);expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
 });
+
+for(const width of [220,258])test(`deep typed JSON remains readable and contained at ${width}px`,async({page})=>{
+ await open(page);await page.evaluate(async width=>{
+  const h=window.canvasHarness,{operationDefaults}=await import('/src/workflow/catalog.js?v='+h.version);let value='Deep value';for(let i=0;i<20;i++)value={nested:value};
+  await h.activate({id:'deep-values',schema:3,runtime:2,mode:'native-unified',roles:{},nodes:{work:{...operationDefaults('collection'),id:'work',type:'workflow',mode:'filter',value,x:200,y:100}},wires:{},definitions:{},groups:{},portals:{}});h.canvas.select({kind:'node',id:'work'});await h.settle();document.querySelector('.pc-body').style.setProperty('--pc-details-width',width+'px');
+ },width);
+ const details=panel(page);await details.locator('[data-control-group="Matching"] > summary').click();let path=[];
+ for(let depth=0;depth<20;depth++){
+  const node=details.locator(`[data-value-path=${JSON.stringify(JSON.stringify(path))}]`);await node.getByRole('button',{name:'Edit Value key nested',exact:true}).last().click();path=[...path,'nested'];
+ }
+ await expect(details.getByLabel('Value string',{exact:true})).toHaveValue('Deep value');await fits(page);
+ const widths=await details.getByLabel('Value type',{exact:true}).evaluateAll(nodes=>nodes.map(node=>node.getBoundingClientRect().width));expect(Math.min(...widths)).toBeGreaterThan(70);
+});

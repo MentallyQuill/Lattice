@@ -31,6 +31,13 @@
     let localRecordMode = $state<'terms'|'rows'>('rows');
     let retryValue = $state(0);
     $effect(()=>{if(control.key==='maxRetries')retryValue=Number(control.value);});
+    function commitRetries(input:HTMLInputElement){
+        if(disabled)return;
+        onnumber(input);
+        // Dragging previews a candidate. After release, the acknowledged view
+        // owns both the thumb and the call-bound hint, including on rejection.
+        retryValue=Number(control.value);input.value=String(control.value);
+    }
     const termMode = $derived((recordMode ?? localRecordMode) === 'terms');
     function setRecordMode(mode:'terms'|'rows'){localRecordMode=mode;onRecordMode?.(mode);}
     function structuredText(source:string){if(disabled)return;onformat?.('json');ontext(source);}
@@ -125,7 +132,7 @@
         <StructuredControl {control} {text} {disabled} ontext={structuredText} {onDraft} {draftValue} {idPrefix} {error} />
     {:else if control.editor === 'number' && control.key === 'maxRetries'}
         <label class="pc-retry-label" for={idPrefix+'-retries'}>{control.label}<output for={idPrefix+'-retries'}>{retryValue===0?'None':retryValue}</output></label>
-        <input class="pc-retry-slider" id={idPrefix+'-retries'} type="range" aria-label={control.label} min={control.min??0} max={control.max} step="1" value={retryValue} aria-valuetext={retryValue===0?'None':retryValue+' additional attempts'} {disabled} oninput={event=>{if(!disabled)retryValue=Number(event.currentTarget.value);}} onchange={event=>{if(!disabled)onnumber(event.currentTarget);}}/>
+        <input class="pc-retry-slider" id={idPrefix+'-retries'} type="range" aria-label={control.label} min={control.min??0} max={control.max} step="1" value={retryValue} aria-valuetext={retryValue===0?'None':retryValue+' additional attempts'} {disabled} oninput={event=>{if(!disabled)retryValue=Number(event.currentTarget.value);}} onchange={event=>commitRetries(event.currentTarget)}/>
         <div class="pc-retry-ends" aria-hidden="true"><span>None</span><span>{control.max}</span></div>
         <small>{retryValue===0?'No retries on failure.':`Up to ${retryValue+1} model calls in total. Only eligible failures are retried.`}</small>
     {:else if control.editor === 'boolean'}

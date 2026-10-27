@@ -14299,26 +14299,28 @@ Nr([
 ]);
 //#endregion
 //#region ui/JsonValueControl.svelte
-var sh = /* @__PURE__ */ K("<label class=\"svelte-1q7020h\">Text</label><textarea class=\"svelte-1q7020h\"></textarea>", 1), ch = /* @__PURE__ */ K("<label class=\"svelte-1q7020h\">Number</label><input inputmode=\"decimal\" class=\"svelte-1q7020h\"/>", 1), lh = /* @__PURE__ */ K("<label class=\"check svelte-1q7020h\"><input type=\"checkbox\" role=\"switch\" class=\"svelte-1q7020h\"/>True <span class=\"svelte-1q7020h\"> </span></label>"), uh = /* @__PURE__ */ K("<small class=\"svelte-1q7020h\">Null is an explicit value.</small>"), dh = /* @__PURE__ */ K("<button type=\"button\" class=\"svelte-1q7020h\">Move up</button><button type=\"button\" class=\"svelte-1q7020h\">Move down</button>", 1), fh = /* @__PURE__ */ K("<!><div class=\"actions svelte-1q7020h\"><!><button type=\"button\" class=\"svelte-1q7020h\">Remove</button></div>", 1), ph = /* @__PURE__ */ K("<div class=\"child svelte-1q7020h\"><button class=\"value-toggle svelte-1q7020h\" type=\"button\"><span class=\"svelte-1q7020h\"><strong class=\"svelte-1q7020h\"> </strong><small class=\"svelte-1q7020h\"> </small></span><span aria-hidden=\"true\" class=\"svelte-1q7020h\"> </span></button> <!></div>"), mh = /* @__PURE__ */ K("<div class=\"actions svelte-1q7020h\"><button type=\"button\" class=\"svelte-1q7020h\">Previous</button><small class=\"svelte-1q7020h\"> </small><button type=\"button\" class=\"svelte-1q7020h\">Next</button></div>"), hh = /* @__PURE__ */ K("<div class=\"svelte-1q7020h\"><label class=\"svelte-1q7020h\">Exact property key</label><div class=\"add-row svelte-1q7020h\"><input class=\"svelte-1q7020h\"/><button type=\"button\" class=\"svelte-1q7020h\">Add property</button></div></div>"), gh = /* @__PURE__ */ K("<button class=\"add-item svelte-1q7020h\" type=\"button\">+ Add item</button>"), _h = /* @__PURE__ */ K("<!> <!> <!>", 1), vh = /* @__PURE__ */ K("<div class=\"value-body svelte-1q7020h\" data-value-node=\"\" role=\"group\"><div class=\"type-row svelte-1q7020h\"><label class=\"svelte-1q7020h\">Type</label><select class=\"svelte-1q7020h\"><option class=\"svelte-1q7020h\">String</option><option class=\"svelte-1q7020h\">Number</option><option class=\"svelte-1q7020h\">Boolean</option><option class=\"svelte-1q7020h\">Null</option><option class=\"svelte-1q7020h\">Object</option><option class=\"svelte-1q7020h\">Array</option></select></div> <!></div>"), yh = /* @__PURE__ */ K("<label class=\"svelte-1q7020h\"> </label><textarea class=\"svelte-1q7020h\"></textarea>", 1), bh = /* @__PURE__ */ K("<div><!></div>"), xh = /* @__PURE__ */ K("<small role=\"status\" class=\"svelte-1q7020h\"> </small>"), Sh = /* @__PURE__ */ K("<div class=\"json-value-control svelte-1q7020h\" data-json-value-control=\"\"><div class=\"mode svelte-1q7020h\"><button type=\"button\" class=\"svelte-1q7020h\"> </button></div> <!> <!></div>");
+var sh = /* @__PURE__ */ K("<label class=\"svelte-1q7020h\">Text</label><textarea class=\"svelte-1q7020h\"></textarea>", 1), ch = /* @__PURE__ */ K("<label class=\"svelte-1q7020h\">Number</label><input inputmode=\"decimal\" class=\"svelte-1q7020h\"/>", 1), lh = /* @__PURE__ */ K("<label class=\"check svelte-1q7020h\"><input type=\"checkbox\" role=\"switch\" class=\"svelte-1q7020h\"/>True <span class=\"svelte-1q7020h\"> </span></label>"), uh = /* @__PURE__ */ K("<small class=\"svelte-1q7020h\">Null is an explicit value.</small>"), dh = /* @__PURE__ */ K("<button type=\"button\" class=\"svelte-1q7020h\">Move up</button><button type=\"button\" class=\"svelte-1q7020h\">Move down</button>", 1), fh = /* @__PURE__ */ K("<!><div class=\"actions svelte-1q7020h\"><!><button type=\"button\" class=\"svelte-1q7020h\">Remove</button></div>", 1), ph = /* @__PURE__ */ K("<div class=\"child svelte-1q7020h\"><button class=\"value-toggle svelte-1q7020h\" type=\"button\"><span class=\"svelte-1q7020h\"><strong class=\"svelte-1q7020h\"> </strong><small class=\"svelte-1q7020h\"> </small></span><span aria-hidden=\"true\" class=\"svelte-1q7020h\"> </span></button> <!></div>"), mh = /* @__PURE__ */ K("<div class=\"actions svelte-1q7020h\"><button type=\"button\" class=\"svelte-1q7020h\">Previous</button><small class=\"svelte-1q7020h\"> </small><button type=\"button\" class=\"svelte-1q7020h\">Next</button></div>"), hh = /* @__PURE__ */ K("<div class=\"svelte-1q7020h\"><label class=\"svelte-1q7020h\">Exact property key</label><div class=\"add-row svelte-1q7020h\"><input class=\"svelte-1q7020h\"/><button type=\"button\" class=\"svelte-1q7020h\">Add property</button></div></div>"), gh = /* @__PURE__ */ K("<button class=\"add-item svelte-1q7020h\" type=\"button\">+ Add item</button>"), _h = /* @__PURE__ */ K("<!> <!> <!>", 1), vh = /* @__PURE__ */ K("<div data-value-node=\"\" role=\"group\"><div class=\"type-row svelte-1q7020h\"><label class=\"svelte-1q7020h\">Type</label><select class=\"svelte-1q7020h\"><option class=\"svelte-1q7020h\">String</option><option class=\"svelte-1q7020h\">Number</option><option class=\"svelte-1q7020h\">Boolean</option><option class=\"svelte-1q7020h\">Null</option><option class=\"svelte-1q7020h\">Object</option><option class=\"svelte-1q7020h\">Array</option></select></div> <!></div>"), yh = /* @__PURE__ */ K("<label class=\"svelte-1q7020h\"> </label><textarea class=\"svelte-1q7020h\"></textarea>", 1), bh = /* @__PURE__ */ K("<div><!></div>"), xh = /* @__PURE__ */ K("<small role=\"status\" class=\"svelte-1q7020h\"> </small>"), Sh = /* @__PURE__ */ K("<div class=\"json-value-control svelte-1q7020h\" data-json-value-control=\"\"><div class=\"mode svelte-1q7020h\"><button type=\"button\" class=\"svelte-1q7020h\"> </button></div> <!> <!></div>");
 function Ch(e, t) {
 	qe(t, !0);
 	let n = (e, t = b) => {
 		let i = /* @__PURE__ */ L(() => k(t())), a = /* @__PURE__ */ L(() => A(W(i))), o = /* @__PURE__ */ L(() => w(t()));
-		var s = vh(), c = B(s), l = B(c), u = H(l), d = B(u);
-		d.value = d.__value = "string";
-		var f = H(d);
-		f.value = f.__value = "number";
+		var s = vh();
+		let c;
+		var l = B(s), u = B(l), d = H(u), f = B(d);
+		f.value = f.__value = "string";
 		var v = H(f);
-		v.value = v.__value = "boolean";
+		v.value = v.__value = "number";
 		var y = H(v);
-		y.value = y.__value = "null";
+		y.value = y.__value = "boolean";
 		var x = H(y);
-		x.value = x.__value = "object";
+		x.value = x.__value = "null";
 		var C = H(x);
-		C.value = C.__value = "array", I(u);
-		var E;
-		Fi(u), I(c);
-		var O = H(c, 2), M = (e) => {
+		C.value = C.__value = "object";
+		var E = H(C);
+		E.value = E.__value = "array", I(d);
+		var O;
+		Fi(d), I(l);
+		var M = H(l, 2), se = (e) => {
 			var n = sh(), a = V(n), s = H(a);
 			ut(s), U((e, t, n, i) => {
 				Q(a, "for", e), Q(s, "id", t), Q(s, "aria-label", r() + " string"), qi(s, n), s.disabled = i;
@@ -14328,7 +14330,7 @@ function Ch(e, t) {
 				() => W(_)[W(o)] ?? String(W(i)),
 				() => !D(t())
 			]), G("input", s, (e) => re(t(), e.currentTarget.value)), q(e, n);
-		}, se = (e) => {
+		}, ce = (e) => {
 			var n = ch(), a = V(n), s = H(a);
 			Z(s), U((e, t, n, i, o) => {
 				Q(a, "for", e), Q(s, "id", t), Q(s, "aria-label", r() + " number"), Q(s, "aria-invalid", n), qi(s, i), s.disabled = o;
@@ -14339,16 +14341,16 @@ function Ch(e, t) {
 				() => W(g)[W(o)] ?? String(W(i)),
 				() => !D(t())
 			]), G("input", s, (e) => ne(t(), e.currentTarget.value)), q(e, n);
-		}, ce = (e) => {
+		}, le = (e) => {
 			var n = lh(), a = B(n);
 			Z(a);
 			var o = H(a, 2), s = B(o, !0);
 			I(o), I(n), U((e) => {
 				Q(a, "aria-label", r() + " boolean"), Ji(a, W(i) === !0), a.disabled = e, J(s, W(i) ? "On" : "Off");
 			}, [() => !D(t())]), G("change", a, (e) => N(t(), e.currentTarget.checked)), q(e, n);
-		}, le = (e) => {
-			q(e, uh());
 		}, ue = (e) => {
+			q(e, uh());
+		}, de = (e) => {
 			let s = /* @__PURE__ */ L(() => j(W(i))), c = /* @__PURE__ */ L(() => Math.min(m[W(o)] ?? 0, Math.max(0, Math.ceil(W(s).length / S) - 1)));
 			var l = _h(), u = V(l);
 			X(u, 16, () => W(s).slice(W(c) * S, (W(c) + 1) * S), (e) => e, (e, i) => {
@@ -14424,21 +14426,21 @@ function Ch(e, t) {
 				W(a) === "object" ? e(_) : e(v, -1);
 			}), q(e, l);
 		};
-		Y(O, (e) => {
-			W(a) === "string" ? e(M) : W(a) === "number" ? e(se, 1) : W(a) === "boolean" ? e(ce, 2) : W(a) === "null" ? e(le, 3) : e(ue, -1);
-		}), I(s), U((e, t, n, i, c) => {
-			Q(s, "id", e), Q(s, "data-value-path", W(o)), Q(s, "aria-label", t), Q(l, "for", n), Q(u, "id", i), Q(u, "aria-label", r() + " type"), u.disabled = c, E !== (E = W(a)) && (u.value = (u.__value = W(a)) ?? "", Pi(u, W(a)));
+		Y(M, (e) => {
+			W(a) === "string" ? e(se) : W(a) === "number" ? e(ce, 1) : W(a) === "boolean" ? e(le, 2) : W(a) === "null" ? e(ue, 3) : e(de, -1);
+		}), I(s), U((e, n, i, l, f) => {
+			c = ji(s, 1, "value-body svelte-1q7020h", null, c, { deep: t().length > 2 }), Q(s, "id", e), Q(s, "data-value-path", W(o)), Q(s, "aria-label", n), Q(u, "for", i), Q(d, "id", l), Q(d, "aria-label", r() + " type"), d.disabled = f, O !== (O = W(a)) && (d.value = (d.__value = W(a)) ?? "", Pi(d, W(a)));
 		}, [
 			() => T(t()),
 			() => t().length ? r() + " · " + t().map((e) => typeof e == "number" ? "Index " + e : "Key " + e).join(" / ") : r(),
 			() => T(t()) + "-type",
 			() => T(t()) + "-type",
 			() => !D(t())
-		]), G("change", u, (e) => te(t(), e.currentTarget.value)), q(e, s);
+		]), G("change", d, (e) => te(t(), e.currentTarget.value)), q(e, s);
 	}, r = oa(t, "label", 3, "Value"), i = oa(t, "disabled", 3, !1), a = oa(t, "error", 3, ""), o = oa(t, "embedded", 3, !1), s = /* @__PURE__ */ L(() => am(t.value)), c = /* @__PURE__ */ L(() => W(s).ok ? W(s).data.value : null), l = /* @__PURE__ */ L(() => W(s).ok ? JSON.stringify(W(s).data.value) : ""), u = /* @__PURE__ */ R(!1), d = /* @__PURE__ */ R(""), f = /* @__PURE__ */ R(""), p = /* @__PURE__ */ R(cn([])), m = cn({}), h = cn({}), g = /* @__PURE__ */ R(cn({})), _ = /* @__PURE__ */ R(cn({})), v = /* @__PURE__ */ R(null), y = /* @__PURE__ */ R(""), x = "", S = 64, C = /* @__PURE__ */ new Map(), w = (e) => JSON.stringify(e);
 	function T(e) {
 		let n = w(e);
-		return C.has(n) || C.set(n, t.idPrefix + "-value-" + C.size), C.get(n);
+		return C.has(n) || C.set(n, C.size), t.idPrefix + "-value-" + C.get(n);
 	}
 	let E = (e, t) => w(e) === w(t), D = (e) => !i() && (W(v) === null || E(W(v), e)), O = /* @__PURE__ */ L(() => W(u) || !W(s).ok);
 	kn(() => {
@@ -15123,12 +15125,12 @@ function Xh(e, t) {
 			var M;
 			Fi(E);
 			var N = H(E, 2), te = (e) => {
-				var r = Uh(), a = V(r), o = H(a);
-				ut(o);
-				var s = H(o);
+				var a = Uh(), o = V(a), s = H(o);
+				ut(s);
+				var c = H(s);
 				U(() => {
-					Q(a, "for", t.idPrefix + "-instructions-" + W(i)), Q(o, "id", t.idPrefix + "-instructions-" + W(i)), Q(o, "aria-label", "Question " + (W(i) + 1) + " instructions"), qi(o, W(n).instructions), Q(s, "aria-label", "Use structured question " + (W(i) + 1) + " instructions");
-				}), G("input", o, (e) => x(W(i), "instructions", e.currentTarget.value)), G("click", s, () => x(W(i), "instructions", { text: W(n).instructions })), q(e, r);
+					Q(o, "for", t.idPrefix + "-instructions-" + W(i)), s.disabled = r(), Q(s, "id", t.idPrefix + "-instructions-" + W(i)), Q(s, "aria-label", "Question " + (W(i) + 1) + " instructions"), qi(s, W(n).instructions), c.disabled = r(), Q(c, "aria-label", "Use structured question " + (W(i) + 1) + " instructions");
+				}), G("input", s, (e) => x(W(i), "instructions", e.currentTarget.value)), G("click", c, () => x(W(i), "instructions", { text: W(n).instructions })), q(e, a);
 			}, ne = (e) => {
 				{
 					let a = /* @__PURE__ */ L(() => "Question " + (W(i) + 1) + " instructions"), o = /* @__PURE__ */ L(() => t.idPrefix + "-instructions-" + W(i));
@@ -15157,7 +15159,7 @@ function Xh(e, t) {
 			var re = H(N, 2), ie = (e) => {
 				var t = Wh(), a = B(t);
 				Z(a), Ie(), I(t), U((e) => {
-					Q(a, "aria-label", "Question " + (W(i) + 1) + " descriptions enabled"), Ji(a, e);
+					a.disabled = r(), Q(a, "aria-label", "Question " + (W(i) + 1) + " descriptions enabled"), Ji(a, e);
 				}, [() => Object.hasOwn(W(n), "criteria")]), G("change", a, (e) => {
 					if (!r()) {
 						if (e.currentTarget.checked) {
@@ -15213,7 +15215,7 @@ function Xh(e, t) {
 					ut(l);
 					var u = H(l);
 					U((e) => {
-						Q(s, "for", t.idPrefix + "-unfinished-" + a + "-" + W(i)), J(c, `Unfinished ${a ?? ""} JSON`), Q(l, "id", t.idPrefix + "-unfinished-" + a + "-" + W(i)), Q(l, "aria-label", "Question " + (W(i) + 1) + " " + a + " unfinished JSON"), qi(l, e), Q(u, "aria-label", "Discard question " + (W(i) + 1) + " " + a + " draft");
+						Q(s, "for", t.idPrefix + "-unfinished-" + a + "-" + W(i)), J(c, `Unfinished ${a ?? ""} JSON`), l.disabled = r(), Q(l, "id", t.idPrefix + "-unfinished-" + a + "-" + W(i)), Q(l, "aria-label", "Question " + (W(i) + 1) + " " + a + " unfinished JSON"), qi(l, e), u.disabled = r(), Q(u, "aria-label", "Discard question " + (W(i) + 1) + " " + a + " draft");
 					}, [() => W(g)[JSON.stringify(String(W(n).id)) + ":" + a]]), G("input", l, (e) => A(W(i), a, e.currentTarget.value)), G("click", u, () => {
 						r() || (delete W(g)[JSON.stringify(String(W(n).id)) + ":" + a], delete W(v)[JSON.stringify(String(W(n).id)) + ":" + a], b());
 					}), q(e, o);
@@ -15224,7 +15226,7 @@ function Xh(e, t) {
 			});
 			var se = H(oe, 2), ce = B(se), le = H(ce), ue = H(le);
 			I(se), I(d), I(a), U((e, o, c) => {
-				a.open = e, J(s, `Question ${W(i) + 1} · ${o ?? ""}`), J(u, c), d.disabled = r(), J(p, `Question ${W(i) + 1}`), J(y, `Identity: ${W(n).id ?? ""}`), Q(T, "for", t.idPrefix + "-type-" + W(i)), Q(E, "id", t.idPrefix + "-type-" + W(i)), Q(E, "aria-label", "Question " + (W(i) + 1) + " type"), M !== (M = W(n).type) && (E.value = (E.__value = W(n).type) ?? "", Pi(E, W(n).type)), Q(ce, "aria-label", "Move question " + (W(i) + 1) + " up"), ce.disabled = r() || W(i) === 0, Q(le, "aria-label", "Move question " + (W(i) + 1) + " down"), le.disabled = r() || W(i) === W(l).length - 1, Q(ue, "aria-label", "Remove question " + (W(i) + 1));
+				a.open = e, J(s, `Question ${W(i) + 1} · ${o ?? ""}`), J(u, c), J(p, `Question ${W(i) + 1}`), J(y, `Identity: ${W(n).id ?? ""}`), Q(T, "for", t.idPrefix + "-type-" + W(i)), E.disabled = r(), Q(E, "id", t.idPrefix + "-type-" + W(i)), Q(E, "aria-label", "Question " + (W(i) + 1) + " type"), M !== (M = W(n).type) && (E.value = (E.__value = W(n).type) ?? "", Pi(E, W(n).type)), Q(ce, "aria-label", "Move question " + (W(i) + 1) + " up"), ce.disabled = r() || W(i) === 0, Q(le, "aria-label", "Move question " + (W(i) + 1) + " down"), le.disabled = r() || W(i) === W(l).length - 1, ue.disabled = r(), Q(ue, "aria-label", "Remove question " + (W(i) + 1));
 			}, [
 				() => W(h).includes(String(W(n).id)),
 				() => String(W(n).id),
@@ -15528,28 +15530,28 @@ function fg(e, t) {
 			var se;
 			Fi(S);
 			var le = H(S, 2);
-			X(le, 17, () => W(n).kind === "daily" ? ["minuteOfDay"] : W(n).kind === "interval" ? ["anchorMinute"] : ["dueMinute"], di, (e, r) => {
-				let i = /* @__PURE__ */ L(() => W(r) === "minuteOfDay" ? "daily minute" : W(r) === "anchorMinute" ? "anchor minute" : "due minute");
-				var s = ng(), c = V(s), l = B(c, !0);
-				I(c);
-				var u = H(c);
-				Z(u), U((e) => {
-					Q(c, "for", t.idPrefix + "-" + W(r) + "-" + W(a)), J(l, W(i)), Q(u, "id", t.idPrefix + "-" + W(r) + "-" + W(a)), Q(u, "aria-label", W(o) + " " + W(i)), qi(u, e);
-				}, [() => k(W(n), W(r))]), G("input", u, (e) => O(W(a), W(r), e.currentTarget.value)), q(e, s);
+			X(le, 17, () => W(n).kind === "daily" ? ["minuteOfDay"] : W(n).kind === "interval" ? ["anchorMinute"] : ["dueMinute"], di, (e, i) => {
+				let s = /* @__PURE__ */ L(() => W(i) === "minuteOfDay" ? "daily minute" : W(i) === "anchorMinute" ? "anchor minute" : "due minute");
+				var c = ng(), l = V(c), u = B(l, !0);
+				I(l);
+				var d = H(l);
+				Z(d), U((e) => {
+					Q(l, "for", t.idPrefix + "-" + W(i) + "-" + W(a)), J(u, W(s)), d.disabled = r(), Q(d, "id", t.idPrefix + "-" + W(i) + "-" + W(a)), Q(d, "aria-label", W(o) + " " + W(s)), qi(d, e);
+				}, [() => k(W(n), W(i))]), G("input", d, (e) => O(W(a), W(i), e.currentTarget.value)), q(e, c);
 			});
 			var ue = H(le, 2), de = (e) => {
-				var r = rg(), i = V(r), s = H(i);
-				Z(s);
-				var c = H(s), l = H(c), u = B(l);
-				u.value = u.__value = "minutes";
-				var d = H(u);
-				d.value = d.__value = "hours";
+				var i = rg(), s = V(i), c = H(s);
+				Z(c);
+				var l = H(c), u = H(l), d = B(u);
+				d.value = d.__value = "minutes";
 				var f = H(d);
-				f.value = f.__value = "days", I(l);
-				var p;
-				Fi(l), U((e, n) => {
-					Q(i, "for", t.idPrefix + "-quantity-" + W(a)), Q(s, "id", t.idPrefix + "-quantity-" + W(a)), Q(s, "aria-label", W(o) + " interval quantity"), qi(s, e), Q(c, "for", t.idPrefix + "-unit-" + W(a)), Q(l, "id", t.idPrefix + "-unit-" + W(a)), Q(l, "aria-label", W(o) + " interval unit"), p !== (p = n) && (l.value = (l.__value = n) ?? "", Pi(l, n));
-				}, [() => ee(W(n)), () => j(W(n))]), G("input", s, (e) => A(W(a), e.currentTarget.value, j(W(n)))), G("change", l, (e) => A(W(a), ee(W(n)), e.currentTarget.value)), q(e, r);
+				f.value = f.__value = "hours";
+				var p = H(f);
+				p.value = p.__value = "days", I(u);
+				var m;
+				Fi(u), U((e, n) => {
+					Q(s, "for", t.idPrefix + "-quantity-" + W(a)), c.disabled = r(), Q(c, "id", t.idPrefix + "-quantity-" + W(a)), Q(c, "aria-label", W(o) + " interval quantity"), qi(c, e), Q(l, "for", t.idPrefix + "-unit-" + W(a)), u.disabled = r(), Q(u, "id", t.idPrefix + "-unit-" + W(a)), Q(u, "aria-label", W(o) + " interval unit"), m !== (m = n) && (u.value = (u.__value = n) ?? "", Pi(u, n));
+				}, [() => ee(W(n)), () => j(W(n))]), G("input", c, (e) => A(W(a), e.currentTarget.value, j(W(n)))), G("change", u, (e) => A(W(a), ee(W(n)), e.currentTarget.value)), q(e, i);
 			};
 			Y(ue, (e) => {
 				W(n).kind === "interval" && e(de);
@@ -15560,24 +15562,24 @@ function fg(e, t) {
 				"order",
 				"clockId",
 				"calendarId"
-			], di, (e, r) => {
-				var i = ag(), s = V(i), c = B(s);
-				Z(c);
-				var l = H(c);
-				I(s);
-				var u = H(s), d = (e) => {
-					var i = ig(), s = V(i), c = B(s, !0);
-					I(s);
-					var l = H(s);
-					Z(l), U((e) => {
-						Q(s, "for", t.idPrefix + "-" + r + "-" + W(a)), J(c, r), Q(l, "id", t.idPrefix + "-" + r + "-" + W(a)), Q(l, "aria-label", W(o) + " " + r), qi(l, e);
-					}, [() => r === "revision" || r === "order" ? k(W(n), r) : String(W(n)[r])]), G("input", l, (e) => r === "revision" || r === "order" ? O(W(a), r, e.currentTarget.value) : D(W(a), r, e.currentTarget.value)), q(e, i);
-				}, f = /* @__PURE__ */ L(() => Object.hasOwn(W(n), r));
-				Y(u, (e) => {
-					W(f) && e(d);
+			], di, (e, i) => {
+				var s = ag(), c = V(s), l = B(c);
+				Z(l);
+				var u = H(l);
+				I(c);
+				var d = H(c), f = (e) => {
+					var s = ig(), c = V(s), l = B(c, !0);
+					I(c);
+					var u = H(c);
+					Z(u), U((e) => {
+						Q(c, "for", t.idPrefix + "-" + i + "-" + W(a)), J(l, i), u.disabled = r(), Q(u, "id", t.idPrefix + "-" + i + "-" + W(a)), Q(u, "aria-label", W(o) + " " + i), qi(u, e);
+					}, [() => i === "revision" || i === "order" ? k(W(n), i) : String(W(n)[i])]), G("input", u, (e) => i === "revision" || i === "order" ? O(W(a), i, e.currentTarget.value) : D(W(a), i, e.currentTarget.value)), q(e, s);
+				}, p = /* @__PURE__ */ L(() => Object.hasOwn(W(n), i));
+				Y(d, (e) => {
+					W(p) && e(f);
 				}), U((e) => {
-					Q(c, "aria-label", W(o) + " " + r + " enabled"), Ji(c, e), J(l, ` ${(r === "clockId" ? "Expected clock" : r === "calendarId" ? "Expected calendar" : r) ?? ""}`);
-				}, [() => Object.hasOwn(W(n), r)]), G("change", c, (e) => M(W(a), r, e.currentTarget.checked)), q(e, i);
+					l.disabled = r(), Q(l, "aria-label", W(o) + " " + i + " enabled"), Ji(l, e), J(u, ` ${(i === "clockId" ? "Expected clock" : i === "calendarId" ? "Expected calendar" : i) ?? ""}`);
+				}, [() => Object.hasOwn(W(n), i)]), G("change", l, (e) => M(W(a), i, e.currentTarget.checked)), q(e, s);
 			});
 			var me = H(pe, 2);
 			{
@@ -15610,7 +15612,7 @@ function fg(e, t) {
 				ut(c);
 				var l = H(c);
 				U((e) => {
-					Q(s, "for", t.idPrefix + "-unfinished-" + W(a)), Q(c, "id", t.idPrefix + "-unfinished-" + W(a)), Q(c, "aria-label", W(o) + " metadata unfinished JSON"), qi(c, e), Q(l, "aria-label", W(o) + " discard metadata draft");
+					Q(s, "for", t.idPrefix + "-unfinished-" + W(a)), c.disabled = r(), Q(c, "id", t.idPrefix + "-unfinished-" + W(a)), Q(c, "aria-label", W(o) + " metadata unfinished JSON"), qi(c, e), l.disabled = r(), Q(l, "aria-label", W(o) + " discard metadata draft");
 				}, [() => W(_)[w(W(n), "extra")]]), G("input", c, (e) => ce(W(a), e.currentTarget.value)), G("click", l, () => {
 					r() || (delete W(_)[w(W(n), "extra")], delete W(x)[w(W(n), "extra")], E());
 				}), q(e, i);
@@ -15619,8 +15621,8 @@ function fg(e, t) {
 				W(_e) && e(ge);
 			}), I(fe);
 			var ve = H(fe), ye = B(ve), be = H(ye), xe = H(be);
-			I(ve), I(p), I(s), U((e, i, c, d, m) => {
-				s.open = e, J(l, i), J(f, c), p.disabled = r(), J(h, W(o)), Q(g, "for", t.idPrefix + "-id-" + W(a)), Q(v, "id", t.idPrefix + "-id-" + W(a)), Q(v, "aria-label", W(o) + " identity"), qi(v, d), Q(y, "for", t.idPrefix + "-kind-" + W(a)), Q(S, "id", t.idPrefix + "-kind-" + W(a)), Q(S, "aria-label", W(o) + " kind"), se !== (se = W(n).kind) && (S.value = (S.__value = W(n).kind) ?? "", Pi(S, W(n).kind)), fe.open = m, Q(ye, "aria-label", "Move schedule " + (W(a) + 1) + " up"), ye.disabled = r() || W(a) === 0, Q(be, "aria-label", "Move schedule " + (W(a) + 1) + " down"), be.disabled = r() || W(a) === W(u).length - 1, Q(xe, "aria-label", "Remove schedule " + (W(a) + 1));
+			I(ve), I(p), I(s), U((e, i, c, d, p) => {
+				s.open = e, J(l, i), J(f, c), J(h, W(o)), Q(g, "for", t.idPrefix + "-id-" + W(a)), v.disabled = r(), Q(v, "id", t.idPrefix + "-id-" + W(a)), Q(v, "aria-label", W(o) + " identity"), qi(v, d), Q(y, "for", t.idPrefix + "-kind-" + W(a)), S.disabled = r(), Q(S, "id", t.idPrefix + "-kind-" + W(a)), Q(S, "aria-label", W(o) + " kind"), se !== (se = W(n).kind) && (S.value = (S.__value = W(n).kind) ?? "", Pi(S, W(n).kind)), fe.open = p, Q(ye, "aria-label", "Move schedule " + (W(a) + 1) + " up"), ye.disabled = r() || W(a) === 0, Q(be, "aria-label", "Move schedule " + (W(a) + 1) + " down"), be.disabled = r() || W(a) === W(u).length - 1, xe.disabled = r(), Q(xe, "aria-label", "Remove schedule " + (W(a) + 1));
 			}, [
 				() => W(re).includes(String(W(n).scheduleId)),
 				() => String(W(n).scheduleId),
@@ -16514,22 +16516,25 @@ function M_(e, t) {
 	kn(() => {
 		t.control.key === "maxRetries" && z(f, Number(t.control.value), !0);
 	});
-	let p = /* @__PURE__ */ L(() => (t.recordMode ?? W(d)) === "terms");
-	function m(e) {
+	function p(e) {
+		r() || (t.onnumber(e), z(f, Number(t.control.value), !0), e.value = String(t.control.value));
+	}
+	let m = /* @__PURE__ */ L(() => (t.recordMode ?? W(d)) === "terms");
+	function h(e) {
 		z(d, e, !0), t.onRecordMode?.(e);
 	}
-	function h(e) {
+	function g(e) {
 		r() || (t.onformat?.("json"), t.ontext(e));
 	}
-	let g = /* @__PURE__ */ R(""), _ = /* @__PURE__ */ R(void 0);
-	function v(e) {
-		r() || (z(_, e), t.onSchemaDraft?.(e));
+	let _ = /* @__PURE__ */ R(""), v = /* @__PURE__ */ R(void 0);
+	function y(e) {
+		r() || (z(v, e), t.onSchemaDraft?.(e));
 	}
-	let y = /* @__PURE__ */ L(() => ["patterns", "extract"].includes(t.control.structured ?? ""));
-	function b() {
+	let b = /* @__PURE__ */ L(() => ["patterns", "extract"].includes(t.control.structured ?? ""));
+	function x() {
 		if (r() || !t.control.inputSpec) return;
 		let e = nm(t.control.inputSpec, t.draftValue === void 0 ? {
-			format: W(p) ? u() : "json",
+			format: W(m) ? u() : "json",
 			text: t.text,
 			currentValue: t.control.value
 		} : {
@@ -16537,26 +16542,26 @@ function M_(e, t) {
 			value: t.draftValue,
 			currentValue: t.control.value
 		});
-		if (W(p) && !e.ok) z(g, e.error.message, !0);
+		if (W(m) && !e.ok) z(_, e.error.message, !0);
 		else {
-			if (!W(p) && e.ok) {
+			if (!W(m) && e.ok) {
 				let n = rm(t.control.inputSpec, e.data.value, "auto");
 				n.ok ? (t.onformat?.("auto"), t.ontext(n.data)) : (t.onDraft ? t.onDraft(e.data.value) : t.ontext(JSON.stringify(e.data.value, null, 2)), t.onformat?.("json"));
 			} else e.ok && (t.onDraft ? t.onDraft(e.data.value) : t.ontext(JSON.stringify(e.data.value, null, 2))), t.onformat?.("json");
-			m(W(p) ? "rows" : "terms"), z(g, "");
+			h(W(m) ? "rows" : "terms"), z(_, "");
 		}
 	}
-	let x = /* @__PURE__ */ L(() => ["questions", "schedules"].includes(t.control.inputSpec?.editor ?? "")), S = /* @__PURE__ */ R(void 0);
-	function C(e) {
-		r() || i() || (z(S, e), t.onStructuredDraft?.(e));
+	let S = /* @__PURE__ */ L(() => ["questions", "schedules"].includes(t.control.inputSpec?.editor ?? "")), C = /* @__PURE__ */ R(void 0);
+	function w(e) {
+		r() || i() || (z(C, e), t.onStructuredDraft?.(e));
 	}
-	let w = /* @__PURE__ */ L(() => {
+	let T = /* @__PURE__ */ L(() => {
 		try {
 			return t.draftValue === void 0 ? JSON.parse(t.text) : t.draftValue;
 		} catch {
 			return t.control.value;
 		}
-	}), T = /* @__PURE__ */ L(() => t.control.editor === "json" && ["value", "path"].includes(t.control.inputSpec?.editor ?? "")), E = /* @__PURE__ */ L(() => {
+	}), E = /* @__PURE__ */ L(() => t.control.editor === "json" && ["value", "path"].includes(t.control.inputSpec?.editor ?? "")), D = /* @__PURE__ */ L(() => {
 		try {
 			let e = t.draftValue === void 0 ? JSON.parse(t.text) : t.draftValue;
 			return t.control.inputSpec?.editor === "path" ? Ym(e, {
@@ -16570,18 +16575,18 @@ function M_(e, t) {
 			return { ok: !1 };
 		}
 	});
-	function D(e) {
+	function O(e) {
 		r() || i() || (t.onDraft ? t.onDraft(e) : t.ontext(JSON.stringify(e, null, 2)));
 	}
-	function O(e) {
+	function k(e) {
 		r() || i() || (t.control.inputSpec?.editor === "path" && t.onformat?.("json"), t.ontext(e));
 	}
-	function k(e, t = []) {
-		if (r() || i() || !W(E).ok) return;
-		let n = Xm(W(E).data.value, t, e);
-		n.ok ? O(n.data.text) : z(g, n.error.message, !0);
+	function A(e, t = []) {
+		if (r() || i() || !W(D).ok) return;
+		let n = Xm(W(D).data.value, t, e);
+		n.ok ? k(n.data.text) : z(_, n.error.message, !0);
 	}
-	let A = /* @__PURE__ */ R({
+	let j = /* @__PURE__ */ R({
 		open: !1,
 		draft: {
 			text: "",
@@ -16589,11 +16594,11 @@ function M_(e, t) {
 			action: "replace",
 			columns: {}
 		}
-	}), j = /* @__PURE__ */ L(() => t.importState ?? W(A)), ee = /* @__PURE__ */ L(() => !!t.control.inputSpec && bm(t.control.inputSpec).length > 0), M = /* @__PURE__ */ L(() => t.draftValue !== void 0 && !W(j).open ? {
+	}), ee = /* @__PURE__ */ L(() => t.importState ?? W(j)), M = /* @__PURE__ */ L(() => !!t.control.inputSpec && bm(t.control.inputSpec).length > 0), N = /* @__PURE__ */ L(() => t.draftValue !== void 0 && !W(ee).open ? {
 		ok: !0,
 		data: { value: t.draftValue }
 	} : t.control.inputSpec ? nm(t.control.inputSpec, t.draftValue === void 0 ? {
-		format: t.control.structured ? t.draftFormat ?? (W(y) && W(p) ? u() : "json") : u(),
+		format: t.control.structured ? t.draftFormat ?? (W(b) && W(m) ? u() : "json") : u(),
 		text: t.text,
 		currentValue: t.control.value
 	} : {
@@ -16601,48 +16606,48 @@ function M_(e, t) {
 		value: t.draftValue,
 		currentValue: t.control.value
 	}) : null);
-	function N(e) {
+	function te(e) {
 		if (r() || i()) return;
 		let n = am(e);
-		n.ok && (z(A, n.data.value), t.onImportState?.(W(A)));
+		n.ok && (z(j, n.data.value), t.onImportState?.(W(j)));
 	}
-	function te(e) {
-		N({
+	function ne(e) {
+		te({
 			open: !0,
 			draft: e
 		});
 	}
-	function ne(e) {
-		r() || i() || !W(M)?.ok || (D(e), W(y) && (t.onformat?.("json"), m("rows")), N({
-			...W(j),
+	function re(e) {
+		r() || i() || !W(N)?.ok || (O(e), W(b) && (t.onformat?.("json"), h("rows")), te({
+			...W(ee),
 			open: !1
 		}));
 	}
-	let re = /* @__PURE__ */ L(() => t.control.inputSpec?.editor === "list"), ie = () => t.control.editor === "enum" && (t.control.options?.length ?? 0) > 1 && (t.control.options?.length ?? 0) <= 3 && t.control.options.every((e) => e.label.length <= 10), ae = () => t.control.effective !== void 0 && t.control.effective !== t.text && t.control.source !== "Saved setting" ? t.control.source : "";
-	function P(e, n) {
+	let ie = /* @__PURE__ */ L(() => t.control.inputSpec?.editor === "list"), ae = () => t.control.editor === "enum" && (t.control.options?.length ?? 0) > 1 && (t.control.options?.length ?? 0) <= 3 && t.control.options.every((e) => e.label.length <= 10), P = () => t.control.effective !== void 0 && t.control.effective !== t.text && t.control.source !== "Saved setting" ? t.control.source : "";
+	function F(e, n) {
 		r() || (e.currentTarget.closest("[role=\"radiogroup\"]")?.querySelectorAll("input[type=\"radio\"]").forEach((e) => e.checked = e.value === String(t.control.value)), t.onvalue(n));
 	}
-	var F = j_();
-	let oe;
-	var se = B(F), ce = (e) => {
+	var oe = j_();
+	let se;
+	var ce = B(oe), le = (e) => {
 		var n = a_(), a = B(n);
 		I(n), U(() => {
-			Q(n, "aria-label", "Import " + t.control.label + " table"), n.disabled = r() || i() || !W(M)?.ok, J(a, `Import ${t.control.label ?? ""} table`);
+			Q(n, "aria-label", "Import " + t.control.label + " table"), n.disabled = r() || i() || !W(N)?.ok, J(a, `Import ${t.control.label ?? ""} table`);
 		}), G("click", n, () => {
-			W(M)?.ok && N({
-				...W(j),
+			W(N)?.ok && te({
+				...W(ee),
 				open: !0
 			});
 		}), q(e, n);
 	};
-	Y(se, (e) => {
-		W(ee) && !W(j).open && e(ce);
+	Y(ce, (e) => {
+		W(M) && !W(ee).open && e(le);
 	});
-	var le = H(se, 2), ue = (e) => {
+	var ue = H(ce, 2), de = (e) => {
 		var n = s_(), a = V(n);
 		ui(a, s, (e) => {
 			{
-				let n = /* @__PURE__ */ L(() => W(M)?.ok ? W(M).data.value : []), a = /* @__PURE__ */ L(() => r() || i()), o = /* @__PURE__ */ L(() => !W(M)?.ok);
+				let n = /* @__PURE__ */ L(() => W(N)?.ok ? W(N).data.value : []), a = /* @__PURE__ */ L(() => r() || i()), o = /* @__PURE__ */ L(() => !W(N)?.ok);
 				Km(e, {
 					get spec() {
 						return t.control.inputSpec;
@@ -16651,12 +16656,12 @@ function M_(e, t) {
 						return W(n);
 					},
 					get draft() {
-						return W(j).draft;
+						return W(ee).draft;
 					},
-					onDraft: te,
-					onConfirm: ne,
-					onCancel: () => N({
-						...W(j),
+					onDraft: ne,
+					onConfirm: re,
+					onCancel: () => te({
+						...W(ee),
 						open: !1
 					}),
 					get disabled() {
@@ -16673,17 +16678,17 @@ function M_(e, t) {
 			I(n), U(() => J(r, `Repair the current ${t.control.label ?? ""} entry before importing.`)), q(e, n);
 		};
 		Y(o, (e) => {
-			W(M)?.ok || e(c);
+			W(N)?.ok || e(c);
 		}), q(e, n);
-	}, de = (e) => {
+	}, fe = (e) => {
 		var i = u_(), a = V(i), o = (e) => {
 			var n = c_();
 			U(() => {
 				Q(n, "aria-label", "Use " + t.control.label + " rows"), n.disabled = r();
-			}), G("click", n, b), q(e, n);
+			}), G("click", n, x), q(e, n);
 		};
 		Y(a, (e) => {
-			W(y) && e(o);
+			W(b) && e(o);
 		});
 		var s = H(a, 2);
 		Dm(s, {
@@ -16717,12 +16722,12 @@ function M_(e, t) {
 		});
 		var c = H(s, 2), l = (e) => {
 			var t = l_(), n = B(t, !0);
-			I(t), U(() => J(n, W(g))), q(e, t);
+			I(t), U(() => J(n, W(_))), q(e, t);
 		};
 		Y(c, (e) => {
-			W(g) && e(l);
+			W(_) && e(l);
 		}), q(e, i);
-	}, fe = (e) => {
+	}, pe = (e) => {
 		var a = Wr();
 		ui(V(a), o, (e) => {
 			{
@@ -16737,7 +16742,7 @@ function M_(e, t) {
 					get draftState() {
 						return t.schemaDraft;
 					},
-					onDraftState: v,
+					onDraftState: y,
 					get label() {
 						return t.control.label;
 					},
@@ -16756,7 +16761,7 @@ function M_(e, t) {
 				});
 			}
 		}), q(e, a);
-	}, pe = (e) => {
+	}, me = (e) => {
 		var o = Wr();
 		ui(V(o), a, (e) => {
 			var a = Wr(), o = V(a), s = (e) => {
@@ -16764,16 +16769,16 @@ function M_(e, t) {
 					let a = /* @__PURE__ */ L(() => r() || i());
 					Xh(e, {
 						get value() {
-							return W(w);
+							return W(T);
 						},
-						onchange: D,
+						onchange: O,
 						get oninvalid() {
 							return t.ontext;
 						},
 						get draftState() {
 							return t.structuredDraft;
 						},
-						onDraftState: C,
+						onDraftState: w,
 						get label() {
 							return t.control.label;
 						},
@@ -16793,16 +16798,16 @@ function M_(e, t) {
 					let a = /* @__PURE__ */ L(() => r() || i());
 					fg(e, {
 						get value() {
-							return W(w);
+							return W(T);
 						},
-						onchange: D,
+						onchange: O,
 						get oninvalid() {
 							return t.ontext;
 						},
 						get draftState() {
 							return t.structuredDraft;
 						},
-						onDraftState: C,
+						onDraftState: w,
 						get label() {
 							return t.control.label;
 						},
@@ -16822,17 +16827,17 @@ function M_(e, t) {
 				t.control.inputSpec?.editor === "questions" ? e(s) : e(c, -1);
 			}), q(e, a);
 		}), q(e, o);
-	}, me = (e) => {
+	}, he = (e) => {
 		var a = Wr(), o = V(a), s = (e) => {
 			var a = Wr(), o = V(a), s = (e) => {
 				{
 					let i = /* @__PURE__ */ L(() => ["select-fields.path", "format.path"].includes(t.control.inputSpec.id)), a = /* @__PURE__ */ L(() => t.control.inputSpec.limits.maxItems ?? 64);
 					oh(e, {
 						get value() {
-							return W(E).data.value;
+							return W(D).data.value;
 						},
-						onchange: D,
-						oninvalid: (e) => k(e),
+						onchange: O,
+						oninvalid: (e) => A(e),
 						get label() {
 							return t.control.label;
 						},
@@ -16858,10 +16863,10 @@ function M_(e, t) {
 					let a = /* @__PURE__ */ L(() => r() || i());
 					Ch(e, {
 						get value() {
-							return W(E).data.value;
+							return W(D).data.value;
 						},
-						onchange: D,
-						oninvalid: k,
+						onchange: O,
+						oninvalid: A,
 						get label() {
 							return t.control.label;
 						},
@@ -16886,12 +16891,12 @@ function M_(e, t) {
 			var s = H(a);
 			ut(s), Ie(), U((e) => {
 				Q(a, "for", t.idPrefix + "-typed-raw"), J(o, `${t.control.label ?? ""} (Advanced JSON)`), Q(s, "id", t.idPrefix + "-typed-raw"), Q(s, "aria-label", t.control.label + " JSON"), qi(s, e), s.disabled = r() || i();
-			}, [() => t.draftValue === void 0 ? t.text : JSON.stringify(t.draftValue, null, 2)]), G("input", s, (e) => O(e.currentTarget.value)), q(e, n);
+			}, [() => t.draftValue === void 0 ? t.text : JSON.stringify(t.draftValue, null, 2)]), G("input", s, (e) => k(e.currentTarget.value)), q(e, n);
 		};
 		Y(o, (e) => {
-			W(E).ok ? e(s) : e(c, -1);
+			W(D).ok ? e(s) : e(c, -1);
 		}), q(e, a);
-	}, he = (e) => {
+	}, ge = (e) => {
 		var i = p_(), a = V(i), o = H(a), s = B(o);
 		s.value = s.__value = "", X(H(s), 17, () => t.control.helperChoices, (e) => e.key, (e, t) => {
 			var n = f_(), r = B(n);
@@ -16916,7 +16921,7 @@ function M_(e, t) {
 		}), G("input", f, (e) => {
 			r() || t.ontext(e.currentTarget.value);
 		}), q(e, i);
-	}, ge = (e) => {
+	}, _e = (e) => {
 		var i = m_(), a = V(i), o = B(a, !0);
 		I(a), Pm(H(a), {
 			get control() {
@@ -16944,17 +16949,17 @@ function M_(e, t) {
 				return t.onDraft;
 			}
 		}), U(() => J(o, t.control.label)), q(e, i);
-	}, _e = (e) => {
+	}, ve = (e) => {
 		var i = g_(), a = V(i), o = B(a, !0);
 		I(a);
 		var s = H(a, 2), c = (e) => {
 			var n = h_();
 			U(() => {
 				Q(n, "aria-label", "Use " + t.control.label + " terms"), n.disabled = r();
-			}), G("click", n, b), q(e, n);
+			}), G("click", n, x), q(e, n);
 		};
 		Y(s, (e) => {
-			W(y) && e(c);
+			W(b) && e(c);
 		}), zh(H(s, 2), {
 			get control() {
 				return t.control;
@@ -16965,7 +16970,7 @@ function M_(e, t) {
 			get disabled() {
 				return r();
 			},
-			ontext: h,
+			ontext: g,
 			get onDraft() {
 				return t.onDraft;
 			},
@@ -16979,22 +16984,20 @@ function M_(e, t) {
 				return n();
 			}
 		}), U(() => J(o, t.control.label)), q(e, i);
-	}, ve = (e) => {
+	}, ye = (e) => {
 		var n = __(), i = V(n), a = B(i, !0), o = H(a), s = B(o, !0);
 		I(o), I(i);
 		var c = H(i, 2);
 		Z(c);
 		var l = H(c, 2), u = H(B(l)), d = B(u, !0);
 		I(u), I(l);
-		var p = H(l, 2), m = B(p, !0);
-		I(p), U(() => {
-			Q(i, "for", t.idPrefix + "-retries"), J(a, t.control.label), Q(o, "for", t.idPrefix + "-retries"), J(s, W(f) === 0 ? "None" : W(f)), Q(c, "id", t.idPrefix + "-retries"), Q(c, "aria-label", t.control.label), Q(c, "min", t.control.min ?? 0), Q(c, "max", t.control.max), qi(c, W(f)), Q(c, "aria-valuetext", W(f) === 0 ? "None" : W(f) + " additional attempts"), c.disabled = r(), J(d, t.control.max), J(m, W(f) === 0 ? "No retries on failure." : `Up to ${W(f) + 1} model calls in total. Only eligible failures are retried.`);
+		var m = H(l, 2), h = B(m, !0);
+		I(m), U(() => {
+			Q(i, "for", t.idPrefix + "-retries"), J(a, t.control.label), Q(o, "for", t.idPrefix + "-retries"), J(s, W(f) === 0 ? "None" : W(f)), Q(c, "id", t.idPrefix + "-retries"), Q(c, "aria-label", t.control.label), Q(c, "min", t.control.min ?? 0), Q(c, "max", t.control.max), qi(c, W(f)), Q(c, "aria-valuetext", W(f) === 0 ? "None" : W(f) + " additional attempts"), c.disabled = r(), J(d, t.control.max), J(h, W(f) === 0 ? "No retries on failure." : `Up to ${W(f) + 1} model calls in total. Only eligible failures are retried.`);
 		}), G("input", c, (e) => {
 			r() || z(f, Number(e.currentTarget.value), !0);
-		}), G("change", c, (e) => {
-			r() || t.onnumber(e.currentTarget);
-		}), q(e, n);
-	}, ye = (e) => {
+		}), G("change", c, (e) => p(e.currentTarget)), q(e, n);
+	}, be = (e) => {
 		var n = v_(), i = B(n), a = B(i, !0);
 		I(i);
 		var o = H(i);
@@ -17005,7 +17008,7 @@ function M_(e, t) {
 		}, [() => !!t.control.value]), G("change", o, (e) => {
 			r() || t.onvalue(e.currentTarget.checked);
 		}), q(e, n);
-	}, be = (e) => {
+	}, xe = (e) => {
 		var n = b_(), i = V(n), a = B(i, !0);
 		I(i);
 		var o = H(i, 2);
@@ -17016,12 +17019,12 @@ function M_(e, t) {
 			I(o), I(i), U((e) => {
 				Q(a, "name", t.idPrefix + "-choice"), Q(a, "aria-label", W(n).label), qi(a, W(n).value), Ji(a, e), a.disabled = r(), J(s, W(n).label);
 			}, [() => String(t.control.value) === W(n).value]), G("change", a, (e) => {
-				e.currentTarget.checked && P(e, W(n).value);
+				e.currentTarget.checked && F(e, W(n).value);
 			}), q(e, i);
 		}), I(o), U(() => {
 			J(a, t.control.label), Q(o, "aria-label", t.control.label);
 		}), q(e, n);
-	}, xe = /* @__PURE__ */ L(() => ie()), Se = (e) => {
+	}, Se = /* @__PURE__ */ L(() => ae()), Ce = (e) => {
 		var i = T_(), a = V(i), o = B(a, !0);
 		I(a);
 		var s = H(a, 2), c = (e) => {
@@ -17075,10 +17078,10 @@ function M_(e, t) {
 			Q(a, "for", t.idPrefix + "-editor"), J(o, t.control.label);
 		}), q(e, i);
 	};
-	Y(le, (e) => {
-		W(ee) && W(j).open && t.control.inputSpec ? e(ue) : W(re) || W(y) && W(p) ? e(de, 1) : t.control.inputSpec?.editor === "schema" ? e(fe, 2) : W(x) ? e(pe, 3) : W(T) ? e(me, 4) : t.control.inputSpec?.id === "for-each.helper" && t.control.helperChoices ? e(he, 5) : t.control.inputSpec?.editor === "hotkey" ? e(ge, 6) : t.control.structured && t.control.editor === "json" ? e(_e, 7) : t.control.editor === "number" && t.control.key === "maxRetries" ? e(ve, 8) : t.control.editor === "boolean" ? e(ye, 9) : W(xe) ? e(be, 10) : e(Se, -1);
+	Y(ue, (e) => {
+		W(M) && W(ee).open && t.control.inputSpec ? e(de) : W(ie) || W(b) && W(m) ? e(fe, 1) : t.control.inputSpec?.editor === "schema" ? e(pe, 2) : W(S) ? e(me, 3) : W(E) ? e(he, 4) : t.control.inputSpec?.id === "for-each.helper" && t.control.helperChoices ? e(ge, 5) : t.control.inputSpec?.editor === "hotkey" ? e(_e, 6) : t.control.structured && t.control.editor === "json" ? e(ve, 7) : t.control.editor === "number" && t.control.key === "maxRetries" ? e(ye, 8) : t.control.editor === "boolean" ? e(be, 9) : W(Se) ? e(xe, 10) : e(Ce, -1);
 	});
-	var Ce = H(le, 2), we = (e) => {
+	var we = H(ue, 2), Te = (e) => {
 		var n = D_(), a = B(n), o = B(a, !0);
 		I(a);
 		var s = H(a), c = (e) => {
@@ -17094,15 +17097,15 @@ function M_(e, t) {
 		});
 		var l = H(s), u = B(l, !0);
 		I(l), I(n), U(() => {
-			J(o, i() ? "Waiting for acknowledgment" : "Unsaved changes"), Q(l, "aria-label", "Save " + t.control.label), Q(l, "data-save-control", t.control.key), l.disabled = r() || i() || W(j).open || W(x) && !!(t.structuredDraft ?? W(S))?.invalid || t.control.inputSpec?.editor === "schema" && t.text !== "" && !!(t.schemaDraft ?? W(_))?.invalid, J(u, i() ? "Validating…" : t.control.inputSpec?.editor === "schema" ? "Save structure" : "Save " + t.control.label);
+			J(o, i() ? "Waiting for acknowledgment" : "Unsaved changes"), Q(l, "aria-label", "Save " + t.control.label), Q(l, "data-save-control", t.control.key), l.disabled = r() || i() || W(ee).open || W(S) && !!(t.structuredDraft ?? W(C))?.invalid || t.control.inputSpec?.editor === "schema" && t.text !== "" && !!(t.schemaDraft ?? W(v))?.invalid, J(u, i() ? "Validating…" : t.control.inputSpec?.editor === "schema" ? "Save structure" : "Save " + t.control.label);
 		}), G("click", l, () => {
-			!r() && !i() && !W(j).open && !(W(x) && (t.structuredDraft ?? W(S))?.invalid) && !(t.control.inputSpec?.editor === "schema" && t.text !== "" && (t.schemaDraft ?? W(_))?.invalid) && t.onsave();
+			!r() && !i() && !W(ee).open && !(W(S) && (t.structuredDraft ?? W(C))?.invalid) && !(t.control.inputSpec?.editor === "schema" && t.text !== "" && (t.schemaDraft ?? W(v))?.invalid) && t.onsave();
 		}), q(e, n);
 	};
-	Y(Ce, (e) => {
-		l() && (c() || i() || n()) && (t.control.editor === "json" || t.control.editor === "lines") && e(we);
+	Y(we, (e) => {
+		l() && (c() || i() || n()) && (t.control.editor === "json" || t.control.editor === "lines") && e(Te);
 	});
-	var Te = H(Ce, 2), Ee = (e) => {
+	var Ee = H(we, 2), De = (e) => {
 		var n = O_(), r = B(n), i = B(r);
 		I(r);
 		var a = H(r), o = B(a, !0);
@@ -17110,20 +17113,20 @@ function M_(e, t) {
 			J(i, `About ${t.control.label ?? ""}`), J(o, t.control.help);
 		}), q(e, n);
 	};
-	Y(Te, (e) => {
-		t.control.help && e(Ee);
+	Y(Ee, (e) => {
+		t.control.help && e(De);
 	});
-	var De = H(Te, 2), Oe = (e) => {
+	var Oe = H(Ee, 2), ke = (e) => {
 		var n = k_(), r = B(n, !0);
 		I(n), U(() => J(r, t.control.exposureNote)), q(e, n);
-	}, ke = (e) => {
+	}, Ae = (e) => {
 		var n = k_(), r = B(n);
-		I(n), U((e) => J(r, `${e ?? ""} · Effective: ${t.control.effective ?? ""}`), [() => ae()]), q(e, n);
-	}, Ae = /* @__PURE__ */ L(() => ae());
-	Y(De, (e) => {
-		t.control.exposureNote ? e(Oe) : W(Ae) && e(ke, 1);
+		I(n), U((e) => J(r, `${e ?? ""} · Effective: ${t.control.effective ?? ""}`), [() => P()]), q(e, n);
+	}, je = /* @__PURE__ */ L(() => P());
+	Y(Oe, (e) => {
+		t.control.exposureNote ? e(ke) : W(je) && e(Ae, 1);
 	});
-	var je = H(De, 2), Me = (e) => {
+	var Me = H(Oe, 2), Ne = (e) => {
 		var r = A_(), i = B(r);
 		{
 			let e = /* @__PURE__ */ L(() => ({ inputLabel: t.control.label }));
@@ -17138,9 +17141,9 @@ function M_(e, t) {
 		}
 		I(r), U(() => Q(r, "id", t.idPrefix + "-error")), q(e, r);
 	};
-	Y(je, (e) => {
-		n() && e(Me);
-	}), I(F), U(() => oe = ji(F, 1, "pc-detail-control svelte-16a137", null, oe, { "pc-control-number": t.control.editor === "number" && t.control.key !== "maxRetries" })), q(e, F), Je();
+	Y(Me, (e) => {
+		n() && e(Ne);
+	}), I(oe), U(() => se = ji(oe, 1, "pc-detail-control svelte-16a137", null, se, { "pc-control-number": t.control.editor === "number" && t.control.key !== "maxRetries" })), q(e, oe), Je();
 }
 Nr([
 	"click",
@@ -18622,10 +18625,10 @@ function sy(e, t) {
 			e.has(r) || e.set(r, []), e.get(r).push(n);
 		}
 		return [...e].sort(([e], [t]) => e === "Main" ? -1 : +(t === "Main"));
-	}), $e = /* @__PURE__ */ R(cn({})), et = /* @__PURE__ */ R(cn({})), tt = (e) => JSON.stringify([t.view ? N(t.view) : "", e]), nt = (e) => e.some((e) => !!(W(o)[e.key]?.error || W(s)[e.key] || W(c)[e.key]?.invalid)), rt = (e, t) => nt(t) || (W(et)[tt(e)] ?? t.some((e) => e.groupOpen));
-	function it(e, t) {
+	}), $e = /* @__PURE__ */ R(cn({})), et = /* @__PURE__ */ R(cn({})), tt = /* @__PURE__ */ L(() => t.view ? N(t.view) : ""), nt = (e) => W(tt).length + ":" + W(tt) + e, rt = (e) => e.some((e) => !!(W(o)[e.key]?.error || W(s)[e.key] || W(c)[e.key]?.invalid)), it = (e, t) => rt(t) || (W(et)[nt(e)] ?? t.some((e) => e.groupOpen));
+	function at(e, t) {
 		e.preventDefault();
-		let n = tt(t), r = e.currentTarget.parentElement;
+		let n = nt(t), r = e.currentTarget.parentElement;
 		z(et, {
 			...W(et),
 			[n]: !r.open
@@ -18634,28 +18637,28 @@ function sy(e, t) {
 			[n]: !0
 		}, !0);
 	}
-	let at = (e) => e.filter((e) => !!W(o)[e.key]).length;
-	function ot(e) {
+	let ot = (e) => e.filter((e) => !!W(o)[e.key]).length;
+	function st(e) {
 		t.view && !t.view.boundary && i().present && se("alias", !0, (n) => i().present(n, "alias", e === t.view?.canonicalTitle ? "" : e));
 	}
-	function st(e) {
+	function ct(e) {
 		if (!t.view?.phaseEditable || !i().editPhase) return;
 		let n = e.value;
 		se("phase", !1, (e) => i().editPhase(e, n)).finally(() => {
 			te && t.view && (e.value = t.view.phase);
 		});
 	}
-	function ct() {
+	function lt() {
 		return {
 			label: W(o).boundary?.text ?? t.view?.boundary?.label ?? "",
 			artifactKind: W(o).boundary?.artifactKind ?? t.view?.boundary?.kind ?? "",
 			required: W(o).boundary?.required ?? t.view?.boundary?.required ?? !1
 		};
 	}
-	function lt(e, n) {
+	function ut(e, n) {
 		if (!t.view?.boundary || t.view.readOnly || !i().editInterface || e === "artifactKind" && !t.view.boundary.kinds.includes(String(n))) return;
 		let r = {
-			...ct(),
+			...lt(),
 			[e]: n
 		};
 		x++, C.delete("boundary"), z(s, {
@@ -18674,9 +18677,9 @@ function sy(e, t) {
 			}
 		}, !0);
 	}
-	function ut() {
+	function dt() {
 		if (!t.view?.boundary || t.view.readOnly || !i().editInterface || W(o).boundary?.pending) return;
-		let e = t.view.boundary.id, n = ct();
+		let e = t.view.boundary.id, n = lt();
 		if (!n.label.trim() || !t.view.boundary.kinds.includes(n.artifactKind)) return;
 		let r = ++x;
 		z(o, {
@@ -18703,7 +18706,7 @@ function sy(e, t) {
 			return s;
 		});
 	}
-	var dt = oy(), ft = B(dt), pt = (e) => {
+	var ft = oy(), pt = B(ft), mt = (e) => {
 		var r = iy(), c = V(r);
 		let l;
 		var u = B(c), d = B(u);
@@ -18805,7 +18808,7 @@ function sy(e, t) {
 				W(s).phase && e(m);
 			}), U(() => {
 				l.disabled = t.view.readOnly || !i().editPhase, f !== (f = t.view.phase) && (l.value = (l.__value = t.view.phase) ?? "", Pi(l, t.view.phase));
-			}), G("change", l, (e) => st(e.currentTarget)), q(e, n);
+			}), G("change", l, (e) => ct(e.currentTarget)), q(e, n);
 		};
 		Y(E, (e) => {
 			t.view.phaseEditable && e(D);
@@ -18946,10 +18949,10 @@ function sy(e, t) {
 			}), I(n), U((e, n, r) => {
 				J(a, `Subgraph ${t.view.boundary.direction ?? ""}`), l.disabled = t.view.readOnly || !i().editInterface, u !== (u = e) && (l.value = (l.__value = e) ?? "", Pi(l, e)), Ji(f, n), f.disabled = t.view.readOnly || !i().editInterface, m.disabled = r, J(h, W(o).boundary?.pending ? "Validating…" : "Save port");
 			}, [
-				() => ct().artifactKind,
-				() => ct().required,
-				() => t.view.readOnly || !i().editInterface || !ct().label.trim() || !!W(o).boundary?.pending
-			]), G("change", l, (e) => lt("artifactKind", e.currentTarget.value)), G("change", f, (e) => lt("required", e.currentTarget.checked)), G("click", m, () => ut()), q(e, n);
+				() => lt().artifactKind,
+				() => lt().required,
+				() => t.view.readOnly || !i().editInterface || !lt().label.trim() || !!W(o).boundary?.pending
+			]), G("change", l, (e) => ut("artifactKind", e.currentTarget.value)), G("change", f, (e) => ut("required", e.currentTarget.checked)), G("click", m, () => dt()), q(e, n);
 		};
 		Y(re, (e) => {
 			t.view.boundary && e(ie);
@@ -19072,8 +19075,8 @@ function sy(e, t) {
 				I(c);
 				var u = H(c), d = (e) => {
 					var t = Mv(), n = B(t);
-					I(t), U((e) => J(n, `${e ?? ""} unsaved`), [() => at(a())]), q(e, t);
-				}, f = /* @__PURE__ */ L(() => at(a()));
+					I(t), U((e) => J(n, `${e ?? ""} unsaved`), [() => ot(a())]), q(e, t);
+				}, f = /* @__PURE__ */ L(() => ot(a()));
 				Y(u, (e) => {
 					W(f) && e(d);
 				}), I(s);
@@ -19082,12 +19085,12 @@ function sy(e, t) {
 					X(V(t), 17, a, (e) => e.key, (e, t) => {
 						n(e, () => W(t));
 					}), q(e, t);
-				}, h = /* @__PURE__ */ L(() => W($e)[tt(i())] || rt(i(), a()));
+				}, h = /* @__PURE__ */ L(() => W($e)[nt(i())] || it(i(), a()));
 				Y(p, (e) => {
 					W(h) && e(m);
 				}), I(o), U((e) => {
 					Q(o, "data-control-group", i()), o.open = e, J(l, i());
-				}, [() => rt(i(), a())]), G("click", s, (e) => it(e, i())), q(e, o);
+				}, [() => it(i(), a())]), G("click", s, (e) => at(e, i())), q(e, o);
 			}), q(e, r);
 		};
 		Y(ae, (e) => {
@@ -19359,17 +19362,17 @@ function sy(e, t) {
 			t.view.modifiers && e(ve);
 		}), U((e) => {
 			l = Ni(c, "", l, { "--pc-detail-family": t.view.familyColor ?? "var(--pc-accent)" }), Q(d, "d", t.view.iconPath), Q(p, "id", a() + "-name"), Q(p, "maxlength", t.view.boundary ? void 0 : 80), qi(p, e), p.disabled = t.view.boundary ? t.view.readOnly || !i().editInterface : !t.view.canPresent || !i().present, J(_, t.view.boundary ? "Subgraph " + t.view.boundary.direction : t.view.family + (t.view.phaseEditable ? "" : " · " + (t.view.phase === "pre" ? "Preparation" : t.view.phase === "post" ? "Response" : t.view.phase)));
-		}, [() => t.view.boundary ? ct().label : t.view.alias || t.view.title || t.view.canonicalTitle]), G("input", p, (e) => {
-			t.view?.boundary && lt("label", e.currentTarget.value);
+		}, [() => t.view.boundary ? lt().label : t.view.alias || t.view.title || t.view.canonicalTitle]), G("input", p, (e) => {
+			t.view?.boundary && ut("label", e.currentTarget.value);
 		}), G("change", p, (e) => {
-			t.view?.boundary || ot(e.currentTarget.value);
+			t.view?.boundary || st(e.currentTarget.value);
 		}), q(e, r);
-	}, mt = (e) => {
+	}, ht = (e) => {
 		q(e, ay());
 	};
-	Y(ft, (e) => {
-		t.view ? e(pt) : e(mt, -1);
-	}), I(dt), q(e, dt), Je();
+	Y(pt, (e) => {
+		t.view ? e(mt) : e(ht, -1);
+	}), I(ft), q(e, ft), Je();
 }
 Nr([
 	"input",

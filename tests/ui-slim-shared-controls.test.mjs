@@ -54,3 +54,30 @@ test('renaming an expanded schedule retains its editing disclosure',async()=>{
   assert.equal(f.host.querySelector('details[data-record-row]').open,true);
  });
 });
+
+for(const [component,value,label] of [
+ ['DecisionQuestionsControl',{first:{type:'noul',instructions:{nested:{secret:'Inspect this full value'}}}},'Question 1 instructions'],
+ ['ScheduleControl',[{scheduleId:'first',kind:'daily',minuteOfDay:0,nested:{secret:'Inspect this full value'}}],'Schedule 1 extra metadata'],
+])test(component+' allows readonly nested inspection while native mutation controls remain disabled',async()=>{
+ await inspectorComponent(component,value,{disabled:true},async f=>{
+  const advanced=f.host.querySelector('.advanced-record');if(advanced)advanced.querySelector('summary').click();
+  const expand=control(f.host,'Edit '+label+' key nested');assert.equal(expand.matches(':disabled'),false);click(f.host,'Edit '+label+' key nested');
+  click(f.host,'Edit '+label+' key secret');assert.equal(control(f.host,label+' string').value,'Inspect this full value');
+  assert.equal(control(f.host,label+' string').matches(':disabled'),true);
+  const field=control(f.host,component==='ScheduleControl'?'Schedule 1 identity':'Question 1 type');assert.equal(field.matches(':disabled'),true);
+  assert.deepEqual(f.read().value,value);assert.equal(f.read().changes.length,0);
+ });
+});
+
+test('reordering questions keeps every nested editor ID and label target unique',async()=>{
+ const questions={a:{type:'noul',instructions:{a:0}},b:{type:'noul',instructions:{b:0,c:0}}};
+ await inspectorComponent('DecisionQuestionsControl',questions,{},async f=>{
+  click(f.host,'Move question 1 down');
+  const second=f.host.querySelectorAll('[data-record-row]')[1];if(!second.open)second.querySelector('summary').click();
+  input(second,'Question 2 instructions new key','added');click(second,'Add Question 2 instructions property');
+  const first=f.host.querySelectorAll('[data-record-row]')[0];if(!first.open)first.querySelector('summary').click();
+  click(first,'Edit Question 1 instructions key c');
+  const ids=[...f.host.querySelectorAll('[id]')].map(node=>node.id);assert.equal(new Set(ids).size,ids.length);
+  for(const label of f.host.querySelectorAll('label[for]'))assert.equal(f.host.querySelectorAll('[id="'+label.htmlFor+'"]').length,1);
+ });
+});

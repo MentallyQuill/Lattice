@@ -174,7 +174,7 @@ test('mapped TSV Replace rows keeps invalid source and located errors through pl
     await importer.getByRole('button', { name: 'Review import', exact: true }).click();
     await expect(importer.getByRole('alert')).toContainText('Row 3, cell 3');
     await expect(importer.getByRole('button', { name: 'Confirm import', exact: true })).toBeDisabled();
-    await expect(panel.getByRole('button', { name: 'Save Rules', exact: true })).toBeDisabled();
+    await expect(panel.getByRole('button', { name: 'Save Rules', exact: true })).toHaveCount(0);
     expect((await saved(page)).nodes[placed.id].rules).toEqual(placed.rules);
     await remount(page, placed.id);
     importer = await openTable(details(page), 'Rules');
@@ -269,7 +269,7 @@ test('wire creation places its selected pin immediately and a later reviewed slo
 test('Condition null and State curve durations retain their real dynamic friendly editors', async ({ page }) => {
     await setup(page, 'null-condition'); await select(page, 'condition');
     await expect(details(page).getByLabel('Value type', { exact: true })).toHaveValue('null');
-    await details(page).getByRole('button', { name: 'Save Value', exact: true }).click();
+    await expect(details(page).getByRole('button', { name: 'Save Value', exact: true })).toHaveCount(0);
     expect((await saved(page)).nodes.condition.value).toBeNull();
     await noWork(page);
     await setup(page, 'curve'); await select(page, 'curve');
@@ -307,8 +307,8 @@ for (const [operation, label, variant, phase] of routes) test(operation + (varia
     const graph = await saved(page), created = Object.values(graph.nodes).find(node => !Object.hasOwn(before.nodes, node.id));
     expect(created.phase).toBe(phase);
     const stage = panel.getByLabel('Workflow stage', { exact: true });
-    await expect(panel.locator('header small')).toContainText(phase + ' phase');
     if (await stage.count()) await expect(stage).toHaveValue(phase);
+    else await expect(panel.locator('header small')).toContainText(phase === 'pre' ? 'Preparation' : 'Response');
     await expect(configuration(page)).toHaveCount(0);
     if (['focus','curve'].includes(variant)) await undo(page);
     await undo(page); expect((await saved(page)).nodes).toEqual(before.nodes); expect((await saved(page)).wires).toEqual(before.wires);

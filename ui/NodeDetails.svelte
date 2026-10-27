@@ -433,7 +433,8 @@
     });
     let mountedGroups = $state<Record<string, boolean>>({});
     let openedGroups = $state<Record<string, boolean>>({});
-    const groupKey = (group:string) => JSON.stringify([view ? selectionIdentity(view) : '', group]);
+    const groupScope = $derived(view ? selectionIdentity(view) : '');
+    const groupKey = (group:string) => groupScope.length+':'+groupScope+group;
     const groupHasError = (controls: DetailControl[]) => controls.some(control => !!(drafts[control.key]?.error || errors[control.key] || schemaStates[control.key]?.invalid));
     const groupOpen = (group:string, controls: DetailControl[]) => groupHasError(controls) || (openedGroups[groupKey(group)] ?? controls.some(control=>control.groupOpen));
     function toggleGroup(event:MouseEvent, group:string) {

@@ -183,6 +183,7 @@ test('editing canonical Pattern rules preserves counts and labels and rejects in
     await expect(details(page).locator('.pc-diagnostic[data-severity="error"]')).toBeVisible();
     expect((await read()).node.rules).toEqual(saved);
     const errorText = await details(page).locator('.pc-diagnostic[data-severity="error"]').textContent();
+    await openDetailGroup(page,'Matching');
     await page.getByLabel('Case sensitive', { exact: true }).uncheck();
     await expect(editor).toHaveValue('{"phrase":');
     await expect(editor).toHaveAttribute('aria-invalid', 'true');
@@ -303,7 +304,7 @@ test('unified workflow keeps its AI De-slop primitives and preserves a focused e
     await details(page).getByRole('button', { name: 'Save Rules', exact: true }).click();
     await inspectOperation(page, 'repair');
     await expect(details(page).getByLabel('Node name', { exact: true })).toHaveValue('Repair');
-    await expect(details(page).locator('.pc-detail-identity')).toContainText('Surface · post phase');
+    await expect(details(page).locator('.pc-detail-identity')).toContainText('Surface · Response');
     const modelBinding = await openDetailGroup(page, 'Model');
     await expect(modelBinding).toContainText('workflow-test-model');
     await expect(details(page).getByLabel('Model mode', { exact: true })).toBeVisible();

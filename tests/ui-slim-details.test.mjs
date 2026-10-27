@@ -115,3 +115,12 @@ test('literal Extract exposes schema validation without offering unused model co
   assert.equal(graph.nodes.call.instructions,'Retain saved instructions');
  });
 });
+
+test('a rejected retry slider restores the saved count and total-call hint',async()=>{
+ const metadata=view(root());
+ await detailsComponent(metadata,{editControl(){return {ok:false,error:{code:'REJECTED',message:'The edit was rejected.'}};}},async f=>{
+  f.host.querySelector('[data-control-group="Limits & retries"]>summary').click();await f.update(metadata);
+  input(f.host,'Additional attempts','5');input(f.host,'Additional attempts','5','change');await f.update(metadata);
+  assert.equal(control(f.host,'Additional attempts').value,'0');assert.match(f.host.textContent,/No retries on failure/);assert.match(f.host.textContent,/rejected/i);
+ });
+});

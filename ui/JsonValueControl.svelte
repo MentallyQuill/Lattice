@@ -16,9 +16,9 @@
     let textDrafts = $state<Record<string, string>>({});
     let invalidPath = $state<JsonPath | null>(null), invalidSource = $state('');
     let submittedSignature = '';
-    const pageSize = 64, tokens = new Map<string, string>();
+    const pageSize = 64, tokens = new Map<string, number>();
     const token = (at: JsonPath) => JSON.stringify(at);
-    function nodeId(at: JsonPath) { const key=token(at);if(!tokens.has(key))tokens.set(key,idPrefix+'-value-'+tokens.size);return tokens.get(key)!; }
+    function nodeId(at: JsonPath) { const key=token(at);if(!tokens.has(key))tokens.set(key,tokens.size);return idPrefix+'-value-'+tokens.get(key)!; }
     const same = (a: JsonPath, b: JsonPath) => token(a)===token(b);
     const editable = (at: JsonPath) => !disabled && (invalidPath===null || same(invalidPath,at));
     const editingRaw = $derived(raw || !checked.ok);
@@ -81,7 +81,7 @@
 
 {#snippet editor(at: JsonPath)}
     {@const current=atPath(at)}{@const type=kind(current)}{@const key=token(at)}
-    <div class="value-body" id={nodeId(at)} data-value-node data-value-path={key} role="group" aria-label={at.length?label+' · '+at.map(part=>typeof part==='number'?'Index '+part:'Key '+part).join(' / '):label}>
+    <div class="value-body" class:deep={at.length>2} id={nodeId(at)} data-value-node data-value-path={key} role="group" aria-label={at.length?label+' · '+at.map(part=>typeof part==='number'?'Index '+part:'Key '+part).join(' / '):label}>
         <div class="type-row"><label for={nodeId(at)+'-type'}>Type</label><select id={nodeId(at)+'-type'} aria-label={label+' type'} value={type} disabled={!editable(at)} onchange={event=>changeType(at,event.currentTarget.value as ValueType)}><option value="string">String</option><option value="number">Number</option><option value="boolean">Boolean</option><option value="null">Null</option><option value="object">Object</option><option value="array">Array</option></select></div>
         {#if type==='string'}<label for={nodeId(at)+'-string'}>Text</label><textarea id={nodeId(at)+'-string'} aria-label={label+' string'} value={textDrafts[key]??String(current)} disabled={!editable(at)} oninput={event=>stringInput(at,event.currentTarget.value)}></textarea>
         {:else if type==='number'}<label for={nodeId(at)+'-number'}>Number</label><input id={nodeId(at)+'-number'} aria-label={label+' number'} inputmode="decimal" aria-invalid={Object.hasOwn(drafts,key)} value={drafts[key]??String(current)} disabled={!editable(at)} oninput={event=>numberInput(at,event.currentTarget.value)}/>
@@ -116,12 +116,12 @@
     .json-value-control,.value-body,.child{min-width:0;box-sizing:border-box;color:var(--pc-text);font:inherit}
     .value-scroll{max-height:400px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:3px}.mode{display:flex;justify-content:flex-end;margin:4px 0}
     .value-scroll.embedded{max-height:none;overflow:visible;padding-right:0}
-    .type-row,.add-row{display:flex;align-items:center;gap:6px;min-width:0}.type-row>label{flex:none}.type-row>select,.add-row>input{flex:1;min-width:0}
+    .type-row,.add-row{display:flex;align-items:center;gap:6px;min-width:0}.type-row>label{flex:none}.type-row>select{flex:1;min-width:0}.add-row{flex-wrap:wrap}.add-row>input{flex:1 1 70px;min-width:0}
     label{display:block;margin:6px 0 3px;font-size:11px}input:not([type='checkbox']),select,textarea{box-sizing:border-box;width:100%;min-width:0;min-height:28px;padding:5px 6px;background:var(--pc-field);color:var(--pc-text);border:1px solid var(--pc-border);border-radius:var(--pc-r-sm,3px);font:inherit}
-    textarea{display:block;min-height:70px;resize:vertical;line-height:1.5}.value-body .value-body{margin-left:7px;border-left:1px solid var(--pc-border);padding-left:7px}
+    textarea{display:block;min-height:70px;resize:vertical;line-height:1.5}.value-body .value-body{margin-left:7px;border-left:1px solid var(--pc-border);padding-left:7px}.value-body.deep{margin-left:0;border-left:0;padding-left:0}
     .child{border-top:1px solid var(--pc-border);margin-top:7px;padding-top:3px}.value-toggle{display:flex;align-items:center;justify-content:space-between;gap:7px;width:100%;text-align:left;background:transparent;border-color:transparent;padding:6px 1px}.value-toggle>span:first-child{min-width:0}.value-toggle strong{display:block;font-weight:500;overflow-wrap:anywhere}.value-toggle small{display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
     button{min-height:28px;padding:4px 7px;border:1px solid var(--pc-border);border-radius:var(--pc-r-sm,3px);background:var(--pc-control);color:var(--pc-text);font:inherit;cursor:pointer;overflow-wrap:anywhere}
-    .actions{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px 7px}.add-item{margin-top:7px}.add-row>button{flex:none;font-size:10px}
+    .actions{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px 7px}.add-item{margin-top:7px}.add-row>button{flex:0 1 auto;max-width:100%;font-size:10px}
     small{color:var(--pc-muted);font-size:10px;line-height:1.5;overflow-wrap:anywhere}.check{display:flex;gap:6px;align-items:center}.check span{margin-left:auto;color:var(--pc-muted)}input[type='checkbox']{accent-color:var(--pc-accent)}
     :is(button,input,select,textarea):focus-visible{outline:2px solid var(--pc-accent);outline-offset:1px}:disabled{opacity:.55;cursor:default}
 </style>
