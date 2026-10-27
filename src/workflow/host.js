@@ -445,7 +445,9 @@ export function createNativeWorkflowController(ports) {
         run.nodeFileDefinitions=captured.data.definitions;run.nodeFileObserved=new Map();run.nodeFileFresh=true;
         if(!run.nodeFileDefinitions.length)return {ok:true};
         const access=ports.nodeFileAccess??getNodeFileAccess();if(!access||typeof access.backend!=='function')return fail('FILE_ACCESS_REQUIRED','Choose an available local file in the File section for this node.');
-        const ready=await access.ready;if(ready?.ok===false)return ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring local file access.');
+        // Each captured backend validates its own readiness. An unused server adapter
+        // may be unavailable while an existing native destination remains valid.
+        await access.ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring file access.');
         run.nodeFileBackend=access.backend(run.nodeFileDefinitions,{scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:live,signal:run.controller.signal});
         for(const definition of run.nodeFileDefinitions){const loaded=await run.nodeFileBackend.load(definition.targetId);if(!loaded.ok)return {...loaded,error:{...loaded.error,field:'fileTarget'}};if(!live())return fail('STALE_FILE_SCOPE','File scope changed while validating access.');run.nodeFileObserved.set(definition.targetId,fileStamp(loaded.data));}
         return {ok:true};

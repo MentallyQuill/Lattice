@@ -7,7 +7,6 @@ import {createRecallCommands} from './recall-commands.js?v=0.29.0';
 import { diagnosticText, presentDiagnostic } from './diagnostics.js?v=0.29.0';
 import {projectRecallView} from './recall-projection.js?v=0.29.0';
 import { prepareIterationBindingOverride } from './iteration-bindings.js?v=0.29.0';
-import { createStoryDocumentSetup } from './story-document-setup.js?v=0.29.0';
 import { createWorkflowDataSetup } from './workflow-data-setup.js?v=0.29.0';
 import { workflowDataPresetFor } from '../workflow/workflow-data-defaults.js?v=0.29.0';
 import { createConfiguredNodeSession, configuredCreationStage, nodeNeedsConfiguration, iterationHelperChoices } from './configured-node-creation.js?v=0.29.0';
@@ -90,8 +89,8 @@ let pendingDocumentPrompt = null;
 // Defer only its intermediate view event for this exact document activation.
 let documentRenderReconciliation = null;
 let workflowFiles = null, documentCommands = null, fileStorageIssue = '';
-let storyDocumentSetup = null, nodeWorkflowDataSetup = null, pendingConfiguredNode = null;
-let nodeFileUnsubscribe=null,nodeFileObservedAccess=null,nodeFilePicking=0;
+let nodeWorkflowDataSetup = null, pendingConfiguredNode = null;
+let nodeFileUnsubscribe=null,nodeFileObservedAccess=null,nodeFileObservedUser=null,nodeFilePicking=0;
 const nodeDocumentCaptures = new Map(), nodeCreationScopes = new WeakMap();
 const editorCaptures = new WeakMap(), exampleContexts = new WeakMap(), workflowNodePresentations = new WeakMap();
 const commentCaptures = new WeakMap(), commentPresentationEffects = new WeakMap(), pendingCommentPresentation = new WeakMap();
@@ -167,11 +166,6 @@ const workflowSession = createWorkflowSession({ runtime: () => workflowRuntime.g
 } });
 const nativeSourceSetup=createNativeSourceSetup({controller:()=>workflowRuntime.getNativeWorkflowController?.(),documentToken:()=>documentSession.capture(),changed:()=>{if(isOpen())updateWorkflowProjection();}});
 const receiveAutomaticWorkflow = () => workflowSession.receiveAutomatic(workflowRuntime.getNativeWorkflowController?.()?.lastAutomaticResult?.());
-function storySetup() {
-    const catalog = workflowRuntime.getStoryDocumentCatalog?.();
-    if (!catalog) return null;
-    return storyDocumentSetup ??= createStoryDocumentSetup(catalog);
-}
 function workflowDataSetup() {
     const catalog = workflowRuntime.getStoryDocumentCatalog?.();
     if (!catalog) return null;
@@ -180,36 +174,6 @@ function workflowDataSetup() {
         return ownValue(ownValue(ownValue(ctx().chatMetadata, 'latticeDocuments'), scope.userId), targetId);
     } });
 }
-function refreshStoryDocuments(notice = '') {
-    const snapshot = storySetup()?.snapshot();
-    workbench?.update({ storyDocuments: snapshot?.ok ? { ...snapshot.data, notice } : { key: '', revision: '', scope: { userId: '', chatId: '' }, documents: [], issue: 'Workflow Data requires an active user and chat.' } });
-}
-function storyDocumentsChanged(result) {
-    if (!result.ok) return result;
-    workflowSession.cancel('Workflow Data authorization changed');
-    refreshWorkflowPreparation(); updateWorkflowProjection(); refreshStoryDocuments(result.data.message);
-    return result;
-}
-const storyDocumentsActions = {
-    refresh: () => refreshStoryDocuments(),
-    load(key, targetId) { return storySetup()?.load(key, targetId) ?? { ok: false, error: { code: 'DOCUMENT_SETUP_UNAVAILABLE', message: 'Workflow Data setup is unavailable.' } }; },
-    async save(key, definition) { const setup = storySetup(); return setup ? storyDocumentsChanged(await setup.save(key, definition)) : { ok: false, error: { code: 'DOCUMENT_SETUP_UNAVAILABLE', message: 'Workflow Data setup is unavailable.' } }; },
-    async remove(key, targetId) { const setup = storySetup(); return setup ? storyDocumentsChanged(await setup.remove(key, targetId)) : { ok: false, error: { code: 'DOCUMENT_SETUP_UNAVAILABLE', message: 'Workflow Data setup is unavailable.' } }; },
-    previewCheckpoint(key, targetId) {
-        if (!storySetup()?.isCurrent(key)) return { ok:false,error:{code:'STALE_DOCUMENT_SETUP',message:'Refresh Workflow Data before previewing history.'} };
-        return workflowRuntime.getNativeWorkflowController?.()?.previewStoryHistoryCheckpoint(targetId) ?? { ok:false,error:{code:'DOCUMENT_SETUP_UNAVAILABLE',message:'Native document history is unavailable.'} };
-    },
-    async applyCheckpoint(key, handle) {
-        if (!storySetup()?.isCurrent(key)) return { ok:false,error:{code:'STALE_DOCUMENT_SETUP',message:'Refresh Workflow Data before applying history.'} };
-        const result = await workflowRuntime.getNativeWorkflowController?.()?.applyStoryHistoryCheckpoint(handle);
-        if (result?.ok && storySetup()?.isCurrent(key)) { workflowSession.cancel('Document history changed'); refreshWorkflowPreparation(); updateWorkflowProjection(); }
-        return result ?? { ok:false,error:{code:'DOCUMENT_SETUP_UNAVAILABLE',message:'Native document history is unavailable.'} };
-    },
-    inspectHistory(key, targetId) {
-        if (!storySetup()?.isCurrent(key)) return { ok:false,error:{code:'STALE_DOCUMENT_SETUP',message:'Refresh Workflow Data before inspecting history.'} };
-        return workflowRuntime.getNativeWorkflowController?.()?.inspectStoryHistory(targetId) ?? { ok:false,error:{code:'DOCUMENT_SETUP_UNAVAILABLE',message:'Native document history is unavailable.'} };
-    },
-};
 let recallProjection = null, refreshingRecall = false, recallDetailsView = null;
 function recallSelectionIds(){return canvas?.multi.size?[...canvas.multi]:canvas?.selection?.kind==='node'?[canvas.selection.id]:[];}
 function recallSetupView(){
@@ -227,13 +191,19 @@ function captureRecallActions(nodeIds,scope='selected'){const captured=recallCom
 const recallActions={refresh:refreshRecallOverview,capture:captureRecallActions,reportIssue:message=>toast(message,'error'),change(nodeIds,action,scope='selected'){const result=captureRecallActions(nodeIds,scope)[action]();if(!result.ok)toast(result.error,'error');return result;},reveal:nodeId=>openRecallDetails(nodeId,'all')};
 function fileWorkspaceData() {
     const state=workflowDataSetup()?.snapshot() ?? {available:false,key:'',documents:[]};
+    const fileOperations=['read-file','write-file','story-clock','commit-clock','commit-outcomes','random-pick'];
+    const ownsFiles=Object.values(current?.nodes??{}).some(node=>fileOperations.includes(node.operation))||Object.values(current?.definitions??{}).some(definition=>Object.values(definition.body?.nodes??{}).some(node=>fileOperations.includes(node.operation)));
+    if(!ownsFiles&&!nodeFileObservedAccess)return {...state,nodeFiles:{storage:'server',supported:false,bindings:{}}};
     const access=getNodeFileAccess();
+    const fileUser=workflowRuntime.getWorkflowDiagnosticScope?.()?.userId??null;
+    if(nodeFileObservedUser!==fileUser){nodeFileObservedUser=fileUser;void access.refresh?.();}
     if(nodeFileObservedAccess!==access){
         nodeFileUnsubscribe?.();nodeFileObservedAccess=access;
-        let bindingSignature=JSON.stringify(access.snapshot());
+        const signature=()=>JSON.stringify([access.supported,access.availability,access.location,access.snapshot()]);
+        let bindingSignature=signature();
         nodeFileUnsubscribe=access.subscribe?.(()=>queueMicrotask(()=>{
-            const next=JSON.stringify(access.snapshot());if(next===bindingSignature)return;bindingSignature=next;
-            const referenced=workspacePrepared?.planner.inventory.primitives.some(unit=>!!unit.node.fileTarget?.bindingId);
+            const next=signature();if(next===bindingSignature)return;bindingSignature=next;
+            const referenced=workspacePrepared?.planner.inventory.primitives.some(unit=>['read-file','write-file','story-clock','commit-clock','commit-outcomes','random-pick'].includes(unit.node.operation));
             if(referenced && !nodeFilePicking && isOpen() && current){refreshWorkspaceDocument();updateWorkflowProjection();}
         }));
     }
@@ -247,7 +217,7 @@ function fileWorkspaceData() {
             if(stored && typeof stored.content==='string')legacyDocuments[doc.targetId]={format:stored.format,content:stored.content};
         }
     }
-    return {...state,definitions,legacyDocuments,nodeFiles:{supported:access.supported===true,accessIssue:access.availability,bindings:access.snapshot()}};
+    return {...state,definitions,legacyDocuments,nodeFiles:{supported:access.supported===true,storage:access.storage,nativeSupported:access.nativeSupported,nativeAccessIssue:access.nativeAccessIssue,accessIssue:access.availability,location:access.location,bindings:access.snapshot()}};
 }
 function workspaceInputs() { const context = ctx(), hostProfiles = profiles(); nodeProfileInputsKey = nodeProfileMetadataKey(context, hostProfiles); return { settings: settings(), profiles: readNodeProfileMetadata(context, hostProfiles), activeModel: activeModelMetadata(context), workflowData:fileWorkspaceData(), result: workflowState.result, resolveBinding: (node, graph) => resolveBinding(node, graph, ctx()), candidateStatus: candidate => workflowRuntime.getNativeWorkflowController?.()?.candidateStatus?.(candidate) }; }
 function refreshWorkflowPreparation() {
@@ -697,7 +667,7 @@ function build() {
         addSystem: { close() { pendingAddSystem = null; workbench.update({ addSystem: null }); }, preview: previewAddSystem, submit: submitAddSystem },
         subgraphSave: { close() { pendingSubgraphSave = null; workbench.update({ subgraphSave: null }); }, save: saveSubgraphToShelf },
         documentPrompt: { choose: chooseDocumentPrompt },
-        recall: recallActions, storyDocuments: storyDocumentsActions, configureNode: configureNodeActions,
+        recall: recallActions, configureNode: configureNodeActions,
         acceptImport: acceptImportReview, cancelImport: cancelImportReview, prepareImportAgain,
     });
     root = workbench.root; hookHistory();
@@ -714,7 +684,7 @@ function build() {
     }); installRecoveryLifecycle();
     const nativeContext = ctx();
     for (const name of ['CHAT_CHANGED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_DELETED', 'MESSAGE_SWIPED', 'MESSAGE_SENT', 'GENERATION_STARTED', 'GENERATION_ENDED', 'GENERATION_STOPPED']) {
-        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (name === 'CHAT_CHANGED') void diagnosticHistoryUi?.refresh(); if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { nativeSourceSetup.cancel(); cancelConfiguredNode(); refreshStoryDocuments(); } if(current?.runtime===3)updateWorkflowProjection(); } });
+        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (name === 'CHAT_CHANGED') void diagnosticHistoryUi?.refresh(); if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { nativeSourceSetup.cancel(); cancelConfiguredNode(); } if(current?.runtime===3)updateWorkflowProjection(); } });
     }
     for (const name of ['CHATCOMPLETION_MODEL_CHANGED', 'CHATCOMPLETION_SOURCE_CHANGED', 'MAIN_API_CHANGED', 'CONNECTION_PROFILE_LOADED', 'CONNECTION_PROFILE_CREATED', 'CONNECTION_PROFILE_UPDATED', 'CONNECTION_PROFILE_DELETED', 'OAI_PRESET_CHANGED_AFTER', 'PRESET_CHANGED', 'PRESET_DELETED', 'PRESET_RENAMED', 'SETTINGS_LOADED_AFTER', 'EXTENSION_SETTINGS_LOADED']) {
         if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => refreshNodeProfileMetadata());
@@ -1919,7 +1889,12 @@ const nodeDetailsActions = {
         try{return await qualifiedNodeFileActions().chooseNodeFile(selection,request);}
         finally{nodeFilePicking--;if(!nodeFilePicking && isOpen() && current){refreshWorkflowPreparation();updateWorkflowProjection();}}
     },
-    saveNodeFile:(selection,settings)=>qualifiedNodeFileActions().saveNodeFile(selection,settings),
+    async saveNodeFile(selection,settings){
+        nodeFilePicking++;
+        try{return await qualifiedNodeFileActions().saveNodeFile(selection,settings);}
+        finally{nodeFilePicking--;if(!nodeFilePicking && isOpen() && current){refreshWorkflowPreparation();updateWorkflowProjection();}}
+    },
+    async refreshNodeFiles(){const result=await getNodeFileAccess().refresh?.()??{ok:true};if(isOpen()&&current){refreshWorkflowPreparation();updateWorkflowProjection();}return result;},
     refreshSourceSetup(selection){const captured=detailCapture(selection,true);if(!captured.ok)return captured;updateWorkflowProjection();return {ok:true};},
     async sourceSetup(selection,key,action){const captured=detailCapture(selection,true);if(!captured.ok)return captured;const editor=graphViews.readEditor();if(editor.view.identity.kind==='library'||editor.prepared.effectiveNodes[selection.address.nodeId]?.operation!=='scene-context'||current?.runtime!==3)return {ok:false,error:{code:'SOURCE_SETUP_UNAVAILABLE',message:'Select a current runtime3 Scene Context node.'}};return nativeSourceSetup.execute(key,action);},
     openReadinessIssue(selection, issue) { return openReadinessDetails(selection, issue); },

@@ -80,3 +80,17 @@ test('confirming a changed format explicitly identifies the existing file bindin
  assert.equal(requests[0].bindingId,'disk-1');
  assert.equal(requests[0].format,'markdown');
 });
+
+test('saving server settings configures the explicit path and owns a logical destination',async()=>{
+ const requests=[],commits=[],node={id:'writer',operation:'write-file',destinationMode:'own'};
+ const actions=createNodeFileActions({capture:()=>({ok:true,data:{node,nodes:{},view:{legacy:false}}}),isCurrent:()=>true,access:()=>({storage:'server',choose:async request=>{requests.push(request);return {ok:true,data:{bindingId:'server-1',name:'SceneContext.txt',path:'C:\\Stories\\SceneContext.txt',generation:'g1',storage:'server',status:'ready'}};}}),commit:(_c,_s,controls)=>{commits.push(controls);return {ok:true};}});
+ const result=await actions.saveNodeFile({}, {...settings,path:'C:\\Stories\\SceneContext.txt'});
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.equal(requests[0].path,'C:\\Stories\\SceneContext.txt');
+ assert.equal(requests[0].name,'SceneContext.txt');
+ assert.equal(commits[0].fileTarget.bindingId,'server-1');
+ assert.equal(commits[0].fileTarget.path,'C:\\Stories\\SceneContext.txt');
+ assert.equal(commits[0].fileTarget.generation,undefined,'server metadata is not portable authoring intent');
+ assert.equal(commits[0].fileTarget.storage,undefined);
+ assert.match(commits[0].targetId,/^file-/);
+});

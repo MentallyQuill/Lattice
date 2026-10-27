@@ -174,3 +174,35 @@ test('schema data files keep JSON metadata when their initial content is edited'
         } finally { await f.close(); }
     }
 });
+
+test('server file configuration uses an editable path and saves without a native picker',async()=>{
+    const saves=[],f=await fixture(model({storage:'server',settings:{...settings,bindingId:''},location:{basePath:'/data/user/files/lattice',platform:'linux',canUseAbsolutePaths:true}}),{saveNodeFile(captured,next){saves.push([captured,next]);return Promise.resolve({ok:true});}});
+    try {
+        assert.equal(f.host.querySelector('[data-choose-node-file]'),null,'server files do not depend on native pickers');
+        assert.equal(f.host.querySelector('[data-save-node-file]').disabled,false,'a named unbound server destination can be configured');
+        edit(f.host,'File path','C:\\Stories\\SceneContext.txt');
+        assert.equal(field(f.host,'Filename').value,'SceneContext.txt');
+        f.host.querySelector('[data-save-node-file]').click();await settle();
+        assert.deepEqual(saves,[[selection,{...settings,bindingId:'',name:'SceneContext.txt',path:'C:\\Stories\\SceneContext.txt'}]]);
+        assert.match(f.host.textContent,/SillyTavern server/);
+        assert.match(f.host.textContent,/\/data\/user\/files\/lattice/);
+        assert.doesNotMatch(f.host.textContent,/flags|relaunch|browser setup/i);
+    } finally {await f.close();}
+});
+
+test('missing server file service reports installation instead of browser flags and cannot configure a path',async()=>{
+    const saves=[];let refreshed=0;const f=await fixture(model({storage:'server',supported:false,settings:{...settings,bindingId:''},accessIssue:{code:'FILE_SERVICE_UNAVAILABLE',message:'Install the Lattice file service on the SillyTavern server to use file paths.'}}),{saveNodeFile(...args){saves.push(args);return {ok:true};},refreshNodeFiles(){refreshed++;return {ok:true};}});
+    try {
+        edit(f.host,'File path','/stories/SceneContext.txt');
+        assert.equal(f.host.querySelector('[data-save-node-file]').disabled,true);
+        f.host.querySelector('[data-save-node-file]').dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true}));await settle();
+        assert.deepEqual(saves,[]);
+        assert.match(f.host.textContent,/Install the Lattice file service/);
+        assert.equal(f.host.querySelector('[data-file-status]').textContent,'Server file service unavailable');
+        assert.doesNotMatch(f.host.textContent,/flags|relaunch|browser setup/i);
+        assert.equal(f.host.querySelector('[data-server-file-guide]')?.getAttribute('href'),'https://github.com/MentallyQuill/Lattice/blob/main/docs/server-files.md');
+        f.host.querySelector('[data-refresh-node-files]').click();await settle();
+        assert.equal(refreshed,1);
+        assert.equal(field(f.host,'File path').value,'/stories/SceneContext.txt','retry does not discard the authored draft');
+    } finally {await f.close();}
+});

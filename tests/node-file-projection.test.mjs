@@ -23,6 +23,27 @@ test('browser file access guidance is retained separately from the setup caution
  assert.equal(supported.accessIssue,undefined,'the live capability check takes precedence over a stale diagnostic');
 });
 
+test('server bindings expose their resolved path and server setup without requiring native browser access',()=>{
+ const fileTarget={bindingId:'server-1',name:'SceneContext.txt',format:'text'};
+ const view=projectNodeFile({id:'writer',operation:'write-file',destinationMode:'own',targetId:'scene',fileTarget},{storage:'server',supported:true,nativeSupported:false,location:{basePath:'/data/user/files/lattice'},bindings:{'server-1':{name:'SceneContext.txt',path:'/stories/SceneContext.txt',format:'text',status:'ready',storage:'server'}}});
+ assert.equal(view.storage,'server');
+ assert.equal(view.settings.path,'/stories/SceneContext.txt');
+ assert.equal(view.issue,undefined);
+ assert.equal(view.location.basePath,'/data/user/files/lattice');
+ const unavailable=projectNodeFile({operation:'read-file'},{storage:'server',supported:false,bindings:{}});
+ assert.match(unavailable.accessIssue.message,/Install.*Lattice file service/i);
+ assert.doesNotMatch(unavailable.issue,/browser/i);
+ const native=projectNodeFile({operation:'read-file',fileTarget},{storage:'server',supported:false,nativeSupported:true,bindings:{'server-1':{name:'SceneContext.txt',status:'ready',storage:'native'}}});
+ assert.equal(native.storage,'native');
+ assert.equal(native.supported,true);
+ assert.equal(native.issue,undefined);
+});
+
+test('an own-file writer without its logical target must save file settings before it is ready',()=>{
+ const view=projectNodeFile({id:'write',operation:'write-file',destinationMode:'own',fileTarget:{bindingId:'disk-1',name:'notes.txt',format:'text'}},{supported:true,storage:'server',bindings:{'disk-1':{storage:'server',name:'notes.txt',format:'text',status:'ready',path:'/notes.txt'}}});
+ assert.match(nodeFileSetupIssue(view)?.message??'',/save.*File settings/i);
+});
+
 test('a granted matching file is ready while a renamed or revoked binding needs setup', () => {
  const settings={bindingId:'disk-1',name:'journal.json',format:'json',missing:'create',content:'[]',visibility:{kind:'public'}};
  const node={operation:'read-file',targetId:'journal',fileTarget:settings};

@@ -15,6 +15,15 @@ test('file destination validation rejects path names, unknown authority and unbo
     assert.deepEqual(targets.validateNodeFileTarget({}).data,{});
 });
 
+test('server file paths retain explicit intent and derive a coherent filename without changing native defaults',()=>{
+    const configured=targets.validateNodeFileTarget({...target,path:'C:\\Stories\\Scène context.txt'});
+    assert.equal(configured.ok,true,JSON.stringify(configured));
+    assert.equal(configured.data.path,'C:\\Stories\\Scène context.txt');
+    assert.equal(configured.data.name,'Scène context.txt');
+    assert.equal(Object.hasOwn(targets.validateNodeFileTarget(target).data,'path'),false);
+    for(const path of ['x\0y','x'.repeat(4097),{},'/tmp/'])assert.equal(targets.validateNodeFileTarget({...target,path}).ok,false);
+});
+
 test('file defaults preserve semantic identity and portable packages strip local authority',()=>{
     const read={...node('read-file',{targetId:'notes',fileTarget:target}),id:'read'};
     const described=describeFileNode(read,{authoring:true});assert.equal(described.ok,true,JSON.stringify(described));

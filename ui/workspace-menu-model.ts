@@ -9,8 +9,8 @@ const iconTones: Record<string, WorkspaceMenuIconTone> = {
  new: 'yellow', save: 'blue', 'save-as': 'blue', 'download-document': 'blue', export: 'blue', 'export-archived-workflows': 'blue',
  'delete-selection': 'red', 'reset-layout': 'green', theme: 'purple', 'add-node': 'blue', 'details-selection': 'blue',
  'add-system': 'purple', 'create-subgraph': 'purple', 'save-subgraph': 'blue', 'comment-selection': 'yellow', 'add-comment': 'yellow', 'manage-portals': 'purple',
- 'validate-workflow': 'green', 'review-host-result': 'blue', 'stop-workflow': 'red', 'run-preview': 'green', configure: 'blue',
- 'story-documents': 'teal', 'memory-recall-menu': 'purple', 'recall-queue-selected': 'green', 'recall-queue-all': 'green',
+ 'validate-workflow': 'green', 'review-host-result': 'blue', 'stop-workflow': 'red', 'run-preview': 'green',
+ 'memory-recall-menu': 'purple', 'recall-queue-selected': 'green', 'recall-queue-all': 'green',
  'recall-cancel-selected': 'red', 'recall-cancel-all': 'red', 'memory-recall': 'purple', help: 'blue',
 };
 const row = (label: string, command: string, icon = '', disabled = false, shortcut = ''): WorkspaceMenuItem => ({ label, command, icon, iconTone: iconTones[command], disabled, shortcut });
@@ -50,10 +50,9 @@ export function workspaceMenus(view: WorkbenchView, panels: WorkspaceMenuPanels 
   [{...row('Workflow outputs','workflow-outputs','run',!view.workflowOutputs?.length),title:'Choose the terminal steps included when Lattice runs this workflow.',children:(view.workflowOutputs ?? []).map(output=>check(output.label,output.command,output.checked,output.disabled))}],
   [row('Validate workflow','validate-workflow','check',!root),row('Review host result','review-host-result','details',root?.reviewTerminals ? !root.reviewTerminals.length : !root?.nodes?.some(node=>node.terminal)),row('Stop workflow','stop-workflow','stop',!c.stop)],
   [{...row('Run to current output','run-preview','run',!preview?.runHere?.enabled || !!preview?.busy || busy),reason:preview?.busy || busy ? 'Wait for the current run to finish.' : preview?.runHere?.reason ?? (!preview?.selectedKey ? 'Select a node output to preview first.' : undefined)},row('Run details…','run-details','details',!view.runDetails && !view.diagnosticHistory)],
-  [{...row('Configure','configure','details'),children:[row('Legacy chat data…','story-documents','library')]}],
   [{...row('Memory recall','memory-recall-menu','arm'),children:[{...row('Queue recall for selected nodes','recall-queue-selected','add',!selectedRecall?.queueNodeIds.length),reason:!selectedRecall?.queueNodeIds.length ? selectedRecall?.queueReason || 'Select an eligible Recall node first.' : undefined},{...row('Cancel recall for selected nodes','recall-cancel-selected','clear',!selectedRecall?.cancelNodeIds.length),reason:!selectedRecall?.cancelNodeIds.length ? selectedRecall?.cancelReason || 'Select a node with queued recall first.' : undefined},{...row('Queue recall for all eligible nodes','recall-queue-all','add',!allRecall?.queueNodeIds.length),reason:!allRecall?.queueNodeIds.length ? allRecall?.queueReason || 'No Recall nodes are eligible to queue.' : undefined},{...row('Cancel all queued recall','recall-cancel-all','clear',!allRecall?.cancelNodeIds.length),reason:!allRecall?.cancelNodeIds.length ? allRecall?.cancelReason || 'No recall is queued to cancel.' : undefined},row('Memory recall overview…','memory-recall','details')]}]
  ]},
  {name:'Help',groups:[[row('Workspace guide','help','help'),row('Node reference','node-reference','library'),row('Keyboard shortcuts','shortcuts','keyboard')],[row('About Lattice','about','info')]]}
  ];
 }
-export const localMenuCommands = new Set(['toggle-preview','toggle-shelf','reset-layout','follow-preview','pin-preview','run-preview','run-details','validate-workflow','help','node-reference','shortcuts','about','examples','add-node','story-documents','memory-recall']);
+export const localMenuCommands = new Set(['toggle-preview','toggle-shelf','reset-layout','follow-preview','pin-preview','run-preview','run-details','validate-workflow','help','node-reference','shortcuts','about','examples','add-node','memory-recall']);

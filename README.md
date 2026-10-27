@@ -73,6 +73,8 @@ With SillyTavern installed and your usual model connection working:
 
 Next, choose **File → Open examples…**. Try **Give this scene one clear direction** for a simple editable instruction, or choose a lesson that fits your story. Each lesson explains its setup and model request budget. Model-based lessons need their connections configured; file-related nodes also need their files configured in Details.
 
+For file nodes, install the included [Lattice server file service](docs/server-files.md). Each node then accepts a file path on the machine running SillyTavern and saves through the server. This works without experimental browser file-access settings.
+
 ![The examples browser in Lattice 0.28.0, filtered to its two new passage lessons](docs/images/examples-curriculum.png)
 
 Lattice is in beta. Save your workflows and try substantial systems in a separate chat first. Update through SillyTavern’s **Manage Extensions**, then reload.

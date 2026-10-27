@@ -2,6 +2,8 @@ import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,valid
 import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.29.0';
 import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.29.0';
 import {sha256Text} from '../workflow/definition-data.js?v=0.29.0';
+import {createServerFileAccess,cloneServerFileData} from './server-file-access.js?v=0.29.0';
+import {createNodeFileService} from './node-file-service.js?v=0.29.0';
 const fail=(code,message,cancelled=false)=>({ok:false,...(cancelled?{cancelled:true}:{}),error:{code,message}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -25,7 +27,8 @@ function captureUpdate(value){
         if(keys.some(key=>typeof key!=='string'||!allowed.includes(key)||!descriptors[key].enumerable||!Object.hasOwn(descriptors[key],'value')))return null;
         if(keys.length!==(Object.hasOwn(descriptors,'sourceBinding')?8:6))return null;
         const result={};
-        for(const key of keys){const checked=cloneJsonValue(descriptors[key].value);if(!checked.ok)return null;result[key]=checked.data.value;}
+        for(const key of keys){const checked=cloneServerFileData(descriptors[key].value);if(checked===undefined)return null;result[key]=checked;}
+        for(const content of [result.expectedContent,result.projectedDocument?.content])if(typeof content==='string'&&new TextEncoder().encode(content).byteLength>262144)return null;
         return result;
     }catch{return null;}
 }
@@ -239,5 +242,8 @@ export function createNodeFileAccess(options={}){
     return Object.freeze({backend,supported,native:supported,availability,ready,snapshot,choose,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);}});
 }
 let sharedAccess;
-export function getNodeFileAccess(){return sharedAccess??=createNodeFileAccess();}
+let hostPorts={};
+export function configureNodeFileAccess(ports){hostPorts=ports??{};}
+export function refreshNodeFileAccess(){return sharedAccess?.refresh?.();}
+export function getNodeFileAccess(){return sharedAccess??=createNodeFileService({native:createNodeFileAccess(),server:createServerFileAccess({getContext:()=>hostPorts.getContext?.()??{},getUserId:()=>hostPorts.getUserId?.()})});}
 export function setNodeFileAccess(adapter=null){sharedAccess=adapter??undefined;}

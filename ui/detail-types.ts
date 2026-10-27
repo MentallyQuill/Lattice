@@ -86,6 +86,7 @@ export interface NodeDetailsView extends DetailSelection {
 export interface NodeDetailsActions {
     chooseNodeFile?: import('./node-file-types').NodeFileActions['chooseNodeFile'];
     saveNodeFile?: import('./node-file-types').NodeFileActions['saveNodeFile'];
+    refreshNodeFiles?:()=>DetailEditResponse;
     sourceSetup?:(selection:DetailSelection,key:string,action:'setup'|'verify'|'reconcile')=>Promise<import('../src/workflow/types').Result<unknown>>;
     refreshSourceSetup?:(selection:DetailSelection)=>DetailEditResponse;
     openReadinessIssue?: (selection: DetailSelection, issue: import('./readiness-types').ReadinessIssue) => void;

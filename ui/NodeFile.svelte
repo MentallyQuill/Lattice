@@ -4,19 +4,20 @@
     import type { NodeFileActions, NodeFileSettings, NodeFileView } from './node-file-types';
 
     let { model, selection, actions, disabled = false, idPrefix = 'pc-node-details' }: { model: NodeFileView; selection: DetailSelection; actions: NodeFileActions; disabled?: boolean; idPrefix?: string } = $props();
-    let name = $state(''), format = $state<NodeFileSettings['format']>('text'), missing = $state<NodeFileSettings['missing']>('create'), content = $state('');
+    let name = $state(''), path = $state(''), format = $state<NodeFileSettings['format']>('text'), missing = $state<NodeFileSettings['missing']>('create'), content = $state('');
     let visibility = $state<NodeFileSettings['visibility']['kind']>('public'), actorId = $state('');
     let dirty = $state(false), pending = $state(''), failure = $state(''), notice = $state('');
     let identity = '', draftIdentity = '', generation = 0, alive = true;
     const formats = [{ value: 'text', label: 'Plain text' }, { value: 'json', label: 'JSON' }, { value: 'jsonl', label: 'JSON Lines' }, { value: 'csv', label: 'CSV' }, { value: 'markdown', label: 'Markdown' }] as const;
     const requiresJson = $derived(['story-clock', 'commit-outcomes', 'random-pick'].includes(model.operation));
+    const server = $derived(model.storage === 'server');
     const canAct = $derived(!disabled && model.available && !pending);
     const canEdit = $derived(canAct && model.mode !== 'inherited');
     const valid = $derived(!!name.trim() && (visibility !== 'actor-private' || !!actorId.trim()));
     const canChoose = $derived(canEdit && model.supported && valid && !!actions.chooseNodeFile);
-    const canSave = $derived(canEdit && dirty && valid && !!actions.saveNodeFile);
-    const renamed = $derived(name.trim() !== model.settings.name);
-    const bindingStatus = $derived(model.mode === 'inherited' ? 'Inherited destination' : !model.supported ? 'Browser setup required' : renamed ? 'Choose a location for this filename.' : model.settings.bindingId ? model.issue ? 'File access needs attention.' : 'File selected' : 'Choose a file to finish setup.');
+    const canSave = $derived(canEdit && valid && !!actions.saveNodeFile && (server ? model.supported && (dirty || !model.settings.bindingId || !!model.issue) : dirty));
+    const renamed = $derived(name.trim() !== model.settings.name || server && path.trim() !== (model.settings.path ?? ''));
+    const bindingStatus = $derived(model.mode === 'inherited' ? 'Inherited destination' : !model.supported ? server ? 'Server file service unavailable' : 'Browser setup required' : renamed ? server ? 'Save settings for this file path.' : 'Choose a location for this filename.' : model.settings.bindingId ? model.issue ? 'File access needs attention.' : server ? 'File configured' : 'File selected' : server ? 'Enter a file path or filename, then save the settings.' : 'Choose a file to finish setup.');
     const contextKey = () => JSON.stringify([selection, model, disabled]);
     const draftKey = () => JSON.stringify([selection.documentNamespace, selection.selectionKey, selection.address, model.operation, model.mode, model.destinationMode, model.settings]);
     $effect.pre(() => {
@@ -27,7 +28,7 @@
         draftIdentity = nextDraft;
         untrack(() => {
             if (replaceDraft) {
-                name = model.settings.name; format = model.settings.format; missing = model.settings.missing; content = model.settings.content;
+                name = model.settings.name; path = model.settings.path ?? ''; format = model.settings.format; missing = model.settings.missing; content = model.settings.content;
                 visibility = model.settings.visibility.kind; actorId = model.settings.visibility.kind === 'actor-private' ? model.settings.visibility.actorId : '';
                 dirty = false;
             }
@@ -35,9 +36,10 @@
         });
     });
     onDestroy(() => { alive = false; generation++; });
-    function edit(field: 'name' | 'format' | 'missing' | 'content' | 'visibility' | 'actor', value: string) {
+    function edit(field: 'name' | 'path' | 'format' | 'missing' | 'content' | 'visibility' | 'actor', value: string) {
         if (!canEdit) return;
-        if (field === 'name') name = value;
+        if (field === 'name') { name = value; if (server && path.trim()) path = path.replace(/[^\\/]*$/, value); }
+        else if (field === 'path') { path = value; if (value.trim()) name = value.split(/[\\/]/).at(-1) ?? ''; }
         else if (field === 'format') { if (!formats.some(option => option.value === value)) return; format = value as NodeFileSettings['format']; }
         else if (field === 'missing') { if (value !== 'create' && value !== 'error') return; missing = value; }
         else if (field === 'content') content = value;
@@ -46,7 +48,7 @@
         generation++; dirty = true; failure = ''; notice = '';
     }
     function preparedSettings(): NodeFileSettings {
-        return { bindingId: model.settings.bindingId, name: name.trim(), format: requiresJson ? 'json' : format, missing, content, visibility: visibility === 'actor-private' ? { kind: visibility, actorId: actorId.trim() } : { kind: visibility } };
+        return { bindingId: model.settings.bindingId, name: name.trim(), ...(server ? { path: path.trim() } : {}), format: requiresJson ? 'json' : format, missing, content, visibility: visibility === 'actor-private' ? { kind: visibility, actorId: actorId.trim() } : { kind: visibility } };
     }
     async function perform(kind: string, action: (captured: DetailSelection) => DetailEditResponse) {
         if (!canAct) return;
@@ -58,7 +60,7 @@
             const result = await action(captured);
             if (!current()) return;
             if (!result.ok) { failure = result.error.message; return; }
-            if (kind === 'save') { dirty = false; notice = renamed ? 'Settings saved. Choose a location for this filename.' : 'File settings saved.'; }
+            if (kind === 'save') { dirty = false; notice = server ? 'File settings saved. File contents are written on Apply.' : renamed ? 'Settings saved. Choose a location for this filename.' : 'File settings saved.'; }
         } catch (error) {
             if (current()) failure = error instanceof Error ? error.message : 'The file settings could not be updated.';
         } finally { if (current()) pending = ''; }
@@ -73,6 +75,10 @@
         const settings = preparedSettings();
         void perform('save', captured => actions.saveNodeFile!(captured, settings));
     }
+    function refreshService() {
+        if (!canAct || !server || model.supported || !actions.refreshNodeFiles) return;
+        void perform('refresh', () => actions.refreshNodeFiles!());
+    }
     function destination(value: string) {
         if (!canAct || model.operation !== 'write-file' || !actions.editControls || !['connected', 'own'].includes(value) || value === model.destinationMode) return;
         void perform('destination', captured => actions.editControls!(captured, { destinationMode: value }));
@@ -86,16 +92,26 @@
     {/if}
     <p class="pc-nf-status" data-file-status>{bindingStatus}</p>
     {#if model.summary}<p class="pc-nf-help pc-nf-summary">{model.summary}</p>{/if}
-    {#if !model.supported && (model.mode !== 'inherited' || model.accessIssue)}<p class="pc-nf-help" data-file-access-issue>{model.accessIssue?.message ?? 'This browser does not provide direct file saving. Open this workflow in desktop Chrome or Edge. File uploads and downloads do not grant this access.'}</p>{/if}
+    {#if !model.supported && (model.mode !== 'inherited' || model.accessIssue)}<p class="pc-nf-help" data-file-access-issue>{model.accessIssue?.message ?? (server ? 'Install the Lattice file service on the SillyTavern server to use file paths.' : 'This browser does not provide direct file saving. Open this workflow in desktop Chrome or Edge. File uploads and downloads do not grant this access.')}</p>{/if}
+    {#if server && !model.supported}
+        <p class="pc-nf-help"><a data-server-file-guide href="https://github.com/MentallyQuill/Lattice/blob/main/docs/server-files.md" target="_blank" rel="noreferrer">Server file setup guide</a></p>
+        {#if actions.refreshNodeFiles}<div class="pc-nf-actions"><button type="button" data-refresh-node-files disabled={!canAct} onclick={refreshService}>{pending === 'refresh' ? 'Checking…' : 'Retry file service'}</button></div>{/if}
+    {/if}
     {#if model.mode === 'inherited'}
         <p class="pc-nf-help">{model.operation === 'commit-clock' ? 'Uses the file captured by Story Clock.' : 'Uses the connected document’s file and settings.'}</p>
     {:else}
         <p class="pc-nf-role">{model.mode === 'source' ? 'Source file' : 'Destination file'}</p>
+        {#if server}
+            <label class="pc-nf-field">File path<input id={idPrefix + '-fileTarget-path'} aria-label="File path" maxlength="4096" value={path} disabled={!canEdit} placeholder="Stories/SceneContext.txt" spellcheck="false" oninput={event => edit('path', event.currentTarget.value)} /></label>
+            <p class="pc-nf-help">Files are saved by the SillyTavern server. Relative paths use {model.location?.basePath || 'your user files/lattice folder'}. Absolute paths refer to that machine.{model.location?.canUseAbsolutePaths === false ? ' Other folders require a SillyTavern administrator account.' : ''}</p>
+        {/if}
         <label class="pc-nf-field">Filename<input id={idPrefix + '-fileTarget-name'} aria-label="Filename" maxlength="256" value={name} disabled={!canEdit} placeholder="notes.txt" oninput={event => edit('name', event.currentTarget.value)} /></label>
+        {#if !server}
         <div class="pc-nf-actions pc-nf-choose">
             <button id={idPrefix + '-fileTarget-choose'} type="button" data-choose-node-file="save" disabled={!canChoose} onclick={() => choose('save')}>{pending === 'choose-save' ? 'Choosing…' : 'Choose location…'}</button>
             <button type="button" data-choose-node-file="open" disabled={!canChoose} onclick={() => choose('open')}>{pending === 'choose-open' ? 'Choosing…' : 'Open existing…'}</button>
         </div>
+        {/if}
         {#if requiresJson}<div class="pc-nf-field"><span>Format</span><output aria-label="File format">JSON</output></div>{:else}<label class="pc-nf-field">Format<select aria-label="File format" value={format} disabled={!canEdit} onchange={event => edit('format', event.currentTarget.value)}>{#each formats as option}<option value={option.value}>{option.label}</option>{/each}</select></label>{/if}
         <label class="pc-nf-field">Missing file<select aria-label="Missing file" value={missing} disabled={!canEdit} onchange={event => edit('missing', event.currentTarget.value)}><option value="create">Create if missing</option><option value="error">Report an error</option></select></label>
         <label class="pc-nf-block">Initial content<textarea aria-label="Initial file content" rows="4" maxlength="100000" value={content} disabled={!canEdit} placeholder="Empty by default" oninput={event => edit('content', event.currentTarget.value)}></textarea></label>
@@ -128,6 +144,7 @@
     .pc-nf-role { margin: 12px 0 5px; color: var(--pc-muted); font-size: 10px; }
     .pc-nf-help { margin: 7px 0 0; color: var(--pc-muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
     .pc-nf-summary { margin: 4px 0 0; }
+    a { color: var(--pc-accent); }
     .pc-nf-migration { padding-top: 8px; border-top: 1px solid var(--pc-border); }
     .pc-nf-error { margin: 7px 0 0; color: var(--pc-error); font-size: 11px; overflow-wrap: anywhere; }
     :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }

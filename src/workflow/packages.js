@@ -10,6 +10,7 @@ const limit = 2000000;
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const pick = (value, keys) => Object.fromEntries(keys.filter(key => Object.hasOwn(value, key)).map(key => [key, value[key]]));
 const portableBindings = bindings => Object.fromEntries(Object.entries(bindings ?? {}).map(([id, binding]) => [id, { ...pick(binding, ['model']), ...(Object.hasOwn(binding, 'profileId') ? { profileId: binding.profileId === ACTIVE_PROFILE_ID ? ACTIVE_PROFILE_ID : null } : {}) }]));
+const portableFileTarget=value=>({...Object.fromEntries(Object.entries(value).filter(([key])=>key!=='path')),bindingId:''});
 // Parameter values are authored JSON unless the exact exposed control is a binding.
 // Resolve against the original flat table before any portable hashes are changed.
 function exposedParameterNode(definition, parameter, snapshots) {
@@ -50,7 +51,7 @@ function portableProjection(snapshots) {
         },
         parameters(node) {
             return Object.fromEntries(instanceParameterTargets(node, snapshots).map(parameter => [parameter.id,
-                parameter.controlId === 'fileTarget' && parameter.value && typeof parameter.value === 'object' ? {...parameter.value,bindingId:''}
+                parameter.controlId === 'fileTarget' && parameter.value && typeof parameter.value === 'object' ? portableFileTarget(parameter.value)
                     : parameter.target?.operation === 'fast-decision' && ['fastConnectionId', 'fallbackProfileId'].includes(parameter.controlId) ? ''
                     : parameter.target?.operation === 'fast-decision' && parameter.controlId === 'fallbackEnabled' ? false
                     : parameter.target?.operation === 'for-each' && parameter.controlId === 'roleOverrides' ? portableBindings(parameter.value)
@@ -92,7 +93,7 @@ function portableNativeDocument(graph, context) {
         ...portableControlKeys(graph,node), ...(node.operation === 'validate-patches' ? ['protectedLiterals'] : []),
     ])]));
     for (const [id, node] of Object.entries(copy.nodes)) {
-        if (node.fileTarget && typeof node.fileTarget === 'object') { if (Object.keys(node.fileTarget).length) node.fileTarget={...node.fileTarget,bindingId:''}; else delete node.fileTarget; }
+        if (node.fileTarget && typeof node.fileTarget === 'object') { if (Object.keys(node.fileTarget).length) node.fileTarget=portableFileTarget(node.fileTarget); else delete node.fileTarget; }
         if (Object.hasOwn(node, 'profileId') && node.profileId !== ACTIVE_PROFILE_ID) node.profileId = null;
         if (node.type === 'workflow' && node.operation === 'fast-decision') {
             node.fastConnectionId = '';

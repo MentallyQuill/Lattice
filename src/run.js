@@ -9,6 +9,7 @@ import { createNativePersistenceVerifier } from './workflow/native-persistence.j
 import { diagnosticText } from './ui/diagnostics.js?v=0.29.0';
 import { presentFailureNotification } from './ui/failure-notification.js?v=0.29.0';
 import { createDiagnosticHistory } from './workflow/diagnostic-history.js?v=0.29.0';
+import {configureNodeFileAccess,refreshNodeFileAccess} from './ui/node-file-access.js?v=0.29.0';
 export { runWorkflow, workflowSignature } from './workflow/runtime.js?v=0.29.0';
 export { createNativeWorkflowController, snapshotContext, snapshotReply } from './workflow/host.js?v=0.29.0';
 
@@ -21,6 +22,7 @@ export function subscribeWorkflowRunEvents(listener) {
     return () => workflowRunListeners.delete(listener);
 }
 const currentUser = () => userHelpers?.getCurrentUserHandle?.();
+configureNodeFileAccess({getContext:ctx,getUserId:currentUser});
 // The immutable native export reads the current handle without invoking graph or
 // request hooks. Private transport uses this separate passive authority last.
 const transportUserId = () => nativeUserReader?.();
@@ -105,5 +107,5 @@ export function initializeNativeWorkflowController() {
         import('/script.js').then(module => { if (['isGenerating', 'syncMesToSwipe', 'syncSwipeToMes'].every(key => typeof module[key] === 'function')) helpers = module; }),
         import('/scripts/user.js').then(module => { if (typeof module.getCurrentUserHandle === 'function') { userHelpers = module; nativeUserReader = module.getCurrentUserHandle; } }),
     ]);
-    return initialization.then(result=>{current.syncRecall();safe(()=>globalThis.document?.dispatchEvent(new CustomEvent('pc-diagnostic-history')));return result;});
+    return initialization.then(result=>{current.syncRecall();void refreshNodeFileAccess();safe(()=>globalThis.document?.dispatchEvent(new CustomEvent('pc-diagnostic-history')));return result;});
 }

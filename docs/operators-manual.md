@@ -59,7 +59,7 @@ The menus group the main actions:
 | Edit | Undo, redo, copy, cut, paste, duplicate, delete, and selection. |
 | View | Show/hide panels, follow or pin Preview, fit the graph, and choose a theme. |
 | Graph | Add nodes, rename, group, make subgraphs, add comments, and manage portals. |
-| Workflow | Enable Lattice, validate, review the result, inspect a run, add systems, and manage legacy chat data or recall. |
+| Workflow | Enable Lattice, validate, review the result, inspect a run, add systems, and manage recall. |
 | Help | Workspace guide, node reference, shortcuts, and version. |
 
 **Enable Lattice** makes the open workflow participate when you use SillyTavern's normal **Send**. Opening or saving a workflow does not switch this setting. Opening a different workflow changes which document Send will use, so check the name in the workflow bar before sending.
@@ -520,7 +520,7 @@ Start by asking what material the operation needs and whether it must stay curre
 | **Read File** | Its selected authorized file, plus the live reference needed to propose a write. |
 | **Memory / Actor Context** | The selected or authorized actor's stored material, with its privacy and participation checks. |
 
-File Input imports a snapshot and cannot authorize a live write. Read File selects a live file through the browser's native picker; older chat-stored documents remain available through Legacy chat data.
+File Input imports a snapshot and cannot authorize a live write. Read File uses its configured server path. Older chat-stored documents remain preserved for migration through the node's File settings.
 
 ### Node files and shared destinations
 
@@ -530,7 +530,7 @@ Choosing files and saving settings do not write their contents. Initial content 
 
 ![Workflow Data manager with authorized sources for the current story](images/workflow-data.png)
 
-*The older chat-document manager remains under Workflow → Configure → Legacy chat data… for recovery and migration. Imported target names do not grant access.*
+*The global chat-document manager has been removed. Configure each destination in Details → File. Imported target names and paths do not grant access.*
 
 CSV requires declared columns. External file edits invalidate captured results and require a fresh run. Removing authorization revokes access without deleting the operating-system file.
 

@@ -9,6 +9,9 @@ export interface NodeFileBindingView {
     name:string;
     format:RecordFormat;
     status:'ready'|'permission-required'|'unavailable';
+    path?:string;
+    generation?:string;
+    storage?:'native'|'server';
 }
 export interface NodeFileDefinition {
     targetId:string;
@@ -18,6 +21,7 @@ export interface NodeFileDefinition {
     content:string;
     missing:'create'|'error';
     visibility:ArtifactVisibility;
+    path?:string;
 }
 export interface NodeFileHandle {
     readonly kind?:'file';
@@ -63,22 +67,29 @@ export interface NodeFileBackend extends FileBackendPorts {
     adoptLegacy:(targetId:string,request:{snapshot:StoredDocument&{scope:StorageScope};pages:Record<string,DocumentHistoryPage>})=>Promise<Result<{adopted:boolean}>>;
 }
 export interface NodeFileAvailabilityIssue {
-    readonly code:'FILE_ACCESS_INSECURE'|'FILE_ACCESS_BRAVE'|'FILE_ACCESS_UNSUPPORTED';
+    readonly code:string;
     readonly message:string;
 }
 export interface NodeFileAccess {
     readonly supported:boolean;
     readonly native:boolean;
+    readonly storage?:'native'|'server';
+    readonly nativeSupported?:boolean;
+    readonly nativeAccessIssue?:NodeFileAvailabilityIssue|null;
+    readonly location?:{basePath:string;platform:string;canUseAbsolutePaths:boolean}|null;
+    refresh?:()=>Promise<Result<{persistent:true}>>;
     /** Explains unavailable direct file saving without confusing it with uploads or downloads. */
     readonly availability:NodeFileAvailabilityIssue|null;
     readonly ready:Promise<Result<{persistent:true}>>;
     snapshot:()=>Record<string,NodeFileBindingView>;
     subscribe:(listener:()=>void)=>()=>void;
     /** Starts its picker synchronously. bindingId authorizes only same-file format reconfiguration; a different physical file gets a fresh identity. Never writes document contents. */
-    choose:(settings:{mode:'open'|'save';bindingId?:string;name:string;format:RecordFormat})=>Promise<Result<{bindingId:string;name:string}>&{cancelled?:true}>;
+    choose:(settings:{mode:'open'|'save';bindingId?:string;name:string;format:RecordFormat;path?:string;storage?:'native'|'server'})=>Promise<Result<{bindingId:string;name:string;path?:string}>&{cancelled?:true}>;
     /** Captures handle identities and never requests permission during execution. */
     backend:(definitions:NodeFileDefinition[],controls:{scope:StorageScope;isCurrent:()=>boolean;signal?:AbortSignal})=>NodeFileBackend;
 }
 export function createNodeFileAccess(options?:NodeFileAccessOptions):NodeFileAccess;
 export function getNodeFileAccess():NodeFileAccess;
+export function configureNodeFileAccess(ports:{getContext:()=>{getRequestHeaders?:()=>Record<string,string>};getUserId:()=>string|undefined|null}):void;
+export function refreshNodeFileAccess():Promise<Result<{persistent:true}>>|undefined;
 export function setNodeFileAccess(adapter?:NodeFileAccess|null):void;

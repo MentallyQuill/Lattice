@@ -91,7 +91,10 @@ export function prepareWorkspaceViews(root, options = {}) {
             if (options.resolveBinding && bound?.issue) issues.push({code:'BINDING_UNAVAILABLE',message:bound.issueDiagnostic?.message || presentDiagnostic(bound.issue).message,field:'profileId',address,category:'setup'});
             const file = options.workflowData?.nodeFiles ? projectNodeFile(effectiveNodes[id],{...options.workflowData,...options.workflowData.nodeFiles,nodes:effectiveNodes,wires:view.savedGraph.wires}) : null;
             const fileIssue=nodeFileSetupIssue(file);
-            if(fileIssue)issues.push({...fileIssue,address});
+            if(fileIssue){
+                for(let index=issues.length-1;index>=0;index--)if(issues[index].code==='FILE_SETUP_REQUIRED'&&issues[index].field==='fileTarget')issues.splice(index,1);
+                issues.push({...fileIssue,address});
+            }
             const document = file ? null : projectWorkflowData(effectiveNodes[id],options.workflowData ?? {},false,address);
             if (document?.available && document.issue) issues.push({code:'DOCUMENT_UNAVAILABLE',message:document.issue,field:document.controlKey,address,category:'setup'});
             const deferred = [!options.resolveBinding && bound?.requestBound ? 'Live model connection has not been evaluated.' : '',document && !document.available ? 'Live document availability has not been evaluated.' : ''].filter(Boolean);

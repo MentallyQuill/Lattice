@@ -19,7 +19,7 @@ export function projectNodeFile(node, state = {}) {
   const sourceView=source?projectNodeFile(source,{...state,nodes:{},wires:{}}):null;
   const label=expected==='read-file'?'Read File':'Story Clock';
   const issue=!sourceView?'Connect '+(expected==='read-file'?'a live file reference from Read File or choose your own destination.':'the Advance Time report from a configured Story Clock.') : sourceView.issue;
-  return {operation:node.operation,mode:'inherited',destinationMode:'connected',settings:sourceView?.settings??{bindingId:'',name:'',format:'text',missing:'create',content:'',visibility:{kind:'public'}},available:state.fileConfigAvailable!==false,supported:state.supported===true,legacy:sourceView?.legacy===true,summary:sourceView?.settings.name?sourceView.settings.name+' — from '+label:'Destination comes from '+label,...(sourceView?.accessIssue?{accessIssue:sourceView.accessIssue}:{}),...(issue?{issue}:{})};
+  return {operation:node.operation,mode:'inherited',destinationMode:'connected',settings:sourceView?.settings??{bindingId:'',name:'',format:'text',missing:'create',content:'',visibility:{kind:'public'}},available:state.fileConfigAvailable!==false,supported:sourceView?.supported??state.supported===true,storage:sourceView?.storage??state.storage??'native',...(sourceView?.location?{location:sourceView.location}:{}),legacy:sourceView?.legacy===true,summary:sourceView?.settings.name?(sourceView.settings.path||sourceView.settings.name)+' — from '+label:'Destination comes from '+label,...(sourceView?.accessIssue?{accessIssue:sourceView.accessIssue}:{}),...(issue?{issue}:{})};
  }
  const preset=workflowDataPresetFor(node.operation);
  const targetId=node[preset?.controlKey??'targetId']||preset?.targetId||'';
@@ -31,22 +31,27 @@ export function projectNodeFile(node, state = {}) {
  if(name && !name.toLowerCase().endsWith('.'+extensions[format])) name+='.'+extensions[format];
  const settings = {bindingId:'',name,format,missing:'create',content:saved?.content??definition?.content??preset?.content??'',visibility:summary?.visibility??preset?.visibility??{kind:'public'},...node.fileTarget};
  const binding = state.bindings?.[settings.bindingId];
+ const storage=binding?.storage??state.storage??'native';
+ const supported=storage==='native'&&state.storage==='server'?state.nativeSupported===true:state.supported===true;
+ if(storage==='server' && settings.path===undefined && typeof binding?.path==='string')settings.path=binding.path;
  const ownId=nodeFileTargetId(node);
- const canonicalTarget=value=>{const checked=validateNodeFileTarget(value);return checked.ok?JSON.stringify(['bindingId','name','format','missing','content'].map(key=>checked.data[key]).concat([checked.data.visibility?.kind,checked.data.visibility?.actorId])):null;};
+ const canonicalTarget=value=>{const checked=validateNodeFileTarget(value);return checked.ok?JSON.stringify(['bindingId','name','path','format','missing','content'].map(key=>checked.data[key]).concat([checked.data.visibility?.kind,checked.data.visibility?.actorId])):null;};
  const conflict=settings.bindingId && Object.values(state.nodes??{}).some(other=>other.id!==node.id && other.fileTarget?.bindingId && (nodeFileTargetId(other)===ownId || other.fileTarget.bindingId===settings.bindingId) && (nodeFileTargetId(other)!==ownId || canonicalTarget(other.fileTarget)!==canonicalTarget(settings)));
 
- const accessIssue=state.supported===true?undefined:state.accessIssue??{code:'FILE_ACCESS_UNSUPPORTED',message:'This browser does not provide direct file saving. Open this workflow in desktop Chrome or Edge. File uploads and downloads do not grant this access.'};
- const bindingReady = state.supported===true && binding?.status==='ready' && !!settings.name.trim() && binding.name===settings.name;
+ const accessIssue=supported?undefined:(storage==='native'&&state.storage==='server'?state.nativeAccessIssue:state.accessIssue)??(storage==='server'?{code:'FILE_SERVICE_UNAVAILABLE',message:'Install the Lattice file service on the SillyTavern server to use file paths. See the server file setup guide.'}:{code:'FILE_ACCESS_UNSUPPORTED',message:'This browser does not provide direct file saving. Open this workflow in desktop Chrome or Edge. File uploads and downloads do not grant this access.'});
+ const bindingReady = supported && binding?.status==='ready' && !!settings.name.trim() && binding.name===settings.name;
  let issue;
  if (!inherited) {
-  if (accessIssue) issue='Direct file saving needs browser setup. See the File section.';
+  if (accessIssue) issue=storage==='server'?'The server file service needs attention. See the File section.':'Direct file saving needs browser setup. See the File section.';
+  else if(node.operation==='write-file'&&(typeof ownId!=='string'||!ownId.trim()||ownId.length>256))issue=storage==='server'?'Save this node’s File settings to configure its destination.':'Choose the destination file again in this node’s File settings.';
   else if(conflict)issue='Nodes sharing this file have different settings. Match their File settings or choose separate files.';
+  else if(storage==='server' && settings.path && binding?.path && settings.path!==binding.path)issue='Save the file settings to confirm this changed path.';
   else if(binding?.format && binding.format!==settings.format)issue='Choose the file again to confirm its changed format.';
   else if (binding?.status==='permission-required') issue='File permission is required. Choose this file again to grant access.';
   else if (settings.bindingId && !binding) issue='The selected file is unavailable. Choose a file location again.';
-  else if (!bindingReady) issue='Choose a file location and filename in this node’s File settings.';
+  else if (!bindingReady) issue=storage==='server'?'Enter a file path or filename and save this node’s File settings.':'Choose a file location and filename in this node’s File settings.';
  }
- return {operation:node.operation,mode:inherited?'inherited':node.operation==='read-file'?'source':'destination',destinationMode:node.destinationMode??'connected',settings,available:state.fileConfigAvailable!==false,supported:state.supported===true,legacy,...(accessIssue?{accessIssue}:{}),...(issue?{issue}:{})};
+ return {operation:node.operation,mode:inherited?'inherited':node.operation==='read-file'?'source':'destination',destinationMode:node.destinationMode??'connected',settings,available:state.fileConfigAvailable!==false,supported,storage,...(storage==='server'&&state.location?{location:state.location}:{}),legacy,...(accessIssue?{accessIssue}:{}),...(issue?{issue}:{})};
 }
 export function nodeFileSetupIssue(view) {
  if (!view || !view.issue) return null;

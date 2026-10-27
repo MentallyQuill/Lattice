@@ -13,7 +13,7 @@ Your usual SillyTavern connection writes the main reply. Other model tools can p
 3. Choose **File → Open examples…** and read a lesson’s requirements. Opening creates an editable copy, makes no model request, and does not change **Enable Lattice**.
 4. Replace sample instructions, actor/item identities, and document targets with your story’s values. Loaded character IDs normally use `character:<avatar filename>`; a display name alone is not a live actor identity.
 5. Click each model tool’s grey bar and choose **Active SillyTavern model** or a saved Connection Manager profile. Leave **Advanced model settings → Model mode → Use profile model** unless that tool needs a different identifier. Configure any **For Each → Helper model bindings** separately.
-6. Select each Story Clock, Read File, or Outcome Commit node and configure its destination in **Details → File**. Resolve **Setup Required**, validation, and connection issues. Older chat documents remain under **Workflow → Configure → Legacy chat data…**.
+6. Select each Story Clock, Read File, or Outcome Commit node and configure its destination in **Details → File**. Resolve **Setup Required**, validation, and connection issues. Older saved chat data remains available for migration from these node settings.
 7. Select **Enable Lattice** with this document open. Switching between Main and its subgraph tabs changes your view, not the workflow used by Send.
 8. Send your player message normally. Lattice prepares connected guidance, continues from the completed reply, and records its response processing. A generated swipe can use the same workflow when its sources and policies permit it.
 9. Select **Review / Publish → Host result** in Preview. Compare the original, proposed reply, appended notes, model trace, and staged changes. Choose **Apply reviewed reply** or **Reject reply**.
@@ -177,13 +177,11 @@ Select a file node and open **Details → File**. Enter its **Filename**, select
 
 Choose a creation policy, initial content and visibility in the same File section. Clock and outcomes files use JSON. Initial content can seed an empty file explicitly selected as a new destination; it never replaces a nonempty file during setup. Choosing, previewing or rejecting does not write document contents. Accepting the reviewed root result checks the captured version and saves staged changes. Inspect each save receipt; independent files may have different outcomes. An external edit requires a fresh run and review.
 
-Native file access and browser-local durable storage are required for repeated file writes; unsupported access is shown explicitly. The browser may require the user to choose a file again after permission changes. Local workflow saves retain binding references; portable sharing exports retain suggested names/formats and require the recipient to select destinations.
+New file destinations use paths handled by the Lattice file service on the SillyTavern server. Enter a File path and save the node's File settings; no experimental browser APIs are required. Paths refer to the machine running SillyTavern. See [server file setup](server-files.md) for installation and Windows/macOS/Linux examples. Previously granted browser bindings remain available. Local workflow saves retain configured paths; portable sharing exports retain suggested names/formats and remove machine paths and binding authority.
 
-Ordinary file uploads and downloads do not grant permission to update a selected file repeatedly. If direct saving is unavailable, the File section explains the browser setup needed. In Brave, enable **File System Access API** at `brave://flags/#file-system-access-api` and relaunch, or use desktop Chrome or Edge. For a page served over insecure HTTP, open SillyTavern over HTTPS or localhost. Trusted loopback addresses such as `http://127.0.0.1:8000` already satisfy the secure-page requirement. These browser requirements are described in the [File System Access documentation](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access).
+Disk files currently retain at most 32 active clock turns and 256 active save receipts. Migrated archives and replay identities are preserved in metadata, but creating additional disk-history checkpoints is not yet supported by the File panel.
 
-Disk files currently retain at most 32 active clock turns and 256 active save receipts. Migrated archives and replay identities are preserved in local metadata, but creating additional disk-history checkpoints is not yet supported; legacy chat-document checkpoint actions remain available in the recovery dialog.
-
-Older chat-stored documents and their history are preserved under **Workflow → Configure → Legacy chat data…**. Their nodes show a migration notice. Choosing a new file carries saved content into the initial contents, rather than reverting to the old template. Migration is written only through an accepted file write. Older lessons calling this dialog **Workflow Data** refer to this legacy recovery screen.
+Older chat-stored documents and their history remain preserved. Their nodes show a migration notice. Configuring a new file carries saved content into the initial contents. Migration is written only through an accepted file write. The former global Workflow Data / Legacy chat data dialog has been removed; configure files directly on the nodes.
 
 All available nodes place directly, including nodes with missing settings or an unselected helper. A red border and **Setup Required** wrench lead to the relevant Details fields; complete them progressively. **Input Required** identifies missing required wiring. You can save an unfinished workflow and run a complete independent branch; an unfinished dependency blocks its requested run before any work begins.
 
@@ -228,7 +226,7 @@ Story time uses authored integer minutes, separately from wall-clock time and me
 
 Nodes selecting the same clock file share its timeline. Select a different file for an independent clock. Separate clocks do not synchronize automatically. Story Clock reads accepted time when the workflow runs.
 
-The File panel supplies the clock's initial JSON. Its `clockId` must match the authored clock identity. The older **Legacy chat data… → Story clock template** remains available for chat-document recovery. This example starts Day 1 at midnight:
+The File panel supplies the clock's initial JSON. Its `clockId` must match the authored clock identity. Existing saved clock data is preserved for migration through the same panel. This example starts Day 1 at midnight:
 
 ```json
 {

@@ -69,7 +69,7 @@ function resolve(rawNode,rawOptions={}){
             if(settings.actorScope==='selected'&&settings.actorId!=='')return fail('INVALID_SETTINGS','Selected scope uses the native selection.');
             if(settings.actorScope==='presence'&&!id(settings.actorId))setupIssues.push({code:'INVALID_SETTINGS',message:'Select a canonical present actor.',field:'actorId'});
         }
-        if(node.operation==='write-file'&&settings.destinationMode==='own'&&!id(settings.targetId))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose a destination identity in the File section.',field:'fileTarget'});
+        if(node.operation==='write-file'&&settings.destinationMode==='own'&&!id(settings.targetId))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Save the destination in this node’s File settings.',field:'fileTarget'});
         if(node.operation==='read-file'&&!id(settings.targetId))return fail('INVALID_SETTINGS','Select an authorized target identity.');
         if(['write-file','project-document'].includes(node.operation)) {
             if(['add-unique','upsert','update-fields'].includes(settings.mode)&&!id(settings.key))setupIssues.push({code:'INVALID_SETTINGS',message:'Choose an identity field for keyed updates.',field:'key'});

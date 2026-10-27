@@ -4,18 +4,23 @@ import {readFile} from 'node:fs/promises';
 import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.29.0';
 import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v=0.29.0';
 import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.29.0';
+import {createWorkflowDataSetup} from '../src/ui/workflow-data-setup.js?v=0.29.0';
 import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.29.0';
 import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.29.0';
 import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js?v=0.29.0';
 import {safe} from '../src/state.js?v=0.29.0';
 const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');
-test('a checkpoint applied in an earlier scope cannot cancel or refresh a replacement workflow',async()=>{
- const start=source.indexOf('    async applyCheckpoint('),end=source.indexOf('\n    },',start);assert.ok(start>=0&&end>start);
- let current=true,release,entered,effects=0;const waiting=new Promise(resolve=>entered=resolve),deferred=new Promise(resolve=>release=resolve);
- const env={storySetup:()=>({isCurrent:key=>current&&key==='captured-key'}),workflowRuntime:{getNativeWorkflowController:()=>({applyStoryHistoryCheckpoint:()=>{entered();return deferred;}})},workflowSession:{cancel(){effects++;}},refreshWorkflowPreparation(){effects++;},updateWorkflowProjection(){effects++;}};
- const method=Function('env','with(env){return ('+source.slice(start,end).trim().replace('async applyCheckpoint(','async function(')+'\n});}')(env);
- const pending=method('captured-key',{});await waiting;current=false;release({ok:true,data:{applied:true,acknowledged:false}});
- assert.equal((await pending).data.applied,true);assert.equal(effects,0,'The old checkpoint response cannot touch the new workflow');
+test('retired global file handlers are absent while per-node migration retains its scoped catalog',()=>{
+ assert.doesNotMatch(source,/storyDocumentsActions|refreshStoryDocuments|function storySetup\(/);
+ const scope={userId:'default-user',chatId:'story'},stored={targetId:'notes',scope,revision:2,format:'text',content:'Saved canonical notes',receipts:[{intentId:'retained',revision:2,fingerprint:'sha256:'+'a'.repeat(64)}]};
+ const context={chatId:scope.chatId,chat:[],chatMetadata:{latticeDocuments:{[scope.userId]:{notes:stored}}}};
+ const catalog=createChatDocumentCatalog({getContext:()=>context,getUserId:()=>scope.userId});
+ assert.equal(catalog.define({targetId:'notes',name:'Campaign notes',format:'text',content:'Initial template',visibility:{kind:'public'}}).ok,true);
+ const before=JSON.stringify(context.chatMetadata);
+ const setup=actual('workflowDataSetup',{workflowRuntime:{getStoryDocumentCatalog:()=>catalog},nodeWorkflowDataSetup:null,createWorkflowDataSetup,ctx:()=>context})();
+ const snapshot=setup.snapshot();assert.equal(snapshot.available,true);assert.equal(snapshot.documents[0].targetId,'notes');
+ assert.equal(catalog.capture().data.scope.userId,scope.userId);assert.equal(context.chatMetadata.latticeDocuments[scope.userId].notes.content,'Saved canonical notes');
+ assert.equal(JSON.stringify(context.chatMetadata),before,'Removing the global UI does not rewrite saved content or receipts');
 });
 function actual(name,env){const start=source.indexOf('function '+name+'('),end=source.indexOf('\n}',start)+2;assert.ok(start>=0);return Function('env','with(env){'+source.slice(start,end)+';return '+name+';}')(env);}
 function fixture(){

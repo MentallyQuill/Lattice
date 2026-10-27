@@ -1,8 +1,8 @@
 import type { Result } from './types';
 import type { DocumentVisibility } from './document-catalog';
 import type { ControlDescriptor } from './types';
-export interface NodeFileTarget {bindingId?:string;name?:string;format?:'json'|'jsonl'|'csv'|'text'|'markdown';missing?:'create'|'error';content?:string;visibility?:DocumentVisibility;}
-export interface NodeFileDefinition extends Required<NodeFileTarget> {targetId:string;}
+export interface NodeFileTarget {bindingId?:string;name?:string;path?:string;format?:'json'|'jsonl'|'csv'|'text'|'markdown';missing?:'create'|'error';content?:string;visibility?:DocumentVisibility;}
+export interface NodeFileDefinition extends Required<Omit<NodeFileTarget,'path'>> {targetId:string;path?:string;}
 export const NODE_FILE_TARGET_CONTROL:ControlDescriptor;
 export const nodeFileFormats:readonly string[];
 export function validNodeFileName(value:unknown):boolean;

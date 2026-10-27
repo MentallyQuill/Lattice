@@ -1,9 +1,10 @@
 import type { DetailEditResponse, DetailEditResult, DetailSelection, NodeDetailsActions } from './detail-types';
 
-/** Portable intent only. Native handles stay in the origin-local file service. */
+/** Authored intent only. The file service owns binding authority. */
 export interface NodeFileSettings {
     bindingId: string;
     name: string;
+    path?: string;
     format: 'json' | 'jsonl' | 'csv' | 'text' | 'markdown';
     missing: 'create' | 'error';
     content: string;
@@ -18,6 +19,8 @@ export interface NodeFileView {
     settings: NodeFileSettings;
     available: boolean;
     supported: boolean;
+    storage?: 'server' | 'native';
+    location?: { basePath: string; platform?: string; canUseAbsolutePaths?: boolean };
     accessIssue?: { code: string; message: string };
     issue?: string;
     legacy: boolean;
@@ -27,5 +30,6 @@ export interface NodeFileView {
 export interface NodeFileActions {
     chooseNodeFile?: (selection: DetailSelection, request: { mode: 'open' | 'save'; settings: NodeFileSettings }) => Promise<DetailEditResult>;
     saveNodeFile?: (selection: DetailSelection, settings: NodeFileSettings) => DetailEditResponse;
+    refreshNodeFiles?: () => DetailEditResponse;
     editControls?: NodeDetailsActions['editControls'];
 }

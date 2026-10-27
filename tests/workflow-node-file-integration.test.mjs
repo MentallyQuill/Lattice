@@ -30,6 +30,8 @@ test('host rejects unconfigured files before allowing native generation or paid 
  try{const result=await f.generate('After');assert.equal(result.ok,false);assert.equal(result.error.code,'FILE_SETUP_REQUIRED');assert.equal(f.calls(),0);assert.equal(f.c.chat.length,1);}finally{f.controller.dispose();}
 });
 import {createNodeFileAccess} from '../src/ui/node-file-access.js?v=0.29.0';
+import {createNodeFileService} from '../src/ui/node-file-service.js?v=0.29.0';
+import {createServerFileAccess} from '../src/ui/server-file-access.js?v=0.29.0';
 async function nativeDisk(content='Before',format='text',mode='open'){
  const state={content,writes:0,permission:'granted'};
  const handle={kind:'file',name:'notes.txt',isSameEntry:async other=>other===handle,queryPermission:async()=>state.permission,getFile:async()=>{const text=state.content;return {name:'notes.txt',size:text.length,lastModified:1,text:async()=>text};},createWritable:async()=>{state.writes++;let next;return {write:async text=>{next=text;},close:async()=>{state.content=next;},abort:async()=>{}};}};
@@ -37,6 +39,13 @@ async function nativeDisk(content='Before',format='text',mode='open'){
  const access=createNodeFileAccess({persistence,showOpenFilePicker:async()=>[handle],showSaveFilePicker:async()=>handle});const chosen=await access.choose({mode,name:'notes.txt',format});assert.equal(chosen.ok,true,JSON.stringify(chosen));
  return {access,state,persistence,fileTarget:{bindingId:chosen.data.bindingId,name:'notes.txt',format,missing:'error',content:'',visibility:{kind:'public'}}};
 }
+
+test('legacy browser files still run when the optional server component is absent',async()=>{
+ const disk=await nativeDisk(),server=createServerFileAccess({getContext:()=>({}),getUserId:()=> 'default-user',fetch:async()=>({status:404,ok:false})});
+ assert.equal((await server.ready).ok,false);
+ const access=createNodeFileService({server,native:disk.access}),f=unifiedRecipeHost(graphForFile(disk.fileTarget),{ports:{nodeFileAccess:access},request:async()=>{throw Error('No requests');}});
+ try{const result=await f.generate('After');assert.equal(result.ok,true,JSON.stringify(result));assert.equal(disk.state.writes,0);const applied=await f.controller.apply(result.reviewHandles[0]);assert.equal(applied.ok,true,JSON.stringify(applied));assert.equal(disk.state.writes,1);}finally{f.controller.dispose();}
+});
 test('native handle remains untouched through preview and rejected review; accepted Apply writes once',async()=>{
  const disk=await nativeDisk(),f=unifiedRecipeHost(graphForFile(disk.fileTarget),{ports:{nodeFileAccess:disk.access},request:async()=>{throw Error('No requests');}});
  try{const result=await f.generate('After');assert.equal(result.ok,true,JSON.stringify(result));assert.equal(disk.state.content,'Before');assert.equal(disk.state.writes,0);const applied=await f.controller.apply(result.reviewHandles[0]);assert.equal(applied.ok,true,JSON.stringify(applied));assert.equal(disk.state.content,'Before\nAfter');assert.equal(disk.state.writes,1);assert.equal(f.c.chatMetadata.latticeDocuments,undefined);assert.equal((await f.controller.apply(result.reviewHandles[0])).ok,true);assert.equal(disk.state.writes,1);}finally{f.controller.dispose();}

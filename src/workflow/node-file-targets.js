@@ -5,13 +5,20 @@ export const NODE_FILE_TARGET_CONTROL=freeze({type:'object',default:{},label:'Fi
 export const nodeFileFormats=Object.freeze(['json','jsonl','csv','text','markdown']);
 const id=value=>typeof value==='string'&&!!value.trim()&&value.length<=256&&!/[\r\n\0]/.test(value);
 export const validNodeFileName=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256&&!/[<>:"/\\|?*\x00-\x1f]/.test(value)&&!['.','..'].includes(value)&&!/[. ]$/.test(value)&&! /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(value);
-/** Portable intent only. A binding ID is resolved exclusively by the origin-local service. */
+/** Authored intent only. A binding ID is resolved exclusively by the file service. */
 export function validateNodeFileTarget(raw={}) {
     const checked=cloneJsonValue(raw);if(!checked.ok)return fail('INVALID_FILE_TARGET','File settings require bounded own JSON data.');
-    const value=checked.data.value,keys=['bindingId','name','format','missing','content','visibility'];
+    const value=checked.data.value,keys=['bindingId','name','format','missing','content','visibility','path'];
     if(!plain(value)||Array.isArray(value)||Object.keys(value).some(key=>!keys.includes(key)))return fail('INVALID_FILE_TARGET','Use the declared File settings.');
     if(!Object.keys(value).length)return {ok:true,data:{}};
     const target={bindingId:'',name:'',format:'text',missing:'create',content:'',visibility:{kind:'public'},...value};
+    if(Object.hasOwn(target,'path')){
+        if(typeof target.path!=='string'||target.path.length>4096||/[\0\r\n]/.test(target.path))return fail('INVALID_FILE_TARGET','Use a file path of at most 4,096 characters.');
+        if(target.path.trim()){
+            target.name=target.path.split(/[\\/]/).at(-1);
+            if(!validNodeFileName(target.name))return fail('INVALID_FILE_TARGET','Include a valid filename at the end of the file path.');
+        }
+    }
     const mark=target.visibility;
     if(typeof target.bindingId!=='string'||target.bindingId!==''&&!id(target.bindingId)||typeof target.name!=='string'||target.name!==''&&!validNodeFileName(target.name)||!nodeFileFormats.includes(target.format)||!['create','error'].includes(target.missing)||typeof target.content!=='string'||target.content.length>100000||!plain(mark)||Object.keys(mark).some(key=>!['kind','actorId'].includes(key))||!['public','hidden','actor-private'].includes(mark.kind)||(mark.kind==='actor-private'?!id(mark.actorId):Object.hasOwn(mark,'actorId')))return fail('INVALID_FILE_TARGET','Choose a filename, supported format, creation policy and visibility.');
     target.visibility=mark.kind==='actor-private'?{kind:mark.kind,actorId:mark.actorId}:{kind:mark.kind};

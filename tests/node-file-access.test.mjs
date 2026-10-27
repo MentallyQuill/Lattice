@@ -334,6 +334,13 @@ test('valid replacements admit old and new contents independently within documen
     const backend=access.backend([definition(binding.bindingId,{name:'large.txt'})],{scope,isCurrent:()=>true}),old=must(await backend.load('logical-notes'));
     must(await backend.compareAndSwap(update(old,'b'.repeat(150000)),{}));assert.equal(handle.state.text,'b'.repeat(150000));assert.equal(handle.state.writes,1);
 });
+test('escaped text retains the byte limit independently of JSON transport size',async()=>{
+    const {access,handle,binding}=await selected(fileHandle('escaped','\n'.repeat(150000)));
+    const backend=access.backend([definition(binding.bindingId,{name:'escaped.txt'})],{scope,isCurrent:()=>true}),old=must(await backend.load('logical-notes'));
+    must(await backend.compareAndSwap(update(old,'"'.repeat(150000)),{}));assert.equal(handle.state.text,'"'.repeat(150000));
+    const fresh=must(await backend.load('logical-notes')),tooLarge=await backend.compareAndSwap(update(fresh,'x'.repeat(262145),'oversized'),{});
+    assert.equal(tooLarge.ok,false);assert.equal(handle.state.writes,1,'oversized contents never reach a writer');
+});
 test('receipt capacity blocks another write before opening a stream',async()=>{
     const {access,handle,binding,persistence}=await selected();
     const backend=access.backend([definition(binding.bindingId)],{scope,isCurrent:()=>true}),old=must(await backend.load('logical-notes'));
