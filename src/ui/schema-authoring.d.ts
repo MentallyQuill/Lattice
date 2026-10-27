@@ -5,6 +5,12 @@ export function removeSchemaKeyword(schema: JsonValue, path: readonly string[], 
 
 /** Local authored drafts only; parent retains this state across editor remounts. */
 export interface SchemaDraftState {
+    /** Inline inspection state; absent on older cached drafts. */
+    expandedPaths?: string[][];
+    advancedPaths?: string[][];
+    selectedPath?: string[];
+    addingFieldPaths?: string[][];
+    fieldNameDrafts?: Record<string, string>;
     path: string[];
     raw: boolean;
     rawText: string;
