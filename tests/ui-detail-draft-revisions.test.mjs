@@ -208,7 +208,7 @@ for (const change of [{ selectionKey: 'another-selection' }, { address: { ...add
             input(editor(f), '["private draft"]'); save(f).click(); flushSync();
             const graph = initialGraph(); graph.nodes.scan.rules = [{ id: 'other', pattern: 'other saved value' }];
             f.update(node(graph, change));
-            assert.equal(editor(f).value, JSON.stringify(graph.nodes.scan.rules, null, 2)); assert.equal(save(f).disabled, false);
+            assert.equal(editor(f).value, JSON.stringify(graph.nodes.scan.rules, null, 2)); assert.equal(save(f), null, 'A fresh selection has no draft to save');
             pending[0]({ ok: false, error: { code: 'OTHER_NODE', message: 'Wrong node validation' } }); await settle();
             assert.equal(editor(f).value, JSON.stringify(graph.nodes.scan.rules, null, 2)); assert.doesNotMatch(f.host.textContent, /Wrong node validation/);
         } finally { await f.close(); }

@@ -1950,6 +1950,7 @@ const nodeDetailsActions = {
     },
     present(selection, field, value) { const captured = detailCapture(selection, true); if (!captured.ok) return captured; presentNode(selection.address.nodeId,field,value); return { ok: true }; },
     editControl(selection,key,value) { const captured = detailCapture(selection); return captured.ok ? commitCaptured(captured.data,prepareNode(current,{ ...scopeCommand(captured.data),kind:'controls',nodeId:selection.address.nodeId,controls:{[key]:value} })) : captured; },
+    editControls(selection,controls) { const captured = detailCapture(selection); return captured.ok ? commitCaptured(captured.data,prepareNode(current,{ ...scopeCommand(captured.data),kind:'controls',nodeId:selection.address.nodeId,controls })) : captured; },
     editModifiers(selection,items) {
         const captured = detailCapture(selection); if (!captured.ok) return captured;
         return commitCaptured(captured.data, prepareScopeMutation(captured.data, context => {

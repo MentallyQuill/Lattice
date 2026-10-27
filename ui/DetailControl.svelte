@@ -22,7 +22,8 @@
     import type { JsonPath } from '../src/workflow/operations/json-data';
     import type { SchemaDraftState } from '../src/ui/schema-authoring';
     import type { DetailControl } from './detail-types';
-    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, structuredDraft, onStructuredDraft, structuredIdentity = '', schemaDraft, onSchemaDraft, schemaIdentity = '', importState, onImportState, importIdentity = '', onvalue, onnumber, onsave, saveButton = true, format = 'auto', draftFormat, onformat, recordMode, onRecordMode }: {
+    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, structuredDraft, onStructuredDraft, structuredIdentity = '', schemaDraft, onSchemaDraft, schemaIdentity = '', importState, onImportState, importIdentity = '', onvalue, onnumber, onsave, ondiscard, dirty = true, saveButton = true, format = 'auto', draftFormat, onformat, recordMode, onRecordMode }: {
+        dirty?: boolean; ondiscard?: () => void;
         recordMode?:'terms'|'rows'; onRecordMode?:(mode:'terms'|'rows')=>void; importState?:ControlImportState; onImportState?:(state:ControlImportState)=>void; importIdentity?:string;
         control: DetailControl; text: string; structuredIdentity?:string; structuredDraft?:StructuredDraftState; onStructuredDraft?:(state:StructuredDraftState)=>void; schemaIdentity?:string; schemaDraft?:SchemaDraftState; onSchemaDraft?:(state:SchemaDraftState)=>void; saveButton?: boolean; format?: ControlInputFormat; draftFormat?:ControlInputFormat; onformat?: (format:ControlInputFormat)=>void; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
         ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; onvalue: (value: unknown) => void; onnumber: (input: HTMLInputElement) => void; onsave: () => void;
@@ -81,6 +82,13 @@
     const entry = $derived(control.inputSpec?.editor === 'list');
     const shortChoices = () => control.editor === 'enum' && (control.options?.length ?? 0) > 1 && (control.options?.length ?? 0) <= 3 && control.options!.every(option => option.label.length <= 10);
     const provenance = () => control.effective !== undefined && control.effective !== text && control.source !== 'Saved setting' ? control.source : '';
+    function choose(event: Event, value: string) {
+        if(disabled)return;
+        // Keep the displayed selection authoritative while an edit is validated.
+        const input=event.currentTarget as HTMLInputElement;
+        input.closest('[role="radiogroup"]')?.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach(choice=>choice.checked=choice.value===String(control.value));
+        onvalue(value);
+    }
 </script>
 
 <div class:pc-control-number={control.editor === 'number'} class="pc-detail-control">
@@ -119,7 +127,7 @@
         <span class="pc-control-label">{control.label}</span>
         <div class="pc-control-segments" role="radiogroup" aria-label={control.label}>
             {#each control.options ?? [] as option (option.value)}
-                <label><input type="radio" name={idPrefix + '-choice'} aria-label={option.label} value={option.value} checked={String(control.value) === option.value} {disabled} onchange={event => { if (!disabled && event.currentTarget.checked) onvalue(option.value); }} /><span>{option.label}</span></label>
+                <label><input type="radio" name={idPrefix + '-choice'} aria-label={option.label} value={option.value} checked={String(control.value) === option.value} {disabled} onchange={event => { if (event.currentTarget.checked) choose(event, option.value); }} /><span>{option.label}</span></label>
             {/each}
         </div>
     {:else}
@@ -136,14 +144,18 @@
             <textarea id={idPrefix + '-editor'} aria-label={control.label} value={text} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.value); }}></textarea>
         {/if}
     {/if}
-    {#if saveButton && (control.editor === 'json' || control.editor === 'lines')}<button type="button" data-save-control={control.key} disabled={disabled || pending || tableState.open || structured && !!(structuredDraft ?? localStructuredDraft)?.invalid || control.inputSpec?.editor==='schema' && text!=='' && !!(schemaDraft ?? localSchemaDraft)?.invalid} onclick={() => { if (!disabled && !pending && !tableState.open && !(structured && (structuredDraft ?? localStructuredDraft)?.invalid) && !(control.inputSpec?.editor==='schema' && text!=='' && (schemaDraft ?? localSchemaDraft)?.invalid)) onsave(); }}>{pending ? 'Validating…' : 'Save ' + control.label}</button>{/if}
-    {#if control.help}<small>{control.help}</small>{/if}
+    {#if saveButton && (dirty || pending || !!error) && (control.editor === 'json' || control.editor === 'lines')}<div class="pc-control-draft-actions"><span>{pending?'Waiting for acknowledgment':'Unsaved changes'}</span>{#if ondiscard}<button type="button" aria-label={'Discard '+control.label+' changes'} disabled={disabled||pending} onclick={ondiscard}>Discard</button>{/if}<button type="button" aria-label={'Save '+control.label} data-save-control={control.key} disabled={disabled || pending || tableState.open || structured && !!(structuredDraft ?? localStructuredDraft)?.invalid || control.inputSpec?.editor==='schema' && text!=='' && !!(schemaDraft ?? localSchemaDraft)?.invalid} onclick={() => { if (!disabled && !pending && !tableState.open && !(structured && (structuredDraft ?? localStructuredDraft)?.invalid) && !(control.inputSpec?.editor==='schema' && text!=='' && (schemaDraft ?? localSchemaDraft)?.invalid)) onsave(); }}>{pending ? 'Validating…' : control.inputSpec?.editor==='schema'?'Save structure':'Save ' + control.label}</button></div>{/if}
+    {#if control.help}<details class="pc-control-help"><summary>About {control.label}</summary><small>{control.help}</small></details>{/if}
     {#if control.exposureNote}<small>{control.exposureNote}</small>{:else if provenance()}<small>{provenance()} · Effective: {control.effective}</small>{/if}
     {#if error}<div id={idPrefix + '-error'} class="pc-detail-error"><DiagnosticMessage issue={error} context={{ inputLabel: control.label }} /></div>{/if}
 </div>
 
 <style>
     .pc-detail-control { min-width: 0; margin: 9px 0; }
+    .pc-control-draft-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 9px; border-top: 1px solid var(--pc-border); padding-top: 6px; }
+    .pc-control-draft-actions > span { flex: 1; color: var(--pc-warn); font-size: 10px; }
+    .pc-control-help { margin-top: 5px; color: var(--pc-muted); font-size: 10px; }
+    .pc-control-help summary { cursor: pointer; }
     label, .pc-control-label { display: block; color: var(--pc-text); font-size: 11px; line-height: 1.5; }
     input:not([type='checkbox']), select, textarea { width: 100%; min-width: 0; box-sizing: border-box; margin-top: 4px; min-height: 28px; padding: 5px 7px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-field); color: var(--pc-text); font: inherit; }
     textarea { display: block; min-height: 88px; resize: vertical; line-height: 1.5; }

@@ -14,6 +14,14 @@ function details(root, id) {
     return projectWorkspacePanels(session.readEditor(), projectPreparedWorkflow(prepared.data.workflow, { selectedId: id }), {}, 'revision', null, null).nodeDetails;
 }
 
+test('details distinguish connection-derived, explicit and workflow-fixed stage context', () => {
+    const root={id:'stage-source',schema:3,runtime:2,mode:'native-unified',roles:{},nodes:{snapshot:{id:'snapshot',type:'workflow',operation:'reply-snapshot'},body:{id:'body',type:'workflow',operation:'draft-text'},call:{id:'call',type:'workflow',operation:'model-call'}},wires:{body:{id:'body',route:'wire',from:'snapshot',fromPort:'out',to:'body',toPort:'draft'},prompt:{id:'prompt',route:'wire',from:'body',fromPort:'out',to:'call',toPort:'prompt'}},definitions:{},groups:{},portals:{}};
+    const connected=details(root,'call');assert.equal(connected.phase,'post');assert.equal(connected.phaseSource,'connections');assert.equal(connected.phaseEditable,true);
+    root.nodes.call.phase='post';assert.equal(details(root,'call').phaseSource,'explicit');
+    const fixed={...root,mode:'native-pre',nodes:{call:{id:'call',type:'workflow',operation:'model-call'}},wires:{}};
+    assert.equal(details(fixed,'call').phaseSource,'workflow');assert.equal(details(fixed,'call').phaseEditable,false);
+});
+
 test('JSON Decode schema projects the actual stored JSON text contract', () => {
     const root = starterGraph('structured-guidance');
     const schema = details(root, 'json-decode').controls.find(control => control.key === 'schema');

@@ -48,3 +48,20 @@ export function input(host, label, value, event = 'input') {
 }
 export function click(host, label) { const element = control(host, label); element.click(); flushSync(); return element; }
 export function nodeAt(host, path) { const element = [...host.querySelectorAll('[data-schema-path]')].find(element => element.getAttribute('data-schema-path') === JSON.stringify(path)); assert.ok(element, `Missing schema node ${JSON.stringify(path)}`); return element; }
+
+export async function detailsComponent(initial, actions, check) {
+    const directory = await mkdtemp(join(tmpdir(), 'lattice-slim-inspector-'));
+    const host = document.createElement('div'); document.body.append(host);
+    let mounted;
+    try {
+        const leaf = await compiled('NodeDetails', directory);
+        const harness = await compiled('Harness', directory, `<script>import Leaf from ${JSON.stringify(pathToFileURL(leaf.path).href)}; let { initial, actions } = $props(); let view = $state.raw(initial); export function update(next) { view = next; }</script><Leaf {view} {actions}/>`);
+        mounted = mount(harness.component, { target: host, props: { initial, actions } }); flushSync();
+        await check({ host, async update(next) { mounted.update(next); flushSync(); await new Promise(resolve => queueMicrotask(resolve)); flushSync(); } });
+    } finally {
+        if (mounted) await unmount(mounted); host.remove();
+        const scope = relative(resolve(tmpdir()), resolve(directory));
+        assert.ok(scope && scope.startsWith('lattice-slim-inspector-') && !scope.startsWith('..') && !isAbsolute(scope));
+        await rm(directory, { recursive: true, force: true });
+    }
+}

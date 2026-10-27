@@ -19,7 +19,7 @@ interface DetailControlBase {
     inputSpec?: import('../src/ui/control-input-contracts').ControlInputSpec; readOnly?: boolean;
     options?: { value: string; label: string }[]; min?: number; max?: number; step?: number | 'any';
     effective?: string; source?: string; help?: string; exposureNote?: string;
-    group?: string; advanced?: boolean; singleLine?: boolean;
+    group?: string; groupOpen?: boolean; advanced?: boolean; singleLine?: boolean;
     helperChoices?: import('../src/ui/configured-node-creation').IterationHelperChoice[];
     structured?: 'rules' | 'fields' | 'sections' | 'slots' | 'numeric-map' | 'durations' | 'patterns' | 'extract';
 }
@@ -70,6 +70,7 @@ export interface NodeDetailsView extends DetailSelection {
     recall?: RecallNodeStatus;
     title: string; canonicalTitle: string; iconPath: string; family: string; phase: string;
     system?: boolean; operation?: string; familyColor?: string; phaseEditable?: boolean;
+    phaseSource?: 'default' | 'connections' | 'explicit' | 'workflow' | 'operation';
     alias: string; compact: boolean; enabled: boolean; readOnly: boolean; canPresent: boolean;
     controls: DetailControl[]; model: DetailModelBinding | null; helperBindings?: DetailHelperBindings | null;
     workflowData?: WorkflowDataView | null;
@@ -97,6 +98,8 @@ export interface NodeDetailsActions {
     loadFile?: (selection: DetailSelection, file: File) => DetailEditResponse;
     present?: (selection: DetailSelection, field: 'alias' | 'compact', value: string | boolean) => DetailEditResponse;
     editControl?: (selection: DetailSelection, key: string, value: unknown) => DetailEditResponse;
+    /** Coupled controls are validated and committed as one qualified candidate. */
+    editControls?: (selection: DetailSelection, controls: Record<string, unknown>) => DetailEditResponse;
     editModifiers?: (selection: DetailSelection, items: DetailModifier[]) => DetailEditResponse;
     editField?: (selection: DetailSelection, key: 'enabled' | 'modelRole', value: boolean | string) => DetailEditResponse;
     editHelperBinding?: (selection:DetailSelection,role:string,field:'profileId'|'model',mode:DetailBindingMode,value:string|null)=>DetailEditResponse;
