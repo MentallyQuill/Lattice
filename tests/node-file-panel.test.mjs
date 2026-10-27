@@ -98,11 +98,36 @@ test('legacy migration and unsupported native access remain explicit and cannot 
     try {
         assert.match(f.host.textContent, /existing chat/i);
         assert.match(f.host.textContent, /preserved/i);
-        assert.match(f.host.textContent, /native file access/i);
+        assert.match(f.host.textContent, /direct file saving/i);
         for (const button of f.host.querySelectorAll('[data-choose-node-file]')) { assert.equal(button.disabled, true); button.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); }
         await settle(); assert.deepEqual(choices, []);
         assert.equal(field(f.host, 'Initial file content').value, 'Starting notes');
     } finally { await f.close(); }
+});
+
+test('unavailable file saving explains the browser setup once beside the disabled chooser', async () => {
+    const guidance='Brave is not exposing direct file saving. Enable File System Access API at brave://flags/#file-system-access-api and relaunch Brave. File uploads and downloads do not grant this access.';
+    const f=await fixture(model({supported:false,issue:'Direct file saving needs browser setup. See the File section.',accessIssue:{code:'FILE_ACCESS_BRAVE',message:guidance}}),{chooseNodeFile:()=>Promise.resolve({ok:true})});
+    try {
+        assert.equal(f.host.querySelector('[data-file-access-issue]')?.textContent,guidance);
+        assert.equal(f.host.textContent.split(guidance).length-1,1);
+        assert.equal(f.host.querySelector('[data-file-status]').textContent,'Browser setup required');
+        assert.doesNotMatch(f.host.textContent,/Open.*in a browser|See the File section/,'the File section contains the guidance rather than pointing back to itself');
+        assert.equal(f.host.querySelector('[data-choose-node-file="save"]').disabled,true);
+        assert.equal(f.host.querySelector('[data-choose-node-file="open"]').disabled,true);
+    } finally {await f.close();}
+});
+
+test('inherited destinations show browser guidance while disconnected nodes keep connection guidance',async()=>{
+    const guidance='Brave is not exposing direct file saving. Enable File System Access API and relaunch Brave.';
+    const f=await fixture(model({mode:'inherited',supported:false,issue:'Direct file saving needs browser setup. See the File section.',accessIssue:{code:'FILE_ACCESS_BRAVE',message:guidance}}));
+    try {
+        assert.equal(f.host.querySelector('[data-file-access-issue]')?.textContent,guidance);
+        assert.doesNotMatch(f.host.textContent,/See the File section/);
+        f.update(model({mode:'inherited',supported:false,issue:'Connect a live file reference from Read File.'}));
+        assert.match(f.host.textContent,/Connect a live file reference/);
+        assert.equal(f.host.querySelector('[data-file-access-issue]'),null);
+    } finally {await f.close();}
 });
 
 test('model or selection changes reset drafts and prevent a stale picker failure from landing', async () => {

@@ -1,9 +1,9 @@
 import {test,expect} from '@playwright/test';
-async function fixture(page,operation='read-file'){
+async function fixture(page,operation='read-file',browserAccess=false){
  await page.route('**/scripts/user.js',route=>route.fulfill({contentType:'text/javascript',body:'export const getCurrentUserHandle=()=>"node-file-browser";'}));
  await page.route('**/script.js',route=>route.fulfill({contentType:'text/javascript',body:'export const isGenerating=()=>false;export const syncMesToSwipe=()=>true;export const syncSwipeToMes=()=>true;'}));
  await page.goto('/tests/browser/harness.html');await page.waitForFunction(()=>!!window.canvasHarness);
- await page.evaluate(async operation=>{
+ await page.evaluate(async ({operation,browserAccess})=>{
   const h=window.canvasHarness;Object.assign(h.context,{chatId:'node-file-chat',characters:[{name:'Companion',avatar:'companion.png',chat:'node-files'}],characterId:0,groupId:null,chat:[],chatMetadata:{},saveMetadata:async()=>true,getRequestHeaders:()=>({'Content-Type':'application/json'})});
   await (await import('/src/run.js?v='+h.version)).initializeNativeWorkflowController();
   const {createNodeFileAccess,setNodeFileAccess}=await import('/src/ui/node-file-access.js?v='+h.version);
@@ -11,15 +11,53 @@ async function fixture(page,operation='read-file'){
   window.nodeFileFixture={text:'',writes:0,picks:0};
   const handle={name:'journal.txt',kind:'file',queryPermission:async()=> 'granted',isSameEntry:async other=>other===handle,getFile:async()=>({size:new TextEncoder().encode(window.nodeFileFixture.text).length,text:async()=>window.nodeFileFixture.text}),createWritable:async()=>{window.nodeFileFixture.writes++;let pending;return {write:async text=>{pending=text;},close:async()=>{window.nodeFileFixture.text=pending;},abort:async()=>{}};}};
   const accessOptions={persistence:{load:async()=>state,save:async next=>{state=next;}},showOpenFilePicker:async()=>{window.nodeFileFixture.picks++;return [handle];},showSaveFilePicker:async()=>{window.nodeFileFixture.picks++;return handle;}};
-  const access=createNodeFileAccess(accessOptions);
+  const access=createNodeFileAccess(browserAccess?{}:accessOptions);
   window.nodeFileFixture.restart=async()=>{const next=createNodeFileAccess(accessOptions);await next.ready;setNodeFileAccess(next);h.UI.refreshIfOpen();await h.settle();};
   await access.ready;setNodeFileAccess(access);
   const {operationDefaults}=await import('/src/workflow/catalog.js?v='+h.version);
   const node={id:'file',type:'workflow',...operationDefaults(operation),x:140,y:180,w:260};
   await h.activate({id:'node-files-browser',name:'Node files',schema:3,runtime:2,mode:'native-unified',nodes:{file:node},wires:{},groups:{},definitions:{},portals:{}});
   await h.view({x:150,y:100,zoom:1});
- },operation);
+ },{operation,browserAccess});
 }
+
+test('Brave without direct file saving gets specific setup guidance beside the disabled controls',async({page},testInfo)=>{
+ await page.addInitScript(()=>{
+  Object.defineProperty(navigator,'brave',{configurable:true,value:{isBrave:async()=>true}});
+  Object.defineProperty(window,'showOpenFilePicker',{configurable:true,value:undefined});
+  Object.defineProperty(window,'showSaveFilePicker',{configurable:true,value:undefined});
+ });
+ await fixture(page,'write-file',true);
+ await page.locator('.pc-node-profile[data-id="file"] .pc-node-readiness').click();
+ await page.getByLabel('File destination',{exact:true}).selectOption('own');
+ const section=page.locator('[data-node-file]'),guidance=section.locator('[data-file-access-issue]');
+ await expect(guidance).toContainText('Brave is not exposing direct file saving');
+ await expect(guidance).toContainText('brave://flags/#file-system-access-api');
+ await expect(guidance).toContainText('relaunch Brave');
+ await expect(guidance).toContainText('File uploads and downloads do not grant this access');
+ await expect(section.locator('[data-file-status]')).toHaveText('Browser setup required');
+ await page.getByLabel('Filename',{exact:true}).fill('journal.txt');
+ await expect(page.getByRole('button',{name:'Choose location…',exact:true})).toBeDisabled();
+ await expect(page.getByRole('button',{name:'Open existing…',exact:true})).toBeDisabled();
+ await expect(section).not.toContainText('Open Lattice in a browser');
+ await expect(section).not.toContainText('See the File section');
+ expect(await page.evaluate(()=>window.nodeFileFixture.writes)).toBe(0);
+ expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+ await page.screenshot({path:testInfo.outputPath('brave-file-setup.png')});
+});
+
+test('real browser file support enables the chooser on localhost without an injected adapter',async({page})=>{
+ await fixture(page,'read-file',true);
+ expect(await page.evaluate(()=>({secure:isSecureContext,open:typeof showOpenFilePicker,save:typeof showSaveFilePicker}))).toEqual({secure:true,open:'function',save:'function'});
+ await page.locator('.pc-node-profile[data-id="file"] .pc-node-readiness').click();
+ await page.getByLabel('Filename',{exact:true}).fill('journal.txt');
+ await expect(page.getByRole('button',{name:'Choose location…',exact:true})).toBeEnabled();
+ await expect(page.getByRole('button',{name:'Open existing…',exact:true})).toBeEnabled();
+ await expect(page.locator('[data-file-access-issue]')).toHaveCount(0);
+ await expect(page.locator('[data-node-file]')).not.toContainText('Browser setup required');
+ expect(await page.evaluate(()=>window.nodeFileFixture.picks)).toBe(0);
+ expect(await page.evaluate(()=>window.nodeFileFixture.writes)).toBe(0);
+});
 test('file setup caution opens the node File section and configuration never writes bytes',async({page},testInfo)=>{
  const browserErrors=[];page.on('pageerror',error=>browserErrors.push(error.message));
  await fixture(page);

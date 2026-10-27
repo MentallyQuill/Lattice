@@ -13,6 +13,16 @@ test('new file reader requires a node-owned destination and pure transforms do n
  assert.equal(projectNodeFile({operation:'project-document'},{}),null);
 });
 
+test('browser file access guidance is retained separately from the setup caution', () => {
+ const accessIssue={code:'FILE_ACCESS_BRAVE',message:'Brave is not exposing direct file saving. Enable File System Access API and relaunch Brave.'};
+ const view=projectNodeFile({id:'writer',operation:'write-file',destinationMode:'own'},{supported:false,accessIssue,bindings:{}});
+ assert.deepEqual(view.accessIssue,accessIssue);
+ assert.match(nodeFileSetupIssue(view).message,/browser setup.*File section/i);
+ assert.doesNotMatch(nodeFileSetupIssue(view).message,/Open Lattice in a browser|Choose.*location/);
+ const supported=projectNodeFile({operation:'read-file'},{supported:true,accessIssue,bindings:{}});
+ assert.equal(supported.accessIssue,undefined,'the live capability check takes precedence over a stale diagnostic');
+});
+
 test('a granted matching file is ready while a renamed or revoked binding needs setup', () => {
  const settings={bindingId:'disk-1',name:'journal.json',format:'json',missing:'create',content:'[]',visibility:{kind:'public'}};
  const node={operation:'read-file',targetId:'journal',fileTarget:settings};
@@ -45,6 +55,15 @@ test('connected writes display the upstream file and missing references have an 
  const disconnected=projectNodeFile(write,{...state,wires:{}});
  assert.match(nodeFileSetupIssue(disconnected).message,/connect.*reference/i);
  assert.equal(projectNodeFile({operation:'random-pick',ledgerId:''},state),null);
+});
+
+test('inherited files retain the browser setup instructions from their owning node', () => {
+ const accessIssue={code:'FILE_ACCESS_BRAVE',message:'Brave is not exposing direct file saving. Enable File System Access API and relaunch Brave.'};
+ const read={id:'read',operation:'read-file'},write={id:'write',operation:'write-file'};
+ const view=projectNodeFile(write,{supported:false,accessIssue,nodes:{read,write},wires:{w:{from:'read',fromPort:'reference',to:'write',toPort:'reference'}}});
+ assert.equal(view.mode,'inherited');
+ assert.deepEqual(view.accessIssue,accessIssue);
+ assert.match(view.issue,/browser setup/);
 });
 
 test('workspace surfaces file configuration as the existing above-node setup caution', async () => {

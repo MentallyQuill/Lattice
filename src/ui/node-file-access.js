@@ -11,6 +11,12 @@ const validVisibility=value=>plain(value)&&(['public','hidden'].includes(value.k
 const hash=value=>typeof value==='string'&&/^sha256:[a-f0-9]{64}$/.test(value);
 const coordinators=new WeakMap();
 const formats={json:['JSON document','application/json','.json'],jsonl:['JSON Lines document','application/x-ndjson','.jsonl'],csv:['CSV document','text/csv','.csv'],text:['Text document','text/plain','.txt'],markdown:['Markdown document','text/markdown','.md']};
+function fileAvailability(supported){
+    if(supported)return null;
+    if(globalThis.isSecureContext===false)return Object.freeze({code:'FILE_ACCESS_INSECURE',message:'Direct file saving requires a secure page. Open SillyTavern over HTTPS or localhost, then choose the file again. File uploads and downloads do not grant this access.'});
+    if(typeof globalThis.navigator?.brave?.isBrave==='function')return Object.freeze({code:'FILE_ACCESS_BRAVE',message:'Brave is not exposing direct file saving. Enable “File System Access API” at brave://flags/#file-system-access-api and relaunch Brave, or use Chrome or Edge. File uploads and downloads do not grant this access.'});
+    return Object.freeze({code:'FILE_ACCESS_UNSUPPORTED',message:'This browser does not provide direct file saving. Open this workflow in desktop Chrome or Edge. File uploads and downloads do not grant this access.'});
+}
 const changedError=cause=>cause?.name==='AbortError'?fail('FILE_CANCELLED','The file selection was cancelled.',true):cause?.name==='NotAllowedError'||cause?.name==='SecurityError'?fail('FILE_PERMISSION','Choose this file again to grant file access.'):fail('FILE_ACCESS_FAILED','The selected file could not be accessed.');
 function captureUpdate(value){
     try{
@@ -44,6 +50,7 @@ function indexedPersistence(indexedDB){
 /** Native handles and durable write identities remain origin-local. */
 export function createNodeFileAccess(options={}){
     const openPicker=options.showOpenFilePicker??globalThis.showOpenFilePicker?.bind(globalThis),savePicker=options.showSaveFilePicker??globalThis.showSaveFilePicker?.bind(globalThis);
+    const supported=typeof openPicker==='function'&&typeof savePicker==='function',availability=fileAvailability(supported);
     const persistence=options.persistence??indexedPersistence(options.indexedDB??globalThis.indexedDB);
     let bindings=[],records={},restoredReady=false;
     const coordinator=options.persistence??options.indexedDB??globalThis.indexedDB??{};
@@ -61,7 +68,7 @@ export function createNodeFileAccess(options={}){
         const {mode,bindingId,name,format}=settings??{};
         if(!['open','save'].includes(mode)||typeof name!=='string'||!name.trim()||name.length>255||/[<>:"/\\|?*\x00-\x1f]/.test(name)||!formats[format])return fail('INVALID_FILE_SELECTION','Choose a filename and supported document format.');
         const picker=mode==='open'?openPicker:savePicker;
-        if(typeof picker!=='function')return fail('FILE_ACCESS_UNSUPPORTED','This browser does not support native file destinations.');
+        if(typeof picker!=='function')return fail('FILE_ACCESS_UNSUPPORTED',availability.message);
         try{
             const [description,mime,extension]=formats[format],configuration={types:[{description,accept:{[mime]:[extension]}}],...(mode==='open'?{multiple:false,mode:'readwrite'}:{suggestedName:name})};
             // The picker must start before the first await, while the click is active.
@@ -229,7 +236,7 @@ export function createNodeFileAccess(options={}){
         }
         return Object.freeze({load,compareAndSwap,lookupHistory,adoptLegacy});
     }
-    return Object.freeze({backend,supported:typeof openPicker==='function'&&typeof savePicker==='function',native:typeof openPicker==='function'&&typeof savePicker==='function',ready,snapshot,choose,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);}});
+    return Object.freeze({backend,supported,native:supported,availability,ready,snapshot,choose,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);}});
 }
 let sharedAccess;
 export function getNodeFileAccess(){return sharedAccess??=createNodeFileAccess();}

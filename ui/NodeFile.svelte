@@ -16,7 +16,7 @@
     const canChoose = $derived(canEdit && model.supported && valid && !!actions.chooseNodeFile);
     const canSave = $derived(canEdit && dirty && valid && !!actions.saveNodeFile);
     const renamed = $derived(name.trim() !== model.settings.name);
-    const bindingStatus = $derived(model.mode === 'inherited' ? 'Inherited destination' : renamed ? 'Choose a location for this filename.' : model.settings.bindingId ? model.issue ? 'File access needs attention.' : 'File selected' : 'Choose a file to finish setup.');
+    const bindingStatus = $derived(model.mode === 'inherited' ? 'Inherited destination' : !model.supported ? 'Browser setup required' : renamed ? 'Choose a location for this filename.' : model.settings.bindingId ? model.issue ? 'File access needs attention.' : 'File selected' : 'Choose a file to finish setup.');
     const contextKey = () => JSON.stringify([selection, model, disabled]);
     const draftKey = () => JSON.stringify([selection.documentNamespace, selection.selectionKey, selection.address, model.operation, model.mode, model.destinationMode, model.settings]);
     $effect.pre(() => {
@@ -86,6 +86,7 @@
     {/if}
     <p class="pc-nf-status" data-file-status>{bindingStatus}</p>
     {#if model.summary}<p class="pc-nf-help pc-nf-summary">{model.summary}</p>{/if}
+    {#if !model.supported && (model.mode !== 'inherited' || model.accessIssue)}<p class="pc-nf-help" data-file-access-issue>{model.accessIssue?.message ?? 'This browser does not provide direct file saving. Open this workflow in desktop Chrome or Edge. File uploads and downloads do not grant this access.'}</p>{/if}
     {#if model.mode === 'inherited'}
         <p class="pc-nf-help">{model.operation === 'commit-clock' ? 'Uses the file captured by Story Clock.' : 'Uses the connected document’s file and settings.'}</p>
     {:else}
@@ -104,9 +105,8 @@
         <div class="pc-nf-actions"><button type="button" data-save-node-file disabled={!canSave} onclick={save}>{pending === 'save' ? 'Saving…' : 'Save file settings'}</button></div>
     {/if}
     {#if model.legacy}<p class="pc-nf-help pc-nf-migration">Existing chat data is preserved. Choose a file to migrate its saved content on Apply.</p>{/if}
-    {#if !model.supported}<p class="pc-nf-help">Native file access is unavailable here. Open this workflow in a browser with native file access to choose a durable file.</p>{/if}
     {#if !model.available}<p class="pc-nf-help">Open an active chat to configure this file.</p>{/if}
-    {#if model.issue}<p class="pc-nf-error">{model.issue}</p>{/if}
+    {#if model.issue && (model.supported || model.mode === 'inherited' && !model.accessIssue)}<p class="pc-nf-error">{model.issue}</p>{/if}
     {#if failure}<p class="pc-nf-error" role="alert">{failure}</p>{/if}
     {#if notice}<p class="pc-nf-help" role="status">{notice}</p>{/if}
 </section>
