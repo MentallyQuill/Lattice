@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { presentDiagnostic, diagnosticText } from '../src/ui/diagnostics.js?v=0.28.1';
+import { presentFailureNotification } from '../src/ui/failure-notification.js?v=0.28.1';
 import { createWorkflowDocumentController } from '../src/ui/document-controller.js?v=0.28.1';
 import { createWorkflowDocumentSession } from '../src/ui/document-session.js?v=0.28.1';
 import { JSDOM } from 'jsdom';
@@ -46,7 +47,7 @@ test('native workflow failures are errors and do not expose unknown host excepti
     const env = { controller: null, createNativeWorkflowController: value => { options = value; return { subscribeRecall() {} }; },
         onWorkflowActivated() {}, getStoryDocumentCatalog() {}, getNativePersistenceVerifier() {}, bindingStatus() {},
         documentSession: {}, ctx() {}, currentUser() {}, transportUserId() {}, settings() {}, activeWorkflow() {},
-        safe: fn => fn(), presentDiagnostic, diagnosticText };
+        safe: fn => fn(), presentDiagnostic, diagnosticText, presentFailureNotification };
     try {
         actual(runSource, 'getNativeWorkflowController', env)();
         options.onResult({ ok: false, error: { code: 'UNKNOWN_HOST_ERROR', message: 'private prompt text' } });

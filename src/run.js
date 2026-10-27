@@ -6,7 +6,8 @@ import { bindingStatus } from './workflow/connections.js?v=0.28.1';
 import { createChatDocumentCatalog } from './workflow/document-catalog.js?v=0.28.1';
 import { createRecallShortcutRegistry } from './ui/recall-shortcuts.js?v=0.28.1';
 import { createNativePersistenceVerifier } from './workflow/native-persistence.js?v=0.28.1';
-import { diagnosticText, presentDiagnostic } from './ui/diagnostics.js?v=0.28.1';
+import { diagnosticText } from './ui/diagnostics.js?v=0.28.1';
+import { presentFailureNotification } from './ui/failure-notification.js?v=0.28.1';
 import { createDiagnosticHistory } from './workflow/diagnostic-history.js?v=0.28.1';
 export { runWorkflow, workflowSignature } from './workflow/runtime.js?v=0.28.1';
 export { createNativeWorkflowController, snapshotContext, snapshotReply } from './workflow/host.js?v=0.28.1';
@@ -82,17 +83,9 @@ export function getNativeWorkflowController() {
         countTokens: async text => { const count = ctx().getTokenCountAsync; if (typeof count === 'function') { const tokens = await count(text); if (Number.isFinite(tokens) && tokens >= 0) return { tokens, method: 'host-tokenizer' }; } return { tokens: Math.ceil(text.length / 4), method: 'character-estimate' }; },
         onResult: (result, origin) => {
             if (!result.ok && !result.skipped && !result.superseded) {
-                const issue = presentDiagnostic(result.error, { action: 'run the workflow' });
-                const rawCode = result.error?.code;
-                const code = typeof rawCode === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(rawCode) ? rawCode : 'WORKFLOW_FAILED';
-                const rawNode = result.error?.address?.nodeId ?? result.error?.nodeId;
-                const location = typeof rawNode === 'string' && /^[A-Za-z0-9_.:-]{1,128}$/.test(rawNode) ? ' at ' + rawNode : '';
-                const automatic = origin?.kind === 'send' && origin?.phase === 'unified';
-                const message = automatic
-                    ? `Workflow stopped (${code}${location}). SillyTavern may continue with its normal reply. Open Lattice for details.`
-                    : `${issue.message} (${code}${location})`;
+                const issue = presentFailureNotification(result, origin);
                 const severity = ['info', 'warning'].includes(issue.severity) ? issue.severity : 'error';
-                safe(() => globalThis.toastr?.[severity]?.(message, 'Lattice workflow', { timeOut: 0, extendedTimeOut: 0, closeButton: true, tapToDismiss: false, escapeHtml: true }));
+                safe(() => globalThis.toastr?.[severity]?.(issue.message, 'Lattice workflow', { timeOut: 0, extendedTimeOut: 0, closeButton: true, tapToDismiss: false, escapeHtml: true }));
             }
             if (origin) safe(() => globalThis.document?.dispatchEvent(new CustomEvent('pc-native-result')));
         },
