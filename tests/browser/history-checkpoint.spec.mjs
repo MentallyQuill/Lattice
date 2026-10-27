@@ -15,8 +15,8 @@ async function launch(page){
   c.chatMetadata.latticeDocuments={'default-user':{notes:{targetId:'notes',revision:2,format:'text',content:'Accepted campaign notes.',receipts:[{intentId:'old',fingerprint:'sha256:'+'a'.repeat(64),revision:2}],scope:{userId:'default-user',chatId:'Story-2'}}}};
   document.dispatchEvent(new CustomEvent('pc-state'));await h.settle();
  });
- await page.getByRole('menuitem',{name:'Workflow',exact:true}).click();await page.getByRole('menuitem',{name:'Configure',exact:true}).hover();await page.getByRole('menuitem',{name:'Workflow Data…',exact:true}).click();
- const dialog=page.getByRole('dialog',{name:'Workflow Data',exact:true});await dialog.getByLabel('Workflow data document',{exact:true}).selectOption('notes');return dialog;
+ await page.getByRole('menuitem',{name:'Workflow',exact:true}).click();await page.getByRole('menuitem',{name:'Configure',exact:true}).hover();await page.getByRole('menuitem',{name:'Legacy chat data…',exact:true}).click();
+ const dialog=page.getByRole('dialog',{name:'Legacy chat data',exact:true});await dialog.getByLabel('Workflow data document',{exact:true}).selectOption('notes');return dialog;
 }
 
 test('history preview and cancel leave data untouched; Apply saves once and lists archive metadata',async({page})=>{

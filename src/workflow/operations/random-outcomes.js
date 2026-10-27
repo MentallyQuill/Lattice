@@ -1,3 +1,4 @@
+import { NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.28.1';
 import { preserveArtifactPrivacy, validVisibilityMetadata, artifactVisibility } from '../artifact-privacy.js?v=0.28.1';
 import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.28.1';
 import { validateOccurrences } from './event-data.js?v=0.28.1';
@@ -154,8 +155,8 @@ const string=(value,maxLength=256)=>({type:'string',default:value,maxLength});
 const register=(id,title,defaults,controls,extra={})=>({id,title,family:'Randomness',phase:'both',minimumSchema:3,minimumRuntime:2,operationVersion:1,input:'data',output:'data',defaults,controls:Object.keys(defaults),controlDescriptors:controls,requestBound:0,modelRole:null,terminal:false,dynamicPorts:true,...extra});
 export const RANDOM_OPERATIONS = {
     'parse-effect-library':register('parse-effect-library','Effect Library',{format:'json',libraryId:'',revision:'',itemId:'',mechanicalPolicy:'narrative-only'},{format:{type:'enum',default:'json',values:['data','json','text']},libraryId:string(''),revision:string(''),itemId:string(''),mechanicalPolicy:{type:'enum',default:'narrative-only',values:['narrative-only','require-mechanics']}}),
-    'random-pick':register('random-pick','Random Pick',{rerollPolicy:'reuse',rerollId:'',ledgerId:''},{rerollPolicy:{type:'enum',default:'reuse',values:['reuse','explicit']},rerollId:string(''),ledgerId:{...string(''),label:'Outcomes ID (optional)'}}),
-    'commit-outcomes':register('commit-outcomes','Outcome Commit',{targetId:workflowDataPresetFor('commit-outcomes').targetId},{targetId:string(workflowDataPresetFor('commit-outcomes').targetId)},{family:'Output',phase:'post',rootOnly:true,hostOperation:true,terminal:true}),
+    'random-pick':register('random-pick','Random Pick',{rerollPolicy:'reuse',rerollId:'',ledgerId:'',fileTarget:{}},{fileTarget:NODE_FILE_TARGET_CONTROL,rerollPolicy:{type:'enum',default:'reuse',values:['reuse','explicit']},rerollId:string(''),ledgerId:{...string(''),label:'Outcomes ID (optional)'}}),
+    'commit-outcomes':register('commit-outcomes','Outcome Commit',{targetId:workflowDataPresetFor('commit-outcomes').targetId,fileTarget:{}},{fileTarget:NODE_FILE_TARGET_CONTROL,targetId:string(workflowDataPresetFor('commit-outcomes').targetId)},{family:'Output',phase:'post',rootOnly:true,hostOperation:true,terminal:true}),
     'saved-outcome':register('saved-outcome','Saved Outcome',{},{}),
     'effect-author':register('effect-author','Effect Author',{instructions:'',maxTokens:2048},{instructions:string('',4096),maxTokens:{type:'integer',default:2048,min:1,max:8192}},{requestBound:1,modelRole:'effectAuthor'}),
     'stage-outcome':register('stage-outcome','Stage Outcome',{},{}),
@@ -183,6 +184,7 @@ function resolve(node,options={}) {
     }
     if(operation==='commit-outcomes'&&settings.targetId==='')settings.targetId=base.defaults.targetId;
     const setupIssues=[];
+    if(Object.hasOwn(settings,'fileTarget')){const target=validateNodeFileTarget(settings.fileTarget);if(!target.ok)return target;settings.fileTarget=target.data;if(options.authoring&&Object.keys(target.data).length&&(operation==='commit-outcomes'||settings.ledgerId!==''||Object.keys(target.data).length)&&(!target.data.bindingId||!target.data.name))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose an outcomes file and filename in the File section.',field:'fileTarget'});}
     let ports;
     if(operation==='commit-outcomes') {if(!id(settings.targetId))return fail('INVALID_SETTINGS','Choose an authorized outcomes source.');ports=[pin('outcomes','data','input',true),pin('receipt','data','output')];}
     else if(operation==='parse-effect-library') {

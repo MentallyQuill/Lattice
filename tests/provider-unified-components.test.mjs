@@ -27,7 +27,7 @@ test('unsaved workflow prompt applies the shared replacement choice',async()=>{
 test('actual Graph menu omits root diagnostics and Tools opens Story documents',async()=>{
  const commands=[],local=[];const state={graphId:'unified',enabled:false,inspectorOpen:true,history:{undo:false,redo:false},selectionCount:0,rootWorkflow:{phase:'unified',busy:false,issues:[]}};
  const f=await fixture('WorkspaceMenus',{state,actions:{command:name=>commands.push(name)},local:name=>local.push(name)});
- try{assert.equal(button(f.host,'Workflows'),undefined);button(f.host,'Graph').click();await tick();flushSync();assert.equal(button(f.host,'Run workflow'),undefined);assert.deepEqual(commands,[]);button(f.host,'Workflow').click();await tick();flushSync();button(f.host,'Configure').click();await tick();flushSync();assert.equal(button(f.host,'Fast connections…'),undefined);const setup=button(f.host,'Workflow Data…');assert.ok(setup);setup.click();flushSync();assert.deepEqual(local,['story-documents']);}finally{await f.close();}
+ try{assert.equal(button(f.host,'Workflows'),undefined);button(f.host,'Graph').click();await tick();flushSync();assert.equal(button(f.host,'Run workflow'),undefined);assert.deepEqual(commands,[]);button(f.host,'Workflow').click();await tick();flushSync();button(f.host,'Configure').click();await tick();flushSync();assert.equal(button(f.host,'Fast connections…'),undefined);const setup=button(f.host,'Legacy chat data…');assert.ok(setup);setup.click();flushSync();assert.deepEqual(local,['story-documents']);}finally{await f.close();}
 });
 
 

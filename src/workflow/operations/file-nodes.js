@@ -1,3 +1,4 @@
+import { NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.28.1';
 import { artifactVisibility } from '../artifact-privacy.js?v=0.28.1';
 import { cloneJsonValue } from './json-data.js?v=0.28.1';
 import { decodeJson } from './json-decode.js?v=0.28.1';
@@ -31,7 +32,10 @@ const controls={
     'read-file':{targetId:textControl(workflowDataPresetFor('read-file').targetId,'Data source',256),bindToChat:control('boolean',false,'Bind derived context to chat'),schema:schemaControl,columns:control('array',[],'CSV columns',{items:'string',max:128})},
     'write-file':{mode:enumControl('append','Mutation',['append','add','add-unique','upsert','update-fields','replace']),collectionPath:textControl('','Collection JSON Pointer'),missingPath:enumControl('error','Missing collection',['error','create']),key:textControl('id','Identity field',256),fieldPolicy:enumControl('merge','Upsert policy',['merge','replace']),fields:control('array',[],'Updated fields',{items:'string',max:128}),schema:schemaControl,columns:control('array',[],'CSV columns',{items:'string',max:128}),separator:textControl('\n','Separator'),emptyPolicy:enumControl('omit','Separator for empty destination',['omit','include']),trailingSeparator:control('boolean',false,'Trailing separator')},
 };
+controls['read-file'].fileTarget=NODE_FILE_TARGET_CONTROL;
+Object.assign(controls['write-file'],{fileTarget:NODE_FILE_TARGET_CONTROL,destinationMode:enumControl('connected','Destination',['connected','own']),targetId:textControl('','Destination identity',256)});
 controls['project-document']={...structuredClone(controls['write-file']),format:enumControl('json','Document format',formats)};controls['project-document'].mode.default='add';
+for(const key of ['fileTarget','destinationMode','targetId'])delete controls['project-document'][key];
 for(const operation of ['read-file','write-file'])Object.assign(controls[operation],{actorScope:enumControl('selected','Actor scope',['selected','presence']),actorId:textControl('','Present actor identity',256)});
 const registration=(id,title,phase,input,output,hostOperation=false)=>({id,title,family:id==='read-file'?'Input':id==='write-file'?'Output':'Shaping',phase,operationVersion:1,minimumSchema:3,minimumRuntime:2,input,output,defaults:Object.fromEntries(Object.entries(controls[id]).map(([key,value])=>[key,structuredClone(value.default)])),controls:Object.keys(controls[id]),controlDescriptors:controls[id],requestBound:0,modelRole:null,terminal:id==='write-file',dynamicPorts:true,...(hostOperation?{rootOnly:true,hostOperation:true}:{})});
 export const FILE_OPERATIONS={format:registration('format','Format','both','data','data'),'read-file':registration('read-file','Read File','both',null,'text',true),'write-file':registration('write-file','Write to File','post','data','data',true),'project-document':registration('project-document','Project Document','both','text','data')};
@@ -60,10 +64,12 @@ function resolve(rawNode,rawOptions={}){
         }
         if(node.operation==='format'&&settings.jsonShape==='single'&&settings.format!=='json')return fail('INVALID_SETTINGS','Single-object shape applies only to JSON serialization.');
         const setupIssues=[];
+        if(Object.hasOwn(settings,'fileTarget')){const target=validateNodeFileTarget(settings.fileTarget);if(!target.ok)return target;settings.fileTarget=target.data;if(options.authoring&&Object.keys(target.data).length&&(node.operation==='read-file'||settings.destinationMode==='own')&&(!target.data.bindingId||!target.data.name))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose a file and filename in the File section.',field:'fileTarget'});}
         if(['read-file','write-file'].includes(node.operation)) {
             if(settings.actorScope==='selected'&&settings.actorId!=='')return fail('INVALID_SETTINGS','Selected scope uses the native selection.');
             if(settings.actorScope==='presence'&&!id(settings.actorId))setupIssues.push({code:'INVALID_SETTINGS',message:'Select a canonical present actor.',field:'actorId'});
         }
+        if(node.operation==='write-file'&&settings.destinationMode==='own'&&!id(settings.targetId))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose a destination identity in the File section.',field:'fileTarget'});
         if(node.operation==='read-file'&&!id(settings.targetId))return fail('INVALID_SETTINGS','Select an authorized target identity.');
         if(['write-file','project-document'].includes(node.operation)) {
             if(['add-unique','upsert','update-fields'].includes(settings.mode)&&!id(settings.key))setupIssues.push({code:'INVALID_SETTINGS',message:'Choose an identity field for keyed updates.',field:'key'});
@@ -77,7 +83,7 @@ function resolve(rawNode,rawOptions={}){
         if(node.operation==='format')ports=[port('in','Records / raw JSON',settings.inputMode==='records'?'data':'text','input',true),port('records','Validated records','data','output'),port('text','Serialized text','text','output'),port('report','Format report','data','output')];
         else if(node.operation==='read-file')ports=[port('text','Contents','text','output'),port('document','Parsed document','data','output'),port('value','Parsed value','data','output'),port('reference','Live file reference','data','output')];
         else if(node.operation==='project-document')ports=[port('source','Original document','text','input',true),port(['append','replace'].includes(settings.mode)?'text':'records',['append','replace'].includes(settings.mode)?'Text':'Records',['append','replace'].includes(settings.mode)?'text':'data','input',true),port('text','Projected document text','text','output'),port('data','Projected document data','data','output'),port('receipt','Projection receipt','data','output')];
-        else ports=[port('reference','Live file reference','data','input',true),port(['append','replace'].includes(settings.mode)?'text':'records',['append','replace'].includes(settings.mode)?'Text':'Records',['append','replace'].includes(settings.mode)?'text':'data','input',true),port('evidence','Canonical source evidence','data','input'),port('projection','Projected document','data','output'),port('receipt','Staging receipt','data','output')];
+        else ports=[port('reference','Live file reference','data','input',settings.destinationMode!=='own'),port(['append','replace'].includes(settings.mode)?'text':'records',['append','replace'].includes(settings.mode)?'Text':'Records',['append','replace'].includes(settings.mode)?'text':'data','input',true),port('evidence','Canonical source evidence','data','input'),port('projection','Projected document','data','output'),port('receipt','Staging receipt','data','output')];
         if(settings.actorScope==='presence')ports.unshift(port('presence','Confirmed live actor presence','data','input',true));
         return {ok:true,data:{node:freeze({id:id(node.id)?node.id:'file-operation',type:'workflow',operation:node.operation,operationVersion:1,phase,...settings}),settings:freeze(settings),schema,ports,setupIssues,descriptor:{...base,phase}}};
     }catch{return fail('INVALID_SETTINGS','File settings must be own plain data properties.');}
@@ -117,6 +123,18 @@ function output(outputs,reports){
     return {ok:true,outputs:checked,reports:freeze(reports)};
 }
 const capabilityErrorMessages=Object.freeze({
+    FILE_PERMISSION:'Choose this file again to grant local file access.',
+    FILE_BINDING_MISSING:'Choose a local file in the File section.',
+    STALE_FILE_BINDING:'The selected file binding changed. Choose it again and rerun.',
+    FILE_ACCESS_UNSUPPORTED:'This browser does not support durable native file access.',
+    FILE_ACCESS_FAILED:'The selected local file could not be accessed.',
+    FILE_ACCESS_REQUIRED:'Choose an available local file in the File section.',
+    FILE_STORAGE_UNAVAILABLE:'Durable local file storage is unavailable.',
+    FILE_STORAGE_FAILED:'Local file access records could not be restored.',
+    FILE_JOURNAL_FAILED:'The file intent could not be saved before writing. No new write was authorized.',
+    FILE_WRITE_FAILED:'The local file write could not be confirmed.',
+    FILE_FORMAT_CONFLICT:'The selected file format conflicts with this node.',
+    FILE_CANCELLED:'The local file selection was cancelled.',
     ABORTED:'The file operation was cancelled.',
     CANCELLED:'The file operation was cancelled.',
     FILE_CAPTURE_RELEASED:'This file capture has been released; read the selected target again.',
@@ -273,6 +291,14 @@ export async function executeFileNode(node,namedInputs,execution={}){
         return produced;
     }
     if(typeof files?.prepare!=='function'||typeof local.createIntentId!=='function'||typeof local.stageFileIntent!=='function'||typeof local.authorizeFileWrite!=='function')return fail('INVALID_PORTS','Write to File requires trusted preparation, stable identity, scope authorization and staging capabilities.');
+    if(settings.destinationMode==='own'){
+        if(inputs.reference&&inputs.reference.value.targetId!==settings.targetId)return fail('FILE_DESTINATION_CONFLICT','The connected live reference belongs to another destination.');
+        if(!inputs.reference){
+            const source={id:capturedNode.id,type:'workflow',operation:'read-file',operationVersion:1,phase:capturedNode.phase,targetId:settings.targetId,fileTarget:settings.fileTarget,actorScope:settings.actorScope,actorId:settings.actorId,schema:settings.schema,columns:settings.columns};
+            const read=await executeFileNode(source,inputs.presence?{presence:exactPresence}:{},local);if(!read.ok)return read;
+            inputs.reference=read.outputs.reference;
+        }
+    }
     const captured=references.get(inputs.reference.value),snapshot=captured.snapshot;
     if(settings.actorScope==='presence'&&captured.actorId!==undefined&&captured.actorId!==settings.actorId)return fail('ACTOR_FILE_SCOPE_MISMATCH','Write requires the same present actor that captured the live file reference.');
     const evidence=inputs.evidence===undefined?[]:Array.isArray(inputs.evidence.value)?inputs.evidence.value:[inputs.evidence.value];

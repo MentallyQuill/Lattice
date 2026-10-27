@@ -31,9 +31,9 @@ test('submenus preserve hover session, keyboard focus and action dismissal', asy
     const configure=menu(page,'Workflow').getByRole('menuitem',{name:'Configure',exact:true});
     await configure.focus(); await page.keyboard.press('ArrowRight');
     const submenu=menu(page,'Configure options'); await expect(submenu).toBeVisible();
-    await expect(submenu.getByRole('menuitem',{name:'Workflow Data…',exact:true})).toBeFocused();
-    await page.keyboard.press('End'); await expect(submenu.getByRole('menuitem',{name:'Workflow Data…',exact:true})).toBeFocused();
-    await page.keyboard.press('Home'); await page.keyboard.press('w'); await expect(submenu.getByRole('menuitem',{name:'Workflow Data…',exact:true})).toBeFocused();
+    await expect(submenu.getByRole('menuitem',{name:'Legacy chat data…',exact:true})).toBeFocused();
+    await page.keyboard.press('End'); await expect(submenu.getByRole('menuitem',{name:'Legacy chat data…',exact:true})).toBeFocused();
+    await page.keyboard.press('Home'); await page.keyboard.press('l'); await expect(submenu.getByRole('menuitem',{name:'Legacy chat data…',exact:true})).toBeFocused();
     await page.keyboard.press('ArrowLeft'); await expect(submenu).toHaveCount(0); await expect(configure).toBeFocused();
     await root(page,'Graph').hover(); await expect(menu(page,'Graph')).toBeVisible();
     await menu(page,'Graph').getByRole('menuitemradio',{name:'Pan tool',exact:true}).click();
@@ -51,7 +51,7 @@ test('menu hit targets and column rails remain reachable in narrow viewports', a
     expect(rails.every(row=>JSON.stringify(row)===JSON.stringify(rails[0]))).toBe(true);
     await page.setViewportSize({width:360,height:520}); await root(page,'Workflow').click();await menu(page,'Workflow').getByRole('menuitem',{name:'Configure',exact:true}).hover();
     for(const name of ['Workflow','Configure options']){const box=await menu(page,name).boundingBox();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(360);expect(box.y+box.height).toBeLessThanOrEqual(520);}
-    await menu(page,'Configure options').getByRole('menuitem',{name:'Workflow Data…',exact:true}).focus(); await page.keyboard.press('Escape');await expect(menu(page,'Workflow').getByRole('menuitem',{name:'Configure',exact:true})).toBeFocused();await expect(menu(page,'Configure options')).toHaveCount(0);await page.keyboard.press('Escape');await expect(root(page,'Workflow')).toBeFocused();
+    await menu(page,'Configure options').getByRole('menuitem',{name:'Legacy chat data…',exact:true}).focus(); await page.keyboard.press('Escape');await expect(menu(page,'Workflow').getByRole('menuitem',{name:'Configure',exact:true})).toBeFocused();await expect(menu(page,'Configure options')).toHaveCount(0);await page.keyboard.press('Escape');await expect(root(page,'Workflow')).toBeFocused();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 test('checkbox choices and root toggle both reset hover, and Tab resumes outside the menu', async ({ page }) => {

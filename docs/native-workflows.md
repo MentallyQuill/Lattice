@@ -8,7 +8,7 @@ Your usual SillyTavern connection writes the main reply. Lattice’s model tools
 
 If you have not installed Lattice, follow the [quick start](lattice-workspace.md). A fresh workspace opens **Unified story workflow** with Lattice disabled.
 
-Choose **File → Open examples…** and read the lesson’s setup. Configure its model tools and any **For Each** helper roles. Automatic Workflow Data sources need no setup; authorize custom story documents through **Workflow → Configure → Workflow Data…**.
+Choose **File → Open examples…** and read the lesson’s setup. Configure its model tools and any **For Each** helper roles. File nodes use their own **Details → File** settings: enter a filename, choose a location or open an existing file, and select the format. A **Setup Required** tag above a node opens the missing setting. Existing chat documents remain under **Workflow → Configure → Legacy chat data…** for recovery and migration.
 
 Keep that document open, select **Enable Lattice**, and Send normally in SillyTavern. After the reply finishes, select **Review / Publish → Host result** in Preview. Apply adds the reviewed version as a new swipe and accepts its staged effects. **Run to here** only tests supported steps. See [applying an example to your story](unified-workflows.md#apply-an-example-to-your-story).
 

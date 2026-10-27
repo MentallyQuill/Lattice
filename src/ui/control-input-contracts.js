@@ -18,7 +18,7 @@ declare('path', 'condition.path confidence-gate.metricPath collection.collection
 declare('rows', 'compose.sections text-rules.rules select-fields.fields format.fields context-join.inputs join.inputs collect.inputs state.updates state.durations');
 declare('questions', 'decision.questions');
 declare('schedules', 'advance-time.schedules');
-declare('value', 'time-trigger.metadata chunk.tokenizerBinding');
+declare('value', 'time-trigger.metadata chunk.tokenizerBinding read-file.fileTarget write-file.fileTarget story-clock.fileTarget commit-outcomes.fileTarget random-pick.fileTarget');
 declare('schema', 'json-decode.schema extract.schema model-call.schema format.schema read-file.schema write-file.schema project-document.schema');
 declare('value', 'condition.value collection.value select-fields.default format.default');
 declare('helper', 'for-each.helper for-each.roleOverrides');

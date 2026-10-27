@@ -16,7 +16,7 @@ CSV applies to declared list or table controls. Prose, templates, file paths and
 
 ## Checkpoint accepted document history
 
-Long-running stories can fill the active clock-turn, save-receipt, accepted-outcome or progression history. Open **Workflow › Configure › Workflow Data**, select the authorized document, then choose **Preview history checkpoint**. Review the counts and choose **Apply checkpoint** or **Cancel checkpoint**. Preview and Cancel make no storage change.
+Long-running stories can fill the active clock-turn, save-receipt, accepted-outcome or progression history. Open **Workflow › Configure › Legacy chat data**, select the authorized document, then choose **Preview history checkpoint**. Review the counts and choose **Apply checkpoint** or **Cancel checkpoint**. Preview and Cancel make no storage change.
 
 Apply archives the exact accepted history while retaining current document values, clock/calendar/remainder, progression budgets, cooldowns, repetition totals and decay times. Future or unrecognized consumed clock IDs remain active. Archived intent fingerprints, original draws, clock turns and authored progression identities still prevent duplicate actions. Archive pages retain their original document and payload privacy, including actor restrictions after the catalog changes.
 
@@ -634,7 +634,7 @@ Strict **recall** selects an authorized existing memory ID and preserves its sto
 
 ### Read File
 
-**Both stages; root or static system body; zero calls.** Reads an authorized logical workflow data target in the active user/chat, producing serialized `text`, parsed `document` Data and exact live `reference` Data. Controls: Authorized target, optional Schema/CSV columns, Actor scope (`selected`/`presence`) and Present actor identity. Presence scope adds required exact live presence Data for the configured actor. Selected scope uses the native actor and no authored actor ID. It is distinct from File Input's portable imported snapshot. Authorize targets in **Workflow → Configure → Workflow Data…**; no arbitrary OS paths are exposed.
+**Both stages; root or static system body; zero calls.** Reads an authorized logical workflow data target in the active user/chat, producing serialized `text`, parsed `document` Data and exact live `reference` Data. Controls: Authorized target, optional Schema/CSV columns, Actor scope (`selected`/`presence`) and Present actor identity. Presence scope adds required exact live presence Data for the configured actor. Selected scope uses the native actor and no authored actor ID. It is distinct from File Input's portable imported snapshot. Choose the source directly in **Details → File**. Enter a filename and choose a location or open an existing file. Native file pickers grant access; missing names, locations or permissions show **Setup Required** above the node. Existing chat documents remain available for migration.
 
 The additive **Parsed value** (`value`) Data output exposes only the parsed structured content, without the `document` wrapper's target/revision/format metadata or top-level provenance. It inherits the file's visibility. JSON, JSON Lines and CSV can supply this value; Text and Markdown skip that output with `FILE_VALUE_UNAVAILABLE`. Existing Text, Parsed document and Live file reference outputs retain their contracts.
 
@@ -648,7 +648,7 @@ The additive **Parsed value** (`value`) Data output exposes only the parsed stru
 
 ### Write to File
 
-**Response/Post terminal; root or static system body; zero calls.** Required exact Read File reference plus records Data or serialized Text according to Mutation; optional canonical evidence; outputs projected document and staging receipt. Presence actor scope adds required exact actor presence. Controls: Mutation (`append`, `add`, `add-unique`, `upsert`, `update-fields`, `replace`), Collection JSON Pointer, Missing collection (`error`/`create`), Identity field, Upsert merge/replace policy, Updated fields, Schema/CSV columns and separator policies.
+**Response/Post terminal; root or static system body; zero calls.** Choose **Connected document** for the exact Read File reference, or **Own file** to configure an independent destination in Details → File. Requires records Data or serialized Text according to Mutation; optional canonical evidence; outputs projected document and staging receipt. Presence actor scope adds required exact actor presence. Controls: Mutation (`append`, `add`, `add-unique`, `upsert`, `update-fields`, `replace`), Collection JSON Pointer, Missing collection (`error`/`create`), Identity field, Upsert merge/replace policy, Updated fields, Schema/CSV columns and separator policies.
 
 Append is Text/Markdown concatenation; JSON uses structured collection mutation. JSON keyed modes need explicit identities; update-fields permits only named fields of existing records. JSON Lines and CSV support Add/Replace. Replace validates the complete destination content before staging. A copied or differently scoped reference cannot authorize a write. In a unified run, this terminal stages an effect for the exact reviewed root's Apply; target previews and failures do not write. Multi-target writes report confirmed partial results and unknown-save barriers honestly. See [document setup](unified-workflows.md#authorize-workflow-data-and-preserve-its-structure).
 
@@ -704,7 +704,7 @@ When used inside a system, this terminal stages its proposal for Main's exact ac
 
 ### Story Clock
 
-**Both stages; root or static system body; zero calls.** No inputs; returns the accepted clock Data for **Accepted clock identity**, with optional expected Calendar identity. Authorize its JSON target and use Workflow Data's clock template. A valid native clock has an explicit calendar, nonnegative integer absolute minute, positive revision and day length. It tracks story time, not real time or message count.
+**Both stages; root or static system body; zero calls.** No inputs; returns the accepted clock Data for **Accepted clock identity**, with optional expected Calendar identity. Choose its JSON file in Details → File; its initial contents supply a starting clock. Clock Commit inherits that captured destination. A valid native clock has an explicit calendar, nonnegative integer absolute minute, positive revision and day length. It tracks story time, not real time or message count.
 
 ### Advance Time
 

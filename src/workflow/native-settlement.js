@@ -1,3 +1,5 @@
+import { captureNodeFileTargets } from './node-file-targets.js?v=0.28.1';
+import { inspectDocumentHistory, validateDocumentHistory } from './document-history.js?v=0.28.1';
 
 /** One explicit native UI lifecycle; preview DTOs never grant storage or archive authority. */
 export function createNativeDocumentHistory(raw){
@@ -125,21 +127,62 @@ export function validateNativeFileEvidence(raw,body,originalBody=body,options={}
 }
 /** A catalog lease authorizes logical user/chat documents; no path comes from a graph. */
 export function createNativeFileSession(config) {
-    config=trustedConfig(config,['catalog','scope','context','userId','persistenceVerifier','signal','isCurrent','barriers','workflowId','originalDraft','getOriginalDraft','validateEvidence','stage','chatSource','maintainHistory']);
+    config=trustedConfig(config,['catalog','scope','context','userId','persistenceVerifier','signal','isCurrent','barriers','workflowId','originalDraft','getOriginalDraft','validateEvidence','stage','chatSource','maintainHistory','nodeFileDefinitions','diskBackend']);
     const scope=cloneJsonValue(config.scope),capture=ownMethod(config.catalog,'capture'),saveAndVerify=ownMethod(config.persistenceVerifier,'saveAndVerify');
     if(!scope.ok||!scope.data.value||!capture||typeof config.context!=='function'||typeof config.userId!=='function'||!saveAndVerify||typeof config.stage!=='function'||typeof config.isCurrent!=='function')return fail('INVALID_NATIVE_FILE_CONFIG','Native file staging requires captured catalog and persistence capabilities.');
     config={...config,scope:scope.data.value};
     let lease;try{lease=capture.call(config.catalog);}catch{return fail('FILE_SCOPE_UNAVAILABLE','The logical document catalog is unavailable.');}if(!lease.ok)return lease;
     if(lease.data.scope.userId!==config.scope.userId||lease.data.scope.chatId!==config.scope.chatId)return fail('STALE_FILE_SCOPE','Document catalog belongs to another user or chat.');
-    const definitions=new Map(lease.data.documents.map(doc=>[doc.targetId,doc]));
+    const nodeDefinitions=cloneJsonValue(config.nodeFileDefinitions??[]);if(!nodeDefinitions.ok||!Array.isArray(nodeDefinitions.data.value))return fail('INVALID_FILE_TARGET','Node file definitions require bounded data.');
+    const checkedTargets=captureNodeFileTargets(nodeDefinitions.data.value.map(({targetId,...fileTarget})=>({operation:'read-file',targetId,fileTarget})));if(!checkedTargets.ok)return checkedTargets;
+    const diskTargets=new Set(checkedTargets.data.definitions.map(doc=>doc.targetId));
+    if(diskTargets.size&&['load','compareAndSwap','lookupHistory'].some(method=>!ownMethod(config.diskBackend,method)))return fail('FILE_ACCESS_REQUIRED','Choose an available local file before running this workflow.');
+    const definitions=new Map([...lease.data.documents,...checkedTargets.data.definitions].map(doc=>[doc.targetId,doc]));
     const chatSource=trustedConfig(config.chatSource,['stamp','matches']),stamp=cloneJsonValue(chatSource.stamp),matches=ownMethod(chatSource,'matches');
     const sourceBinding=stamp.ok&&validChatSourceBinding(stamp.data.value)&&matches?Object.freeze(stamp.data.value):null;
     const current=()=>{try{return config.isCurrent()===true&&lease.data.isCurrent();}catch{return false;}};
     const barrierKey=targetId=>canonical([config.scope.userId,config.scope.chatId,targetId]);
-    const backend=createChatDocumentBackend({scope:{userId:config.scope.userId,chatId:config.scope.chatId},getContext:()=>{const c=config.context(),chatId=c.getCurrentChatId?.()??c.chatId,userId=config.userId();if(!current())throw new Error('Stale logical document authority');return {chat:c.chat,chatId,userId,chatMetadata:c.chatMetadata};},initialDocuments:lease.data.documents.map(({targetId,format,content})=>({targetId,format,content})),saveMetadata:async selection=>{const result=await saveAndVerify.call(config.persistenceVerifier,selection??{kind:'document',targetId:writingTarget},{signal:config.signal});return result.ok&&result.data.acknowledged===true;}});
+    const legacyBackend=createChatDocumentBackend({scope:{userId:config.scope.userId,chatId:config.scope.chatId},getContext:()=>{const c=config.context(),chatId=c.getCurrentChatId?.()??c.chatId,userId=config.userId();if(!current())throw new Error('Stale logical document authority');return {chat:c.chat,chatId,userId,chatMetadata:c.chatMetadata};},initialDocuments:lease.data.documents.map(({targetId,format,content})=>({targetId,format,content})),saveMetadata:async selection=>{const result=await saveAndVerify.call(config.persistenceVerifier,selection??{kind:'document',targetId:writingTarget},{signal:config.signal});return result.ok&&result.data.acknowledged===true;}});
+    const migrationChecks=new Map(),storageScope={userId:config.scope.userId,chatId:config.scope.chatId};
+    async function migrateLegacy(targetId){
+        if(!lease.data.documents.some(doc=>doc.targetId===targetId))return good({adopted:false});
+        const metadata=own(config.context(),'chatMetadata'),saved=own(own(own(metadata,'latticeDocuments'),storageScope.userId),targetId);
+        if(saved===undefined)return good({adopted:false});
+        const checked=cloneJsonValue(saved);if(!checked.ok)return fail('INVALID_FILE_METADATA','Legacy migration requires a bounded saved document.');
+        if(canonical(checked.data.value.scope)!==canonical(storageScope))return good({adopted:false});
+        const disk=await config.diskBackend.load(targetId);if(!current())return fail('STALE_FILE_SCOPE','File migration scope changed.');if(!disk.ok)return disk;
+        if(disk.data.format!==checked.data.value.format||disk.data.content!==checked.data.value.content)return good({adopted:false});
+        const loaded=await legacyBackend.load(targetId);if(!loaded.ok)return loaded;
+        const archivePages=()=>own(own(own(config.context(),'chatMetadata'),'latticeDocumentHistory'),storageScope.userId)??{};
+        const inspected=await validateDocumentHistory({targetId,scope:storageScope,history:loaded.data.history,pages:archivePages()});if(!inspected.ok)return inspected;
+        const latest=await legacyBackend.load(targetId);if(!current())return fail('STALE_FILE_SCOPE','File migration scope changed.');if(!latest.ok)return latest;
+        const live=inspectDocumentHistory({targetId,scope:storageScope,history:latest.data.history,pages:archivePages()});
+        if(canonical(latest.data)!==canonical(loaded.data)||!live.ok||canonical(live.data.pages)!==canonical(inspected.data.pages))return fail('DOCUMENT_HISTORY_CHANGED','Legacy history changed while its disk migration was captured.');
+        const adopt=ownMethod(config.diskBackend,'adoptLegacy');if(!adopt)return fail('FILE_MIGRATION_REQUIRED','This local file backend cannot retain the saved legacy history.');
+        const adopted=await adopt.call(config.diskBackend,targetId,{snapshot:{...loaded.data,scope:storageScope},pages:Object.fromEntries(inspected.data.pages.map(page=>[page.pageId,page]))});
+        return current()?adopted:fail('STALE_FILE_SCOPE','File migration scope changed before its metadata was retained.');
+    }
+    const backend=Object.freeze({...legacyBackend,...Object.fromEntries(['load','compareAndSwap','lookupHistory'].map(method=>[method,async(first,...rest)=>{
+        const targetId=method==='compareAndSwap'?first.targetId:first;
+        if(!diskTargets.has(targetId))return legacyBackend[method](first,...rest);
+        let migration=migrationChecks.get(targetId);if(!migration){migration=migrateLegacy(targetId);migrationChecks.set(targetId,migration);}
+        const migrated=await migration;if(!migrated.ok)return migrated;
+        return config.diskBackend[method](first,...rest);
+    }]))});
+    async function loadTarget(targetId,options){
+        const barrier=config.barriers?.get(barrierKey(targetId));
+        if(barrier&&!diskTargets.has(targetId))return fail('PERSISTENCE_UNKNOWN','This target has an unconfirmed native save. Reconcile it before another write.');
+        const loaded=await backend.load(targetId,options);if(!loaded.ok)return loaded;
+        if(barrier){
+            const receipt=loaded.data.receipts.find(value=>value.intentId===barrier.intentId&&value.revision===barrier.revision);
+            if(!receipt)return fail('PERSISTENCE_UNKNOWN','This target still lacks its durable receipt for the previous file write.');
+            if(config.barriers?.get(barrierKey(targetId))===barrier)config.barriers.delete(barrierKey(targetId));
+        }
+        return loaded;
+    }
     let writingTarget=null;
     const store=createFileStore({scope:{userId:config.scope.userId,chatId:config.scope.chatId},authorizedTargets:[...definitions.keys()],signal:config.signal,isCurrent:current,validateEvidence:config.validateEvidence,
-        load:(targetId,options)=>config.barriers?.has(barrierKey(targetId))?Promise.resolve(fail('PERSISTENCE_UNKNOWN','This target has an unconfirmed native save. Reconcile it before another write.')):backend.load(targetId,options),
+        load:loadTarget,
         bindRead:(snapshot,stored)=>{
             if(!sourceBinding||!current())return fail('CHAT_SOURCE_REQUIRED','A captured accepted chat prefix is required for derived context.');
             const template=definitions.get(snapshot.targetId);if(!template)return fail('FILE_NOT_AUTHORIZED','Select an authorized document.');
@@ -162,9 +205,9 @@ export function createNativeFileSession(config) {
             const policy=visibility(targetId);if(!policy.ok)return policy;
             if(options?.bindToChat===true){
                 if(!sourceBinding)return fail('CHAT_SOURCE_REQUIRED','A captured accepted chat prefix is required for derived context.');
-                const key=barrierKey(targetId);if(config.barriers?.has(key))return fail('PERSISTENCE_UNKNOWN','Verify the previous native save before reading derived context.');
-                const loaded=await backend.load(targetId,{bindToChat:true});if(!current())return fail('STALE_FILE_SCOPE','Document source changed before history maintenance.');if(!loaded.ok)return loaded;
-                if(config.maintainHistory===true&&!loaded.data.copiedScope&&loaded.data.receipts.length>=240){
+                const key=barrierKey(targetId);if(config.barriers?.has(key)&&!diskTargets.has(targetId))return fail('PERSISTENCE_UNKNOWN','Verify the previous native save before reading derived context.');
+                const loaded=await loadTarget(targetId,{bindToChat:true});if(!current())return fail('STALE_FILE_SCOPE','Document source changed before history maintenance.');if(!loaded.ok)return loaded;
+                if(!diskTargets.has(targetId)&&config.maintainHistory===true&&!loaded.data.copiedScope&&loaded.data.receipts.length>=240){
                     const preview=await backend.previewCheckpoint(targetId,policy.data);if(!current())return fail('STALE_FILE_SCOPE','Document source changed during history maintenance.');if(!preview.ok)return preview;
                     if(preview.data.view.privateActorIds.some(actorId=>actorId!==config.scope.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original actor privacy.');
                     const mark=preview.data.view.visibility;if(mark.kind!=='public'&&policy.data.kind!=='hidden'&&!(mark.kind==='actor-private'&&policy.data.kind==='actor-private'&&mark.actorId===policy.data.actorId))return fail('PRIVATE_DESTINATION','History maintenance must preserve document privacy.');
