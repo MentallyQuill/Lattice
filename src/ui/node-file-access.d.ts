@@ -62,9 +62,15 @@ export interface NodeFileBackend extends FileBackendPorts {
     /** Trusted host migration only: associate checked same-scope metadata when effective disk bytes and format match. */
     adoptLegacy:(targetId:string,request:{snapshot:StoredDocument&{scope:StorageScope};pages:Record<string,DocumentHistoryPage>})=>Promise<Result<{adopted:boolean}>>;
 }
+export interface NodeFileAvailabilityIssue {
+    readonly code:'FILE_ACCESS_INSECURE'|'FILE_ACCESS_BRAVE'|'FILE_ACCESS_UNSUPPORTED';
+    readonly message:string;
+}
 export interface NodeFileAccess {
     readonly supported:boolean;
     readonly native:boolean;
+    /** Explains unavailable direct file saving without confusing it with uploads or downloads. */
+    readonly availability:NodeFileAvailabilityIssue|null;
     readonly ready:Promise<Result<{persistent:true}>>;
     snapshot:()=>Record<string,NodeFileBindingView>;
     subscribe:(listener:()=>void)=>()=>void;

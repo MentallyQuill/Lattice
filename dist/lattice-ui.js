@@ -18084,7 +18084,7 @@ Nr([
 ]);
 //#endregion
 //#region ui/NodeFile.svelte
-var zv = /* @__PURE__ */ K("<label class=\"pc-nf-field svelte-12htcqv\">Destination<select aria-label=\"File destination\" class=\"svelte-12htcqv\"><option class=\"svelte-12htcqv\">Connected document</option><option class=\"svelte-12htcqv\">Own file</option></select></label>"), Bv = /* @__PURE__ */ K("<p class=\"pc-nf-help pc-nf-summary svelte-12htcqv\"> </p>"), Vv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\"> </p>"), Hv = /* @__PURE__ */ K("<div class=\"pc-nf-field svelte-12htcqv\"><span class=\"svelte-12htcqv\">Format</span><output aria-label=\"File format\" class=\"svelte-12htcqv\">JSON</output></div>"), Uv = /* @__PURE__ */ K("<option class=\"svelte-12htcqv\"> </option>"), Wv = /* @__PURE__ */ K("<label class=\"pc-nf-field svelte-12htcqv\">Format<select aria-label=\"File format\" class=\"svelte-12htcqv\"></select></label>"), Gv = /* @__PURE__ */ K("<label class=\"pc-nf-field svelte-12htcqv\">Actor ID<input aria-label=\"File actor ID\" maxlength=\"128\" class=\"svelte-12htcqv\"/></label>"), Kv = /* @__PURE__ */ K("<p class=\"pc-nf-role svelte-12htcqv\"> </p> <label class=\"pc-nf-field svelte-12htcqv\">Filename<input aria-label=\"Filename\" maxlength=\"256\" placeholder=\"notes.txt\" class=\"svelte-12htcqv\"/></label> <div class=\"pc-nf-actions pc-nf-choose svelte-12htcqv\"><button type=\"button\" data-choose-node-file=\"save\" class=\"svelte-12htcqv\"> </button> <button type=\"button\" data-choose-node-file=\"open\" class=\"svelte-12htcqv\"> </button></div> <!> <label class=\"pc-nf-field svelte-12htcqv\">Missing file<select aria-label=\"Missing file\" class=\"svelte-12htcqv\"><option class=\"svelte-12htcqv\">Create if missing</option><option class=\"svelte-12htcqv\">Report an error</option></select></label> <label class=\"pc-nf-block svelte-12htcqv\">Initial content<textarea aria-label=\"Initial file content\" rows=\"4\" maxlength=\"100000\" placeholder=\"Empty by default\" class=\"svelte-12htcqv\"></textarea></label> <p class=\"pc-nf-help svelte-12htcqv\">Used when creating a missing file. Existing file contents stay unchanged until Apply.</p> <label class=\"pc-nf-field svelte-12htcqv\">Visibility<select aria-label=\"File visibility\" class=\"svelte-12htcqv\"><option class=\"svelte-12htcqv\">Public</option><option class=\"svelte-12htcqv\">Hidden</option><option class=\"svelte-12htcqv\">Actor private</option></select></label> <!> <div class=\"pc-nf-actions svelte-12htcqv\"><button type=\"button\" data-save-node-file=\"\" class=\"svelte-12htcqv\"> </button></div>", 1), qv = /* @__PURE__ */ K("<p class=\"pc-nf-help pc-nf-migration svelte-12htcqv\">Existing chat data is preserved. Choose a file to migrate its saved content on Apply.</p>"), Jv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\">Native file access is unavailable here. Open this workflow in a browser with native file access to choose a durable file.</p>"), Yv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\">Open an active chat to configure this file.</p>"), Xv = /* @__PURE__ */ K("<p class=\"pc-nf-error svelte-12htcqv\"> </p>"), Zv = /* @__PURE__ */ K("<p class=\"pc-nf-error svelte-12htcqv\" role=\"alert\"> </p>"), Qv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\" role=\"status\"> </p>"), $v = /* @__PURE__ */ K("<section class=\"pc-node-file svelte-12htcqv\" data-node-file=\"\"><h3 class=\"svelte-12htcqv\">File</h3> <!> <p class=\"pc-nf-status svelte-12htcqv\" data-file-status=\"\"> </p> <!> <!> <!> <!> <!> <!> <!> <!></section>");
+var zv = /* @__PURE__ */ K("<label class=\"pc-nf-field svelte-12htcqv\">Destination<select aria-label=\"File destination\" class=\"svelte-12htcqv\"><option class=\"svelte-12htcqv\">Connected document</option><option class=\"svelte-12htcqv\">Own file</option></select></label>"), Bv = /* @__PURE__ */ K("<p class=\"pc-nf-help pc-nf-summary svelte-12htcqv\"> </p>"), Vv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\" data-file-access-issue=\"\"> </p>"), Hv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\"> </p>"), Uv = /* @__PURE__ */ K("<div class=\"pc-nf-field svelte-12htcqv\"><span class=\"svelte-12htcqv\">Format</span><output aria-label=\"File format\" class=\"svelte-12htcqv\">JSON</output></div>"), Wv = /* @__PURE__ */ K("<option class=\"svelte-12htcqv\"> </option>"), Gv = /* @__PURE__ */ K("<label class=\"pc-nf-field svelte-12htcqv\">Format<select aria-label=\"File format\" class=\"svelte-12htcqv\"></select></label>"), Kv = /* @__PURE__ */ K("<label class=\"pc-nf-field svelte-12htcqv\">Actor ID<input aria-label=\"File actor ID\" maxlength=\"128\" class=\"svelte-12htcqv\"/></label>"), qv = /* @__PURE__ */ K("<p class=\"pc-nf-role svelte-12htcqv\"> </p> <label class=\"pc-nf-field svelte-12htcqv\">Filename<input aria-label=\"Filename\" maxlength=\"256\" placeholder=\"notes.txt\" class=\"svelte-12htcqv\"/></label> <div class=\"pc-nf-actions pc-nf-choose svelte-12htcqv\"><button type=\"button\" data-choose-node-file=\"save\" class=\"svelte-12htcqv\"> </button> <button type=\"button\" data-choose-node-file=\"open\" class=\"svelte-12htcqv\"> </button></div> <!> <label class=\"pc-nf-field svelte-12htcqv\">Missing file<select aria-label=\"Missing file\" class=\"svelte-12htcqv\"><option class=\"svelte-12htcqv\">Create if missing</option><option class=\"svelte-12htcqv\">Report an error</option></select></label> <label class=\"pc-nf-block svelte-12htcqv\">Initial content<textarea aria-label=\"Initial file content\" rows=\"4\" maxlength=\"100000\" placeholder=\"Empty by default\" class=\"svelte-12htcqv\"></textarea></label> <p class=\"pc-nf-help svelte-12htcqv\">Used when creating a missing file. Existing file contents stay unchanged until Apply.</p> <label class=\"pc-nf-field svelte-12htcqv\">Visibility<select aria-label=\"File visibility\" class=\"svelte-12htcqv\"><option class=\"svelte-12htcqv\">Public</option><option class=\"svelte-12htcqv\">Hidden</option><option class=\"svelte-12htcqv\">Actor private</option></select></label> <!> <div class=\"pc-nf-actions svelte-12htcqv\"><button type=\"button\" data-save-node-file=\"\" class=\"svelte-12htcqv\"> </button></div>", 1), Jv = /* @__PURE__ */ K("<p class=\"pc-nf-help pc-nf-migration svelte-12htcqv\">Existing chat data is preserved. Choose a file to migrate its saved content on Apply.</p>"), Yv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\">Open an active chat to configure this file.</p>"), Xv = /* @__PURE__ */ K("<p class=\"pc-nf-error svelte-12htcqv\"> </p>"), Zv = /* @__PURE__ */ K("<p class=\"pc-nf-error svelte-12htcqv\" role=\"alert\"> </p>"), Qv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\" role=\"status\"> </p>"), $v = /* @__PURE__ */ K("<section class=\"pc-node-file svelte-12htcqv\" data-node-file=\"\"><h3 class=\"svelte-12htcqv\">File</h3> <!> <p class=\"pc-nf-status svelte-12htcqv\" data-file-status=\"\"> </p> <!> <!> <!> <!> <!> <!> <!> <!></section>");
 function ey(e, t) {
 	qe(t, !0);
 	let n = oa(t, "disabled", 3, !1), r = oa(t, "idPrefix", 3, "pc-node-details"), i = /* @__PURE__ */ R(""), a = /* @__PURE__ */ R("text"), o = /* @__PURE__ */ R("create"), s = /* @__PURE__ */ R(""), c = /* @__PURE__ */ R("public"), l = /* @__PURE__ */ R(""), u = /* @__PURE__ */ R(!1), d = /* @__PURE__ */ R(""), f = /* @__PURE__ */ R(""), p = /* @__PURE__ */ R(""), m = "", h = 0, g = !0, _ = [
@@ -18112,7 +18112,7 @@ function ey(e, t) {
 		"story-clock",
 		"commit-outcomes",
 		"random-pick"
-	].includes(t.model.operation)), y = /* @__PURE__ */ L(() => !n() && t.model.available && !W(d)), b = /* @__PURE__ */ L(() => W(y) && t.model.mode !== "inherited"), x = /* @__PURE__ */ L(() => !!W(i).trim() && (W(c) !== "actor-private" || !!W(l).trim())), S = /* @__PURE__ */ L(() => W(b) && t.model.supported && W(x) && !!t.actions.chooseNodeFile), C = /* @__PURE__ */ L(() => W(b) && W(u) && W(x) && !!t.actions.saveNodeFile), w = /* @__PURE__ */ L(() => W(i).trim() !== t.model.settings.name), T = /* @__PURE__ */ L(() => t.model.mode === "inherited" ? "Inherited destination" : W(w) ? "Choose a location for this filename." : t.model.settings.bindingId ? t.model.issue ? "File access needs attention." : "File selected" : "Choose a file to finish setup."), E = () => JSON.stringify([
+	].includes(t.model.operation)), y = /* @__PURE__ */ L(() => !n() && t.model.available && !W(d)), b = /* @__PURE__ */ L(() => W(y) && t.model.mode !== "inherited"), x = /* @__PURE__ */ L(() => !!W(i).trim() && (W(c) !== "actor-private" || !!W(l).trim())), S = /* @__PURE__ */ L(() => W(b) && t.model.supported && W(x) && !!t.actions.chooseNodeFile), C = /* @__PURE__ */ L(() => W(b) && W(u) && W(x) && !!t.actions.saveNodeFile), w = /* @__PURE__ */ L(() => W(i).trim() !== t.model.settings.name), T = /* @__PURE__ */ L(() => t.model.mode === "inherited" ? "Inherited destination" : t.model.supported ? W(w) ? "Choose a location for this filename." : t.model.settings.bindingId ? t.model.issue ? "File access needs attention." : "File selected" : "Choose a file to finish setup." : "Browser setup required"), E = () => JSON.stringify([
 		t.selection,
 		t.model,
 		n()
@@ -18218,9 +18218,16 @@ function ey(e, t) {
 	});
 	var F = H(ae, 2), oe = (e) => {
 		var n = Vv(), r = B(n, !0);
+		I(n), U(() => J(r, t.model.accessIssue?.message ?? "This browser does not provide direct file saving. Open this workflow in desktop Chrome or Edge. File uploads and downloads do not grant this access.")), q(e, n);
+	};
+	Y(F, (e) => {
+		!t.model.supported && (t.model.mode !== "inherited" || t.model.accessIssue) && e(oe);
+	});
+	var se = H(F, 2), ce = (e) => {
+		var n = Hv(), r = B(n, !0);
 		I(n), U(() => J(r, t.model.operation === "commit-clock" ? "Uses the file captured by Story Clock." : "Uses the connected document’s file and settings.")), q(e, n);
-	}, se = (e) => {
-		var n = Kv(), u = V(n), f = B(u, !0);
+	}, le = (e) => {
+		var n = qv(), u = V(n), f = B(u, !0);
 		I(u);
 		var p = H(u, 2), m = H(B(p));
 		Z(m), I(p);
@@ -18229,11 +18236,11 @@ function ey(e, t) {
 		var x = H(g, 2), w = B(x, !0);
 		I(x), I(h);
 		var T = H(h, 2), E = (e) => {
-			q(e, Hv());
+			q(e, Uv());
 		}, O = (e) => {
-			var t = Wv(), n = H(B(t));
+			var t = Gv(), n = H(B(t));
 			X(n, 21, () => _, di, (e, t) => {
-				var n = Uv(), r = B(n, !0);
+				var n = Wv(), r = B(n, !0);
 				I(n);
 				var i = {};
 				U(() => {
@@ -18265,7 +18272,7 @@ function ey(e, t) {
 		var se;
 		Fi(ae), I(ie);
 		var ce = H(ie, 2), le = (e) => {
-			var t = Gv(), n = H(B(t));
+			var t = Kv(), n = H(B(t));
 			Z(n), I(t), U(() => {
 				qi(n, W(l)), n.disabled = !W(b);
 			}), G("input", n, (e) => D("actor", e.currentTarget.value)), q(e, t);
@@ -18278,20 +18285,14 @@ function ey(e, t) {
 			J(f, t.model.mode === "source" ? "Source file" : "Destination file"), Q(m, "id", r() + "-fileTarget-name"), qi(m, W(i)), m.disabled = !W(b), Q(g, "id", r() + "-fileTarget-choose"), g.disabled = !W(S), J(y, W(d) === "choose-save" ? "Choosing…" : "Choose location…"), x.disabled = !W(S), J(w, W(d) === "choose-open" ? "Choosing…" : "Open existing…"), j.disabled = !W(b), te !== (te = W(o)) && (j.value = (j.__value = W(o)) ?? "", Pi(j, W(o))), qi(re, W(s)), re.disabled = !W(b), ae.disabled = !W(b), se !== (se = W(c)) && (ae.value = (ae.__value = W(c)) ?? "", Pi(ae, W(c))), de.disabled = !W(C), J(fe, W(d) === "save" ? "Saving…" : "Save file settings");
 		}), G("input", m, (e) => D("name", e.currentTarget.value)), G("click", g, () => A("save")), G("click", x, () => A("open")), G("change", j, (e) => D("missing", e.currentTarget.value)), G("input", re, (e) => D("content", e.currentTarget.value)), G("change", ae, (e) => D("visibility", e.currentTarget.value)), G("click", de, ee), q(e, n);
 	};
-	Y(F, (e) => {
-		t.model.mode === "inherited" ? e(oe) : e(se, -1);
+	Y(se, (e) => {
+		t.model.mode === "inherited" ? e(ce) : e(le, -1);
 	});
-	var ce = H(F, 2), le = (e) => {
-		q(e, qv());
-	};
-	Y(ce, (e) => {
-		t.model.legacy && e(le);
-	});
-	var ue = H(ce, 2), de = (e) => {
+	var ue = H(se, 2), de = (e) => {
 		q(e, Jv());
 	};
 	Y(ue, (e) => {
-		t.model.supported || e(de);
+		t.model.legacy && e(de);
 	});
 	var fe = H(ue, 2), pe = (e) => {
 		q(e, Yv());
@@ -18304,7 +18305,7 @@ function ey(e, t) {
 		I(n), U(() => J(r, t.model.issue)), q(e, n);
 	};
 	Y(me, (e) => {
-		t.model.issue && e(he);
+		t.model.issue && (t.model.supported || t.model.mode === "inherited" && !t.model.accessIssue) && e(he);
 	});
 	var ge = H(me, 2), _e = (e) => {
 		var t = Zv(), n = B(t, !0);

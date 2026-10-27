@@ -18,6 +18,7 @@ export interface NodeFileView {
     settings: NodeFileSettings;
     available: boolean;
     supported: boolean;
+    accessIssue?: { code: string; message: string };
     issue?: string;
     legacy: boolean;
     summary?: string;

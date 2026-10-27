@@ -40,3 +40,11 @@ Earlier full runs exposed compatibility and old-UI expectation failures; those w
 Native browser file access and durable origin-local storage are required. Native handles may need user re-selection after permission changes. File bytes and the local journal are separate storage systems; the pending journal reconciles interrupted saves but browser APIs cannot atomically exclude an independent desktop editor.
 
 Disk histories currently retain at most 32 active clock turns and 256 active save receipts. Migrated archives/replay identities remain available; creating additional disk-history checkpoints is outside this change. Existing legacy chat-document checkpoint actions remain available in recovery.
+
+## Follow-up: actionable browser setup guidance (2026-10-27)
+
+The reported disabled chooser was observed in Brave at `http://127.0.0.1:8000`. The native picker feature check was correct, but its generic instruction to open a browser confused direct file saving with ordinary uploads/downloads. Chromium checks confirmed native pickers are available on trusted localhost, absent on insecure HTTP, and available on HTTPS. Brave's separate API restriction is documented by [Chrome's File System Access guide](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access).
+
+The file service now reports distinct guidance for Brave, insecure pages, and missing browser support. Available picker functions remain authoritative. The File section displays the explanation once, while the setup caution points to it. Connected writers and Clock Commit inherit that guidance. No browser settings are changed automatically, and persistence, permission, and Apply behavior are unchanged.
+
+Follow-up validation: **86 focused unit tests across six files** and **23 browser tests** passed. Regressions cover Brave's missing APIs, a real localhost browser without an injected file adapter, inherited destinations, and existing file setup/Details behavior. Type checking reported zero errors/warnings; production build, asset validation, and whitespace checks passed. Visual QA inspected the updated Brave setup panel. No real user files were written or browser permissions changed.

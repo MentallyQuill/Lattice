@@ -16,6 +16,53 @@ function storage() {
     let saved={bindings:[],records:{}};
     return {load:async()=>saved,save:async value=>{saved={bindings:value.bindings.map(row=>({...row})),records:structuredClone(value.records)};}};
 }
+async function withFileEnvironment(environment,run){
+    const values={showOpenFilePicker:undefined,showSaveFilePicker:undefined,isSecureContext:true,navigator:{},...environment};
+    const descriptors=Object.fromEntries(Object.keys(values).map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
+    try{for(const [key,value] of Object.entries(values))Object.defineProperty(globalThis,key,{configurable:true,value});return await run();}
+    finally{for(const [key,descriptor] of Object.entries(descriptors)){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}}
+}
+test('missing native pickers explain direct saving rather than ordinary uploads and downloads',async()=>{
+    await withFileEnvironment({},async()=>{
+        const access=module.createNodeFileAccess({persistence:storage()});
+        assert.equal(access.supported,false);
+        assert.equal(access.availability.code,'FILE_ACCESS_UNSUPPORTED');
+        assert.match(access.availability.message,/direct file saving/i);
+        assert.match(access.availability.message,/desktop Chrome or Edge/i);
+        assert.match(access.availability.message,/uploads and downloads do not grant this access/i);
+        const selected=await access.choose({mode:'save',name:'notes.txt',format:'text'});
+        assert.equal(selected.error.code,'FILE_ACCESS_UNSUPPORTED');
+        assert.equal(selected.error.message,access.availability.message);
+        assert.equal(Object.isFrozen(access.availability),true);
+    });
+});
+test('Brave without native pickers gives its specific file access setting and relaunch guidance',async()=>{
+    await withFileEnvironment({navigator:{brave:{isBrave:async()=>true}}},async()=>{
+        const access=module.createNodeFileAccess({persistence:storage()});
+        assert.equal(access.availability.code,'FILE_ACCESS_BRAVE');
+        assert.match(access.availability.message,/Brave is not exposing direct file saving/);
+        assert.match(access.availability.message,/brave:\/\/flags\/#file-system-access-api/);
+        assert.match(access.availability.message,/relaunch Brave/);
+        assert.match(access.availability.message,/uploads and downloads/);
+    });
+});
+test('an insecure page gets address guidance before browser-specific guidance',async()=>{
+    await withFileEnvironment({isSecureContext:false,navigator:{brave:{isBrave:async()=>true}}},async()=>{
+        const access=module.createNodeFileAccess({persistence:storage()});
+        assert.equal(access.availability.code,'FILE_ACCESS_INSECURE');
+        assert.match(access.availability.message,/HTTPS or localhost/);
+        assert.doesNotMatch(access.availability.message,/flags|relaunch/);
+    });
+});
+test('provided native pickers are authoritative even when browser detection would warn',async()=>{
+    await withFileEnvironment({isSecureContext:false,navigator:{brave:{isBrave:async()=>true}}},async()=>{
+        const handle=fileHandle('notes'),access=module.createNodeFileAccess({persistence:storage(),showOpenFilePicker:async()=>[handle],showSaveFilePicker:async()=>handle});
+        assert.equal(access.supported,true);
+        assert.equal(access.native,true);
+        assert.equal(access.availability,null);
+        must(await access.choose({mode:'save',name:'notes.txt',format:'text'}));
+    });
+});
 test('choose starts the native picker in the gesture and persists only a plain binding view', async () => {
     assert.equal(typeof module.createNodeFileAccess,'function');
     const handle=fileHandle('chosen');let picked=false,resolveReady;

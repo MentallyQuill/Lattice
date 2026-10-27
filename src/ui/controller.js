@@ -247,7 +247,7 @@ function fileWorkspaceData() {
             if(stored && typeof stored.content==='string')legacyDocuments[doc.targetId]={format:stored.format,content:stored.content};
         }
     }
-    return {...state,definitions,legacyDocuments,nodeFiles:{supported:access.supported===true,bindings:access.snapshot()}};
+    return {...state,definitions,legacyDocuments,nodeFiles:{supported:access.supported===true,accessIssue:access.availability,bindings:access.snapshot()}};
 }
 function workspaceInputs() { const context = ctx(), hostProfiles = profiles(); nodeProfileInputsKey = nodeProfileMetadataKey(context, hostProfiles); return { settings: settings(), profiles: readNodeProfileMetadata(context, hostProfiles), activeModel: activeModelMetadata(context), workflowData:fileWorkspaceData(), result: workflowState.result, resolveBinding: (node, graph) => resolveBinding(node, graph, ctx()), candidateStatus: candidate => workflowRuntime.getNativeWorkflowController?.()?.candidateStatus?.(candidate) }; }
 function refreshWorkflowPreparation() {

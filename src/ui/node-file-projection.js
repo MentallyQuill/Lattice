@@ -19,7 +19,7 @@ export function projectNodeFile(node, state = {}) {
   const sourceView=source?projectNodeFile(source,{...state,nodes:{},wires:{}}):null;
   const label=expected==='read-file'?'Read File':'Story Clock';
   const issue=!sourceView?'Connect '+(expected==='read-file'?'a live file reference from Read File or choose your own destination.':'the Advance Time report from a configured Story Clock.') : sourceView.issue;
-  return {operation:node.operation,mode:'inherited',destinationMode:'connected',settings:sourceView?.settings??{bindingId:'',name:'',format:'text',missing:'create',content:'',visibility:{kind:'public'}},available:state.fileConfigAvailable!==false,supported:state.supported===true,legacy:sourceView?.legacy===true,summary:sourceView?.settings.name?sourceView.settings.name+' — from '+label:'Destination comes from '+label,...(issue?{issue}:{})};
+  return {operation:node.operation,mode:'inherited',destinationMode:'connected',settings:sourceView?.settings??{bindingId:'',name:'',format:'text',missing:'create',content:'',visibility:{kind:'public'}},available:state.fileConfigAvailable!==false,supported:state.supported===true,legacy:sourceView?.legacy===true,summary:sourceView?.settings.name?sourceView.settings.name+' — from '+label:'Destination comes from '+label,...(sourceView?.accessIssue?{accessIssue:sourceView.accessIssue}:{}),...(issue?{issue}:{})};
  }
  const preset=workflowDataPresetFor(node.operation);
  const targetId=node[preset?.controlKey??'targetId']||preset?.targetId||'';
@@ -35,17 +35,18 @@ export function projectNodeFile(node, state = {}) {
  const canonicalTarget=value=>{const checked=validateNodeFileTarget(value);return checked.ok?JSON.stringify(['bindingId','name','format','missing','content'].map(key=>checked.data[key]).concat([checked.data.visibility?.kind,checked.data.visibility?.actorId])):null;};
  const conflict=settings.bindingId && Object.values(state.nodes??{}).some(other=>other.id!==node.id && other.fileTarget?.bindingId && (nodeFileTargetId(other)===ownId || other.fileTarget.bindingId===settings.bindingId) && (nodeFileTargetId(other)!==ownId || canonicalTarget(other.fileTarget)!==canonicalTarget(settings)));
 
+ const accessIssue=state.supported===true?undefined:state.accessIssue??{code:'FILE_ACCESS_UNSUPPORTED',message:'This browser does not provide direct file saving. Open this workflow in desktop Chrome or Edge. File uploads and downloads do not grant this access.'};
  const bindingReady = state.supported===true && binding?.status==='ready' && !!settings.name.trim() && binding.name===settings.name;
  let issue;
  if (!inherited) {
-  if (!state.supported) issue='Direct file access is unavailable. Open Lattice in a browser with native file access to choose a destination.';
+  if (accessIssue) issue='Direct file saving needs browser setup. See the File section.';
   else if(conflict)issue='Nodes sharing this file have different settings. Match their File settings or choose separate files.';
   else if(binding?.format && binding.format!==settings.format)issue='Choose the file again to confirm its changed format.';
   else if (binding?.status==='permission-required') issue='File permission is required. Choose this file again to grant access.';
   else if (settings.bindingId && !binding) issue='The selected file is unavailable. Choose a file location again.';
   else if (!bindingReady) issue='Choose a file location and filename in this node’s File settings.';
  }
- return {operation:node.operation,mode:inherited?'inherited':node.operation==='read-file'?'source':'destination',destinationMode:node.destinationMode??'connected',settings,available:state.fileConfigAvailable!==false,supported:state.supported===true,legacy,...(issue?{issue}:{})};
+ return {operation:node.operation,mode:inherited?'inherited':node.operation==='read-file'?'source':'destination',destinationMode:node.destinationMode??'connected',settings,available:state.fileConfigAvailable!==false,supported:state.supported===true,legacy,...(accessIssue?{accessIssue}:{}),...(issue?{issue}:{})};
 }
 export function nodeFileSetupIssue(view) {
  if (!view || !view.issue) return null;
