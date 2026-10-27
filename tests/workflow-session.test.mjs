@@ -222,3 +222,26 @@ test('document token replacement rejects a late target result even before UI syn
     const pending=session.run({target:targetOf(root)});owner={};finish(response(runRecord(root,'late-document')));await pending;
     assert.equal(state.recording,null);session.syncDocument();assert.equal(state.busy,false);
 });
+
+
+test('recovered sessions retain bounded safe failures and announce partial completion after automatic application', () => {
+    const root = starterGraph('structured-guidance'), recording = runRecord(root, 'partial-recovered');
+    const address = {workflowId:root.id,instancePath:[],nodeId:'compose-guidance'};
+    let state;
+    const session = createWorkflowSession({runtime:()=>({}),current:()=>root,epoch:()=>1,active:()=>true,changed:value=>state=value});
+    const failures = Array.from({length:40}, () => ({code:'REQUEST_FAILED',message:'The request failed.',address,privateHandle:'PRIVATE_CAPABILITY'}));
+    session.receiveAutomatic(automatic(root,{...response(recording),recovered:true,failures,failurePolicy:'continue-available',failureDisposition:'continued',automaticallyApplied:true,appliedLocally:true}));
+    assert.equal(session.result().recovered,true);
+    assert.equal(session.result().failurePolicy,'continue-available');
+    assert.equal(session.result().failureDisposition,'continued');
+    assert.equal(session.result().failures.length,32);
+    assert.deepEqual(session.result().failures[0].address,address);
+    assert.equal(JSON.stringify(session.result()).includes('PRIVATE_CAPABILITY'),false);
+    assert.match(state.status,/Completed with failures/);
+    const view = projectPreparedWorkflow(prepareWorkflowProjection(root,{result:session.result()}));
+    assert.equal(view.result.recovered,true);
+    assert.equal(view.result.failurePolicy,'continue-available');
+    assert.equal(view.result.failureDisposition,'continued');
+    assert.equal(view.result.failures.length,32);
+    assert.match(view.result.outcomeNotice,/Completed with failures/);
+});

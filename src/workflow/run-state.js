@@ -6,7 +6,7 @@ export function createRunState(runId) {
     if (typeof runId !== 'string' || !runId) return null;
     return freeze({ runId, lastSeq: 0, status: 'empty', plan: null, nodes: [], elapsedMs: 0, at: null });
 }
-const terminal = status => ['completed', 'skipped', 'unresolved', 'failed', 'cancelled', 'invalid', 'stale'].includes(status);
+const terminal = status => ['partial', 'completed', 'skipped', 'unresolved', 'failed', 'cancelled', 'invalid', 'stale'].includes(status);
 const untouched = node => ['waiting', 'queued', 'not-run', 'blocked'].includes(node.status);
 const number = value => typeof value === 'number' && Number.isFinite(value) && value >= 0;
 const active = node => node.status === 'running' || node.status === 'cancelling';
@@ -52,7 +52,7 @@ export function reduceRunState(previous, raw) {
             nodes = nodes.map(node => node.status === 'running' ? { ...node, status: 'cancelling', subphase: 'cancelling' } : node);
             const error = safeError(own(raw, 'reason'), previous.plan ?? {units:[],hierarchy:[]}); if (error) next.error = error;
         } else if (type === 'run-settled') {
-            const status = own(raw, 'status'); if (!['completed', 'unresolved', 'failed', 'cancelled', 'invalid', 'stale'].includes(status)) return previous;
+            const status = own(raw, 'status'); if (!['partial', 'completed', 'unresolved', 'failed', 'cancelled', 'invalid', 'stale'].includes(status)) return previous;
             if (previous.status === 'empty' && !['invalid', 'cancelled', 'stale'].includes(status)) return previous;
             const rawAddress = own(raw, 'failedAddress'), failedAddress = rawAddress === undefined ? null : nodeAddress(rawAddress);
             if (rawAddress !== undefined && (!failedAddress || !nodes.some(node => node.included && addressKey(node.address) === addressKey(failedAddress)))) return previous;
@@ -60,7 +60,7 @@ export function reduceRunState(previous, raw) {
             if (status === 'failed') nodes = failNodes(nodes, failedAddress, elapsedMs);
             else nodes = nodes.map(node => {
                 if (!node.included || terminal(node.status) || node.status === 'blocked' || node.status === 'not-run') return node;
-                return settleNode(node, status === 'completed' ? (active(node) ? 'completed' : 'not-run') : status, elapsedMs);
+                return settleNode(node, ['completed','partial'].includes(status) ? (active(node) ? 'completed' : 'not-run') : status, elapsedMs);
             });
             const error = safeError(own(raw, 'error'), previous.plan ?? {units:[],hierarchy:[]}, failedAddress); if (error) {
                 next.error = error;
@@ -76,7 +76,7 @@ export function reduceRunState(previous, raw) {
                 const phase = own(raw, 'phase'); if (!['binding', 'executing'].includes(phase) || node.status === 'running') return previous;
                 // Preflight may resolve a fixed binding before its source runs;
                 // only execution authorizes input consumption and needs settled dependencies.
-                if (nodes.some(item => active(item)) || phase === 'executing' && node.dependencies.some(dependency => !nodes.some(item => addressKey(item.address) === addressKey(dependency) && ['completed','skipped','unresolved'].includes(item.status)))) return previous;
+                if (nodes.some(item => active(item)) || phase === 'executing' && node.dependencies.some(dependency => !nodes.some(item => addressKey(item.address) === addressKey(dependency) && (['completed','skipped','unresolved'].includes(item.status)||item.status==='failed'&&item.recoverable===true||item.status==='blocked')))) return previous;
                 node.subphase = phase;
                 const binding = safeBinding(own(raw, 'binding')); if (binding) node.binding = binding;
                 if (phase === 'executing') { nodes = nodes.map(item => item.included && item.status === 'waiting' ? { ...item, status: 'queued' } : item); node.status = 'running'; node.startedAt = elapsedMs; next.status = 'running'; }
@@ -104,11 +104,11 @@ export function reduceRunState(previous, raw) {
                 const error = safeError(own(raw, 'error'), previous.plan, address); if (error) node.request.error = error;
                 node.subphase = node.status === 'cancelling' ? 'cancelling' : 'executing';
             } else if (type === 'node-settled') {
-                const status = own(raw, 'status'); if (!['completed', 'skipped', 'unresolved', 'failed', 'cancelled'].includes(status) || (node.status !== 'running' && !(status === 'failed' && node.subphase === 'binding') && !(['skipped','unresolved'].includes(status)&&untouched(node)&&node.dependencies.every(dependency=>nodes.some(item=>addressKey(item.address)===addressKey(dependency)&&['completed','skipped','unresolved'].includes(item.status)))))) return previous;
+                const status = own(raw, 'status'); if (!['completed', 'skipped', 'unresolved', 'failed', 'cancelled', 'blocked'].includes(status) || (node.status !== 'running' && !(status === 'failed' && node.subphase === 'binding') && !(['skipped','unresolved','blocked'].includes(status)&&untouched(node)&&node.dependencies.every(dependency=>nodes.some(item=>addressKey(item.address)===addressKey(dependency)&&(['completed','skipped','unresolved'].includes(item.status)||item.status==='failed'&&item.recoverable===true||item.status==='blocked')))))) return previous;
                 node = settleNode(node, status, elapsedMs);
                 const reason = safeError(own(raw,'reason')); if(reason) node.reason = reason;
                 const error = safeError(own(raw, 'error'), previous.plan, address); if (error) node.error = error;
-                if (status === 'failed') nodes = failNodes(nodes, address, elapsedMs);
+                if (status === 'failed') { node.recoverable = own(raw,'recoverable')===true; if(!node.recoverable) nodes = failNodes(nodes, address, elapsedMs); }
             } else return previous;
             nodes = nodes.slice(); nodes[index] = node;
         }

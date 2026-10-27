@@ -37,7 +37,7 @@ export function createChatProgress({ document, subscribeActivity, subscribeEvent
         const finished = included.filter(node => node.status === 'completed').length + skipped;
         percent.textContent = state.plan ? (state.status === 'completed' ? 100 : Math.min(99, included.length ? Math.floor(finished / included.length * 100) : 0)) + '%' : '—';
         root.dataset.status = state.status === 'empty' ? 'waiting' : state.status;
-        const description = `Workflow stage progress. ${root.dataset.status}. ${finished} of ${included.length} stages finished. ${skipped} skipped.`;
+        const description = `Workflow stage progress. ${state.status === 'partial' ? 'Completed with failures' : root.dataset.status}. ${finished} of ${included.length} stages finished. ${skipped} skipped.`;
         root.title = description;
         root.setAttribute('aria-label', description);
         let rows = state.plan ? projectRunRows(state) : [{ status: 'waiting' }];
@@ -75,7 +75,7 @@ export function createChatProgress({ document, subscribeActivity, subscribeEvent
         if (next === state) return;
         state = next;
         render();
-        if (['completed', 'unresolved', 'failed', 'cancelled', 'invalid', 'stale'].includes(state.status)) fade();
+        if (['completed', 'partial', 'unresolved', 'failed', 'cancelled', 'invalid', 'stale'].includes(state.status)) fade();
     });
 
     return {

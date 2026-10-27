@@ -3,7 +3,7 @@
     import type { DiagnosticHistoryActions, DiagnosticHistoryView } from './diagnostic-history-types';
     import type { DiagnosticError, DiagnosticLog } from '../src/workflow/diagnostic-history';
     let { view, actions }: { view: DiagnosticHistoryView | null; actions?: DiagnosticHistoryActions } = $props();
-    const statusLabel = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+    const statusLabel = (value: string) => value === 'partial' ? 'Completed with failures' : value.charAt(0).toUpperCase() + value.slice(1);
     const isoTime = (value: number) => Number.isFinite(value) ? new Date(value).toISOString() : undefined;
     const timestamp = (value: number) => Number.isFinite(value) ? new Date(value).toLocaleString() : 'Unknown time';
     const retainedFailure = (entry: DiagnosticLog) => entry.attempts.find(attempt => attempt.validationError || attempt.error);
@@ -15,7 +15,7 @@
     <label class="pc-diagnostic-toggle"><input type="checkbox" aria-label="Save diagnostic logs" checked={view?.enabled ?? false} disabled={!view || !actions?.setEnabled} onchange={event => { if (view) actions?.setEnabled(event.currentTarget.checked); }} />Save model responses</label>
     <p>Failure metadata is always retained locally in this browser, including when this switch is off. Model output text requires this opt-in and may contain private story text.</p>
     <p>Turning this on applies to the next run. Turning it off stops response capture immediately. Saved logs stay available until cleared or removed by retention limits.</p>
-    <p>Successful and cancelled runs are saved only with this switch on. Keeps up to 50 runs and 5 MiB per user; oldest logs are removed first.</p>
+    <p>Completed runs with failures retain their metadata. Successful and cancelled runs are saved only with this switch on. Keeps up to 50 runs and 5 MiB per user; oldest logs are removed first.</p>
     <h4>Saved logs</h4>
     <div class="pc-diagnostic-history-actions">
         <button type="button" data-diagnostic-export disabled={!scopeAvailable || !view?.entries.length || !actions?.export} onclick={() => { if (scopeAvailable && view?.entries.length) actions?.export(view.scopeKey); }}>Export logs</button>
@@ -26,8 +26,8 @@
     <ol class="pc-diagnostic-log-list">
         {#each view?.entries ?? [] as entry (entry.id)}
             {@const failure = retainedFailure(entry)}
-            {@const error = entry.error ?? failure?.validationError ?? failure?.error}
-            {@const failedAddress = entry.error?.address ?? failure?.address}
+            {@const error = entry.error ?? entry.failures?.[0] ?? failure?.validationError ?? failure?.error}
+            {@const failedAddress = entry.error?.address ?? entry.failures?.[0]?.address ?? failure?.address}
             <li data-diagnostic-log={entry.id}>
                 <button type="button" class="pc-diagnostic-log-select" aria-expanded={view?.selectedId === entry.id} disabled={!actions?.select} onclick={() => actions?.select(entry.id)}>
                     <strong>{entry.origin.workflowName || entry.origin.workflowId}</strong>
@@ -45,6 +45,7 @@
             <p>Started: {timestamp(selected.origin.startedAt)} · Finished: {timestamp(selected.endedAt)}</p>
             {#if selected.truncated}<p class="pc-diagnostic-notice">This log was truncated to fit the retention limits.</p>{/if}
             {#if selected.error}{@render errorDetails(selected.error, 'Run error')}{/if}
+            {#each selected.failures ?? [] as failure}<div>{#if failure.address}<p>Node: {[...failure.address.instancePath, failure.address.nodeId].join(' / ')}</p>{/if}{@render errorDetails(failure, 'Node failure')}</div>{/each}
             <ol class="pc-diagnostic-attempts">
                 {#each selected.attempts as attempt, index (`${index}`)}
                     <li data-diagnostic-attempt={attempt.attempt}>

@@ -65,6 +65,10 @@ function boundRun(log, limit = DIAGNOSTIC_RUN_BYTES) {
         if (!over()) break;
         if (row[key]?.findings?.length) { const before = bytes(row[key]); row[key].findings = []; row[key].truncated = true; total += bytes(row[key]) - before; }
     }
+    for (const error of [log.error,...(log.failures ?? [])]) {
+        if (!over()) break;
+        if (error?.findings?.length) { const before = bytes(error); error.findings = []; error.truncated = true; total += bytes(error) - before; }
+    }
     for (const row of log.attempts) { if (!over()) break; if (row.binding) { total -= bytes(row.binding) + 11; delete row.binding; } }
     while (over() && log.attempts.length) total -= bytes(log.attempts.shift());
     return log;
@@ -126,9 +130,9 @@ function storedAttempt(raw) {
 }
 function storedLog(raw,userId) {
     try {
-        if (!known(raw,['version','id','origin','endedAt','status','error','actualCalls','callBound','attempts','truncated']) || own(raw,'version') !== 1 || typeof own(raw,'id') !== 'string' || !identity(own(raw,'id')) || !known(own(raw,'origin'),['userId','chatId','characterId','groupId','workflowId','workflowName','runId','mode','native','startedAt'])) return null;
+        if (!known(raw,['version','id','origin','endedAt','status','error','failures','actualCalls','callBound','attempts','truncated']) || own(raw,'version') !== 1 || typeof own(raw,'id') !== 'string' || !identity(own(raw,'id')) || !known(own(raw,'origin'),['userId','chatId','characterId','groupId','workflowId','workflowName','runId','mode','native','startedAt'])) return null;
         const origin = originOf(own(raw,'origin')), attempts = own(raw,'attempts');
-        if (!origin || origin.userId !== userId || own(raw,'id') !== origin.runId || !nonnegative(own(raw,'endedAt')) || !['completed','failed','cancelled','invalid','unresolved','stale'].includes(own(raw,'status')) || !['actualCalls','callBound'].every(key => Number.isSafeInteger(own(raw,key)) && own(raw,key) >= 0) || !dense(attempts,2048) || !attempts.every(storedAttempt) || !optional(raw,'error',storedError) || !optional(raw,'truncated',bool) || bytes(raw) > DIAGNOSTIC_RUN_BYTES) return null;
+        if (!origin || origin.userId !== userId || own(raw,'id') !== origin.runId || !nonnegative(own(raw,'endedAt')) || !['completed','partial','failed','cancelled','invalid','unresolved','stale'].includes(own(raw,'status')) || !['actualCalls','callBound'].every(key => Number.isSafeInteger(own(raw,key)) && own(raw,key) >= 0) || !dense(attempts,2048) || !attempts.every(storedAttempt) || !optional(raw,'error',storedError) || !optional(raw,'failures',value => dense(value,32) && value.every(error => storedError(error) && storedAddress(own(error,'address')))) || !optional(raw,'truncated',bool) || bytes(raw) > DIAGNOSTIC_RUN_BYTES) return null;
         const keys = attempts.map(row => `${addressKey(row.address)}:${row.attempt}`); if (new Set(keys).size !== keys.length) return null;
         return freeze(JSON.parse(encode(raw)));
     } catch { return null; }
@@ -192,7 +196,7 @@ export function createDiagnosticHistory({store,indexedDB,onChange} = {}) {
                     const type = own(event,'type');
                     if (type === 'run-settled') {
                         const status = own(event,'status');
-                        if (['completed','failed','cancelled','invalid','unresolved','stale'].includes(status)) terminal = {status,error:diagnosticError(own(event,'error')),address:safeAddress(own(event,'failedAddress'))};
+                        if (['completed','partial','failed','cancelled','invalid','unresolved','stale'].includes(status)) terminal = {status,error:diagnosticError(own(event,'error')),address:safeAddress(own(event,'failedAddress'))};
                         return;
                     }
                     if (type === 'plan') { const count = own(own(event,'plan'),'callBound'); if (Number.isSafeInteger(count) && count >= 0) callBound = count; return; }
@@ -255,12 +259,18 @@ export function createDiagnosticHistory({store,indexedDB,onChange} = {}) {
                     }
                     const error = diagnosticError(own(result,'error')) ?? terminal?.error;
                     if (error && !error.address && terminal?.address) { error.address = terminal.address; error.nodeId = terminal.address.nodeId; }
-                    const status = terminal?.status ?? (own(result,'ok') === true ? 'completed':error?.code === 'ABORTED' ? 'cancelled':'failed');
-                    if (metadataOnly && (own(result,'superseded') === true || !['failed','invalid','unresolved'].includes(status))) {
+                    const status = terminal?.status ?? (own(result,'ok') === true ? own(result,'recovered') === true ? 'partial':'completed':error?.code === 'ABORTED' ? 'cancelled':'failed');
+                    if (metadataOnly && (own(result,'superseded') === true || !['partial','failed','invalid','unresolved'].includes(status))) {
                         capture.release();
                         return capture.pending = Promise.resolve(successResult({discarded:true}));
                     }
-                    pendingEntry = freeze(boundRun({version:1,id:origin.runId,origin,endedAt:Date.now(),status,...(error?{error}:{}),actualCalls,callBound,attempts:[...attempts.values()],...(truncated?{truncated:true}:{})}));
+                    const rawFailures = own(result,'failures'), failures = [];
+                    if (Array.isArray(rawFailures)) for (let index = 0; index < Math.min(32,own(rawFailures,'length')); index++) {
+                        const failure = diagnosticError(own(rawFailures,String(index)));
+                        if (failure?.address) failures.push(failure);
+                    }
+                    if (Array.isArray(rawFailures) && own(rawFailures,'length') > 32) truncated = true;
+                    pendingEntry = freeze(boundRun({version:1,id:origin.runId,origin,endedAt:Date.now(),status,...(error?{error}:{}),...(failures.length?{failures}:{}),actualCalls,callBound,attempts:[...attempts.values()],...(truncated?{truncated:true}:{})}));
                     attempts.clear(); bindings.clear();
                     capture.pending = enqueue(async () => {
                         const discarded = () => successResult({discarded:true,...(capture.omitted?{omitted:capture.omitted}:{})});

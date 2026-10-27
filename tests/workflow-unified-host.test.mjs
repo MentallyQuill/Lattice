@@ -87,7 +87,7 @@ function unifiedGraph({ guidance = false, revise = true } = {}) {
 function nativeFixture(graph = unifiedGraph(), options = {}) {
     const listeners = new Map(), events = [], results = [];
     const c = { chatId: 'story', characterId: 0, groupId: null, characters: [{ data: { name: 'Mara' } }], chat: [{ mes: 'I open the door.', is_user: true, extra: {} }], extensionPrompts: {}, eventTypes: Object.fromEntries(['GENERATION_STARTED', 'GENERATION_STOPPED', 'GENERATION_ENDED', 'MESSAGE_RECEIVED', 'MESSAGE_SENT', 'CHAT_CHANGED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_DELETED', 'MESSAGE_SWIPED', 'MESSAGE_SWIPE_DELETED'].map(name => [name, name])) };
-    c.eventSource = { on(name, fn) { const bucket = listeners.get(name) ?? []; bucket.push(fn); listeners.set(name, bucket); }, removeListener(name, fn) { listeners.set(name, (listeners.get(name) ?? []).filter(value => value !== fn)); }, async emit(name, ...args) { for (const listener of listeners.get(name) ?? []) await listener(...args); } };
+    c.eventSource = { on(name, fn) { const bucket = listeners.get(name) ?? []; bucket.push(fn); listeners.set(name, bucket); }, makeFirst(name, fn) { const bucket = (listeners.get(name) ?? []).filter(value => value !== fn); bucket.unshift(fn); listeners.set(name, bucket); }, removeListener(name, fn) { listeners.set(name, (listeners.get(name) ?? []).filter(value => value !== fn)); }, async emit(name, ...args) { for (const listener of listeners.get(name) ?? []) await listener(...args); } };
     c.setExtensionPrompt = (key, value) => { c.extensionPrompts[key] = { value }; };
     c.saveChat = async () => {}; c.updateMessageBlock = async () => {}; c.swipe = { refresh: async () => {} };
     let busy = false, user = 'default-user', requests = 0;
@@ -536,4 +536,195 @@ test('a post-reply native dry-run Start cannot replace the owned generation wait
 
 test('a dry-run interceptor leaves owned native guidance and continuation intact',async()=>{
  const f=nativeFixture(unifiedGraph({guidance:true,revise:false}));try{assert.equal((await f.start()).awaitingNative,true);const guidance=JSON.stringify(f.c.extensionPrompts);assert.ok(Object.values(f.c.extensionPrompts).some(p=>p.value));await f.c.eventSource.emit('GENERATION_STARTED','normal',{},true);assert.deepEqual(await f.controller.beforeGenerate(f.c.chat,8192,()=>assert.fail('Inspection must not abort generation'),'normal'),{ok:true,skipped:true});assert.equal(JSON.stringify(f.c.extensionPrompts),guidance);addReply(f);await f.c.eventSource.emit('MESSAGE_RECEIVED',1,'normal');f.setBusy(false);await f.c.eventSource.emit('GENERATION_ENDED',2);assert.equal((await settled(f)).ok,true);assert.equal(f.requests(),0);}finally{f.controller.dispose();}
+});
+
+test('Stop all generation aborts failed preparation and retains the original failure through the stop event', async () => {
+    let stops = 0, aborts = 0;
+    const f = nativeFixture(unifiedGraph({ guidance: true, revise: false }), {
+        countTokens: async () => ({ tokens: 1000000 }),
+        abort: () => { aborts++; },
+        ports: { getFailurePolicy: () => 'stop', stopGeneration: () => { stops++; f.c.eventSource.emit('GENERATION_STOPPED'); return true; } },
+    });
+    try {
+        const value = await f.start();
+        assert.equal(value.ok, false);
+        assert.equal(value.error.code, 'GUIDANCE_OVERFLOW');
+        assert.equal(stops, 1);
+        assert.equal(aborts, 1);
+        assert.equal(value.failurePolicy, 'stop');
+        assert.equal(value.failureDisposition, 'stopped');
+        assert.equal(value.fallback, undefined);
+        assert.equal(f.results.length, 1);
+        assert.equal(f.results[0].error.code, 'GUIDANCE_OVERFLOW');
+        assert.equal(f.results[0].recording.status, 'failed');
+        assert.ok(Object.values(f.c.extensionPrompts).every(prompt => !prompt.value));
+    } finally { f.controller.dispose(); }
+});
+
+test('a failed supported group Send stops the shared native generation instead of allowing remaining speakers', async () => {
+    let stops = 0, aborts = 0;
+    const f = nativeFixture(unifiedGraph({ revise: false }), {
+        abort: () => { aborts++; },
+        ports: { getFailurePolicy: () => 'stop', stopGeneration: () => { stops++; return true; } },
+    });
+    f.c.groupId = 'group';
+    try {
+        const value = await f.start();
+        assert.equal(value.error.code, 'UNSUPPORTED_NATIVE_GENERATION');
+        assert.equal(value.failureDisposition, 'stopped');
+        assert.equal(stops, 1);
+        assert.equal(aborts, 1);
+    } finally { f.controller.dispose(); }
+});
+
+test('strict post-processing failure preserves the completed native reply and stops further generation', async () => {
+    let stops = 0;
+    const f = nativeFixture(unifiedGraph(), {
+        request: async () => ({ ok: false, error: { code: 'REQUEST_FAILED', message: 'Synthetic failure.' } }),
+        ports: { getFailurePolicy: () => 'stop', stopGeneration: () => { stops++; f.c.eventSource.emit('GENERATION_STOPPED'); return true; } },
+    });
+    try {
+        assert.equal((await f.start()).ok, true);
+        const reply = addReply(f);
+        await f.c.eventSource.emit('MESSAGE_RECEIVED', 1, 'normal');
+        f.setBusy(false);
+        await f.c.eventSource.emit('GENERATION_ENDED', 2);
+        const value = await settled(f);
+        assert.equal(value.error.code, 'REQUEST_FAILED');
+        assert.equal(value.failureDisposition, 'stopped');
+        assert.equal(stops, 1);
+        assert.equal(reply.mes, 'Native reply.');
+        assert.deepEqual(reply.swipes, ['Native reply.']);
+        assert.deepEqual(value.reviewHandles, []);
+    } finally { f.controller.dispose(); }
+});
+
+test('failure policy is captured before preparation and changes apply to the next Send', async () => {
+    let policy = 'stop', measured, resume, stops = 0;
+    const entered = new Promise(resolve => { measured = resolve; });
+    const gate = new Promise(resolve => { resume = resolve; });
+    const f = nativeFixture(unifiedGraph({ guidance: true, revise: false }), {
+        countTokens: async () => { measured(); await gate; return { tokens: 1000000 }; },
+        ports: { getFailurePolicy: () => policy, stopGeneration: () => { stops++; return true; } },
+    });
+    try {
+        const pending = f.start();
+        await entered;
+        policy = 'native-fallback';
+        resume();
+        const value = await pending;
+        assert.equal(value.failurePolicy, 'stop');
+        assert.equal(value.failureDisposition, 'stopped');
+        assert.equal(stops, 1);
+        const next = await f.start();
+        assert.equal(next.failurePolicy, 'native-fallback');
+        assert.equal(next.failureDisposition, 'native-fallback');
+        assert.equal(next.fallback, 'native');
+        assert.equal(stops, 1);
+    } finally { f.controller.dispose(); }
+});
+
+test('strict stopping reports an unavailable native stop helper without losing the node error', async () => {
+    let aborts = 0;
+    const f = nativeFixture(unifiedGraph({ guidance: true, revise: false }), {
+        countTokens: async () => ({ tokens: 1000000 }), abort: () => { aborts++; },
+        ports: { getFailurePolicy: () => 'stop' },
+    });
+    try {
+        const value = await f.start();
+        assert.equal(value.error.code, 'GUIDANCE_OVERFLOW');
+        assert.equal(value.failureDisposition, 'stop-unavailable');
+        assert.equal(value.fallback, undefined);
+        assert.equal(aborts, 1);
+    } finally { f.controller.dispose(); }
+});
+
+test('Continue where possible uses three of five completed guidance contributions through the real native controller', async () => {
+    const graph = unifiedGraph({ guidance: true, revise: false });
+    graph.nodes.guide.sections = [];
+    graph.nodes.prompt = { id: 'prompt', type: 'workflow', operation: 'text', text: 'Plan this scene.' };
+    for (const id of ['weather', 'mood', 'action', 'setting', 'direction']) {
+        graph.nodes[id] = { id, type: 'workflow', operation: 'model-call', profileId: id };
+        graph.nodes.guide.sections.push({ name: id, text: '', onSkipped: 'omit' });
+        graph.wires['prompt-' + id] = { id: 'prompt-' + id, route: 'wire', from: 'prompt', fromPort: 'out', to: id, toPort: 'prompt' };
+        graph.wires['guide-' + id] = { id: 'guide-' + id, route: 'wire', from: id, fromPort: 'out', to: 'guide', toPort: 'section.' + id };
+    }
+    const calls = [];
+    const f = nativeFixture(graph, {
+        resolveBinding: node => ({ ok: true, data: { profileId: node.profileId, model: 'test' } }),
+        request: async ({ binding }) => {
+            calls.push(binding.profileId);
+            return ['weather', 'setting'].includes(binding.profileId)
+                ? { ok: false, error: { code: 'REQUEST_FAILED', message: 'Synthetic failure.' } }
+                : { ok: true, data: { text: binding.profileId + ' guidance', finish: 'stop' } };
+        },
+        ports: { getFailurePolicy: () => 'continue-available' },
+    });
+    try {
+        const ready = await f.start();
+        assert.equal(ready.ok, true, JSON.stringify(ready.error));
+        assert.equal(ready.awaitingNative, true);
+        assert.deepEqual(calls, ['weather', 'mood', 'action', 'setting', 'direction']);
+        assert.ok(Object.values(f.c.extensionPrompts).some(prompt => prompt.value === 'mood guidance\n\naction guidance\n\ndirection guidance'));
+        addReply(f);
+        await f.c.eventSource.emit('MESSAGE_RECEIVED', 1, 'normal');
+        f.setBusy(false);
+        await f.c.eventSource.emit('GENERATION_ENDED', 2);
+        const value = await settled(f);
+        assert.equal(value.ok, true, JSON.stringify(value.error));
+        assert.equal(value.recovered, true);
+        assert.equal(value.failureDisposition, 'continued');
+        assert.equal(value.failurePolicy, 'continue-available');
+        assert.equal(value.recording.status, 'partial');
+        assert.equal(value.failures.length, 2);
+        assert.equal(value.actualCalls, 5);
+        assert.equal(value.reviewHandles.length, 1);
+        assert.equal(f.c.chat.at(-1).mes, 'Native reply.');
+        assert.equal((await f.controller.apply(value.reviewHandles[0])).ok, true);
+        assert.equal(calls.length, 5, 'Review does not rerun completed work');
+    } finally { f.controller.dispose(); }
+});
+
+test('a policy stop event delayed by an earlier async listener cannot cancel a replacement Send', async () => {
+    let tokens = 1000000, release, stopEvent;
+    const gate = new Promise(resolve => { release = resolve; });
+    const f = nativeFixture(unifiedGraph({ guidance: true, revise: false }), {
+        countTokens: async () => ({ tokens }),
+        ports: { getFailurePolicy: () => 'stop', stopGeneration: () => { stopEvent = f.c.eventSource.emit('GENERATION_STOPPED'); return true; } },
+    });
+    f.c.eventSource.makeFirst('GENERATION_STOPPED', async () => gate);
+    try {
+        assert.equal((await f.start()).error.code, 'GUIDANCE_OVERFLOW');
+        tokens = 1;
+        const next = await f.start();
+        assert.equal(next.ok, true, JSON.stringify(next.error));
+        const owner = f.controller.activity().runId;
+        release();
+        await stopEvent;
+        assert.equal(f.controller.activity()?.runId, owner);
+        assert.ok(Object.values(f.c.extensionPrompts).some(prompt => prompt.value === 'Use vivid prose.'));
+    } finally { release(); f.controller.dispose(); }
+});
+
+test('reentrant chat and generation replacement inside native stopping keeps the replacement owner live', async () => {
+    let tokens = 1000000, replacement;
+    const f = nativeFixture(unifiedGraph({ guidance: true, revise: false }), {
+        countTokens: async () => ({ tokens }),
+        ports: { getFailurePolicy: () => 'stop', stopGeneration: () => {
+            f.c.eventSource.emit('CHAT_CHANGED');
+            f.c.chatId = 'replacement-chat';
+            tokens = 1;
+            replacement = f.start();
+            f.c.eventSource.emit('GENERATION_STOPPED');
+            return true;
+        } },
+    });
+    try {
+        await f.start();
+        const next = await replacement;
+        assert.equal(next.ok, true, JSON.stringify(next.error));
+        assert.equal(next.awaitingNative, true);
+        assert.equal(f.controller.activity()?.runId, next.runId);
+        assert.ok(Object.values(f.c.extensionPrompts).some(prompt => prompt.value === 'Use vivid prose.'));
+    } finally { f.controller.dispose(); }
 });

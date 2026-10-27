@@ -1,3 +1,4 @@
+import type { WorkflowFailurePolicy } from './failure-policy';
 /** Plain boundary DTOs: never carry host adapters, authenticated bindings or authority. */
 export type Result<T> = { ok: true; data: T } | { ok: false; error: WorkflowError };
 export interface SchemaFinding { path: string; keyword: string; message: string; }
@@ -231,9 +232,9 @@ export interface HostOperationExecutionContext extends OperationExecutionContext
 export type HostOperationExecutor = (node: NativeNode, inputs: Record<string, WorkflowArtifact>, local: HostOperationExecutionContext) => Promise<OperationResult> | OperationResult;
 
 /** Frozen diagnostic data; authenticated connection objects never enter these DTOs. */
-export type RunStatus = 'empty' | 'waiting' | 'queued' | 'running' | 'cancelling' | 'completed' | 'skipped' | 'unresolved' | 'failed' | 'blocked' | 'not-run' | 'cancelled' | 'invalid' | 'stale';
-export type RunSettlement = 'completed' | 'unresolved' | 'failed' | 'cancelled' | 'invalid' | 'stale';
-export interface SafeRunError { code: string; message: string; truncated?: boolean; findings?: SchemaFinding[]; }
+export type RunStatus = 'empty' | 'waiting' | 'queued' | 'running' | 'cancelling' | 'completed' | 'partial' | 'skipped' | 'unresolved' | 'failed' | 'blocked' | 'not-run' | 'cancelled' | 'invalid' | 'stale';
+export type RunSettlement = 'partial' | 'completed' | 'unresolved' | 'failed' | 'cancelled' | 'invalid' | 'stale';
+export interface SafeRunError { address?: NodeAddress; nodeId?: string; inputPortId?: string; code: string; message: string; truncated?: boolean; findings?: SchemaFinding[]; }
 /** Historical recordings may describe the retired typed transport; active operations use text completion. */
 export interface BindingSummary { capability?: 'text-completion' | 'typed-decision'; provider?: 'jev' | 'laya' | 'compatible'; connectionId?: string; role?: string; profileId?: string | null; model?: string | null; fingerprint?: string; truncated?: boolean; }
 export interface SourceSummary {
@@ -263,7 +264,7 @@ export type RunEvent = EventClock & (
     | { type: 'node-retry'; address: NodeAddress; reasonCode: 'INVALID_JSON' | 'SCHEMA_MISMATCH' | 'REQUEST_FAILED'; delayMs: number; nextAttempt: number; maxAttempts: number }
     | { type: 'request-start'; address: NodeAddress; attempt: number; maxTokens: number; inputTokens?: number | null; capability?: 'text-completion' | 'typed-decision'; iteration?: IterationProvenance }
     | { type: 'request-settled'; address: NodeAddress; attempt: number; status: 'completed' | 'failed' | 'cancelled'; durationMs: number; dispatched?: boolean; finish?: string | null; usage?: ReportedUsage | null; error?: SafeRunError }
-    | { type: 'node-settled'; address: NodeAddress; status: 'completed' | 'skipped' | 'unresolved' | 'failed' | 'cancelled'; error?: SafeRunError; reason?: SafeRunError }
+    | { type: 'node-settled'; address: NodeAddress; status: 'completed' | 'skipped' | 'unresolved' | 'failed' | 'cancelled' | 'blocked'; recoverable?: boolean; error?: SafeRunError; reason?: SafeRunError }
 );
 export interface RunNodeState extends RunUnit {
     status: RunStatus; subphase: 'binding' | 'executing' | 'request' | 'retrying' | 'cancelling' | null;
@@ -308,13 +309,15 @@ export interface RecordedPreviewSection {
     recordedRawText?: string; recordedModifierTrace?: readonly import('./modifiers').ModifierTrace[];
 }
 export interface TerminalReviewHandle { handleId: string; runId: string; terminal: TerminalTarget; }
-interface BoundedRunData { runId: string; ok: boolean; callBound: number; actualCalls: number; recording: Recording; error?: WorkflowError; preview?: true; }
+interface BoundedRunData { recovered?: true; failures?: readonly SafeRunError[]; runId: string; ok: boolean; callBound: number; actualCalls: number; recording: Recording; error?: WorkflowError; preview?: true; }
 export type BoundedWorkflowRunResult = BoundedRunData & { schema: 3 | 4; runtime: 2 | 3; mode: 'root' | 'target' };
 /** A failed factory can return no recording; consumers preserve their prior bounded record. */
 export interface WorkflowPreparationFailure { schema?: number; runtime?: number; mode: 'root' | 'target'; runId?: string; ok: false; callBound: number; actualCalls: number; error: WorkflowError; recording?: never; }
 export type WorkflowRunResult = BoundedWorkflowRunResult | WorkflowPreparationFailure;
-export type HostWorkflowRunResult = WorkflowRunResult & { reviewHandles?: TerminalReviewHandle[]; published?: boolean; automaticallyApplied?: boolean; effectsOnlyApplied?: boolean; fallback?: 'native'; };
+export type HostWorkflowRunResult = WorkflowRunResult & { failurePolicy?: WorkflowFailurePolicy; failureDisposition?: 'native-fallback' | 'stopped' | 'stop-unavailable' | 'continued' | 'reply-preserved'; reviewHandles?: TerminalReviewHandle[]; published?: boolean; automaticallyApplied?: boolean; effectsOnlyApplied?: boolean; fallback?: 'native'; };
+export interface WorkflowFailureControlPorts { getFailurePolicy?: () => WorkflowFailurePolicy; stopGeneration?: () => boolean | void | Promise<boolean | void>; }
 export interface WorkflowRunOptions {
+    failurePolicy?: WorkflowFailurePolicy;
     target?: WorkflowTarget; onEvent?: (event: RunEvent) => unknown; runId?: string;
     /** Passive owner diagnostic sink. Hidden/unknown response scopes must be omitted by its consumer. */
     onDiagnostic?: (event: WorkflowDiagnosticEvent) => unknown;

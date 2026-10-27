@@ -1,3 +1,4 @@
+import { isWorkflowFailurePolicy } from '../workflow/failure-policy.js?v=0.28.1';
 import { projectCurrentDiagnostics } from './current-diagnostics.js?v=0.28.1';
 import { prepareGraphArtifacts } from '../workflow/graph-artifacts.js?v=0.28.1';
 import { prepareWorkflowAttempt, prepareWorkflowPlanner, preparedWorkflowExpansion } from '../workflow/resolve.js?v=0.28.1';
@@ -39,6 +40,19 @@ function safeSettlement(raw) {
         receipts.push(freeze({intentId,targetId,status,...(error ? {error} : {})}));
     }
     return freeze({status:own(raw,'status'),published:true,receipts});
+}
+const recoveredNotice = 'Completed with failures. Successful results were kept. Review Run details for failed or blocked stages.';
+function outcomeMetadata(raw, recording = own(raw,'recording')) {
+    const metadata = {}, policy = own(raw,'failurePolicy'), disposition = own(raw,'failureDisposition');
+    if (isWorkflowFailurePolicy(policy)) metadata.failurePolicy = policy;
+    if (['native-fallback','stopped','stop-unavailable','continued','reply-preserved'].includes(disposition)) metadata.failureDisposition = disposition;
+    if (own(raw,'ok') !== true || !(own(raw,'recovered') === true || own(recording,'status') === 'partial')) return metadata;
+    const source = own(raw,'failures'), failures = [];
+    if (Array.isArray(source)) for (let index = 0; index < Math.min(32,own(source,'length')); index++) {
+        const error = safeError(own(source,String(index)));
+        if (error?.address) failures.push(error);
+    }
+    return {...metadata,recovered:true,failures:freeze(failures),outcomeNotice:recoveredNotice};
 }
 const summaryView = result => result.ok ? { callBound: result.data.callBound, issues: [], diagnostics: [], requiresNativeGeneration: result.data.requiresNativeGeneration === true, requiredBindingAddresses: result.data.requiredBindingAddresses } : { callBound: 0, issues: [result.error.message], diagnostics: presentDiagnostics([result.error]), requiresNativeGeneration: false, requiredBindingAddresses: [] };
 const emptyView = message => ({ graphId: '', name: '', phase: '', profiles: [], families: [], nodes: [], groups: [], selectedId: null, callBound: 0, issues: [message], diagnostics: presentDiagnostics([message]), busy: false, status: '', result: null, quoteHelp: QUOTE_SCOPE_HELP, rows: [], targets: [] });
@@ -222,7 +236,7 @@ export function projectPreparedWorkflow(prepared, { viewPath = [], selectedId = 
     const owner = projections.get(prepared);
     if (!owner) return emptyView('Use an actual prepared projection.');
     result ??= owner.result;
-    if (owner.failure) return { ...owner.failure, busy, status, result: result ? { kind: 'bounded', ok: result.ok === true, error: result.error?.message || '', ...(result.error ? { errorDiagnostic: presentDiagnostic(result.error) } : {}), actualCalls: result.actualCalls || 0, callBound: 0, ...noPreview, applyAvailable: false, applyIssue: owner.failure.issues[0], tokenMethods: [] } : null };
+    if (owner.failure) return { ...owner.failure, busy, status, result: result ? { kind: 'bounded', ok: result.ok === true, ...outcomeMetadata(result), error: result.error?.message || '', ...(result.error ? { errorDiagnostic: presentDiagnostic(result.error) } : {}), actualCalls: result.actualCalls || 0, callBound: 0, ...noPreview, applyAvailable: false, applyIssue: owner.failure.issues[0], tokenMethods: [] } : null };
     recording ??= result?.recording;
     const path = safeWorkflowData(viewPath) && Array.isArray(viewPath) ? pathKey(viewPath) : '', view = owner.views.get(path);
     if (!view) return { ...owner.base, ...emptyView('The selected workflow view is unavailable.'), busy, status };
@@ -239,7 +253,7 @@ export function projectPreparedWorkflow(prepared, { viewPath = [], selectedId = 
         && (!view.instancePath.length || pathKey(view.instancePath) === pathKey(cached.handle.terminal.address.instancePath));
     const preview = historicalPreviewTarget(recording, pinned || target), displayedTarget = preview.target;
     const content = preview.unavailable ? projectRecordedPreview({ kind: 'diagnostic', format: 'omitted', reason: 'historical wrapper mapping unavailable' }) : boundedPreview(recording, displayedTarget);
-    const resultView = result || recording ? { kind: 'bounded', ok: result?.ok === true, error: result?.error?.message || '', actualCalls: result?.actualCalls || 0, callBound: result?.callBound ?? recording?.plan?.callBound ?? summary.callBound,
+    const resultView = result || recording ? { kind: 'bounded', ok: result?.ok === true, ...outcomeMetadata(result,recording), error: result?.error?.message || '', actualCalls: result?.actualCalls || 0, callBound: result?.callBound ?? recording?.plan?.callBound ?? summary.callBound,
         runId: recording?.runId || result?.runId || '', ...content, previewTarget: displayedTarget, applyAvailable: !!validHandle,
         selectedReviewHandle: validHandle ? cached.handle : null, persistOnly: !!(validHandle && cached.persistOnly), ...(safeSettlement(result?.settlement) ? {settlement:safeSettlement(result.settlement)} : {}), applyIssue: validHandle ? cached.issue || applyIssue : applyIssue, tokenMethods: [...new Set((recording?.units || []).map(unit => unit.request?.tokenCount?.method).filter(Boolean))] } : null;
     if (resultView && result?.error) resultView.errorDiagnostic = presentDiagnostic({ ...safeError(result.error), ...(nodeAddress(result.error.address) ? { address: nodeAddress(result.error.address) } : {}) });
@@ -251,7 +265,7 @@ export function projectPreparedWorkflow(prepared, { viewPath = [], selectedId = 
         busy, status, result: resultView, rows: cachedRows(owner, rowSource, view.instancePath), recording: recording || null, availability, preparationError };
 }
 function boundedResult(raw, handles) {
-    const result = { schema: raw.schema, runtime: raw.runtime, mode: raw.mode, runId: raw.runId, ok: raw.ok === true, callBound: raw.callBound, actualCalls: raw.actualCalls, recording: raw.recording, reviewHandles: handles };
+    const result = { schema: raw.schema, runtime: raw.runtime, mode: raw.mode, runId: raw.runId, ok: raw.ok === true, callBound: raw.callBound, actualCalls: raw.actualCalls, recording: raw.recording, reviewHandles: handles, ...outcomeMetadata(raw) };
     const error = safeError(raw.error);
     if (error) result.error = { ...error, ...(nodeAddress(own(own(raw, 'error'), 'address')) ? { address: nodeAddress(own(own(raw, 'error'), 'address')) } : {}) };
     const settlement = safeSettlement(own(raw,'settlement')); if (settlement) result.settlement = settlement;
@@ -293,6 +307,7 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
             : settlement?.status === 'save-unverified' ? 'Reply accepted. Some saves are unconfirmed. Check their save status before writing again.'
             : settlement?.status === 'settled' ? result.effectsOnlyApplied === true ? 'Workflow data saved. Native reply unchanged.' : 'Reply accepted. Workflow data saved. Saving the reply is still unconfirmed.'
             : automatic ? 'Revised reply applied as a new swipe.' : 'Reply applied locally. Saving is unconfirmed.';
+        if (result?.recovered) status = recoveredNotice + ' ' + status;
         if (settlement?.status === 'partial') { availability = 'current'; applyIssue = ''; }
         else { clearAuthority(); availability = recording ? 'stale' : 'current'; if (!recording) result = null; }
     }
@@ -314,7 +329,7 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
             preparationError = { ...(safeError(response.error) || { code: 'PREPARATION_FAILED', message: 'Workflow preparation failed.' }), ...(address ? { address } : {}) };
             clearAuthority(); availability = recording ? 'superseded' : 'current';
         } else { preparationError = { code: 'RECORDING_REQUIRED', message: 'Current workflow results require an addressed recording.' }; clearAuthority(); availability = recording ? 'superseded' : 'current'; }
-        status = response.ok ? 'Run complete. Review the result.' : diagnosticText(response.error || { code: cancelled ? 'ABORTED' : 'WORKFLOW_FAILED', message: 'Run failed.' });
+        status = response.ok ? result?.recovered ? recoveredNotice : 'Run complete. Review the result.' : diagnosticText(response.error || { code: cancelled ? 'ABORTED' : 'WORKFLOW_FAILED', message: 'Run failed.' });
     }
     function capture() {
         syncDocument();
@@ -397,7 +412,7 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
             if(displayedAutomatic)retiredAutomatic.add(displayedAutomatic);
             generation++; invocation = null; displayedAutomatic = record; adopt(record.result, false, origin.signature); applyIssue = '';
             if (result?.ok && result.automaticallyApplied === true && result.appliedLocally === true) acceptApplied(record.result, true);
-            else status = result?.ok ? 'Review the result.' : diagnosticText(record.result.error || { code: 'WORKFLOW_FAILED', message: 'Run failed.' });
+            else status = result?.ok ? result.recovered ? recoveredNotice : 'Review the result.' : diagnosticText(record.result.error || { code: 'WORKFLOW_FAILED', message: 'Run failed.' });
             status = `Automatic Send · unified workflow · "${origin.graphName || graph.name}". ${status}`; publish();
         },
         refreshFreshness(selector) {

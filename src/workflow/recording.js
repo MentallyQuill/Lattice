@@ -202,7 +202,7 @@ export function createRunRecorder(options) {
         try {
             if (finished) return errorResult('RUN_FINISHED', 'This diagnostic recorder is finished.');
             if (!skeleton || !plain(raw)) return errorResult('CAPTURE_NOT_PLANNED', 'Capture requires an admitted run plan.');
-            if (['cancelling', 'cancelled', 'failed', 'completed', 'unresolved', 'invalid', 'stale'].includes(state.status)) return errorResult('RUN_CLOSED', 'Late diagnostic captures cannot reopen a closed run.');
+            if (['partial', 'cancelling', 'cancelled', 'failed', 'completed', 'unresolved', 'invalid', 'stale'].includes(state.status)) return errorResult('RUN_CLOSED', 'Late diagnostic captures cannot reopen a closed run.');
             const address = nodeAddress(own(raw, 'address')), direction = own(raw, 'direction'), portId = own(raw, 'portId');
             const unitIndex = address ? state.plan.units.findIndex(unit => addressKey(unit.address) === addressKey(address)) : -1;
             if (unitIndex < 0 || !state.plan.units[unitIndex].included) return errorResult('CAPTURE_NOT_PLANNED', 'The capture address is outside the selected plan.');

@@ -44,7 +44,9 @@ function failedNode(result, issue, nodeId) {
 
 /** Toast copy uses only captured node metadata, catalog copy and sanitized validator findings. */
 export function presentFailureNotification(result, origin) {
-    const error = own(result, 'error'), issue = presentDiagnostic(error, { action: 'run the workflow' });
+    const recovered=own(result,'recovered')===true, failures=own(result,'failures');
+    const failed=recovered && dense(failures,32)?failures:[];
+    const error = own(result, 'error') ?? (recovered?own(failed,'0'):undefined), issue = presentDiagnostic(error, { action: 'run the workflow' });
     const code = issue.technical?.code || 'WORKFLOW_FAILED';
     const nodeId = identifier(issue.address?.nodeId ?? own(error, 'nodeId'));
     const node = failedNode(result, issue, nodeId), title = label(own(node, 'label'));
@@ -62,6 +64,9 @@ export function presentFailureNotification(result, origin) {
     const maxTokens = own(own(node, 'request'), 'maxTokens');
     const tokenLimit = code === 'TRUNCATED_OUTPUT' && Number.isSafeInteger(maxTokens) && maxTokens > 0 ? ` Output tokens: ${maxTokens}.` : '';
     const automatic = own(origin, 'kind') === 'send' && own(origin, 'phase') === 'unified';
-    return { severity: issue.severity,
-        message: `Workflow stopped${location}${count} (${code}). ${detail}${tokenLimit}${automatic ? ' SillyTavern may continue with its normal reply.' : ''} Open Lattice for details.` };
+    const disposition=own(result,'failureDisposition');
+    const outcome=recovered?'':disposition==='stopped'?' Generation stopped.':disposition==='stop-unavailable'?' SillyTavern stopping could not be confirmed.':disposition==='reply-preserved'?' The completed SillyTavern reply was kept.':disposition==='native-fallback'?' Continuing with normal SillyTavern generation.':automatic?' SillyTavern may continue with its normal reply.':'';
+    const heading=recovered?`Workflow continued with available results; ${failed.length} ${failed.length===1?'node':'nodes'} failed`:'Workflow stopped';
+    return { severity: recovered?'warning':issue.severity,
+        message: `${heading}${location}${count} (${code}). ${detail}${tokenLimit}${outcome} Open Lattice for details.` };
 }

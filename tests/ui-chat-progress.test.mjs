@@ -211,3 +211,22 @@ test('request retries retain the primitive percentage until the stage settles', 
     f.event('node-settled', { address: address('b'), status: 'completed' });
     assert.equal(f.meter().querySelector('.pc-chat-progress-percent').textContent, '99%');
 });
+
+
+test('partial chat progress announces failures, preserves failed pixels and fades after settlement', t => {
+    const f = fixture(t), time = clock(t);
+    f.activity();
+    f.event('plan',{plan:plan([unit('a'),unit('b')])});
+    f.event('node-phase',{address:address('a'),phase:'executing'});
+    f.event('node-settled',{address:address('a'),status:'completed'});
+    f.event('node-phase',{address:address('b'),phase:'executing'});
+    f.event('node-settled',{address:address('b'),status:'failed',error:{code:'REQUEST_FAILED',message:'The request failed.'}});
+    f.event('run-settled',{status:'partial'});
+    assert.match(f.meter().getAttribute('aria-label'),/Completed with failures/);
+    assert.equal(f.meter().dataset.status,'partial');
+    assert.equal(f.meter().querySelectorAll('[data-status="failed"]').length,1);
+    assert.equal(f.meter().querySelector('.pc-chat-progress-percent').textContent,'50%');
+    assert.equal(f.meter().classList.contains('pc-chat-progress-fading'),true);
+    time.tick(3000);
+    assert.equal(f.meter().hidden,true);
+});

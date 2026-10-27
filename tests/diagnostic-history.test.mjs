@@ -463,3 +463,35 @@ test('discard after a full-retention copied write restores its evicted previous 
     assert.equal((await pending).data.discarded,true);
     assert.deepEqual((await history.list(origin())).data.entries.map(entry=>entry.id).sort(),previousIds);
 });
+
+
+test('metadata-only partial runs retain sanitized addressed failures and omit response bodies after reload', async () => {
+    const store = memoryStore(), history = module.createDiagnosticHistory({store});
+    const capture = history.begin(origin(), {mode:'metadata'});
+    const failure = {code:'REQUEST_FAILED',message:'The request failed.',address,privateHandle:'PRIVATE_CAPABILITY'};
+    capture.model({type:'response',address,attempt:1,text:'PRIVATE_COMPLETION',visibility:{kind:'public'}});
+    capture.event({type:'run-settled',status:'partial'});
+    await capture.finish({ok:true,recovered:true,failures:[failure],actualCalls:2,callBound:3});
+    const entry = (await module.createDiagnosticHistory({store}).list(origin())).data.entries[0];
+    assert.ok(entry, 'partial results remain useful when full response logging is off');
+    assert.equal(entry.status,'partial');
+    assert.deepEqual(entry.failures,[{code:failure.code,message:failure.message,address,nodeId:address.nodeId}]);
+    assert.equal(entry.attempts[0].response.text,undefined);
+    assert.equal(JSON.stringify(store.users.get('owner')).includes('PRIVATE_'),false);
+});
+
+
+test('recovered result metadata derives partial history without a settlement event and bounds failures', async () => {
+    const store = memoryStore(), history = module.createDiagnosticHistory({store});
+    const capture = history.begin(origin(), {mode:'metadata'});
+    const failures = Array.from({length:40}, (_,index) => ({code:'REQUEST_FAILED',message:'Failure '+index,address:{...address,nodeId:'failed-'+index}}));
+    await capture.finish({ok:true,recovered:true,failures});
+    const entry = (await history.list(origin())).data.entries[0];
+    assert.equal(entry.status,'partial');
+    assert.equal(entry.failures.length,32);
+    assert.equal(entry.truncated,true);
+    const invalid = {...entry,id:'invalid',origin:{...entry.origin,runId:'invalid'},failures:[{code:'BAD',message:'Unaddressed'}]};
+    const overflow = {...entry,id:'overflow',origin:{...entry.origin,runId:'overflow'},failures:[...entry.failures,entry.failures[0]]};
+    store.users.set('owner',[entry,invalid,overflow]);
+    assert.deepEqual((await history.list(origin())).data.entries.map(row => row.id),['run']);
+});

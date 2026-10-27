@@ -187,3 +187,17 @@ test('saved schema findings are escaped, bounded and validated before display', 
         assert.equal(reads, 0); assert.equal(f.host.querySelector('.pc-diagnostic-findings'), null);
     } finally { await f.close(); }
 });
+
+
+test('saved partial runs expose their outcome and node failure even when no request attempt exists', async () => {
+    const failure = {code:'TEXT_RULE_FAILED',message:'The text rule failed.',address};
+    const entry = saved({status:'partial',attempts:[],failures:[failure]});
+    const f = await fixture(history({entries:[entry],selectedId:entry.id}));
+    try {
+        const row = f.host.querySelector('[data-diagnostic-log]');
+        assert.match(row.textContent,/Completed with failures/);
+        assert.match(row.textContent,/TEXT_RULE_FAILED/);
+        assert.match(row.textContent,/extract/);
+        assert.match(f.host.querySelector('[data-diagnostic-selection]').textContent,/The text rule failed/);
+    } finally { await f.close(); }
+});

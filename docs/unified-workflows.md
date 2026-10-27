@@ -62,7 +62,7 @@ Select **Generate Reply → Details** to set **Injection role** (System, User or
 
 Connections decide dependencies. A Preparation label alone does not put text into the main prompt: connect it to guidance or another required preparation input. A response branch must reach a selected terminal or consumed output to run. Canvas position does not determine order. Cycles, incompatible types, invalid pins, and unsupported helper nodes fail validation.
 
-Tools that support both stages expose **Stage → Preparation / Response**. A skipped optional branch can be omitted by Join. An unresolved required branch holds its dependents; uncertainty is not automatically false.
+Tools that support both stages expose **Stage → Preparation / Response**. A skipped optional branch can be omitted by Join. The global [When a node fails](native-workflows.md#choose-what-happens-when-a-node-fails) setting can also allow recovery from eligible failed branches using these authored optional inputs. An unresolved required branch holds its dependents; uncertainty is not automatically false.
 
 ## Recover structured model output
 

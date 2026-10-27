@@ -14,7 +14,7 @@ export interface DiagnosticAttempt {
     error?:DiagnosticError; validationError?:DiagnosticError;
     retry?:{reasonCode:string; delayMs:number; nextAttempt:number};
 }
-export interface DiagnosticLog {version:1; id:string; origin:DiagnosticOrigin; endedAt:number; status:string; error?:DiagnosticError; actualCalls:number; callBound:number; attempts:DiagnosticAttempt[]; truncated?:boolean;}
+export interface DiagnosticLog {version:1; id:string; origin:DiagnosticOrigin; endedAt:number; status:string; error?:DiagnosticError; failures?:DiagnosticError[]; actualCalls:number; callBound:number; attempts:DiagnosticAttempt[]; truncated?:boolean;}
 export interface DiagnosticCapture {
     /** Live text-capture lease: false for metadata captures and after revocation or finish. */
     readonly captureResponses:boolean;
