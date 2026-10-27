@@ -1,3 +1,4 @@
+import {findInlineEditor,rememberValueEditor,selectValueScope} from './helpers/inline-value-scope.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile, mkdtemp, rm } from 'node:fs/promises';
@@ -111,11 +112,12 @@ async function panel(name, view, actions) {
         const harness = await compiled('N6ParentHarness', directory, `<script>import Parent from ${JSON.stringify(pathToFileURL(leaf.path).href)};let {initial,actions}=$props();let view=$state.raw(initial);export function update(next){view=next;}</script><Parent {view} {actions}/>`);
         mounted = mount(harness.component, { target, props: { initial: view, actions } });
         flushSync(); await tick(); flushSync();
+        for(const group of target.querySelectorAll('details[data-control-group]'))if(!group.open){group.querySelector('summary').click();flushSync();}
         return { host: target, mounted, close };
     } catch (error) { await close(); throw error; }
 }
 function input(host, label, value, event = 'input') {
-    const element = host.querySelector('[aria-label="' + label + '"]');
+    const element = findInlineEditor(host,label);
     assert.ok(element, 'Missing ' + label);
     if (['checkbox', 'radio'].includes(element.type)) element.checked = value; else element.value = value;
     element.dispatchEvent(new dom.window.Event(event, { bubbles: true })); flushSync();
@@ -123,7 +125,7 @@ function input(host, label, value, event = 'input') {
 }
 async function click(host, label) {
     const element = [...host.querySelectorAll('button')].find(button => button.getAttribute('aria-label') === label || button.textContent.trim() === label);
-    assert.ok(element, 'Missing ' + label); element.click(); flushSync(); await tick(); flushSync();
+    assert.ok(element, 'Missing ' + label); element.click(); flushSync(); rememberValueEditor(host,element,flushSync); await tick(); flushSync();
 }
 function detail(root, id = 'node', revision = 'r1') {
     const node = root.nodes[id], phase = node.phase ?? 'pre';
@@ -286,9 +288,9 @@ test('pristine N6 controls follow authoritative revisions and real Undo without 
             assert.equal(f.editControl(detail(f.root),key,next).ok,true);f.refresh();form.mounted.update(detail(f.root,'node','r2'));flushSync();await tick();flushSync();
             if(operation==='decision')assert.equal(form.host.querySelector('[aria-label="Question 1 instructions"]').value,'External words.');
             if(operation==='advance-time')assert.equal(form.host.querySelector('[aria-label="Schedule 1 interval quantity"]').value,'720');
-            await click(form.host,'Save '+labelFor(operation));assert.deepEqual(submitted.at(-1),next);assert.equal(f.commits(),1);
+            assert.equal(form.host.querySelector('[data-save-control="'+key+'"]'),null);assert.equal(submitted.length,0);assert.equal(f.commits(),1);
             assert.ok(H.undo(f.root));assert.deepEqual(f.root,before);f.refresh();form.mounted.update(detail(f.root,'node','r3'));flushSync();await tick();flushSync();
-            await click(form.host,'Save '+labelFor(operation));assert.deepEqual(submitted.at(-1),before.nodes.node[key]);assert.equal(H.undo(f.root),null);
+            assert.equal(form.host.querySelector('[data-save-control="'+key+'"]'),null);assert.equal(submitted.length,0);assert.equal(H.undo(f.root),null);
         }finally{await form.close();}
     }
 });
@@ -299,9 +301,9 @@ test('pending N6 Saves disable real editors and synthetic changes until acknowle
         try{
             await changeFriendly(form,operation,operation==='decision'?'Submitted words.':'720');await click(form.host,'Save '+labelFor(operation));assert.equal(calls,1);
             const labels=operation==='decision'?['Question 1 instructions','Question 1 type']:operation==='advance-time'?['Schedule 1 interval quantity','Schedule 1 interval unit']:[labelFor(operation)+' number'];
-            for(const label of labels)assert.equal(form.host.querySelector('[aria-label="'+label+'"]').matches(':disabled'),true,label);
+            for(const label of labels)assert.equal(findInlineEditor(form.host,label).matches(':disabled'),true,label);
             input(form.host,labels[0],operation==='decision'?'': '1e');release();flushSync();await tick();flushSync();assert.equal(f.commits(),1);f.refresh();await inspectorRemount(form,detail(f.root));
-            assert.deepEqual(f.root.nodes.node[key],submitted);await click(form.host,'Save '+labelFor(operation));assert.equal(calls,2);release();flushSync();await tick();
+            assert.deepEqual(f.root.nodes.node[key],submitted);assert.equal(form.host.querySelector('[data-save-control="'+key+'"]'),null);assert.equal(calls,1);
         }finally{if(release)release();await form.close();}
     }
 });
@@ -316,7 +318,7 @@ test('old N6 Save acknowledgement retains newer invalid-only drafts after revisi
             else {if(!form.host.querySelector('[aria-label="'+labelFor(operation)+' number"]')){await click(form.host,'Edit '+labelFor(operation)+' key own');await click(form.host,'Edit '+labelFor(operation)+' key numeric');}input(form.host,labelFor(operation)+' number','1e');}
             release();flushSync();await tick();flushSync();await inspectorRemount(form,detail(f.root));
             const label=operation==='decision'?'Question 1 criteria unfinished JSON':operation==='advance-time'?'Schedule 1 interval quantity':labelFor(operation)+' JSON';
-            const rejected=form.host.querySelector('[aria-label="'+label+'"]');assert.ok(rejected,label);assert.match(rejected.value,/1e/);await click(form.host,'Save '+labelFor(operation));assert.equal(calls,1);assert.deepEqual(f.root.nodes.node[key],submitted);
+            const rejected=findInlineEditor(form.host,label);assert.ok(rejected,label);assert.match(rejected.value,/1e/);await click(form.host,'Save '+labelFor(operation));assert.equal(calls,1);assert.deepEqual(f.root.nodes.node[key],submitted);
             input(form.host,label,operation==='time-trigger'?JSON.stringify(changedValue(operation,2)):'2');await click(form.host,'Save '+labelFor(operation));assert.equal(calls,2);release();flushSync();await tick();
         }finally{if(release)release();await form.close();}
     }
@@ -340,6 +342,6 @@ test('optional answer descriptions retain inactive invalid criteria across accep
 
 test('existing duplicate schedule identities open repairable raw JSON without a keyed-row crash',async()=>{
     const f=editing('advance-time');f.root.nodes.node.schedules=[schedule,{...schedule,dueMinute:10}];H.reset(f.root);f.refresh();const form=await panel('NodeDetails',detail(f.root),{editControl:f.editControl});
-    try{assert.ok(form.host.querySelector('[aria-label="Schedules JSON"]'));await click(form.host,'Save '+labelFor('advance-time'));assert.equal(f.commits(),0);input(form.host,'Schedules JSON',JSON.stringify([schedule]));await click(form.host,'Save '+labelFor('advance-time'));assert.equal(f.commits(),1);assert.deepEqual(f.root.nodes.node.schedules,[schedule]);}
+    try{assert.ok(form.host.querySelector('[aria-label="Schedules JSON"]'));assert.equal(form.host.querySelector('[data-save-control="schedules"]'),null);assert.equal(f.commits(),0);input(form.host,'Schedules JSON',JSON.stringify([schedule]));await click(form.host,'Save '+labelFor('advance-time'));assert.equal(f.commits(),1);assert.deepEqual(f.root.nodes.node.schedules,[schedule]);}
     finally{await form.close();}
 });

@@ -5,6 +5,7 @@ import { join, relative, resolve, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { compiled } from './svelte-compile.mjs';
+import { findInlineEditor, rememberValueEditor } from './inline-value-scope.mjs';
 
 const dom = new JSDOM('<!doctype html><body></body>', { pretendToBeVisual: true });
 globalThis.window = dom.window; globalThis.document = dom.window.document;
@@ -21,12 +22,13 @@ export async function inspectorComponent(name, initial, options, check) {
         const harness = await compiled('Harness', directory, `<script>
             import Leaf from ${JSON.stringify(pathToFileURL(leaf.path).href)};
             let { initial, options } = $props();
-            let text = $state(initial), draft = $state.raw();
+            let text = $state(initial), value = $state.raw(initial), draft = $state.raw();
             let changes = $state([]), invalids = $state([]);
-            export function read() { return { text, draft, changes: [...changes], invalids: [...invalids] }; }
+            export function read() { return { text, value, draft, changes: [...changes], invalids: [...invalids] }; }
             function ontext(next) { text = next; changes = [...changes, next]; }
             function oninvalid(next) { invalids = [...invalids, next]; }
-        </script><Leaf {text} {ontext} {oninvalid} draftState={options.draftState} onDraftState={next => draft = next} {...options} label="Test" idPrefix="slim-test" />`);
+            function onchange(next) { value = next; changes = [...changes, next]; }
+        </script><Leaf {text} {value} {onchange} {ontext} {oninvalid} draftState={options.draftState} onDraftState={next => draft = next} {...options} label="Test" idPrefix="slim-test" />`);
         const start = (text, settings) => { mounted = mount(harness.component, { target: host, props: { initial: text, options: settings } }); flushSync(); };
         start(initial, options);
         await check({ host, read: () => mounted.read(), remount: async () => { const saved = mounted.read(); await unmount(mounted); start(saved.text, { ...options, draftState: saved.draft }); } });
@@ -39,14 +41,14 @@ export async function inspectorComponent(name, initial, options, check) {
     }
 }
 export function control(host, label) {
-    const element = [...host.querySelectorAll('[aria-label]')].find(element => element.getAttribute('aria-label') === label);
+    const element = findInlineEditor(host,label);
     assert.ok(element, `Missing ${label}`); return element;
 }
 export function input(host, label, value, event = 'input') {
     const element = control(host, label); element.value = value;
     element.dispatchEvent(new dom.window.Event(event, { bubbles: true })); flushSync(); return element;
 }
-export function click(host, label) { const element = control(host, label); element.click(); flushSync(); return element; }
+export function click(host, label) { const element = control(host, label); element.click(); flushSync(); rememberValueEditor(host,element,flushSync); return element; }
 export function nodeAt(host, path) { const element = [...host.querySelectorAll('[data-schema-path]')].find(element => element.getAttribute('data-schema-path') === JSON.stringify(path)); assert.ok(element, `Missing schema node ${JSON.stringify(path)}`); return element; }
 
 export async function detailsComponent(initial, actions, check) {

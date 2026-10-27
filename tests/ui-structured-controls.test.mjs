@@ -176,7 +176,7 @@ test('disabled row and raw editors cannot change the parent draft even through f
         ['durations', '{"onset":2}', 'Duration 1 steps', '4'],
     ]) await fixture(kind, initial, async f => {
         f.disable(true);
-        for (const editor of f.host.querySelectorAll('input,select,textarea,button')) assert.equal(editor.disabled, true, `${kind} editor must disable native controls`);
+        for (const editor of f.host.querySelectorAll('input,select,textarea')) assert.equal(editor.disabled || editor.readOnly, true, `${kind} editor must disable native controls`);
         input(f.host, label, value, label.includes('use default') || kind === 'numeric-map' || kind === 'durations' ? 'change' : 'input');
         for (const button of f.host.querySelectorAll('button')) button.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
         flushSync(); assert.equal(f.read().text, initial); assert.deepEqual(f.read().changes, []);

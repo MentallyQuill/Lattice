@@ -122,7 +122,7 @@
         {#if recordEntry}<button type="button" aria-label={'Use '+control.label+' terms'} {disabled} onclick={switchRows}>Terms / CSV</button>{/if}
         <StructuredControl {control} {text} {disabled} ontext={structuredText} {onDraft} {draftValue} {idPrefix} {error} />
     {:else if control.editor === 'boolean'}
-        <label class="pc-detail-check"><input aria-label={control.label} type="checkbox" checked={Boolean(control.value)} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.checked); }} />{control.label}</label>
+        <label class="pc-detail-check"><span>{control.label}</span><input aria-label={control.label} type="checkbox" role="switch" checked={Boolean(control.value)} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.checked); }} /><small>{control.value?'On':'Off'}</small></label>
     {:else if shortChoices()}
         <span class="pc-control-label">{control.label}</span>
         <div class="pc-control-segments" role="radiogroup" aria-label={control.label}>
@@ -169,6 +169,7 @@
     .pc-control-segments input:focus-visible + span { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
     .pc-control-segments input:disabled + span { opacity: .55; }
     .pc-detail-check { display: flex; align-items: center; gap: 6px; } input[type='checkbox'] { accent-color: var(--pc-accent); flex: none; margin: 0; }
+    .pc-detail-check > span{flex:1}.pc-detail-check small{margin:0;min-width:18px}.pc-detail-check input[role='switch']{appearance:none;width:28px;height:16px;border:1px solid var(--pc-border);border-radius:9px;background:var(--pc-field);position:relative;cursor:pointer}.pc-detail-check input[role='switch']::after{content:'';position:absolute;width:10px;height:10px;top:2px;left:2px;border-radius:50%;background:var(--pc-muted)}.pc-detail-check input[role='switch']:checked{background:var(--pc-accent)}.pc-detail-check input[role='switch']:checked::after{left:14px;background:var(--pc-on-accent,var(--pc-text))}
     small { display: block; margin-top: 4px; color: var(--pc-muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
     button { margin-top: 5px; min-height: 26px; max-width: 100%; padding: 4px 8px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); color: var(--pc-text); font: inherit; font-size: 11px; cursor: pointer; overflow-wrap: anywhere; }
     button:hover:global(:where(:not(body.pc-node-held *))):not(:disabled) { background: color-mix(in srgb, var(--pc-text) 10%, var(--pc-control)); } :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }

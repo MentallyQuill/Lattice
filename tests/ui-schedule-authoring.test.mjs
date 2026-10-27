@@ -1,3 +1,4 @@
+import {findInlineEditor,rememberValueEditor,selectValueScope} from './helpers/inline-value-scope.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 const api=await import('../src/ui/schedule-authoring.js').catch(()=>({}));
@@ -58,8 +59,8 @@ async function fixture(initial,check,options={}) {
         mounted=mount((await import(harness)).default,{target:host,props:{initial,options}});flushSync();await check({host,read:()=>mounted.read(),remount:()=>{mounted.remount();flushSync();mounted.show();flushSync();}});
     }finally{if(mounted)await unmount(mounted);host.remove();await rm(directory,{recursive:true,force:true});}
 }
-function input(host,label,value,type='input'){const e=host.querySelector(`[aria-label="${label}"]`);assert.ok(e,'Missing '+label);e.value=value;e.dispatchEvent(new dom.window.Event(type,{bubbles:true}));flushSync();}
-function click(host,label){const e=host.querySelector(`button[aria-label="${label}"]`);assert.ok(e,'Missing '+label);e.click();flushSync();}
+function input(host,label,value,type='input'){const e=findInlineEditor(host,label);assert.ok(e,'Missing '+label);e.value=value;e.dispatchEvent(new dom.window.Event(type,{bubbles:true}));flushSync();}
+function click(host,label){const e=host.querySelector(`button[aria-label="${label}"]`);assert.ok(e,'Missing '+label);e.click();flushSync();rememberValueEditor(host,e,flushSync);}
 test('schedule forms convert authored intervals and retain private metadata, revision, scope and optional absence',async()=>{
     await fixture([{scheduleId:'exact',kind:'interval',anchorMinute:0,intervalMinutes:480,revision:7,clockId:'chosen',extra:{visibility:'private',value:false}}],async f=>{
         input(f.host,'Schedule 1 interval quantity','8');input(f.host,'Schedule 1 interval unit','hours','change');assert.equal(f.read().value[0].intervalMinutes,480);
@@ -91,7 +92,7 @@ test('changing schedule kind retains authored inactive timing and optional falsy
 });
 test('retained nested metadata drafts can be repaired after a schedule remount without losing private scope',async()=>{
     await fixture([{scheduleId:'one',kind:'delay',dueMinute:10,scope:{visibility:'private',actorId:'Rowan'}}],async f=>{
-        click(f.host,'Edit Schedule 1 extra metadata key scope');click(f.host,'Edit Schedule 1 extra metadata key actorId');click(f.host,'Edit Schedule 1 extra metadata as JSON');input(f.host,'Schedule 1 extra metadata JSON','{unfinished');f.remount();
+        click(f.host,'Edit Schedule 1 extra metadata key scope');click(f.host,'Edit Schedule 1 extra metadata key actorId');input(f.host,'Schedule 1 extra metadata type','number','change');input(f.host,'Schedule 1 extra metadata number','-');f.remount();
         input(f.host,'Schedule 1 metadata unfinished JSON','"Mira"');assert.deepEqual(JSON.parse(JSON.stringify(f.read().value[0].scope)),{visibility:'private',actorId:'Mira'});
     });
 });

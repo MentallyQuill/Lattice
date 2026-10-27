@@ -23,6 +23,7 @@
     }
     let rows = $derived(parseRows());
     let raw = $state(false);
+    let addedRow = $state<number | null>(null);
     let editingRaw = $derived(raw || !rows);
     let rawText = $derived(editingRaw && draftValue !== undefined ? JSON.stringify(draftValue, null, 2) : text);
     function rawInput(value: string) { if (!disabled) { raw = true; ontext(value); } }
@@ -34,6 +35,7 @@
     }
     function add() {
         if (disabled || !rows || rows.length >= rowLimit) return;
+        addedRow = rows.length;
         let suffix = 1; while (rows.some(row => row.name === rowName + suffix)) suffix++;
         const id = allocateControlRowId(control.structured === 'slots' ? rowMinimum === 2 ? 'context' : 'slot' : 'pattern', rows.map(row => String(row.id)));
         emitRows([...rows, control.structured === 'fields' ? { name: rowName + suffix, path: [] } : control.structured === 'sections' ? { name: rowName + suffix, text: '' } : control.structured === 'slots' ? { id, label: 'Input ' + id.split('-').at(-1), ...(rowMinimum === 1 ? {required:true} : {}) } : control.structured === 'numeric-map' ? { name: rowName + suffix, number: 0 } : control.structured === 'durations' ? { name: phases.find(phase => !rows.some(row => row.name === phase)), number: 1 } : control.structured === 'patterns' ? {id,pattern:'text'} : control.structured === 'extract' ? {id,literal:'text',label:''} : { kind: 'literal', pattern: 'text', replacement: '' }]);
@@ -73,14 +75,15 @@
 </script>
 
 <div class="pc-structured-control" data-structured-control={control.structured}>
-    <div class="pc-structured-mode"><button type="button" aria-label={'Edit ' + control.label + (editingRaw ? ' as rows' : ' as JSON')} disabled={disabled || (editingRaw && !rows)} onclick={() => { if (!disabled && rows) raw = !editingRaw; }}>{editingRaw ? 'Use rows' : 'Advanced JSON'}</button></div>
+    <div class="pc-structured-mode"><button type="button" aria-label={'Edit ' + control.label + (editingRaw ? ' as rows' : ' as JSON')} disabled={editingRaw && !rows} onclick={() => { if (rows) raw = !editingRaw; }}>{editingRaw ? 'Use rows' : 'Edit JSON'}</button></div>
     {#if editingRaw}
-        <label for={idPrefix + '-raw'}>{control.label} (JSON)</label><textarea class="pc-structured-raw" id={idPrefix + '-raw'} aria-label={control.label} aria-invalid={!!error} aria-describedby={error ? idPrefix + '-error' : undefined} value={rawText} {disabled} oninput={event => rawInput(event.currentTarget.value)} spellcheck="false"></textarea>
+        <label for={idPrefix + '-raw'}>{control.label} (JSON)</label><textarea class="pc-structured-raw" id={idPrefix + '-raw'} aria-label={control.label} aria-invalid={!!error} aria-describedby={error ? idPrefix + '-error' : undefined} value={rawText} readonly={disabled} oninput={event => rawInput(event.currentTarget.value)} spellcheck="false"></textarea>
         {#if !rows}<small>This shape needs Advanced JSON. Authored values are retained; rows are available for supported shapes.</small>{/if}
     {:else if rows}
-        <div class="pc-structured-rows">
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard access to the bounded record list.) -->
+        <div class="pc-structured-rows" role="region" aria-label={control.label + ' records'} tabindex="0">
             {#each rows as row, index}
-                <fieldset class="pc-structured-row"><legend>{rowName[0].toUpperCase() + rowName.slice(1)} {index + 1}</legend>
+                <details class="pc-structured-row" data-record-row open={index===0 || addedRow===index}><summary><span>{String(row.name ?? row.label ?? row.id ?? rowName[0].toUpperCase() + rowName.slice(1) + ' ' + (index + 1))}</span><small>{String(row.text ?? row.pattern ?? row.literal ?? row.number ?? '')}</small></summary><fieldset><legend>{rowName[0].toUpperCase() + rowName.slice(1)} {index + 1}</legend>
                     {#if control.structured === 'durations'}
                         <label for={idPrefix + '-phase-' + index}>Phase</label><select id={idPrefix + '-phase-' + index} aria-label={'Duration ' + (index + 1) + ' phase'} value={String(row.name)} {disabled} onchange={event => mapName(index, event.currentTarget)}>{#each phases as phase}<option value={phase} disabled={rows.some((other, position) => position !== index && other.name === phase)}>{phase[0].toUpperCase() + phase.slice(1)}</option>{/each}</select>
                         <label for={idPrefix + '-steps-' + index}>Steps</label><input type="number" id={idPrefix + '-steps-' + index} aria-label={'Duration ' + (index + 1) + ' steps'} value={Number(row.number)} min="1" max="64" step="1" {disabled} onchange={event => numberField(index, event.currentTarget)} />
@@ -92,7 +95,7 @@
                         <JsonPathControl value={row.path as JsonPath} label={'Field ' + (index + 1) + ' path'} idPrefix={idPrefix + '-path-' + index} {disabled} allowIndices={true} onchange={value => change(index, 'path', value)} oninvalid={source => invalidField(index, 'path', source)} />
                         <label class="pc-structured-check"><input type="checkbox" aria-label={'Field ' + (index + 1) + ' required'} checked={row.required !== false} {disabled} onchange={event => change(index, 'required', event.currentTarget.checked)} /> Required</label>
                         <label class="pc-structured-check"><input type="checkbox" aria-label={'Field ' + (index + 1) + ' use default'} checked={Object.hasOwn(row, 'default')} {disabled} onchange={event => useDefault(index, event.currentTarget.checked)} /> Use default when missing</label><small>Defaults apply when Required is off.</small>
-                        {#if Object.hasOwn(row, 'default')}<JsonValueControl value={row.default as JsonValue} label={'Field ' + (index + 1) + ' default'} idPrefix={idPrefix + '-default-' + index} {disabled} onchange={value => change(index, 'default', value)} oninvalid={(source, path) => invalidField(index, 'default', source, path)} />{/if}
+                        {#if Object.hasOwn(row, 'default')}<JsonValueControl embedded value={row.default as JsonValue} label={'Field ' + (index + 1) + ' default'} idPrefix={idPrefix + '-default-' + index} {disabled} onchange={value => change(index, 'default', value)} oninvalid={(source, path) => invalidField(index, 'default', source, path)} />{/if}
                     {:else if control.structured === 'patterns' || control.structured === 'extract'}
                         <label for={idPrefix + '-pattern-id-' + index}>ID</label><input id={idPrefix + '-pattern-id-' + index} aria-label={'Pattern ' + (index + 1) + ' ID'} value={String(row.id)} {disabled} oninput={event => change(index, 'id', event.currentTarget.value)} />
                         <label for={idPrefix + '-phrase-' + index}>{control.structured === 'extract' ? 'Phrase' : 'Expression'}</label><input id={idPrefix + '-phrase-' + index} aria-label={'Pattern ' + (index + 1) + (control.structured === 'extract' ? ' phrase' : ' expression')} value={String(row[control.structured === 'extract' ? 'literal' : 'pattern'])} {disabled} oninput={event => change(index, control.structured === 'extract' ? 'literal' : 'pattern', event.currentTarget.value)} />
@@ -114,7 +117,7 @@
                     <label for={idPrefix + '-flags-' + index}>Flags</label><input id={idPrefix + '-flags-' + index} aria-label={'Rule ' + (index + 1) + ' flags'} value={String(row.flags ?? '')} {disabled} oninput={event => change(index, 'flags', event.currentTarget.value)} />
                     {/if}
                     <div class="pc-structured-actions">{#if !['numeric-map', 'durations'].includes(control.structured ?? '')}<button type="button" aria-label={'Move ' + rowName + ' ' + (index + 1) + ' up'} disabled={disabled || index === 0} onclick={() => move(index, -1)}>Move up</button><button type="button" aria-label={'Move ' + rowName + ' ' + (index + 1) + ' down'} disabled={disabled || index === rows.length - 1} onclick={() => move(index, 1)}>Move down</button>{/if}<button type="button" aria-label={'Remove ' + rowName + ' ' + (index + 1)} disabled={disabled || rows.length <= rowMinimum} onclick={() => remove(index)}>Remove</button></div>
-                </fieldset>
+                </fieldset></details>
             {/each}
         </div>
         <button type="button" aria-label={"Add " + rowName} disabled={disabled || rows.length >= rowLimit} onclick={add}>Add {rowName}</button>
@@ -123,6 +126,12 @@
 
 <style>
     .pc-structured-control, .pc-structured-rows { min-width: 0; color: var(--pc-text); font: inherit; }
+    .pc-structured-rows { max-height: 400px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+    .pc-structured-row > summary { cursor: pointer; padding: 6px 0; overflow-wrap: anywhere; }
+    .pc-structured-row > summary > span { font-weight: 500; }
+    .pc-structured-row > summary small { display: block; margin-left: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 16px); }
+    fieldset { min-width: 0; border: 0; margin: 0; padding: 0 4px 4px; }
+    legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
     .pc-structured-row { min-width: 0; margin: 8px 0; padding: 8px 0; border: 0; border-top: 1px solid var(--pc-border); }
     legend { padding: 0 4px 0 0; color: var(--pc-muted); font-size: 12px; }
     label { display: block; margin: 7px 0 3px; font-size: 12px; }
