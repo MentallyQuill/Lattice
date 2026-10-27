@@ -315,3 +315,22 @@ test('stage editing follows the current controls capabilities rather than static
     const legacy={id:'legacy-stage',schema:3,runtime:2,mode:'native-pre',nodes:{node:{id:'node',type:'workflow',...operationDefaults('style-transfer'),inputKind:'text',phase:'pre'}},wires:{}};
     assert.equal(details(legacy,'node').phaseEditable,false,'Legacy single-stage scopes do not expose a stage selector');
 });
+
+
+test('recovered panel projections retain partial status and notice while leaving failed and blocked rows honest', () => {
+    const root = starterGraph('structured-guidance');
+    const prepared = prepareWorkspaceViews(root), session = createGraphViewSession({root,activationId:'partial-panels',...prepared.data}).data;
+    const target = {workflowId:root.id,instancePath:[],nodeId:'compose-json',portId:'out'};
+    const error = {code:'REQUEST_FAILED',message:'Request failed.',address:{workflowId:root.id,instancePath:[],nodeId:'json-decode'}};
+    const base = projectPreparedWorkflow(prepared.data.workflow,{selectedId:'compose-json',selectedTarget:target,result:{ok:true,recovered:true,failures:[error],actualCalls:2,callBound:3}});
+    const rows = ['failed','blocked','skipped','completed'].map((status,index) => ({address:{workflowId:root.id,instancePath:[],nodeId:'row-'+index},kind:'primitive',status,executableCount:1,completedCount:status === 'completed' ? 1 : 0,children:[]}));
+    const workflow = {...base,rows};
+    const panels = projectWorkspacePanels(session.readEditor(),workflow,{availability:'current',status:'Run complete. Review the result.'},'partial',target,null);
+    assert.equal(panels.runDetails.status,'partial');
+    assert.ok(panels.runDetails.diagnostics.some(item=>item.technical?.code === 'REQUEST_FAILED'));
+    assert.deepEqual(panels.runDetails.diagnostics.find(item=>item.technical?.code === 'REQUEST_FAILED').address,error.address);
+    assert.equal(panels.runMeter.status,'partial');
+    assert.deepEqual(panels.runDetails.rows.map(row=>row.status),['failed','blocked','skipped','completed']);
+    assert.match(panels.outputPreview.statusDetail,/Completed with failures/);
+    assert.doesNotMatch(panels.outputPreview.statusDetail,/Run complete\./);
+});

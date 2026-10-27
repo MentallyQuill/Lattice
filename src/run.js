@@ -1,5 +1,5 @@
 /** Current Lattice host facade. SillyTavern owns native reply generation. */
-import { ctx, safe, settings, save, activeWorkflow, onWorkflowActivated, documentSession} from './state.js?v=0.28.1';
+import { ctx, safe, settings, save, activeWorkflow, onWorkflowActivated, documentSession, getWorkflowFailurePolicy} from './state.js?v=0.28.1';
 import { validateWorkflow } from './workflow/contracts.js?v=0.28.1';
 import { createNativeWorkflowController } from './workflow/host.js?v=0.28.1';
 import { bindingStatus } from './workflow/connections.js?v=0.28.1';
@@ -76,13 +76,15 @@ export function getNativeWorkflowController() {
         registerRecallHotkey: request => { recallShortcuts ??= createRecallShortcutRegistry(globalThis.document,{changed:()=>safe(()=>globalThis.document.dispatchEvent(new CustomEvent('pc-recall-state')))}); return recallShortcuts.register(request); },
         context: ctx, userId: currentUser, transportUserId, documentCatalog: getStoryDocumentCatalog(), persistenceVerifier: getNativePersistenceVerifier(),
         isEnabled: () => settings().enabled === true,
+        getFailurePolicy: getWorkflowFailurePolicy,
+        stopGeneration: () => {const stop=helpers?.stopGeneration??ctx().stopGeneration;return typeof stop==='function'?stop():false;},
         getGraph: () => { const graph = activeWorkflow(); return safe(() => Object.getOwnPropertyDescriptor(graph ?? {}, 'mode')?.value) === 'native-unified' ? graph : null; },
         isBusy: () => !helpers || helpers.isGenerating(),
         syncMesToSwipe: (...args) => helpers?.syncMesToSwipe(...args), syncSwipeToMes: (...args) => helpers?.syncSwipeToMes(...args),
         bindingStatus,
         countTokens: async text => { const count = ctx().getTokenCountAsync; if (typeof count === 'function') { const tokens = await count(text); if (Number.isFinite(tokens) && tokens >= 0) return { tokens, method: 'host-tokenizer' }; } return { tokens: Math.ceil(text.length / 4), method: 'character-estimate' }; },
         onResult: (result, origin) => {
-            if (!result.ok && !result.skipped && !result.superseded) {
+            if ((!result.ok || result.recovered === true) && !result.skipped && !result.superseded) {
                 const issue = presentFailureNotification(result, origin);
                 const severity = ['info', 'warning'].includes(issue.severity) ? issue.severity : 'error';
                 safe(() => globalThis.toastr?.[severity]?.(issue.message, 'Lattice workflow', { timeOut: 0, extendedTimeOut: 0, closeButton: true, tapToDismiss: false, escapeHtml: true }));

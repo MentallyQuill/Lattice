@@ -36,6 +36,24 @@ The normal SillyTavern reply is an additional request. Fixed selection, context 
 
 Connections determine execution order. Tools that support both stages expose **Stage → Preparation / Response**. Text transformations can work in either stage; editing the reply Draft belongs to Response. Disabled operations block validation. Saved subgraphs retain their exact definitions and stage requirements.
 
+## Choose what happens when a node fails
+
+In **Extensions → Lattice → When a node fails**, choose:
+
+| Option | Behavior |
+| --- | --- |
+| **Fall back to SillyTavern** | End workflow processing and allow normal SillyTavern generation. This is the default. |
+| **Stop all generation** | Stop the workflow and generation belonging to this Send. |
+| **Continue where possible** | Keep completed results and continue branches whose required inputs remain available. |
+
+The setting is global and stays outside workflow files. Changing it affects the next run. Configured node retries finish before the failure policy takes effect.
+
+For partial recovery, connect independent model results to optional Compose sections. Choose **Skipped source → Omit section** to leave out a failed contribution, or **Use fallback text** to use the section's saved text. Three successful contributions can then guide a reply even if two other branches fail. A required failed input blocks its dependent branch; an authored optional boundary can absorb that missing branch. Ordinary unresolved conditions still hold execution.
+
+Recovered runs show **Completed with failures**, retain failed/blocked stages in Run details, and produce a persistent warning. Successful nodes are not rerun. Requests inside a failed multi-request node or For Each operation do not become partial outputs.
+
+Recovery still requires valid structure, current sources, authorized inputs and valid budgets. If no required generation/output path survives, the Send stops. A completed native reply is kept after a later processing failure; the policy never starts a second fallback reply. Stop applies to the current Send, including its remaining native continuations where supported, without stopping unrelated background calls. Unified workflows still require a supported native generation type and chat.
+
 ## Shape scene context
 
 **Scene Context** reads a bounded set of recent messages and selected character fields available to SillyTavern. Choose **Context visibility → public** for a general planner or public narrative processing. The actor-perspective view does not grant a general model access to any character’s private material. Use [Actor Context](unified-workflows.md#character-specific-direction-and-private-reflections) for a character’s own authorized branch.

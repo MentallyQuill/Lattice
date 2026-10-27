@@ -142,3 +142,25 @@ test('successful automatic result produces no toast and retains the result event
 test('informational cancellation remains neutral, visible and persistent',()=>{const f=fixture();f.onResult({ok:false,error:{code:'ABORTED',message:'Workflow was stopped.'}},automatic);assert.equal(f.calls.length,1);assert.equal(f.kinds[0],'info');assert.match(f.calls[0][0],/Workflow stopped.*ABORTED/);assert.equal(f.calls[0][2].timeOut,0);assert.equal(f.calls[0][2].closeButton,true);assert.deepEqual(f.events,['pc-native-result']);});
 test('arbitrary error code and node text cannot reach the toast',()=>{const f=fixture();f.onResult({ok:false,error:{code:'<secret>',message:'PRIVATE',nodeId:'<script>private</script>'}},automatic);assert.equal(f.calls.length,1);assert.match(f.calls[0][0],/WORKFLOW_FAILED/);assert.doesNotMatch(f.calls[0][0],/secret|private|script|PRIVATE/);});
 
+
+test('failure notices use the captured stop outcome instead of suggesting native fallback', () => {
+ const f=fixture();
+ f.onResult({ok:false,failurePolicy:'stop',failureDisposition:'stopped',error:{code:'REQUEST_FAILED',nodeId:'planner'}},automatic);
+ assert.match(f.calls[0][0],/Generation stopped/);
+ assert.doesNotMatch(f.calls[0][0],/may continue|Continuing with normal/);
+});
+
+test('a recovered automatic run shows a persistent warning with safe failure details', () => {
+ const f=fixture();
+ f.onResult({ok:true,recovered:true,failurePolicy:'continue-available',failureDisposition:'continued',failures:[
+  {code:'INVALID_JSON',nodeId:'weather',message:'PRIVATE response'},
+  {code:'REQUEST_FAILED',nodeId:'mood',message:'PRIVATE transport'}
+ ]},automatic);
+ assert.equal(f.calls.length,1);
+ assert.equal(f.kinds[0],'warning');
+ assert.match(f.calls[0][0],/continued with available results/);
+ assert.match(f.calls[0][0],/2 nodes failed/);
+ assert.match(f.calls[0][0],/weather.*INVALID_JSON/);
+ assert.doesNotMatch(f.calls[0][0],/PRIVATE|may continue|Generation stopped/);
+ assert.equal(f.calls[0][2].timeOut,0);
+});

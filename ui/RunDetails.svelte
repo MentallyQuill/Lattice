@@ -5,7 +5,7 @@
     import type { RunDetailsActions, RunDetailsView } from './detail-types';
     import type { DiagnosticHistoryActions, DiagnosticHistoryView } from './diagnostic-history-types';
     let { view, actions = {}, history = null, historyActions }: { view: RunDetailsView | null; actions?: RunDetailsActions; history?: DiagnosticHistoryView | null; historyActions?: DiagnosticHistoryActions } = $props();
-    const statusLabel = (status: string) => status === 'not-run' ? 'Not run' : status === 'empty' ? 'Ready' : status.charAt(0).toUpperCase() + status.slice(1);
+    const statusLabel = (status: string) => status === 'partial' ? 'Completed with failures' : status === 'not-run' ? 'Not run' : status === 'empty' ? 'Ready' : status.charAt(0).toUpperCase() + status.slice(1);
     const duration = (value: number | null) => value !== null && Number.isFinite(value) && value >= 0 ? (value / 1000).toFixed(2) + 's' : 'Unknown';
     const count = (value: number | null | undefined) => value !== undefined && value !== null && Number.isFinite(value) && value >= 0 ? String(value) : 'Unknown';
     let diagnostics = $derived(view?.diagnostics ?? presentDiagnostics(view?.issue ? [view.issue] : []));
@@ -37,7 +37,7 @@
 <style>
     .pc-run-details { min-width: 0; padding: 12px; color: var(--pc-text); font: inherit; font-size: 12px; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--pc-border); padding-bottom: 9px; } h3 { margin: 0; font-size: 14px; }
-    .pc-run-status { font-size: 10px; color: var(--pc-muted); white-space: nowrap; } .pc-run-status[data-status='running'], .pc-run-status[data-status='cancelling'] { color: var(--pc-accent); } .pc-run-status[data-status='failed'], .pc-run-status[data-status='invalid'] { color: #e58d94; } .pc-run-status[data-status='completed'] { color: #a4c2ad; } .pc-run-status[data-status='stale'] { color: #c4ad7b; } .pc-run-status[data-status='blocked'] { color: #c497a0; }
+    .pc-run-status { font-size: 10px; color: var(--pc-muted); white-space: nowrap; } .pc-run-status[data-status='running'], .pc-run-status[data-status='cancelling'] { color: var(--pc-accent); } .pc-run-status[data-status='failed'], .pc-run-status[data-status='invalid'] { color: #e58d94; } .pc-run-status[data-status='completed'] { color: #a4c2ad; } .pc-run-status[data-status='partial'], .pc-run-status[data-status='stale'] { color: #c4ad7b; } .pc-run-status[data-status='blocked'] { color: #c497a0; }
     .pc-run-summary { display: flex; flex-wrap: wrap; gap: 5px 16px; margin: 10px 0; color: var(--pc-muted); font-size: 11px; } .pc-run-summary p { margin: 0; }
     .pc-run-rows { margin: 12px 0 0; padding: 0; list-style: none; } li { min-width: 0; padding: 8px 9px; margin-bottom: 6px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); box-shadow: none; }
     li[data-status='running'], li[data-status='cancelling'] { border-color: var(--pc-accent); } li[data-status='failed'] { border-color: #a44d59; background: #1a1b1c; } li[data-status='blocked'], li[data-status='not-run'] { background: #181a1b55; }
@@ -52,7 +52,7 @@
     :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-status[data-status='failed'], :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-status[data-status='invalid'], :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-error,
     :global(:root[data-pc-light="1"]) .pc-run-details :global(.pc-diagnostic[data-severity='error']) { color: var(--pc-run-error-text); }
     :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-status[data-status='completed'] { color: var(--pc-run-success-text); }
-    :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-status[data-status='stale'], :global(:root[data-pc-light="1"]) .pc-run-details :global(.pc-diagnostic[data-severity='warning']) { color: var(--pc-run-warning-text); }
+    :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-status[data-status='partial'], :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-status[data-status='stale'], :global(:root[data-pc-light="1"]) .pc-run-details :global(.pc-diagnostic[data-severity='warning']) { color: var(--pc-run-warning-text); }
     :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-status[data-status='blocked'] { color: var(--pc-muted); }
     :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-status[data-status='running'], :global(:root[data-pc-light="1"]) .pc-run-details .pc-run-status[data-status='cancelling'] { color: var(--pc-run-flow-text); }
 </style>

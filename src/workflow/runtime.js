@@ -1,3 +1,4 @@
+import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.28.1';
 import { executeChunk } from './operations/chunk.js?v=0.28.1';
 import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.1';
 import { artifactVisibility, preserveArtifactPrivacy } from './artifact-privacy.js?v=0.28.1';
@@ -37,6 +38,7 @@ export const workflowSignature = graphSemanticSignature;
 export const freezeArtifact = freeze;
 const failure = (code,message,nodeId) => ({ok:false,error:{code,message,...(nodeId ? {nodeId} : {})}});
 const success = artifact => ({ok:true,artifact,reports:[]});
+const RECOVERABLE_NODE_ERRORS=new Set(['REQUEST_FAILED','INVALID_RESPONSE','TRUNCATED_OUTPUT','COMPLETION_UNVERIFIED','EMPTY_OUTPUT','INVALID_JSON','SCHEMA_MISMATCH','BINDING_MISSING','PROFILE_MISSING','MODEL_MISSING','PRESET_MISSING','INSTRUCT_MISSING','ENDPOINT_MISSING']);
 const cutoff = finish => ['length','max_tokens','max_output_tokens'].includes(String(finish).toLowerCase());
 const complete = finish => ['stop','eos_token','eos','stop_sequence','end_turn','complete','completed'].includes(String(finish).toLowerCase());
 const artifactKey = address => JSON.stringify([address.workflowId,address.instancePath,address.nodeId,address.portId]);
@@ -155,6 +157,8 @@ async function executeWorkflow(original,ports,hooks={}) {
         try{return diagnosticResponseCurrent===undefined||typeof diagnosticResponseCurrent==='function'&&diagnosticResponseCurrent()===true;}catch{return false;}
     };
     const schema=versionMetadata(own(original,'schema')),runtime=versionMetadata(own(original,'runtime')),mode=ports.target===undefined?'root':'target';
+    const failurePolicy=normalizeWorkflowFailurePolicy(own(ports,'failurePolicy'));
+    const failures=[],unavailableOutputs=new Set(),fatalUnits=new Map();
     const artifacts=new Map(),outputStates=new Map(),unitStates=new Map(),bindings=new Map(),requestBindings=new Map(),bindingReports=new Map(),nodeCalls=new Map(),helperPrograms=new Map(),terminals=[];
     let runId,recorder,plan,safePlan,current,callBound=0,actualCalls=0,seq=0,lastElapsed=0,cancelling=false,closed=false,removeAbort=()=>{};
     let now,monotonic,started;
@@ -170,10 +174,10 @@ async function executeWorkflow(original,ports,hooks={}) {
     const stopped=()=>ports.signal?.aborted||cancelling;
     const finish=raw=>{
         const result=raw.ok?raw:safeFailure(raw);
-        if(recorder && !closed){if(stopped())cancel();emit('run-settled',{status:stopped()?'cancelled':result.ok?'completed':raw.unresolved?'unresolved':!safePlan?'invalid':/^STALE|BINDING_CHANGED/.test(result.error?.code)?'stale':'failed',...(!result.ok?{error:safeError(result.error),...(result.error?.address&&safePlan?.units.some(unit=>unit.included&&addressKey(unit.address)===addressKey(result.error.address))&&!raw.unresolved?{failedAddress:result.error.address}:{})}:{})});closed=true;}
+        if(recorder && !closed){if(stopped())cancel();emit('run-settled',{status:stopped()?'cancelled':result.ok?(failures.length?'partial':'completed'):raw.unresolved?'unresolved':!safePlan?'invalid':/^STALE|BINDING_CHANGED/.test(result.error?.code)?'stale':'failed',...(!result.ok?{error:safeError(result.error),...(result.error?.address&&safePlan?.units.some(unit=>unit.included&&addressKey(unit.address)===addressKey(result.error.address))&&!raw.unresolved?{failedAddress:result.error.address}:{})}:{})});closed=true;}
         const recording=recorder?.finish();
         const identity=typeof runId==='string'?{runId}:{};
-        return freezeArtifact({...(schema!==undefined?{schema}:{}),...(runtime!==undefined?{runtime}:{}),...identity,mode,ok:result.ok,callBound,actualCalls,...(recording?{recording}:{}),...(!result.ok?{error:result.error}:{}),...(result.preview?{preview:true}:{})});
+        return freezeArtifact({...(schema!==undefined?{schema}:{}),...(runtime!==undefined?{runtime}:{}),...identity,mode,ok:result.ok,callBound,actualCalls,...(recording?{recording}:{}),...(!result.ok?{error:result.error}:{}),...(result.preview?{preview:true}:{}),...(failures.length?{failures,...(result.ok?{recovered:true}:{})}:{})});
     };
     try {
         runId=ports.runId===undefined?(globalThis.crypto?.randomUUID?.()??'run-'+Date.now()+'-'+Math.random()):ports.runId;
@@ -212,7 +216,7 @@ async function executeWorkflow(original,ports,hooks={}) {
             if(!duringExecution)emit('node-phase',{address:unit.address,phase:'binding'});
             const resolved=await ports.resolveBinding?.({...node,modelRole:node.modelRole??op.modelRole},bindingGraph,unit.address);
             if(stopped())return failure('ABORTED','Workflow was stopped.',node.id);
-            if(!resolved?.ok){const error=resolved??failure('BINDING_MISSING','Resolve the activated model connection before running.');if(!duringExecution)emit('node-settled',{address:unit.address,status:'failed',error:safeError(error.error)});return error;}
+            if(!resolved?.ok){const error=resolved??failure('BINDING_MISSING','Resolve the activated model connection before running.');if(!RECOVERABLE_NODE_ERRORS.has(error.error?.code))fatalUnits.set(addressKey(unit.address),error);return error;}
             const binding=resolved.data,key=addressKey(unit.address);bindings.set(key,binding);
             requestBindings.set(JSON.stringify([key,'primary']),{address:unit.address,binding,capability:op.requestCapability??'text-completion',role:node.modelRole??op.modelRole});
             bindingReports.set(key,summarizeBinding(binding,node,op));
@@ -221,6 +225,17 @@ async function executeWorkflow(original,ports,hooks={}) {
         };
         const nativeBoundary=mode==='root'&&prepared.graph.mode==='native-unified'?nodes.find(unit=>operationFor(unit.node,{phase:unit.phase,mode:prepared.graph.mode})?.nativeBoundary):undefined;
         const getRequestBindings=()=>Object.freeze([...requestBindings.values()].map(entry=>Object.freeze({...entry,address:freezeArtifact(structuredClone(entry.address))})));
+        // Only explicitly admitted node-local failures may become unavailable branches.
+        const recoverNode=(unit,result)=>{
+            const operation=operationFor(unit.node,{phase:unit.phase,mode:prepared.graph.mode});
+            if(fatalUnits.has(addressKey(unit.address))||operation?.hostOperation||operation?.nativeBoundary||failurePolicy!=='continue-available'||stopped()||!RECOVERABLE_NODE_ERRORS.has(own(own(result,'error'),'code')))return false;
+            const error=safeError(result.error,safePlan,unit.address),state={status:'skipped',reason:error};
+            if(failures.length<32)failures.push(error);
+            for(const port of unit.outputPorts){unavailableOutputs.add(artifactKey({...unit.address,portId:port.id}));outputStates.set(artifactKey({...unit.address,portId:port.id}),state);recorder.capture({address:unit.address,direction:'output',portId:port.id,state});}
+            unitStates.set(addressKey(unit.address),{status:'failed',reason:error});
+            emit('node-settled',{address:unit.address,status:'failed',error,recoverable:true});
+            return true;
+        };
         let unresolved=false;
         for(const unit of nodes) {
             current=unit;const node=unit.node,key=addressKey(unit.address),op=operationFor(node,{phase:unit.phase,mode:prepared.graph.mode});let binding=bindings.get(key);
@@ -235,24 +250,28 @@ async function executeWorkflow(original,ports,hooks={}) {
             if(nativeBoundary&&unit!==nativeBoundary&&unit.phase==='post')stageState=unitStates.get(addressKey(nativeBoundary.address))??{status:'unresolved',reason:{code:'NATIVE_BOUNDARY_UNRESOLVED',message:'The owned native boundary has not completed.'}};
             else if(unit===nativeBoundary)stageState=unit.dependencies.map(at=>unitStates.get(addressKey(at))).find(state=>state?.status==='unresolved');
             const held=stageState?.status==='unresolved'?stageState:Object.values(inputStates).find(state=>state.status==='unresolved');
-            const skipped=prepared.graph.runtime===3&&node.operation==='scene-context'&&node.activationMode==='events'&&!inputs.trigger||stageState?.status==='skipped'||unit.inputPorts.some(port=>port.required&&inputStates[port.id]?.status==='skipped');
-            if(unit.systemDisabled||held||skipped){const status=unit.systemDisabled?'skipped':held?'unresolved':'skipped',state={status,reason:unit.systemDisabled?{code:'SYSTEM_DISABLED',message:'The enclosing system is disabled.'}:held?.reason??stageState?.reason??{code:'INPUT_SKIPPED',message:'A required branch input was skipped.'}};if(held&&!unit.systemDisabled)unresolved=true;
-                for(const port of unit.outputPorts){outputStates.set(artifactKey({...unit.address,portId:port.id}),state);recorder.capture({address:unit.address,direction:'output',portId:port.id,state});}
-                unitStates.set(key,state);emit('node-settled',{address:unit.address,status,reason:state.reason});continue;
+            const failedInput=plan.edges.find(edge=>addressKey(edge.to)===key&&unit.inputPorts.some(port=>port.id===edge.to.portId&&(port.required||unit===nativeBoundary))&&unavailableOutputs.has(artifactKey(edge.from)));
+            const failedStage=stageState?.status==='blocked';
+            const skipped=failedInput||failedStage||prepared.graph.runtime===3&&node.operation==='scene-context'&&node.activationMode==='events'&&!inputs.trigger||stageState?.status==='skipped'||unit.inputPorts.some(port=>port.required&&inputStates[port.id]?.status==='skipped');
+            if(unit.systemDisabled||held||skipped){const status=unit.systemDisabled?'skipped':held?'unresolved':'skipped',state={status,reason:unit.systemDisabled?{code:'SYSTEM_DISABLED',message:'The enclosing system is disabled.'}:held?.reason??(failedInput?inputStates[failedInput.to.portId].reason:undefined)??stageState?.reason??{code:'INPUT_SKIPPED',message:'A required branch input was skipped.'}};if(held&&!unit.systemDisabled)unresolved=true;
+                for(const port of unit.outputPorts){if((failedInput||failedStage)&&!held&&!unit.systemDisabled)unavailableOutputs.add(artifactKey({...unit.address,portId:port.id}));outputStates.set(artifactKey({...unit.address,portId:port.id}),state);recorder.capture({address:unit.address,direction:'output',portId:port.id,state});}
+                const nodeStatus=(failedInput||failedStage)&&!held&&!unit.systemDisabled?'blocked':status;unitStates.set(key,{...state,status:nodeStatus});emit('node-settled',{address:unit.address,status:nodeStatus,reason:state.reason});continue;
             }
             const lazyBinding=(Object.hasOwn(MODEL_OPERATIONS,node.operation)||Object.hasOwn(DECISION_OPERATIONS,node.operation)||Object.hasOwn(EVENT_OPERATIONS,node.operation)||Object.hasOwn(RANDOM_OPERATIONS,node.operation));
-            if(unit.requestBound&&op.modelRole&&!bindings.has(key)&&!lazyBinding){const bound=await bindUnit(unit,op);if(!bound.ok)return finish(bound);binding=bound.data;}
+            if(unit.requestBound&&op.modelRole&&!bindings.has(key)&&!lazyBinding){const bound=await bindUnit(unit,op);if(!bound.ok){if(recoverNode(unit,bound))continue;emit('node-settled',{address:unit.address,status:'failed',error:safeError(bound.error,safePlan,unit.address)});return finish(bound);}binding=bound.data;}
             emit('node-phase',{address:unit.address,phase:'executing'});observe(ports.onStage,freezeArtifact(structuredClone(node)),unit.address);
             const authorizeInputs=async(selectedNode,selectedInputs,address,capability)=>{
                 if(prepared.graph.mode!=='native-unified'&&prepared.graph.runtime!==3||typeof hooks.authorizeModelInputs!=='function')return {ok:true};
                 let checked;try{checked=await hooks.authorizeModelInputs({node:selectedNode,address,inputs:selectedInputs,capability});}catch{return failure('ACTOR_SCOPE_FAILED','The auxiliary model scope could not be authorized.',selectedNode.id);}
                 if(stopped())return failure('ABORTED','Workflow was stopped.',selectedNode.id);
+                if(checked?.ok!==true)fatalUnits.set(key,checked?.ok===false?checked:failure('ACTOR_SCOPE_FAILED','The auxiliary model scope was not authorized.',selectedNode.id));
                 return checked?.ok===true?checked:checked?.ok===false?checked:failure('ACTOR_SCOPE_FAILED','The auxiliary model scope was not authorized.',selectedNode.id);
             };
             const retainScopedOutput=async(payload)=>{
                 if(prepared.graph.mode!=='native-unified'&&prepared.graph.runtime!==3||typeof hooks.retainScopedOutput!=='function')return {ok:true,data:{retained:true}};
                 let retained;try{retained=await hooks.retainScopedOutput(payload);}catch{return failure('ACTOR_SCOPE_FAILED','The private artifact scope could not be retained.',payload.node?.id??node.id);}
                 if(stopped())return failure('ABORTED','Workflow was stopped.',payload.node?.id??node.id);
+                if(retained?.ok!==true||retained.data?.retained!==true)fatalUnits.set(key,retained?.ok===false?retained:failure('ACTOR_SCOPE_FAILED','The private artifact scope was not retained.',node.id));
                 return retained?.ok===true&&retained.data?.retained===true?retained:retained?.ok===false?retained:failure('ACTOR_SCOPE_FAILED','The private artifact scope was not retained.',payload.node?.id??node.id);
             };
             const childAuthorizers=new Map(),childDiagnosticScopes=new Map();
@@ -265,7 +284,7 @@ async function executeWorkflow(original,ports,hooks={}) {
             };
             const requestFailure=()=>failure(closed||!operationOpen?'REQUEST_SCOPE_CLOSED':stopped()?'ABORTED':'CALL_LIMIT',closed||!operationOpen?'This operation request scope has closed.':stopped()?'Workflow was stopped.':'Workflow request limit reached.',node.id);
             const admitted=()=>!closed&&operationOpen&&!stopped()&&actualCalls<callBound&&(nodeCalls.get(key)??0)<unit.requestBound;
-            const trackedRequest=async(options)=>{
+            const dispatchRequest=async(options)=>{
                 const capability='text-completion';
                 if(!admitted())return requestFailure();
                 if(requestInFlight)return failure('REQUEST_IN_FLIGHT','This operation already has an active request.',node.id);
@@ -335,6 +354,13 @@ async function executeWorkflow(original,ports,hooks={}) {
                     emit('request-settled',{address:unit.address,attempt,status:stopped()?'cancelled':response.ok?'completed':'failed',durationMs:Math.max(0,monotonic()-started-requestStarted),...(metadata?.finish!==undefined?{finish:boundedText(metadata.finish,128)??null}:{}),...(safeUsage(usage)!==undefined?{usage:safeUsage(usage)}:{}),...(!response.ok?{error:safeError(response.error)}:{})});return response;
                 }finally{requestInFlight=false;}
             };
+            // Preserve safety provenance even when an operation adapter normalizes
+            // an unfamiliar transport error into its generic request failure.
+            const trackedRequest=async options=>{
+                const result=await dispatchRequest(options);
+                if(result?.ok===false&&!RECOVERABLE_NODE_ERRORS.has(result.error?.code))fatalUnits.set(key,result);
+                return result;
+            };
             const request=trackedRequest;
             const onRetry=details=>{
                 if(!admitted()||requestInFlight||(nodeCalls.get(key)??0)<1||!plain(details))return;
@@ -363,7 +389,7 @@ async function executeWorkflow(original,ports,hooks={}) {
                     if(!childBindings.has(capability)){
                         const selected=await ports.resolveBinding?.(selectedNode,{...bindingGraph,roles:childLocal.roles},child.address);
                         if(!childOpen||closed||!operationOpen||stopped())return requestFailure();
-                        if(!selected?.ok)return selected??failure('BINDING_MISSING','Resolve the activated helper model connection.',node.id);
+                        if(!selected?.ok){const error=selected??failure('BINDING_MISSING','Resolve the activated helper model connection.',node.id);if(!RECOVERABLE_NODE_ERRORS.has(error.error?.code))fatalUnits.set(key,error);return error;}
                         childBindings.set(capability,selected.data);
                     }
                     if(typeof childLocal.request!=='function')return failure('REQUEST_MISSING','The helper requires its bounded per-iteration request capability.',node.id);
@@ -380,11 +406,11 @@ async function executeWorkflow(original,ports,hooks={}) {
             const rawResult=await executeNode(node,inputs,op,{...ports,phase:unit.phase,operationRuntime:unit.runtime,rootMode:prepared.graph.mode,binding,request,onRetry,onModelValidation,iterateHelper,isRecoveredIterationResult:result=>recovered.has(result),getRequestCount:()=>nodeCalls.get(key)??0,inputStates:freezeArtifact(inputStates),root:unit.address.instancePath.length===0 || isScopedSystemOperation(node) && typeof hooks.executeHostOperation==='function',address:unit.address,executeIntrospection:hooks.executeIntrospection,executeHostOperation:hooks.executeHostOperation,getRequestBindings,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});
             if(!rawResult?.ok)onModelValidation(rawResult?.error);
             // Native generation authors the public story from scoped portrayal guidance; it never publishes guidance verbatim.
-            const result=preserveArtifactPrivacy(rawResult,node.operation==='generate-reply'?{}:inputs);
+            const result=preserveArtifactPrivacy(failurePolicy==='continue-available'?(fatalUnits.get(key)??rawResult):rawResult,node.operation==='generate-reply'?{}:inputs);
             operationOpen=false;
             if(requestInFlight)return finish(failure('PENDING_REQUEST','The operation returned before its active request settled.',node.id));
             if(stopped())return finish(failure('ABORTED','Workflow was stopped.',node.id));
-            if(!result?.ok){emit('node-settled',{address:unit.address,status:'failed',error:safeError(own(result,'error'),safePlan,unit.address)});return finish(result??failure('WORKFLOW_FAILED','The operation returned no result.',node.id));}
+            if(!result?.ok){if(recoverNode(unit,result))continue;emit('node-settled',{address:unit.address,status:'failed',error:safeError(own(result,'error'),safePlan,unit.address)});return finish(result??failure('WORKFLOW_FAILED','The operation returned no result.',node.id));}
             const outputs=own(result,'outputs'),states=own(result,'outputStates');
             if(outputs!==undefined&&!plain(outputs)||states!==undefined&&!plain(states)||[...Object.keys(outputs??{}),...Object.keys(states??{})].some(id=>!unit.outputPorts.some(port=>port.id===id))){const error=failure('INVALID_OUTPUT','The operation returned undeclared output ports.',node.id);emit('node-settled',{address:unit.address,status:'failed',error:error.error});return finish(error);}
             const metadata={binding:bindingReports.get(key),reports:result.reports};
@@ -411,7 +437,13 @@ async function executeWorkflow(original,ports,hooks={}) {
         }
         current=null;
         if(unresolved)return finish({...failure('UNRESOLVED_INPUT','A selected workflow output is unresolved; dependent work is held.'),unresolved:true});
-        const settlement=await hooks.settle?.({mode,terminals:mode==='root'?terminals:[],bindings:plan.primitives.flatMap(unit=>[...requestBindings.values()].filter(entry=>addressKey(entry.address)===addressKey(unit.address)))});
+        if(failures.length){
+            const selected=plan.resolvedTarget;
+            const targetReady=mode==='target'&&(selected?.kind==='terminal'?terminals.some(entry=>addressKey(entry.terminal.address)===addressKey(selected.address)):selected&&outputStates.get(artifactKey(selected))?.status==='completed');
+            const rootReady=mode==='root'&&terminals.length>0&&(!nativeBoundary||unitStates.get(addressKey(nativeBoundary.address))?.status==='completed');
+            if(!targetReady&&!rootReady)return finish(failure('RECOVERY_OUTPUT_UNAVAILABLE','No valid selected output remains after node failures.'));
+        }
+        const settlement=await hooks.settle?.({mode,failures:freezeArtifact([...failures]),terminals:mode==='root'?terminals:[],bindings:plan.primitives.flatMap(unit=>[...requestBindings.values()].filter(entry=>addressKey(entry.address)===addressKey(unit.address)))});
         if(stopped())return finish(failure('ABORTED','Workflow was stopped.'));if(settlement?.ok===false)return finish(settlement);
         return finish({ok:true});
     } catch {return finish(failure(stopped()?'ABORTED':'WORKFLOW_FAILED','Workflow preparation failed; inspect the source, connection and tokenizer.',current?.node.id));}

@@ -2,7 +2,7 @@
     import type { RunMeterView } from './run-meter-types';
     import { alignPixelGrid } from '../src/ui/pixel-grid.js';
     let { view, open }: { view: RunMeterView | null; open?: () => void } = $props();
-    const label = (status: string) => status === 'empty' ? 'Ready' : status === 'not-run' ? 'Not run' : status.charAt(0).toUpperCase() + status.slice(1);
+    const label = (status: string) => status === 'partial' ? 'Completed with failures' : status === 'empty' ? 'Ready' : status === 'not-run' ? 'Not run' : status.charAt(0).toUpperCase() + status.slice(1);
     const priority = ['cancelling', 'running', 'failed', 'blocked', 'cancelled', 'invalid', 'stale', 'queued', 'waiting', 'not-run'];
     let pixels = $derived.by(() => {
         if (!view) return [];

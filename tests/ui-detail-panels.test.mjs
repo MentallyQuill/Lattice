@@ -851,3 +851,13 @@ test('unattempted incomplete Preview stays quiet and explains native policy as o
  const f=await fixture('OutputPreview',preview({status:'not-run',sections:[],review:null,issues:['Input needs a connection'],runHere:{enabled:false,callBound:0,issue:'This step starts when you send a message.',reason:'This step starts when you send a message.'}}),{});
  try{assert.equal(f.host.querySelectorAll('.pc-diagnostic').length,0);assert.doesNotMatch(f.host.textContent,/Error:|Input needs a connection/);assert.match(f.host.textContent,/This step starts when you send a message/);}finally{await f.close();}
 });
+
+
+test('partial run details label the outcome and preserve individual unsuccessful stage labels', async () => {
+    const rows = ['failed','blocked','skipped','completed'].map((status,index)=>({key:String(index),title:'Stage '+index,kind:'primitive',depth:0,status,address:{workflowId:'root',instancePath:[],nodeId:'node-'+index},durationMs:null,attempts:0,callBound:0,usage:null}));
+    const f = await fixture('RunDetails',{runId:'partial',status:'partial',elapsedMs:50,actualCalls:1,callBound:2,completedCount:1,executableCount:4,rows},{});
+    try {
+        assert.match(f.host.querySelector('header').textContent,/Completed with failures/);
+        assert.deepEqual([...f.host.querySelectorAll('[data-run-row]')].map(row=>row.dataset.status),['failed','blocked','skipped','completed']);
+    } finally { await f.close(); }
+});

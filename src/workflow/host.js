@@ -1,3 +1,4 @@
+import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.28.1';
 import { randomUuid } from '../random-id.js?v=0.28.1';
 import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.28.1';
 import {cloneJsonValue} from './operations/json-data.js?v=0.28.1';
@@ -46,6 +47,17 @@ const GUIDANCE_ROLES = { system: 0, user: 1, assistant: 2 };
 const fail = (code,message) => ({ok:false,error:{code,message}});
 const identity = c => ({chatId:c.getCurrentChatId?.() ?? c.chatId ?? null,characterId:c.characterId ?? null,groupId:c.groupId ?? null});
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+// Stop ownership is captured before observers, without reading source getters.
+// Native context wrappers may change; their chat reference and scalar IDs must not.
+const nativeStopPassport = getContext => {
+    try {
+        const c=getContext(),own=key=>{const field=Object.getOwnPropertyDescriptor(c,key);if(field&&!Object.hasOwn(field,'value'))throw Error();return field?.value??null;};
+        const chat=own('chat'),chatId=own('chatId'),characterId=own('characterId'),groupId=own('groupId');
+        if(!Array.isArray(chat)||chatId===null||![chatId,characterId,groupId].every(value=>value===null||typeof value==='string'||typeof value==='number'&&Number.isFinite(value)))return null;
+        return Object.freeze({chat,chatId,characterId,groupId});
+    } catch {return null;}
+};
+const sameNativeStopPassport=(a,b)=>!!a&&!!b&&a.chat===b.chat&&a.chatId===b.chatId&&a.characterId===b.characterId&&a.groupId===b.groupId;
 // Inspect only explicit source disclosure metadata, never unrelated native extras.
 const contextDisclosure = material => {
     try {
@@ -258,7 +270,7 @@ export function createNativeWorkflowController(ports) {
     let epoch=0, active=null, result=null, automaticResult=null, applying=false, automaticApplication=null, internalEvents=0, unsubscribe=null;
     let generationSequence=0, generation={dryRun:false,type:'normal'}, generationInvocationDryRun=false;
     const activityListeners=new Set(), progressListeners=new Set();
-    let runState=null,progressRevision=0;
+    let runState=null,progressRevision=0,nativeStopListener=null,invokingPolicyStop=null;
     const activity=()=>active ? Object.freeze({busy:true,graph:active.originalGraph,graphId:Object.getOwnPropertyDescriptor(active.originalGraph ?? {},'id')?.value,runId:active.runId,native:active.native,documentToken:active.documentToken}) : null;
     // Progress is passive metadata. Freeze the snapshot, never the live graph or document owner.
     const progress=()=>active ? Object.freeze({...activity(),runState}) : null;
@@ -369,9 +381,11 @@ export function createNativeWorkflowController(ports) {
     const playerSourceFresh=run=>{try{return !run.playerSourceCurrent||run.playerSourceCurrent()===true;}catch{return false;}};
     const sourceFresh=run=>[...(run.sourcePages??[])].every(page=>inspectSourcePage(page).ok) && playerSourceFresh(run) && memoryFresh(run) && promptFresh(run) && [...(run.pendingSources?.values()??[])].every(validSource) && [...(run.sceneSources??[])].every(entry=>entry.text!==null && sourceText(entry.chat)===entry.text && (entry.characterVisibility===undefined || (entry.characterVisibility!==null && characterVisibility(context())===entry.characterVisibility)) && (entry.characterSnapshots??[]).every(captured=>characterText(snapshotContext(context(),{chat:entry.chat,node:captured.node}))===captured.text));
     const start=(graph,native=false,abortPrimary=null,target)=>{
+        const policyOwner=generation,policyPassport=native?nativeStopPassport(context):null;
+        const failurePolicy=normalizeWorkflowFailurePolicy(ports.getFailurePolicy?.());
         const runId=token(),diagnosticCapture=captureDiagnostics(graph,native,target,runId);
         cancel('Superseded by a new workflow');
-        const run={epoch,runId,diagnosticCapture,controller:new AbortController(),originalGraph:graph,documentToken:ports.getDocumentToken?.(),native,abortPrimary,pending:true,target,mode:target===undefined?'root':'target',pendingSources:new Map(),sceneSources:[],promptSources:new Map(),bindingContexts:new Map(),modelAddresses:new WeakMap(),modelScopes:new Map(),bindingChecks:[],reviewHandles:[],memoryTerminals:new Map(),memoryIntents:new Map(),memorySession:null,invalidMemoryEvidence:false,fileSession:null,fileSessions:new Map(),fileReferences:new WeakMap(),actorContext:null,guidanceComposition:createNativeGuidanceComposition(),actorMemorySessions:new Map(),stagedFiles:[],retainResources:false,resourcesReleased:false};
+        const run={epoch,runId,diagnosticCapture,failurePolicy,policyOwner,policyPassport,controller:new AbortController(),originalGraph:graph,documentToken:ports.getDocumentToken?.(),native,abortPrimary,pending:true,target,mode:target===undefined?'root':'target',pendingSources:new Map(),sceneSources:[],promptSources:new Map(),bindingContexts:new Map(),modelAddresses:new WeakMap(),modelScopes:new Map(),bindingChecks:[],reviewHandles:[],memoryTerminals:new Map(),memoryIntents:new Map(),memorySession:null,invalidMemoryEvidence:false,fileSession:null,fileSessions:new Map(),fileReferences:new WeakMap(),actorContext:null,guidanceComposition:createNativeGuidanceComposition(),actorMemorySessions:new Map(),stagedFiles:[],retainResources:false,resourcesReleased:false};
         run.sourcePages=new Set();run.sourceCaptures=new Set();run.sourceReaders=new Set();run.actorArtifactOwners=new WeakMap();run.sourceProofs=createSourceProofRegistry({signal:run.controller.signal,isCurrent:()=>fresh(run)&&!run.resourcesReleased});
         run.sourceCapability=Object.freeze({authorizeSource:artifact=>run.sourceProofs.authorizeSource(artifact),authorizePairing:(artifact,manifest)=>run.sourceProofs.authorizePairing(artifact,manifest),validateCurrent:artifact=>run.sourceProofs.validateCurrent(artifact)});
         active=run;runState=createRunState(runId);publishActivity();return run;
@@ -569,7 +583,8 @@ export function createNativeWorkflowController(ports) {
                 memoryOutputs.push(output);
             }
         }
-        if(memoryOutputs.length!==run.memoryTerminals.size)return fail('INVALID_MEMORY_TERMINAL','The compiled Memory Commit terminal did not provide its exact intent.');
+        const expectedMemoryOutputs=run.failurePolicy==='continue-available' && transport.failures?.length>0?run.memoryIntents.size:run.memoryTerminals.size;
+        if(memoryOutputs.length!==expectedMemoryOutputs)return fail('INVALID_MEMORY_TERMINAL','The compiled Memory Commit terminal did not provide its exact intent.');
         for(const output of transport.terminals) {
             if(output.artifact?.kind!=='candidate')continue;
             const source=run.pendingSources.get(output.artifact.source?.token);if(!source)return fail('STALE_CANDIDATE','The candidate source is no longer available.');
@@ -659,7 +674,7 @@ export function createNativeWorkflowController(ports) {
     async function execute(run,options) {
         let value;
         try {value=await runWorkflowForHost(run.originalGraph,{
-            ...(options.phase===undefined?{}:{phase:options.phase}),target:run.target,runId:run.runId,signal:run.controller.signal,
+            ...(options.phase===undefined?{}:{phase:options.phase}),target:run.target,runId:run.runId,signal:run.controller.signal,failurePolicy:run.failurePolicy,
             snapshot:(phase,node)=>selectedSnapshot(run,phase,node,options),countTokens:ports.countTokens,...(ports.chunkTokenizer?{chunkTokenizer:ports.chunkTokenizer}:{}),
             resolveBinding:(node,graph,address)=>{
                 const result=(ports.resolveBinding??((n,g)=>resolveBinding(n,g,context())))(node,graph,address);
@@ -684,7 +699,7 @@ export function createNativeWorkflowController(ports) {
         finally {delete run.cancel;run.bindingContexts.clear();run.modelScopes.clear();run.modelAddresses=new WeakMap();if(!run.retainResources)releaseRun(run);}
         if(!value.ok||run.mode==='target') {releaseRun(run);run.pendingSources.clear();run.sceneSources.length=0;run.promptSources.clear();run.bindingChecks=[];for(const [id,entry]of candidates)if(entry.run===run)candidates.delete(id);for(const [id,entry]of sources)if(entry.run===run)sources.delete(id);if(run.native)clear();}
         else run.pendingSources.clear();
-        const publicValue=freezeArtifact({...value,reviewHandles:value.ok?run.reviewHandles:[]});
+        const publicValue=freezeArtifact({...value,failurePolicy:run.failurePolicy,reviewHandles:value.ok?run.reviewHandles:[]});
         run.publicResult=publicValue;
         return finishDiagnostic(run.diagnosticCapture,publicValue);
     }
@@ -922,6 +937,36 @@ export function createNativeWorkflowController(ports) {
         }
         return fail('HOST_OPERATION_REQUIRED','Unsupported private host operation.');
     }
+    // Runtime completion owns the original error. Stopping the host must not
+    // replace that recording with the reentrant GENERATION_STOPPED cancellation.
+    async function failureDisposition(run,value) {
+        if(value.ok)return {...value,...(value.recovered?{failureDisposition:'continued'}:{})};
+        const ownsRun=()=>active===run && run.epoch===epoch && run.policyOwner===generation;
+        const owns=()=>ownsRun() && sameNativeStopPassport(run.policyPassport,nativeStopPassport(context));
+        if(!ownsRun() || run.controller.signal.aborted)return value;
+        if(run.failurePolicy==='native-fallback')return {...value,failureDisposition:generation.aborted?'stopped':run.nativeResolved?'reply-preserved':'native-fallback'};
+        run.policyStopping=true;
+        const abort=run.abortPrimary;run.abortPrimary=null;
+        try{abort?.(true);}catch{/* Native callback is best effort; real stop follows. */}
+        let stopped=false;
+        try {if(owns() && typeof ports.stopGeneration==='function'){
+            // SillyTavern emits Stop without awaiting its async event dispatch.
+            // Observe our own stop synchronously before another listener can yield
+            // and deliver that old event to a replacement generation.
+            const c=context(),events=c.eventTypes??c.event_types??{};
+            if(nativeStopListener && events.GENERATION_STOPPED)c.eventSource?.makeFirst?.(events.GENERATION_STOPPED,nativeStopListener);
+            if(owns()){
+                let pending;invokingPolicyStop=run.policyOwner;
+                try{pending=ports.stopGeneration();}finally{invokingPolicyStop=null;}
+                stopped=(await pending)!==false;
+            }
+        }}
+        catch {/* Keep the node failure and report that host stopping was unconfirmed. */}
+        finally {run.policyStopping=false;}
+        run.controller.abort('Workflow failed');
+        if(owns()) {generation.aborted=true;clear();}
+        return {...value,failureDisposition:stopped?'stopped':'stop-unavailable'};
+    }
     async function beforeUnified(graph,chat,abort,type) {
         if(generation.overlap){abort?.(true);return notify(fail('OVERLAPPING_GENERATION','A new generation overlapped the owned native continuation.'));}
         if(active?.native){cancel('Overlapping native generation');abort?.(true);return notify(fail('OVERLAPPING_GENERATION','Overlapping native requests are unsupported.'));}
@@ -932,13 +977,15 @@ export function createNativeWorkflowController(ports) {
         run.nativeType=type;run.nativeReady=deferred();run.nativeCompletion=deferred();
         const completion=execute(run,{chat}).then(async value=>{
             const priorResult=result;
+            if(!value.ok)value=await failureDisposition(run,value);
+            else if(value.recovered)value={...value,failureDisposition:'continued'};
             run.nativeReady.resolve(value.ok?fail('NATIVE_BOUNDARY_MISSING','The selected workflow never reached native generation.'):value);
             if(active===run&&value.ok&&run.nativeResolved)value=await automaticallyApply(run,value);
             if(active===run){active=null;notify(value,run);}else if(active===null && run.controller.signal.aborted && result===priorResult)notify(value,run);return value;
         });
         run.completion=completion;
         const ready=await run.nativeReady.promise;
-        if(!ready.ok) {const final=await completion;return {...final,fallback:'native'};}
+        if(!ready.ok) {const final=await completion;return final.failureDisposition==='native-fallback'?{...final,fallback:'native'}:final;}
         return ready;
     }
     async function beforeGenerate(chat,_contextSize,abort,type='normal') {
@@ -1109,9 +1156,10 @@ export function createNativeWorkflowController(ports) {
             generation={overlap:!!active?.unified && !active.nativeResolved,observed:true,id:++generationSequence,startedAt:Date.now(),type:type || 'normal',dryRun:!!dryRun,aborted:!!options?.signal?.aborted,originalTail:{message:context().chat?.at(-1),text:context().chat?.at(-1)?.mes}};
             cancel('Generation started');
             const owner=generation;
-            if(options?.signal)options.signal.addEventListener('abort',()=>{if(generation===owner){generation.aborted=true;cancel('Generation aborted');}},{once:true});
+            if(options?.signal)options.signal.addEventListener('abort',()=>{if(generation===owner){generation.aborted=true;if(!active?.policyStopping)cancel('Generation aborted');}},{once:true});
         });
-        on('GENERATION_STOPPED',()=>{generation.aborted=true;const m=context().chat?.at(-1);if(m && !m.is_user && (!generation.originalTail || m!==generation.originalTail.message || m.mes!==generation.originalTail.text || incompleteStream(context(),context().chat.length-1)))rememberStopped(context());cancel('Generation stopped');});
+        nativeStopListener=()=>{if(invokingPolicyStop){if(generation===invokingPolicyStop)generation.aborted=true;return;}generation.aborted=true;if(active?.policyStopping)return;const m=context().chat?.at(-1);if(m && !m.is_user && (!generation.originalTail || m!==generation.originalTail.message || m.mes!==generation.originalTail.text || incompleteStream(context(),context().chat.length-1)))rememberStopped(context());cancel('Generation stopped');};
+        on('GENERATION_STOPPED',nativeStopListener);
         on('GENERATION_ENDED',()=>{
             if(active?.unified && !active.nativeResolved){active.nativeEnded=true;active.nativeEndedAt??=Date.now();active.abortPrimary=null;clear();scheduleNative(active);return;}
             if(generation.unified && generation.finished)return;

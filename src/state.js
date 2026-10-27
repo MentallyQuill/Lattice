@@ -11,6 +11,8 @@ import * as graphHistory from './history.js?v=0.28.1';
 import { definitionRefKey } from './workflow/definition-data.js?v=0.28.1';
 import { containsRetiredModelCall, cloneArchivedWorkflow, retiredLibraryKeys, recoveryLibraryKeys, portableArchivedWorkflow, portableArchivedDefinition } from './workflow/retired-workflows.js?v=0.28.1';
 
+import { isWorkflowFailurePolicy, normalizeWorkflowFailurePolicy } from './workflow/failure-policy.js?v=0.28.1';
+
 export const MODULE = 'lattice';
 export const ctx = () => globalThis.SillyTavern.getContext();
 export function uid(prefix = 'n') { return prefix + '_' + (globalThis.crypto?.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).slice(2)); }
@@ -67,6 +69,7 @@ function legacyRecord(value) {
 
 function checkSettings(value) {
     const saved = dataRecord(value), metadata = {}, library = dataRecord(saved?.subgraphLibrary);
+    if (saved && Object.hasOwn(saved, 'workflowFailurePolicy') && !isWorkflowFailurePolicy(saved.workflowFailurePolicy)) throw new Error('Lattice workflow failure policy must be a supported preference.');
     if (saved && Object.hasOwn(saved, 'diagnosticLogging') && typeof saved.diagnosticLogging !== 'boolean') throw new Error('Lattice diagnostic logging must be a boolean preference.');
     if (saved) for (const [key, item] of Object.entries(saved)) if (!['graphs', 'activeGraphId', 'nativeBindings', 'subgraphLibrary', 'workspaceViews', 'migrationRecovery', 'recoveryDraft', 'archivedWorkflows'].includes(key)) metadata[key] = item;
     if (!saved || !safeWorkflowData(metadata) || ![1, 2].includes(saved.schema) || typeof saved.enabled !== 'boolean' || !plain(saved.ui) || !library || !checkRegistry(library.definitions ?? {}) || !safeWorkflowData(Object.fromEntries(Object.entries(library).filter(([key]) => key !== 'definitions')))) throw new Error('Lattice settings must contain plain-data preferences and a current reusable subgraph shelf.');
@@ -244,7 +247,7 @@ export function settings() {
     if (!plain(root)) throw new Error('Lattice: getContext() exposed no extension settings.');
     const property = Object.getOwnPropertyDescriptor(root, MODULE);
     if (!property) {
-        const value = { schema: 2, enabled: false, diagnosticLogging: false, subgraphLibrary: { definitions: {} }, ui: {}, migrationRecovery: [], recoveryDraft: null };
+        const value = { schema: 2, enabled: false, diagnosticLogging: false, workflowFailurePolicy: 'native-fallback', subgraphLibrary: { definitions: {} }, ui: {}, migrationRecovery: [], recoveryDraft: null };
         checkSettings(value);
         root[MODULE] = value; admitted.add(value); ownDocument(value, c);
         return value;
@@ -257,6 +260,23 @@ export function settings() {
     if (migrated) save({ recovery: false });
     return value;
 }
+export function getWorkflowFailurePolicy() { return normalizeWorkflowFailurePolicy(settings().workflowFailurePolicy); }
+export function setWorkflowFailurePolicy(value) {
+    if (!isWorkflowFailurePolicy(value)) throw new Error('Lattice workflow failure policy must be a supported preference.');
+    const current = settings(), hadPreference = Object.hasOwn(current, 'workflowFailurePolicy'), previous = current.workflowFailurePolicy;
+    current.workflowFailurePolicy = value;
+    let result;
+    try { result = save({ recovery: false }); }
+    catch { result = recoveryIssue('HOST_SAVE', 'The workflow failure preference could not be saved. Try again.'); }
+    if (!result.ok) {
+        if (hadPreference) current.workflowFailurePolicy = previous;
+        else delete current.workflowFailurePolicy;
+        return result;
+    }
+    if (globalThis.document) document.dispatchEvent(new CustomEvent('pc-state'));
+    return result;
+}
+
 shared.recoveryBatchDepth ??= 0;
 shared.recoveryPending ??= false;
 shared.settingsSavePending ??= false;

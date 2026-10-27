@@ -46,7 +46,7 @@ test('native workflow failures are errors and do not expose unknown host excepti
     const f = toastFixture(); let options;
     const env = { controller: null, createNativeWorkflowController: value => { options = value; return { subscribeRecall() {} }; },
         onWorkflowActivated() {}, getStoryDocumentCatalog() {}, getNativePersistenceVerifier() {}, bindingStatus() {},
-        documentSession: {}, ctx() {}, currentUser() {}, transportUserId() {}, settings() {}, activeWorkflow() {},
+        documentSession: {}, ctx() {}, currentUser() {}, transportUserId() {}, settings() {}, activeWorkflow() {}, getWorkflowFailurePolicy: () => 'native-fallback',
         safe: fn => fn(), presentDiagnostic, diagnosticText, presentFailureNotification };
     try {
         actual(runSource, 'getNativeWorkflowController', env)();

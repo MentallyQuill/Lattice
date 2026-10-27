@@ -145,3 +145,14 @@ test('overflow retains failure feedback in one aggregate pixel and details remai
         host.querySelector('button').click(); assert.equal(opened, 1);
     } finally { await f.close(); }
 });
+
+
+test('partial meter calls out failures without repainting failed and blocked rows as completed', async () => {
+    const f = await fixture();
+    try {
+        const host = await f.show({status:'partial',rows:[row('kept'),row('failed','failed'),row('blocked','blocked')],completedCount:1,executableCount:3,actualCalls:2,callBound:2,elapsedMs:1000},()=>{});
+        assert.match(host.textContent,/Completed with failures/);
+        assert.match(host.querySelector('button').getAttribute('aria-label'),/Completed with failures/);
+        assert.deepEqual([...host.querySelectorAll('[data-run-pixel]')].map(pixel=>pixel.dataset.status),['completed','failed','blocked']);
+    } finally { await f.close(); }
+});

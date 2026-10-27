@@ -584,7 +584,12 @@
 .pc-settings-content { display: flex; flex-direction: column; gap: 12px; padding: 12px 0; color: var(--pc-text); font: 14px/1.4 var(--pc-font, system-ui, sans-serif); }
 .pc-settings-controls { overflow: hidden; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); }
 :root .pc-settings-block .pc-settings-toggle { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 68px; margin: 0; padding: 12px; color: inherit; cursor: pointer; }
-.pc-settings-toggle + .pc-settings-toggle { border-top: 1px solid var(--pc-border); }
+.pc-settings-controls > * + * { border-top: 1px solid var(--pc-border); }
+.pc-settings-failure { display: flex; flex-direction: column; gap: 6px; padding: 12px; min-width: 0; }
+.pc-settings-failure label { color: var(--pc-text); font-size: 13px; font-weight: 600; }
+:root .pc-settings-failure select { width: 100%; min-width: 0; min-height: 36px; margin: 0; padding: 6px 8px; border: 1px solid var(--pc-border); border-radius: 4px; color: var(--pc-text); background: var(--pc-panel-solid); font: inherit; }
+:root .pc-settings-failure select:focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 3px; }
+.pc-settings-failure small { color: var(--pc-muted); font-size: 12px; line-height: 1.4; }
 .pc-settings-toggle:hover { background: color-mix(in srgb, var(--pc-text) 4%, transparent); }
 .pc-settings-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .pc-settings-copy strong { font-size: 13px; font-weight: 600; }

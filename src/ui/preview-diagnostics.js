@@ -39,7 +39,7 @@ export function previewDiagnostics({ workflow, state, target, selectedKey, secti
     }
     const earlier = state.availability === 'superseded' || state.availability === 'stale';
     const historyNotice = earlier && (sections.length || !state.busy && workflow.result) ? 'This preview describes an earlier run. It may not match the current workflow or reply.' : '';
-    const statusDetail = state.preparationError || workflow.result?.error || unique.some(item => item.message === state.status) ? '' : state.status || '';
+    const statusDetail = state.preparationError || workflow.result?.error || unique.some(item => item.message === state.status) ? '' : workflow.result?.outcomeNotice ? state.status?.includes('Completed with failures') ? state.status : workflow.result.outcomeNotice : state.status || '';
     const runReason = state.busy ? 'Wait for the current run to finish.'
         : workflow.targetSummary?.requiresNativeGeneration ? presentDiagnostic({ code: 'MANUAL_NATIVE_TRIGGER_REQUIRED', message: 'This step starts when you send a message.' }, context).message
         : workflow.targetSummary?.attemptable === false ? (workflow.targetSummary?.diagnostics ?? []).map(item => item.message).join(' ') : '';
