@@ -53,7 +53,7 @@ test('post canonical Transpose nodes and Details retain reference, scope and boo
     await expect.poll(() => page.evaluate(id => { const node = window.canvasHarness.graph.nodes[id]; return [node.referenceKind, node.mode, node.scope]; }, id)).toEqual(['data', 'rhythm', 'narration']);
     await expect(page.locator(`.pc-node[data-id="${id}"] .pc-port[data-port="reference"]`)).toHaveAttribute('data-kind', 'data');
     const glossary = await insert(page, 'Transpose', 'terminology-map');
-    await page.getByRole('checkbox', { name: 'Case sensitive', exact: true }).uncheck();
+    await page.getByRole('switch', { name: 'Case sensitive', exact: true }).uncheck();
     await expect.poll(() => page.evaluate(id => window.canvasHarness.graph.nodes[id].caseSensitive, glossary)).toBe(false);
     expect(await page.evaluate(() => window.canvasHarness.providerCalls())).toBe(0);
 });

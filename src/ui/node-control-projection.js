@@ -2,6 +2,10 @@ import { OPERATIONS, operationFor, describeAuthoredOperation } from '../workflow
 import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.28.1';
 import { recallControlLabel } from '../workflow/recall-labels.js?v=0.28.1';
 import { resolveControlInputSpec, formatControlInput } from './control-input-contracts.js?v=0.28.1';
+/** Editor compatibility only; revision/activation are write tokens. */
+export function detailsEditorContractKey(node) {
+ return JSON.stringify([node.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured, control.inputSpec?.id, control.inputSpec?.version]), node.model?.profile.allowedModes, node.model?.model.allowedModes, node.model?.editable, node.helperBindings && [node.helperBindings.helperKey, node.helperBindings.editable, node.helperBindings.roles.map(row => [row.role, row.model.allowedModes])], node.boundary && [node.boundary.id, node.boundary.direction, node.boundary.kinds], !!node.fileInput, node.modifiers && [node.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), node.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), node.modifiers.editable], node.readOnly]);
+}
 /** Shared detached authoring fields; no graph, host, or execution authority. */
 export function projectNodeControls(operation, controls = {}, { phase, readOnly = false, graph }) {
  const base = OPERATIONS[operation]; if (!base) return [];
@@ -40,12 +44,31 @@ function detailPresentation(operation, key) {
   : key === 'rules' && operation === 'pattern' ? 'patterns'
   : key === 'patterns' && operation === 'extract' ? 'extract'
   : key === 'durations' ? 'durations' : undefined;
- const group = ['pins','protectedLiterals','exemptions'].includes(key) ? 'Protections'
+ const primaryModel = ['enrich','extract','model-call','revise-draft'].includes(operation);
+ const purpose = purposeGroups[operation];
+ const specific = purpose && Object.entries(purpose).find(([,keys]) => keys.includes(key))?.[0];
+ const group = key === 'instructions' ? 'Instructions'
+  : primaryModel && ['maxTokens','maxRetries'].includes(key) ? 'Limits & retries'
+  : primaryModel && ['outputKind','schema'].includes(key) ? 'Output'
+  : specific ?? (['pins','protectedLiterals','exemptions'].includes(key) ? 'Protections'
   : ['min','max','baseline','decay'].includes(key) ? 'Bounds'
   : key === 'durations' ? 'Phases'
-  : ['separator','maxTokens'].includes(key) ? 'Output' : 'Main';
- return {group, ...(group !== 'Main' ? {advanced:true} : {}), ...(structured ? {structured} : {}), ...(['actorId','curveId','trackId','idempotencyKey','promptId'].includes(key) ? {singleLine:true} : {})};
+  : ['separator','maxTokens'].includes(key) ? 'Output' : 'Main');
+ const groupOpen = group === 'Instructions' || primaryModel && group === 'Output';
+ return {group, ...(groupOpen ? {groupOpen:true} : {}), ...(group !== 'Main' ? {advanced:true} : {}), ...(structured ? {structured} : {}), ...(operation === 'model-call' && key === 'outputKind' ? {options:[{value:'text',label:'Plain text'},{value:'data',label:'JSON data'}]} : {}), ...(['actorId','curveId','trackId','idempotencyKey','promptId'].includes(key) ? {singleLine:true} : {})};
 }
+
+// Presentation groups never change visibility, defaults, admission, or values.
+const purposeGroups = {
+ chunk:{Sizing:['sizeUnit','targetSize','overlap','turnsPerChunk'],Advanced:['sentenceLocale','tokenizerBinding','maxTokenizerCalls','maxChunks']},
+ pattern:{Matching:['scope','caseSensitive','matchPolicy','minOccurrences','regexFlags'],Limits:['timeoutMs']},
+ format:{Output:['fields','schema','columns','separator','trailingSeparator']},
+ 'write-file':{Content:['collectionPath','missingPath','key','fieldPolicy','fields','emptyPolicy'],Format:['schema','columns','separator','trailingSeparator'],'Actor access':['actorScope','actorId']},
+ 'project-document':{Content:['collectionPath','missingPath','key','fieldPolicy','fields','emptyPolicy'],Format:['schema','columns','separator','trailingSeparator']},
+ 'time-trigger':{Schedule:['scheduleId','scheduleRevision','clockId','calendarId','minuteOfDay','order'],Metadata:['metadata'],Limits:['limit','consumedIds']},
+ collection:{Matching:['fieldPath','value','operator','missingPolicy'],Merge:['mergePolicy','identityPath'],Thresholds:['thresholds']},
+ recall:{Matching:['keywords','caseSensitive','eventTypes','partnerIds','tags','recordIds'],Limits:['limit','maxCharacters','maxTokens'],Output:['title']},
+};
 
 /** Present saved list values in a grammar that round trips their literal contents. */
 export function controlInputPresentation(control, format = 'auto') {

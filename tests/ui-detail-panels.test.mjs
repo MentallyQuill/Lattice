@@ -216,7 +216,7 @@ test('selected deterministic details keep canonical identity and guard readonly 
         assert.equal(f.host.querySelector('[aria-label="Sections"]').disabled, true);
         change(f.host.querySelector('[aria-label="Node name"]'), 'Alias two');
         assert.equal(calls.length, 1); assert.deepEqual(calls[0], ['present', { selectionKey: JSON.stringify(address), revision: 'revision1', address }, 'alias', 'Alias two']);
-        input(f.host.querySelector('[aria-label="Sections"]'), '[]'); f.host.querySelector('[data-save-control="sections"]').click();
+        input(f.host.querySelector('[aria-label="Sections"]'), '[]'); assert.equal(f.host.querySelector('[data-save-control="sections"]'),null);
         assert.equal(calls.length, 1, 'raw events cannot bypass readonly semantic guard');
         f.update(node({ readOnly: true, canPresent: false })); change(f.host.querySelector('[aria-label="Node name"]'), 'blocked');
         assert.equal(calls.length, 1, 'presentation permission has its own guard');

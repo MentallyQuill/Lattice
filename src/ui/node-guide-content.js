@@ -757,7 +757,7 @@ const controls = {
 
 /** Supplementary settings are added by the caller only when the selected node exposes them. */
 const supplementaryControls = {
-    maxRetries: 'Extra requests for this model node, from zero to two; the default is zero. Two permits up to three total requests. Retryable transient failures and at most one JSON or schema correction share this allowance. Authentication, configuration, cancellation, privacy and limit failures stop immediately. Completed nodes and SillyTavern native generation are never retried. Retrying keeps the same stage active and all requests count against its budget.',
+    maxRetries: 'Extra requests for this model node, from zero to five; the default is zero. Five permits up to six total requests. Retryable transient failures and at most one JSON or schema correction share this allowance. Authentication, configuration, cancellation, privacy and limit failures stop immediately. Completed nodes and SillyTavern native generation are never retried. Retrying keeps the same stage active and all requests count against its budget.',
     enabled: 'Allow this node to participate in workflow execution when enabled. Disabled paths may leave downstream required inputs unavailable.',
     phase: 'Preparation runs before Generate Reply; Response runs after it. The selected node’s input and output types must support that stage. Compose Text works in either; Compose Guidance requires Preparation.',
     stage: 'Preparation runs before Generate Reply; Response runs after it. Choose a stage supported by this node’s operation and connected values.',

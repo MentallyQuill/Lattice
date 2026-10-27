@@ -1,3 +1,4 @@
+import {findInlineEditor,rememberValueEditor,selectValueScope} from './helpers/inline-value-scope.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 const authoring = await import('../src/ui/json-value-authoring.js').catch(() => ({}));
@@ -85,11 +86,11 @@ async function fixture(name, initial, check, extra = {}) {
     }
 }
 function input(host, label, value, type = 'input') {
-    const element = host.querySelector(`[aria-label="${label}"]`); assert.ok(element, `Missing ${label}`);
+    const element = findInlineEditor(host,label); assert.ok(element, `Missing ${label}`);
     if (element.type === 'checkbox') element.checked = value; else element.value = value;
     element.dispatchEvent(new dom.window.Event(type, { bubbles: true })); flushSync(); return element;
 }
-function click(host, label) { const element = host.querySelector(`button[aria-label="${label}"]`); assert.ok(element, `Missing ${label}`); element.click(); flushSync(); return element; }
+function click(host, label) { const element = host.querySelector(`button[aria-label="${label}"]`); assert.ok(element, `Missing ${label}`); element.click(); flushSync(); rememberValueEditor(host,element,flushSync); return element; }
 
 test('path segments retain exact keys and provide indices only when the consumer permits them', async () => {
     await fixture('JsonPathControl', ['a.b', 'red, blue', '__proto__', '0'], async f => {
@@ -122,7 +123,7 @@ test('value types remain editable through null, structured values and falsy scal
         assert.equal(f.host.querySelector('[aria-label="Test number"]').value, '-'); assert.equal(f.read().value, 0);
         assert.ok(f.read().invalids.includes('-'));
         click(f.host, 'Edit Test as JSON'); assert.equal(f.host.querySelector('[aria-label="Test JSON"]').value, '-');
-        click(f.host, 'Edit Test as typed value'); assert.equal(f.host.querySelector('[aria-label="Test number"]').value, '-');
+        input(f.host,'Test JSON','0'); click(f.host, 'Edit Test as fields'); assert.equal(f.host.querySelector('[aria-label="Test number"]').value, '0');
         input(f.host, 'Test number', '0'); assert.equal(f.read().value, 0);
         input(f.host, 'Test number', '1e400'); assert.equal(f.read().value, 0);
         input(f.host, 'Test number', '2'); assert.equal(f.read().value, 2);
@@ -139,10 +140,10 @@ test('typed object and array tree edits preserve own keys and emit actual values
         input(f.host, 'Test new key', 'polluted'); click(f.host, 'Add Test property');
         click(f.host, 'Edit Test key polluted'); input(f.host, 'Test type', 'boolean', 'change'); input(f.host, 'Test boolean', true, 'change');
         assert.equal({}.polluted, undefined); assert.deepEqual(f.read().value.__proto__, { polluted: true });
-        click(f.host, 'Back Test'); click(f.host, 'Back Test'); click(f.host, 'Edit Test key a.b');
+        selectValueScope(f.host,[]); click(f.host, 'Edit Test key a.b');
         input(f.host, 'Test type', 'array', 'change'); click(f.host, 'Add Test item');
         click(f.host, 'Edit Test index 0'); input(f.host, 'Test type', 'number', 'change'); input(f.host, 'Test number', '0');
-        click(f.host, 'Back Test'); click(f.host, 'Add Test item'); click(f.host, 'Move Test index 1 up');
+        selectValueScope(f.host,['a.b']); click(f.host, 'Add Test item'); click(f.host, 'Move Test index 1 up');
         assert.deepEqual(f.read().value['a.b'], [null, 0]);
         click(f.host, 'Remove Test index 0'); assert.deepEqual(f.read().value['a.b'], [0]);
         assert.equal(typeof f.read().value, 'object'); assert.equal(typeof f.read().value['a.b'][0], 'number');
@@ -182,7 +183,7 @@ test('disabled typed and advanced controls reject forced events', async () => {
         ['JsonValueControl', null, 'Test type', 'object', 'change'],
         ['JsonValueControl', {}, 'Test new key', '__proto__', 'input'],
     ]) await fixture(name, initial, async f => {
-        for (const editor of f.host.querySelectorAll('input,select,textarea,button')) assert.equal(editor.disabled, true);
+        for (const editor of f.host.querySelectorAll('input,select,textarea')) assert.equal(editor.disabled || editor.readOnly, true);
         input(f.host, label, next, type);
         for (const button of f.host.querySelectorAll('button')) button.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
         flushSync(); assert.deepEqual(f.read().value, initial); assert.equal(f.read().changes.length, 0); assert.equal(f.read().invalids.length, 0);

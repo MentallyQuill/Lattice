@@ -4,6 +4,7 @@ export function durationToMinutes(quantity: number, unit: 'minutes' | 'hours' | 
 export function validateScheduleMetadata(value: JsonValue): Result<{ value: JsonValue }>;
 /** Parent-owned local UI state; never store this as canonical schedule data. */
 export interface ScheduleDraftState {
+    expandedRows?: string[];
     rows: JsonValue[]; raw: boolean; rawText: string; feedback: string;
     invalidText: string; invalid: boolean; drafts: Record<string,string>;
     draftPaths: Record<string,JsonPath>;

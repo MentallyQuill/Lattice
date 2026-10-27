@@ -183,6 +183,7 @@ test('editing canonical Pattern rules preserves counts and labels and rejects in
     await expect(details(page).locator('.pc-diagnostic[data-severity="error"]')).toBeVisible();
     expect((await read()).node.rules).toEqual(saved);
     const errorText = await details(page).locator('.pc-diagnostic[data-severity="error"]').textContent();
+    await openDetailGroup(page,'Matching');
     await page.getByLabel('Case sensitive', { exact: true }).uncheck();
     await expect(editor).toHaveValue('{"phrase":');
     await expect(editor).toHaveAttribute('aria-invalid', 'true');
@@ -303,7 +304,7 @@ test('unified workflow keeps its AI De-slop primitives and preserves a focused e
     await details(page).getByRole('button', { name: 'Save Rules', exact: true }).click();
     await inspectOperation(page, 'repair');
     await expect(details(page).getByLabel('Node name', { exact: true })).toHaveValue('Repair');
-    await expect(details(page).locator('.pc-detail-identity')).toContainText('Surface · post phase');
+    await expect(details(page).locator('.pc-detail-identity')).toContainText('Surface · Response');
     const modelBinding = await openDetailGroup(page, 'Model');
     await expect(modelBinding).toContainText('workflow-test-model');
     await expect(details(page).getByLabel('Model mode', { exact: true })).toBeVisible();
@@ -421,7 +422,7 @@ test('an external reply edit disables Apply and a rejected candidate preserves t
 });
 
 
-test('switching graph or closing cancels a delayed run and ignores its late result', async ({ page }) => {
+test('switching graph cancels a delayed run while closing preserves its review authority', async ({ page }) => {
     await reviewFixture(page);
     await page.evaluate(() => {
         const c = window.canvasHarness.context;
@@ -431,7 +432,7 @@ test('switching graph or closing cancels a delayed run and ignores its late resu
     await page.waitForFunction(() => !!window.finishWorkflowRequest);
     await installWorkflow(page, 'Scene guidance');
     expect(await page.evaluate(() => window.workflowSignal.aborted)).toBe(true);
-    await page.evaluate(async () => { window.finishWorkflowRequest({ choices: [{ message: { content: '{"patches":[{"index":0,"replacement":"late"}]}' }, finish_reason: 'stop' }] }); await window.canvasHarness.settle(); });
+    await page.evaluate(async () => { window.finishWorkflowRequest({ choices: [{ message: { content: 'Late replacement.' }, finish_reason: 'stop' }], usage: { prompt_tokens: 50, completion_tokens: 10 } }); await window.canvasHarness.settle(); });
     await expect(page.getByRole('button', { name: 'Apply reviewed reply', exact: true })).toHaveCount(0);
     expect(await page.evaluate(() => window.canvasHarness.context.chat.at(-1).mes)).toBe('We delve.');
     await installWorkflow(page, 'Reviewed AI De-slop');
@@ -440,10 +441,28 @@ test('switching graph or closing cancels a delayed run and ignores its late resu
     await page.evaluate(() => { window.finishWorkflowRequest = null; });
     await runRoot(page);
     await page.waitForFunction(() => !!window.finishWorkflowRequest);
+    const runId = await page.evaluate(async () => (await import('/src/run.js?v=' + window.canvasHarness.version)).getNativeWorkflowController().activity()?.runId);
+    expect(runId).toBeTruthy();
     await page.getByRole('button', { name: 'Close canvas', exact: true }).click();
-    expect(await page.evaluate(() => window.workflowSignal.aborted)).toBe(true);
-    await page.evaluate(async () => { window.finishWorkflowRequest({ choices: [{ message: { content: '{"patches":[{"index":0,"replacement":"late"}]}' }, finish_reason: 'stop' }] }); window.canvasHarness.UI.open(); await window.canvasHarness.settle(); });
-    await expect(page.getByRole('button', { name: 'Apply reviewed reply', exact: true })).toHaveCount(0);
+    await expect(page.locator('.pc-root')).not.toHaveClass(/pc-open/);
+    expect(await page.evaluate(() => window.workflowSignal.aborted)).toBe(false);
+    expect(await page.evaluate(async () => (await import('/src/run.js?v=' + window.canvasHarness.version)).getNativeWorkflowController().activity()?.runId)).toBe(runId);
+    await page.evaluate(async () => { window.finishWorkflowRequest({ choices: [{ message: { content: 'We explore.' }, finish_reason: 'stop' }], usage: { prompt_tokens: 50, completion_tokens: 10 } }); await window.canvasHarness.settle(); });
+    await expect.poll(() => page.evaluate(async () => {
+        const result = (await import('/src/run.js?v=' + window.canvasHarness.version)).getNativeWorkflowController().lastAutomaticResult()?.result;
+        return { runId: result?.runId, ok: result?.ok, status: result?.recording.status };
+    })).toEqual({ runId, ok: true, status: 'completed' });
+    expect(await page.evaluate(() => window.canvasHarness.context.chat.at(-1).mes)).toBe('We delve.');
+    expect(await page.evaluate(() => window.workflowSaveAttempts || 0)).toBe(0);
+    await page.evaluate(async () => { window.canvasHarness.UI.open(); await window.canvasHarness.settle(); });
+    await selectTerminal(page, 'review-publish', false);
+    await candidateText(page, 'We explore.');
+    const apply = page.getByRole('button', { name: 'Apply reviewed reply', exact: true });
+    await expect(apply).toBeEnabled();
+    expect(await page.evaluate(() => window.canvasHarness.context.chat.at(-1).mes)).toBe('We delve.');
+    await apply.click();
+    expect(await page.evaluate(() => window.canvasHarness.context.chat.at(-1).swipes)).toEqual(['We delve.', 'We explore.']);
+    expect(await page.evaluate(() => window.workflowSaveAttempts)).toBe(1);
 });
 test('Run to here stays diagnostic and actual Send retains addressed request evidence', async ({ page }) => {
     await reviewFixture(page);

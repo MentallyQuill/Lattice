@@ -21,7 +21,7 @@ Your usual SillyTavern model writes the reply. Lattice can prepare guidance for 
 
 ## New in 0.28.1: recover model steps
 
-Choose up to two retries on individual model nodes, inspect each attempt in run details, and receive persistent failure notices. Structured output tolerates complete JSON fences while retaining strict validation. Mobile startup also works on LAN HTTP connections. [Read the 0.28.1 release notes](docs/releases/0.28.1.md) for retry limits and update instructions.
+Choose up to five additional attempts on individual model nodes, inspect each attempt in run details, and receive persistent failure notices. Structured output tolerates complete JSON fences while retaining strict validation. Mobile startup also works on LAN HTTP connections. [Read the 0.28.1 release notes](docs/releases/0.28.1.md) for update instructions and the original release behavior.
 
 ## New in 0.28.0: work with smaller passages
 

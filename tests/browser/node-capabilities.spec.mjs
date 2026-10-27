@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { chooseControl, controlValue } from './details-helpers.mjs';
+import { chooseControl, controlValue, openDetailGroup } from './details-helpers.mjs';
 
 const details = page => page.getByRole('region', { name: 'Node details', exact: true });
 
@@ -41,7 +41,7 @@ async function select(page, id) {
 test('Extract Details saves literal case and word choices and hides them in Model mode', async ({ page }) => {
     await launch(page, 'extract');
     await select(page, 'extract');
-    const panel = details(page), caseSensitive = panel.getByRole('checkbox', { name: 'Case sensitive', exact: true });
+    const panel = details(page), caseSensitive = panel.getByRole('switch', { name: 'Case sensitive', exact: true });
     await expect(caseSensitive).toBeChecked();
     expect(await controlValue(page, 'Match')).toBe('substring');
     await caseSensitive.uncheck();
@@ -68,6 +68,7 @@ test('Extract Details saves literal case and word choices and hides them in Mode
 test('Collection Details retains numeric, boolean, null and structured JSON comparison values', async ({ page }) => {
     await launch(page, 'collection');
     await select(page, 'collection');
+    await openDetailGroup(page,'Matching');
     const panel = details(page), type = panel.getByLabel('Value type', { exact: true });
     await expect(type).toHaveValue('string');
     const save = panel.getByRole('button', { name: 'Save Value', exact: true });
@@ -79,7 +80,8 @@ test('Collection Details retains numeric, boolean, null and structured JSON comp
         await expect(type).toHaveValue(kind);
     }
     await type.selectOption('object');
-    await panel.getByRole('button', { name: 'Edit Value as JSON', exact: true }).click();
+    const rawButton=panel.getByRole('button', { name: 'Edit Value as JSON', exact: true });
+    if(await rawButton.isVisible())await rawButton.click();
     const json = panel.getByLabel('Value JSON', { exact: true });
     await json.fill('{"unfinished":');
     await save.click();
@@ -89,7 +91,7 @@ test('Collection Details retains numeric, boolean, null and structured JSON comp
     await json.fill(JSON.stringify(structured));
     await save.click();
     await expect.poll(() => page.evaluate(() => window.canvasHarness.graph.nodes.collection.value)).toEqual(structured);
-    await panel.getByRole('button', { name: 'Edit Value as JSON', exact: true }).click();
+    if(await rawButton.isVisible())await rawButton.click();
     await json.fill('[0,false,null,{"id":"lantern"}]');
     await save.click();
     await expect.poll(() => page.evaluate(() => window.canvasHarness.graph.nodes.collection.value)).toEqual([0, false, null, { id: 'lantern' }]);

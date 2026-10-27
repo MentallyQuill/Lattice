@@ -1,3 +1,4 @@
+import {findInlineEditor,rememberValueEditor,selectValueScope} from './helpers/inline-value-scope.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 const api = await import('../src/ui/decision-authoring.js').catch(() => ({}));
@@ -58,8 +59,8 @@ async function fixture(initial,check,options={}) {
         mounted=mount((await import(harness)).default,{target:host,props:{initial,options}});flushSync();await check({host,read:()=>mounted.read(),remount:()=>{mounted.remount();flushSync();mounted.show();flushSync();}});
     }finally{if(mounted)await unmount(mounted);host.remove();await rm(directory,{recursive:true,force:true});}
 }
-function input(host,label,value,type='input'){const e=host.querySelector(`[aria-label="${label}"]`);assert.ok(e,'Missing '+label);e.value=value;e.dispatchEvent(new dom.window.Event(type,{bubbles:true}));flushSync();}
-function click(host,label){const e=host.querySelector(`button[aria-label="${label}"]`);assert.ok(e,'Missing '+label);e.click();flushSync();}
+function input(host,label,value,type='input'){const e=findInlineEditor(host,label);assert.ok(e,'Missing '+label);e.value=value;e.dispatchEvent(new dom.window.Event(type,{bubbles:true}));flushSync();}
+function click(host,label){const e=host.querySelector(`button[aria-label="${label}"]`);assert.ok(e,'Missing '+label);e.click();flushSync();rememberValueEditor(host,e,flushSync);}
 test('question cards retain identity and advanced structured criteria while editing words and order',async()=>{
     await fixture({'question-1':{type:'noul',instructions:'Before',criteria:{true:{exact:[0,false,null,'']}}},other:{type:'score',instructions:[],criteria:['low','high']}},async f=>{
         input(f.host,'Question 1 instructions','After, exact');assert.deepEqual(JSON.parse(JSON.stringify(f.read().value['question-1'])),{type:'noul',instructions:'After, exact',criteria:{true:{exact:[0,false,null,'']}}});
@@ -79,7 +80,7 @@ test('disabled question cards cannot change saved settings',async()=>{
 });
 test('unfinished typed criteria remain visible after remount and block unrelated question edits until corrected',async()=>{
     await fixture({'q':{type:'score',instructions:'Before',criteria:['low','high']}},async f=>{
-        click(f.host,'Edit Question 1 rubric levels index 0');click(f.host,'Edit Question 1 rubric levels as JSON');input(f.host,'Question 1 rubric levels JSON','{unfinished');
+        click(f.host,'Edit Question 1 rubric levels index 0');input(f.host,'Question 1 rubric levels string','x'.repeat(262145));
         click(f.host,'Advanced questions JSON');click(f.host,'Use question cards');f.remount();assert.match(f.host.textContent,/unfinished/);
         input(f.host,'Question 1 instructions','After');assert.equal(f.read().value.q.instructions,'Before');
         click(f.host,'Discard question 1 criteria draft');assert.equal(f.read().value.q.instructions,'After');
@@ -87,7 +88,7 @@ test('unfinished typed criteria remain visible after remount and block unrelated
 });
 test('retained child criteria JSON drafts can be repaired at the exact nested path after remount',async()=>{
     await fixture({'q':{type:'score',instructions:'Before',criteria:[{detail:'low'},'high']}},async f=>{
-        click(f.host,'Edit Question 1 rubric levels index 0');click(f.host,'Edit Question 1 rubric levels key detail');click(f.host,'Edit Question 1 rubric levels as JSON');input(f.host,'Question 1 rubric levels JSON','{unfinished');f.remount();
+        click(f.host,'Edit Question 1 rubric levels index 0');click(f.host,'Edit Question 1 rubric levels key detail');input(f.host,'Question 1 rubric levels type','number','change');input(f.host,'Question 1 rubric levels number','-');f.remount();
         input(f.host,'Question 1 criteria unfinished JSON','"fixed"');assert.deepEqual(JSON.parse(JSON.stringify(f.read().value.q.criteria)),[{detail:'fixed'},'high']);
     });
 });

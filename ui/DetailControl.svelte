@@ -22,12 +22,22 @@
     import type { JsonPath } from '../src/workflow/operations/json-data';
     import type { SchemaDraftState } from '../src/ui/schema-authoring';
     import type { DetailControl } from './detail-types';
-    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, structuredDraft, onStructuredDraft, structuredIdentity = '', schemaDraft, onSchemaDraft, schemaIdentity = '', importState, onImportState, importIdentity = '', onvalue, onnumber, onsave, saveButton = true, format = 'auto', draftFormat, onformat, recordMode, onRecordMode }: {
+    let { control, text, error = '', disabled = false, pending = false, idPrefix, ontext, onDraft, draftValue, structuredDraft, onStructuredDraft, structuredIdentity = '', schemaDraft, onSchemaDraft, schemaIdentity = '', importState, onImportState, importIdentity = '', onvalue, onnumber, onsave, ondiscard, dirty = true, saveButton = true, format = 'auto', draftFormat, onformat, recordMode, onRecordMode }: {
+        dirty?: boolean; ondiscard?: () => void;
         recordMode?:'terms'|'rows'; onRecordMode?:(mode:'terms'|'rows')=>void; importState?:ControlImportState; onImportState?:(state:ControlImportState)=>void; importIdentity?:string;
         control: DetailControl; text: string; structuredIdentity?:string; structuredDraft?:StructuredDraftState; onStructuredDraft?:(state:StructuredDraftState)=>void; schemaIdentity?:string; schemaDraft?:SchemaDraftState; onSchemaDraft?:(state:SchemaDraftState)=>void; saveButton?: boolean; format?: ControlInputFormat; draftFormat?:ControlInputFormat; onformat?: (format:ControlInputFormat)=>void; error?: string; disabled?: boolean; pending?: boolean; idPrefix: string;
         ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; onvalue: (value: unknown) => void; onnumber: (input: HTMLInputElement) => void; onsave: () => void;
     } = $props();
     let localRecordMode = $state<'terms'|'rows'>('rows');
+    let retryValue = $state(0);
+    $effect(()=>{if(control.key==='maxRetries')retryValue=Number(control.value);});
+    function commitRetries(input:HTMLInputElement){
+        if(disabled)return;
+        onnumber(input);
+        // Dragging previews a candidate. After release, the acknowledged view
+        // owns both the thumb and the call-bound hint, including on rejection.
+        retryValue=Number(control.value);input.value=String(control.value);
+    }
     const termMode = $derived((recordMode ?? localRecordMode) === 'terms');
     function setRecordMode(mode:'terms'|'rows'){localRecordMode=mode;onRecordMode?.(mode);}
     function structuredText(source:string){if(disabled)return;onformat?.('json');ontext(source);}
@@ -81,9 +91,16 @@
     const entry = $derived(control.inputSpec?.editor === 'list');
     const shortChoices = () => control.editor === 'enum' && (control.options?.length ?? 0) > 1 && (control.options?.length ?? 0) <= 3 && control.options!.every(option => option.label.length <= 10);
     const provenance = () => control.effective !== undefined && control.effective !== text && control.source !== 'Saved setting' ? control.source : '';
+    function choose(event: Event, value: string) {
+        if(disabled)return;
+        // Keep the displayed selection authoritative while an edit is validated.
+        const input=event.currentTarget as HTMLInputElement;
+        input.closest('[role="radiogroup"]')?.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach(choice=>choice.checked=choice.value===String(control.value));
+        onvalue(value);
+    }
 </script>
 
-<div class:pc-control-number={control.editor === 'number'} class="pc-detail-control">
+<div class:pc-control-number={control.editor === 'number' && control.key !== 'maxRetries'} class="pc-detail-control">
     {#if tableSupported && !tableState.open}<button type="button" aria-label={'Import '+control.label+' table'} disabled={disabled||pending||!tableValue?.ok} onclick={()=>{if(tableValue?.ok)tableStateChange({...tableState,open:true});}}>Import {control.label} table</button>{/if}
     {#if tableSupported && tableState.open && control.inputSpec}
         {#key importIdentity}<ControlImport spec={control.inputSpec} value={tableValue?.ok?tableValue.data.value:[]} draft={tableState.draft} onDraft={tableDraft} onConfirm={confirmTable} onCancel={()=>tableStateChange({...tableState,open:false})} disabled={disabled||pending} admissionDisabled={!tableValue?.ok}/>{/key}
@@ -113,13 +130,18 @@
         <span class="pc-control-label">{control.label}</span>
         {#if recordEntry}<button type="button" aria-label={'Use '+control.label+' terms'} {disabled} onclick={switchRows}>Terms / CSV</button>{/if}
         <StructuredControl {control} {text} {disabled} ontext={structuredText} {onDraft} {draftValue} {idPrefix} {error} />
+    {:else if control.editor === 'number' && control.key === 'maxRetries'}
+        <label class="pc-retry-label" for={idPrefix+'-retries'}>{control.label}<output for={idPrefix+'-retries'}>{retryValue===0?'None':retryValue}</output></label>
+        <input class="pc-retry-slider" id={idPrefix+'-retries'} type="range" aria-label={control.label} min={control.min??0} max={control.max} step="1" value={retryValue} aria-valuetext={retryValue===0?'None':retryValue+' additional attempts'} {disabled} oninput={event=>{if(!disabled)retryValue=Number(event.currentTarget.value);}} onchange={event=>commitRetries(event.currentTarget)}/>
+        <div class="pc-retry-ends" aria-hidden="true"><span>None</span><span>{control.max}</span></div>
+        <small>{retryValue===0?'No retries on failure.':`Up to ${retryValue+1} model calls in total. Only eligible failures are retried.`}</small>
     {:else if control.editor === 'boolean'}
-        <label class="pc-detail-check"><input aria-label={control.label} type="checkbox" checked={Boolean(control.value)} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.checked); }} />{control.label}</label>
+        <label class="pc-detail-check"><span>{control.label}</span><input aria-label={control.label} type="checkbox" role="switch" checked={Boolean(control.value)} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.checked); }} /><small>{control.value?'On':'Off'}</small></label>
     {:else if shortChoices()}
         <span class="pc-control-label">{control.label}</span>
         <div class="pc-control-segments" role="radiogroup" aria-label={control.label}>
             {#each control.options ?? [] as option (option.value)}
-                <label><input type="radio" name={idPrefix + '-choice'} aria-label={option.label} value={option.value} checked={String(control.value) === option.value} {disabled} onchange={event => { if (!disabled && event.currentTarget.checked) onvalue(option.value); }} /><span>{option.label}</span></label>
+                <label><input type="radio" name={idPrefix + '-choice'} aria-label={option.label} value={option.value} checked={String(control.value) === option.value} {disabled} onchange={event => { if (event.currentTarget.checked) choose(event, option.value); }} /><span>{option.label}</span></label>
             {/each}
         </div>
     {:else}
@@ -136,14 +158,19 @@
             <textarea id={idPrefix + '-editor'} aria-label={control.label} value={text} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.value); }}></textarea>
         {/if}
     {/if}
-    {#if saveButton && (control.editor === 'json' || control.editor === 'lines')}<button type="button" data-save-control={control.key} disabled={disabled || pending || tableState.open || structured && !!(structuredDraft ?? localStructuredDraft)?.invalid || control.inputSpec?.editor==='schema' && text!=='' && !!(schemaDraft ?? localSchemaDraft)?.invalid} onclick={() => { if (!disabled && !pending && !tableState.open && !(structured && (structuredDraft ?? localStructuredDraft)?.invalid) && !(control.inputSpec?.editor==='schema' && text!=='' && (schemaDraft ?? localSchemaDraft)?.invalid)) onsave(); }}>{pending ? 'Validating…' : 'Save ' + control.label}</button>{/if}
-    {#if control.help}<small>{control.help}</small>{/if}
+    {#if saveButton && (dirty || pending || !!error) && (control.editor === 'json' || control.editor === 'lines')}<div class="pc-control-draft-actions"><span>{pending?'Waiting for acknowledgment':'Unsaved changes'}</span>{#if ondiscard}<button type="button" aria-label={'Discard '+control.label+' changes'} disabled={disabled||pending} onclick={ondiscard}>Discard</button>{/if}<button type="button" aria-label={'Save '+control.label} data-save-control={control.key} disabled={disabled || pending || tableState.open || structured && !!(structuredDraft ?? localStructuredDraft)?.invalid || control.inputSpec?.editor==='schema' && text!=='' && !!(schemaDraft ?? localSchemaDraft)?.invalid} onclick={() => { if (!disabled && !pending && !tableState.open && !(structured && (structuredDraft ?? localStructuredDraft)?.invalid) && !(control.inputSpec?.editor==='schema' && text!=='' && (schemaDraft ?? localSchemaDraft)?.invalid)) onsave(); }}>{pending ? 'Validating…' : control.inputSpec?.editor==='schema'?'Save structure':'Save ' + control.label}</button></div>{/if}
+    {#if control.help}<details class="pc-control-help"><summary>About {control.label}</summary><small>{control.help}</small></details>{/if}
     {#if control.exposureNote}<small>{control.exposureNote}</small>{:else if provenance()}<small>{provenance()} · Effective: {control.effective}</small>{/if}
     {#if error}<div id={idPrefix + '-error'} class="pc-detail-error"><DiagnosticMessage issue={error} context={{ inputLabel: control.label }} /></div>{/if}
 </div>
 
 <style>
     .pc-detail-control { min-width: 0; margin: 9px 0; }
+    .pc-retry-label{display:flex;justify-content:space-between;align-items:center;gap:8px}.pc-retry-label output{color:var(--pc-accent);font-variant-numeric:tabular-nums}.pc-retry-ends{display:flex;justify-content:space-between;color:var(--pc-muted);font-size:10px}.pc-retry-slider{accent-color:var(--pc-accent);padding:0!important;border:0!important;background:transparent!important;cursor:pointer}
+    .pc-control-draft-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 9px; border-top: 1px solid var(--pc-border); padding-top: 6px; }
+    .pc-control-draft-actions > span { flex: 1; color: var(--pc-warn); font-size: 10px; }
+    .pc-control-help { margin-top: 5px; color: var(--pc-muted); font-size: 10px; }
+    .pc-control-help summary { cursor: pointer; }
     label, .pc-control-label { display: block; color: var(--pc-text); font-size: 11px; line-height: 1.5; }
     input:not([type='checkbox']), select, textarea { width: 100%; min-width: 0; box-sizing: border-box; margin-top: 4px; min-height: 28px; padding: 5px 7px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-field); color: var(--pc-text); font: inherit; }
     textarea { display: block; min-height: 88px; resize: vertical; line-height: 1.5; }
@@ -157,6 +184,7 @@
     .pc-control-segments input:focus-visible + span { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
     .pc-control-segments input:disabled + span { opacity: .55; }
     .pc-detail-check { display: flex; align-items: center; gap: 6px; } input[type='checkbox'] { accent-color: var(--pc-accent); flex: none; margin: 0; }
+    .pc-detail-check > span{flex:1}.pc-detail-check small{margin:0;min-width:18px}.pc-detail-check input[role='switch']{appearance:none;width:28px;height:16px;border:1px solid var(--pc-border);border-radius:9px;background:var(--pc-field);position:relative;cursor:pointer}.pc-detail-check input[role='switch']::after{content:'';position:absolute;width:10px;height:10px;top:2px;left:2px;border-radius:50%;background:var(--pc-muted)}.pc-detail-check input[role='switch']:checked{background:var(--pc-accent)}.pc-detail-check input[role='switch']:checked::after{left:14px;background:var(--pc-on-accent,var(--pc-text))}
     small { display: block; margin-top: 4px; color: var(--pc-muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
     button { margin-top: 5px; min-height: 26px; max-width: 100%; padding: 4px 8px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); color: var(--pc-text); font: inherit; font-size: 11px; cursor: pointer; overflow-wrap: anywhere; }
     button:hover:global(:where(:not(body.pc-node-held *))):not(:disabled) { background: color-mix(in srgb, var(--pc-text) 10%, var(--pc-control)); } :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }

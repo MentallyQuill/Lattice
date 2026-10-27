@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {controlInputPresentation} from '../src/ui/node-control-projection.js';
+    import {controlInputPresentation, detailsEditorContractKey} from '../src/ui/node-control-projection.js';
     import {readControlRows} from '../src/ui/control-input-adapters.js';
     import {parseControlInput} from '../src/ui/control-input-contracts.js';
     import type {ControlInputFormat} from '../src/ui/control-input-contracts';
@@ -24,12 +24,14 @@
     let errors = $state<Record<string, string>>({});
     // View/navigation state never owns the canonical text of an untouched control.
     let schemaStates = $state.raw<Record<string, SchemaDraftState>>({});
+    let schemaEpoch = $state<Record<string, number>>({});
     let importStates=$state.raw<Record<string,ControlImportState>>({});
     let recordModes=$state.raw<Record<string,'terms'|'rows'>>({});
     function importState(control:DetailControl,state:ControlImportState){if(!view||view.readOnly||!actions.editControl||drafts[control.key]?.pending)return;const checked=cloneJsonValue(state);if(!checked.ok)return;importStates={...importStates,[control.key]:checked.data.value as unknown as ControlImportState};}
     let structuredStates=$state.raw<Record<string,StructuredDraftState>>({});
     let structuredEpoch=$state<Record<string,number>>({});
     let identity = '', revision = '', support = '';
+    let modelSchemaContext: { format: unknown; full: string; fields: string } | null = null;
     let sequence = 0, boundaryDraftSequence = 0, draftVisit = 0;
     const requests = new Map<string, number>();
     let modifierBusy = $state(false);
@@ -68,6 +70,11 @@
         const next = view ? selectionIdentity(view) : '', nextRevision = view?.revision ?? '';
         const nextSupport = view?.editorContractKey ?? JSON.stringify([view?.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured, control.inputSpec?.id, control.inputSpec?.version]), view?.model?.profile.allowedModes, view?.model?.model.allowedModes, view?.model?.editable, view?.helperBindings && [view.helperBindings.helperKey,view.helperBindings.editable,view.helperBindings.roles.map(row=>[row.role,row.model.allowedModes])], view?.boundary && [view.boundary.id, view.boundary.direction, view.boundary.kinds], !!view?.fileInput, view?.modifiers && [view.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), view.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), view.modifiers.editable, view.readOnly]]);
         const changedSelection = next !== identity;
+        const nextModelSchemaContext = view?.operation === 'model-call' ? {
+            format: view.controls.find(control => control.key === 'outputKind')?.value,
+            full: detailsEditorContractKey(view),
+            fields: detailsEditorContractKey({...view, modifiers: null})
+        } : null;
         if (changedSelection || nextRevision !== revision || nextSupport !== support) {
             if (changedSelection || nextSupport !== support) { boundaryDraftSequence++; modifierEpoch++; }
             if (changedSelection) {
@@ -82,12 +89,23 @@
             let restoredRecordModes=changedSelection?retained?.recordModes??{}:untrack(()=>recordModes);
             let restoredStructures=changedSelection?retained?.structures??{}:untrack(()=>structuredStates);
             if (changedContract) {
-                draftCache.delete(next); restoredSchemas = {}; restoredStructures={}; restoredImports={}; restoredRecordModes={};
+                // Text output introduces text modifiers. That capability change
+                // does not invalidate the same node's schema editor/draft.
+                // Require both known producer contracts and otherwise identical
+                // editor capabilities; opaque/incompatible contracts still expire.
+                const keepSchema = !changedSelection && modelSchemaContext && nextModelSchemaContext &&
+                    support === modelSchemaContext.full && nextSupport === nextModelSchemaContext.full &&
+                    modelSchemaContext.fields === nextModelSchemaContext.fields &&
+                    modelSchemaContext.format !== nextModelSchemaContext.format &&
+                    ['text','data'].includes(String(modelSchemaContext.format)) && ['text','data'].includes(String(nextModelSchemaContext.format));
+                const schemaDraft = keepSchema ? restored.schema : undefined;
+                draftCache.delete(next); restoredSchemas = keepSchema && restoredSchemas.schema ? {schema:restoredSchemas.schema} : {}; restoredStructures={}; restoredImports={}; restoredRecordModes={};
                 // Boundary label/required fields keep the same contract when the allowed
                 // artifact kinds change. Revalidate only that field; other incompatible
                 // editor drafts must remain discarded when an old contract returns.
                 restored = restored.boundary ? supportedDrafts({ boundary: restored.boundary }, view) : {};
                 if (restored.boundary) nextDraftGeneration('boundary');
+                if (schemaDraft) restored = {...restored, schema:schemaDraft};
             }
             identity = next; revision = nextRevision; support = nextSupport; requests.clear(); sequence++; errors = {}; modifierBusy = false; modifierBusySequence++;
             // A revision expires writes, while unsaved text still belongs to this node.
@@ -97,6 +115,7 @@
             structuredStates=Object.fromEntries(Object.entries(restoredStructures).filter(([key])=>view?.controls.some(control=>control.key===key && ['questions','schedules'].includes(control.inputSpec?.editor??''))));
             schemaStates = Object.fromEntries(Object.entries(restoredSchemas).filter(([key])=>view?.controls.some(control=>control.key===key && control.inputSpec?.editor==='schema')));
         }
+        modelSchemaContext = nextModelSchemaContext;
     });
     const selection = (node: NodeDetailsView): DetailSelection => ({ ...(node.documentNamespace ? { documentNamespace: node.documentNamespace } : {}), selectionKey: node.selectionKey, revision: node.revision, address: 'kind' in node.address ? { ...node.address, definitionRef: { ...node.address.definitionRef } } : { ...node.address, instancePath: [...node.address.instancePath] } });
     const current = (captured: DetailSelection) => alive && !!view && view.selectionKey === captured.selectionKey && view.revision === captured.revision && selectionIdentity(view) === selectionIdentity(captured);
@@ -224,7 +243,32 @@
     }
     function editControl(control: DetailControl, value: unknown) {
         if (!actions.editControl) return;
+        if (view?.operation === 'model-call' && control.key === 'outputKind') {
+            const schema = view.controls.find(item => item.key === 'schema');
+            if (!schema || !actions.editControls) {
+                errors = { ...errors, outputKind: 'This output change requires an atomic settings action.' }; return;
+            }
+            const retained = schemaStates.schema?.inactiveText ?? String(schema.value ?? '');
+            const patch = { outputKind: value, schema: value === 'text' ? '' : retained };
+            // The saved source and unfinished authoring state remain distinct.
+            if (value === 'text') {
+                const state=schemaStates.schema ?? {path:[],raw:false,rawText:'',feedback:'',invalid:false,invalidText:'',invalidPath:[],invalidKeyword:'',numberDrafts:{},typedDrafts:{},inactiveText:''};
+                schemaStates = { ...schemaStates, schema: { ...state, inactiveText:String(schema.value) } };
+            }
+            void perform(control.key, false, captured => actions.editControls!(captured, patch)); return;
+        }
         void perform(control.key, false, captured => actions.editControl!(captured, control.key, value));
+    }
+    function discardControl(control: DetailControl) {
+        if (!view || view.readOnly || drafts[control.key]?.pending) return;
+        nextDraftGeneration(control.key); requests.delete(control.key);
+        const next={...drafts}; delete next[control.key]; drafts=next;
+        errors={...errors,[control.key]:''};
+        const saved=schemaStates[control.key];
+        if(saved) schemaStates={...schemaStates,[control.key]:{...saved,rawText:textFor(control),invalid:false,invalidText:'',invalidPath:[],invalidKeyword:'',feedback:'',numberDrafts:{},typedDrafts:{},typedTextDrafts:{}}};
+        schemaEpoch={...schemaEpoch,[control.key]:(schemaEpoch[control.key]??0)+1};
+        const structures={...structuredStates};delete structures[control.key];structuredStates=structures;
+        structuredEpoch={...structuredEpoch,[control.key]:(structuredEpoch[control.key]??0)+1};
     }
     function editNumber(control: DetailControl, input: HTMLInputElement) {
         if (!view || view.readOnly || !actions.editControl) return;
@@ -379,6 +423,8 @@
     const controlGroups = $derived.by(() => {
         const groups = new Map<string, DetailControl[]>();
         for (const control of view?.controls ?? []) {
+            if (view?.operation === 'model-call' && control.key === 'schema' && view.controls.find(item=>item.key==='outputKind')?.value === 'text') continue;
+            if (view?.operation === 'extract' && view.controls.find(item=>item.key==='mode')?.value === 'literal' && ['instructions','maxTokens','maxRetries'].includes(control.key)) continue;
             const name = control.group && control.group !== 'Main' ? control.group : control.advanced ? 'Advanced' : 'Main';
             if (!groups.has(name)) groups.set(name, []);
             groups.get(name)!.push(control);
@@ -386,10 +432,25 @@
         return [...groups].sort(([a], [b]) => a === 'Main' ? -1 : b === 'Main' ? 1 : 0);
     });
     let mountedGroups = $state<Record<string, boolean>>({});
-    const groupHasError = (controls: DetailControl[]) => controls.some(control => !!(drafts[control.key]?.error || errors[control.key]));
+    let openedGroups = $state<Record<string, boolean>>({});
+    const groupScope = $derived(view ? selectionIdentity(view) : '');
+    const groupKey = (group:string) => groupScope.length+':'+groupScope+group;
+    const groupHasError = (controls: DetailControl[]) => controls.some(control => !!(drafts[control.key]?.error || errors[control.key] || schemaStates[control.key]?.invalid));
+    const groupOpen = (group:string, controls: DetailControl[]) => groupHasError(controls) || (openedGroups[groupKey(group)] ?? controls.some(control=>control.groupOpen));
+    function toggleGroup(event:MouseEvent, group:string) {
+        event.preventDefault();
+        const key=groupKey(group), details=(event.currentTarget as HTMLElement).parentElement as HTMLDetailsElement;
+        openedGroups={...openedGroups,[key]:!details.open}; mountedGroups={...mountedGroups,[key]:true};
+    }
+    const groupDrafts = (controls: DetailControl[]) => controls.filter(control=>!!drafts[control.key]).length;
     function editName(value: string) {
         if (!view || view.boundary || !actions.present) return;
         void perform('alias', true, captured => actions.present!(captured, 'alias', value === view?.canonicalTitle ? '' : value));
+    }
+    function editStage(input: HTMLSelectElement) {
+        if (!view?.phaseEditable || !actions.editPhase) return;
+        const phase=input.value as 'pre'|'post';
+        void perform('phase',false,captured=>actions.editPhase!(captured,phase)).finally(()=>{if(alive&&view)input.value=view.phase;});
     }
     function boundaryValues() {
         return { label: drafts.boundary?.text ?? view?.boundary?.label ?? '', artifactKind: drafts.boundary?.artifactKind ?? view?.boundary?.kind ?? '', required: drafts.boundary?.required ?? view?.boundary?.required ?? false };
@@ -426,7 +487,7 @@
         <div class="pc-detail-identity">
             <input id={idPrefix + '-name'} class="pc-detail-name" aria-label="Node name" maxlength={view.boundary ? undefined : 80} value={view.boundary ? boundaryValues().label : view.alias || view.title || view.canonicalTitle} disabled={view.boundary ? view.readOnly || !actions.editInterface : !view.canPresent || !actions.present} oninput={event => { if (view?.boundary) draftBoundary('label', event.currentTarget.value); }} onchange={event => { if (!view?.boundary) editName(event.currentTarget.value); }} />
             {#if !view.boundary && (view.alias || view.title || view.canonicalTitle) !== view.canonicalTitle}<small data-canonical-title>Canonical type: {view.canonicalTitle}</small>{/if}
-            <small>{view.boundary ? 'Subgraph ' + view.boundary.direction : view.family + ' · ' + view.phase + ' phase'}</small>
+            <small>{view.boundary ? 'Subgraph ' + view.boundary.direction : view.family + (view.phaseEditable ? '' : ' · ' + (view.phase==='pre'?'Preparation':view.phase==='post'?'Response':view.phase))}</small>
         </div>
         {#if openGuide}<button type="button" class="pc-node-guide-help" aria-label={`Open ${view.canonicalTitle} guide`} title={`Help with ${view.canonicalTitle}`} onclick={openGuide}>?</button>{/if}
     </header>
@@ -444,7 +505,7 @@
             {#each view.readiness.deferred as requirement}<small>{requirement}</small>{/each}
         </section>
     {/if}
-    {#if view.phaseEditable}<label>Workflow stage<select aria-label="Workflow stage" value={view.phase} disabled={view.readOnly || !actions.editPhase} onchange={event => { const phase = event.currentTarget.value as 'pre' | 'post'; void perform('phase', false, captured => actions.editPhase!(captured, phase)); }}><option value="pre">Preparation · before Generate Reply</option><option value="post">Response · after Generate Reply</option></select></label>{#if errors.phase}<div class="pc-detail-error"><DiagnosticMessage issue={errors.phase} context={{ nodeTitle: view?.title }} /></div>{/if}{/if}
+    {#if view.phaseEditable}<label><span class="pc-stage-label">Workflow stage{#if view.phaseSource}<small>{{default:'Automatic',connections:'From connections',explicit:'Set on this node',workflow:'Set by workflow',operation:'Set by node type'}[view.phaseSource]}</small>{/if}</span><select aria-label="Workflow stage" value={view.phase} disabled={view.readOnly || !actions.editPhase} onchange={event => editStage(event.currentTarget)}><option value="pre">Preparation · before Generate Reply</option><option value="post">Response · after Generate Reply</option></select></label>{#if errors.phase}<div class="pc-detail-error"><DiagnosticMessage issue={errors.phase} context={{ nodeTitle: view?.title }} /></div>{/if}{/if}
     {#if view.recall}<RecallDetails view={view.recall} actions={{queue:()=>actions.queueRecall?.(selection(view!))??{ok:false,error:{code:'RECALL_UNAVAILABLE',message:'Memory recall is unavailable.'}},cancel:()=>actions.cancelRecall?.(selection(view!))??{ok:false,error:{code:'RECALL_UNAVAILABLE',message:'Memory recall is unavailable.'}},revealShortcut:actions.revealRecallShortcut}} />{/if}
     {#if view.readOnly || !view.enabled}<p class="pc-detail-state">{#if view.readOnly}<span>Read-only body</span>{/if}{#if !view.enabled}<span class="pc-detail-blocked">{view.system ? 'System skipped' : 'Blocks run · Disabled'}</span>{/if}</p>{/if}
     {#if view.system}<label><input type="checkbox" aria-label="Run this system" checked={view.enabled} disabled={view.readOnly || !actions.editField} onchange={event => { const enabled = event.currentTarget.checked; void perform('enabled', false, captured => actions.editField!(captured, 'enabled', enabled)); }} /> Run this system</label><small>When off, the whole system and its outputs are skipped. Optional Guidance sections can omit it.</small>{#if errors.enabled}<div class="pc-detail-error"><DiagnosticMessage issue={errors.enabled} context={{ nodeTitle: view?.title }} /></div>{/if}{/if}
@@ -481,8 +542,8 @@
             {/each}
         </fieldset>
         {#each controlGroups.filter(([group]) => group !== 'Main') as [group, controls] (group)}
-            <details class="pc-detail-group" data-control-group={group} open={groupHasError(controls)}><summary onclick={() => { mountedGroups[group] = true; }}>{group}</summary>
-                {#if mountedGroups[group] || groupHasError(controls)}{#each controls as control (control.key)}{@render controlEditor(control)}{/each}{/if}
+            <details class="pc-detail-group" data-control-group={group} open={groupOpen(group, controls)}><summary onclick={event => toggleGroup(event,group)}><span>{group}</span>{#if groupDrafts(controls)}<small>{groupDrafts(controls)} unsaved</small>{/if}</summary>
+                {#if mountedGroups[groupKey(group)] || groupOpen(group,controls)}{#each controls as control (control.key)}{@render controlEditor(control)}{/each}{/if}
             </details>
         {/each}
     {/if}
@@ -529,7 +590,7 @@
 </section>
 
 {#snippet controlEditor(control: DetailControl)}
-    <DetailControlEditor recordMode={recordModes[control.key]??'rows'} onRecordMode={mode=>{if(view&&!view.readOnly&&!drafts[control.key]?.pending)recordModes={...recordModes,[control.key]:mode};}} draftFormat={drafts[control.key]?.format} importState={importStates[control.key]} onImportState={state=>importState(control,state)} importIdentity={selectionIdentity(view!)+draftContract(view!,control.key)} {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} structuredIdentity={view ? selectionIdentity(view)+':'+view.revision+':'+draftContract(view,control.key)+':'+(structuredEpoch[control.key]??0) : ''} structuredDraft={structuredStateFor(control)} onStructuredDraft={state=>structuredDraft(control,state)} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key) : ''} schemaDraft={schemaStates[control.key]} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
+    <DetailControlEditor dirty={!!drafts[control.key]} ondiscard={() => discardControl(control)} recordMode={recordModes[control.key]??'rows'} onRecordMode={mode=>{if(view&&!view.readOnly&&!drafts[control.key]?.pending)recordModes={...recordModes,[control.key]:mode};}} draftFormat={drafts[control.key]?.format} importState={importStates[control.key]} onImportState={state=>importState(control,state)} importIdentity={selectionIdentity(view!)+draftContract(view!,control.key)} {control} format={formatFor(control)} onformat={format=>formatDraft(control,format)} text={drafts[control.key]?.text ?? textFor(control)} error={drafts[control.key]?.error || errors[control.key] || ''} disabled={!!view?.readOnly || !actions.editControl} pending={!!drafts[control.key]?.pending} idPrefix={idPrefix + '-' + control.key} draftValue={drafts[control.key]?.typedValue} structuredIdentity={view ? selectionIdentity(view)+':'+view.revision+':'+draftContract(view,control.key)+':'+(structuredEpoch[control.key]??0) : ''} structuredDraft={structuredStateFor(control)} onStructuredDraft={state=>structuredDraft(control,state)} schemaIdentity={view ? selectionIdentity(view)+':'+draftContract(view,control.key)+':'+(schemaEpoch[control.key]??0) : ''} schemaDraft={schemaStates[control.key]} onSchemaDraft={state=>schemaDraft(control,state)} onDraft={value => draftValue(control, value)} ontext={text => draft(control, text)} onvalue={value => editControl(control, value)} onnumber={input => editNumber(control, input)} onsave={() => save(control)} />
 {/snippet}
 
 <style>
@@ -553,6 +614,15 @@
     .pc-detail-state { display: flex; flex-wrap: wrap; gap: 3px 8px; margin: 8px 0; color: var(--pc-muted); font-size: 10px; } .pc-detail-blocked { color: var(--pc-warn); }
     .pc-detail-group { min-width: 0; margin: 10px 0 0; padding: 9px 0 0; border: 0; border-top-width: 1px; border-top-style: solid; border-top-color: var(--pc-border); border-radius: 0; background: transparent; box-shadow: none; }
     .pc-detail-main { margin-top: 0; border-top-color: transparent; padding-top: 2px; }
+    .pc-stage-label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .pc-stage-label small { text-align: right; }
+    details.pc-detail-group { padding: 0 8px 8px; }
+    details.pc-detail-group[open] { background: var(--pc-block, var(--pc-panel)); }
+    details.pc-detail-group > summary { display: flex; align-items: center; gap: 8px; min-height: 38px; list-style: none; color: var(--pc-text); }
+    details.pc-detail-group > summary::-webkit-details-marker { display: none; }
+    details.pc-detail-group > summary::before { content: '›'; font-size: 17px; color: var(--pc-muted); }
+    details.pc-detail-group[open] > summary::before { transform: rotate(90deg); }
+    details.pc-detail-group > summary small { margin-left: auto; color: var(--pc-warn); }
     legend { padding: 0 5px; color: var(--pc-muted); font-size: 11px; } label { display: block; margin: 8px 0; color: var(--pc-text); font-size: 11px; }
     input:not([type='checkbox']), select { display: block; width: 100%; min-width: 0; box-sizing: border-box; margin-top: 4px; min-height: 28px; padding: 5px 7px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-field); color: var(--pc-text); font: inherit; }
     input[type='checkbox'] { accent-color: var(--pc-accent); }
