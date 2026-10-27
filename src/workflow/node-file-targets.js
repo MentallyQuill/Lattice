@@ -1,5 +1,5 @@
-import { cloneJsonValue } from './operations/json-data.js?v=0.28.1';
-import { freeze, plain } from './record-data.js?v=0.28.1';
+import { cloneJsonValue } from './operations/json-data.js?v=0.29.0';
+import { freeze, plain } from './record-data.js?v=0.29.0';
 const fail=(code,message)=>({ok:false,error:{code,message,field:'fileTarget'}});
 export const NODE_FILE_TARGET_CONTROL=freeze({type:'object',default:{},label:'File',editor:'json',max:8,hidden:true,exposable:false});
 export const nodeFileFormats=Object.freeze(['json','jsonl','csv','text','markdown']);
@@ -14,6 +14,7 @@ export function validateNodeFileTarget(raw={}) {
     const target={bindingId:'',name:'',format:'text',missing:'create',content:'',visibility:{kind:'public'},...value};
     const mark=target.visibility;
     if(typeof target.bindingId!=='string'||target.bindingId!==''&&!id(target.bindingId)||typeof target.name!=='string'||target.name!==''&&!validNodeFileName(target.name)||!nodeFileFormats.includes(target.format)||!['create','error'].includes(target.missing)||typeof target.content!=='string'||target.content.length>100000||!plain(mark)||Object.keys(mark).some(key=>!['kind','actorId'].includes(key))||!['public','hidden','actor-private'].includes(mark.kind)||(mark.kind==='actor-private'?!id(mark.actorId):Object.hasOwn(mark,'actorId')))return fail('INVALID_FILE_TARGET','Choose a filename, supported format, creation policy and visibility.');
+    target.visibility=mark.kind==='actor-private'?{kind:mark.kind,actorId:mark.actorId}:{kind:mark.kind};
     return {ok:true,data:freeze(target)};
 }
 /** Storage identity stays the authored logical ID; bindingId is never substituted for it. */

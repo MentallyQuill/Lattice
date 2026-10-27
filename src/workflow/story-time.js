@@ -1,4 +1,4 @@
-import { cloneJsonValue, stringifyJsonValue } from './operations/json-data.js?v=0.28.1';
+import { cloneJsonValue, stringifyJsonValue } from './operations/json-data.js?v=0.29.0';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const integer = value => Number.isSafeInteger(value) && value >= 0;

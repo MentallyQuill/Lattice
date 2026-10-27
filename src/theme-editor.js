@@ -5,9 +5,9 @@
  * as you pick them.
  */
 
-import { safe } from './state.js?v=0.28.1';
-import * as T from './theme.js?v=0.28.1';
-import { ARTIFACT_KINDS, ARTIFACT_PIN_NAMES, createArtifactGlyph } from './ui/artifact-glyph.js?v=0.28.1';
+import { safe } from './state.js?v=0.29.0';
+import * as T from './theme.js?v=0.29.0';
+import { ARTIFACT_KINDS, ARTIFACT_PIN_NAMES, createArtifactGlyph } from './ui/artifact-glyph.js?v=0.29.0';
 
 const make = (tag, cls, text) => {
     const n = document.createElement(tag);

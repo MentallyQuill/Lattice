@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { operationDefaults, semanticControlsForNode } from '../src/workflow/catalog.js?v=0.28.1';
-import { exportWorkflow } from '../src/workflow/packages.js?v=0.28.1';
-import { describeFileNode, executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.28.1';
-import { createFileStore } from '../src/workflow/file-store.js?v=0.28.1';
-const targets=await import('../src/workflow/node-file-targets.js?v=0.28.1').catch(()=>({}));
+import { operationDefaults, semanticControlsForNode } from '../src/workflow/catalog.js?v=0.29.0';
+import { exportWorkflow } from '../src/workflow/packages.js?v=0.29.0';
+import { describeFileNode, executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.29.0';
+import { createFileStore } from '../src/workflow/file-store.js?v=0.29.0';
+const targets=await import('../src/workflow/node-file-targets.js?v=0.29.0').catch(()=>({}));
 const target={bindingId:'native-handle-1',name:'notes.txt',format:'text',missing:'create',content:'',visibility:{kind:'public'}};
 const node=(operation,settings={})=>({id:operation,type:'workflow',...operationDefaults(operation),...settings});
 
@@ -45,11 +45,19 @@ test('captured targets keep handle authority separate and reject conflicting log
     assert.equal(targets.captureNodeFileTargets([node('story-clock')]).error.code,'FILE_SETUP_REQUIRED');
     assert.equal(targets.captureNodeFileTargets([node('read-file',{targetId:'legacy'})],{legacyDocuments:[{targetId:'legacy',format:'text',content:'old',visibility:{kind:'public'}}]}).ok,true);
 });
+test('shared actor-private destinations accept equivalent imported visibility key order',()=>{
+    const first=node('read-file',{targetId:'notes',fileTarget:{...target,visibility:{kind:'actor-private',actorId:'mara'}}});
+    const second={...first,id:'other',fileTarget:{...target,visibility:{actorId:'mara',kind:'actor-private'}}};
+    const captured=targets.captureNodeFileTargets([first,second]);
+    assert.equal(captured.ok,true,JSON.stringify(captured));
+    assert.equal(captured.data.definitions.length,1);
+    assert.deepEqual(captured.data.definitions[0].visibility,{kind:'actor-private',actorId:'mara'});
+});
 test('native access errors retain actionable codes without exposing backend paths',async()=>{
  const result=await executeFileNode(node('read-file',{targetId:'notes'}),{},{root:true,phase:'pre',files:{read:async()=>({ok:false,error:{code:'FILE_PERMISSION',message:'C:\\private\\notes.txt denied'}})}});
  assert.equal(result.error.code,'FILE_PERMISSION');assert.equal(JSON.stringify(result).includes('private'),false);
 });
 test('portable empty file settings remain omitted across repeated export and import',async()=>{
- const {parseWorkflow}=await import('../src/workflow/packages.js?v=0.28.1');const clock={...node('story-clock'),id:'clock'},graph={id:'portable-defaults',name:'Portable defaults',schema:3,runtime:2,mode:'native-unified',nodes:{clock},wires:{},portals:{},definitions:{},runTargets:[]};
+ const {parseWorkflow}=await import('../src/workflow/packages.js?v=0.29.0');const clock={...node('story-clock'),id:'clock'},graph={id:'portable-defaults',name:'Portable defaults',schema:3,runtime:2,mode:'native-unified',nodes:{clock},wires:{},portals:{},definitions:{},runTargets:[]};
  const first=exportWorkflow(graph);assert.equal(Object.hasOwn(first.graph.nodes.clock,'fileTarget'),false);const parsed=parseWorkflow(JSON.stringify(first));assert.equal(parsed.ok,true,JSON.stringify(parsed));assert.deepEqual(exportWorkflow(parsed.data),first);
 });

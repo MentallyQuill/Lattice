@@ -2887,7 +2887,7 @@ var Oa = [
 ];
 for (let [e, t] of Oa) for (let n of e.split(" ")) Da[n] = t;
 //#endregion
-//#region src/ui/diagnostic-workflow.js?v=0.28.1
+//#region src/ui/diagnostic-workflow.js?v=0.29.0
 var ka = (e, t, n) => ({
 	id: e,
 	severity: "error",
@@ -2986,7 +2986,7 @@ for (let e of [
 	"EFFECT_PREVIEW_LIMIT"
 ]) Pa[e] = ka("workflow-limit", "Workflow exceeds a size limit", "This workflow or its data exceeds a supported size limit. Simplify the selected workflow or reduce its input data.");
 //#endregion
-//#region src/ui/diagnostic-copy.js?v=0.28.1
+//#region src/ui/diagnostic-copy.js?v=0.29.0
 var Ia = Object.freeze({
 	id: "unknown",
 	severity: "error",
@@ -5012,7 +5012,7 @@ function Js(e, t) {
 }
 Nr(["click"]);
 //#endregion
-//#region src/workflow/foundation-release.js?v=0.28.1
+//#region src/workflow/foundation-release.js?v=0.29.0
 var Ys = Object.freeze({
 	id: "foundation-028",
 	newLessonNumbers: Object.freeze([34, 35]),
@@ -5051,7 +5051,7 @@ function Xs(e) {
 	return null;
 }
 //#endregion
-//#region src/workflow/operations/json-data.js?v=0.28.1
+//#region src/workflow/operations/json-data.js?v=0.29.0
 function Zs(e) {
 	if (typeof e != "object" || !e) return JSON.stringify(e);
 	if (Array.isArray(e)) {
@@ -5181,7 +5181,7 @@ function rc(e) {
 	return e;
 }
 //#endregion
-//#region src/workflow/operations/chunk-contract.js?v=0.28.1
+//#region src/workflow/operations/chunk-contract.js?v=0.29.0
 var ic = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5356,11 +5356,36 @@ function dc(e, { phase: t = "pre" } = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/workflow-versions.js?v=0.28.1
+//#region src/workflow/workflow-versions.js?v=0.29.0
 var fc = (e, t) => e === 3 && t === 2 || e === 4 && t === 3, pc = (e, t = {}) => fc(e?.schema, e?.runtime) && e.schema >= (t.minimumSchema ?? 3) && e.runtime >= (t.minimumRuntime ?? 2);
-Object.freeze({ kind: "public" }), Object.freeze({ kind: "hidden" });
+Object.freeze([
+	"none",
+	"minimal",
+	"low",
+	"medium",
+	"high",
+	"xhigh",
+	"max",
+	"enabled",
+	"adaptive",
+	"custom"
+]), new Set(Object.values({
+	"openrouter.ai": "openrouter",
+	"nano-gpt.com": "nanogpt",
+	"api.nano-gpt.com": "nanogpt",
+	"api.openai.com": "openai",
+	"api.anthropic.com": "claude",
+	"api.deepseek.com": "deepseek",
+	"api.z.ai": "zai",
+	"open.bigmodel.cn": "zai",
+	"api.x.ai": "xai",
+	"api.groq.com": "groq",
+	"api.moonshot.ai": "moonshot",
+	"api.moonshot.cn": "moonshot",
+	"generativelanguage.googleapis.com": "makersuite"
+})), Object.freeze({ kind: "public" }), Object.freeze({ kind: "hidden" });
 //#endregion
-//#region src/workflow/recall-state.js?v=0.28.1
+//#region src/workflow/recall-state.js?v=0.29.0
 var mc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5429,7 +5454,7 @@ function Sc(e) {
 	].some((t) => typeof e[t] != "boolean") ? mc("INVALID_RECALL_HOTKEY", "Select a physical key with Control, Alt or Meta, or a function key.") : e.code === "KeyR" ? mc("RECALL_HOTKEY_CONFLICT", "R is reserved for Run to here. Choose a different key.") : !e.ctrl && !e.alt && !e.meta && !/^F/u.test(e.code) ? mc("INVALID_RECALL_HOTKEY", "Select a physical key with Control, Alt or Meta, or a function key.") : hc(e);
 }
 //#endregion
-//#region src/workflow/operations/recall-nodes.js?v=0.28.1
+//#region src/workflow/operations/recall-nodes.js?v=0.29.0
 var Cc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5640,7 +5665,7 @@ function Nc(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/lifecycle-nodes.js?v=0.28.1
+//#region src/workflow/operations/lifecycle-nodes.js?v=0.29.0
 var Pc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5801,7 +5826,7 @@ function Bc(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/node-file-targets.js?v=0.28.1
+//#region src/workflow/node-file-targets.js?v=0.29.0
 var Vc = (e, t) => ({
 	ok: !1,
 	error: {
@@ -5853,13 +5878,16 @@ function Kc(e = {}) {
 		"public",
 		"hidden",
 		"actor-private"
-	].includes(a.kind) || (a.kind === "actor-private" ? !Wc(a.actorId) : Object.hasOwn(a, "actorId")) ? Vc("INVALID_FILE_TARGET", "Choose a filename, supported format, creation policy and visibility.") : {
+	].includes(a.kind) || (a.kind === "actor-private" ? !Wc(a.actorId) : Object.hasOwn(a, "actorId")) ? Vc("INVALID_FILE_TARGET", "Choose a filename, supported format, creation policy and visibility.") : (i.visibility = a.kind === "actor-private" ? {
+		kind: a.kind,
+		actorId: a.actorId
+	} : { kind: a.kind }, {
 		ok: !0,
 		data: rc(i)
-	};
+	});
 }
 //#endregion
-//#region src/workflow/operations/json-decode.js?v=0.28.1
+//#region src/workflow/operations/json-decode.js?v=0.29.0
 var qc = (e) => String(e).replaceAll("~", "~0").replaceAll("/", "~1"), Jc = (e, t) => t === "object" ? typeof e == "object" && !!e && !Array.isArray(e) : t === "array" ? Array.isArray(e) : t === "null" ? e === null : t === "integer" ? Number.isInteger(e) : typeof e === t, Yc = (e) => typeof e == "object" && !!e && !Array.isArray(e), Xc = /* @__PURE__ */ new Set([
 	"type",
 	"enum",
@@ -6045,7 +6073,7 @@ function tl(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/select-fields.js?v=0.28.1
+//#region src/workflow/operations/select-fields.js?v=0.29.0
 var nl = () => ({
 	ok: !1,
 	error: {
@@ -6128,7 +6156,7 @@ function il(e, t) {
 	} : a;
 }
 //#endregion
-//#region src/workflow/story-time.js?v=0.28.1
+//#region src/workflow/story-time.js?v=0.29.0
 var al = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6260,7 +6288,7 @@ function hl(e) {
 	};
 }
 //#endregion
-//#region src/workflow/workflow-data-defaults.js?v=0.28.1
+//#region src/workflow/workflow-data-defaults.js?v=0.29.0
 var gl = {
 	schemaVersion: 1,
 	clockId: "lattice-default-clock",
@@ -6308,7 +6336,7 @@ function vl(e) {
 	}) : null;
 }
 //#endregion
-//#region src/workflow/operations/file-nodes.js?v=0.28.1
+//#region src/workflow/operations/file-nodes.js?v=0.29.0
 var yl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6642,7 +6670,7 @@ Object.freeze({
 	EFFECT_CAPABILITY_FAILED: "The trusted host could not stage the prepared file intent."
 });
 //#endregion
-//#region src/workflow/operations/time-nodes.js?v=0.28.1
+//#region src/workflow/operations/time-nodes.js?v=0.29.0
 var Nl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -6917,7 +6945,7 @@ function Ul(e, t = {}) {
 }
 Object.getOwnPropertyDescriptor(AbortSignal.prototype, "aborted").get;
 //#endregion
-//#region src/workflow/operations/context-data.js?v=0.28.1
+//#region src/workflow/operations/context-data.js?v=0.29.0
 function Wl(e) {
 	let t = 0, n = 0, r = /* @__PURE__ */ new Set(), i = (e, a) => {
 		if (++t > 2e4 || a > 40) return "limit";
@@ -6970,7 +6998,7 @@ function Gl(e) {
 	return e;
 }
 //#endregion
-//#region src/workflow/operations/event-nodes.js?v=0.28.1
+//#region src/workflow/operations/event-nodes.js?v=0.29.0
 var Kl = (e, t) => ({
 	ok: !1,
 	error: {
@@ -7282,7 +7310,7 @@ function $l(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/random-outcomes.js?v=0.28.1
+//#region src/workflow/operations/random-outcomes.js?v=0.29.0
 var eu = (e, t) => ({
 	ok: !1,
 	error: {
@@ -7497,7 +7525,7 @@ function su(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/progression.js?v=0.28.1
+//#region src/workflow/progression.js?v=0.29.0
 var cu = (e, t) => ({
 	ok: !1,
 	error: {
@@ -7536,7 +7564,7 @@ function du(e, t, n) {
 	}
 }
 //#endregion
-//#region src/workflow/operations/collection-nodes.js?v=0.28.1
+//#region src/workflow/operations/collection-nodes.js?v=0.29.0
 var fu = (e, t) => ({
 	ok: !1,
 	error: {
@@ -7730,7 +7758,7 @@ function Su(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/compose.js?v=0.28.1
+//#region src/workflow/operations/compose.js?v=0.29.0
 var Cu = (e, t) => ({
 	ok: !1,
 	error: {
@@ -7841,7 +7869,7 @@ function Tu(e = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/nodes.js?v=0.28.1
+//#region src/workflow/operations/nodes.js?v=0.29.0
 var Eu = (e, t, n) => ({
 	key: e,
 	label: t,
@@ -8072,7 +8100,7 @@ function zu(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/context-join.js?v=0.28.1
+//#region src/workflow/operations/context-join.js?v=0.29.0
 var Bu = [{
 	id: "context-1",
 	label: "Context 1"
@@ -8158,7 +8186,7 @@ function Wu(e, t) {
 	});
 }
 //#endregion
-//#region src/workflow/operations/transpose-nodes.js?v=0.28.1
+//#region src/workflow/operations/transpose-nodes.js?v=0.29.0
 var Gu = (e, t, n, r, i = !1) => ({
 	id: e,
 	label: t,
@@ -8355,7 +8383,7 @@ function od(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/library/slop-policy-data.js?v=0.28.1
+//#region src/workflow/library/slop-policy-data.js?v=0.29.0
 var sd = {
 	source: {
 		title: "Core banned AI slop and clichés",
@@ -10059,7 +10087,7 @@ function cd(e) {
 }
 cd(sd);
 //#endregion
-//#region src/workflow/operations/prose-cleanup.js?v=0.28.1
+//#region src/workflow/operations/prose-cleanup.js?v=0.29.0
 var ld = Object.freeze([
 	"inspect",
 	"contextual",
@@ -10215,7 +10243,7 @@ Object.freeze({
 	ABORTED: "The operation was stopped; discard its late response."
 });
 //#endregion
-//#region src/workflow/operations/progression-nodes.js?v=0.28.1
+//#region src/workflow/operations/progression-nodes.js?v=0.29.0
 var xd = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10249,7 +10277,7 @@ function Ed(e) {
 	});
 }
 //#endregion
-//#region src/workflow/introspection/nodes.js?v=0.28.1
+//#region src/workflow/introspection/nodes.js?v=0.29.0
 var Dd = {
 	reflect: [
 		"character",
@@ -10513,7 +10541,7 @@ function Bd(e, t = {}) {
 	return !r.ok || !Pd(r.data) || Object.keys(r.data).some((e) => e !== "phase") || r.data.phase !== void 0 && !["pre", "post"].includes(r.data.phase) ? hd("INVALID_SETTINGS", "Unsupported execution phase.") : n.data.node.operation === "memory" && n.data.settings.mode === "commit" && r.data.phase === "pre" ? hd("INVALID_PHASE", "Memory Commit settles only after a successful root run.") : Rd(n.data, r.data.phase);
 }
 //#endregion
-//#region src/workflow/introspection/native.js?v=0.28.1
+//#region src/workflow/introspection/native.js?v=0.29.0
 var Vd = (e, t) => ({
 	ok: !1,
 	error: {
@@ -10804,7 +10832,7 @@ function of(e, t = {}) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/control-nodes.js?v=0.28.1
+//#region src/workflow/operations/control-nodes.js?v=0.29.0
 var sf = [
 	"context",
 	"draft",
@@ -11062,7 +11090,7 @@ function gf(e, t = {}) {
 	}
 }
 //#endregion
-//#region src/workflow/decision.js?v=0.28.1
+//#region src/workflow/decision.js?v=0.29.0
 var _f = (e, t) => ({
 	ok: !1,
 	error: {
@@ -11097,7 +11125,7 @@ function xf(e) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/decision-nodes.js?v=0.28.1
+//#region src/workflow/operations/decision-nodes.js?v=0.29.0
 var Sf = (e, t) => ({
 	ok: !1,
 	error: {
@@ -11234,7 +11262,7 @@ typeof globalThis.DOMException == "function" && Object.getOwnPropertyDescriptor(
 	maximum: /^Expected a number at most -?\d+(?:\.\d+)?(?:e[+-]?\d+)?\.$/
 });
 //#endregion
-//#region src/workflow/operations/model-nodes.js?v=0.28.1
+//#region src/workflow/operations/model-nodes.js?v=0.29.0
 var kf = (e, t) => ({
 	ok: !1,
 	error: {
@@ -11506,7 +11534,7 @@ function zf(e, t = {}) {
 	} : n;
 }
 //#endregion
-//#region src/workflow/operations/pattern-nodes.js?v=0.28.1
+//#region src/workflow/operations/pattern-nodes.js?v=0.29.0
 var Bf = () => ({
 	ok: !1,
 	error: {
@@ -11676,7 +11704,7 @@ function Kf(e) {
 	};
 }
 //#endregion
-//#region src/workflow/operations/filter-text.js?v=0.28.1
+//#region src/workflow/operations/filter-text.js?v=0.29.0
 var qf = (e, t) => ({
 	ok: !1,
 	error: {
@@ -11794,7 +11822,7 @@ function $f(e) {
 	};
 }
 //#endregion
-//#region src/workflow/catalog.js?v=0.28.1
+//#region src/workflow/catalog.js?v=0.29.0
 var ep = [
 	"context",
 	"draft",
@@ -12396,7 +12424,7 @@ function bp(e, t, n) {
 	}
 }
 //#endregion
-//#region src/workflow/recall-labels.js?v=0.28.1
+//#region src/workflow/recall-labels.js?v=0.29.0
 var xp = {
 	activation: {
 		armed: "Manual queue",
@@ -12423,7 +12451,7 @@ var xp = {
 	}
 }, Sp = (e, t) => Object.hasOwn(xp[e], t) ? xp[e][t] : "Unavailable", Cp = (e, t) => Object.hasOwn(xp, e) ? Sp(e, t) : null;
 //#endregion
-//#region src/ui/schedule-authoring.js?v=0.28.1
+//#region src/ui/schedule-authoring.js?v=0.29.0
 function wp(e) {
 	let t = pl(e);
 	return t.ok ? {
@@ -12445,7 +12473,7 @@ function Tp(e) {
 	} : n;
 }
 //#endregion
-//#region src/ui/delimited-input.js?v=0.28.1
+//#region src/ui/delimited-input.js?v=0.29.0
 function Ep(e, t) {
 	let n = [], r = [], i = (e) => ({
 		ok: !1,
@@ -12478,7 +12506,7 @@ function Ep(e, t) {
 	} : l;
 }
 //#endregion
-//#region src/ui/control-input-contracts.js?v=0.28.1
+//#region src/ui/control-input-contracts.js?v=0.29.0
 var Dp = (e, t, n = {}) => ({
 	ok: !1,
 	error: {
@@ -12790,18 +12818,6 @@ function Vp(e, t, n) {
 		return Dp("INVALID_CONTROL_INPUT", "Use bounded own input data.");
 	}
 }
-Object.freeze([
-	"none",
-	"minimal",
-	"low",
-	"medium",
-	"high",
-	"xhigh",
-	"max",
-	"enabled",
-	"adaptive",
-	"custom"
-]);
 //#endregion
 //#region src/ui/node-control-projection.js
 function Hp(e) {
@@ -13104,7 +13120,7 @@ function Yp(e, t = "auto") {
 	};
 }
 //#endregion
-//#region src/ui/decision-authoring.js?v=0.28.1
+//#region src/ui/decision-authoring.js?v=0.29.0
 var Xp = (e) => ({
 	ok: !1,
 	error: {
@@ -13627,7 +13643,7 @@ function xm(e) {
 	}
 }
 //#endregion
-//#region src/ui/control-input-adapters.js?v=0.28.1
+//#region src/ui/control-input-adapters.js?v=0.29.0
 var Sm = () => ({
 	ok: !1,
 	error: {
@@ -13790,7 +13806,7 @@ function Am(e, t, n) {
 	}
 }
 //#endregion
-//#region src/ui/json-value-authoring.js?v=0.28.1
+//#region src/ui/json-value-authoring.js?v=0.29.0
 var jm = (e, t) => ({
 	ok: !1,
 	error: {
@@ -18170,7 +18186,7 @@ Nr([
 var Hv = /* @__PURE__ */ K("<label class=\"pc-nf-field svelte-12htcqv\">Destination<select aria-label=\"File destination\" class=\"svelte-12htcqv\"><option class=\"svelte-12htcqv\">Connected document</option><option class=\"svelte-12htcqv\">Own file</option></select></label>"), Uv = /* @__PURE__ */ K("<p class=\"pc-nf-help pc-nf-summary svelte-12htcqv\"> </p>"), Wv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\"> </p>"), Gv = /* @__PURE__ */ K("<div class=\"pc-nf-field svelte-12htcqv\"><span class=\"svelte-12htcqv\">Format</span><output aria-label=\"File format\" class=\"svelte-12htcqv\">JSON</output></div>"), Kv = /* @__PURE__ */ K("<option class=\"svelte-12htcqv\"> </option>"), qv = /* @__PURE__ */ K("<label class=\"pc-nf-field svelte-12htcqv\">Format<select aria-label=\"File format\" class=\"svelte-12htcqv\"></select></label>"), Jv = /* @__PURE__ */ K("<label class=\"pc-nf-field svelte-12htcqv\">Actor ID<input aria-label=\"File actor ID\" maxlength=\"128\" class=\"svelte-12htcqv\"/></label>"), Yv = /* @__PURE__ */ K("<p class=\"pc-nf-role svelte-12htcqv\"> </p> <label class=\"pc-nf-field svelte-12htcqv\">Filename<input aria-label=\"Filename\" maxlength=\"256\" placeholder=\"notes.txt\" class=\"svelte-12htcqv\"/></label> <div class=\"pc-nf-actions pc-nf-choose svelte-12htcqv\"><button type=\"button\" data-choose-node-file=\"save\" class=\"svelte-12htcqv\"> </button> <button type=\"button\" data-choose-node-file=\"open\" class=\"svelte-12htcqv\"> </button></div> <!> <label class=\"pc-nf-field svelte-12htcqv\">Missing file<select aria-label=\"Missing file\" class=\"svelte-12htcqv\"><option class=\"svelte-12htcqv\">Create if missing</option><option class=\"svelte-12htcqv\">Report an error</option></select></label> <label class=\"pc-nf-block svelte-12htcqv\">Initial content<textarea aria-label=\"Initial file content\" rows=\"4\" maxlength=\"100000\" placeholder=\"Empty by default\" class=\"svelte-12htcqv\"></textarea></label> <p class=\"pc-nf-help svelte-12htcqv\">Used when creating a missing file. Existing file contents stay unchanged until Apply.</p> <label class=\"pc-nf-field svelte-12htcqv\">Visibility<select aria-label=\"File visibility\" class=\"svelte-12htcqv\"><option class=\"svelte-12htcqv\">Public</option><option class=\"svelte-12htcqv\">Hidden</option><option class=\"svelte-12htcqv\">Actor private</option></select></label> <!> <div class=\"pc-nf-actions svelte-12htcqv\"><button type=\"button\" data-save-node-file=\"\" class=\"svelte-12htcqv\"> </button></div>", 1), Xv = /* @__PURE__ */ K("<p class=\"pc-nf-help pc-nf-migration svelte-12htcqv\">Existing chat data is preserved. Choose a file to migrate its saved content on Apply.</p>"), Zv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\">Native file access is unavailable here. Open this workflow in a browser with native file access to choose a durable file.</p>"), Qv = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\">Open an active chat to configure this file.</p>"), $v = /* @__PURE__ */ K("<p class=\"pc-nf-error svelte-12htcqv\"> </p>"), ey = /* @__PURE__ */ K("<p class=\"pc-nf-error svelte-12htcqv\" role=\"alert\"> </p>"), ty = /* @__PURE__ */ K("<p class=\"pc-nf-help svelte-12htcqv\" role=\"status\"> </p>"), ny = /* @__PURE__ */ K("<section class=\"pc-node-file svelte-12htcqv\" data-node-file=\"\"><h3 class=\"svelte-12htcqv\">File</h3> <!> <p class=\"pc-nf-status svelte-12htcqv\" data-file-status=\"\"> </p> <!> <!> <!> <!> <!> <!> <!> <!></section>");
 function ry(e, t) {
 	qe(t, !0);
-	let n = oa(t, "disabled", 3, !1), r = oa(t, "idPrefix", 3, "pc-node-details"), i = /* @__PURE__ */ R(""), a = /* @__PURE__ */ R("text"), o = /* @__PURE__ */ R("create"), s = /* @__PURE__ */ R(""), c = /* @__PURE__ */ R("public"), l = /* @__PURE__ */ R(""), u = /* @__PURE__ */ R(!1), d = /* @__PURE__ */ R(""), f = /* @__PURE__ */ R(""), p = /* @__PURE__ */ R(""), m = "", h = 0, g = !0, _ = [
+	let n = oa(t, "disabled", 3, !1), r = oa(t, "idPrefix", 3, "pc-node-details"), i = /* @__PURE__ */ R(""), a = /* @__PURE__ */ R("text"), o = /* @__PURE__ */ R("create"), s = /* @__PURE__ */ R(""), c = /* @__PURE__ */ R("public"), l = /* @__PURE__ */ R(""), u = /* @__PURE__ */ R(!1), d = /* @__PURE__ */ R(""), f = /* @__PURE__ */ R(""), p = /* @__PURE__ */ R(""), m = "", h = "", g = 0, _ = !0, v = [
 		{
 			value: "text",
 			label: "Plain text"
@@ -18191,28 +18207,39 @@ function ry(e, t) {
 			value: "markdown",
 			label: "Markdown"
 		}
-	], v = /* @__PURE__ */ L(() => [
+	], y = /* @__PURE__ */ L(() => [
 		"story-clock",
 		"commit-outcomes",
 		"random-pick"
-	].includes(t.model.operation)), y = /* @__PURE__ */ L(() => !n() && t.model.available && !W(d)), b = /* @__PURE__ */ L(() => W(y) && t.model.mode !== "inherited"), x = /* @__PURE__ */ L(() => !!W(i).trim() && (W(c) !== "actor-private" || !!W(l).trim())), S = /* @__PURE__ */ L(() => W(b) && t.model.supported && W(x) && !!t.actions.chooseNodeFile), C = /* @__PURE__ */ L(() => W(b) && W(u) && W(x) && !!t.actions.saveNodeFile), w = /* @__PURE__ */ L(() => W(i).trim() !== t.model.settings.name), T = /* @__PURE__ */ L(() => t.model.mode === "inherited" ? "Inherited destination" : W(w) ? "Choose a location for this filename." : t.model.settings.bindingId ? t.model.issue ? "File access needs attention." : "File selected" : "Choose a file to finish setup."), E = () => JSON.stringify([
+	].includes(t.model.operation)), b = /* @__PURE__ */ L(() => !n() && t.model.available && !W(d)), x = /* @__PURE__ */ L(() => W(b) && t.model.mode !== "inherited"), S = /* @__PURE__ */ L(() => !!W(i).trim() && (W(c) !== "actor-private" || !!W(l).trim())), C = /* @__PURE__ */ L(() => W(x) && t.model.supported && W(S) && !!t.actions.chooseNodeFile), w = /* @__PURE__ */ L(() => W(x) && W(u) && W(S) && !!t.actions.saveNodeFile), T = /* @__PURE__ */ L(() => W(i).trim() !== t.model.settings.name), E = /* @__PURE__ */ L(() => t.model.mode === "inherited" ? "Inherited destination" : W(T) ? "Choose a location for this filename." : t.model.settings.bindingId ? t.model.issue ? "File access needs attention." : "File selected" : "Choose a file to finish setup."), D = () => JSON.stringify([
 		t.selection,
 		t.model,
 		n()
+	]), O = () => JSON.stringify([
+		t.selection.documentNamespace,
+		t.selection.selectionKey,
+		t.selection.address,
+		t.model.operation,
+		t.model.mode,
+		t.model.destinationMode,
+		t.model.settings
 	]);
 	jn(() => {
-		let e = E();
-		e !== m && (m = e, h++, Tr(() => {
-			z(i, t.model.settings.name, !0), z(a, t.model.settings.format, !0), z(o, t.model.settings.missing, !0), z(s, t.model.settings.content, !0), z(c, t.model.settings.visibility.kind, !0), z(l, t.model.settings.visibility.kind === "actor-private" ? t.model.settings.visibility.actorId : "", !0), z(u, !1), z(d, ""), z(f, ""), z(p, "");
-		}));
+		let e = D(), n = O();
+		if (e === m) return;
+		m = e, g++;
+		let r = n !== h;
+		h = n, Tr(() => {
+			r && (z(i, t.model.settings.name, !0), z(a, t.model.settings.format, !0), z(o, t.model.settings.missing, !0), z(s, t.model.settings.content, !0), z(c, t.model.settings.visibility.kind, !0), z(l, t.model.settings.visibility.kind === "actor-private" ? t.model.settings.visibility.actorId : "", !0), z(u, !1)), z(d, ""), z(f, ""), z(p, "");
+		});
 	}), ci(() => {
-		g = !1, h++;
+		_ = !1, g++;
 	});
-	function D(e, t) {
-		if (W(b)) {
+	function k(e, t) {
+		if (W(x)) {
 			if (e === "name") z(i, t, !0);
 			else if (e === "format") {
-				if (!_.some((e) => e.value === t)) return;
+				if (!v.some((e) => e.value === t)) return;
 				z(a, t, !0);
 			} else if (e === "missing") {
 				if (t !== "create" && t !== "error") return;
@@ -18226,14 +18253,14 @@ function ry(e, t) {
 				].includes(t)) return;
 				z(c, t, !0);
 			} else z(l, t, !0);
-			h++, z(u, !0), z(f, ""), z(p, "");
+			g++, z(u, !0), z(f, ""), z(p, "");
 		}
 	}
-	function O() {
+	function A() {
 		return {
 			bindingId: t.model.settings.bindingId,
 			name: W(i).trim(),
-			format: W(v) ? "json" : W(a),
+			format: W(y) ? "json" : W(a),
 			missing: W(o),
 			content: W(s),
 			visibility: W(c) === "actor-private" ? {
@@ -18242,11 +18269,11 @@ function ry(e, t) {
 			} : { kind: W(c) }
 		};
 	}
-	async function k(e, n) {
-		if (!W(y)) return;
-		let r = JSON.parse(JSON.stringify(t.selection)), i = E(), a = ++h;
+	async function ee(e, n) {
+		if (!W(b)) return;
+		let r = JSON.parse(JSON.stringify(t.selection)), i = D(), a = ++g;
 		z(d, e, !0), z(f, ""), z(p, "");
-		let o = () => g && a === h && i === E();
+		let o = () => _ && a === g && i === D();
 		try {
 			let t = await n(r);
 			if (!o()) return;
@@ -18254,68 +18281,68 @@ function ry(e, t) {
 				z(f, t.error.message, !0);
 				return;
 			}
-			e === "save" && (z(u, !1), z(p, W(w) ? "Settings saved. Choose a location for this filename." : "File settings saved.", !0));
+			e === "save" && (z(u, !1), z(p, W(T) ? "Settings saved. Choose a location for this filename." : "File settings saved.", !0));
 		} catch (e) {
 			o() && z(f, e instanceof Error ? e.message : "The file settings could not be updated.", !0);
 		} finally {
 			o() && z(d, "");
 		}
 	}
-	function A(e) {
-		if (!W(S) || !t.actions.chooseNodeFile) return;
-		let n = O();
-		k("choose-" + e, (r) => t.actions.chooseNodeFile(r, {
+	function j(e) {
+		if (!W(C) || !t.actions.chooseNodeFile) return;
+		let n = A();
+		ee("choose-" + e, (r) => t.actions.chooseNodeFile(r, {
 			mode: e,
 			settings: n
 		}));
 	}
-	function ee() {
-		if (!W(C) || !t.actions.saveNodeFile) return;
-		let e = O();
-		k("save", (n) => t.actions.saveNodeFile(n, e));
+	function M() {
+		if (!W(w) || !t.actions.saveNodeFile) return;
+		let e = A();
+		ee("save", (n) => t.actions.saveNodeFile(n, e));
 	}
-	function j(e) {
-		W(y) && t.model.operation === "write-file" && t.actions.editControls && ["connected", "own"].includes(e) && e !== t.model.destinationMode && k("destination", (n) => t.actions.editControls(n, { destinationMode: e }));
+	function N(e) {
+		W(b) && t.model.operation === "write-file" && t.actions.editControls && ["connected", "own"].includes(e) && e !== t.model.destinationMode && ee("destination", (n) => t.actions.editControls(n, { destinationMode: e }));
 	}
-	var M = ny(), N = B(M), te = H(N, 2), ne = (e) => {
+	var te = ny(), ne = B(te), re = H(ne, 2), ie = (e) => {
 		var n = Hv(), r = H(B(n)), i = B(r);
 		i.value = i.__value = "connected";
 		var a = H(i);
 		a.value = a.__value = "own", I(r);
 		var o;
 		Fi(r), I(n), U(() => {
-			r.disabled = !W(y) || !t.actions.editControls, o !== (o = t.model.destinationMode) && (r.value = (r.__value = t.model.destinationMode) ?? "", Pi(r, t.model.destinationMode));
-		}), G("change", r, (e) => j(e.currentTarget.value)), q(e, n);
+			r.disabled = !W(b) || !t.actions.editControls, o !== (o = t.model.destinationMode) && (r.value = (r.__value = t.model.destinationMode) ?? "", Pi(r, t.model.destinationMode));
+		}), G("change", r, (e) => N(e.currentTarget.value)), q(e, n);
 	};
-	Y(te, (e) => {
-		t.model.operation === "write-file" && e(ne);
+	Y(re, (e) => {
+		t.model.operation === "write-file" && e(ie);
 	});
-	var re = H(te, 2), ie = B(re, !0);
-	I(re);
-	var ae = H(re, 2), P = (e) => {
+	var ae = H(re, 2), P = B(ae, !0);
+	I(ae);
+	var F = H(ae, 2), oe = (e) => {
 		var n = Uv(), r = B(n, !0);
 		I(n), U(() => J(r, t.model.summary)), q(e, n);
 	};
-	Y(ae, (e) => {
-		t.model.summary && e(P);
+	Y(F, (e) => {
+		t.model.summary && e(oe);
 	});
-	var F = H(ae, 2), oe = (e) => {
+	var se = H(F, 2), ce = (e) => {
 		var n = Wv(), r = B(n, !0);
 		I(n), U(() => J(r, t.model.operation === "commit-clock" ? "Uses the file captured by Story Clock." : "Uses the connected document’s file and settings.")), q(e, n);
-	}, se = (e) => {
+	}, le = (e) => {
 		var n = Yv(), u = V(n), f = B(u, !0);
 		I(u);
 		var p = H(u, 2), m = H(B(p));
 		Z(m), I(p);
-		var h = H(p, 2), g = B(h), y = B(g, !0);
+		var h = H(p, 2), g = B(h), _ = B(g, !0);
 		I(g);
-		var x = H(g, 2), w = B(x, !0);
-		I(x), I(h);
+		var b = H(g, 2), S = B(b, !0);
+		I(b), I(h);
 		var T = H(h, 2), E = (e) => {
 			q(e, Gv());
-		}, O = (e) => {
+		}, D = (e) => {
 			var t = qv(), n = H(B(t));
-			X(n, 21, () => _, di, (e, t) => {
+			X(n, 21, () => v, di, (e, t) => {
 				var n = Kv(), r = B(n, !0);
 				I(n);
 				var i = {};
@@ -18325,19 +18352,19 @@ function ry(e, t) {
 			}), I(n);
 			var r;
 			Fi(n), I(t), U(() => {
-				n.disabled = !W(b), r !== (r = W(a)) && (n.value = (n.__value = W(a)) ?? "", Pi(n, W(a)));
-			}), G("change", n, (e) => D("format", e.currentTarget.value)), q(e, t);
+				n.disabled = !W(x), r !== (r = W(a)) && (n.value = (n.__value = W(a)) ?? "", Pi(n, W(a)));
+			}), G("change", n, (e) => k("format", e.currentTarget.value)), q(e, t);
 		};
 		Y(T, (e) => {
-			W(v) ? e(E) : e(O, -1);
+			W(y) ? e(E) : e(D, -1);
 		});
-		var k = H(T, 2), j = H(B(k)), M = B(j);
-		M.value = M.__value = "create";
-		var N = H(M);
-		N.value = N.__value = "error", I(j);
+		var O = H(T, 2), A = H(B(O)), ee = B(A);
+		ee.value = ee.__value = "create";
+		var N = H(ee);
+		N.value = N.__value = "error", I(A);
 		var te;
-		Fi(j), I(k);
-		var ne = H(k, 2), re = H(B(ne));
+		Fi(A), I(O);
+		var ne = H(O, 2), re = H(B(ne));
 		ut(re), I(ne);
 		var ie = H(ne, 4), ae = H(B(ie)), P = B(ae);
 		P.value = P.__value = "public";
@@ -18350,61 +18377,61 @@ function ry(e, t) {
 		var ce = H(ie, 2), le = (e) => {
 			var t = Jv(), n = H(B(t));
 			Z(n), I(t), U(() => {
-				qi(n, W(l)), n.disabled = !W(b);
-			}), G("input", n, (e) => D("actor", e.currentTarget.value)), q(e, t);
+				qi(n, W(l)), n.disabled = !W(x);
+			}), G("input", n, (e) => k("actor", e.currentTarget.value)), q(e, t);
 		};
 		Y(ce, (e) => {
 			W(c) === "actor-private" && e(le);
 		});
 		var ue = H(ce, 2), de = B(ue), fe = B(de, !0);
 		I(de), I(ue), U(() => {
-			J(f, t.model.mode === "source" ? "Source file" : "Destination file"), Q(m, "id", r() + "-fileTarget-name"), qi(m, W(i)), m.disabled = !W(b), Q(g, "id", r() + "-fileTarget-choose"), g.disabled = !W(S), J(y, W(d) === "choose-save" ? "Choosing…" : "Choose location…"), x.disabled = !W(S), J(w, W(d) === "choose-open" ? "Choosing…" : "Open existing…"), j.disabled = !W(b), te !== (te = W(o)) && (j.value = (j.__value = W(o)) ?? "", Pi(j, W(o))), qi(re, W(s)), re.disabled = !W(b), ae.disabled = !W(b), se !== (se = W(c)) && (ae.value = (ae.__value = W(c)) ?? "", Pi(ae, W(c))), de.disabled = !W(C), J(fe, W(d) === "save" ? "Saving…" : "Save file settings");
-		}), G("input", m, (e) => D("name", e.currentTarget.value)), G("click", g, () => A("save")), G("click", x, () => A("open")), G("change", j, (e) => D("missing", e.currentTarget.value)), G("input", re, (e) => D("content", e.currentTarget.value)), G("change", ae, (e) => D("visibility", e.currentTarget.value)), G("click", de, ee), q(e, n);
+			J(f, t.model.mode === "source" ? "Source file" : "Destination file"), Q(m, "id", r() + "-fileTarget-name"), qi(m, W(i)), m.disabled = !W(x), Q(g, "id", r() + "-fileTarget-choose"), g.disabled = !W(C), J(_, W(d) === "choose-save" ? "Choosing…" : "Choose location…"), b.disabled = !W(C), J(S, W(d) === "choose-open" ? "Choosing…" : "Open existing…"), A.disabled = !W(x), te !== (te = W(o)) && (A.value = (A.__value = W(o)) ?? "", Pi(A, W(o))), qi(re, W(s)), re.disabled = !W(x), ae.disabled = !W(x), se !== (se = W(c)) && (ae.value = (ae.__value = W(c)) ?? "", Pi(ae, W(c))), de.disabled = !W(w), J(fe, W(d) === "save" ? "Saving…" : "Save file settings");
+		}), G("input", m, (e) => k("name", e.currentTarget.value)), G("click", g, () => j("save")), G("click", b, () => j("open")), G("change", A, (e) => k("missing", e.currentTarget.value)), G("input", re, (e) => k("content", e.currentTarget.value)), G("change", ae, (e) => k("visibility", e.currentTarget.value)), G("click", de, M), q(e, n);
 	};
-	Y(F, (e) => {
-		t.model.mode === "inherited" ? e(oe) : e(se, -1);
+	Y(se, (e) => {
+		t.model.mode === "inherited" ? e(ce) : e(le, -1);
 	});
-	var ce = H(F, 2), le = (e) => {
+	var ue = H(se, 2), de = (e) => {
 		q(e, Xv());
 	};
-	Y(ce, (e) => {
-		t.model.legacy && e(le);
-	});
-	var ue = H(ce, 2), de = (e) => {
-		q(e, Zv());
-	};
 	Y(ue, (e) => {
-		t.model.supported || e(de);
+		t.model.legacy && e(de);
 	});
 	var fe = H(ue, 2), pe = (e) => {
-		q(e, Qv());
+		q(e, Zv());
 	};
 	Y(fe, (e) => {
-		t.model.available || e(pe);
+		t.model.supported || e(pe);
 	});
 	var me = H(fe, 2), he = (e) => {
+		q(e, Qv());
+	};
+	Y(me, (e) => {
+		t.model.available || e(he);
+	});
+	var ge = H(me, 2), _e = (e) => {
 		var n = $v(), r = B(n, !0);
 		I(n), U(() => J(r, t.model.issue)), q(e, n);
 	};
-	Y(me, (e) => {
-		t.model.issue && e(he);
+	Y(ge, (e) => {
+		t.model.issue && e(_e);
 	});
-	var ge = H(me, 2), _e = (e) => {
+	var ve = H(ge, 2), ye = (e) => {
 		var t = ey(), n = B(t, !0);
 		I(t), U(() => J(n, W(f))), q(e, t);
 	};
-	Y(ge, (e) => {
-		W(f) && e(_e);
+	Y(ve, (e) => {
+		W(f) && e(ye);
 	});
-	var ve = H(ge, 2), ye = (e) => {
+	var be = H(ve, 2), xe = (e) => {
 		var t = ty(), n = B(t, !0);
 		I(t), U(() => J(n, W(p))), q(e, t);
 	};
-	Y(ve, (e) => {
-		W(p) && e(ye);
-	}), I(M), U(() => {
-		Q(M, "aria-labelledby", r() + "-fileTarget-heading"), Q(N, "id", r() + "-fileTarget-heading"), J(ie, W(T));
-	}), q(e, M), Je();
+	Y(be, (e) => {
+		W(p) && e(xe);
+	}), I(te), U(() => {
+		Q(te, "aria-labelledby", r() + "-fileTarget-heading"), Q(ne, "id", r() + "-fileTarget-heading"), J(P, W(E));
+	}), q(e, te), Je();
 }
 Nr([
 	"change",
@@ -20091,7 +20118,7 @@ function Wy(e, t) {
 	}, [() => r() ? `Comment: ${r().title}` : n() ? `${n().label} node: ${n().ports.map((e) => e.label).join(", ")}` : "Node preview"]), q(e, l), Je();
 }
 //#endregion
-//#region src/canvas/connection-route.js?v=0.28.1
+//#region src/canvas/connection-route.js?v=0.29.0
 var Gy = 25, Ky = 12, qy = 6, Jy = (e) => `${e.x},${e.y}`, Yy = (e, t, n = 0) => ({
 	x: e.x + t,
 	y: e.y + n
@@ -20612,7 +20639,7 @@ function yb(e, t) {
 }
 Nr(["click"]);
 //#endregion
-//#region src/ui/node-guide-content.js?v=0.28.1
+//#region src/ui/node-guide-content.js?v=0.29.0
 var $ = (e, t, ...n) => ({
 	title: e,
 	summary: t,
@@ -27327,7 +27354,7 @@ function aA(e) {
 	}) : null;
 }
 //#endregion
-//#region src/workflow/semantic-json-data.js?v=0.28.1
+//#region src/workflow/semantic-json-data.js?v=0.29.0
 var oA = /* @__PURE__ */ new Set([
 	"condition",
 	"select-fields",
@@ -27477,7 +27504,7 @@ function xA(e, t, n) {
 	};
 }
 //#endregion
-//#region src/workflow/modifiers.js?v=0.28.1
+//#region src/workflow/modifiers.js?v=0.29.0
 var SA = (e) => (e && typeof e == "object" && (Object.values(e).forEach(SA), Object.freeze(e)), e), CA = (e, t, n) => ({
 	key: e,
 	label: t,
@@ -29745,10 +29772,10 @@ var wM = {
 	generate_interceptor: "latticeGenerationInterceptor",
 	requires: [],
 	optional: [],
-	js: "index.js?v=0.28.1",
+	js: "index.js?v=0.29.0",
 	css: "style.css",
 	author: "Dulgadurbit",
-	version: "0.28.1",
+	version: "0.29.0",
 	homePage: "https://github.com/MentallyQuill/Lattice",
 	auto_update: !1,
 	description: "Build named-pin workflows for optional scene guidance and reviewed reply repairs in SillyTavern, with per-node model connections."

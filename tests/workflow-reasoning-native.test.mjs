@@ -9,7 +9,7 @@ function fixture(controls={},options={}){
     c.eventSource={on(name,fn){const bucket=listeners.get(name)??[];bucket.push(fn);listeners.set(name,bucket);},removeListener(name,fn){listeners.set(name,(listeners.get(name)??[]).filter(item=>item!==fn));},async emit(name,...args){for(const fn of listeners.get(name)??[])await fn(...args);}};
     c.setExtensionPrompt=(key,value)=>{c.extensionPrompts[key]={value};};
     c.stopGeneration=()=>{stops++;void c.eventSource.emit('GENERATION_STOPPED');};
-    const controller=createNativeWorkflowController({context:()=>c,getGraph:phase=>phase==='unified'?graph:undefined,isEnabled:()=>true,userId:()=> 'user',isBusy:()=>busy,countTokens:async()=>({tokens:1}),onResult:r=>results.push(r)});
+    const controller=createNativeWorkflowController({context:()=>c,getGraph:phase=>phase==='unified'?graph:undefined,isEnabled:()=>true,userId:()=> 'user',isBusy:()=>busy,countTokens:async()=>({tokens:1}),getFailurePolicy:()=>options.failurePolicy,stopGeneration:()=>c.stopGeneration(),onResult:r=>results.push(r)});
     controller.subscribe();
     return {graph,c,controller,results,aborts:()=>aborts,stops:()=>stops,setBusy:value=>{busy=value;},async start(){await c.eventSource.emit('GENERATION_STARTED','normal',{},false);return controller.beforeGenerate([...c.chat],8192,()=>aborts++,'normal');},emit:payload=>c.eventSource.emit('CHAT_COMPLETION_SETTINGS_READY',payload)};
 }
@@ -73,6 +73,24 @@ test('native unsupported final settings stop physical generation and retain the 
         assert.equal(f.stops(),1);assert.equal(f.results.at(-1)?.error?.code,'REASONING_UNSUPPORTED');
         assert.equal(value.reasoning_effort,'high');
     }finally{f.controller.dispose();}
+});
+
+test('native reasoning failures stop once under stop and recovery policies without replay or fallback',async()=>{
+    for(const failurePolicy of ['stop','continue-available']){
+        const f=fixture({reasoningEffort:'high'},{failurePolicy});
+        try{
+            assert.equal((await f.start()).ok,true);
+            const value={...payload(),chat_completion_source:'unmapped-provider'};
+            await f.emit(value);
+            for(let count=0;count<20&&!f.results.length;count++)await new Promise(resolve=>setTimeout(resolve,1));
+            const result=f.results.at(-1);assert.ok(result,'The original native failure must settle');
+            assert.equal(f.stops(),1,failurePolicy);assert.equal(f.aborts(),1,failurePolicy);
+            assert.equal(result.error.code,'REASONING_UNSUPPORTED');assert.equal(result.failureDisposition,'stopped');
+            assert.equal(result.fallback,undefined);assert.equal(result.actualCalls,0);assert.equal(f.results.length,1);
+            assert.equal(value.reasoning_effort,'high');
+            await f.emit(payload());assert.equal(f.stops(),1);assert.equal(f.results.length,1);
+        }finally{f.controller.dispose();}
+    }
 });
 
 test('native direct Claude and Gemini reasoning uses the final payload without auxiliary binding restrictions',async()=>{

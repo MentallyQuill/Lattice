@@ -1,5 +1,5 @@
 /** Private, exact UTF-16 projection. Separators are never original source material. */
-import {canonicalContextData} from './context-data.js?v=0.28.1';
+import {canonicalContextData} from './context-data.js?v=0.29.0';
 export function projectSourceSpan(mapping,start,end){
  if(!mapping||mapping.sourceRefs.length!==1)return null;
  const ref=mapping.sourceRefs[0],span=ref.span;

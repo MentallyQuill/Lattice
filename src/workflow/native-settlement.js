@@ -1,5 +1,5 @@
-import { captureNodeFileTargets } from './node-file-targets.js?v=0.28.1';
-import { inspectDocumentHistory, validateDocumentHistory } from './document-history.js?v=0.28.1';
+import { captureNodeFileTargets } from './node-file-targets.js?v=0.29.0';
+import { inspectDocumentHistory, validateDocumentHistory } from './document-history.js?v=0.29.0';
 
 /** One explicit native UI lifecycle; preview DTOs never grant storage or archive authority. */
 export function createNativeDocumentHistory(raw){
@@ -58,15 +58,15 @@ export function createNativeDocumentHistory(raw){
         },
     });
 }
-import { own } from './record-data.js?v=0.28.1';
-import { isNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.28.1';
-import { createStagedEffects } from './staged-effects.js?v=0.28.1';
-import { createFileStore, createChatDocumentBackend } from './file-store.js?v=0.28.1';
-import {artifactVisibility} from './artifact-privacy.js?v=0.28.1';
-import {validChatSourceBinding} from './chat-prefix-binding.js?v=0.28.1';
-import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.28.1';
-import { cloneJsonValue } from './operations/json-data.js?v=0.28.1';
-import { validateOccurrences } from './operations/event-data.js?v=0.28.1';
+import { own } from './record-data.js?v=0.29.0';
+import { isNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.29.0';
+import { createStagedEffects } from './staged-effects.js?v=0.29.0';
+import { createFileStore, createChatDocumentBackend } from './file-store.js?v=0.29.0';
+import {artifactVisibility} from './artifact-privacy.js?v=0.29.0';
+import {validChatSourceBinding} from './chat-prefix-binding.js?v=0.29.0';
+import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.29.0';
+import { cloneJsonValue } from './operations/json-data.js?v=0.29.0';
+import { validateOccurrences } from './operations/event-data.js?v=0.29.0';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 function trustedConfig(raw,allowed) {
     try {if(!raw||typeof raw!=='object'||![Object.prototype,null].includes(Object.getPrototypeOf(raw)))return {};const descriptors=Object.getOwnPropertyDescriptors(raw);if(Reflect.ownKeys(raw).some(key=>typeof key!=='string'||!allowed.includes(key)||!descriptors[key].enumerable||!Object.hasOwn(descriptors[key],'value')))return {};return Object.fromEntries(Object.entries(descriptors).map(([key,property])=>[key,property.value]));}catch{return {};}

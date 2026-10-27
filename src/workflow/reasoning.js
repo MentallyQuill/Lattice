@@ -6,15 +6,21 @@ const fail = (code, message) => ({ ok: false, error: { code, message } });
 const routeProvider = target => target.api === 'textgenerationwebui' ? 'text' : String(target.source ?? target.api ?? '').toLowerCase();
 const customRoute = target => routeProvider(target) === 'custom';
 const modelName = target => String(target.model ?? '').toLowerCase().split('/').at(-1);
-function customProvider(target) {
-    // Endpoints are optional hints. Never inspect URLs with credentials or query data.
+const reasoningHosts = { 'openrouter.ai': 'openrouter', 'nano-gpt.com': 'nanogpt', 'api.nano-gpt.com': 'nanogpt', 'api.openai.com': 'openai', 'api.anthropic.com': 'claude', 'api.deepseek.com': 'deepseek', 'api.z.ai': 'zai', 'open.bigmodel.cn': 'zai', 'api.x.ai': 'xai', 'api.groq.com': 'groq', 'api.moonshot.ai': 'moonshot', 'api.moonshot.cn': 'moonshot', 'generativelanguage.googleapis.com': 'makersuite' };
+const reasoningProviders = new Set(Object.values(reasoningHosts));
+/** Public provider classification only; never retain an endpoint or its private data. */
+export function reasoningProviderHint(endpoint) {
     try {
-        const url = new URL(target.endpoint);
+        const url = new URL(endpoint);
         if (['https:', 'http:'].includes(url.protocol) && !url.username && !url.password && !url.search && !url.hash) {
-            const hosts = { 'openrouter.ai': 'openrouter', 'nano-gpt.com': 'nanogpt', 'api.nano-gpt.com': 'nanogpt', 'api.openai.com': 'openai', 'api.anthropic.com': 'claude', 'api.deepseek.com': 'deepseek', 'api.z.ai': 'zai', 'open.bigmodel.cn': 'zai', 'api.x.ai': 'xai', 'api.groq.com': 'groq', 'api.moonshot.ai': 'moonshot', 'api.moonshot.cn': 'moonshot', 'generativelanguage.googleapis.com': 'makersuite' };
-            if (Object.hasOwn(hosts, url.hostname)) return hosts[url.hostname];
+            if (Object.hasOwn(reasoningHosts, url.hostname)) return reasoningHosts[url.hostname];
         }
-    } catch { /* Model families provide a second public hint. */ }
+    } catch { /* Unknown endpoints have no public provider hint. */ }
+    return undefined;
+}
+function customProvider(target) {
+    const provider = reasoningProviderHint(target.endpoint) ?? (reasoningProviders.has(target.reasoningProvider) ? target.reasoningProvider : undefined);
+    if (provider) return provider;
     const model = modelName(target);
     if (/^(?:gpt-[56]|o[134](?:-|$))/.test(model)) return 'openai';
     if (/^claude-/.test(model)) return 'claude';

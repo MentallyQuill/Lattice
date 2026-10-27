@@ -1,43 +1,43 @@
-import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.28.1';
-import { captureNodeFileTargets, nodeFileTargetId } from './node-file-targets.js?v=0.28.1';
-import { getNodeFileAccess } from '../ui/node-file-access.js?v=0.28.1';
-import { randomUuid } from '../random-id.js?v=0.28.1';
-import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.28.1';
-import {cloneJsonValue} from './operations/json-data.js?v=0.28.1';
-import {captureNativeCharacterProjection} from './native-source-projections.js?v=0.28.1';
-import {createNativeSourceRegistry} from './native-source-registry.js?v=0.28.1';
-import {createSourceReader,inspectSourcePage} from './source-reader.js?v=0.28.1';
-import {createSourceProofRegistry} from './source-provenance.js?v=0.28.1';
-import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.28.1';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.1';
-import { sha256Text } from './definition-data.js?v=0.28.1';
-import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.28.1';
-import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.28.1';
-import { reasoningRequestOverrides } from './reasoning.js?v=0.28.1';
-import { addressKey, safeError } from './record-data.js?v=0.28.1';
-import { createRunState, reduceRunState } from './run-state.js?v=0.28.1';
-import { cloneWorkflowDocument } from './document.js?v=0.28.1';
-import { prepareWorkflowAttempt, resolveWorkflow } from './resolve.js?v=0.28.1';
-import { projectIntrospectionNode } from './introspection/native.js?v=0.28.1';
-import { executeIntrospection } from './introspection/nodes.js?v=0.28.1';
-import { parseRecord } from './introspection/contracts.js?v=0.28.1';
-import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.28.1';
-import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.28.1';
-import { createChatPrefixBinding } from './chat-prefix-binding.js?v=0.28.1';
-import {queryProgressionHistory} from './progression.js?v=0.28.1';
-import { createChatDocumentCatalog } from './document-catalog.js?v=0.28.1';
-import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.28.1';
-import { createNativePersistenceVerifier } from './native-persistence.js?v=0.28.1';
-import { createNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.28.1';
-import { createNativeActorContext } from './native-actor-context.js?v=0.28.1';
-import { createNativeRecallController } from './native-recall.js?v=0.28.1';
-import { createNativeStoryState, createNativeOutcomeCache } from './native-story-state.js?v=0.28.1';
-import { executeTimeNode } from './operations/time-nodes.js?v=0.28.1';
-import { executeRandom } from './operations/random-outcomes.js?v=0.28.1';
-import { executeFileNode } from './operations/file-nodes.js?v=0.28.1';
-import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.28.1';
-import { snapshotPromptSource, promptSourceFingerprint } from './prompt-source.js?v=0.28.1';
-import { createNativeMemoryAdapter, nativeMemoryFingerprint, nativeMemoryScope, nativeVisibility } from './introspection/host-memory.js?v=0.28.1';
+import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.29.0';
+import { captureNodeFileTargets, nodeFileTargetId } from './node-file-targets.js?v=0.29.0';
+import { getNodeFileAccess } from '../ui/node-file-access.js?v=0.29.0';
+import { randomUuid } from '../random-id.js?v=0.29.0';
+import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.29.0';
+import {cloneJsonValue} from './operations/json-data.js?v=0.29.0';
+import {captureNativeCharacterProjection} from './native-source-projections.js?v=0.29.0';
+import {createNativeSourceRegistry} from './native-source-registry.js?v=0.29.0';
+import {createSourceReader,inspectSourcePage} from './source-reader.js?v=0.29.0';
+import {createSourceProofRegistry} from './source-provenance.js?v=0.29.0';
+import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.29.0';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.29.0';
+import { sha256Text } from './definition-data.js?v=0.29.0';
+import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.29.0';
+import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.29.0';
+import { reasoningRequestOverrides } from './reasoning.js?v=0.29.0';
+import { addressKey, safeError } from './record-data.js?v=0.29.0';
+import { createRunState, reduceRunState } from './run-state.js?v=0.29.0';
+import { cloneWorkflowDocument } from './document.js?v=0.29.0';
+import { prepareWorkflowAttempt, resolveWorkflow } from './resolve.js?v=0.29.0';
+import { projectIntrospectionNode } from './introspection/native.js?v=0.29.0';
+import { executeIntrospection } from './introspection/nodes.js?v=0.29.0';
+import { parseRecord } from './introspection/contracts.js?v=0.29.0';
+import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.29.0';
+import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.29.0';
+import { createChatPrefixBinding } from './chat-prefix-binding.js?v=0.29.0';
+import {queryProgressionHistory} from './progression.js?v=0.29.0';
+import { createChatDocumentCatalog } from './document-catalog.js?v=0.29.0';
+import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.29.0';
+import { createNativePersistenceVerifier } from './native-persistence.js?v=0.29.0';
+import { createNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.29.0';
+import { createNativeActorContext } from './native-actor-context.js?v=0.29.0';
+import { createNativeRecallController } from './native-recall.js?v=0.29.0';
+import { createNativeStoryState, createNativeOutcomeCache } from './native-story-state.js?v=0.29.0';
+import { executeTimeNode } from './operations/time-nodes.js?v=0.29.0';
+import { executeRandom } from './operations/random-outcomes.js?v=0.29.0';
+import { executeFileNode } from './operations/file-nodes.js?v=0.29.0';
+import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.29.0';
+import { snapshotPromptSource, promptSourceFingerprint } from './prompt-source.js?v=0.29.0';
+import { createNativeMemoryAdapter, nativeMemoryFingerprint, nativeMemoryScope, nativeVisibility } from './introspection/host-memory.js?v=0.29.0';
 
 // Internal review seam: observations contain no authority or retained payload values.
 const retentionInspectors=new WeakMap();
@@ -755,6 +755,29 @@ export function createNativeWorkflowController(ports) {
         if(run.nativeTimer)clearTimeout(run.nativeTimer);run.nativeTimer=null;
         run.nativeFailed=true;run.nativeCompletion?.resolve(error);run.nativeReady?.resolve(error);clear();
     }
+    const ownsNativeStop=run=>active===run && run.epoch===epoch && run.policyOwner===generation && sameNativeStopPassport(run.policyPassport,nativeStopPassport(context));
+    function stopNativeGeneration(run,stop) {
+        if(run.nativeStopReceipt)return run.nativeStopReceipt;
+        if(!ownsNativeStop(run)||typeof stop!=='function')return Promise.resolve(false);
+        try {
+            // Observe the owned Stop before another async listener can deliver
+            // that event to a replacement Send.
+            const c=context(),events=c.eventTypes??c.event_types??{};
+            if(nativeStopListener && events.GENERATION_STOPPED)c.eventSource?.makeFirst?.(events.GENERATION_STOPPED,nativeStopListener);
+            if(!ownsNativeStop(run))return Promise.resolve(false);
+        } catch {return Promise.resolve(false);}
+        // Publish the receipt before calling the host: stopping may reenter us.
+        const receipt=deferred();run.nativeStopReceipt=receipt.promise;
+        const previous=invokingPolicyStop;invokingPolicyStop=run.policyOwner;
+        try {Promise.resolve(stop()).then(value=>receipt.resolve(value!==false),()=>receipt.resolve(false));}
+        catch {receipt.resolve(false);}
+        finally {invokingPolicyStop=previous;}
+        return receipt.promise;
+    }
+    function stopNativeReasoning(run) {
+        try {const c=context(),stop=c.stopGeneration;void stopNativeGeneration(run,typeof stop==='function'?()=>stop.call(c):undefined);}
+        catch {/* Keep the reasoning failure when native stopping is unavailable. */}
+    }
     const nativeReasoningTarget=(c,payload)=>({api:payload?'openai':c.mainApi,source:payload?.chat_completion_source??c.chatCompletionSettings?.chat_completion_source,model:payload?.model??c.getChatCompletionModel?.(c.chatCompletionSettings),endpoint:payload?.custom_url??c.chatCompletionSettings?.custom_url??null});
     function nativeReasoningOverrides(target,controls,payload) {
         const mapped=reasoningRequestOverrides(target,controls);if(!mapped.ok)return mapped;
@@ -799,24 +822,32 @@ export function createNativeWorkflowController(ports) {
         if(!mapped.ok)return mapped;
         run.nativeReasoning=controls;return {ok:true};
     }
-    function applyNativeReasoning(payload) {
+    async function applyNativeReasoning(payload) {
         const run=active;
         // This event is emitted only by the native chat send, after its final
         // settings conversion. Auxiliary services never emit it.
-        if(!run?.native||!run.unified||!run.nativePrepared||run.nativeResolved||run.nativeFailed||run.nativeReasoningApplied||!run.nativeReasoning||payload?.type!==run.nativeType||generationInvocationDryRun||generation.dryRun||generation.aborted||!nativePrefixFresh(run)||!sourceFresh(run))return;
+        const current=()=>active===run&&run?.native&&run.unified&&run.nativePrepared&&!run.nativeResolved&&!run.nativeFailed&&!run.nativeReasoningApplied&&run.nativeReasoning&&payload?.type===run.nativeType&&!generationInvocationDryRun&&!generation.dryRun&&!generation.aborted&&nativePrefixFresh(run);
+        if(!current()||!sourceFresh(run))return;
+        const reject=error=>{
+            run.nativeReasoningFailure=error;holdNative(run,error);const abort=run.abortPrimary;run.abortPrimary=null;run.nativeOwner.aborted=true;
+            try{abort?.(true);}catch{/* The installed native abort callback is best effort. */}
+            stopNativeReasoning(run);
+        };
+        if(run.nodeFileBackend){
+            const files=await verifyNodeFiles(run);
+            if(!current())return;
+            if(!files.ok){reject(files);return;}
+            if(!sourceFresh(run))return;
+        }
         const target=nativeReasoningTarget(context(),payload);
         const mapped=nativeReasoningOverrides(target,run.nativeReasoning,payload);
         // The public YAML parser can be supplied by the host. Recheck ownership
         // after that callback before altering or stopping a native request.
-        if(active!==run||generationInvocationDryRun||!nativePrefixFresh(run)||!sourceFresh(run))return;
-        if(!mapped.ok){
-            run.nativeReasoningFailure=mapped;holdNative(run,mapped);const abort=run.abortPrimary;run.abortPrimary=null;run.nativeOwner.aborted=true;
-            try{abort?.(true);context().stopGeneration?.();}catch{/* The installed native stop callback is best effort. */}
-            return;
-        }
+        if(!current()||!sourceFresh(run))return;
+        if(!mapped.ok){reject(mapped);return;}
         if(!payload||typeof payload!=='object'||Array.isArray(payload))return;
         try{Object.assign(payload,mapped.data);run.nativeReasoningApplied=true;}
-        catch{const error=fail('REASONING_UNSUPPORTED','The final native settings could not accept this reasoning override.');run.nativeReasoningFailure=error;holdNative(run,error);try{context().stopGeneration?.();}catch{/* Host stop is best effort. */}}
+        catch{reject(fail('REASONING_UNSUPPORTED','The final native settings could not accept this reasoning override.'));}
     }
     function checkNativeCompletion(run) {
         run.nativeTimer=null;
@@ -1001,6 +1032,7 @@ export function createNativeWorkflowController(ports) {
             }
             prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);
             const reasoning=prepareNativeReasoning(run,node);if(!reasoning.ok)return rejectPreparation(reasoning);
+            const finalFiles=await verifyNodeFiles(run);if(!finalFiles.ok)return rejectPreparation(finalFiles);
             prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);
             run.pending=false;run.nativePrepared=true;run.nativeReady.resolve({ok:true,prepared:true,awaitingNative:true,runId:run.runId,published:inputs.guidance!==undefined,...(run.nativeReasoningSkipped?{reasoningSkipped:true}:{})});
             return run.nativeCompletion.promise;
@@ -1046,29 +1078,17 @@ export function createNativeWorkflowController(ports) {
     async function failureDisposition(run,value) {
         if(value.ok)return {...value,...(value.recovered?{failureDisposition:'continued'}:{})};
         const ownsRun=()=>active===run && run.epoch===epoch && run.policyOwner===generation;
-        const owns=()=>ownsRun() && sameNativeStopPassport(run.policyPassport,nativeStopPassport(context));
         if(!ownsRun() || run.controller.signal.aborted)return value;
         if(run.failurePolicy==='native-fallback')return {...value,failureDisposition:generation.aborted?'stopped':run.nativeResolved?'reply-preserved':'native-fallback'};
         run.policyStopping=true;
         const abort=run.abortPrimary;run.abortPrimary=null;
         try{abort?.(true);}catch{/* Native callback is best effort; real stop follows. */}
         let stopped=false;
-        try {if(owns() && typeof ports.stopGeneration==='function'){
-            // SillyTavern emits Stop without awaiting its async event dispatch.
-            // Observe our own stop synchronously before another listener can yield
-            // and deliver that old event to a replacement generation.
-            const c=context(),events=c.eventTypes??c.event_types??{};
-            if(nativeStopListener && events.GENERATION_STOPPED)c.eventSource?.makeFirst?.(events.GENERATION_STOPPED,nativeStopListener);
-            if(owns()){
-                let pending;invokingPolicyStop=run.policyOwner;
-                try{pending=ports.stopGeneration();}finally{invokingPolicyStop=null;}
-                stopped=(await pending)!==false;
-            }
-        }}
+        try {stopped=await stopNativeGeneration(run,ports.stopGeneration);}
         catch {/* Keep the node failure and report that host stopping was unconfirmed. */}
         finally {run.policyStopping=false;}
         run.controller.abort('Workflow failed');
-        if(owns()) {generation.aborted=true;clear();}
+        if(ownsNativeStop(run)) {generation.aborted=true;clear();}
         return {...value,failureDisposition:stopped?'stopped':'stop-unavailable'};
     }
     async function beforeUnified(graph,chat,abort,type) {

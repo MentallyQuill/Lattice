@@ -54,21 +54,15 @@ Use **Graph → Add node…** to search the shelf and place a node immediately. 
 
 *Preview lets you inspect the result of a step before sending a reply. This demonstration uses a structured scene brief.*
 
-## Use automatic Workflow Data
+## Configure files in Details
 
-Add **Story Clock**, **Read File**, or **Outcome Commit** to use their automatic sources:
+Select **Story Clock**, **Read File**, or **Outcome Commit** and open **Details → File**. Enter a filename and choose **Choose location…** or **Open existing…**. Configure the format, initial content, creation policy, and visibility there. Clock and outcome files use JSON; actor-private files also require the actor ID.
 
-| Node | Starting source |
-| --- | --- |
-| Story Clock | **Chat clock**: Day 1 at 00:00, with a 24-hour day. |
-| Read File | **Chat notes**: empty plain text. |
-| Outcome Commit | **Chat outcomes**: an empty JSON list. |
+**Write to File** uses the exact connected document reference by default, or can choose **Own file**. **Clock Commit** inherits its clock's destination. A missing destination or permission appears as **Setup Required** above the node.
 
-Lattice makes the referenced defaults available when the enabled workflow runs. Change starting values or content in Details; **Advanced** lets you choose a source, format, and visibility. Actor-private sources also require an actor ID. Clock and outcomes keep their required JSON format.
+Initial values do not overwrite saved contents during setup. Preview and rejection do not write files; accepting a reviewed result saves its staged changes after freshness checks. Nodes sharing a clock file share its timeline.
 
-Starting values seed unsaved data. Changing them does not overwrite saved time, notes, or outcomes. Nodes choosing the same clock share its timeline; separate clocks do not synchronize automatically.
-
-For named documents required by a lesson, open **Workflow → Configure → Workflow Data…**. These are story documents stored with the chat, not arbitrary files on your computer. See [document setup](unified-workflows.md#authorize-workflow-data-and-preserve-its-structure).
+Older chat-stored documents remain under **Workflow → Configure → Legacy chat data…** for access and migration. See [file setup](unified-workflows.md#configure-files-in-each-node).
 
 ## Add a reusable system
 

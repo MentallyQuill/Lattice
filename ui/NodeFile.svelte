@@ -7,7 +7,7 @@
     let name = $state(''), format = $state<NodeFileSettings['format']>('text'), missing = $state<NodeFileSettings['missing']>('create'), content = $state('');
     let visibility = $state<NodeFileSettings['visibility']['kind']>('public'), actorId = $state('');
     let dirty = $state(false), pending = $state(''), failure = $state(''), notice = $state('');
-    let identity = '', generation = 0, alive = true;
+    let identity = '', draftIdentity = '', generation = 0, alive = true;
     const formats = [{ value: 'text', label: 'Plain text' }, { value: 'json', label: 'JSON' }, { value: 'jsonl', label: 'JSON Lines' }, { value: 'csv', label: 'CSV' }, { value: 'markdown', label: 'Markdown' }] as const;
     const requiresJson = $derived(['story-clock', 'commit-outcomes', 'random-pick'].includes(model.operation));
     const canAct = $derived(!disabled && model.available && !pending);
@@ -18,14 +18,20 @@
     const renamed = $derived(name.trim() !== model.settings.name);
     const bindingStatus = $derived(model.mode === 'inherited' ? 'Inherited destination' : renamed ? 'Choose a location for this filename.' : model.settings.bindingId ? model.issue ? 'File access needs attention.' : 'File selected' : 'Choose a file to finish setup.');
     const contextKey = () => JSON.stringify([selection, model, disabled]);
+    const draftKey = () => JSON.stringify([selection.documentNamespace, selection.selectionKey, selection.address, model.operation, model.mode, model.destinationMode, model.settings]);
     $effect.pre(() => {
-        const next = contextKey();
+        const next = contextKey(), nextDraft = draftKey();
         if (next === identity) return;
         identity = next; generation++;
+        const replaceDraft = nextDraft !== draftIdentity;
+        draftIdentity = nextDraft;
         untrack(() => {
-            name = model.settings.name; format = model.settings.format; missing = model.settings.missing; content = model.settings.content;
-            visibility = model.settings.visibility.kind; actorId = model.settings.visibility.kind === 'actor-private' ? model.settings.visibility.actorId : '';
-            dirty = false; pending = ''; failure = ''; notice = '';
+            if (replaceDraft) {
+                name = model.settings.name; format = model.settings.format; missing = model.settings.missing; content = model.settings.content;
+                visibility = model.settings.visibility.kind; actorId = model.settings.visibility.kind === 'actor-private' ? model.settings.visibility.actorId : '';
+                dirty = false;
+            }
+            pending = ''; failure = ''; notice = '';
         });
     });
     onDestroy(() => { alive = false; generation++; });

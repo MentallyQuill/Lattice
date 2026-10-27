@@ -8,6 +8,7 @@ export interface ReasoningTarget {
     source?: string | null;
     model?: string | null;
     endpoint?: string | null;
+    reasoningProvider?: string;
     metadata?: {
         reasoning?: { supported_efforts?: string[] | null; mandatory?: boolean };
         effort?: { supported_levels?: string[] };
@@ -19,5 +20,6 @@ export interface ReasoningOptions {
 }
 export type ReasoningRequestResult = { ok: true; data: Record<string, unknown> } | { ok: false; error: { code: string; message: string } };
 export const REASONING_EFFORTS: readonly ReasoningEffort[];
+export function reasoningProviderHint(endpoint?: string | null): string | undefined;
 export function reasoningOptions(target?: ReasoningTarget): ReasoningOptions;
 export function reasoningRequestOverrides(target?: ReasoningTarget, controls?: ReasoningControls): ReasoningRequestResult;

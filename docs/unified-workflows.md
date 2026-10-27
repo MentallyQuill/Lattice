@@ -13,7 +13,7 @@ Your usual SillyTavern connection writes the main reply. Other model tools can p
 3. Choose **File → Open examples…** and read a lesson’s requirements. Opening creates an editable copy, makes no model request, and does not change **Enable Lattice**.
 4. Replace sample instructions, actor/item identities, and document targets with your story’s values. Loaded character IDs normally use `character:<avatar filename>`; a display name alone is not a live actor identity.
 5. Click each model tool’s grey bar and choose **Active SillyTavern model** or a saved Connection Manager profile. Leave **Advanced model settings → Model mode → Use profile model** unless that tool needs a different identifier. Configure any **For Each → Helper model bindings** separately.
-6. Automatic Story Clock, Read File, and Outcome Commit sources need no setup. Authorize named lesson targets in **Workflow → Configure → Workflow Data…** and resolve validation or connection issues.
+6. Select each Story Clock, Read File, or Outcome Commit node and configure its destination in **Details → File**. Resolve **Setup Required**, validation, and connection issues. Older chat documents remain under **Workflow → Configure → Legacy chat data…**.
 7. Select **Enable Lattice** with this document open. Switching between Main and its subgraph tabs changes your view, not the workflow used by Send.
 8. Send your player message normally. Lattice prepares connected guidance, continues from the completed reply, and records its response processing. A generated swipe can use the same workflow when its sources and policies permit it.
 9. Select **Review / Publish → Host result** in Preview. Compare the original, proposed reply, appended notes, model trace, and staged changes. Choose **Apply reviewed reply** or **Reject reply**.
@@ -222,11 +222,11 @@ State and projection receipts shown before Apply are proposed diagnostics. Save 
 
 ## Story time: midnight, 14:00 and eight-hour intervals
 
-Story time uses authored integer minutes, separately from wall-clock time and message count. **Story Clock** defaults to **Chat clock**, Day 1 at midnight, with a 24-hour day. Change **Starting values** in Details; **Advanced** contains source, Visibility, JSON Format, and calendar settings. Saved time stays intact.
+Story time uses authored integer minutes, separately from wall-clock time and message count. Configure the **Story Clock** JSON file in **Details → File**, including its starting values and visibility. Saved time stays intact.
 
-Nodes selecting the same source share its timeline. Use **+** beside the source for an independent named clock. Separate clocks do not synchronize automatically. Story Clock reads accepted time when the workflow runs.
+Nodes selecting the same clock file share its timeline. Select a different file for an independent clock. Separate clocks do not synchronize automatically. Story Clock reads accepted time when the workflow runs.
 
-For a custom target, **Workflow → Configure → Workflow Data… → Story clock template** supplies a valid starting schema. Its `clockId` must match the target. This example starts Day 1 at midnight:
+The File panel supplies the clock's initial JSON. Its `clockId` must match the authored clock identity. The older **Legacy chat data… → Story clock template** remains available for chat-document recovery. This example starts Day 1 at midnight:
 
 ```json
 {

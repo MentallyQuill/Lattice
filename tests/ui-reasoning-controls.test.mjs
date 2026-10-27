@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {prepareWorkspaceViews,projectWorkspacePanels} from '../src/ui/workspace-preparation.js?v=0.28.1';
-import {createGraphViewSession} from '../src/ui/graph-view-session.js?v=0.28.1';
-import {projectPreparedWorkflow} from '../src/ui/workflow-surface.js?v=0.28.1';
-import {readNodeProfileMetadata,prepareNodeProfileOptions} from '../src/ui/node-profile-preparation.js?v=0.28.1';
+import {prepareWorkspaceViews,projectWorkspacePanels} from '../src/ui/workspace-preparation.js?v=0.29.0';
+import {createGraphViewSession} from '../src/ui/graph-view-session.js?v=0.29.0';
+import {projectPreparedWorkflow} from '../src/ui/workflow-surface.js?v=0.29.0';
+import {readNodeProfileMetadata,prepareNodeProfileOptions,nodeProfileMetadataKey} from '../src/ui/node-profile-preparation.js?v=0.29.0';
 import {activeModelMetadata,ACTIVE_PROFILE_ID} from '../src/workflow/model-profiles.js';
+import {resolveBinding} from '../src/workflow/connections.js';
+import {reasoningOptions,reasoningRequestOverrides} from '../src/workflow/reasoning.js';
 import {detailsComponent,control,input,click} from './helpers/inspector-component.mjs';
 
 const graph=(node={})=>({id:'reasoning-ui',schema:3,runtime:2,mode:'native-unified',roles:{},nodes:{call:{id:'call',type:'workflow',operation:'model-call',profileId:'saved',...node}},wires:{},definitions:{},portals:{},groups:{}});
@@ -16,6 +18,65 @@ function fixture(root,options={}){
  return {session,workflow,details:(view=workflow)=>projectWorkspacePanels(session.readEditor(),view,{},'reasoning:1',null,null).nodeDetails};
 }
 const effort=details=>details.controls.find(row=>row.key==='reasoningEffort');
+
+function customHost(endpoint,model){
+ const profile={id:'saved',name:'Saved',api:'custom',model,preset:'saved-preset','api-url':endpoint,secret:'private-key'};
+ const preset={custom_url:'https://api.deepseek.com/v1',temperature:0.7};
+ const context={mainApi:'openai',chatCompletionSettings:{chat_completion_source:'custom',custom_model:model,custom_url:endpoint},
+  CONNECT_API_MAP:{custom:{selected:'openai',source:'custom'}},getChatCompletionModel:settings=>settings.custom_model,
+  getPresetManager:()=>({getCompletionPresetByName:()=>preset}),ConnectionManagerRequestService:{getProfile:()=>profile}};
+ return {context,profile,preset};
+}
+
+test('custom endpoint profile metadata keeps inspector presets consistent with the transport provider',()=>{
+ for(const [endpoint,model,rejected] of [['https://openrouter.ai/api/v1','anthropic/claude-opus-4-7','adaptive'],['https://nano-gpt.com/api/v1','deepseek/deepseek-v4-flash','enabled']]){
+  const f=customHost(endpoint,model);
+  for(const active of [false,true]){
+   const root=graph({profileId:active?ACTIVE_PROFILE_ID:'saved'}),metadata=readNodeProfileMetadata(f.context,[f.profile]);
+   const binding=resolveBinding(root.nodes.call,root,f.context);assert.equal(binding.ok,true,JSON.stringify(binding.error));
+   const view=fixture(root,{profiles:metadata,activeModel:activeModelMetadata(f.context)}),details=view.details();
+   assert.deepEqual(effort(details).options,reasoningOptions(binding.data).options,`${active?'active':'fixed'} ${endpoint}`);
+   assert.ok(!effort(details).options.some(option=>option.value===rejected));
+   for(const option of effort(details).options.filter(option=>option.value!=='custom'))assert.equal(reasoningRequestOverrides(binding.data,{reasoningEffort:option.value}).ok,true,option.value);
+   const publicData=JSON.stringify([metadata,view.workflow,details]);assert.ok(!publicData.includes(endpoint));assert.ok(!publicData.includes('private-key'));
+  }
+ }
+});
+
+test('custom endpoint metadata follows profile then preset then host endpoint precedence',()=>{
+ const f=customHost('https://openrouter.ai/api/v1','anthropic/claude-opus-4-7'),root=graph();
+ for(const source of ['profile','preset','host']){
+  if(source==='preset')delete f.profile['api-url'];
+  if(source==='host')delete f.preset.custom_url;
+  const metadata=readNodeProfileMetadata(f.context,[f.profile]),binding=resolveBinding(root.nodes.call,root,f.context);
+  assert.equal(binding.ok,true,JSON.stringify(binding.error));
+  assert.deepEqual(effort(fixture(root,{profiles:metadata}).details()).options,reasoningOptions(binding.data).options,source);
+ }
+ const override=graph({model:'openai/gpt-5'}),metadata=readNodeProfileMetadata(f.context,[f.profile]);
+ const binding=resolveBinding(override.nodes.call,override,f.context);assert.equal(binding.ok,true);
+ assert.deepEqual(effort(fixture(override,{profiles:metadata}).details()).options,reasoningOptions(binding.data).options,'Effective model overrides still use the endpoint provider');
+});
+
+test('custom reasoning metadata refresh keys track provider changes without exposing endpoints',()=>{
+ const f=customHost('https://openrouter.ai/api/v1','anthropic/claude-opus-4-7'),key=()=>nodeProfileMetadataKey(f.context,[f.profile]);
+ const initial=key();f.profile['api-url']='https://nano-gpt.com/api/v1';assert.notEqual(key(),initial);
+ delete f.profile['api-url'];const presetKey=key();f.preset.custom_url='https://api.groq.com/openai/v1';assert.notEqual(key(),presetKey);
+ const activeKey=key();f.context.chatCompletionSettings.custom_url='https://nano-gpt.com/api/v1';assert.notEqual(key(),activeKey);
+ f.context.chatCompletionSettings.custom_url='https://user:private-key@nano-gpt.com/api?key=private-query';
+ const publicKey=key();assert.ok(!publicKey.includes('https://'));assert.ok(!publicKey.includes('private-'));
+});
+
+test('custom endpoint provider refresh decorates cached fields using the effective model',()=>{
+ const f=customHost('https://openrouter.ai/api/v1','anthropic/claude-opus-4-7'),root=graph();
+ const view=fixture(root,{profiles:readNodeProfileMetadata(f.context,[f.profile])}),first=view.details();
+ assert.ok(!effort(first).options.some(option=>option.value==='adaptive'));
+ f.profile['api-url']='https://api.anthropic.com/v1';
+ const metadata=readNodeProfileMetadata(f.context,[f.profile])[0],updated={...view.workflow,profiles:view.workflow.profiles.map(profile=>profile.id===metadata.id?{...profile,...metadata}:profile)};
+ const refreshed=view.details(updated),binding=resolveBinding(root.nodes.call,root,f.context);assert.equal(binding.ok,true);
+ assert.deepEqual(effort(refreshed).options,reasoningOptions(binding.data).options);
+ assert.ok(effort(refreshed).options.some(option=>option.value==='adaptive'));
+ assert.equal(refreshed.editorContractKey,first.editorContractKey,'Provider refresh retains the existing authored editor contracts');
+});
 
 test('profile metadata carries canonical route source without endpoint or settings',()=>{
  const context={CONNECT_API_MAP:{friendly:{selected:'openai',source:'claude',label:'Looks like OpenAI'},local:{selected:'textgenerationwebui',type:'ollama',label:'Local'}}};

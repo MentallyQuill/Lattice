@@ -1,7 +1,7 @@
 import type { DetailSelection, DetailEditResponse } from './detail-types';
 
 /** Host-prepared metadata. The canvas never resolves profiles or binding authority. */
-export interface NodeProfileOption { value: string; label: string; api?: string; source?: string; apiLabel: string; model: string; active: boolean }
+export interface NodeProfileOption { value: string; label: string; api?: string; source?: string; reasoningProvider?: string; apiLabel: string; model: string; active: boolean }
 export interface PreparedNodeProfile {
     selected?: boolean; hasProfile?: boolean; fileLabel?: string; compact?: boolean; readiness?: import('./readiness-types').NodeReadiness;
     id: string; selection: DetailSelection; value: string; label: string; model: string; editable: boolean;

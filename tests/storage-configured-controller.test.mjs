@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
-import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.28.1';
-import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v=0.28.1';
-import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.28.1';
-import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.28.1';
-import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.28.1';
-import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js?v=0.28.1';
-import {safe} from '../src/state.js?v=0.28.1';
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.29.0';
+import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v=0.29.0';
+import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.29.0';
+import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.29.0';
+import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.29.0';
+import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js?v=0.29.0';
+import {safe} from '../src/state.js?v=0.29.0';
 const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');
 test('a checkpoint applied in an earlier scope cannot cancel or refresh a replacement workflow',async()=>{
  const start=source.indexOf('    async applyCheckpoint('),end=source.indexOf('\n    },',start);assert.ok(start>=0&&end>start);

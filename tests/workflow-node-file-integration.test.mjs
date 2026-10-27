@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createNativeFileSession} from '../src/workflow/native-settlement.js?v=0.28.1';
-import {executeFileNode} from '../src/workflow/operations/file-nodes.js?v=0.28.1';
-import {operationDefaults} from '../src/workflow/catalog.js?v=0.28.1';
+import {createNativeFileSession} from '../src/workflow/native-settlement.js?v=0.29.0';
+import {executeFileNode} from '../src/workflow/operations/file-nodes.js?v=0.29.0';
+import {operationDefaults} from '../src/workflow/catalog.js?v=0.29.0';
 const target={targetId:'notes',bindingId:'handle-notes',name:'notes.txt',format:'text',missing:'create',content:'',visibility:{kind:'public'}};
 function fixture(){
  let stored={targetId:'notes',revision:'disk:1',format:'text',content:'Before',receipts:[]},writes=0,prepared;
@@ -19,6 +19,7 @@ test('disk native session stages through Read File and persists once after accep
  assert.equal((await f.session.store.commit(f.prepared().handle,{root:true,accepted:true})).ok,true);assert.equal(f.writes(),1);
 });
 import {unifiedRecipeHost} from './helpers/unified-recipe-host.mjs';
+import {nativeFixture} from './helpers/native-workflow-fixture.mjs';
 function graphForFile(fileTarget={}){
  const nodes={send:{id:'send',type:'workflow',operation:'on-send'},generate:{id:'generate',type:'workflow',operation:'generate-reply'},review:{id:'review',type:'workflow',operation:'review-publish'},body:{id:'body',type:'workflow',operation:'draft-text'},write:{id:'write',type:'workflow',...operationDefaults('write-file'),destinationMode:'own',targetId:'notes',fileTarget}};
  const connect=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});
@@ -28,7 +29,7 @@ test('host rejects unconfigured files before allowing native generation or paid 
  const f=unifiedRecipeHost(graphForFile(),{request:async()=>{throw Error('No paid requests');}});
  try{const result=await f.generate('After');assert.equal(result.ok,false);assert.equal(result.error.code,'FILE_SETUP_REQUIRED');assert.equal(f.calls(),0);assert.equal(f.c.chat.length,1);}finally{f.controller.dispose();}
 });
-import {createNodeFileAccess} from '../src/ui/node-file-access.js?v=0.28.1';
+import {createNodeFileAccess} from '../src/ui/node-file-access.js?v=0.29.0';
 async function nativeDisk(content='Before',format='text',mode='open'){
  const state={content,writes:0,permission:'granted'};
  const handle={kind:'file',name:'notes.txt',isSameEntry:async other=>other===handle,queryPermission:async()=>state.permission,getFile:async()=>{const text=state.content;return {name:'notes.txt',size:text.length,lastModified:1,text:async()=>text};},createWritable:async()=>{state.writes++;let next;return {write:async text=>{next=text;},close:async()=>{state.content=next;},abort:async()=>{}};}};
@@ -46,6 +47,38 @@ test('external disk edits after preview prevent publication and every file write
  const disk=await nativeDisk(),f=unifiedRecipeHost(graphForFile(disk.fileTarget),{ports:{nodeFileAccess:disk.access},request:async()=>{throw Error('No requests');}});
  try{const result=await f.generate('After');assert.equal(result.ok,true,JSON.stringify(result));disk.state.content='External';const applied=await f.controller.apply(result.reviewHandles[0]);assert.equal(applied.ok,false);assert.equal(applied.error.code,'FILE_REVISION_CONFLICT');assert.equal(disk.state.content,'External');assert.equal(disk.state.writes,0);assert.equal(f.c.chat[1].swipes.length,1);}finally{f.controller.dispose();}
 });
+test('external disk edits during guidance tokenization block native generation before release',async()=>{
+ const disk=await nativeDisk(),graph=graphForFile(disk.fileTarget);let generating=false,entered,release,calls=0,aborts=0;
+ graph.nodes.guide={id:'guide',type:'workflow',operation:'compose',outputKind:'guidance',sections:[{name:'Style',text:'Use vivid prose.'}]};
+ graph.wires.guidance={id:'guidance',route:'wire',from:'guide',fromPort:'out',to:'generate',toPort:'guidance'};
+ const tokenizing=new Promise(resolve=>{entered=resolve;}),gate=new Promise(resolve=>{release=resolve;});
+ let f;const catalog=createChatDocumentCatalog({getContext:()=>f.c,getUserId:()=> 'default-user'});
+ f=nativeFixture(graph,{ports:{documentCatalog:catalog,nodeFileAccess:disk.access,countTokens:async()=>{if(generating){entered();await gate;}return {tokens:1};}},onEvent:event=>{if(event.type==='node-phase'&&event.address.nodeId==='generate'&&event.phase==='executing')generating=true;},request:async()=>{calls++;throw Error('No paid requests');}});
+ try{
+  f.c.chatMetadata={};f.c.chat.pop();await f.c.eventSource.emit('GENERATION_STARTED','normal',{},false);
+  const pending=f.controller.beforeGenerate([...f.c.chat],8192,()=>{aborts++;},'normal');
+  await Promise.race([tokenizing,pending.then(result=>assert.fail('Native preparation settled before tokenization: '+JSON.stringify(result)))]);disk.state.content='Externally changed';release();const result=await pending;
+  assert.equal(result.ok,false);assert.equal(result.error.code,'FILE_REVISION_CONFLICT');assert.equal(aborts,1);
+  assert.equal(calls,0);assert.equal(disk.state.writes,0);assert.equal(disk.state.content,'Externally changed');assert.equal(f.c.chat.length,1);
+ }finally{release();f.controller.dispose();}
+});
+test('external disk edits after preparation stop the awaited native settings hook before payload changes',async()=>{
+ const disk=await nativeDisk(),graph=graphForFile(disk.fileTarget);graph.nodes.generate.reasoningEffort='high';let stops=0,aborts=0;
+ const f=unifiedRecipeHost(graph,{ports:{nodeFileAccess:disk.access,getFailurePolicy:()=> 'stop',stopGeneration:()=>f.c.stopGeneration()},configureContext:c=>{
+  Object.assign(c,{mainApi:'openai',chatCompletionSettings:{chat_completion_source:'openai',openai_model:'gpt-5.1'},getChatCompletionModel:settings=>settings.openai_model});
+  c.eventTypes.CHAT_COMPLETION_SETTINGS_READY='CHAT_COMPLETION_SETTINGS_READY';c.stopGeneration=()=>{stops++;void c.eventSource.emit('GENERATION_STOPPED');};
+ },request:async()=>{throw Error('No paid requests');}});
+ try{
+  await f.c.eventSource.emit('GENERATION_STARTED','normal',{},false);
+  const ready=await f.controller.beforeGenerate([...f.c.chat],8192,()=>{aborts++;},'normal');assert.equal(ready.ok,true,JSON.stringify(ready.error));
+  disk.state.content='Externally changed';const payload={type:'normal',chat_completion_source:'openai',model:'gpt-5.1',reasoning_effort:'low'};
+  await f.c.eventSource.emit('CHAT_COMPLETION_SETTINGS_READY',payload);
+  for(let count=0;count<20&&!f.results.length;count++)await new Promise(resolve=>setTimeout(resolve,1));
+  assert.equal(payload.reasoning_effort,'low');assert.equal(stops,1);assert.equal(aborts,1);
+  assert.equal(f.results.at(-1)?.error?.code,'FILE_REVISION_CONFLICT');assert.equal(f.results.at(-1)?.failureDisposition,'stopped');
+  assert.equal(f.calls(),0);assert.equal(disk.state.writes,0);assert.equal(f.c.chat.length,1);
+ }finally{f.controller.dispose();}
+});
 test('revoked local access blocks native generation even for a post-phase destination',async()=>{
  const disk=await nativeDisk();disk.state.permission='denied';const f=unifiedRecipeHost(graphForFile(disk.fileTarget),{ports:{nodeFileAccess:disk.access},request:async()=>{throw Error('No requests');}});
  try{const result=await f.generate('After');assert.equal(result.ok,false);assert.equal(result.error.code,'FILE_PERMISSION');assert.equal(f.c.chat.length,1);assert.equal(f.calls(),0);assert.equal(disk.state.writes,0);}finally{f.controller.dispose();}
@@ -62,7 +95,7 @@ test('Clock Commit inherits its captured disk destination with a distinct logica
  const f=unifiedRecipeHost(graph,{ports:{nodeFileAccess:disk.access},request:async()=>{throw Error('No requests');}});
  try{const result=await f.generate('After');assert.equal(result.ok,true,JSON.stringify(result));assert.equal(disk.state.writes,0);assert.equal((await f.controller.apply(result.reviewHandles[0])).ok,true);const saved=JSON.parse(disk.state.content);assert.equal(saved.clockId,'logical-clock');assert.equal(saved.absoluteMinute,60);assert.equal(saved.revision,2);assert.equal(disk.state.writes,1);assert.equal(f.c.chatMetadata.latticeDocuments,undefined);}finally{f.controller.dispose();}
 });
-import {normalizeOccurrences,confirmOccurrences,resolveItemHolders} from '../src/workflow/operations/event-data.js?v=0.28.1';
+import {normalizeOccurrences,confirmOccurrences,resolveItemHolders} from '../src/workflow/operations/event-data.js?v=0.29.0';
 test('Random Pick and Outcome Commit share one configured disk ledger in the story session',async()=>{
  const playerText='Mara uses her wand.',source={sourceId:'player',revision:'1',sceneId:'Story-2',watch:'player-message',text:playerText,visibility:'public'};
  const candidates=normalizeOccurrences(source,[{eventType:'item-used',actorId:'mara',itemId:'wand',position:{start:0,end:playerText.length},semantics:'actual'}],{actorIds:['mara'],itemIds:['wand']});assert.equal(candidates.ok,true,JSON.stringify(candidates));
@@ -77,9 +110,9 @@ test('explicit save selection initializes empty JSON from its template only afte
  const disk=await nativeDisk('','json','save');Object.assign(disk.fileTarget,{missing:'create',content:'[]'});const graph=graphForFile(disk.fileTarget);graph.nodes.write.mode='replace';const f=unifiedRecipeHost(graph,{ports:{nodeFileAccess:disk.access},request:async()=>{throw Error('No requests');}});
  try{const result=await f.generate('{"item":"one"}');assert.equal(result.ok,true,JSON.stringify(result));assert.equal(disk.state.content,'');assert.equal(disk.state.writes,0);const applied=await f.controller.apply(result.reviewHandles[0]);assert.equal(applied.ok,true,JSON.stringify(applied));assert.deepEqual(JSON.parse(disk.state.content),{item:'one'});assert.equal(disk.state.writes,1);}finally{f.controller.dispose();}
 });
-import {createChatDocumentBackend} from '../src/workflow/file-store.js?v=0.28.1';
-import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.28.1';
-import {applyProgressionEvents} from '../src/workflow/progression.js?v=0.28.1';
+import {createChatDocumentBackend} from '../src/workflow/file-store.js?v=0.29.0';
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.29.0';
+import {applyProgressionEvents} from '../src/workflow/progression.js?v=0.29.0';
 async function checkpointedProgression(){
  const scope={userId:'default-user',chatId:'Story-2'},rules={ruleSetId:'xp',revision:1,rules:[{ruleId:'award',eventType:'progress',targetKey:'xp',identityFields:['victim'],mode:'add',amount:5,min:0,max:100}]},event={eventId:'event-1',eventType:'progress',identity:{victim:'enemy'},status:'confirmed',evidence:{origin:'scene'}};
  const awarded=applyProgressionEvents({values:[{key:'xp',value:0}],ledger:[]},[event],rules);assert.equal(awarded.ok,true,JSON.stringify(awarded));

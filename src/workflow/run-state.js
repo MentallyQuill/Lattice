@@ -1,4 +1,4 @@
-import { addressKey, nodeAddress, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText, freeze, expandRecordAddress, dense } from './record-data.js?v=0.28.1';
+import { addressKey, nodeAddress, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText, freeze, expandRecordAddress, dense } from './record-data.js?v=0.29.0';
 
 /** @typedef {{runId:string,lastSeq:number,status:string,plan:object|null,nodes:object[],elapsedMs:number,at:number|null}} RunState */
 /** Explicit initialization; invalid identity is a programmer boundary error. */

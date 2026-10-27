@@ -28,6 +28,21 @@ const field = (host, label) => { const value = host.querySelector(`[aria-label="
 const edit = (host, label, value, event = 'input') => { const element = field(host, label); element.value = value; element.dispatchEvent(new dom.window.Event(event, { bubbles: true })); flushSync(); };
 const settle = async () => { await tick(); flushSync(); };
 
+test('unrelated node revisions preserve file drafts and save against the current selection', async () => {
+    const saves = [], f = await fixture(model(), { saveNodeFile(captured, next) { saves.push([captured, next]); return { ok: true }; } });
+    try {
+        edit(f.host, 'Filename', 'draft-notes.md');
+        edit(f.host, 'Initial file content', 'Keep this unfinished file draft');
+        const revised = { ...selection, revision: 'revision2' };
+        f.update(model({ summary: 'Updated node status' }), revised);
+        assert.equal(field(f.host, 'Filename').value, 'draft-notes.md');
+        assert.equal(field(f.host, 'Initial file content').value, 'Keep this unfinished file draft');
+        assert.equal(f.host.querySelector('[data-save-node-file]').disabled, false);
+        f.host.querySelector('[data-save-node-file]').click(); await settle();
+        assert.deepEqual(saves, [[revised, { ...settings, name: 'draft-notes.md', content: 'Keep this unfinished file draft' }]]);
+    } finally { await f.close(); }
+});
+
 test('file settings save the authored values without selecting or writing a disk file', async () => {
     const saves = [], choices = [], f = await fixture(model(), { saveNodeFile(captured, next) { saves.push([captured, next]); return { ok: true }; }, chooseNodeFile(...args) { choices.push(args); return Promise.resolve({ ok: true }); } });
     try {

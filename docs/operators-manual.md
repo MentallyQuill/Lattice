@@ -59,7 +59,7 @@ The menus group the main actions:
 | Edit | Undo, redo, copy, cut, paste, duplicate, delete, and selection. |
 | View | Show/hide panels, follow or pin Preview, fit the graph, and choose a theme. |
 | Graph | Add nodes, rename, group, make subgraphs, add comments, and manage portals. |
-| Workflow | Enable Lattice, validate, review the result, inspect a run, add systems, and manage Workflow Data or recall. |
+| Workflow | Enable Lattice, validate, review the result, inspect a run, add systems, and manage legacy chat data or recall. |
 | Help | Workspace guide, node reference, shortcuts, and version. |
 
 **Enable Lattice** makes the open workflow participate when you use SillyTavern's normal **Send**. Opening or saving a workflow does not switch this setting. Opening a different workflow changes which document Send will use, so check the name in the workflow bar before sending.
@@ -517,36 +517,28 @@ Start by asking what material the operation needs and whether it must stay curre
 | **Scene Context** | Selected story context with source and visibility information. Check its perspective and budget. |
 | **Generate Reply / Reply Snapshot** | The completed reply as a source-linked Draft in the appropriate response context. |
 | **Player Event Source** | The actual current player message, useful for rules before the reply is written. |
-| **Read File** | A current authorized Workflow Data document, plus the live reference needed to propose a write. |
+| **Read File** | Its selected authorized file, plus the live reference needed to propose a write. |
 | **Memory / Actor Context** | The selected or authorized actor's stored material, with its privacy and participation checks. |
 
-File Input does not stay linked to an operating-system file and cannot authorize a live write. Workflow Data is stored with the story; a name such as `campaign-notes.md` identifies a scoped story document, not an arbitrary path on your computer.
+File Input imports a snapshot and cannot authorize a live write. Read File selects a live file through the browser's native picker; older chat-stored documents remain available through Legacy chat data.
 
-### Workflow Data defaults and shared sources
+### Node files and shared destinations
 
-New **Story Clock**, **Read File**, and **Outcome Commit** nodes provide convenient starting sources:
+Open **Details → File** on **Story Clock**, **Read File**, or **Outcome Commit**. Enter a filename, choose a location or existing file, then set its format, creation policy, initial content, and visibility. Notes support JSON, JSON Lines, CSV, Plain text, and Markdown; clocks and outcomes use JSON. Actor-private files also require an actor ID. Missing settings or permissions appear above the node as **Setup Required**.
 
-| Node | Default source |
-| --- | --- |
-| Story Clock | **Chat clock**, starting at Day 1, 00:00 with a 24-hour day. |
-| Read File | **Chat notes**, initially empty plain text. |
-| Outcome Commit | **Chat outcomes**, initially an empty JSON list. |
-
-A unified run supplies the referenced defaults for the active user/chat and retains saved content. In Details, change **Starting values**, **Initial content**, or **Initial outcomes** to set the template for a new source. **Load initial values** loads an existing source's template for editing. **Save settings** updates that template; it does not reset saved time, notes, or outcomes.
-
-Open **Advanced** to choose a compatible source or use **+** beside it to create a separate named source. Notes support JSON, JSON Lines, CSV, Plain text, and Markdown. Clock and outcome sources require their JSON format. Choose **Public**, **Hidden**, or **Actor private** visibility; Actor private also requires the actor ID.
+Choosing files and saving settings do not write their contents. Initial content can seed a selected empty destination; it does not replace a nonempty file during setup. Native file handles stay in local browser storage and are removed from portable workflow exports.
 
 ![Workflow Data manager with authorized sources for the current story](images/workflow-data.png)
 
-*Open Workflow → Configure → Workflow Data… to manage custom sources. Imported target names do not automatically grant access.*
+*The older chat-document manager remains under Workflow → Configure → Legacy chat data… for recovery and migration. Imported target names do not grant access.*
 
-For a custom source, give it a unique target ID, display name, format, visibility, and initial template. CSV requires declared columns. Updating a template leaves existing saved content intact. **Remove authorization** revokes access; it does not delete an operating-system file.
+CSV requires declared columns. External file edits invalidate captured results and require a fresh run. Removing authorization revokes access without deleting the operating-system file.
 
-The default Chat clock is shared through Main and its systems. Default notes and outcomes inside each system have separate stable sources. Choose the same explicit source when you want systems to share a notebook or ledger. A skipped system does not create its unused defaults. Keep one final writer per shared target; two proposed writers for the same target are rejected.
+Choose the same physical file when nodes should share a clock, notebook, or ledger. Choosing a different file separates that node's destination. Keep one final writer per shared target; two proposed writers for the same target are rejected.
 
-Read File has Text, document Data, and reference outputs. Connect its **exact reference** to Write to File for the same target. Use Text append for plain-text/Markdown notes and structured mutations for JSON collections. **Format** checks and serializes records; **Project Document** previews the proposed updated content without saving it. Prose needs extraction before it becomes reliable structured records.
+Read File has Text, document Data, and reference outputs. Connect its **exact reference** to Write to File for the same target, or choose **Own file** on the writer. Clock Commit inherits its Story Clock destination. Use Text append for plain-text/Markdown notes and structured mutations for JSON collections. **Format** checks and serializes records; **Project Document** previews the proposed updated content without saving it. Prose needs extraction before it becomes reliable structured records.
 
-Write to File stages the change. It becomes accepted only with the corresponding reviewed reply. See [Workflow Data setup and write modes](unified-workflows.md#authorize-workflow-data-and-preserve-its-structure) for nested collections, unique IDs, and field updates.
+Write to File stages the change. It becomes accepted only with the corresponding reviewed reply. See [file setup and write modes](unified-workflows.md#configure-files-in-each-node) for nested collections, unique IDs, and field updates.
 
 ### Story time and scheduled events
 

@@ -48,7 +48,7 @@ test('connected writes display the upstream file and missing references have an 
 });
 
 test('workspace surfaces file configuration as the existing above-node setup caution', async () => {
- const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.28.1');
+ const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.29.0');
  const graph={id:'file-workflow',schema:3,runtime:2,mode:'native-unified',name:'Files',nodes:{reader:{id:'reader',type:'workflow',operation:'read-file',x:0,y:0}},wires:{},groups:{}};
  const result=prepareWorkspaceViews(graph,{workflowData:{nodeFiles:{supported:true,bindings:{}}}});
  assert.equal(result.ok,true,JSON.stringify(result));
@@ -58,7 +58,7 @@ test('workspace surfaces file configuration as the existing above-node setup cau
 });
 
 test('workspace recomputes live file permissions rather than trusting saved binding IDs', async () => {
- const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.28.1');
+ const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.29.0');
  const fileTarget={bindingId:'disk-1',name:'notes.txt',format:'text',missing:'create',content:'',visibility:{kind:'public'}};
  const graph={id:'file-workflow',schema:3,runtime:2,mode:'native-unified',name:'Files',nodes:{reader:{id:'reader',type:'workflow',operation:'read-file',targetId:'notes',fileTarget,x:0,y:0}},wires:{},groups:{}};
  const result=prepareWorkspaceViews(graph,{workflowData:{nodeFiles:{supported:true,bindings:{'disk-1':{name:'notes.txt',status:'permission-required'}}}}});

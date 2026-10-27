@@ -1,7 +1,7 @@
-import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory} from '../workflow/document-history.js?v=0.28.1';
-import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.28.1';
-import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.28.1';
-import {sha256Text} from '../workflow/definition-data.js?v=0.28.1';
+import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory} from '../workflow/document-history.js?v=0.29.0';
+import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.29.0';
+import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.29.0';
+import {sha256Text} from '../workflow/definition-data.js?v=0.29.0';
 const fail=(code,message,cancelled=false)=>({ok:false,...(cancelled?{cancelled:true}:{}),error:{code,message}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);

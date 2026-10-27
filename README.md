@@ -19,6 +19,10 @@ Your usual SillyTavern model writes the reply. Lattice can prepare guidance for 
 
 *Several story systems can share one workflow. Open a system to inspect its rules, edit it, or switch it off.*
 
+## New in 0.29.0: choose files and recover workflows
+
+Configure file destinations in each node’s **Details → File** panel, choose what happens when a workflow node fails, and set provider-aware reasoning on model nodes. Slimmer inspectors keep structured settings and drafts easier to work with. [Read the 0.29.0 release notes](docs/releases/0.29.0.md) for defaults, limits, and upgrade instructions.
+
 ## New in 0.28.1: recover model steps
 
 Choose up to five additional attempts on individual model nodes, inspect each attempt in run details, and receive persistent failure notices. Structured output tolerates complete JSON fences while retaining strict validation. Mobile startup also works on LAN HTTP connections. [Read the 0.28.1 release notes](docs/releases/0.28.1.md) for update instructions and the original release behavior.
@@ -86,7 +90,7 @@ With SillyTavern installed and your usual model connection working:
 4. Select **Enable Lattice**, then send a player message normally. The starter uses your usual SillyTavern generation and makes no extra model requests.
 5. Select **Review / Publish**, choose **Host result** in Preview, and apply or reject the reviewed reply.
 
-Next, choose **File → Open examples…**. Try **Give this scene one clear direction** for a simple editable instruction, or choose a lesson that fits your story. Each lesson explains its setup and model request budget. Model-based lessons need their connections configured; some also need story documents in Workflow Data.
+Next, choose **File → Open examples…**. Try **Give this scene one clear direction** for a simple editable instruction, or choose a lesson that fits your story. Each lesson explains its setup and model request budget. Model-based lessons need their connections configured; file-related nodes also need their files configured in Details.
 
 ![The examples browser in Lattice 0.28.0, filtered to its two new passage lessons](docs/images/examples-curriculum.png)
 

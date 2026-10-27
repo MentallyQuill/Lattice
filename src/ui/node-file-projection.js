@@ -1,5 +1,5 @@
-import {nodeFileTargetId,validateNodeFileTarget} from '../workflow/node-file-targets.js?v=0.28.1';
-import { workflowDataPresetFor } from '../workflow/workflow-data-defaults.js?v=0.28.1';
+import {nodeFileTargetId,validateNodeFileTarget} from '../workflow/node-file-targets.js?v=0.29.0';
+import { workflowDataPresetFor } from '../workflow/workflow-data-defaults.js?v=0.29.0';
 const owned = new Set(['read-file','write-file','story-clock','commit-outcomes','random-pick','commit-clock']);
 const extensions = {json:'json',jsonl:'jsonl',csv:'csv',text:'txt',markdown:'md'};
 /** Plain display state only. Native handles never cross this boundary. */

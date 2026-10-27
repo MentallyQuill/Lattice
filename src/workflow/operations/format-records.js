@@ -1,6 +1,6 @@
-import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.28.1';
-import { decodeJson } from './json-decode.js?v=0.28.1';
-import { selectFields } from './select-fields.js?v=0.28.1';
+import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.29.0';
+import { decodeJson } from './json-decode.js?v=0.29.0';
+import { selectFields } from './select-fields.js?v=0.29.0';
 
 const fail = (code, message) => ({ok:false,error:{code,message}});
 const invalid = () => fail('INVALID_FORMAT_SETTINGS','Format settings must contain supported plain data.');
