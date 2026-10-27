@@ -5,7 +5,8 @@ import { OPERATIONS } from '../src/workflow/catalog.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const documents = ['README.md', 'docs/README.md', 'docs/examples.md', 'docs/operators-manual.md', 'docs/node-reference.md', 'docs/lattice-workspace.md', 'docs/native-workflows.md', 'docs/development.md', 'docs/developer-guide.md', 'docs/unified-workflows.md', 'docs/lattice-reference-library.md', 'docs/introspection-package.md', 'docs/story-systems.md', 'docs/connection-comments.md', 'docs/media.md'];
-documents.push('docs/releases/0.28.0.md', 'docs/releases/0.28.1.md', 'docs/releases/0.29.0.md', 'docs/reasoning-controls.md');
+const releaseDocuments = (await readdir(join(root, 'docs/releases'))).filter(name => name.endsWith('.md')).map(name => 'docs/releases/' + name);
+documents.push(...releaseDocuments, 'docs/reasoning-controls.md');
 const texts = new Map(await Promise.all(documents.map(async path => [path, (await readFile(join(root, path), 'utf8')).replace(/\r\n?/g, '\n')])));
 const failures = [], images = new Set();
 let links = 0;
@@ -19,7 +20,8 @@ function anchors(text) {
     }));
 }
 for (const [path, text] of texts) {
-    if (/Silly\s*Canvas|ComfyTavern/i.test(text)) failures.push(path + ': obsolete branding or interface reference');
+    const historicalRelease = /^docs\/releases\/\d+\.\d+\.\d+\.md$/.test(path) && text.includes('Historical notes reconstructed from repository history;');
+    if (!historicalRelease && /Silly\s*Canvas|ComfyTavern/i.test(text)) failures.push(path + ': obsolete branding or interface reference');
     const references = [
         ...[...text.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/g)].map(match => ({ href: match[1], image: match[0].startsWith('!') })),
         ...[...text.matchAll(/<(?:img|a)\b[^>]*?\b(src|href)=["']([^"']+)["'][^>]*>/g)].map(match => ({ href: match[2], image: match[1] === 'src' })),
@@ -43,6 +45,8 @@ for (const [path, text] of texts) {
 // The README routes readers to the manual and developer guide. Detailed node
 // contracts remain in the reference; operators use the built-in ? guides.
 for (const guide of ['operators-manual', 'developer-guide']) if (!texts.get('README.md').includes('docs/' + guide + '.md')) failures.push('README missing guide ' + guide);
+if (!texts.get('README.md').includes('href="docs/releases/README.md"')) failures.push('README missing Release Notes navigation');
+for (const path of releaseDocuments.filter(path => path !== 'docs/releases/README.md')) if (!texts.get('docs/releases/README.md')?.includes('](' + path.split('/').at(-1) + ')')) failures.push('Release Notes index missing ' + path);
 const sharedHeadings = { Join: 'Join and Collect', Collect: 'Join and Collect', Append: 'Append and Combine', Combine: 'Append and Combine' };
 for (const operation of Object.values(OPERATIONS)) {
     const heading = sharedHeadings[operation.title] ?? operation.title;

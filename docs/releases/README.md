@@ -1,0 +1,43 @@
+# Release Notes
+
+[Lattice README](../../README.md) · [Documentation](../README.md)
+
+Changes and upgrade guidance for Lattice, newest first. Select a version for its release notes.
+
+Notes before 0.28.0 were reconstructed from main-branch repository history. Their dates and controls describe the historical snapshots, not the current interface. Version numbers absent from that history are omitted.
+
+- [0.29.0](0.29.0.md)
+- [0.28.1](0.28.1.md)
+- [0.28.0](0.28.0.md)
+- [0.27.5](0.27.5.md)
+- [0.27.4](0.27.4.md)
+- [0.27.3](0.27.3.md)
+- [0.27.2](0.27.2.md)
+- [0.27.1](0.27.1.md)
+- [0.27.0](0.27.0.md)
+- [0.26.0](0.26.0.md)
+- [0.25.0](0.25.0.md)
+- [0.24.0](0.24.0.md)
+- [0.23.0](0.23.0.md)
+- [0.22.1](0.22.1.md)
+- [0.22.0](0.22.0.md)
+- [0.20.0](0.20.0.md)
+- [0.19.1](0.19.1.md)
+- [0.19.0](0.19.0.md)
+- [0.18.0](0.18.0.md)
+- [0.17.0](0.17.0.md)
+- [0.16.0](0.16.0.md)
+- [0.15.0](0.15.0.md)
+- [0.13.0](0.13.0.md)
+- [0.12.0](0.12.0.md)
+- [0.11.0](0.11.0.md)
+- [0.10.0](0.10.0.md)
+- [0.9.0](0.9.0.md)
+- [0.8.0](0.8.0.md)
+- [0.7.0](0.7.0.md)
+- [0.6.0](0.6.0.md)
+- [0.5.0](0.5.0.md)
+- [0.4.0](0.4.0.md)
+- [0.3.0](0.3.0.md)
+- [0.2.0](0.2.0.md)
+- [0.1.0](0.1.0.md)

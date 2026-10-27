@@ -8,6 +8,7 @@
   <a href="#install-and-try-it">Install</a> ·
   <a href="docs/operators-manual.md">Operator’s manual</a> ·
   <a href="docs/developer-guide.md">Developer guide</a> ·
+  <a href="docs/releases/README.md">Release Notes</a> ·
   <a href="LICENSE">MIT license</a>
 </p>
 
@@ -18,26 +19,6 @@ Your usual SillyTavern model writes the reply. Lattice can prepare guidance for 
 ![Wand, weather, and relationship systems connected to one SillyTavern reply](docs/images/beta-overview.png)
 
 *Several story systems can share one workflow. Open a system to inspect its rules, edit it, or switch it off.*
-
-## New in 0.29.0: choose files and recover workflows
-
-Configure file destinations in each node’s **Details → File** panel, choose what happens when a workflow node fails, and set provider-aware reasoning on model nodes. Slimmer inspectors keep structured settings and drafts easier to work with. [Read the 0.29.0 release notes](docs/releases/0.29.0.md) for defaults, limits, and upgrade instructions.
-
-## New in 0.28.1: recover model steps
-
-Choose up to five additional attempts on individual model nodes, inspect each attempt in run details, and receive persistent failure notices. Structured output tolerates complete JSON fences while retaining strict validation. Mobile startup also works on LAN HTTP connections. [Read the 0.28.1 release notes](docs/releases/0.28.1.md) for update instructions and the original release behavior.
-
-## New in 0.28.0: work with smaller passages
-
-A lore chapter or a long conversation is easier to work with a passage at a time. **Chunk** divides supplied material into smaller pieces. Choose their size, decide how much neighboring passages share, and inspect the result before using it to guide a reply.
-
-Two new lessons bring the examples browser to **32 editable workflows**. **Split a lore chapter into useful passages** includes a chapter you can experiment with. **Group replies into three-turn passages** works with older conversation turns while protecting the newest ones. Both include practice files, and the original conversation stays intact.
-
-![The lore passage lesson open in Lattice, with Chunk settings and its prepared result](docs/images/foundation-chunk.png)
-
-*Change the passage settings and use Run to here to see the result. This preparation makes no model request.*
-
-[Read the 0.28.0 release notes](docs/releases/0.28.0.md) for a short walkthrough and what this release includes.
 
 ## What could you build?
 
