@@ -192,12 +192,12 @@ const content = {
         'Choose Records or raw JSON Text input and connect the matching value.',
         'Choose serialization, field mapping, and any schema or CSV columns.',
         'Inspect Records, Text, and the report before connecting a file mutation.'),
-    'read-file': entry('Read File', 'Read an authorized workflow data source and return its text, parsed value, document wrapper, and live write reference.',
-        'Authorize the source in Workflow → Configure → Workflow Data, then select it here.',
+    'read-file': entry('Read File', 'Read the file selected in this node and return its text, parsed value, document wrapper, and live write reference.',
+        'In this node’s File settings, enter a filename and choose a location or open an existing file. Legacy chat data stays available for migration.',
         'Choose selected-actor scope or connect exact presence for the configured actor.',
         'Use Parsed value for structured Data calculations, Document for metadata, Text for transformation, and Reference for an authorized Write to File. Text and Markdown sources skip Parsed value.'),
-    'write-file': entry('Write to File', 'Stage a checked change to an authorized workflow data source for acceptance with the reviewed root result.',
-        'Connect the exact Reference from Read File and the Records or Text required by the mutation.',
+    'write-file': entry('Write to File', 'Stage a checked change to this node’s selected file for acceptance with the reviewed root result.',
+        'Choose Connected document to use Read File’s exact Reference, or Own file to select a separate destination. Connect the Records or Text required by the mutation.',
         'Choose the mutation and any collection, identity, schema, or separator policies.',
         'Inspect the projection and receipt; apply the reviewed root result to save the staged change.'),
     'project-document': entry('Project Document', 'Preview a document mutation as Text and Data without reading or writing a live file.',
@@ -636,7 +636,7 @@ const controls = {
         columns: csvColumns,
         ...actorScopeControls,
     },
-    'write-file': { ...fileMutationControls, ...actorScopeControls },
+    'write-file': { ...fileMutationControls, ...actorScopeControls, destinationMode:'Use the connected Read File document, or choose an independent file destination in this node.', targetId:'Identity of this node’s selected destination. The File section manages its filename and local access.' },
     'project-document': { ...fileMutationControls, format: serialization },
     'story-clock': {
         clockId: 'Authorized accepted-clock data source identity. Its JSON must contain a valid calendar, absolute minute, revision, and day length.',
@@ -757,6 +757,7 @@ const controls = {
 
 /** Supplementary settings are added by the caller only when the selected node exposes them. */
 const supplementaryControls = {
+    fileTarget: 'File selected in this node. Choose a filename, location, format, initial contents and visibility. Applying the reviewed result saves staged changes.',
     maxRetries: 'Extra requests for this model node, from zero to five; the default is zero. Five permits up to six total requests. Retryable transient failures and at most one JSON or schema correction share this allowance. Authentication, configuration, cancellation, privacy and limit failures stop immediately. Completed nodes and SillyTavern native generation are never retried. Retrying keeps the same stage active and all requests count against its budget.',
     enabled: 'Allow this node to participate in workflow execution when enabled. Disabled paths may leave downstream required inputs unavailable.',
     phase: 'Preparation runs before Generate Reply; Response runs after it. The selected node’s input and output types must support that stage. Compose Text works in either; Compose Guidance requires Preparation.',

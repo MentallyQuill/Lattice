@@ -169,17 +169,19 @@ Saved `sharedQuote` and `sceneEvidence` retain the shared observation. `reflecti
 
 Native generation has one selected actor. Separate Actor Context branches do not let another actor’s private direction guide that selected actor or automatically generate a group’s private prompts.
 
-## Authorize Workflow Data and preserve its structure
+## Configure files in each node
 
-New **Story Clock**, **Read File**, and **Outcome Commit** nodes select automatic sources: **Chat clock**, empty plain-text **Chat notes**, and an empty JSON **Chat outcomes** list. A unified run makes only the referenced defaults available in the active user/chat. Change starting values or content in Details; use **Advanced** for source, Format, and Visibility. Clock and outcomes require JSON. Changing settings retains saved content.
+Select a file node and open **Details → File**. Enter its **Filename**, select **Format**, then choose **Choose location…** for a new destination or **Open existing…** for an existing file. The native picker chooses the directory and actual filename together. Browser-local access permissions stay outside workflow JSON. A clickable **Setup Required** tag above the node identifies a missing file, filename or permission.
 
-The default clock is shared across Main and systems. Default notes and outcomes inside separate systems have stable separate sources; explicit named targets keep their selected sharing. Disabled systems do not create unused defaults. Use one final writer for a shared source: two staged writes to one target are rejected.
+**Read File** owns its source. **Write to File** can use **Connected document**, inheriting Read File’s exact live reference, or **Own file**, choosing its destination without an extra read node. **Story Clock** owns its JSON file and **Clock Commit** inherits it. **Outcome Commit** owns its JSON ledger. Format and Project Document prepare content without saving it. File Input continues importing a snapshot into the workflow.
 
-**Workflow → Configure → Workflow Data…** manages custom targets for the current user and chat. A name such as `souls.json` identifies a scoped story document stored in chat metadata; it is not a computer file path.
+Choose a creation policy, initial content and visibility in the same File section. Clock and outcomes files use JSON. Initial content can seed an empty file explicitly selected as a new destination; it never replaces a nonempty file during setup. Choosing, previewing or rejecting does not write document contents. Accepting the reviewed root result checks the captured version and saves staged changes. Inspect each save receipt; independent files may have different outcomes. An external edit requires a fresh run and review.
 
-Supply a unique target ID, display name, format, visibility, and initial template. Formats are **JSON**, **JSON Lines**, **CSV**, **Plain text**, and **Markdown**. CSV needs declared columns. Actor-private documents also need the canonical actor ID. Changing a label does not expose Hidden data to public models or notes.
+Native file access and browser-local durable storage are required for repeated file writes; unsupported access is shown explicitly. The browser may require the user to choose a file again after permission changes. Local workflow saves retain binding references; portable sharing exports retain suggested names/formats and require the recipient to select destinations.
 
-Initial templates seed unsaved content. Updating a template does not overwrite saved data. For an existing authorization, use **Load initial template** before editing that template. **Remove authorization** revokes workflow access.
+Disk files currently retain at most 32 active clock turns and 256 active save receipts. Migrated archives and replay identities are preserved in local metadata, but creating additional disk-history checkpoints is not yet supported; legacy chat-document checkpoint actions remain available in the recovery dialog.
+
+Older chat-stored documents and their history are preserved under **Workflow → Configure → Legacy chat data…**. Their nodes show a migration notice. Choosing a new file carries saved content into the initial contents, rather than reverting to the old template. Migration is written only through an accepted file write. Older lessons calling this dialog **Workflow Data** refer to this legacy recovery screen.
 
 All available nodes place directly, including nodes with missing settings or an unselected helper. A red border and **Setup Required** wrench lead to the relevant Details fields; complete them progressively. **Input Required** identifies missing required wiring. You can save an unfinished workflow and run a complete independent branch; an unfinished dependency blocks its requested run before any work begins.
 

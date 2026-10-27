@@ -101,11 +101,15 @@
 
 <svelte:document onpointerdown={(event) => { if ((opened || editFocusPending) && !root.contains(event.target as Node)) close(); }} />
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions (Decoration contains its own keyboard controls and isolates canvas gestures.) -->
-<div class="pc-node-profile" class:pc-decoration-compact={row.compact} class:pc-decoration-selected={row.selected} data-id={row.id} role="group" aria-label={row.hasProfile===false ? 'Node readiness' : 'Node connection profile'} bind:this={root} use:isolate style:left={`${row.x}px`} style:top={`${row.y}px`} style:width={`${row.w}px`} style:z-index={opened ? 20 : 2} onwheel={stop}>
+<div class="pc-node-profile" class:pc-decoration-compact={row.compact} class:pc-decoration-selected={row.selected} data-id={row.id} role="group" aria-label={row.hasProfile===false ? row.fileLabel ? 'Node file' : 'Node readiness' : 'Node connection profile'} bind:this={root} use:isolate style:left={`${row.x}px`} style:top={`${row.y}px`} style:width={`${row.w}px`} style:z-index={opened ? 20 : 2} onwheel={stop}>
     <div class="pc-node-decoration-stack">
         {#if row.model}
             <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard focus exposes the complete truncated model identifier.) -->
             <div class="node-model-meta" title={row.model} tabindex="0" role="note" aria-label={`Model: ${row.model}`}>{row.model}</div>{/if}
+        {#if row.fileLabel}
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard focus exposes the complete truncated filename.) -->
+            <div class="node-file-meta" title={row.fileLabel} tabindex="0" role="note" aria-label={`File: ${row.fileLabel}`}>{row.fileLabel}</div>
+        {/if}
         {#if row.readiness?.state === 'setup'}
             <button type="button" class="pc-node-readiness" data-readiness={row.readiness.state} title={`${row.readiness.label}: ${row.readiness.description}`} aria-label={`${row.readiness.label}: ${row.readiness.description}`} aria-describedby={`${row.id}-readiness-diagnostics`} onclick={() => openReadinessDetails?.(row.selection,row.readiness?.issues[0])}>
                 <svg viewBox="0 0 24 24" aria-hidden="true">{#if row.readiness.state === 'setup'}<path d="m14 6 4 4m-3-7a6 6 0 0 0-7 7L2 16a3 3 0 0 0 4 4l6-6a6 6 0 0 0 7-7l-4 4-3-3z" />{:else}<path d="M9 3v5m6-5v5M6 8h12v4a6 6 0 0 1-12 0zM12 18v4" />{/if}</svg>
@@ -142,8 +146,8 @@
     :global(:root[data-pc-light="1"]) .pc-node-profile { color-scheme:light; }
     .pc-node-profile * { box-sizing:border-box; }
     .pc-node-decoration-stack { position:absolute; bottom:12px; left:0; width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:5px; pointer-events:auto; }
-    .node-model-meta { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; width:100%; max-height:31px; overflow:hidden; color:var(--pc-muted); font-size:11px; line-height:15px; overflow-wrap:anywhere; }
-    .node-model-meta:focus-visible { outline:2px solid var(--pc-accent); }
+    .node-model-meta, .node-file-meta { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; width:100%; max-height:31px; overflow:hidden; color:var(--pc-muted); font-size:11px; line-height:15px; overflow-wrap:anywhere; }
+    .node-model-meta:focus-visible, .node-file-meta:focus-visible { outline:2px solid var(--pc-accent); }
     .pc-node-readiness { display:flex; align-items:center; gap:5px; max-width:100%; min-height:calc(24px * var(--pc-recall-scale,1)); min-width:calc(24px * var(--pc-recall-scale,1)); padding:3px 6px; border:1px solid currentColor; border-radius:4px; background:var(--pc-panel-solid); color:var(--pc-error,#ef6666); font:inherit; font-size:11px; line-height:16px; cursor:pointer; margin:0; appearance:none; filter:none; text-shadow:none; box-shadow:none; }
     .pc-node-readiness svg { width:calc(14px * var(--pc-recall-scale,1)); height:calc(14px * var(--pc-recall-scale,1)); flex:0 0 calc(14px * var(--pc-recall-scale,1)); }
     .pc-readiness-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

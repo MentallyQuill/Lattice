@@ -16,6 +16,7 @@
     import RecallDetails from './RecallDetails.svelte';
     import ModifierStack from './ModifierStack.svelte';
     import WorkflowData from './WorkflowData.svelte';
+    import NodeFile from './NodeFile.svelte';
     import type { StructuredDraftState, DetailBindingMode, DetailControl, DetailEditResponse, DetailModifier, DetailSelection, NodeDetailsActions, NodeDetailsView } from './detail-types';
     const inputError=(error:{code:string;message:string})=>error.code==='INVALID_CONTROL_JSON'?error.code+': '+error.message:error.message;
     let { view, actions = {}, idPrefix = 'pc-node-details', openGuide }: { view: NodeDetailsView | null; actions?: NodeDetailsActions; idPrefix?: string; openGuide?: () => void } = $props();
@@ -525,7 +526,7 @@
             {:else}<p>{view.tokenizerSetup.issue}</p><small>Tokens stops without output when its exact binding is unavailable. Character estimates are never used for Chunk.</small>{/if}
         </fieldset>{/if}
         {#if view.sourceSetup}<NativeSourceSetup model={view.sourceSetup} selection={selection(view)} {actions} disabled={view.readOnly} />{/if}
-        {#if view.workflowData}<WorkflowData model={view.workflowData} selection={selection(view)} {actions} disabled={view.readOnly} idPrefix={idPrefix + '-workflow-data'} />{/if}
+        {#if view.nodeFile}<NodeFile model={view.nodeFile} selection={selection(view)} {actions} disabled={view.readOnly} {idPrefix} />{:else if view.workflowData}<WorkflowData model={view.workflowData} selection={selection(view)} {actions} disabled={view.readOnly} idPrefix={idPrefix + '-workflow-data'} />{/if}
         <fieldset class="pc-detail-group pc-detail-main" data-operation-controls>
             {#if view.fileInput}
                 <div data-file-input-controls>

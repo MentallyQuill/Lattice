@@ -59,7 +59,7 @@
     const currentGuideSelection = $derived(guideOwner ? JSON.stringify([guideOwner.documentNamespace ?? '', guideOwner.selectionKey, guideOwner.address, view.commentDetails ? 'comment' : view.nodeDetails?.guideKey ?? view.nodeDetails?.operation]) : '');
     const nodeGuide = $derived(overlay === 'node-guide' ? view.commentDetails ? projectCommentGuide(view.commentDetails.comment) : projectNodeGuide(view.nodeDetails) : null);
     $effect(() => { if (overlay === 'node-guide' && (guideSelection !== currentGuideSelection || !nodeGuide)) closeOverlay(); });
-    const overlayTitle = $derived(({examples:'Examples', 'run-details':'Run details', 'story-documents':'Workflow Data', 'memory-recall':'Memory recall', 'validate-workflow':'Workflow validation', 'node-reference':'Node reference', shortcuts:'Keyboard shortcuts', about:'About Lattice'} as Record<string,string>)[overlay] ?? 'Workspace guide');
+    const overlayTitle = $derived(({examples:'Examples', 'run-details':'Run details', 'story-documents':'Legacy chat data', 'memory-recall':'Memory recall', 'validate-workflow':'Workflow validation', 'node-reference':'Node reference', shortcuts:'Keyboard shortcuts', about:'About Lattice'} as Record<string,string>)[overlay] ?? 'Workspace guide');
     const dialogTitle = $derived(overlay === 'node-guide' && nodeGuide ? `${nodeGuide.title} guide` : overlayTitle);
     const rootWorkflow = $derived(view.rootWorkflow ?? view.workflow);
     const insertionContextKey = $derived(`${view.menuContextKey ?? ''}:${view.graphId}:${view.graphViews?.active.key ?? ''}:${view.graphViews?.viewEpoch ?? ''}`);

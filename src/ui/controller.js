@@ -50,6 +50,9 @@ import { createWorkflowDocumentController } from './document-controller.js?v=0.2
 import { createWorkflowFileAccess } from './workflow-file-access.js?v=0.28.1';
 import { createDiagnosticHistoryController } from './diagnostic-history-controller.js?v=0.28.1';
 import { readTextFile } from './file-input.js?v=0.28.1';
+import {getNodeFileAccess} from './node-file-access.js?v=0.28.1';
+import {projectNodeFile} from './node-file-projection.js?v=0.28.1';
+import {createNodeFileActions} from './node-file-actions.js?v=0.28.1';
 import { prepareWorkspaceViews, prepareNodePlacementCard, prepareLibraryViews, projectEditorDraw, initialWorkspaceCamera, projectWorkspacePanels, projectNodeProfiles } from './workspace-preparation.js?v=0.28.1';
 import { prepareWorkflowProjection, projectPreparedWorkflow, createWorkflowSession } from './workflow-surface.js?v=0.28.1';
 import { ctx, safe, settings, save, activeWorkflow, activateWorkflow, documentSession, activeWorkspaceViews, setActiveWorkspaceViews, recoveredWorkflows, retainRecoveryWorkflows, onWorkflowActivated, onRecoveryIssue, blankGraph, touchGraph, commitGraphEdit, stepGraphHistory, exportGraph, exportArchivedWorkflows, onGraphTouched, groupMembers } from '../state.js?v=0.28.1';
@@ -88,6 +91,7 @@ let pendingDocumentPrompt = null;
 let documentRenderReconciliation = null;
 let workflowFiles = null, documentCommands = null, fileStorageIssue = '';
 let storyDocumentSetup = null, nodeWorkflowDataSetup = null, pendingConfiguredNode = null;
+let nodeFileUnsubscribe=null,nodeFileObservedAccess=null,nodeFilePicking=0;
 const nodeDocumentCaptures = new Map(), nodeCreationScopes = new WeakMap();
 const editorCaptures = new WeakMap(), exampleContexts = new WeakMap(), workflowNodePresentations = new WeakMap();
 const commentCaptures = new WeakMap(), commentPresentationEffects = new WeakMap(), pendingCommentPresentation = new WeakMap();
@@ -221,7 +225,31 @@ function recallUiContext(){if(!isOpen()||!graphViews||!recallProjection)return n
 const recallCommands=createRecallCommands({readContext:recallUiContext,isContextCurrent:captured=>{const now=recallUiContext();return !!now&&now.editorToken===captured.editorToken&&now.documentToken===captured.documentToken&&now.selectionEpoch===captured.selectionEpoch;},captureRecall:()=>workflowRuntime.getNativeWorkflowController?.()?.captureRecall?.(),changeRecallQueues:(capture,request)=>workflowRuntime.getNativeWorkflowController?.()?.changeRecallQueues?.(capture,request),openDetails:openRecallDetails,changed:refreshRecallOverview});
 function captureRecallActions(nodeIds,scope='selected'){const captured=recallCommands.capture(nodeIds,scope);return {queue:()=>captured.ok?recallCommands.change(captured.data,'queue'):captured,cancel:()=>captured.ok?recallCommands.change(captured.data,'cancel'):captured};}
 const recallActions={refresh:refreshRecallOverview,capture:captureRecallActions,reportIssue:message=>toast(message,'error'),change(nodeIds,action,scope='selected'){const result=captureRecallActions(nodeIds,scope)[action]();if(!result.ok)toast(result.error,'error');return result;},reveal:nodeId=>openRecallDetails(nodeId,'all')};
-function workspaceInputs() { const context = ctx(), hostProfiles = profiles(); nodeProfileInputsKey = nodeProfileMetadataKey(context, hostProfiles); return { settings: settings(), profiles: readNodeProfileMetadata(context, hostProfiles), activeModel: activeModelMetadata(context), workflowData: workflowDataSetup()?.snapshot() ?? { available: false, key: '', documents: [] }, result: workflowState.result, resolveBinding: (node, graph) => resolveBinding(node, graph, ctx()), candidateStatus: candidate => workflowRuntime.getNativeWorkflowController?.()?.candidateStatus?.(candidate) }; }
+function fileWorkspaceData() {
+    const state=workflowDataSetup()?.snapshot() ?? {available:false,key:'',documents:[]};
+    const access=getNodeFileAccess();
+    if(nodeFileObservedAccess!==access){
+        nodeFileUnsubscribe?.();nodeFileObservedAccess=access;
+        let bindingSignature=JSON.stringify(access.snapshot());
+        nodeFileUnsubscribe=access.subscribe?.(()=>queueMicrotask(()=>{
+            const next=JSON.stringify(access.snapshot());if(next===bindingSignature)return;bindingSignature=next;
+            const referenced=workspacePrepared?.planner.inventory.primitives.some(unit=>!!unit.node.fileTarget?.bindingId);
+            if(referenced && !nodeFilePicking && isOpen() && current){refreshWorkspaceDocument();updateWorkflowProjection();}
+        }));
+    }
+    const definitions={...state.definitions},legacyDocuments={};
+    const captured=workflowRuntime.getStoryDocumentCatalog?.()?.capture?.();
+    if(captured?.ok){
+        const saved=ctx().chatMetadata?.latticeDocuments?.[captured.data.scope.userId]??{};
+        for(const doc of captured.data.documents){
+            definitions[doc.targetId]={targetId:doc.targetId,name:doc.name,format:doc.format,content:doc.content,visibility:structuredClone(doc.visibility)};
+            const stored=Object.getOwnPropertyDescriptor(saved,doc.targetId)?.value;
+            if(stored && typeof stored.content==='string')legacyDocuments[doc.targetId]={format:stored.format,content:stored.content};
+        }
+    }
+    return {...state,definitions,legacyDocuments,nodeFiles:{supported:access.supported===true,bindings:access.snapshot()}};
+}
+function workspaceInputs() { const context = ctx(), hostProfiles = profiles(); nodeProfileInputsKey = nodeProfileMetadataKey(context, hostProfiles); return { settings: settings(), profiles: readNodeProfileMetadata(context, hostProfiles), activeModel: activeModelMetadata(context), workflowData:fileWorkspaceData(), result: workflowState.result, resolveBinding: (node, graph) => resolveBinding(node, graph, ctx()), candidateStatus: candidate => workflowRuntime.getNativeWorkflowController?.()?.candidateStatus?.(candidate) }; }
 function refreshWorkflowPreparation() {
     if (!current || !workspacePrepared) return;
     workspacePrepared.workflow = prepareWorkflowProjection(current, { ...workspaceInputs(), ...(workspacePrepared.planner ? { planner: workspacePrepared.planner } : {}) });
@@ -1040,6 +1068,7 @@ function openReadinessDetails(selection, issue) {
             target = inspector.querySelector(field === 'modelRole' ? '[aria-label="Model role"]:not([disabled])'
                 : '[aria-label="Model identifier"]:not([disabled]),[aria-label="Model mode"]:not([disabled])');
         }
+        if(!target && field==='fileTarget')target=inspector.querySelector('[data-node-file] button[id*="fileTarget-choose"]:not([disabled]),[data-node-file] select[aria-label="File destination"]:not([disabled])');
         if (!target && ['targetId','clockId'].includes(field)) {
             const group = inspector.querySelector('[data-workflow-advanced]'); if (group) group.open = true;
             target = group?.querySelector('button[data-workflow-source]:not([disabled]),select[aria-label$=" source"]:not([disabled]),button.pc-wd-add:not([disabled])')
@@ -1835,6 +1864,18 @@ function editIterationHelperBinding(selection, role, field, mode, value) {
         return {ok:true,data:{}};
     }));
 }
+function qualifiedNodeFileActions(){return createNodeFileActions({
+    capture(selection){
+        const edit=detailCapture(selection);if(!edit.ok)return edit;
+        const editor=graphViews.readEditor(),node=editor.prepared.effectiveNodes[selection.address.nodeId];
+        const state=fileWorkspaceData(),view=projectNodeFile(node,{...state,...state.nodeFiles,nodes:editor.prepared.effectiveNodes,wires:editor.prepared.savedGraph.wires});
+        if(!view || view.mode==='inherited')return {ok:false,error:{code:'INVALID_FILE_TARGET',message:'Choose a node that owns its file destination.'}};
+        return {ok:true,data:{edit:edit.data,node,nodes:editor.prepared.effectiveNodes,view,selectedEpoch:selectionEpoch}};
+    },
+    isCurrent(captured,selection){return captured.selectedEpoch===selectionEpoch && selectedKind==='node' && selected?.id===selection.address.nodeId && detailCapture(selection).ok && editorCurrent(captured.edit);},
+    access:getNodeFileAccess,
+    commit(captured,selection,controls){return commitCaptured(captured.edit,prepareNode(current,{...scopeCommand(captured.edit),kind:'controls',nodeId:selection.address.nodeId,controls}));},
+});}
 const commentDetailsActions = {
     patch(selection, patch) { const captured = detailCapture(selection); return captured.ok ? commentPatch(captured.data, selection.address.nodeId, patch) : captured; },
     command(selection, command) { const captured = detailCapture(selection); return captured.ok ? commentCommand(captured.data, selection.address.nodeId, command) : captured; },
@@ -1873,6 +1914,12 @@ const nodeGuideActions = {
     },
 };
 const nodeDetailsActions = {
+    async chooseNodeFile(selection,request){
+        nodeFilePicking++;
+        try{return await qualifiedNodeFileActions().chooseNodeFile(selection,request);}
+        finally{nodeFilePicking--;if(!nodeFilePicking && isOpen() && current){refreshWorkflowPreparation();updateWorkflowProjection();}}
+    },
+    saveNodeFile:(selection,settings)=>qualifiedNodeFileActions().saveNodeFile(selection,settings),
     refreshSourceSetup(selection){const captured=detailCapture(selection,true);if(!captured.ok)return captured;updateWorkflowProjection();return {ok:true};},
     async sourceSetup(selection,key,action){const captured=detailCapture(selection,true);if(!captured.ok)return captured;const editor=graphViews.readEditor();if(editor.view.identity.kind==='library'||editor.prepared.effectiveNodes[selection.address.nodeId]?.operation!=='scene-context'||current?.runtime!==3)return {ok:false,error:{code:'SOURCE_SETUP_UNAVAILABLE',message:'Select a current runtime3 Scene Context node.'}};return nativeSourceSetup.execute(key,action);},
     openReadinessIssue(selection, issue) { return openReadinessDetails(selection, issue); },

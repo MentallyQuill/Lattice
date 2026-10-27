@@ -186,6 +186,10 @@ export function computeDefinitionIdentity(value, options = {}) {
                         delete node[controlId];
                         continue;
                     }
+                    if ((controlId === 'fileTarget' && !Object.keys(control.data.default ?? {}).length) || (node.operation === 'write-file' && ((controlId === 'destinationMode' && control.data.default === 'connected') || (controlId === 'targetId' && control.data.default === '' && (node.destinationMode ?? 'connected') === 'connected')))) {
+                        delete node[controlId];
+                        continue;
+                    }
                     if (node.operation === 'read-file' && controlId === 'bindToChat' && control.data.default === false) {
                         delete node[controlId];
                         continue;

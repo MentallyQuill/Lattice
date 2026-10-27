@@ -1,3 +1,4 @@
+import { NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.28.1';
 import { advanceStoryClock, enumerateScheduledOccurrences, resolveTimeAdvance } from '../story-time.js?v=0.28.1';
 import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.28.1';
 import { freeze } from '../record-data.js?v=0.28.1';
@@ -28,7 +29,7 @@ const registration = (id, title, controlDescriptors, extra = {}) => ({
 export const TIME_OPERATIONS = {
     'commit-clock': registration('commit-clock','Clock Commit',{}, {family:'Output',phase:'post',rootOnly:true,hostOperation:true,terminal:true}),
     'story-clock': registration('story-clock', 'Story Clock', {
-        clockId: stringControl('Clock', workflowDataPresetFor('story-clock').targetId), calendarId: stringControl('Expected calendar (optional)'),
+        fileTarget: NODE_FILE_TARGET_CONTROL, clockId: stringControl('Clock', workflowDataPresetFor('story-clock').targetId), calendarId: stringControl('Expected calendar (optional)'),
     }, { input: null, rootOnly: true, hostOperation: true }),
     'time-trigger': registration('time-trigger', 'Time Trigger', {
         mode: { type: 'enum', label: 'Schedule mode', default: 'daily', values: ['daily', 'interval', 'delay'] },
@@ -71,6 +72,7 @@ function resolve(node, options = {}) {
             || control.type === 'array' && (!Array.isArray(value) || value.length > control.max || control.items === 'record' && value.some(item => !plain(item)))) return fail('INVALID_SETTINGS', 'Use supported bounded Time controls.');
     }
     const setupIssues=[];
+    if(operation==='story-clock'){const target=validateNodeFileTarget(settings.fileTarget);if(!target.ok)return target;settings.fileTarget=target.data;if(options.authoring&&Object.keys(target.data).length&&(!target.data.bindingId||!target.data.name))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose a clock file and filename in the File section.',field:'fileTarget'});}
     if(operation==='time-trigger'&&!id(settings.scheduleId))setupIssues.push({code:'INVALID_SETTINGS',message:'Select a schedule identity.',field:'scheduleId'});
     if(setupIssues.length&&!options.authoring)return {ok:false,error:setupIssues[0]};
     if (operation === 'story-clock' && (!id(settings.clockId) || settings.calendarId !== '' && !id(settings.calendarId))) return fail('INVALID_SETTINGS', 'Select an explicit clock and optional calendar identity.');

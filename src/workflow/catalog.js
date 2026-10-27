@@ -251,6 +251,8 @@ export function semanticControlsForNode(node, operation = operationFor(node)) {
         if (Array.isArray(controls.sections)) controls.sections = controls.sections.map(section => { const normalized = { ...section }; if (normalized.kind === 'text') delete normalized.kind; if (normalized.required === false) delete normalized.required; if (normalized.onSkipped === 'fallback') delete normalized.onSkipped; return normalized; });
     }
     // Additive editor controls must preserve existing version-1 semantic pins.
+    if (controls.fileTarget && !Object.keys(controls.fileTarget).length) delete controls.fileTarget;
+    if (node.operation === 'write-file' && controls.destinationMode === 'connected') { delete controls.destinationMode; if (controls.targetId === '') delete controls.targetId; }
     if (controls.maxRetries === 0) delete controls.maxRetries;
     if (node.operation === 'generate-reply') {
         if (controls.injectionRole === 'system') delete controls.injectionRole;
@@ -302,6 +304,7 @@ export function operationDefaults(id = 'scene-context', { mode } = {}) {
     }
     if (!op) throw new Error(`Unknown workflow operation: ${id}`);
     const defaults = structuredClone(op.defaults);
+    if (defaults.fileTarget && !Object.keys(defaults.fileTarget).length) delete defaults.fileTarget;
     if (id === 'review-publish' && defaults.autoApply === false) delete defaults.autoApply;
     if (id === 'review-publish' && defaults.autoApplyEffects === false) delete defaults.autoApplyEffects;
     if (id === 'read-file' && defaults.bindToChat === false) delete defaults.bindToChat;

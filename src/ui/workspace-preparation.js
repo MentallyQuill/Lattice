@@ -20,6 +20,7 @@ import { modifierTypes, modifierSummary, applyTextModifiers } from '../workflow/
 import { addressKey, boundedText, RENDERED_TEXT_BYTES, freeze } from '../workflow/record-data.js?v=0.28.1';
 import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.28.1';
 import { projectWorkflowData } from './workflow-data-setup.js?v=0.28.1';
+import { projectNodeFile, nodeFileSetupIssue } from './node-file-projection.js?v=0.28.1';
 import { presentDiagnostic, presentDiagnostics } from './diagnostics.js?v=0.28.1';
 import { previewDiagnostics } from './preview-diagnostics.js?v=0.28.1';
 import { projectRecordedPreview, boundReadablePreviewSections } from './recorded-preview.js?v=0.28.1';
@@ -87,7 +88,10 @@ export function prepareWorkspaceViews(root, options = {}) {
             for(const issue of primitiveUnits.get(addressKey(address))?.setupIssues ?? [])if(!issues.some(existing=>existing.category==='setup' && existing.code===issue.code && existing.field===issue.field && existing.message===issue.message))issues.unshift({...issue,address,category:'setup'});
             const bound = display.nodes.find(node => node.id === id);
             if (options.resolveBinding && bound?.issue) issues.push({code:'BINDING_UNAVAILABLE',message:bound.issueDiagnostic?.message || presentDiagnostic(bound.issue).message,field:'profileId',address,category:'setup'});
-            const document = projectWorkflowData(effectiveNodes[id],options.workflowData ?? {},false,address);
+            const file = options.workflowData?.nodeFiles ? projectNodeFile(effectiveNodes[id],{...options.workflowData,...options.workflowData.nodeFiles,nodes:effectiveNodes,wires:view.savedGraph.wires}) : null;
+            const fileIssue=nodeFileSetupIssue(file);
+            if(fileIssue)issues.push({...fileIssue,address});
+            const document = file ? null : projectWorkflowData(effectiveNodes[id],options.workflowData ?? {},false,address);
             if (document?.available && document.issue) issues.push({code:'DOCUMENT_UNAVAILABLE',message:document.issue,field:document.controlKey,address,category:'setup'});
             const deferred = [!options.resolveBinding && bound?.requestBound ? 'Live model connection has not been evaluated.' : '',document && !document.available ? 'Live document availability has not been evaluated.' : ''].filter(Boolean);
             card.readiness = readinessFromIssues(issues,deferred);
@@ -184,19 +188,22 @@ export function projectNodeProfiles(editor, workflow, revision) {
     const library = editor.view.identity.kind === 'library', path = editor.view.identity.instancePath ?? [];
     const options = (workflow.profiles ?? []).map(profile => ({ value: profile.id, label: profile.name, apiLabel: profile.apiLabel || '', model: profile.model || '', active: profile.active === true }));
     const available = options.length ? options : prepareNodeProfileOptions();
+    const fileState = { ...workflow.workflowData, ...workflow.workflowData?.nodeFiles, nodes: editor.prepared.effectiveNodes, wires: editor.prepared.savedGraph.wires };
     return Object.values(editor.prepared.effectiveNodes).flatMap(node => {
         const op = operationFor(node), bound = op?.requestBound;
         const requestBound = typeof bound === 'function' ? bound(node) : bound || 0;
         const hasProfile = !!requestBound;
         const readiness=editor.prepared.drawBase.nativeCards[node.id]?.readiness;
-        if(!hasProfile && (!readiness || readiness.state==='ready'))return [];
+        const fileLabel = projectNodeFile(node, fileState)?.settings.name?.trim() || '';
+        if(!hasProfile && !fileLabel && (!readiness || readiness.state==='ready'))return [];
         const prepared = library ? null : workflow.nodes.find(row => row.id === node.id);
         const role = node.modelRole ?? op?.modelRole;
-        const value = prepared?.profileId ?? node.profileId ?? editor.prepared.savedGraph.roles?.[role]?.profileId ?? '';
+        const value = hasProfile ? prepared?.profileId ?? node.profileId ?? editor.prepared.savedGraph.roles?.[role]?.profileId ?? '' : '';
         const option = available.find(option => option.value === value);
         const model = hasProfile ? prepared?.model || node.model || prepared?.resolvedModel || (option ? option.model : '') || '' : '';
+        const label = hasProfile ? option?.label || (value ? 'Unavailable connection · ' + value : 'Choose a connection') : '';
         const address = library ? { kind: 'library', definitionRef: editor.prepared.definitionRef, nodeId: node.id } : { workflowId: workflow.graphId, instancePath: [...path], nodeId: node.id };
-        return [{ id: node.id, selection: { selectionKey: JSON.stringify([editor.view.key, node.id]), revision, address }, value, label: option?.label || (value ? 'Unavailable connection · ' + value : 'Choose a connection'), model, editable: !library, hasProfile, readiness, compact: readNodePresentation(node).compact, options: available }];
+        return [{ id: node.id, selection: { selectionKey: JSON.stringify([editor.view.key, node.id]), revision, address }, value, label, model, ...(fileLabel ? {fileLabel} : {}), editable: !library, hasProfile, readiness, compact: readNodePresentation(node).compact, options: available }];
     });
 }
 
@@ -230,7 +237,8 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
             const workflowData = saved ? projectWorkflowData(editor.prepared.effectiveNodes[selectedId] ?? saved, workflow.workflowData ?? {}, !(editor.readOnly || library), library ? undefined : address) : null;
             let fieldCache = immutableScope ? authoredFieldCaches.get(contentIdentity) : null;
             if (!fieldCache) { fieldCache = new Map(); if (immutableScope) authoredFieldCaches.set(contentIdentity, fieldCache); }
-            const fieldKey = JSON.stringify([selectedId, workflowData?.controlKey]);
+            const nodeFile=workflow.workflowData?.nodeFiles ? projectNodeFile(editor.prepared.effectiveNodes[selectedId]??saved,{...workflow.workflowData,...workflow.workflowData.nodeFiles,nodes:editor.prepared.effectiveNodes,wires:graph.wires}) : null;
+            const fieldKey = JSON.stringify([selectedId, workflowData?.controlKey,!!nodeFile]);
             let fields = fieldCache.get(fieldKey);
             if (!fields) {
                 const effectiveNode = editor.prepared.effectiveNodes[selectedId] ?? saved;
@@ -239,7 +247,7 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
                 const effectiveControls = projectNodeControls(saved?.operation,effectiveNode,context);
                 const controls = metadata ? [...ownControls, ...effectiveControls.filter(control=>!ownControls.some(own=>own.key===control.key))].filter(control => {
                     const key=control.key;
-                    return !(workflowData && (key===workflowData.controlKey || saved.operation==='story-clock' && key==='calendarId') || key==='roleOverrides' && saved.operation==='for-each' || fileInput && ['fileName','content','loaded'].includes(key));
+                    return !(nodeFile && (['fileTarget','destinationMode','targetId','ledgerId'].includes(key)) || workflowData && !nodeFile && (key===workflowData.controlKey || saved.operation==='story-clock' && key==='calendarId') || key==='roleOverrides' && saved.operation==='for-each' || fileInput && ['fileName','content','loaded'].includes(key));
                 }).map(control=>{
                     const own=Object.hasOwn(saved,control.key)?saved[control.key]:control.value;
                     const effectiveValue=Object.hasOwn(effectiveNode,control.key)?effectiveNode[control.key]:control.value;
@@ -278,7 +286,7 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
             const nodeDetails = saved && metadata && !commentDetails ? { ...selection, guideKey, guideCard, title: boundary?.label ?? (presentation.alias || (typeof saved.title === 'string' ? saved.title : metadata.canonicalTitle)), canonicalTitle: metadata.canonicalTitle, operation: saved.operation, system: saved.type === 'subgraph', iconPath: metadata.iconPath, family: metadata.family, familyColor: metadata.familyColor, phase: effective?.phase ?? phaseForNode(graph,saved) ?? metadata.phase ?? graph.mode.slice(7), phaseEditable, phaseSource, alias: presentation.alias, compact: presentation.compact, enabled: saved.enabled !== false, readOnly: editor.readOnly || library, canPresent: true, controls, ...(fileInput ? { fileInput } : {}), ...(boundary ? { boundary } : {}),
                 model: metadata.modelRole && (effective?.effective !== 'No model call' || saved.model || saved.profileId || Object.keys(editor?.prepared.drawBase.bindingBlocks?.[selectedId] ?? {}).length) ? { role: saved.modelRole ?? metadata.modelRole, roleEditable: true, editable: !library, profileDefaultModel: editor.prepared.drawBase.profileDefaultModels?.[selectedId] ?? !!saved.profileId, profile: field('profileId', workflow.profiles.map(profile => ({ value: profile.id, label: profile.name }))), model: field('model'), effective: effective?.effective || (library ? [editor.prepared.effectiveNodes[selectedId]?.profileId ?? graph.roles?.[saved.modelRole ?? metadata.modelRole]?.profileId,editor.prepared.effectiveNodes[selectedId]?.model ?? graph.roles?.[saved.modelRole ?? metadata.modelRole]?.model].filter(Boolean).join(' · ') : ''), source: editor.prepared.drawBase.instanceBindingSources?.[selectedId] ? 'Containing instance override' : saved.profileId || saved.model ? 'Node override' : 'Inherited from ' + (saved.modelRole ?? metadata.modelRole), ...(effective?.issue ? {issue: effective.issue} : {}) } : null,
                 helperBindings: saved.operation === 'for-each' ? { ...editor.prepared.drawBase.iterationBindings?.[selectedId], editable: !(editor.readOnly || library) } : null,
-                ...(workflowData ? { workflowData } : {}),
+                ...(nodeFile ? {nodeFile} : workflowData ? { workflowData } : {}),
                 modifiers: modifierView(saved, metadata, !(editor.readOnly || library)),
                 ports: fields.ports, readiness: metadata.readiness, issues: [] } : null;
             if (nodeDetails?.model && effective?.issueDiagnostic) nodeDetails.model.issueDiagnostic = effective.issueDiagnostic;

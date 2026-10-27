@@ -50,7 +50,8 @@ function portableProjection(snapshots) {
         },
         parameters(node) {
             return Object.fromEntries(instanceParameterTargets(node, snapshots).map(parameter => [parameter.id,
-                parameter.target?.operation === 'fast-decision' && ['fastConnectionId', 'fallbackProfileId'].includes(parameter.controlId) ? ''
+                parameter.controlId === 'fileTarget' && parameter.value && typeof parameter.value === 'object' ? {...parameter.value,bindingId:''}
+                    : parameter.target?.operation === 'fast-decision' && ['fastConnectionId', 'fallbackProfileId'].includes(parameter.controlId) ? ''
                     : parameter.target?.operation === 'fast-decision' && parameter.controlId === 'fallbackEnabled' ? false
                     : parameter.target?.operation === 'for-each' && parameter.controlId === 'roleOverrides' ? portableBindings(parameter.value)
                     : parameter.target?.operation === 'for-each' && parameter.controlId === 'helper' ? context.reference(parameter.value) : parameter.value,
@@ -91,6 +92,7 @@ function portableNativeDocument(graph, context) {
         ...portableControlKeys(graph,node), ...(node.operation === 'validate-patches' ? ['protectedLiterals'] : []),
     ])]));
     for (const [id, node] of Object.entries(copy.nodes)) {
+        if (node.fileTarget && typeof node.fileTarget === 'object') { if (Object.keys(node.fileTarget).length) node.fileTarget={...node.fileTarget,bindingId:''}; else delete node.fileTarget; }
         if (Object.hasOwn(node, 'profileId') && node.profileId !== ACTIVE_PROFILE_ID) node.profileId = null;
         if (node.type === 'workflow' && node.operation === 'fast-decision') {
             node.fastConnectionId = '';
