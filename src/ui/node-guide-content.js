@@ -757,6 +757,8 @@ const controls = {
 
 /** Supplementary settings are added by the caller only when the selected node exposes them. */
 const supplementaryControls = {
+    reasoningEffort: 'Reasoning applies to this node’s model requests, including retries. None disables optional thinking where supported; models that require reasoning use the indicated minimum or provider default. Choices follow the effective provider and model, subject to the installed host adapter.',
+    reasoningCustom: 'Provider reasoning value used when Reasoning is Custom. Enter up to 128 characters. The value stays saved when changing models or effort presets; a host adapter that cannot preserve it reports an error before the request.',
     maxRetries: 'Extra requests for this model node, from zero to five; the default is zero. Five permits up to six total requests. Retryable transient failures and at most one JSON or schema correction share this allowance. Authentication, configuration, cancellation, privacy and limit failures stop immediately. Completed nodes and SillyTavern native generation are never retried. Retrying keeps the same stage active and all requests count against its budget.',
     enabled: 'Allow this node to participate in workflow execution when enabled. Disabled paths may leave downstream required inputs unavailable.',
     phase: 'Preparation runs before Generate Reply; Response runs after it. The selected node’s input and output types must support that stage. Compose Text works in either; Compose Guidance requires Preparation.',

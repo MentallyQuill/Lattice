@@ -14,6 +14,6 @@ export function activeModelMetadata(context) {
         if (!api) return null;
         const route = Object.values(context.CONNECT_API_MAP ?? {}).find(route => route.selected === context.mainApi && (chat ? route.source : route.type) === api);
         const model = chat ? context.getChatCompletionModel?.(settings) : api === 'huggingface' ? 'tgi' : settings?.[TEXT_MODELS[api]];
-        return {api,apiLabel:text(route?.label) ?? text(route?.name) ?? LABELS[api] ?? api,model:text(model)};
+        return {api,...(completion ? {transport:'textgenerationwebui'} : {}),apiLabel:text(route?.label) ?? text(route?.name) ?? LABELS[api] ?? api,model:text(model)};
     } catch { return null; }
 }

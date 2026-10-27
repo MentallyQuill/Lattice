@@ -73,6 +73,19 @@ Object.assign(OPERATIONS, INPUT_OPERATIONS);
 Object.assign(OPERATIONS, CONTROL_OPERATIONS);
 Object.assign(OPERATIONS, DECISION_OPERATIONS);
 Object.assign(OPERATIONS, MODEL_OPERATIONS, LIFECYCLE_OPERATIONS, FILE_OPERATIONS, TIME_OPERATIONS, EVENT_OPERATIONS, RANDOM_OPERATIONS, COLLECTION_OPERATIONS, RECALL_OPERATIONS);
+const REASONING_VALUES = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'enabled', 'adaptive', 'custom'];
+function withReasoningControls(descriptor) {
+    if (!descriptor.modelRole && !descriptor.nativeBoundary && !['context', 'express', 'item-use-trigger'].includes(descriptor.id) && !OPERATIONS[descriptor.id]?.controls.includes('reasoningEffort')) return descriptor;
+    return { ...descriptor,
+        controls: [...descriptor.controls.filter(key => !['reasoningEffort', 'reasoningCustom'].includes(key)), 'reasoningEffort', 'reasoningCustom'],
+        defaults: { ...descriptor.defaults, reasoningEffort: 'none', reasoningCustom: '' },
+        controlDescriptors: { ...descriptor.controlDescriptors,
+            reasoningEffort: { type: 'enum', values: REASONING_VALUES, default: 'none', label: 'Reasoning' },
+            reasoningCustom: { type: 'string', maxLength: 128, default: '', label: 'Custom reasoning' },
+        },
+    };
+}
+for (const [id, operation] of Object.entries(OPERATIONS)) OPERATIONS[id] = withReasoningControls(operation);
 OPERATIONS.repair.controlDescriptors.categories.label = 'Policy categories (empty selects all)';
 for (const [key, label] of Object.entries({ mode: 'Mode', scope: 'Scope', caseSensitive: 'Case sensitive', strength: 'Strength', instructions: 'Instructions', maxTokens: 'Output tokens', protectedLiterals: 'Protected literals' })) OPERATIONS.repair.controlDescriptors[key].label = label;
 const contextJoinDescriptor = source => ({ ...source, controlDescriptors: { inputs: { ...source.controlDescriptors.inputs, label: 'Inputs', editor: 'json', exposable: false } } });
@@ -106,6 +119,10 @@ export function phaseForNode(graph, node) {
     } catch { return null; }
 }
 function dynamicDescription(node, phase, authoring = false) {
+    const result = dynamicBaseDescription(node, phase, authoring);
+    return result.ok ? { ...result, data: { ...result.data, descriptor: withReasoningControls(result.data.descriptor) } } : result;
+}
+function dynamicBaseDescription(node, phase, authoring = false) {
     if (node.operation === 'chunk') return describeChunk(node, {phase});
     if (node.operation === 'filter-text') return phase === 'post' ? describeFilterText(node) : failure('INVALID_PHASE', 'Filter Text requires post phase.');
     if (node.operation === 'pattern') return phase === 'post' ? describePattern(node) : failure('INVALID_PHASE', 'Pattern requires post phase.');
@@ -132,7 +149,8 @@ function dynamicDescription(node, phase, authoring = false) {
             }));
             if (!['repair', 'scan', ...CLEANUP_MODES].includes(settings.mode)) return failure('INVALID_SETTINGS', 'Select a supported Repair mode.');
             if (CLEANUP_MODES.includes(settings.mode)) {
-                const checked = validateCleanupSettings(settings);
+                const { reasoningEffort, reasoningCustom, ...cleanupSettings } = settings;
+                const checked = validateCleanupSettings(cleanupSettings);
                 if (!checked.ok) return checked;
             } else {
                 descriptor.controls = descriptor.controls.filter(key => !['scope', 'categories', 'caseSensitive'].includes(key));
@@ -252,6 +270,8 @@ export function semanticControlsForNode(node, operation = operationFor(node)) {
     }
     // Additive editor controls must preserve existing version-1 semantic pins.
     if (controls.maxRetries === 0) delete controls.maxRetries;
+    if (controls.reasoningEffort === 'none') delete controls.reasoningEffort;
+    if (controls.reasoningCustom === '') delete controls.reasoningCustom;
     if (node.operation === 'generate-reply') {
         if (controls.injectionRole === 'system') delete controls.injectionRole;
         if (controls.injectionPosition === 'in-chat') delete controls.injectionPosition;
@@ -302,6 +322,8 @@ export function operationDefaults(id = 'scene-context', { mode } = {}) {
     }
     if (!op) throw new Error(`Unknown workflow operation: ${id}`);
     const defaults = structuredClone(op.defaults);
+    delete defaults.reasoningEffort;
+    delete defaults.reasoningCustom;
     if (id === 'review-publish' && defaults.autoApply === false) delete defaults.autoApply;
     if (id === 'review-publish' && defaults.autoApplyEffects === false) delete defaults.autoApplyEffects;
     if (id === 'read-file' && defaults.bindToChat === false) delete defaults.bindToChat;

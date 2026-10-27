@@ -89,7 +89,7 @@
     function tableDraft(draft:ControlImportDraft){tableStateChange({open:true,draft});}
     function confirmTable(value:JsonValue){if(disabled||pending||!tableValue?.ok)return;typedChange(value);if(recordEntry){onformat?.('json');setRecordMode('rows');}tableStateChange({...tableState,open:false});}
     const entry = $derived(control.inputSpec?.editor === 'list');
-    const shortChoices = () => control.editor === 'enum' && (control.options?.length ?? 0) > 1 && (control.options?.length ?? 0) <= 3 && control.options!.every(option => option.label.length <= 10);
+    const shortChoices = () => control.editor === 'enum' && control.key !== 'reasoningEffort' && (control.options?.length ?? 0) > 1 && (control.options?.length ?? 0) <= 3 && control.options!.every(option => option.label.length <= 10);
     const provenance = () => control.effective !== undefined && control.effective !== text && control.source !== 'Saved setting' ? control.source : '';
     function choose(event: Event, value: string) {
         if(disabled)return;
@@ -159,7 +159,7 @@
         {/if}
     {/if}
     {#if saveButton && (dirty || pending || !!error) && (control.editor === 'json' || control.editor === 'lines')}<div class="pc-control-draft-actions"><span>{pending?'Waiting for acknowledgment':'Unsaved changes'}</span>{#if ondiscard}<button type="button" aria-label={'Discard '+control.label+' changes'} disabled={disabled||pending} onclick={ondiscard}>Discard</button>{/if}<button type="button" aria-label={'Save '+control.label} data-save-control={control.key} disabled={disabled || pending || tableState.open || structured && !!(structuredDraft ?? localStructuredDraft)?.invalid || control.inputSpec?.editor==='schema' && text!=='' && !!(schemaDraft ?? localSchemaDraft)?.invalid} onclick={() => { if (!disabled && !pending && !tableState.open && !(structured && (structuredDraft ?? localStructuredDraft)?.invalid) && !(control.inputSpec?.editor==='schema' && text!=='' && (schemaDraft ?? localSchemaDraft)?.invalid)) onsave(); }}>{pending ? 'Validating…' : control.inputSpec?.editor==='schema'?'Save structure':'Save ' + control.label}</button></div>{/if}
-    {#if control.help}<details class="pc-control-help"><summary>About {control.label}</summary><small>{control.help}</small></details>{/if}
+    {#if control.help}{#if control.key==='reasoningEffort'}<small>{control.help}</small>{:else}<details class="pc-control-help"><summary>About {control.label}</summary><small>{control.help}</small></details>{/if}{/if}
     {#if control.exposureNote}<small>{control.exposureNote}</small>{:else if provenance()}<small>{provenance()} · Effective: {control.effective}</small>{/if}
     {#if error}<div id={idPrefix + '-error'} class="pc-detail-error"><DiagnosticMessage issue={error} context={{ inputLabel: control.label }} /></div>{/if}
 </div>

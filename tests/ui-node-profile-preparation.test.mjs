@@ -26,7 +26,7 @@ test('prepared per-node controls expose only safe current profile metadata and q
     assert.equal(plan.editable, true);
     assert.deepEqual(plan.selection, { selectionKey: JSON.stringify([f.session.readEditor().view.key, 'response-plan']), revision: 'profiles:7', address: { workflowId: root.id, instancePath: [], nodeId: 'response-plan' } });
     assert.equal(f.session.readEditor().view.selection.primary, null);
-    assert.deepEqual(plan.options, [{ value: activeId, label: 'Active SillyTavern model', apiLabel: 'OpenAI', model: 'host-model', active: true }, { value: 'saved', label: 'Reasoning connection', apiLabel: 'OpenAI', model: 'profile-model', active: false }]);
+    assert.deepEqual(plan.options, [{ value: activeId, label: 'Active SillyTavern model', api: 'openai', source: 'openai', apiLabel: 'OpenAI', model: 'host-model', active: true }, { value: 'saved', label: 'Reasoning connection', api: 'openai', source: 'openai', apiLabel: 'OpenAI', model: 'profile-model', active: false }]);
     assert.ok(!JSON.stringify(rows).includes('private-'));
     assert.ok(!rows.some(row => root.nodes[row.id].operation === 'scene-context'));
     assert.deepEqual(root, before);

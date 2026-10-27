@@ -119,6 +119,7 @@ export function describeExposedControl(value, controlId) {
         : descriptor.type === 'object' ? record(current) && [Object.prototype, null].includes(Object.getPrototypeOf(current)) && (descriptor.max === undefined || Object.keys(current).length <= descriptor.max)
         : descriptor.type === 'array' ? Array.isArray(current) && (descriptor.items === 'json' ? cloneDefinitionData(current).ok : current.every(item => typeof item === 'string' || ['string-or-record', 'record', 'context-slot'].includes(descriptor.items) && record(item)))
         : descriptor.type === 'json-value' ? cloneJsonValue(current).ok
+        : descriptor.type === 'string' ? typeof current === 'string' && (descriptor.maxLength === undefined || current.length <= descriptor.maxLength)
         : typeof current === descriptor.type;
     if (!valid) return fail('DEFINITION_PARAMETER', 'Saved control default does not match its catalog descriptor.');
     return cloneDefinitionData({ ...descriptor, default: current }, { descriptor: true, descriptorOperation: operation.id, controlId });
@@ -178,6 +179,10 @@ export function computeDefinitionIdentity(value, options = {}) {
                         continue;
                     }
                     // Additive defaults preserve both prior version-1 pins and old saved bodies.
+                    if ((controlId === 'reasoningEffort' && control.data.default === 'none') || (controlId === 'reasoningCustom' && control.data.default === '')) {
+                        delete node[controlId];
+                        continue;
+                    }
                     if (node.operation === 'generate-reply' && ((controlId === 'injectionRole' && control.data.default === 'system') || (controlId === 'injectionPosition' && control.data.default === 'in-chat') || (controlId === 'injectionDepth' && control.data.default === 0))) {
                         delete node[controlId];
                         continue;

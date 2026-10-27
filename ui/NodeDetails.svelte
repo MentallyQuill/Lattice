@@ -423,6 +423,7 @@
     const controlGroups = $derived.by(() => {
         const groups = new Map<string, DetailControl[]>();
         for (const control of view?.controls ?? []) {
+            if (control.key === 'reasoningCustom' && view?.controls.find(item=>item.key==='reasoningEffort')?.value !== 'custom') continue;
             if (view?.operation === 'model-call' && control.key === 'schema' && view.controls.find(item=>item.key==='outputKind')?.value === 'text') continue;
             if (view?.operation === 'extract' && view.controls.find(item=>item.key==='mode')?.value === 'literal' && ['instructions','maxTokens','maxRetries'].includes(control.key)) continue;
             const name = control.group && control.group !== 'Main' ? control.group : control.advanced ? 'Advanced' : 'Main';

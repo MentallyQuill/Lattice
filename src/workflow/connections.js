@@ -1,6 +1,7 @@
 import { randomUuid } from '../random-id.js?v=0.28.1';
 import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME, activeModelMetadata } from './model-profiles.js?v=0.28.1';
 import { normalizeRequestFailure } from './request-failure.js?v=0.28.1';
+import { reasoningRequestOverrides } from './reasoning.js?v=0.28.1';
 const fail = (code, message) => ({ok:false,error:{code,message}});
 const resolved = new WeakMap();
 const fingerprint = () => randomUuid();
@@ -140,6 +141,9 @@ export async function requestModel(request,contextOrGetter,transport = {}) {
             if (!tc && Object.hasOwn(overrides,'max_completion_tokens')) overrides.max_completion_tokens = maxTokens;
             overrides.stream = false;
         }
+        const reasoning=reasoningRequestOverrides(binding,request);
+        if(!reasoning.ok)return reasoning;
+        Object.assign(overrides,reasoning.data);
         if (signal?.aborted) return fail('ABORTED', 'The request was stopped before transmission.');
         const passiveState = beforeSend ? requestStateWatch(getContext(),binding) : null;
         if (beforeSend && passiveState === null || !check()) return fail('BINDING_CHANGED', 'The fixed connection changed before transmission. Run preflight again.');

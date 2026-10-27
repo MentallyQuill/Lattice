@@ -10,6 +10,7 @@ import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.1';
 import { sha256Text } from './definition-data.js?v=0.28.1';
 import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.28.1';
 import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.28.1';
+import { reasoningRequestOverrides } from './reasoning.js?v=0.28.1';
 import { addressKey, safeError } from './record-data.js?v=0.28.1';
 import { createRunState, reduceRunState } from './run-state.js?v=0.28.1';
 import { cloneWorkflowDocument } from './document.js?v=0.28.1';
@@ -713,11 +714,78 @@ export function createNativeWorkflowController(ports) {
         if(run.nativeTimer)clearTimeout(run.nativeTimer);run.nativeTimer=null;
         run.nativeFailed=true;run.nativeCompletion?.resolve(error);run.nativeReady?.resolve(error);clear();
     }
+    const nativeReasoningTarget=(c,payload)=>({api:payload?'openai':c.mainApi,source:payload?.chat_completion_source??c.chatCompletionSettings?.chat_completion_source,model:payload?.model??c.getChatCompletionModel?.(c.chatCompletionSettings),endpoint:payload?.custom_url??c.chatCompletionSettings?.custom_url??null});
+    function nativeReasoningOverrides(target,controls,payload) {
+        const mapped=reasoningRequestOverrides(target,controls);if(!mapped.ok)return mapped;
+        if(!Object.hasOwn(mapped.data,'custom_include_body'))return mapped;
+        try {
+            const object=value=>value&&typeof value==='object'&&!Array.isArray(value);
+            const parse=value=>{
+                try{return JSON.parse(value);}catch{
+                    const yaml=globalThis.SillyTavern?.libs?.yaml;
+                    if(typeof yaml?.parse==='function')return yaml.parse(value);
+                    if(typeof value==='string'&&/^[\w.-]+$/.test(value))return value;
+                    throw Error();
+                }
+            };
+            const overlay=JSON.parse(mapped.data.custom_include_body||'{}');
+            if(payload?.custom_exclude_body){
+                const excluded=parse(payload.custom_exclude_body),keys=Array.isArray(excluded)?excluded.filter(key=>typeof key==='string'):object(excluded)?Object.keys(excluded):typeof excluded==='string'?[excluded]:[];
+                if(keys.some(key=>Object.hasOwn(overlay,key)))return fail('REASONING_UNSUPPORTED','The native custom exclusion body removes a required reasoning field.');
+            }
+            const existing=payload?.custom_include_body;
+            if(existing===undefined||existing===null||existing==='')return mapped;
+            const parsed=parse(existing),body=Array.isArray(parsed)?Object.assign({},...parsed.filter(object)):object(parsed)?{...parsed}:{};
+            // Node controls own reasoning; stale custom fields must not restore
+            // a preset effort or conflict with a different provider's mapping.
+            for(const key of ['reasoning','reasoning_effort','thinking','reasoning_budget','thinking_budget','thinking_config','thinkingConfig','enable_thinking','include_reasoning'])delete body[key];
+            if(object(body.extra_body?.google))delete body.extra_body.google.thinking_config;
+            if(object(body.extra_body)&&object(overlay.extra_body)){
+                if(object(body.extra_body.google)&&object(overlay.extra_body.google))overlay.extra_body.google={...body.extra_body.google,...overlay.extra_body.google};
+                overlay.extra_body={...body.extra_body,...overlay.extra_body};
+            }
+            return {ok:true,data:{...mapped.data,custom_include_body:JSON.stringify({...body,...overlay})}};
+        } catch {return fail('REASONING_UNSUPPORTED','Native custom reasoning requires readable JSON or the host YAML parser for custom include and exclusion bodies.');}
+    }
+    function prepareNativeReasoning(run,node) {
+        const c=context(),controls=Object.freeze({reasoningEffort:node.reasoningEffort??'none',reasoningCustom:node.reasoningCustom??''});
+        const surface=!!unsubscribe&&c.mainApi==='openai'&&!!(c.eventTypes??c.event_types)?.CHAT_COMPLETION_SETTINGS_READY&&typeof c.eventSource?.on==='function';
+        if(!surface){
+            if(controls.reasoningEffort!=='none')return fail('REASONING_UNSUPPORTED','The host has no supported final native reasoning settings surface.');
+            run.nativeReasoningSkipped=true;run.nativeReasoningSkipReason='The host has no supported native reasoning settings surface.';return {ok:true};
+        }
+        const target=nativeReasoningTarget(c),mapped=nativeReasoningOverrides(target,controls,c.chatCompletionSettings);
+        if(!mapped.ok)return mapped;
+        run.nativeReasoning=controls;return {ok:true};
+    }
+    function applyNativeReasoning(payload) {
+        const run=active;
+        // This event is emitted only by the native chat send, after its final
+        // settings conversion. Auxiliary services never emit it.
+        if(!run?.native||!run.unified||!run.nativePrepared||run.nativeResolved||run.nativeFailed||run.nativeReasoningApplied||!run.nativeReasoning||payload?.type!==run.nativeType||generationInvocationDryRun||generation.dryRun||generation.aborted||!nativePrefixFresh(run)||!sourceFresh(run))return;
+        const target=nativeReasoningTarget(context(),payload);
+        const mapped=nativeReasoningOverrides(target,run.nativeReasoning,payload);
+        // The public YAML parser can be supplied by the host. Recheck ownership
+        // after that callback before altering or stopping a native request.
+        if(active!==run||generationInvocationDryRun||!nativePrefixFresh(run)||!sourceFresh(run))return;
+        if(!mapped.ok){
+            run.nativeReasoningFailure=mapped;holdNative(run,mapped);const abort=run.abortPrimary;run.abortPrimary=null;run.nativeOwner.aborted=true;
+            try{abort?.(true);context().stopGeneration?.();}catch{/* The installed native stop callback is best effort. */}
+            return;
+        }
+        if(!payload||typeof payload!=='object'||Array.isArray(payload))return;
+        try{Object.assign(payload,mapped.data);run.nativeReasoningApplied=true;}
+        catch{const error=fail('REASONING_UNSUPPORTED','The final native settings could not accept this reasoning override.');run.nativeReasoningFailure=error;holdNative(run,error);try{context().stopGeneration?.();}catch{/* Host stop is best effort. */}}
+    }
     function checkNativeCompletion(run) {
         run.nativeTimer=null;
         if(active!==run || run.nativeResolved || !run.nativeEnded)return;
         if(!run.nativePrepared)return holdNative(run,fail('NATIVE_GENERATION_MISMATCH','Native generation ended before its preparation was released.'));
         if(!nativePrefixFresh(run))return holdNative(run,fail('STALE_SOURCE','The owned native chat, prefix, user or workflow changed.'));
+        if(run.nativeReasoning&&!run.nativeReasoningApplied){
+            if(run.nativeReasoning.reasoningEffort!=='none')return holdNative(run,fail('REASONING_UNSUPPORTED','The native generation did not expose its final reasoning settings.'));
+            run.nativeReasoningSkipped=true;run.nativeReasoningSkipReason='The native generation did not expose its final reasoning settings.';
+        }
         if(!run.nativeReceived)return holdNative(run,fail('NATIVE_REPLY_MISSING','Generation ended without its matching received reply.'));
         if(ports.isBusy?.()) {
             if(Date.now()-run.nativeEndedAt>=5000)return holdNative(run,fail('NATIVE_COMPLETION_TIMEOUT','Native generation did not become settled after End.'));
@@ -740,7 +808,7 @@ export function createNativeWorkflowController(ports) {
         const entry={message:m,chat:c.chat,refs:[...c.chat],prefix:sourceText(c.chat),swipeText:m.swipes[draft.source.swipeId],source:draft.source,run};
         run.pendingSources.set(draft.source.token,entry);run.nativeDraft=draft;run.nativeResolved=true;run.nativeOwner.finished=true;run.abortPrimary=null;clear();
         const metadata=freezeArtifact({kind:'data',value:{type:'native-generation',schemaVersion:1,runId:run.runId,attemptId:run.nativeOwner.id,generationType:run.nativeType,source:{...run.identity,userId:run.userId,messageIndex:captured.expectedIndex,swipeId:captured.expectedSwipe},started,finished}});
-        const completedResult={ok:true,outputs:{draft,metadata},reports:[{code:'NATIVE_GENERATION_COMPLETED',generationType:run.nativeType,reviewRequired:true}]};
+        const completedResult={ok:true,outputs:{draft,metadata},reports:[{code:'NATIVE_GENERATION_COMPLETED',generationType:run.nativeType,reviewRequired:true},...(run.nativeReasoningSkipped?[{code:'REASONING_SKIPPED',reason:run.nativeReasoningSkipReason}]:[])]};
         if(run.recallCaptured){const retained=recall.capture(run,completedResult,{kind:'source',source:{sourceId:draft.source.sourceId,revision:draft.source.revision,sceneId:draft.source.sceneId,watch:'draft'},text:draft.text,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&sourceFresh(run)});if(!retained.ok)return holdNative(run,retained);}
         run.nativeCompletion.resolve(completedResult);
     }
@@ -890,7 +958,9 @@ export function createNativeWorkflowController(ports) {
                 prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);
             }
             prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);
-            run.pending=false;run.nativePrepared=true;run.nativeReady.resolve({ok:true,prepared:true,awaitingNative:true,runId:run.runId,published:inputs.guidance!==undefined});
+            const reasoning=prepareNativeReasoning(run,node);if(!reasoning.ok)return rejectPreparation(reasoning);
+            prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);
+            run.pending=false;run.nativePrepared=true;run.nativeReady.resolve({ok:true,prepared:true,awaitingNative:true,runId:run.runId,published:inputs.guidance!==undefined,...(run.nativeReasoningSkipped?{reasoningSkipped:true}:{})});
             return run.nativeCompletion.promise;
         }
         if(['recall','hotkey-arm'].includes(node.operation)){if(!run.unified||run.mode==='target')return {ok:true,outputStates:Object.fromEntries((node.operation==='recall'?['out','records','report']:['proposal']).map(id=>[id,{status:'skipped',reason:{code:'RECALL_PREVIEW_NO_ACTIVATION',message:'Recall activates only on an owned ordinary Send or generated swipe.'}}])),reports:[]};const result=await recall.execute(run,node,inputs,{phase:operationPorts.phase,address:operationPorts.address,countTokens:ports.countTokens});if(result.ok&&artifactVisibility(result.outputs).kind==='actor-private'){const scoped=scopedActors(run);if(!scoped.ok)return scoped;const grant=scoped.data.authorizeSelectedActor();if(!grant.ok)return grant;const retained=scoped.data.captureScopedResult(result,grant.data.grant);if(!retained.ok)return retained;}return result;}
@@ -1104,6 +1174,7 @@ export function createNativeWorkflowController(ports) {
         recall.sync();
         const c=context(),events=c.eventTypes ?? c.event_types ?? {},subscriptions=[];
         const on=(name,fn)=>{if(events[name] && c.eventSource?.on){c.eventSource.on(events[name],fn);subscriptions.push([events[name],fn]);}};
+        on('CHAT_COMPLETION_SETTINGS_READY',applyNativeReasoning);
         on('GENERATION_STARTED',(type,options,dryRun)=>{
             generationInvocationDryRun=!!dryRun;if(dryRun)return;
             generation={overlap:!!active?.unified && !active.nativeResolved,observed:true,id:++generationSequence,startedAt:Date.now(),type:type || 'normal',dryRun:!!dryRun,aborted:!!options?.signal?.aborted,originalTail:{message:context().chat?.at(-1),text:context().chat?.at(-1)?.mes}};
@@ -1111,7 +1182,7 @@ export function createNativeWorkflowController(ports) {
             const owner=generation;
             if(options?.signal)options.signal.addEventListener('abort',()=>{if(generation===owner){generation.aborted=true;cancel('Generation aborted');}},{once:true});
         });
-        on('GENERATION_STOPPED',()=>{generation.aborted=true;const m=context().chat?.at(-1);if(m && !m.is_user && (!generation.originalTail || m!==generation.originalTail.message || m.mes!==generation.originalTail.text || incompleteStream(context(),context().chat.length-1)))rememberStopped(context());cancel('Generation stopped');});
+        on('GENERATION_STOPPED',()=>{generation.aborted=true;const m=context().chat?.at(-1);if(m && !m.is_user && (!generation.originalTail || m!==generation.originalTail.message || m.mes!==generation.originalTail.text || incompleteStream(context(),context().chat.length-1)))rememberStopped(context());if(active?.nativeReasoningFailure){clear();return;}cancel('Generation stopped');});
         on('GENERATION_ENDED',()=>{
             if(active?.unified && !active.nativeResolved){active.nativeEnded=true;active.nativeEndedAt??=Date.now();active.abortPrimary=null;clear();scheduleNative(active);return;}
             if(generation.unified && generation.finished)return;

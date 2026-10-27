@@ -1,6 +1,7 @@
 import { prepareNodeReadiness, readinessFromIssues, summarizeReadiness } from './node-readiness.js?v=0.28.1';
 import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.28.1';
-import { projectNodeControls, detailControl, detailsEditorContractKey } from './node-control-projection.js?v=0.28.1';
+import { projectNodeControls, projectReasoningControls, detailControl, detailsEditorContractKey } from './node-control-projection.js?v=0.28.1';
+import { ACTIVE_PROFILE_ID } from '../workflow/model-profiles.js?v=0.28.1';
 import { preparedViewContentIdentity } from './graph-view-session.js?v=0.28.1';
 import { iterationHelperChoices } from './configured-node-creation.js?v=0.28.1';
 import { prepareIterationBindings } from './iteration-bindings.js?v=0.28.1';
@@ -182,7 +183,7 @@ export function projectEditorDraw(editor, { canvasOnly = false } = {}) {
 export function projectNodeProfiles(editor, workflow, revision) {
     if (!editor?.prepared) return [];
     const library = editor.view.identity.kind === 'library', path = editor.view.identity.instancePath ?? [];
-    const options = (workflow.profiles ?? []).map(profile => ({ value: profile.id, label: profile.name, apiLabel: profile.apiLabel || '', model: profile.model || '', active: profile.active === true }));
+    const options = (workflow.profiles ?? []).map(profile => ({ value: profile.id, label: profile.name, api: profile.api || '', source: profile.source || profile.api || '', apiLabel: profile.apiLabel || '', model: profile.model || '', active: profile.active === true }));
     const available = options.length ? options : prepareNodeProfileOptions();
     return Object.values(editor.prepared.effectiveNodes).flatMap(node => {
         const op = operationFor(node), bound = op?.requestBound;
@@ -248,7 +249,12 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
                 fields = freeze(structuredClone({ controls, ports: metadata?.ports.map(port => ({ id: port.port, label: port.label, direction: port.dir === 'in' ? 'input' : 'output', kind: port.kind, required: port.required === true })) ?? [] }));
                 fieldCache.set(fieldKey, fields);
             }
-            const { controls } = fields;
+            const effectiveNode = editor.prepared.effectiveNodes[selectedId] ?? saved;
+            const role = effectiveNode?.modelRole ?? metadata?.modelRole;
+            const profileId = saved?.operation === 'generate-reply' ? ACTIVE_PROFILE_ID : effective?.profileId || effectiveNode?.profileId || graph.roles?.[role]?.profileId;
+            const profile = workflow.profiles?.find(profile => profile.id === profileId);
+            const model = saved?.operation === 'generate-reply' ? profile?.model : effective?.model || effectiveNode?.model || effective?.resolvedModel || profile?.model;
+            const controls = projectReasoningControls(fields.controls, {api:profile?.api,source:profile?.source,model});
             const modes = [{ value: 'inherit', label: 'Inherit role' }, { value: 'override', label: 'Override' }];
             const field = (key, options) => {
                 const explicitNull = editor?.prepared.drawBase.bindingBlocks?.[selectedId]?.[key] === true;
@@ -283,7 +289,7 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
                 ports: fields.ports, readiness: metadata.readiness, issues: [] } : null;
             if (nodeDetails?.model && effective?.issueDiagnostic) nodeDetails.model.issueDiagnostic = effective.issueDiagnostic;
             if (nodeDetails) nodeDetails.editorContractKey = detailsEditorContractKey(nodeDetails);
-            return { nodeDetails, commentDetails, fields };
+            return { nodeDetails, commentDetails, fields:controls === fields.controls ? fields : {...fields,controls} };
         })();
         const detached = structuredClone({ nodeDetails: produced.nodeDetails, commentDetails: produced.commentDetails });
         if (detached.nodeDetails) { detached.nodeDetails.controls = produced.fields.controls; detached.nodeDetails.ports = produced.fields.ports; }

@@ -3,10 +3,10 @@ const profileName = value => typeof value === 'string' ? value : '';
 const text = value => typeof value === 'string' ? value.slice(0, 256) : '';
 /** Public display metadata only; never a saved profile, endpoint or request binding. */
 export function prepareNodeProfileOptions(profiles = [], activeModel = null) {
-    const options = [{ value: ACTIVE_PROFILE_ID, label: ACTIVE_PROFILE_NAME, apiLabel: text(activeModel?.apiLabel), model: text(activeModel?.model), active: true }], seen = new Set([ACTIVE_PROFILE_ID]);
+    const options = [{ value: ACTIVE_PROFILE_ID, label: ACTIVE_PROFILE_NAME, api: text(activeModel?.transport) || text(activeModel?.api), source: text(activeModel?.source) || text(activeModel?.api), apiLabel: text(activeModel?.apiLabel), model: text(activeModel?.model), active: true }], seen = new Set([ACTIVE_PROFILE_ID]);
     for (const profile of profiles) {
         const value = text(profile?.id); if (!value || seen.has(value)) continue; seen.add(value);
-        options.push({ value, label: profileName(profile.name) || value, apiLabel: text(profile.apiLabel) || text(profile.api), model: text(profile.model), active: false });
+        options.push({ value, label: profileName(profile.name) || value, api: text(profile.api), source: text(profile.source) || text(profile.api), apiLabel: text(profile.apiLabel) || text(profile.api), model: text(profile.model), active: false });
     }
     return options;
 }
@@ -29,7 +29,7 @@ export function readNodeProfileMetadata(context, profiles = []) {
         if (!model && route?.selected === 'textgenerationwebui' && context.textCompletionSettings?.type === route.type) {
             model = text(activeModelMetadata({ mainApi: 'textgenerationwebui', textCompletionSettings: context.textCompletionSettings, CONNECT_API_MAP: context.CONNECT_API_MAP })?.model);
         }
-        return { id: text(profile.id), name: profileName(profile.name), api: text(profile.api), apiLabel: text(route?.label) || text(route?.name) || text(route?.source) || text(route?.type) || text(profile.api), model };
+        return { id: text(profile.id), name: profileName(profile.name), api: text(route?.selected) || text(profile.api), source: text(route?.source) || text(route?.type) || text(profile.api), apiLabel: text(route?.label) || text(route?.name) || text(route?.source) || text(route?.type) || text(profile.api), model };
     });
 }
 

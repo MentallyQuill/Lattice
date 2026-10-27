@@ -26,6 +26,22 @@ Configure **For Each → Helper model bindings** separately. Choosing a connecti
 
 Each request uses the tool’s own instructions and connected material. Lattice does not switch SillyTavern’s main connection globally or copy the main prompt into every extra request. Credentials stay in SillyTavern’s secret store.
 
+Choose **Details → Limits & retries → Reasoning** on a model node to control
+that node's requests. **None** is the default. Available choices follow the
+effective connection and model; **Custom** opens a field for a provider effort
+value. The value is saved with the node and reused on retries. Inside a helper
+or subgraph, configure the node that makes the request. **Generate Reply** uses
+the active SillyTavern model and applies its setting to that reply alone.
+
+None disables optional thinking when the provider and installed SillyTavern
+adapter support it. Some models always reason; their control explains how None
+is handled. Providers use different effort names, thinking switches, or token
+budgets, and some host adapters cannot forward every provider setting. Unsupported
+Custom values produce an error instead of silently using a different effort.
+These controls do not change the saved connection profile or global sampler.
+See [reasoning controls and provider adapter limits](reasoning-controls.md) for
+the supported routes and model capability rules.
+
 **Run to here** can spend tokens when the tested path includes model tools. A later Send runs its own preparation; it does not reuse that diagnostic result. Update the extension through **Manage Extensions**, then reload.
 
 ## Model-backed examples

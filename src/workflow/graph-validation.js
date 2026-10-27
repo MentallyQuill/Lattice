@@ -51,6 +51,7 @@ function controlValid(value, descriptor) {
         : descriptor.type === 'object' ? record(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value)) && (descriptor.max === undefined || Object.keys(value).length <= descriptor.max) && cloneDefinitionData(value).ok
         : descriptor.type === 'array' ? Array.isArray(value) && (descriptor.items === 'json' ? cloneDefinitionData(value).ok : value.every(item => typeof item === 'string' || ['string-or-record', 'record', 'context-slot'].includes(descriptor.items) && record(item)))
         : descriptor.type === 'json-value' ? cloneJsonValue(value).ok
+        : descriptor.type === 'string' ? typeof value === 'string' && (descriptor.maxLength === undefined || value.length <= descriptor.maxLength)
         : typeof value === descriptor.type;
 }
 

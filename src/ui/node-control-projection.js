@@ -2,6 +2,7 @@ import { OPERATIONS, operationFor, describeAuthoredOperation } from '../workflow
 import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.28.1';
 import { recallControlLabel } from '../workflow/recall-labels.js?v=0.28.1';
 import { resolveControlInputSpec, formatControlInput } from './control-input-contracts.js?v=0.28.1';
+import { reasoningOptions } from '../workflow/reasoning.js?v=0.28.1';
 /** Editor compatibility only; revision/activation are write tokens. */
 export function detailsEditorContractKey(node) {
  return JSON.stringify([node.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured, control.inputSpec?.id, control.inputSpec?.version]), node.model?.profile.allowedModes, node.model?.model.allowedModes, node.model?.editable, node.helperBindings && [node.helperBindings.helperKey, node.helperBindings.editable, node.helperBindings.roles.map(row => [row.role, row.model.allowedModes])], node.boundary && [node.boundary.id, node.boundary.direction, node.boundary.kinds], !!node.fileInput, node.modifiers && [node.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), node.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), node.modifiers.editable], node.readOnly]);
@@ -24,9 +25,30 @@ export function detailControl(key,label,descriptor,value) {
  const editor=descriptor.editor==='json'||descriptor.type==='json-value'||descriptor.type==='object'||descriptor.type==='array'&&descriptor.items!=='string'?'json':descriptor.type==='enum'?'enum':descriptor.type==='array'?'lines':['integer','number'].includes(descriptor.type)?'number':descriptor.type==='boolean'?'boolean':'text';
  return {key,label,value:value === undefined ? descriptor.default : value,editor,...(descriptor.help?{help:descriptor.help}:{}),...(editor==='json'?(descriptor.type==='string'?{representation:'json-text',allowEmpty:true}:{representation:'json-value'}):{}),...(descriptor.values?{options:descriptor.values.map(value=>({value,label:descriptor.valueLabels?.[value]??value}))}:{}),...(descriptor.min!==undefined?{min:descriptor.min}:{}),...(descriptor.max!==undefined?{max:descriptor.max}:{}),...(editor==='number'?{step:descriptor.step ?? (descriptor.type==='integer'?1:'any')}:{})};
 }
+/** Provider decoration stays separate from cached authored field contracts. */
+const reasoningControlCache = new WeakMap();
+export function projectReasoningControls(controls, target = {}) {
+ if (!controls.some(control => control.key === 'reasoningEffort')) return controls;
+ const key = JSON.stringify([target.api, target.source, target.model, target.endpoint, target.metadata]);
+ const previous = reasoningControlCache.get(controls);
+ if (previous?.key === key) return previous.controls;
+ const presentation = reasoningOptions(target);
+ const projected = controls.map(control => {
+  if (control.key !== 'reasoningEffort') return control;
+  const value = control.value ?? 'none', options = [...presentation.options];
+  if (!options.some(option => option.value === value)) options.push({value:String(value),label:String(value) + ' (saved)'});
+  return {...control,value,options,help:presentation.help};
+ });
+ reasoningControlCache.set(controls, {key,controls:projected});
+ return projected;
+}
 const friendlyControlLabel = key => ({ maxTokens: 'Output tokens', budgetTokens: 'Token budget', pins: 'Pinned wording', rules: 'Rules' }[key] ?? key.replace(/([A-Z])/g, char => ' ' + char.toLowerCase()).replace(/^./, char => char.toUpperCase()));
 function visibleDetailControl(node, defaults, key) {
  const value = name => node?.[name] ?? defaults[name];
+ if (['reasoningEffort','reasoningCustom'].includes(key)) {
+  const operation = operationFor(node), bound = operation?.requestBound;
+  if (!operation?.nativeBoundary && !(typeof bound === 'function' ? bound(node) : bound)) return false;
+ }
  if(node?.operation==='scene-context'&&defaults.selection!==undefined){if(key==='activationMode')return false;if(key==='recentMessages')return value('selection')==='recent';if(key==='keepRecentAssistantTurns')return value('selection')==='before-window';}
  if (node?.operation === 'compose') return key !== 'template' || value('mode') === 'template' ? key !== 'separator' || value('mode') === 'join' : false;
  if (node?.operation === 'text-rules') return key !== 'separator' || value('mode') === 'extract' ? !['scope','protectedLiterals'].includes(key) || value('inputKind') === 'draft' : false;
@@ -47,7 +69,8 @@ function detailPresentation(operation, key) {
  const primaryModel = ['enrich','extract','model-call','revise-draft'].includes(operation);
  const purpose = purposeGroups[operation];
  const specific = purpose && Object.entries(purpose).find(([,keys]) => keys.includes(key))?.[0];
- const group = key === 'instructions' ? 'Instructions'
+ const group = ['reasoningEffort','reasoningCustom'].includes(key) ? 'Limits & retries'
+  : key === 'instructions' ? 'Instructions'
   : primaryModel && ['maxTokens','maxRetries'].includes(key) ? 'Limits & retries'
   : primaryModel && ['outputKind','schema'].includes(key) ? 'Output'
   : specific ?? (['pins','protectedLiterals','exemptions'].includes(key) ? 'Protections'
@@ -55,7 +78,7 @@ function detailPresentation(operation, key) {
   : key === 'durations' ? 'Phases'
   : ['separator','maxTokens'].includes(key) ? 'Output' : 'Main');
  const groupOpen = group === 'Instructions' || primaryModel && group === 'Output';
- return {group, ...(groupOpen ? {groupOpen:true} : {}), ...(group !== 'Main' ? {advanced:true} : {}), ...(structured ? {structured} : {}), ...(operation === 'model-call' && key === 'outputKind' ? {options:[{value:'text',label:'Plain text'},{value:'data',label:'JSON data'}]} : {}), ...(['actorId','curveId','trackId','idempotencyKey','promptId'].includes(key) ? {singleLine:true} : {})};
+ return {group, ...(groupOpen ? {groupOpen:true} : {}), ...(group !== 'Main' ? {advanced:true} : {}), ...(structured ? {structured} : {}), ...(operation === 'model-call' && key === 'outputKind' ? {options:[{value:'text',label:'Plain text'},{value:'data',label:'JSON data'}]} : {}), ...(['actorId','curveId','trackId','idempotencyKey','promptId','reasoningCustom'].includes(key) ? {singleLine:true} : {})};
 }
 
 // Presentation groups never change visibility, defaults, admission, or values.

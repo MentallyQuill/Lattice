@@ -130,7 +130,7 @@ async function executeNode(node,inputs,op,local) {
         }
         case 'repair': {
             if(!CLEANUP_MODES.includes(node.mode))return repairDraft(input,node,local);
-            const settings=Object.fromEntries(op.controls.filter(key=>key!=='policyVersion').map(key=>[key,node[key]===undefined?op.defaults[key]:node[key]]));
+            const settings=Object.fromEntries(op.controls.filter(key=>!['policyVersion','reasoningEffort','reasoningCustom'].includes(key)).map(key=>[key,node[key]===undefined?op.defaults[key]:node[key]]));
             const result=await cleanupDraft(input,settings,{request:local.request,countTokens:local.countTokens,binding:local.binding,...(local.signal?{signal:local.signal}:{}),...(inputs.context?{context:inputs.context}:{})});
             return result.ok?{ok:true,artifact:result.data.artifact,reports:result.data.report}:result;
         }
@@ -308,7 +308,8 @@ async function executeWorkflow(original,ports,hooks={}) {
                         if(!diagnosticRequestOpen||closed||!operationOpen||stopped()||!mayCaptureDiagnosticResponse())return;
                         const text=own(value,'text');if(typeof text==='string')diagnosticCompletion=text;
                     }:undefined;
-                    try{response=await ports.request({...options,binding:requestBinding,signal:ports.signal,onDiagnosticResponse,isDiagnosticResponseCurrent:diagnosticResponses?mayCaptureDiagnosticResponse:undefined});}
+                    const reasoning=node.operation==='for-each'?{reasoningEffort:own(options,'reasoningEffort')??'none',reasoningCustom:own(options,'reasoningCustom')??''}:{reasoningEffort:node.reasoningEffort??'none',reasoningCustom:node.reasoningCustom??''};
+                    try{response=await ports.request({...options,...reasoning,binding:requestBinding,signal:ports.signal,onDiagnosticResponse,isDiagnosticResponseCurrent:diagnosticResponses?mayCaptureDiagnosticResponse:undefined});}
                     catch(error){response=normalizeRequestFailure(error,{aborted:stopped()});}
                     finally{diagnosticRequestOpen=false;}
                     if(closed||!operationOpen)return requestFailure();
@@ -368,7 +369,7 @@ async function executeWorkflow(original,ports,hooks={}) {
                     }
                     if(typeof childLocal.request!=='function')return failure('REQUEST_MISSING','The helper requires its bounded per-iteration request capability.',node.id);
                     const before=nodeCalls.get(key)??0;childCalls++;
-                    try{return await childLocal.request({...options,capability,binding:childBindings.get(capability),modelRole:role,childAddress:child.address});}
+                    try{return await childLocal.request({...options,reasoningEffort:childNode.reasoningEffort??'none',reasoningCustom:childNode.reasoningCustom??'',capability,binding:childBindings.get(capability),modelRole:role,childAddress:child.address});}
                     finally{childCalls+=(nodeCalls.get(key)??0)-before-1;}
                 };
                 try{const result=await executeNode(childNode,childInputs,childOp,{...ports,...childLocal,iterateHelper:childIterate,isRecoveredIterationResult:result=>recovered.has(result),binding:undefined,request:childRequest,onModelValidation,onRetry:details=>{if(childOpen&&childCalls>0&&childCalls<child.requestBound)onRetry(details);},getRequestCount:()=>childCalls,executeIntrospection:hooks.executeIntrospection,executeHostOperation:undefined,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});if(!result?.ok)onModelValidation(result?.error);return result;}
