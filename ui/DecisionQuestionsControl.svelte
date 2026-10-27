@@ -7,6 +7,7 @@
     import type { JsonValue, JsonPath } from '../src/workflow/operations/json-data';
     import JsonValueControl from './JsonValueControl.svelte';
     type Row = Record<string,JsonValue>;
+    const answerTypeLabel=(type:JsonValue)=>({noul:'Yes / no',choice:'Named choices',score:'Ordered score rubric'} as Record<string,string>)[String(type)]??String(type);
     let { value, onchange, oninvalid, draftState, onDraftState, idPrefix, label='Questions', disabled=false, error='' }: {value:JsonValue;onchange:(value:JsonValue)=>void;oninvalid?:(text:string)=>void;draftState?:DecisionDraftState;onDraftState?:(state:DecisionDraftState)=>void;idPrefix:string;label?:string;disabled?:boolean;error?:string}=$props();
     function initial(){return draftState;}
     function initialValue(){return value;}
@@ -44,7 +45,7 @@
         <small>{rows.length} of 32 questions. Identity stays fixed when words or order change.</small>
         <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard access to the bounded record list.) -->
         <div class="records" role="region" aria-label={label+' records'} tabindex="0">{#each rows as row,index (row.id)}
-            <details class="record" data-record-row open={expandedRows.includes(String(row.id))} ontoggle={event=>{const id=String(row.id);expandedRows=event.currentTarget.open?[...new Set([...expandedRows,id])]:expandedRows.filter(key=>key!==id);}}><summary>Question {index+1} · {String(row.id)}<small>{String(row.type)}</small></summary><fieldset><legend>Question {index+1}</legend><small>Identity: {row.id}</small>
+            <details class="record" data-record-row open={expandedRows.includes(String(row.id))} ontoggle={event=>{const id=String(row.id);expandedRows=event.currentTarget.open?[...new Set([...expandedRows,id])]:expandedRows.filter(key=>key!==id);}}><summary>Question {index+1} · {String(row.id)}<small>{answerTypeLabel(row.type)}</small></summary><fieldset><legend>Question {index+1}</legend><small>Identity: {row.id}</small>
                 <label for={idPrefix+'-type-'+index}>Answer type</label><select {disabled} id={idPrefix+'-type-'+index} aria-label={'Question '+(index+1)+' type'} value={row.type} onchange={event=>type(index,event.currentTarget.value)}><option value="noul">Yes / no</option><option value="choice">Named choices</option><option value="score">Ordered score rubric</option></select>
                 {#if typeof row.instructions==='string'}<label for={idPrefix+'-instructions-'+index}>Instructions</label><textarea {disabled} id={idPrefix+'-instructions-'+index} aria-label={'Question '+(index+1)+' instructions'} value={row.instructions} oninput={event=>edit(index,'instructions',event.currentTarget.value)}></textarea><button {disabled} type="button" aria-label={'Use structured question '+(index+1)+' instructions'} onclick={()=>edit(index,'instructions',{text:row.instructions})}>Use structured instructions</button>
                 {:else}<JsonValueControl embedded value={row.instructions} onchange={next=>typedEdit(index,'instructions',next)} oninvalid={(text,path)=>typedInvalid(index,'instructions',text,path)} label={'Question '+(index+1)+' instructions'} idPrefix={idPrefix+'-instructions-'+index} {disabled}/>{/if}

@@ -99,7 +99,7 @@ from 0–2 to 0–5, preserve request bound `1 + maxRetries` and retry eligibili
 - [x] Add failing boundary tests (0/5 accepted, 6/noninteger rejected) for every
   runtime retry contract and a real slider/undo browser interaction.
 - [x] Implement the range and accurate None/count/total-call labeling.
-- [ ] Run full unit suite, Svelte type checks, build/assets/examples checks and
+- [x] Run full unit suite, Svelte type checks, build/assets/examples checks and
   browser suite. Inspect production screenshots at required widths/themes.
-- [ ] Obtain the required fresh whole-branch review, address material findings
+- [x] Obtain the required fresh whole-branch review, address material findings
   with regression tests, rebuild assets and prepare the worktree for review.

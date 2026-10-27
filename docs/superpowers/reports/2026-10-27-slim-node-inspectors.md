@@ -61,4 +61,20 @@ whole-list JSON parsing or serialization.
 
 ## Final verification
 
-Final full-suite results are recorded after the running checks finish.
+- Complete production browser suite: **518/518 passed** (9.8 minutes), including
+  all 25 affected operation families, narrow/deep editors, theme changes,
+  readonly bodies, rejection, Undo, draft retention, and workspace behavior.
+- Final affected Node suites: **22/22 files passed**, including creation forms,
+  schemas, typed values, structured/question/schedule editors, large payloads,
+  qualified drafts, atomic edits, and runtime retry bounds.
+- The full Node run covered **399 files**. It completed 398/399 before the
+  group-key performance fix; the sole failure was subsequently corrected and
+  passed in the final 22-file run. The original baseline was 396/396.
+- Svelte/TypeScript: **0 errors, 0 warnings**.
+- Production build passed; committed UI/CSS regenerated. Asset verification
+  passed with **827 versioned local imports**.
+- Memory example freshness passed: **2 lessons, 10 files, no changes**.
+- Production screenshots inspected in Lattice and Ash and at narrow widths.
+
+Implementation is committed in the managed worktree and ready for review.
+Integration into another branch and deployment remain separate actions.
