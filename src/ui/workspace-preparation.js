@@ -1,6 +1,6 @@
 import { prepareNodeReadiness, readinessFromIssues, summarizeReadiness } from './node-readiness.js?v=0.28.1';
 import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.28.1';
-import { projectNodeControls, detailControl } from './node-control-projection.js?v=0.28.1';
+import { projectNodeControls, detailControl, detailsEditorContractKey } from './node-control-projection.js?v=0.28.1';
 import { preparedViewContentIdentity } from './graph-view-session.js?v=0.28.1';
 import { iterationHelperChoices } from './configured-node-creation.js?v=0.28.1';
 import { prepareIterationBindings } from './iteration-bindings.js?v=0.28.1';
@@ -500,9 +500,4 @@ export function projectDefinitionInstance(info,wrapper,profiles=[],effectiveCont
 export function projectDefinitionUpdate(previous,next) {
  const rows=(old,choices,compatible=()=>true)=>old.map(row=>{const options=choices.filter(choice=>compatible(row,choice)).map(choice=>({id:choice.id,label:choice.label}));return {from:row.id,label:row.label,to:options.some(choice=>choice.id===row.id)?row.id:null,options,canDrop:true};});
  return {portMap:rows(previous.interface,next.interface,(a,b)=>a.direction===b.direction&&a.kind===b.kind),parameterMap:rows(previous.parameters,next.parameters),roleMap:rows(previous.roles,next.roles),nodeBindingMap:rows(previous.nodeBindings,next.nodeBindings)};
-}
-
-/** Producer contract contains editor compatibility only; revision/activation are write tokens. */
-function detailsEditorContractKey(node) {
-    return JSON.stringify([node.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured, control.inputSpec?.id, control.inputSpec?.version]), node.model?.profile.allowedModes, node.model?.model.allowedModes, node.model?.editable, node.helperBindings && [node.helperBindings.helperKey, node.helperBindings.editable, node.helperBindings.roles.map(row => [row.role, row.model.allowedModes])], node.boundary && [node.boundary.id, node.boundary.direction, node.boundary.kinds], !!node.fileInput, node.modifiers && [node.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), node.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), node.modifiers.editable], node.readOnly]);
 }

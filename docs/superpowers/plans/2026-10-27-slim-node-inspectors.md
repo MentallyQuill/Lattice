@@ -1,6 +1,6 @@
 # Slim Node Inspectors Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Deliver a slim, understandable and easy-to-navigate real details bar
 across all nodes affected by bloated shared editors, preserving supported behavior.
@@ -44,13 +44,13 @@ component/integration tests and browser details tests.
 **Interfaces:** Consume existing SchemaControl props and SchemaDraftState;
 extend optional view-state fields, keeping old cached drafts compatible.
 
-- [ ] Add failing tests for inline expansion, no redundant enable toggle,
+- [x] Add failing tests for inline expansion, no redundant enable toggle,
   read-only navigation, exact source/key preservation and invalid draft recovery.
-- [ ] Port the approved Svelte editor with production-relative imports; retain
+- [x] Port the approved Svelte editor with production-relative imports; retain
   contextual constraints, advanced JSON/rules and one bounded scroll region.
-- [ ] Adapt existing interaction tests to the approved controls and run schema
+- [x] Adapt existing interaction tests to the approved controls and run schema
   authoring, integration and production browser checks.
-- [ ] Commit the independently verified shared schema change.
+- [x] Commit the independently verified shared schema change.
 
 ### Task 2: Real inspector grouping and atomic authoring
 
@@ -61,14 +61,14 @@ extend optional view-state fields, keeping old cached drafts compatible.
 **Interfaces:** Preserve NodeDetailsActions; add an acknowledged atomic controls
 action only for coupled changes. Keep existing single-control callers working.
 
-- [ ] Add failing projection/transaction/component tests for Model Call and
+- [x] Add failing projection/transaction/component tests for Model Call and
   other schema consumers, rejected output/stage edits, stale acknowledgments,
   readonly settings and presentation independence.
-- [ ] Group common settings by purpose, integrate output/schema atomically,
+- [x] Group common settings by purpose, integrate output/schema atomically,
   retain truthful phase controls/context and reduce repeated helper chrome.
-- [ ] Show save/discard controls only for authored drafts and pending/errors;
+- [x] Show save/discard controls only for authored drafts and pending/errors;
   retain canonical diagnostics, guide access and advanced model overrides.
-- [ ] Run relevant component and production browser checks and commit.
+- [x] Run relevant component and production browser checks and commit.
 
 ### Task 3: Compact reusable controls and record/value editors
 
@@ -79,14 +79,14 @@ same redundant chrome; matching component/browser tests.
 **Interfaces:** Keep current typed values, callbacks, draft admission, exact
 key semantics, operation-specific record schemas and available actions.
 
-- [ ] Inventory every affected operation/editor family in the execution ledger.
+- [x] Inventory every affected operation/editor family in the execution ledger.
   Add failing tests for compact rows, inline navigation, hidden advanced detail,
   retained actions and accessible narrow/keyboard behavior.
-- [ ] Apply progressive disclosure to repeated records and typed children;
+- [x] Apply progressive disclosure to repeated records and typed children;
   use compact native boolean/scalar controls without removing settings.
-- [ ] Run existing structured/value/decision/schedule tests, fix affected
+- [x] Run existing structured/value/decision/schedule tests, fix affected
   interaction expectations, and exercise representatives in the real harness.
-- [ ] Commit the verified shared-control changes.
+- [x] Commit the verified shared-control changes.
 
 ### Task 4: Retry range and complete integration verification
 
@@ -96,9 +96,9 @@ operations, browser coverage, developer docs and generated `dist/lattice-ui.js`.
 **Interfaces:** Keep `maxRetries` integer; widen supported range consistently
 from 0–2 to 0–5, preserve request bound `1 + maxRetries` and retry eligibility.
 
-- [ ] Add failing boundary tests (0/5 accepted, 6/noninteger rejected) for every
+- [x] Add failing boundary tests (0/5 accepted, 6/noninteger rejected) for every
   runtime retry contract and a real slider/undo browser interaction.
-- [ ] Implement the range and accurate None/count/total-call labeling.
+- [x] Implement the range and accurate None/count/total-call labeling.
 - [ ] Run full unit suite, Svelte type checks, build/assets/examples checks and
   browser suite. Inspect production screenshots at required widths/themes.
 - [ ] Obtain the required fresh whole-branch review, address material findings

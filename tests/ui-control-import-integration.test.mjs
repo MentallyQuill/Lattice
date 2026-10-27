@@ -170,7 +170,7 @@ test('shared inspector imports current unsaved rows, blocks Save while open, ret
  const view=detail(f.root);let calls=0;const form=await panel('NodeDetails',view,{editControl:(selection,key,value)=>{calls++;return f.editControl(selection,key,value);}});
  try{
   await click(form.host,'Import Rules table');
-  assert.equal(form.host.querySelector('[data-save-control="rules"]').disabled,true);
+  assert.equal(form.host.querySelector('[data-save-control="rules"]'),null,'No Save action is offered before a local draft exists');
   input(form.host,'Table delimiter','\t','change');input(form.host,'Table data','Expression\tID\nnew\tx\nagain\tx');
   input(form.host,'Map pattern column','Expression','change');input(form.host,'Map id column','ID','change');await click(form.host,'Review import');
   assert.match(form.host.querySelector('[role="alert"]').textContent,/Row 3, cell 2/);

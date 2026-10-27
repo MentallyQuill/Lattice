@@ -96,7 +96,7 @@
                 </div>
             {/each}
             {#if keys.length>pageSize}<div class="actions"><button type="button" aria-label={'Previous '+label+' children'} disabled={page===0} onclick={()=>pages[key]=page-1}>Previous</button><small>Page {page+1} of {Math.ceil(keys.length/pageSize)}</small><button type="button" aria-label={'Next '+label+' children'} disabled={(page+1)*pageSize>=keys.length} onclick={()=>pages[key]=page+1}>Next</button></div>{/if}
-            {#if type==='object'}<form onsubmit={event=>{event.preventDefault();addProperty(at);}}><label for={nodeId(at)+'-new-key'}>Exact property key</label><div class="add-row"><input id={nodeId(at)+'-new-key'} aria-label={label+' new key'} value={keyDrafts[key]??''} disabled={!editable(at)} oninput={event=>{if(editable(at))keyDrafts[key]=event.currentTarget.value;}}/><button type="submit" aria-label={'Add '+label+' property'} disabled={!editable(at)}>Add property</button></div></form>
+            {#if type==='object'}<div><label for={nodeId(at)+'-new-key'}>Exact property key</label><div class="add-row"><input id={nodeId(at)+'-new-key'} aria-label={label+' new key'} value={keyDrafts[key]??''} disabled={!editable(at)} oninput={event=>{if(editable(at))keyDrafts[key]=event.currentTarget.value;}} onkeydown={event=>{if(event.key==='Enter'){event.preventDefault();event.stopPropagation();addProperty(at);}}}/><button type="button" aria-label={'Add '+label+' property'} disabled={!editable(at)} onclick={()=>addProperty(at)}>Add property</button></div></div>
             {:else}<button class="add-item" type="button" aria-label={'Add '+label+' item'} disabled={!editable(at)} onclick={()=>addItem(at)}>+ Add item</button>{/if}
         {/if}
     </div>

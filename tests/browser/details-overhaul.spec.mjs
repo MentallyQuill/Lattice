@@ -122,8 +122,8 @@ test('shared table import remains local and cancelling preserves the ordinary in
  const panel=page.getByRole('region',{name:'Node details',exact:true}),before=await page.evaluate(()=>structuredClone(window.canvasHarness.graph));
  await panel.getByRole('button',{name:'Import Fields table',exact:true}).click();await panel.getByLabel('Table data',{exact:true}).fill('Name,Path\nOne,invalid');
  await panel.getByLabel('Map name column',{exact:true}).selectOption('Name');await panel.getByLabel('Map path column',{exact:true}).selectOption('Path');await panel.getByRole('button',{name:'Review import',exact:true}).click();
- await expect(panel.getByRole('alert')).toContainText('Row 2, cell 2');await expect(panel.getByRole('button',{name:'Save Fields',exact:true})).toBeDisabled();
- await panel.getByRole('button',{name:'Cancel import',exact:true}).click();await expect(panel.getByRole('button',{name:'Save Fields',exact:true})).toBeEnabled();
+ await expect(panel.getByRole('alert')).toContainText('Row 2, cell 2');await expect(panel.getByRole('button',{name:'Save Fields',exact:true})).toHaveCount(0);
+ await panel.getByRole('button',{name:'Cancel import',exact:true}).click();await expect(panel.getByRole('button',{name:'Save Fields',exact:true})).toHaveCount(0);
  await panel.getByRole('button',{name:'Import Fields table',exact:true}).click();await expect(panel.getByLabel('Table data',{exact:true})).toHaveValue('Name,Path\nOne,invalid');
  expect(await page.evaluate(()=>window.canvasHarness.graph)).toEqual(before);expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
 });

@@ -29,6 +29,8 @@
         ontext: (text: string) => void; onDraft?: (value: unknown) => void; draftValue?: unknown; onvalue: (value: unknown) => void; onnumber: (input: HTMLInputElement) => void; onsave: () => void;
     } = $props();
     let localRecordMode = $state<'terms'|'rows'>('rows');
+    let retryValue = $state(0);
+    $effect(()=>{if(control.key==='maxRetries')retryValue=Number(control.value);});
     const termMode = $derived((recordMode ?? localRecordMode) === 'terms');
     function setRecordMode(mode:'terms'|'rows'){localRecordMode=mode;onRecordMode?.(mode);}
     function structuredText(source:string){if(disabled)return;onformat?.('json');ontext(source);}
@@ -91,7 +93,7 @@
     }
 </script>
 
-<div class:pc-control-number={control.editor === 'number'} class="pc-detail-control">
+<div class:pc-control-number={control.editor === 'number' && control.key !== 'maxRetries'} class="pc-detail-control">
     {#if tableSupported && !tableState.open}<button type="button" aria-label={'Import '+control.label+' table'} disabled={disabled||pending||!tableValue?.ok} onclick={()=>{if(tableValue?.ok)tableStateChange({...tableState,open:true});}}>Import {control.label} table</button>{/if}
     {#if tableSupported && tableState.open && control.inputSpec}
         {#key importIdentity}<ControlImport spec={control.inputSpec} value={tableValue?.ok?tableValue.data.value:[]} draft={tableState.draft} onDraft={tableDraft} onConfirm={confirmTable} onCancel={()=>tableStateChange({...tableState,open:false})} disabled={disabled||pending} admissionDisabled={!tableValue?.ok}/>{/key}
@@ -121,6 +123,11 @@
         <span class="pc-control-label">{control.label}</span>
         {#if recordEntry}<button type="button" aria-label={'Use '+control.label+' terms'} {disabled} onclick={switchRows}>Terms / CSV</button>{/if}
         <StructuredControl {control} {text} {disabled} ontext={structuredText} {onDraft} {draftValue} {idPrefix} {error} />
+    {:else if control.editor === 'number' && control.key === 'maxRetries'}
+        <label class="pc-retry-label" for={idPrefix+'-retries'}>{control.label}<output for={idPrefix+'-retries'}>{retryValue===0?'None':retryValue}</output></label>
+        <input class="pc-retry-slider" id={idPrefix+'-retries'} type="range" aria-label={control.label} min={control.min??0} max={control.max} step="1" value={retryValue} aria-valuetext={retryValue===0?'None':retryValue+' additional attempts'} {disabled} oninput={event=>{if(!disabled)retryValue=Number(event.currentTarget.value);}} onchange={event=>{if(!disabled)onnumber(event.currentTarget);}}/>
+        <div class="pc-retry-ends" aria-hidden="true"><span>None</span><span>{control.max}</span></div>
+        <small>{retryValue===0?'No retries on failure.':`Up to ${retryValue+1} model calls in total. Only eligible failures are retried.`}</small>
     {:else if control.editor === 'boolean'}
         <label class="pc-detail-check"><span>{control.label}</span><input aria-label={control.label} type="checkbox" role="switch" checked={Boolean(control.value)} {disabled} onchange={event => { if (!disabled) onvalue(event.currentTarget.checked); }} /><small>{control.value?'On':'Off'}</small></label>
     {:else if shortChoices()}
@@ -152,6 +159,7 @@
 
 <style>
     .pc-detail-control { min-width: 0; margin: 9px 0; }
+    .pc-retry-label{display:flex;justify-content:space-between;align-items:center;gap:8px}.pc-retry-label output{color:var(--pc-accent);font-variant-numeric:tabular-nums}.pc-retry-ends{display:flex;justify-content:space-between;color:var(--pc-muted);font-size:10px}.pc-retry-slider{accent-color:var(--pc-accent);padding:0!important;border:0!important;background:transparent!important;cursor:pointer}
     .pc-control-draft-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 9px; border-top: 1px solid var(--pc-border); padding-top: 6px; }
     .pc-control-draft-actions > span { flex: 1; color: var(--pc-warn); font-size: 10px; }
     .pc-control-help { margin-top: 5px; color: var(--pc-muted); font-size: 10px; }

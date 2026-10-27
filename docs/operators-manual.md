@@ -288,7 +288,11 @@ The guide is the complete explanation for each tool. This manual explains the ed
 
 ### Familiar node settings
 
-Prefer the normal controls for everyday editing. Lists and tables let you add, remove, and reorder rows. Structured values have controls for text, numbers, true/false, lists, and objects. Where a control has **Save …**, use it to validate and commit the whole edit.
+Prefer the normal controls for everyday editing. Expand fields and records in place to inspect their settings; long lists scroll inside the inspector. Lists and tables let you add, remove, and reorder rows. Structured values have controls for text, numbers, true/false, lists, and objects. A draft reveals **Save** and **Discard**. Save validates the edit and waits for acknowledgment; a rejected edit remains available to correct. Discard returns that control to its saved value.
+
+For **Model Call**, choose **Plain text** or **JSON data** under Output. JSON fields appear directly below the format choice. Use **Any JSON type** to allow every JSON type, add constraints where needed, or open **Edit schema JSON** for the exact document. Field names remain exact keys. Workflow stage retains the real Preparation/Response behavior and reports whether it came from the node, workflow, connections, or operation.
+
+Under **Limits & retries**, **Additional attempts** runs from **None** to **5**. Five additional attempts permits at most six model calls, including the first attempt. Only eligible failures are retried; cancellation and authorization failures do not gain retries. Literal Extract does not expose unused model controls.
 
 For example, Pattern's **Rules → Terms / CSV** accepts:
 

@@ -7,11 +7,12 @@ import {JSDOM} from 'jsdom';
 import {pathToFileURL} from 'node:url';
 import {compiled} from './helpers/svelte-compile.mjs';
 import {projectNodeControls} from '../src/ui/node-control-projection.js';
+import {findInlineEditor,selectValueScope,rememberValueEditor} from './helpers/inline-value-scope.mjs';
 const dom=new JSDOM('<!doctype html><body></body>',{pretendToBeVisual:true});globalThis.window=dom.window;globalThis.document=dom.window.document;
 for(const key of ['Node','Element','Text','Comment','Document','HTMLElement','HTMLMediaElement','HTMLButtonElement','HTMLInputElement','HTMLSelectElement','MutationObserver'])Object.defineProperty(globalThis,key,{configurable:true,value:dom.window[key]});
 const {mount,unmount,flushSync,tick}=await import(new URL('../node_modules/svelte/src/index-client.js',import.meta.url).href);
-async function fixture(name,props,reactive=false){const directory=await mkdtemp(join(tmpdir(),'lattice-storage-ui-')),host=document.createElement('div');document.body.append(host);let mounted;const close=async()=>{if(mounted)await unmount(mounted);host.remove();const rel=relative(resolve(tmpdir()),resolve(directory));assert.ok(rel&&!rel.startsWith('..')&&!isAbsolute(rel));await rm(directory,{recursive:true,force:true});};try{let leaf;try{leaf=await compiled(name,directory);}catch(error){assert.fail(name+' component must compile: '+error.message);}if(reactive){const harness=await compiled('TypedDraftHarness',directory,`<script>import Leaf from ${JSON.stringify(pathToFileURL(leaf.path).href)};let {initial,actions}=$props();let view=$state.raw(initial);export function update(next){view=next;}</script><Leaf {view} {actions}/>`);mounted=mount(harness.component,{target:host,props:{initial:props.view,actions:props.actions}});}else mounted=mount(leaf.component,{target:host,props});flushSync();await tick();return {host,mounted,close};}catch(error){await close();throw error;}}
-const input=(host,label,value,event='input')=>{const element=host.querySelector('[aria-label="'+label+'"]');assert.ok(element,label);element.value=value;element.dispatchEvent(new dom.window.Event(event,{bubbles:true}));flushSync();return element;};const button=(host,label)=>[...host.querySelectorAll('button')].find(element=>element.getAttribute('aria-label')===label||element.textContent.trim()===label);
+async function fixture(name,props,reactive=false){const directory=await mkdtemp(join(tmpdir(),'lattice-storage-ui-')),host=document.createElement('div');document.body.append(host);let mounted;const close=async()=>{if(mounted)await unmount(mounted);host.remove();const rel=relative(resolve(tmpdir()),resolve(directory));assert.ok(rel&&!rel.startsWith('..')&&!isAbsolute(rel));await rm(directory,{recursive:true,force:true});};try{let leaf;try{leaf=await compiled(name,directory);}catch(error){assert.fail(name+' component must compile: '+error.message);}if(reactive){const harness=await compiled('TypedDraftHarness',directory,`<script>import Leaf from ${JSON.stringify(pathToFileURL(leaf.path).href)};let {initial,actions}=$props();let view=$state.raw(initial);export function update(next){view=next;}</script><Leaf {view} {actions}/>`);mounted=mount(harness.component,{target:host,props:{initial:props.view,actions:props.actions}});}else mounted=mount(leaf.component,{target:host,props});flushSync();await tick();for(const summary of host.querySelectorAll("details[data-control-group]:not([open]) > summary")){summary.click();flushSync();}return {host,mounted,close};}catch(error){await close();throw error;}}
+const input=(host,label,value,event='input')=>{const element=findInlineEditor(host,label);assert.ok(element,label);element.value=value;element.dispatchEvent(new dom.window.Event(event,{bubbles:true}));flushSync();return element;};const button=(host,label)=>[...host.querySelectorAll('button')].find(element=>element.getAttribute('aria-label')===label||element.textContent.trim()===label);
 const view={key:'scope-key',revision:'r1',scope:{userId:'default-user',chatId:'story'},documents:[{targetId:'mara.json',name:'Mara memories',format:'json',revision:'doc1',visibility:{kind:'actor-private',actorId:'mara'}}],issue:''};
 
 test('real Workflow Data panel explicitly loads a template and saves actor-private structured authorization',async()=>{
@@ -89,7 +90,7 @@ test('friendly schema and whole-controls Advanced JSON preserve the same nested 
   const session=createConfiguredNodeSession({isCurrent:()=>true,prepare:(_capture,command)=>{made.push(command.controls);return {ok:true,data:command};}});
   const opened=session.open({}, {operation:'json-decode'},{phase:'pre',targets:[],helpers:[]});
   const f=await fixture('ConfigureNode',{view:opened.view,actions:{apply:(...args)=>session.apply(...args),cancel:key=>session.cancel(key)}});
-  try {if(advanced){button(f.host,'Advanced JSON').click();flushSync();input(f.host,'Node controls JSON',JSON.stringify({...JSON.parse(opened.view.controls),schema}));}else {const enabled=f.host.querySelector('[aria-label="Schema schema enabled"]');enabled.checked=true;enabled.dispatchEvent(new dom.window.Event('change',{bubbles:true}));flushSync();button(f.host,'Edit Schema schema as JSON').click();flushSync();input(f.host,'Schema schema JSON',schema);}
+  try {if(advanced){button(f.host,'Advanced JSON').click();flushSync();input(f.host,'Node controls JSON',JSON.stringify({...JSON.parse(opened.view.controls),schema}));}else {button(f.host,'Edit Schema schema as JSON').click();flushSync();input(f.host,'Schema schema JSON',schema);}
    button(f.host,'Create node').click();await tick();flushSync();assert.equal(f.host.querySelector('[data-diagnostic]'),null,f.host.textContent);assert.equal((await opened.result).ok,true);
   }finally {session.cancel(opened.view.key);await f.close();}
  }
@@ -101,7 +102,20 @@ test('saving an existing multi-segment path retains its typed segments', async (
  const control=projectNodeControls('collection',{identityPath:['actor','items']},{phase:'post'}).find(control=>control.key==='identityPath');
  let saved;
  const f=await fixture('NodeDetails',{view:{selectionKey:'path',revision:'1',address:{workflowId:'paths',instancePath:[],nodeId:'collection'},title:'Collection',canonicalTitle:'Collection',iconPath:'',family:'Data',phase:'post',alias:'',compact:false,enabled:true,readOnly:false,canPresent:true,controls:[control],model:null,ports:[]},actions:{editControl(_selection,_key,value){saved=value;return {ok:true};}}});
- try{button(f.host,'Save Identity path').click();await tick();flushSync();assert.deepEqual(saved,['actor','items']);}finally{await f.close();}
+ try{input(f.host,'Identity path segment 2 key','items');button(f.host,'Save Identity path').click();await tick();flushSync();assert.deepEqual(saved,['actor','items']);}finally{await f.close();}
+});
+
+test('schema fields added by click or Enter stay local until explicit node creation',async()=>{
+ let applies=0,submitted;
+ const f=await fixture('ConfigureNode',{view:{key:'local-schema',operation:'json-decode',title:'JSON Decode',controls:JSON.stringify({schema:'{"type":"object"}'}),phase:'pre',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){applies++;submitted=JSON.parse(text);return {ok:false,error:{code:'RETAIN',message:'Keep editing'}};},cancel(){}}});
+ try{
+  for(const [key,enter] of [['clicked',false],['entered',true]]){
+   button(f.host,'Add Schema field').click();flushSync();const field=input(f.host,'Schema new field name',key);
+   if(enter)field.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));else button(f.host,'Confirm Schema field').click();
+   flushSync();await tick();assert.equal(applies,0,'Field authoring must not submit the parent creation form');
+  }
+  button(f.host,'Create node').click();await tick();flushSync();assert.equal(applies,1);assert.deepEqual(Object.keys(JSON.parse(submitted.schema).properties),['clicked','entered']);
+ }finally{await f.close();}
 });
 
 test('both shared forms preserve literal commas quotes newlines and brackets on unchanged and neighboring-entry Saves', async () => {
@@ -118,7 +132,7 @@ test('both shared forms preserve literal commas quotes newlines and brackets on 
   try{
    if(!creation){f.host.querySelector('[data-control-group="Protections"] summary').click();await tick();flushSync();}
    const text=f.host.querySelector('[aria-label="Protected literals"]').value;
-   if(editNeighbor)input(f.host,'Protected literals',text+',neighbor');
+   input(f.host,'Protected literals',editNeighbor?text+',neighbor':text);
    button(f.host,creation?'Create node':'Save Protected literals').click();await tick();flushSync();
    assert.deepEqual(saved,editNeighbor?[...literals,'neighbor']:literals,(creation?'creation':'editing')+' round trip');
   }finally{if(session){session.cancel(opened.view.key);await opened.result;}await f.close();}
@@ -287,13 +301,13 @@ test('both shared parents save typed mapping paths and distinguish omitted defau
  for(const creation of [false,true]){
   const saves=[],fields=[{name:'literal',path:['a.b','red, blue','__proto__','0'],required:false}],props=creation?{view:{key:'typed-fields',operation:'select-fields',title:'Select Fields',controls:JSON.stringify({fields}),phase:'pre',phaseLocked:false,targets:[],helpers:[]},actions:{apply(_key,text){saves.push(JSON.parse(text).fields);return {ok:false,error:{code:'RETAIN',message:'Keep editing'}};},cancel(){}}}:{view:typedDetails('select-fields',{fields}),actions:{editControl(_selection,key,value){assert.equal(key,'fields');saves.push(value);return {ok:false,error:{code:'RETAIN',message:'Keep editing'}};}}};
   const f=await fixture(creation?'ConfigureNode':'NodeDetails',props);
-  const save=async()=>{button(f.host,creation?'Create node':'Save Fields').click();await tick();flushSync();};
+  const save=async()=>{const action=button(f.host,creation?'Create node':'Save Fields');assert.ok(action,'Expected '+(creation?'Create node':'Save Fields')+' after editing');action.click();await tick();flushSync();};
   try{
-   assert.equal(f.host.querySelector('[aria-label="Field 1 default type"]'),null);await save();assert.equal(Object.hasOwn(saves[0][0],'default'),false);
+   assert.equal(f.host.querySelector('[aria-label="Field 1 default type"]'),null);if(!creation)input(f.host,'Field 1 name','literal');await save();assert.equal(Object.hasOwn(saves[0][0],'default'),false);
    f.host.querySelector('[aria-label="Field 1 use default"]').click();flushSync();assert.equal(f.host.querySelector('[aria-label="Field 1 default type"]').value,'null');
    input(f.host,'Field 1 path segment 4 kind','index','change');input(f.host,'Field 1 path segment 4 index','0');button(f.host,'Move Field 1 path segment 4 up').click();flushSync();
    await save();assert.deepEqual(saves[1],[{...fields[0],path:['a.b','red, blue',0,'__proto__'],default:null}]);
-   input(f.host,'Field 1 default type','object','change');input(f.host,'Field 1 default new key','__proto__');button(f.host,'Add Field 1 default property').click();flushSync();button(f.host,'Edit Field 1 default key __proto__').click();flushSync();input(f.host,'Field 1 default type','boolean','change');await save();
+   input(f.host,'Field 1 default type','object','change');input(f.host,'Field 1 default new key','__proto__');button(f.host,'Add Field 1 default property').click();flushSync();assert.equal(saves.length,2,'Adding a nested property must not submit the containing form');button(f.host,'Edit Field 1 default key __proto__').click();flushSync();rememberValueEditor(f.host,button(f.host,'Edit Field 1 default key __proto__'),flushSync);selectValueScope(f.host,['__proto__']);input(f.host,'Field 1 default type','boolean','change');await save();
    assert.deepEqual(saves[2][0].default,JSON.parse('{"__proto__":false}'));assert.equal(typeof saves[2][0].default,'object');assert.equal({}.polluted,undefined);
    f.host.querySelector('[aria-label="Field 1 use default"]').click();flushSync();await save();assert.equal(Object.hasOwn(saves[3][0],'default'),false);
   }finally{await f.close();}

@@ -317,11 +317,11 @@
         {/each}
     </div>
     {#if includesPath(addingFieldPaths, at)}
-        <form class="add-field" onsubmit={event => { event.preventDefault(); addProperty(at); }}>
+        <div class="add-field">
             <label for={nodeId(at) + '-new-field'}>Field name <span class="subtle">(exact key)</span></label>
-            <div class="name-input"><input id={nodeId(at) + '-new-field'} aria-label={label + ' new field name'} value={fieldNameDrafts[token(at)] ?? ''} disabled={!editable(at)} placeholder="e.g. summary" oninput={event => fieldNameDrafts[token(at)] = event.currentTarget.value} /><button type="submit" aria-label={'Confirm ' + label + ' field'} disabled={!editable(at)}>Add</button></div>
+            <div class="name-input"><input id={nodeId(at) + '-new-field'} aria-label={label + ' new field name'} value={fieldNameDrafts[token(at)] ?? ''} disabled={!editable(at)} placeholder="e.g. summary" oninput={event => fieldNameDrafts[token(at)] = event.currentTarget.value} onkeydown={event=>{if(event.key==='Enter'){event.preventDefault();event.stopPropagation();addProperty(at);}}} /><button type="button" aria-label={'Confirm ' + label + ' field'} disabled={!editable(at)} onclick={()=>addProperty(at)}>Add</button></div>
             <p class="hint">Spaces and dots stay literal. A blank name creates an empty key.</p>
-        </form>
+        </div>
     {/if}
     <div class="setting-row extra-fields"><label for={nodeId(at) + '-extra-fields'}>Extra fields</label><select id={nodeId(at) + '-extra-fields'} value={current.additionalProperties === false ? 'reject' : 'allow'} disabled={!editable(at)} onchange={event => extraFields(at, event.currentTarget.value)}><option value="allow">Allow</option><option value="reject">Reject</option></select></div>
 {/snippet}

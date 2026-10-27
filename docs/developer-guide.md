@@ -8,6 +8,16 @@ The repository uses the [MIT license](../LICENSE). Preserve its copyright and pe
 
 ## Architecture
 
+The shared details editors use the existing theme tokens and node metadata.
+`NodeDetails` owns qualified drafts and acknowledgment handling; `DetailControl`
+dispatches to inline schema, record, question, schedule, path, and typed-value
+editors. Preserve their typed callbacks, exact JSON keys, invalid drafts, and
+read-only inspection when reusing them. Model Call output/schema changes use
+the atomic `editControls` action, so an incompatible wire rejects the entire
+candidate. Section expansion belongs to the qualified selection and survives
+accepted edits. The `maxRetries` contract accepts integers from 0 through 5;
+request bounds still include the initial attempt.
+
 A workflow moves through six layers. Following one node through these layers is a useful way to find the code you need.
 
 1. **The UI collects an editing action.** Svelte components in [ui/](../ui/) render the shelf, Details, canvas, Preview, and review controls. [controller.js](../src/ui/controller.js) translates actions into domain commands; components receive display data and callbacks.

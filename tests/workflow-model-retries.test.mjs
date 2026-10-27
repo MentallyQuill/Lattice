@@ -67,13 +67,13 @@ test('retry controls bound the resolved model budget and retain zero-call litera
         const defaults = describeModelNode({ id: 'defaults', operation });
         assert.equal(defaults.ok, true);
         assert.equal(defaults.data.descriptor.requestBound, 1);
-        assert.deepEqual(defaults.data.descriptor.controlDescriptors.maxRetries, { type: 'integer', min: 0, max: 2, default: 0, label: 'Maximum retries' });
-        for (const maxRetries of [0, 1, 2]) assert.equal(describeModelNode(node(operation, { maxRetries })).data.descriptor.requestBound, maxRetries + 1);
+        assert.deepEqual(defaults.data.descriptor.controlDescriptors.maxRetries, { type: 'integer', min: 0, max: 5, default: 0, label: 'Additional attempts' });
+        for (const maxRetries of [0, 1, 2, 3, 4, 5]) assert.equal(describeModelNode(node(operation, { maxRetries })).data.descriptor.requestBound, maxRetries + 1);
     }
     const literal = describeModelNode(node('extract', { mode: 'literal' })).data.descriptor;
     assert.equal(literal.requestBound, 0);
     assert.equal(literal.modelRole, null);
-    for (const maxRetries of [-1, 3, 0.5, '2', null]) {
+    for (const maxRetries of [-1, 6, 0.5, '2', null]) {
         let calls = 0;
         const result = await executeModelNode(node('model-call', { maxRetries }), prompt, { request: async () => { calls++; return complete('Unused'); } });
         assert.equal(result.error.code, 'INVALID_SETTINGS');
@@ -82,7 +82,7 @@ test('retry controls bound the resolved model budget and retain zero-call litera
 });
 
 test('default zero and explicit retry limits cap transient physical requests', async () => {
-    for (const [settings, expectedCalls, expectedWaits] of [[{}, 1, []], [{ maxRetries: 0 }, 1, []], [{ maxRetries: 1 }, 2, [500]], [{ maxRetries: 2 }, 3, [500, 1000]]]) {
+    for (const [settings, expectedCalls, expectedWaits] of [[{}, 1, []], [{ maxRetries: 0 }, 1, []], [{ maxRetries: 1 }, 2, [500]], [{ maxRetries: 2 }, 3, [500, 1000]], [{ maxRetries: 5 }, 6, [500,1000,1000,1000,1000]]]) {
         let calls = 0;
         const waits = [];
         const result = await executeModelNode({ id: 'limited', operation: 'model-call', ...settings }, prompt, {

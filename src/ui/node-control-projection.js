@@ -2,6 +2,10 @@ import { OPERATIONS, operationFor, describeAuthoredOperation } from '../workflow
 import { introspectionDefaults } from '../workflow/introspection/native.js?v=0.28.1';
 import { recallControlLabel } from '../workflow/recall-labels.js?v=0.28.1';
 import { resolveControlInputSpec, formatControlInput } from './control-input-contracts.js?v=0.28.1';
+/** Editor compatibility only; revision/activation are write tokens. */
+export function detailsEditorContractKey(node) {
+ return JSON.stringify([node.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured, control.inputSpec?.id, control.inputSpec?.version]), node.model?.profile.allowedModes, node.model?.model.allowedModes, node.model?.editable, node.helperBindings && [node.helperBindings.helperKey, node.helperBindings.editable, node.helperBindings.roles.map(row => [row.role, row.model.allowedModes])], node.boundary && [node.boundary.id, node.boundary.direction, node.boundary.kinds], !!node.fileInput, node.modifiers && [node.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), node.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), node.modifiers.editable], node.readOnly]);
+}
 /** Shared detached authoring fields; no graph, host, or execution authority. */
 export function projectNodeControls(operation, controls = {}, { phase, readOnly = false, graph }) {
  const base = OPERATIONS[operation]; if (!base) return [];

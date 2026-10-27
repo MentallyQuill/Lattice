@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {controlInputPresentation} from '../src/ui/node-control-projection.js';
+    import {controlInputPresentation, detailsEditorContractKey} from '../src/ui/node-control-projection.js';
     import {readControlRows} from '../src/ui/control-input-adapters.js';
     import {parseControlInput} from '../src/ui/control-input-contracts.js';
     import type {ControlInputFormat} from '../src/ui/control-input-contracts';
@@ -31,6 +31,7 @@
     let structuredStates=$state.raw<Record<string,StructuredDraftState>>({});
     let structuredEpoch=$state<Record<string,number>>({});
     let identity = '', revision = '', support = '';
+    let modelSchemaContext: { format: unknown; full: string; fields: string } | null = null;
     let sequence = 0, boundaryDraftSequence = 0, draftVisit = 0;
     const requests = new Map<string, number>();
     let modifierBusy = $state(false);
@@ -69,6 +70,11 @@
         const next = view ? selectionIdentity(view) : '', nextRevision = view?.revision ?? '';
         const nextSupport = view?.editorContractKey ?? JSON.stringify([view?.controls.map(control => [control.key, control.editor, control.representation, control.allowEmpty, control.structured, control.inputSpec?.id, control.inputSpec?.version]), view?.model?.profile.allowedModes, view?.model?.model.allowedModes, view?.model?.editable, view?.helperBindings && [view.helperBindings.helperKey,view.helperBindings.editable,view.helperBindings.roles.map(row=>[row.role,row.model.allowedModes])], view?.boundary && [view.boundary.id, view.boundary.direction, view.boundary.kinds], !!view?.fileInput, view?.modifiers && [view.modifiers.items.map(item => [item.id, item.type]).sort(([a], [b]) => a.localeCompare(b)), view.modifiers.options.map(option => [option.type, option.fields.map(field => [field.key, field.editor])]), view.modifiers.editable, view.readOnly]]);
         const changedSelection = next !== identity;
+        const nextModelSchemaContext = view?.operation === 'model-call' ? {
+            format: view.controls.find(control => control.key === 'outputKind')?.value,
+            full: detailsEditorContractKey(view),
+            fields: detailsEditorContractKey({...view, modifiers: null})
+        } : null;
         if (changedSelection || nextRevision !== revision || nextSupport !== support) {
             if (changedSelection || nextSupport !== support) { boundaryDraftSequence++; modifierEpoch++; }
             if (changedSelection) {
@@ -83,12 +89,23 @@
             let restoredRecordModes=changedSelection?retained?.recordModes??{}:untrack(()=>recordModes);
             let restoredStructures=changedSelection?retained?.structures??{}:untrack(()=>structuredStates);
             if (changedContract) {
-                draftCache.delete(next); restoredSchemas = {}; restoredStructures={}; restoredImports={}; restoredRecordModes={};
+                // Text output introduces text modifiers. That capability change
+                // does not invalidate the same node's schema editor/draft.
+                // Require both known producer contracts and otherwise identical
+                // editor capabilities; opaque/incompatible contracts still expire.
+                const keepSchema = !changedSelection && modelSchemaContext && nextModelSchemaContext &&
+                    support === modelSchemaContext.full && nextSupport === nextModelSchemaContext.full &&
+                    modelSchemaContext.fields === nextModelSchemaContext.fields &&
+                    modelSchemaContext.format !== nextModelSchemaContext.format &&
+                    ['text','data'].includes(String(modelSchemaContext.format)) && ['text','data'].includes(String(nextModelSchemaContext.format));
+                const schemaDraft = keepSchema ? restored.schema : undefined;
+                draftCache.delete(next); restoredSchemas = keepSchema && restoredSchemas.schema ? {schema:restoredSchemas.schema} : {}; restoredStructures={}; restoredImports={}; restoredRecordModes={};
                 // Boundary label/required fields keep the same contract when the allowed
                 // artifact kinds change. Revalidate only that field; other incompatible
                 // editor drafts must remain discarded when an old contract returns.
                 restored = restored.boundary ? supportedDrafts({ boundary: restored.boundary }, view) : {};
                 if (restored.boundary) nextDraftGeneration('boundary');
+                if (schemaDraft) restored = {...restored, schema:schemaDraft};
             }
             identity = next; revision = nextRevision; support = nextSupport; requests.clear(); sequence++; errors = {}; modifierBusy = false; modifierBusySequence++;
             // A revision expires writes, while unsaved text still belongs to this node.
@@ -98,6 +115,7 @@
             structuredStates=Object.fromEntries(Object.entries(restoredStructures).filter(([key])=>view?.controls.some(control=>control.key===key && ['questions','schedules'].includes(control.inputSpec?.editor??''))));
             schemaStates = Object.fromEntries(Object.entries(restoredSchemas).filter(([key])=>view?.controls.some(control=>control.key===key && control.inputSpec?.editor==='schema')));
         }
+        modelSchemaContext = nextModelSchemaContext;
     });
     const selection = (node: NodeDetailsView): DetailSelection => ({ ...(node.documentNamespace ? { documentNamespace: node.documentNamespace } : {}), selectionKey: node.selectionKey, revision: node.revision, address: 'kind' in node.address ? { ...node.address, definitionRef: { ...node.address.definitionRef } } : { ...node.address, instancePath: [...node.address.instancePath] } });
     const current = (captured: DetailSelection) => alive && !!view && view.selectionKey === captured.selectionKey && view.revision === captured.revision && selectionIdentity(view) === selectionIdentity(captured);
@@ -230,10 +248,10 @@
             if (!schema || !actions.editControls) {
                 errors = { ...errors, outputKind: 'This output change requires an atomic settings action.' }; return;
             }
-            const retained = schemaStates.schema?.inactiveText || String(schema.value ?? '');
+            const retained = schemaStates.schema?.inactiveText ?? String(schema.value ?? '');
             const patch = { outputKind: value, schema: value === 'text' ? '' : retained };
             // The saved source and unfinished authoring state remain distinct.
-            if (value === 'text' && schema.value) {
+            if (value === 'text') {
                 const state=schemaStates.schema ?? {path:[],raw:false,rawText:'',feedback:'',invalid:false,invalidText:'',invalidPath:[],invalidKeyword:'',numberDrafts:{},typedDrafts:{},inactiveText:''};
                 schemaStates = { ...schemaStates, schema: { ...state, inactiveText:String(schema.value) } };
             }
@@ -406,6 +424,7 @@
         const groups = new Map<string, DetailControl[]>();
         for (const control of view?.controls ?? []) {
             if (view?.operation === 'model-call' && control.key === 'schema' && view.controls.find(item=>item.key==='outputKind')?.value === 'text') continue;
+            if (view?.operation === 'extract' && view.controls.find(item=>item.key==='mode')?.value === 'literal' && ['instructions','maxTokens','maxRetries'].includes(control.key)) continue;
             const name = control.group && control.group !== 'Main' ? control.group : control.advanced ? 'Advanced' : 'Main';
             if (!groups.has(name)) groups.set(name, []);
             groups.get(name)!.push(control);
@@ -413,8 +432,15 @@
         return [...groups].sort(([a], [b]) => a === 'Main' ? -1 : b === 'Main' ? 1 : 0);
     });
     let mountedGroups = $state<Record<string, boolean>>({});
+    let openedGroups = $state<Record<string, boolean>>({});
+    const groupKey = (group:string) => JSON.stringify([view ? selectionIdentity(view) : '', group]);
     const groupHasError = (controls: DetailControl[]) => controls.some(control => !!(drafts[control.key]?.error || errors[control.key] || schemaStates[control.key]?.invalid));
-    const groupOpen = (controls: DetailControl[]) => controls.some(control=>control.groupOpen) || groupHasError(controls);
+    const groupOpen = (group:string, controls: DetailControl[]) => groupHasError(controls) || (openedGroups[groupKey(group)] ?? controls.some(control=>control.groupOpen));
+    function toggleGroup(event:MouseEvent, group:string) {
+        event.preventDefault();
+        const key=groupKey(group), details=(event.currentTarget as HTMLElement).parentElement as HTMLDetailsElement;
+        openedGroups={...openedGroups,[key]:!details.open}; mountedGroups={...mountedGroups,[key]:true};
+    }
     const groupDrafts = (controls: DetailControl[]) => controls.filter(control=>!!drafts[control.key]).length;
     function editName(value: string) {
         if (!view || view.boundary || !actions.present) return;
@@ -515,8 +541,8 @@
             {/each}
         </fieldset>
         {#each controlGroups.filter(([group]) => group !== 'Main') as [group, controls] (group)}
-            <details class="pc-detail-group" data-control-group={group} open={groupOpen(controls)}><summary onclick={() => { mountedGroups[group] = true; }}><span>{group}</span>{#if groupDrafts(controls)}<small>{groupDrafts(controls)} unsaved</small>{/if}</summary>
-                {#if mountedGroups[group] || groupOpen(controls)}{#each controls as control (control.key)}{@render controlEditor(control)}{/each}{/if}
+            <details class="pc-detail-group" data-control-group={group} open={groupOpen(group, controls)}><summary onclick={event => toggleGroup(event,group)}><span>{group}</span>{#if groupDrafts(controls)}<small>{groupDrafts(controls)} unsaved</small>{/if}</summary>
+                {#if mountedGroups[groupKey(group)] || groupOpen(group,controls)}{#each controls as control (control.key)}{@render controlEditor(control)}{/each}{/if}
             </details>
         {/each}
     {/if}
