@@ -68,6 +68,7 @@ test('close flushes the final cancelled camera before deactivating the view sess
     f.env.pendingDocumentPrompt = null; f.env.documentCommands = null;
     f.env.chooseDocumentPrompt = controllerFunction('chooseDocumentPrompt', f.env);
     f.env.workflowActivityUnsubscribe = null;
+    f.env.workflowProgressUnsubscribe = null;
     f.env.workbench = { update() {} };
     Object.assign(f.env, { canvas: { cancelGesture() { f.session.updateView({ camera: { x: 45, y: -20, zoom: 1.2 } }); f.persist(false, true); } }, persistGraphViews: f.persist, cancelConfiguredNode() {}, cancelImportReview() {}, document: { removeEventListener() {} }, receiveAutomaticWorkflow() {}, documentTransition: false, workflowSession: { cancel() {} }, rootRunEpoch: 0, uiEpoch: 0, nativeWireBridge: null, root: { classList: { remove() {} } } });
     controllerFunction('close', f.env)();

@@ -259,19 +259,19 @@ function boundedResult(raw, handles) {
     for (const key of ['preview', 'published', 'fallback']) if (raw[key] !== undefined) result[key] = raw[key];
     return freeze(result);
 }
-export function createWorkflowSession({ runtime, current, epoch, rootCurrent = current, runEpoch = epoch, documentToken, active, changed }) {
+export function createWorkflowSession({ runtime, current, epoch, rootCurrent = current, runEpoch = epoch, documentToken, active, ownerActive = active, changed }) {
     let result = null, recording = null, runState = null, preparationError = null, reviewHandles = [], availability = 'current';
     let busy = false, status = '', applyIssue = '', applyDiagnostic = null, generation = 0, invocation = null;
     let diagnosticAttempt = null, diagnosticCache = null;
     const retiredAutomatic = new WeakSet();
-    let ignoredAutomatic = new WeakSet(), displayedAutomatic = null, documentOwner = documentToken?.();
+    let ignoredAutomatic = new WeakSet(), displayedAutomatic = null, documentOwner = documentToken?.(), liveRunId = null;
     const currentDiagnostics = (documentKey = String(documentOwner ?? rootCurrent()?.id ?? '')) => {
         if (!diagnosticAttempt || !active() || diagnosticAttempt.graph !== rootCurrent() || diagnosticAttempt.epoch !== runEpoch() || diagnosticAttempt.documentOwner !== documentToken?.() || diagnosticAttempt.serial !== generation) return null;
         if (diagnosticCache?.documentKey === documentKey) return diagnosticCache;
         diagnosticCache = projectCurrentDiagnostics({ ...diagnosticAttempt, documentKey }); return diagnosticCache;
     };
     const publish = () => changed({ currentDiagnostics: currentDiagnostics(), result, recording, runState, preparationError, reviewHandles, availability, busy, status, applyIssue, applyDiagnostic: applyIssue ? applyDiagnostic : null });
-    const rootOwned = transaction => active() && rootCurrent() === transaction.graph && generation === transaction.serial && (!documentToken || documentToken() === transaction.documentOwner);
+    const rootOwned = transaction => ownerActive() && rootCurrent() === transaction.graph && generation === transaction.serial && (!documentToken || documentToken() === transaction.documentOwner);
     const valid = transaction => rootOwned(transaction) && runEpoch() === transaction.epoch && !transaction.cancelled;
     const settledValid = transaction => valid(transaction) && workflowSignature(transaction.graph) === transaction.revision;
     function syncDocument() {
@@ -280,7 +280,7 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
         documentOwner = next; diagnosticAttempt = null; diagnosticCache = null; generation++; invocation = null;
         result = null; recording = null; runState = null; preparationError = null; reviewHandles = [];
         availability = 'current'; busy = false; status = ''; applyIssue = '';
-        displayedAutomatic = null; ignoredAutomatic = new WeakSet(); publish();
+        displayedAutomatic = null; ignoredAutomatic = new WeakSet(); liveRunId = null; publish();
     }
     function clearAuthority() {
         reviewHandles = [];
@@ -337,16 +337,36 @@ export function createWorkflowSession({ runtime, current, epoch, rootCurrent = c
         result: () => result,
         currentDiagnostics,
         syncDocument,
+        // Progress observes the host's run; it never grants candidate or Apply authority.
+        receiveProgress(progress) {
+            syncDocument();
+            const graph = rootCurrent();
+            if (!active() || !progress?.busy || progress.graph !== graph || progress.graphId !== graph?.id || (documentToken && progress.documentToken !== documentOwner) || !progress.runState || progress.runState.runId !== progress.runId) return;
+            if (liveRunId !== progress.runId) {
+                if (invocation?.runId && invocation.runId !== progress.runId) { generation++; invocation = null; busy = false; }
+                liveRunId = progress.runId;
+                diagnosticAttempt = null; diagnosticCache = null; preparationError = null;
+                clearAuthority();
+                if (!recording) result = null;
+                availability = recording ? 'superseded' : 'current'; status = ''; applyIssue = '';
+            }
+            if (runState === progress.runState) return;
+            runState = progress.runState; publish();
+        },
         receiveAutomatic(record) {
             syncDocument();
             const graph = rootCurrent(), origin = own(record,'origin'), incoming = own(record,'result');
             if(!plainMetadata(record)||!plainMetadata(origin)||!plainMetadata(incoming))return;
             if (!active() || !record?.result || !origin || (documentToken && origin.documentToken !== documentOwner) || origin.kind !== 'send' || origin.phase !== 'unified' || graph?.mode !== 'native-unified' || origin.graph !== graph || origin.graphId !== graph.id || origin.signature !== workflowSignature(graph) || ignoredAutomatic.has(record) || retiredAutomatic.has(record) || displayedAutomatic === record) return;
-            if (busy) { ignoredAutomatic.add(record); return; }
             // Real controllers identify their one latest attempt, including recorded failures.
             // Lightweight historical view adapters without this API still retire replaced records.
             const controller=runtime();
             if(typeof controller?.lastAutomaticResult==='function' && controller.lastAutomaticResult()!==record)return;
+            if (busy) {
+                // A Send can finish while the editor is hidden and no progress observer is attached.
+                if (typeof controller?.lastAutomaticResult !== 'function' || invocation?.target === undefined || !invocation.runId || invocation.runId === origin.runId) { ignoredAutomatic.add(record); return; }
+                generation++; invocation = null; busy = false;
+            }
             // A payload-free superseded Send cannot replace the one retained diagnostic.
             const received = own(incoming,'recording');
             if(received!==undefined && !plainMetadata(received))return;

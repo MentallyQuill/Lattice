@@ -81,7 +81,7 @@ let viewSaveTimer = null, pinnedPreview = null, targetedPreview = null, selected
 let nativeGroupPresenter = null, detachedClip = null, workspaceIssue = '';
 let pendingSubgraphSave = null, pendingAddSystem = null;
 const systemPresentationEffects = new WeakMap(), pendingSystemPresentation = new WeakMap();
-let workflowActivityUnsubscribe = null;
+let workflowActivityUnsubscribe = null, workflowProgressUnsubscribe = null;
 let pendingDocumentPrompt = null;
 // The final graph-touch notification renders dirty state after owned reconciliation.
 // Defer only its intermediate view event for this exact document activation.
@@ -156,7 +156,7 @@ export function profiles() {
 let workflowRevision = null, nodeProfileInputsKey = null;
 let workflowProjection = null, workflowProjectionGraph = null;
 let workflowState = { result: null, busy: false, status: '', applyIssue: '' };
-const workflowSession = createWorkflowSession({ runtime: () => workflowRuntime.getNativeWorkflowController?.(), rootCurrent: () => current, runEpoch: () => rootRunEpoch, documentToken: () => documentSession.capture(), active: isOpen, changed: state => {
+const workflowSession = createWorkflowSession({ runtime: () => workflowRuntime.getNativeWorkflowController?.(), rootCurrent: () => current, runEpoch: () => rootRunEpoch, documentToken: () => documentSession.capture(), active: isOpen, ownerActive: () => !!current && documentSession.current() === current, changed: state => {
     const authorityChanged = state.result !== workflowState.result || state.reviewHandles !== workflowState.reviewHandles;
     workflowState = state;
     if (isOpen() && !documentTransition) { if (authorityChanged) refreshWorkflowPreparation(); if (!openingWorkspace) updateWorkflowProjection(); }
@@ -574,26 +574,28 @@ function defaultNodeSpot() {
 }
 export function isOpen() { return !!root && root.classList.contains('pc-open'); }
 export function open() {
-    const wasOpen = isOpen();
     openingWorkspace = true;
     try {
         build(); root.classList.add('pc-open'); document.addEventListener('pc-native-result', receiveAutomaticWorkflow);
         safe(() => applyTheme()); current = activeWorkflow(); ensureDocumentCommands();
-        setCanvasGraph({ cancelRun: wasOpen });
+        setCanvasGraph({ cancelRun: false });
         workflowActivityUnsubscribe?.();
         workflowActivityUnsubscribe = workflowRuntime.getNativeWorkflowController?.()?.subscribeActivity?.(() => { if (isOpen() && graphViews && !documentTransition && !openingWorkspace) updateWorkflowProjection(); }) ?? null;
+        workflowProgressUnsubscribe?.();
+        workflowProgressUnsubscribe = workflowRuntime.getNativeWorkflowController?.()?.subscribeProgress?.(progress => { if (isOpen() && graphViews && !documentTransition) workflowSession.receiveProgress(progress); }) ?? null;
     } finally { openingWorkspace = false; }
     renderAll({ canvasReady: true });
 }
 export function close() {
     nativeSourceSetup.cancel();
     workflowActivityUnsubscribe?.(); workflowActivityUnsubscribe = null;
+    workflowProgressUnsubscribe?.(); workflowProgressUnsubscribe = null;
     cancelConfiguredNode();
     documentCommands?.cancelReplacement();
     chooseDocumentPrompt('cancel');
     cancelImportReview(); document.removeEventListener('pc-native-result', receiveAutomaticWorkflow);
-    documentTransition = true; workflowSession.cancel('Workflow view closed'); documentTransition = false;
-    canvas?.cancelGesture(); persistGraphViews(true); graphViews?.deactivate(); graphViews = null; rootRunEpoch++; uiEpoch++;
+    // Only editor captures expire here; the document still owns its in-flight run.
+    canvas?.cancelGesture(); persistGraphViews(true); graphViews?.deactivate(); graphViews = null; uiEpoch++;
     workbench?.update({ graphViews: undefined });
     nativeWireBridge?.cancel('view-close'); root?.classList.remove('pc-open');
 }
@@ -602,7 +604,8 @@ function setCanvasGraph({ cancelRun = true } = {}) {
     cancelConfiguredNode();
     chooseDocumentPrompt('cancel');
     canvas?.cancelGesture(); persistGraphViews(true); const initializeCamera = !activeWorkspaceViews() && (!current.view || current.view.x === 0 && current.view.y === 0 && current.view.zoom === 1);
-    graphViews?.deactivate(); graphViews = null; workspacePrepared = null; editorDraw = null; rootRunEpoch++;
+    graphViews?.deactivate(); graphViews = null; workspacePrepared = null; editorDraw = null;
+    if (cancelRun) rootRunEpoch++;
     documentTransition = true;
     workflowSession.syncDocument();
     if (cancelRun) workflowSession.cancel('Workflow graph changed');
