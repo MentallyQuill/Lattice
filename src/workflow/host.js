@@ -460,7 +460,13 @@ export function createNativeWorkflowController(ports) {
         const access=ports.nodeFileAccess??getNodeFileAccess();
         if(run.managedFileEntries?.some(entry=>entry.node.fileTarget?.managed===true)){
             await access?.ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring managed files.');
-            const managed=await prepareManagedNodeFiles(run.managedFileEntries,{workflowId:run.managedWorkflowId,edges:run.managedFileEdges,scope:{userId:run.userId,chatId:run.identity.chatId},legacyDocuments:legacy.data.documents,isCurrent:live,access});if(!managed.ok)return managed;
+            const existing=captureNodeFileTargets(nodes.filter(node=>!node.fileTarget?.managed),{legacyDocuments:legacy.data.documents});if(!existing.ok)return existing;
+            if(existing.data.definitions.length){
+                if(typeof access?.backend!=='function')return fail('FILE_ACCESS_REQUIRED','Choose an available file for the connected commit.');
+                const checked=access.backend(existing.data.definitions,{scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:live,signal:run.controller.signal});
+                for(const definition of existing.data.definitions){const loaded=await checked.load(definition.targetId);if(!live())return fail('STALE_FILE_SCOPE','The file scope changed while validating an existing destination.');if(!loaded.ok)return loaded;if(loaded.data.format!==definition.format)return fail('FILE_FORMAT_CONFLICT','The existing file type changed; choose it again.');}
+            }
+            const managed=await prepareManagedNodeFiles(run.managedFileEntries,{workflowId:run.managedWorkflowId,edges:run.managedFileEdges,scope:{userId:run.userId,chatId:run.identity.chatId},legacyDocuments:legacy.data.documents,authorizedDefinitions:existing.data.definitions,isCurrent:live,access});if(!managed.ok)return managed;
             run.managedFileNodes=new Map(run.managedFileEntries.map((entry,index)=>[addressKey(entry.address),managed.data.nodes[index]]));
             nodes=managed.data.nodes;run.workflowDataNodes=Object.fromEntries(nodes.map((node,index)=>[index,node]));
         }

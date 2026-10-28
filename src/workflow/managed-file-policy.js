@@ -2,7 +2,7 @@ import { sha256Text } from './definition-data.js?v=0.29.0';
 import { cloneJsonValue } from './operations/json-data.js?v=0.29.0';
 import { freeze } from './record-data.js?v=0.29.0';
 import { decodeJson, validateJsonSchema } from './operations/json-decode.js?v=0.29.0';
-import { validateNodeFileTarget } from './node-file-targets.js?v=0.29.0';
+import { nodeFileTargetId, validateNodeFileTarget } from './node-file-targets.js?v=0.29.0';
 const suffixes=Object.freeze({text:'txt',markdown:'md',json:'json',jsonl:'jsonl',csv:'csv'});
 const fail=(message)=>({ok:false,error:{code:'INVALID_MANAGED_FILE',message,field:'fileTarget'}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=4096;
@@ -66,22 +66,33 @@ export async function prepareManagedNodeFiles(nodes,context) {
             candidates.push(checked.data);
         }
         const indexed=new Map(entries.map((entry,index)=>[key(entry.address),index]));
+        const existingSink=node=>{
+            const targetId=nodeFileTargetId(node),checked=validateNodeFileTarget(node.fileTarget??{});if(!checked.ok)return checked;
+            const configured=checked.data,explicit=Object.keys(configured).length>0;
+            const definition=(context.authorizedDefinitions??[]).find(value=>value.targetId===targetId&&(!explicit||value.bindingId===configured.bindingId&&value.format===configured.format&&JSON.stringify(value.visibility)===JSON.stringify(configured.visibility)))??(!explicit?(context.legacyDocuments??[]).find(value=>value.targetId===targetId):null);
+            if(!definition||definition.format!=='json')return {ok:false,error:{code:'FILE_SETUP_REQUIRED',message:'Choose an authorized JSON outcomes file for the connected commit.',field:'fileTarget',nodeId:node.id}};
+            return {ok:true,data:{targetId,visibility:definition.visibility??{kind:'public'},fileTarget:explicit?configured:{}}};
+        };
         // Explicit typed connections share the commit-owned ledger. Model outcome IDs never select it.
         for(let index=0;index<entries.length;index++){
             if(entries[index].node.operation!=='random-pick'||!candidates[index].definition)continue;
-            const sinks=new Set(),pending=[key(entries[index].address)],visited=new Set();
+            const sinks=new Map(),pending=[key(entries[index].address)],visited=new Set();
             while(pending.length){
                 const source=pending.pop();if(visited.has(source))continue;visited.add(source);
                 for(const edge of context.edges??[]){
                     if(key(edge.from)!==source||edge.from.portId!=='out')continue;
                     const destination=indexed.get(key(edge.to));if(destination===undefined)continue;
                     const operation=entries[destination].node.operation;
-                    if(operation==='commit-outcomes'&&edge.to.portId==='outcomes'&&candidates[destination].definition)sinks.add(destination);
+                    if(operation==='commit-outcomes'&&edge.to.portId==='outcomes'){
+                        const candidate=candidates[destination];
+                        if(candidate.definition)sinks.set(candidate.definition.targetId,{...candidate,targetId:candidate.definition.targetId,visibility:candidate.definition.visibility});
+                        else {const checked=existingSink(candidate.node);if(!checked.ok)return checked;sinks.set(checked.data.targetId,{node:freeze({...candidate.node,fileTarget:checked.data.fileTarget}),definition:null,...checked.data});}
+                    }
                     else if(['effect-author','stage-outcome'].includes(operation)&&edge.to.portId==='in')pending.push(key(edge.to));
                 }
             }
             if(sinks.size>1)return {ok:false,error:{code:'MANAGED_OUTCOME_AMBIGUOUS',message:'Choose one outcomes file for this random selection; its connected commits own different files.',field:'fileTarget',nodeId:entries[index].node.id}};
-            if(sinks.size){const sink=candidates[[...sinks][0]];if(entries[index].node.fileTarget.visibility&&JSON.stringify(entries[index].node.fileTarget.visibility)!==JSON.stringify(sink.definition.visibility))return fail('Connected outcome files must preserve the same privacy.');candidates[index]={node:freeze({...candidates[index].node,ledgerId:sink.definition.targetId,fileTarget:sink.node.fileTarget}),definition:sink.definition};}
+            if(sinks.size){const sink=[...sinks.values()][0];if(entries[index].node.fileTarget.visibility&&JSON.stringify(entries[index].node.fileTarget.visibility)!==JSON.stringify(sink.visibility))return fail('Connected outcome files must preserve the same privacy.');candidates[index]={node:freeze({...candidates[index].node,ledgerId:sink.targetId,fileTarget:sink.node.fileTarget}),definition:sink.definition};}
         }
         for(let index=0;index<entries.length;index++){
             if(context.isCurrent?.()!==true)return {ok:false,error:{code:'STALE_FILE_SCOPE',message:'The managed file scope changed.'}};

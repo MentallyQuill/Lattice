@@ -3,7 +3,9 @@ import type { NodeFileDefinition } from './node-file-targets';
 export type ManagedFileFormat='json'|'jsonl'|'csv'|'text'|'markdown';
 export interface ManagedFileContext {
  /** Trusted saved-library ID or host document namespace, never the imported graph ID alone. */
- workflowId:string;address?:NodeAddress;actorId?:string;legacyDocuments?:{targetId:string}[];
+ workflowId:string;address?:NodeAddress;actorId?:string;legacyDocuments?:{targetId:string;format?:ManagedFileFormat;visibility?:import('./document-catalog').DocumentVisibility}[];
+ /** Existing explicit definitions whose bindings the captured backend successfully loaded. */
+ authorizedDefinitions?:NodeFileDefinition[];
  inputFormat?:ManagedFileFormat;inputKind?:'data'|'text';inputColumns?:string[];
  /** Trusted planner edges; typed outcome lineage shares one commit-owned ledger. */
  edges?:{from:NodeAddress&{portId:string};to:NodeAddress&{portId:string}}[];

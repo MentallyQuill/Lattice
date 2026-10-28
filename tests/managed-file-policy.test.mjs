@@ -73,6 +73,26 @@ test('connected managed outcome picks share their commit ledger and ambiguous si
  assert.equal(ambiguous.error.code,'MANAGED_OUTCOME_AMBIGUOUS');
  assert.equal(allocated,0);
 });
+test('mixed outcome lineage inherits only authorized existing file scope and rejects unresolved sinks before allocation',async()=>{
+ const address=nodeId=>({workflowId:'authored',instancePath:[],nodeId});
+ const fileTarget={bindingId:'checked-existing-binding',name:'Mara outcomes.json',format:'json',missing:'error',content:'[]',visibility:{kind:'actor-private',actorId:'mara'}};
+ const entries=[{node:{id:'pick',operation:'random-pick',fileTarget:{managed:true}},address:address('pick')},{node:{id:'commit',operation:'commit-outcomes',targetId:'existing',fileTarget},address:address('commit')}];
+ let allocations=0;
+ const context={workflowId:'trusted',scope:{userId:'u',chatId:'c'},edges:[{from:{...address('pick'),portId:'out'},to:{...address('commit'),portId:'outcomes'}}],isCurrent:()=>true,access:{ensureManaged:async()=>{allocations++;throw Error('Existing authority must not allocate a managed file.');}}};
+ const authorized=await policy.prepareManagedNodeFiles(entries,{...context,authorizedDefinitions:[{targetId:'existing',...fileTarget}]});
+ assert.equal(authorized.ok,true,JSON.stringify(authorized));
+ assert.equal(authorized.data.nodes[0].ledgerId,'existing');
+ assert.deepEqual(authorized.data.nodes[0].fileTarget,fileTarget);
+ assert.deepEqual(authorized.data.definitions,[]);
+ const unresolved=await policy.prepareManagedNodeFiles(entries,context);
+ assert.equal(unresolved.error.code,'FILE_SETUP_REQUIRED');
+ const imported=await policy.prepareManagedNodeFiles(entries,{...context,authorizedDefinitions:[{targetId:'existing',...fileTarget,bindingId:'different-binding'}],legacyDocuments:[{targetId:'existing',format:'json',content:'[]',visibility:{kind:'public'}}]});
+ assert.equal(imported.error.code,'FILE_SETUP_REQUIRED');
+ const other={node:{id:'other',operation:'commit-outcomes',fileTarget:{managed:true}},address:address('other')};
+ const conflicting=await policy.prepareManagedNodeFiles([...entries,other],{...context,authorizedDefinitions:[{targetId:'existing',...fileTarget}],edges:[...context.edges,{from:{...address('pick'),portId:'out'},to:{...address('other'),portId:'outcomes'}}]});
+ assert.equal(conflicting.error.code,'MANAGED_OUTCOME_AMBIGUOUS');
+ assert.equal(allocations,0);
+});
 test('managed policy cannot redirect connected references or widen imported actor authority',()=>{
  for(const fileTarget of [{managed:true,bindingId:'imported'},{managed:true,path:'/private'},{managed:true,visibility:{kind:'public'}}]){
   const result=policy.resolveManagedFileNode({id:'w',operation:'write-file',destinationMode:'own',actorScope:'presence',actorId:'mara',fileTarget},{workflowId:'trusted',address:{nodeId:'w',instancePath:[]}});
