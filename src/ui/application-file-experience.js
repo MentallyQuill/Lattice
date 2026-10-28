@@ -13,6 +13,6 @@ export function createApplicationFileExperience(ports){
  ports.configureStorageMode?.(()=>setup.view().effectiveMode);
  const origins=createWorkflowExampleOrigins({store,getUserId:ports.getUserId});
  const library=withWorkflowExampleOrigins(createWorkflowLibrary({store,getScope:ports.getUserId}),origins,ports.session);
- const controller=createWorkflowLibraryController({session:ports.session,library,getContext:ports.getContext,isBusy:ports.isBusy,activate:ports.activate,replace:ports.replace,persistSelection:ports.persistSelection,getSelection:ports.getSelection,prompt:ports.prompt,downloadCopy:ports.downloadCopy,changed:ports.changed});
+ const controller=createWorkflowLibraryController({session:ports.session,library,canAdopt:()=>!!ports.getUserId?.(),getContext:ports.getContext,isBusy:ports.isBusy,activate:ports.activate,replace:ports.replace,persistSelection:ports.persistSelection,getSelection:ports.getSelection,prompt:ports.prompt,downloadCopy:ports.downloadCopy,changed:ports.changed});
  return Object.freeze({store,server,setup,library,controller,origins});
 }

@@ -18,7 +18,7 @@ export interface WorkflowSessionPort {
 export interface WorkflowActivationOptions {source?:LibrarySource;workspaceViews?:unknown;exampleMetadata?:WorkflowExampleMetadataV1;clean?:boolean}
 export interface WorkflowAutosaveStatus {state:string;result?:Result<unknown>}
 export interface WorkflowAutosaveView extends WorkflowAutosaveStatus {deferred:boolean;saving:boolean;storage:'host';capabilities?:WorkflowLibraryCapabilities;label:string}
-export interface AutosaveDraft {source:LibrarySource;snapshot:string;json?:string}
+export interface AutosaveDraft {source:LibrarySource|null;snapshot:string;json?:string}
 export interface WorkflowAutosave {
  changed():void;
  flush():Promise<Result<unknown>>;
@@ -29,11 +29,13 @@ export interface WorkflowAutosave {
 }
 export interface WorkflowAutosaveOptions {
  session:WorkflowSessionPort;
- library:Pick<WorkflowLibrary,'save'|'read'> & Partial<Pick<WorkflowLibrary,'capabilities'>>;
+ library:Pick<WorkflowLibrary,'save'|'read'|'adopt'> & Partial<Pick<WorkflowLibrary,'capabilities'>>;
  isBusy?:()=>boolean;
  activate?:(graph:NativeGraph3,options:WorkflowActivationOptions)=>unknown;
  onStatus?:(status:WorkflowAutosaveStatus)=>void;
  getContext?:()=>unknown;
+ canAdopt?:()=>boolean;
+ onAdopt?:(id:string,context:unknown)=>Promise<Result<unknown>>;
  delay?:number;
 }
 export function createWorkflowAutosave(options:WorkflowAutosaveOptions):WorkflowAutosave;

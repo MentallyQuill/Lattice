@@ -68,3 +68,23 @@ test('file recovery confirms a retained version and preserves hidden privacy',as
  const outputName=await page.evaluate(()=>window.recoveryOutputName);await expect(recovery.getByText('Replace the current file with this earlier version?',{exact:false})).toBeVisible();expect(files.get(outputName)).toBe('Second');await recovery.getByRole('button',{name:'Restore this version',exact:true}).click();await expect(recovery).toHaveCount(0);
  expect(files.get(outputName)).toBe('First');expect(await page.evaluate(async()=>(await window.recoveryFileBackend.readVersion(window.recoveryFileTarget,{versionId:'current'})).data.visibility.kind)).toBe('hidden');expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
 });
+
+test('new workflow authoring autosaves without Save and reopens from host files',async({page})=>{
+ const files=await host(page);await command(page,'New workflow');
+ const firstPrompt=page.getByRole('dialog',{name:'Save workflow changes?'});if(await firstPrompt.isVisible())await firstPrompt.getByRole('button',{name:"Don't Save",exact:true}).click();
+ await expect.poll(()=>page.evaluate(async()=>{const h=window.canvasHarness;return(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.view().source?.kind;})).toBe('library');
+ const blankId=await page.evaluate(async()=>{const h=window.canvasHarness;return(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.getWorkflowIdentity();});
+ expect([...files.keys()].some(name=>name.endsWith('workflow-'+blankId+'.json'))).toBe(true);
+ await page.evaluate(()=>{const h=window.canvasHarness;h.graph.name='Auto saved draft';h.graph.description='Authored without Save';h.S.touchGraph(h.graph);});
+ await expect.poll(()=>[...files.values()].some(value=>value.includes('Authored without Save'))).toBe(true);
+ const id=await page.evaluate(async()=>{const h=window.canvasHarness;return(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.getWorkflowIdentity();});
+ expect([...files.keys()].some(name=>name.endsWith('workflow-'+id+'.json'))).toBe(true);
+ await expect.poll(()=>page.evaluate(async()=>{const h=window.canvasHarness,c=(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller;return !c.view().dirty;})).toBe(true);
+ await page.evaluate(value=>{window.previousAutoSavedId=value;},id);
+ await command(page,'New workflow');
+ await expect.poll(()=>page.evaluate(async()=>{const h=window.canvasHarness,c=(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller;return c.view().source?.kind==='library'&&!c.view().dirty&&c.getWorkflowIdentity()!==window.previousAutoSavedId;})).toBe(true);
+ await command(page,'Open saved…');await page.getByRole('dialog',{name:'Saved workflows'}).getByRole('button',{name:'Auto saved draft',exact:true}).click();
+ const prompt=page.getByRole('dialog',{name:'Save workflow changes?'});if(await prompt.isVisible())await prompt.getByRole('button',{name:"Don't Save",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.canvasHarness.graph.description)).toBe('Authored without Save');
+ expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+});

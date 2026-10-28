@@ -45,7 +45,7 @@ export function getApplicationFileExperience(){
         changed:()=>safe(()=>globalThis.document?.dispatchEvent(new CustomEvent('pc-file-experience')))});
     applicationFiles.setup.subscribe(()=>{void refreshNodeFileAccess();safe(()=>globalThis.document?.dispatchEvent(new CustomEvent('pc-file-experience')));});
     onGraphTouched(graph=>{if(graph===documentSession.current())applicationFiles.controller.changed();});
-    documentSession.subscribe(event=>{if(event.type==='views')applicationFiles.controller.changed();});
+    documentSession.subscribe(event=>{if(event.type==='views'||event.type==='activate'&&event.graph===documentSession.current()&&!event.source&&documentSession.dirty())applicationFiles.controller.changed();});
     return applicationFiles;
 }
 // The immutable native export reads the current handle without invoking graph or

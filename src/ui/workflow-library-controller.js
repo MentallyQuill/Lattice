@@ -10,7 +10,7 @@ export function createWorkflowLibraryController(env) {
     const activate=env.activate??((graph,options)=>session.activate(graph,options));
     const listeners=new Set();let busy=false,items=[],status={state:'idle'},selection=null,disposed=false;
     const notify=()=>{for(const listener of listeners)try{listener();}catch{}env.changed?.();};
-    const autosave=createWorkflowAutosave({session,library,getContext,isBusy,activate,delay:env.delay,onStatus:value=>{status=value;notify();}});
+    const autosave=createWorkflowAutosave({session,library,getContext,isBusy,activate,delay:env.delay,canAdopt:env.canAdopt,onAdopt:(id,context)=>select(id,context),onStatus:value=>{status=value;notify();}});
     const encode=()=>serializeWorkflowDocument(session.current(),session.workspaceViews(),{exampleMetadata:session.exampleMetadata?.()});
     const current=(token,context)=>!disposed&&session.capture()===token&&context===getContext();
     async function select(id,context) {
@@ -78,9 +78,9 @@ export function createWorkflowLibraryController(env) {
             const context=getContext(),token=session.capture();
             for(let attempt=0;attempt<4;attempt++) {
                 const result=await autosave.flush();if(!current(token,context))return cancelled();if(!result.ok)return result;
-                if(!session.dirty()||session.source()?.kind!=='library')break;
+                if(!session.dirty()||session.source()?.kind!=='library'&&(session.source()||!env.canAdopt?.()))break;
             }
-            if(session.source()?.kind==='library'&&session.dirty())return fail('WORKFLOW_EDIT_PENDING','New workflow edits are still arriving. Finish editing before running.');
+            if(session.dirty()&&(session.source()?.kind==='library'||!session.source()&&env.canAdopt?.()))return fail('WORKFLOW_EDIT_PENDING','New workflow edits are still arriving. Finish editing before running.');
             const latest=await autosave.refresh();
             if(context!==getContext())return cancelled();
             if(isBusy()||busy||latest.ok&&latest.data?.deferred)return fail('WORKFLOW_BUSY','Finish the current run or review before starting another run.');
