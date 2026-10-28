@@ -147,7 +147,7 @@
         "definition": {
           "id": "combined-wand",
           "version": 2,
-          "semanticHash": "sha256:7c7d88c06702badb9f489c297832ca06cbb04d6987ef0be403616d9c0483eb77"
+          "semanticHash": "sha256:2fc7c28fea568c4998e3c6b0594d5fe0ed6c00de7957133f4377b422a4e2e44c"
         },
         "parameterOverrides": {},
         "roleOverrides": {},
@@ -164,7 +164,7 @@
         "definition": {
           "id": "combined-weather",
           "version": 2,
-          "semanticHash": "sha256:ea566b6a076b949fb6fcf02721c388ea284589ef9e7cf9f84ec5f94650fb3e74"
+          "semanticHash": "sha256:d120b495c9ca01fb3e702f7cc623d4d620d2f7be16f901e6ba00cf3f61d7779a"
         },
         "parameterOverrides": {},
         "roleOverrides": {},
@@ -181,7 +181,7 @@
         "definition": {
           "id": "combined-relationship",
           "version": 2,
-          "semanticHash": "sha256:404822e2502b16aaad61fecd7c53ec3fd0e18db0579dcf08a1c3ce1cb9dd9eb5"
+          "semanticHash": "sha256:91eec63a1a8c2f9456122004c36003e18e190b387f3e773cb26d42d55d2f3b1b"
         },
         "parameterOverrides": {},
         "roleOverrides": {},
@@ -703,10 +703,10 @@
           "definitions": {}
         }
       },
-      "[\"combined-wand\",2,\"sha256:7c7d88c06702badb9f489c297832ca06cbb04d6987ef0be403616d9c0483eb77\"]": {
+      "[\"combined-wand\",2,\"sha256:2fc7c28fea568c4998e3c6b0594d5fe0ed6c00de7957133f4377b422a4e2e44c\"]": {
         "id": "combined-wand",
         "version": 2,
-        "semanticHash": "sha256:7c7d88c06702badb9f489c297832ca06cbb04d6987ef0be403616d9c0483eb77",
+        "semanticHash": "sha256:2fc7c28fea568c4998e3c6b0594d5fe0ed6c00de7957133f4377b422a4e2e44c",
         "name": "Broken wand",
         "interface": [
           {
@@ -1162,7 +1162,8 @@
               "model": null,
               "modelRole": null,
               "alias": "Outcome Commit",
-              "targetId": "wand-outcomes"
+              "targetId": "wand-outcomes",
+              "fileHandling": ""
             },
             "boundary-input-1": {
               "id": "boundary-input-1",
@@ -1366,10 +1367,10 @@
           "portals": {}
         }
       },
-      "[\"combined-weather\",2,\"sha256:ea566b6a076b949fb6fcf02721c388ea284589ef9e7cf9f84ec5f94650fb3e74\"]": {
+      "[\"combined-weather\",2,\"sha256:d120b495c9ca01fb3e702f7cc623d4d620d2f7be16f901e6ba00cf3f61d7779a\"]": {
         "id": "combined-weather",
         "version": 2,
-        "semanticHash": "sha256:ea566b6a076b949fb6fcf02721c388ea284589ef9e7cf9f84ec5f94650fb3e74",
+        "semanticHash": "sha256:d120b495c9ca01fb3e702f7cc623d4d620d2f7be16f901e6ba00cf3f61d7779a",
         "name": "Eight-hour rain",
         "interface": [
           {
@@ -1621,7 +1622,8 @@
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "alias": "Clock Commit"
+              "alias": "Clock Commit",
+              "fileHandling": ""
             },
             "boundary-input-5": {
               "id": "boundary-input-5",
@@ -1761,10 +1763,10 @@
           "portals": {}
         }
       },
-      "[\"combined-relationship\",2,\"sha256:404822e2502b16aaad61fecd7c53ec3fd0e18db0579dcf08a1c3ce1cb9dd9eb5\"]": {
+      "[\"combined-relationship\",2,\"sha256:91eec63a1a8c2f9456122004c36003e18e190b387f3e773cb26d42d55d2f3b1b\"]": {
         "id": "combined-relationship",
         "version": 2,
-        "semanticHash": "sha256:404822e2502b16aaad61fecd7c53ec3fd0e18db0579dcf08a1c3ce1cb9dd9eb5",
+        "semanticHash": "sha256:91eec63a1a8c2f9456122004c36003e18e190b387f3e773cb26d42d55d2f3b1b",
         "name": "Rowan toward Iris",
         "interface": [
           {
@@ -2162,7 +2164,8 @@
               "columns": [],
               "separator": "\n",
               "emptyPolicy": "omit",
-              "trailingSeparator": false
+              "trailingSeparator": false,
+              "fileHandling": ""
             },
             "boundary-input-10": {
               "id": "boundary-input-10",
