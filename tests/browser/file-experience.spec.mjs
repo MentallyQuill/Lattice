@@ -89,3 +89,22 @@ test('new workflow authoring autosaves without Save and reopens from host files'
  await expect.poll(()=>page.evaluate(()=>window.canvasHarness.graph.description)).toBe('Authored without Save');
  expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
 });
+test('closed workspace retains a draft and blocks Send until its selected workflow can be resolved',async({page})=>{
+ await host(page);
+ const result=await page.evaluate(async()=>{
+  const h=window.canvasHarness,runtime=await import('/src/run.js?v='+h.version),{serializeWorkflowDocument}=await import('/src/workflow/document-file.js?v='+h.version),app=runtime.getApplicationFileExperience();
+  const selected=structuredClone(h.graph);selected.name='Selected in next chat';const saved=await app.library.adopt({json:serializeWorkflowDocument(selected).data.json});if(!saved.ok)throw Error(JSON.stringify(saved));
+  h.UI.close();const draft=structuredClone(h.graph);draft.name='Retained recovery draft';h.S.activateWorkflow(draft,{source:{kind:'recovery',name:draft.name}});
+  h.context.chatId='next-chat';h.context.characters[0].chat='next-chat';h.context.chatMetadata={latticeWorkflowSelection:{kind:'library',id:saved.data.id}};
+  h.S.settings().enabled=true;await h.context.eventSource.emit('CHAT_CHANGED');let aborted=false;
+  const send=runtime.getNativeWorkflowController().beforeGenerate([],8192,()=>{aborted=true;},'normal');
+  const response=await Promise.race([send,new Promise(resolve=>setTimeout(()=>resolve({timeout:true}),1500))]);
+  return {response,aborted,name:h.S.activeWorkflow().name,dirty:h.S.documentSession.dirty(),open:h.UI.isOpen()};
+ });
+ expect(result.response.timeout).not.toBe(true);expect(result.response.error?.code).toBe('WORKFLOW_SELECTION_PENDING');expect(result.aborted).toBe(true);expect(result.name).toBe('Retained recovery draft');expect(result.dirty).toBe(true);expect(result.open).toBe(false);
+ await page.evaluate(async()=>{const h=window.canvasHarness;h.UI.open();window.pendingSelectionResolution=(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.beforeRun();});
+ await page.getByRole('dialog',{name:'Save workflow changes?'}).getByRole('button',{name:"Don't Save",exact:true}).click();
+ const resolved=await page.evaluate(async()=>({result:await window.pendingSelectionResolution,name:window.canvasHarness.S.activeWorkflow().name}));
+ expect(resolved.result.ok).toBe(true);expect(resolved.name).toBe('Selected in next chat');
+ expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+});

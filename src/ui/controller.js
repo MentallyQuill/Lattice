@@ -1195,7 +1195,7 @@ async function onNewGraph() {
 
 
 function requestDocumentChoice(name) {
-    if(!workbench)return Promise.resolve('cancel');
+    if(!workbench||!isOpen())return Promise.resolve('cancel');
     return new Promise(resolve => { pendingDocumentPrompt = { resolve }; workbench.update({ documentPrompt: { name } }); });
 }
 
