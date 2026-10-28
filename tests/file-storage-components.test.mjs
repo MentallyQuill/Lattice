@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {JSDOM} from 'jsdom';
 import {compiled} from './helpers/svelte-compile.mjs';
+import {createFileStorageSetup} from '../src/ui/file-storage-setup.js';
 const dom=new JSDOM('<!doctype html><body></body>',{pretendToBeVisual:true});globalThis.window=dom.window;globalThis.document=dom.window.document;
 for(const key of ['Node','Element','Text','Comment','Document','HTMLElement','HTMLButtonElement','HTMLInputElement','HTMLSelectElement','MutationObserver'])Object.defineProperty(globalThis,key,{configurable:true,value:dom.window[key]});
 const {mount,unmount,flushSync,tick}=await import(new URL('../node_modules/svelte/src/index-client.js',import.meta.url).href);
@@ -26,4 +27,15 @@ test('server chooser browses folders and returns only a path without authorizing
   instance=mount(component.component,{target,props:{access,mode:'open',onselect:path=>selected.push(path),oncancel:()=>{}}});flushSync();await settle();await settle();
   target.querySelector('[data-server-entry="file"]').click();await settle();assert.deepEqual(selected,['/files/notes.txt']);assert.deepEqual(calls,['/files']);
  }finally{if(instance)await unmount(instance);target.remove();await rm(directory,{recursive:true,force:true});}
+});
+
+test('reopening completed setup offers both choices and can switch back to inside saving',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lattice-change-storage-')),target=document.createElement('div');document.body.append(target);let instance;
+ const records=new Map(),setup=createFileStorageSetup({access:{serviceVersion:{apiVersion:1,chooserVersion:1},refresh:async()=>({ok:true,data:{persistent:true}})},getHost:()=>({hostId:'https://stories.example',userId:'alice'}),preferences:{read:async name=>({ok:true,data:{exists:records.has(name),content:records.get(name)??'',revision:null}}),write:async({name,content})=>{records.set(name,content);return {ok:true,data:{acknowledged:true,revision:'saved'}};}}});
+ try{
+  await setup.ready;await setup.choose('anywhere');await setup.cancel();await setup.open();
+  const component=await compiled('FileStorageSetup',directory);instance=mount(component.component,{target,props:{setup}});flushSync();
+  const inside=target.querySelector('[data-storage-choice="inside"]');assert.ok(inside,'completed settings must offer the inside choice');assert.ok(target.querySelector('[data-storage-choice="anywhere"]'));
+  inside.click();await settle();await settle();assert.equal(setup.view().choice,'inside');assert.equal(setup.view().effectiveMode,'inside');assert.equal(setup.view().open,false);assert.equal(JSON.parse([...records.values()][0]).choice,'inside');
+ }finally{if(instance)await unmount(instance);setup.dispose();target.remove();await rm(directory,{recursive:true,force:true});}
 });

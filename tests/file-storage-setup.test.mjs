@@ -25,7 +25,7 @@ test('missing, incompatible, denied and offline remain distinct and cancellation
 });
 test('restart resumes progress but always rechecks support and refuses unacknowledged preferences',async()=>{
  const f=fixture();f.code('FILE_SERVICE_REQUIRED');const setup=module.createFileStorageSetup(f);await setup.ready;await setup.choose('anywhere');await setup.next();await setup.next();
- const resumed=module.createFileStorageSetup(f);await resumed.ready;assert.equal(resumed.view().step,'restart');assert.equal(resumed.view().status,'missing');
+ const resumed=module.createFileStorageSetup(f);await resumed.ready;assert.equal(resumed.view().step,'restart');assert.equal(resumed.view().status,'missing');await resumed.open();assert.equal(resumed.view().step,'restart');
  f.code(null);await resumed.check();assert.equal(resumed.view().status,'ready');assert.equal(resumed.view().step,'complete');
  const failed=module.createFileStorageSetup({...f,preferences:{read:f.preferences.read,write:async()=>({ok:false,error:{code:'PERSISTENCE_UNKNOWN',message:'Not confirmed'}})}});await failed.ready;await failed.choose('inside');assert.equal(failed.view().preferenceError,'Not confirmed');
 });

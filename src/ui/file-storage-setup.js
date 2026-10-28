@@ -37,11 +37,11 @@ export function createFileStorageSetup({access,preferences,getHost,downloadSetup
   const compatible=result.ok&&access.serviceVersion?.apiVersion===1&&access.serviceVersion?.chooserVersion===1;
   state.status=compatible?'ready':result.ok?'incompatible':statusFor(result.error.code);
   state.error=result.ok?(compatible?'':'Update Lattice file support on the SillyTavern server.'):result.error.message;
-  if(state.choice==='anywhere'&&compatible){state.step='complete';await persist();}emit();
+  if(state.choice==='anywhere'&&compatible&&!(state.open&&state.step==='choice')){state.step='complete';await persist();}emit();
  }
  const ready=check();
  return Object.freeze({ready,view,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},
-  open(){state.open=true;emit();return check();},check,
+  async open(){await ready;if(state.step==='complete')state.step='choice';state.open=true;emit();await check();},check,
   async choose(choice){if(!['inside','anywhere'].includes(choice))return;await ready;await restore(identity());state.choice=choice;state.open=choice==='anywhere';state.step=choice==='inside'?'choice':state.status==='ready'?'complete':'download';await persist();if(choice==='anywhere')await check();emit();},
   async cancel(){state.open=false;++sequence;await persist();emit();},
   async next(){if(state.step==='verify')return check();state.step=steps[Math.min(steps.length-2,steps.indexOf(state.step)+1)];await persist();emit();},
