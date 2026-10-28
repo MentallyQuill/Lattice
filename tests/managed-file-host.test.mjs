@@ -5,6 +5,82 @@ import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v
 import { operationDefaults } from '../src/workflow/catalog.js?v=0.29.0';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
 import { normalizeOccurrences,confirmOccurrences,resolveItemHolders } from '../src/workflow/operations/event-data.js?v=0.29.0';
+import {nativeFixture,reviewGraph} from './helpers/native-workflow-fixture.mjs';
+
+test('host adopts an empty legacy own-file destination before strict runtime preflight',async()=>{
+ const graph={id:'legacy-file',name:'Legacy file',schema:3,runtime:2,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'Scene context'},write:{id:'write',type:'workflow',operation:'write-file',destinationMode:'own',targetId:'',mode:'append',fileTarget:{name:'SceneContext.txt',format:'text',content:'',visibility:{kind:'hidden'}}}},wires:{w:{id:'w',route:'wire',from:'text',fromPort:'out',to:'write',toPort:'text'}},portals:{},definitions:{},runTargets:[]};
+ const authored=structuredClone(graph),c={chatId:'chat',characterId:0,characters:[{name:'Mara'}],chat:[{mes:'Hello',is_user:true}],chatMetadata:{}};
+ const catalog=createChatDocumentCatalog({getContext:()=>c,getUserId:()=> 'u'});
+ const definitions=[];let writes=0;
+ const access={ready:Promise.resolve(),ensureManaged:async definition=>{definitions.push(definition);return {ok:true,data:{...definition,bindingId:'managed-binding',storage:'host'}};},backend:defs=>({lookupHistory:async()=>({ok:true,data:{epoch:0,receipt:null,outcomes:[],clockTurn:null,privateActorIds:[],visibility:{kind:'hidden'}}}),load:async targetId=>{const definition=defs.find(value=>value.targetId===targetId);return {ok:true,data:{targetId,revision:0,format:definition.format,content:definition.content,receipts:[]}};},compareAndSwap:async()=>{writes++;return {ok:true};}})};
+ const controller=createNativeWorkflowController({context:()=>c,getGraph:()=>graph,userId:()=> 'u',getWorkflowIdentity:()=> 'library:legacy',nodeFileAccess:access,documentCatalog:catalog,isBusy:()=>false});
+ try{
+  const result=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'write',portId:'projection'});
+  assert.equal(result.ok,true,JSON.stringify(result.error));
+  assert.equal(definitions.length,1);assert.equal(definitions[0].name,'SceneContext.txt');assert.deepEqual(definitions[0].visibility,{kind:'hidden'});
+  assert.equal(writes,0,'Preflight and target preview cannot publish file bytes');assert.deepEqual(graph,authored);
+ }finally{controller.dispose();}
+});
+
+test('a genuine file setup failure stops native generation without fallback or allocation',async()=>{
+ const graph=reviewGraph({revise:false});
+ graph.nodes.text={id:'text',type:'workflow',operation:'text',text:'Scene context'};
+ graph.nodes.write={id:'write',type:'workflow',operation:'write-file',destinationMode:'own',targetId:'',mode:'append',fileTarget:{name:'SceneContext.txt',format:'text',content:'Imported authored template',visibility:{kind:'hidden'}}};
+ graph.wires.file={id:'file',route:'wire',from:'text',fromPort:'out',to:'write',toPort:'text'};
+ graph.runTargets.push({instancePath:[],nodeId:'write'});
+ const authored=structuredClone(graph);let allocations=0,stops=0,aborts=0,requests=0;
+ const f=nativeFixture(graph,{ports:{getFailurePolicy:()=> 'stop',stopGeneration:()=>{stops++;return true;},nodeFileAccess:{ensureManaged:async()=>{allocations++;throw Error('An imported template cannot acquire a managed grant.');}}},request:async()=>{requests++;throw Error('Invalid destinations cannot dispatch.');}});
+ f.c.chatMetadata={};
+ try{
+  f.c.chat.pop();await f.c.eventSource.emit('GENERATION_STARTED','normal',{},false);
+  const result=await f.controller.beforeGenerate(f.c.chat,8192,()=>{aborts++;},'normal');
+  assert.equal(result.ok,false);assert.equal(result.error.code,'FILE_SETUP_REQUIRED');
+  assert.equal(result.failurePolicy,'stop');assert.equal(result.failureDisposition,'stopped');assert.equal(result.fallback,undefined);
+  assert.equal(stops,1);assert.equal(aborts,1);assert.equal(requests,0);assert.equal(allocations,0);assert.deepEqual(graph,authored);
+ }finally{f.controller.dispose();}
+});
+
+test('legacy adoption cannot redirect canonical data appearing after planning',async()=>{
+ const graph={id:'legacy-race',name:'Legacy file',schema:3,runtime:2,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'Scene context'},write:{id:'write',type:'workflow',operation:'write-file',destinationMode:'own',targetId:'old-scene',mode:'append',fileTarget:{name:'SceneContext.txt',format:'text',content:'',visibility:{kind:'hidden'}}}},wires:{w:{id:'w',route:'wire',from:'text',fromPort:'out',to:'write',toPort:'text'}},portals:{},definitions:{},runTargets:[]};
+ const c={chatId:'chat',characterId:0,characters:[{name:'Mara'}],chat:[{mes:'Hello',is_user:true}],chatMetadata:{}};
+ const catalog=createChatDocumentCatalog({getContext:()=>c,getUserId:()=> 'u'});let allocations=0;
+ const controller=createNativeWorkflowController({context:()=>c,getGraph:()=>graph,userId:()=> 'u',documentCatalog:catalog,nodeFileAccess:{ensureManaged:async()=>{allocations++;return {ok:false,error:{code:'UNEXPECTED_ALLOCATION',message:'Existing canonical data must not be redirected.'}};}},onEvent:event=>{if(event.type==='plan')c.chatMetadata.latticeDocuments={u:{'old-scene':{content:'Preserve canonical scene'}}};},isBusy:()=>false});
+ try{
+  const result=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'write',portId:'projection'});
+  assert.equal(result.error?.code,'STALE_FILE_SCOPE');assert.equal(allocations,0);
+  assert.equal(c.chatMetadata.latticeDocuments.u['old-scene'].content,'Preserve canonical scene');assert.equal(graph.nodes.write.fileTarget.managed,undefined);
+ }finally{controller.dispose();}
+});
+
+test('native generation reaches its boundary with an eligible legacy destination under stop policy',async()=>{
+ const graph=reviewGraph({revise:false});
+ graph.nodes.text={id:'text',type:'workflow',operation:'text',text:'Scene context'};
+ graph.nodes.write={id:'write',type:'workflow',operation:'write-file',destinationMode:'own',targetId:'',mode:'append',fileTarget:{name:'SceneContext.txt',format:'text',content:'',visibility:{kind:'hidden'}}};
+ graph.wires.file={id:'file',route:'wire',from:'text',fromPort:'out',to:'write',toPort:'text'};graph.runTargets.push({instancePath:[],nodeId:'write'});
+ const authored=structuredClone(graph),definitions=[];let writes=0,stops=0,aborts=0;
+ const access={ready:Promise.resolve(),ensureManaged:async definition=>{definitions.push(definition);return {ok:true,data:{...definition,bindingId:'managed-binding',storage:'host'}};},backend:defs=>({lookupHistory:async()=>({ok:true,data:{epoch:0,receipt:null,outcomes:[],clockTurn:null,privateActorIds:[],visibility:{kind:'hidden'}}}),load:async targetId=>{const definition=defs.find(value=>value.targetId===targetId);return {ok:true,data:{targetId,revision:0,format:definition.format,content:definition.content,receipts:[]}};},compareAndSwap:async()=>{writes++;return {ok:true};}})};
+ const f=nativeFixture(graph,{ports:{getFailurePolicy:()=> 'stop',stopGeneration:()=>{stops++;return true;},nodeFileAccess:access}});f.c.chatMetadata={};
+ try{
+  f.c.chat.pop();await f.c.eventSource.emit('GENERATION_STARTED','normal',{},false);
+  const ready=await f.controller.beforeGenerate(f.c.chat,8192,()=>{aborts++;},'normal');
+  assert.equal(ready.ok,true,JSON.stringify(ready.error));assert.equal(definitions.length,1);assert.equal(writes,0);assert.equal(stops,0);assert.equal(aborts,0);assert.deepEqual(graph,authored);
+ }finally{f.controller.dispose();}
+});
+
+for(const protection of ['canonical','catalog','path','binding','template'])test(`legacy preflight preserves ${protection} authority without allocating a replacement`,async()=>{
+ const fileTarget={name:'SceneContext.txt',format:'text',content:'',visibility:{kind:'hidden'},...(protection==='path'?{path:'C:\\authored-scene.txt'}:{}),...(protection==='binding'?{bindingId:'imported-ungranted'}:{}),...(protection==='template'?{content:'Authored template'}:{})};
+ const graph={id:'protected-file',name:'Protected file',schema:3,runtime:2,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'Scene context'},write:{id:'write',type:'workflow',operation:'write-file',destinationMode:'own',targetId:'old-scene',mode:'append',fileTarget}},wires:{w:{id:'w',route:'wire',from:'text',fromPort:'out',to:'write',toPort:'text'}},portals:{},definitions:{},runTargets:[]};
+ const authored=structuredClone(graph),c={chatId:'chat',characterId:0,characters:[{name:'Mara'}],chat:[{mes:'Hello',is_user:true}],chatMetadata:protection==='canonical'?{latticeDocuments:{u:{'old-scene':{content:'Canonical bytes'}}}}:{}};
+ const catalog=createChatDocumentCatalog({getContext:()=>c,getUserId:()=> 'u'});let allocations=0;
+ if(protection==='catalog')assert.equal(catalog.define({targetId:'old-scene',name:'Existing scene',format:'text',content:'Saved template',visibility:{kind:'hidden'}}).ok,true);
+ const access={ensureManaged:async()=>{allocations++;throw Error('Protected authority cannot acquire a replacement grant.');},backend:()=>({load:async()=>({ok:false,error:{code:'FILE_BINDING_MISSING',message:'Imported grants require explicit local authorization.'}})})};
+ const controller=createNativeWorkflowController({context:()=>c,getGraph:()=>graph,userId:()=> 'u',nodeFileAccess:access,documentCatalog:catalog,isBusy:()=>false});
+ try{
+  const result=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'write',portId:'projection'});
+  assert.equal(result.ok,false);assert.equal(result.error.code,protection==='binding'?'FILE_BINDING_MISSING':'FILE_SETUP_REQUIRED');
+  assert.equal(allocations,0);assert.deepEqual(graph,authored);
+ }finally{controller.dispose();}
+});
 test('host provisions a trusted managed destination before staging and retains authored intent',async()=>{
  const graph={id:'untrusted-authored-id',name:'File',schema:3,runtime:2,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'Hello'},write:{id:'write',type:'workflow',...operationDefaults('write-file',{managedFiles:true})}},wires:{w:{id:'w',route:'wire',from:'text',fromPort:'out',to:'write',toPort:'text'}},portals:{},definitions:{},runTargets:[]};
  const c={chatId:'chat',characterId:0,characters:[{name:'Mara'}],chat:[{mes:'Hello',is_user:true}],chatMetadata:{}};

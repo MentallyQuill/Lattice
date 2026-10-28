@@ -53,11 +53,11 @@ function diagnosticVisibility(node,inputs,authorized) {
     return artifactVisibility({inputs,...(actor?{visibility:actor}:{})});
 }
 
-function planWorkflow(graph,ports) {
+function planWorkflow(graph,ports,hooks) {
     const normalized=cloneWorkflowDocument(graph);if(!normalized.ok)return normalized;
     if(normalized.data.mode!=='native-unified')return failure('WRONG_PHASE','Only unified workflow roots can execute.');
     if(ports.phase && normalized.data.mode!=='native-'+ports.phase)return failure('WRONG_PHASE','The workflow operation does not support this phase.');
-    const resolved=prepareWorkflowAttempt(normalized.data,ports.target===undefined?{}:{target:ports.target});return resolved.ok?{ok:true,data:resolved.data.selection,preflight:resolved.data.preflight,graph:normalized.data}:resolved;
+    const resolved=prepareWorkflowAttempt(normalized.data,ports.target===undefined?{}:{target:ports.target},hooks.prepareFileNode);return resolved.ok?{ok:true,data:resolved.data.selection,preflight:resolved.data.preflight,graph:normalized.data}:resolved;
 }
 async function executeNode(node,inputs,op,local) {
     const input=inputs.in;
@@ -191,7 +191,7 @@ async function executeWorkflow(original,ports,hooks={}) {
         const readNow=now,readMonotonic=monotonic;
         now=()=>{try{const value=readNow();return Number.isFinite(value)&&value>=0?value:initial;}catch{return initial;}};
         monotonic=()=>{try{const value=readMonotonic();return Number.isFinite(value)&&value>=0?value:started+lastElapsed;}catch{return started+lastElapsed;}};
-        const prepared=planWorkflow(original,ports);if(!prepared.ok)return finish(prepared);
+        const prepared=planWorkflow(original,ports,hooks);if(!prepared.ok)return finish(prepared);
         const originalGraphSnapshot=structuredClone(original);
         plan=prepared.data;callBound=plan.callBound;safePlan=parseRunPlan(plan);
         if(!safePlan)return finish(failure('INVALID_RUN_PLAN','The workflow execution inventory is invalid.'));
