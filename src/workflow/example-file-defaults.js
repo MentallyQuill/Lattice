@@ -20,14 +20,15 @@ export function prepareExampleFileDefaults({exampleId,nodes,workflowId,actorBind
  for(const entry of entries){
   const node=entry.node;
   if(!entry.address||entry.address.nodeId!==node.id||!Array.isArray(entry.address.instancePath))return fail('Example files require qualified node addresses.');
-  if(explicit(node)||Object.hasOwn(canonicalDocuments,nodeFileTargetId(node))||legacyDocuments.some(value=>value.targetId===nodeFileTargetId(node)))continue;
-  const source=sources.find(source=>source.operation===node.operation&&(source.id===node.id||node.id.startsWith(source.id+'-'))&&logical(source)===logical(node));
+  if(explicit(node)||node.fileTarget?.managed!==true&&(Object.hasOwn(canonicalDocuments,nodeFileTargetId(node))||legacyDocuments.some(value=>value.targetId===nodeFileTargetId(node))))continue;
+  const source=sources.find(source=>source.operation===node.operation&&(source.id===node.id||node.id.startsWith(source.id+'-'))&&(logical(source)===logical(node)||node.operation==='story-clock'&&node.fileTarget?.managed===true));
   if(source)entry.node=remap(node,source);
   if(!source||!['read-file','story-clock','random-pick','commit-outcomes'].includes(node.operation))continue;
   const target=logical(source),fixtureName=target==='sword-souls'?'sword-souls-99.json':target+(target==='campaign-notebook'?'.txt':'.json');
   let content=EXAMPLE_FILE_FIXTURES[fixtureName];if(content===undefined)continue;
   const format=fixtureName.endsWith('.txt')?'text':'json';if(node.fileTarget?.format&&node.fileTarget.format!==format)continue;
   const privateActor=target.startsWith('rowan-')?'character:rowan.png':target.startsWith('iris-')?'character:iris.png':source.actorScope==='presence'?source.actorId:null;
+  if(privateActor&&(node.actorId??'')!==(source.actorId??'')&&node.actorId!==actorBindings[privateActor]){entry.node=node;continue;}
   if(privateActor&&node.fileTarget?.visibility&&(node.fileTarget.visibility.kind!=='actor-private'||node.fileTarget.visibility.actorId!==actorBindings[privateActor])){entry.node=node;continue;}
   if(privateActor&&!actorBindings[privateActor]){if(!actorChoices.some(choice=>choice.sampleActorId===privateActor))actorChoices.push({sampleActorId:privateActor,label:actors[privateActor]??'Lesson character'});continue;}
   if(privateActor){entry.node.actorId=actorBindings[privateActor];if(exampleId==='lesson-29')content='[]';}
@@ -37,13 +38,18 @@ export function prepareExampleFileDefaults({exampleId,nodes,workflowId,actorBind
   initialTemplates[key(entry.address)]=content;
   const resourceKey=JSON.stringify([entry.address.workflowId,entry.address.instancePath,target,entry.node.fileTarget.visibility]);
   if(!resources.has(resourceKey))resources.set(resourceKey,[]);resources.get(resourceKey).push(entry);
-  if(node.operation==='story-clock')clocks.set(target,resolved.data.definition.targetId);
+  if(node.operation==='story-clock'){
+   // Retain the exact owner ID for later reprepare/Save As relationship checks.
+   clocks.set(target,{current:resolved.data.definition.targetId,previous:node.fileTarget?.managed===true?node.clockId:source.clockId});
+   entry.node.clockId=resolved.data.definition.targetId;
+  }
  }
  for(const group of resources.values())if(group.length>1){const owner=group.find(entry=>entry.node.operation==='commit-outcomes')??group[0];for(const entry of group)if(entry!==owner)fileOwners[key(entry.address)]=clone(owner.address);}
  // Keep authored schedule expectations aligned with their scoped clock source.
  for(const entry of entries){
   const source=sources.find(source=>source.operation===entry.node.operation&&(source.id===entry.node.id||entry.node.id.startsWith(source.id+'-')));
-  if(source?.operation==='time-trigger'&&clocks.has(source.clockId)&&(entry.node.clockId===source.clockId||entry.node.clockId?.startsWith('managed:')))entry.node.clockId=clocks.get(source.clockId);
+  const clock=source?.operation==='time-trigger'?clocks.get(source.clockId):null;
+  if(clock&&(entry.node.clockId===source.clockId||entry.node.clockId===clock.previous))entry.node.clockId=clock.current;
  }
  for(const [sampleActorId,label] of Object.entries(actors))if(!actorBindings[sampleActorId]&&!actorChoices.some(choice=>choice.sampleActorId===sampleActorId)&&entries.some(entry=>sources.some(source=>source.operation===entry.node.operation&&(source.id===entry.node.id||entry.node.id.startsWith(source.id+'-')))&&JSON.stringify(entry.node).includes(sampleActorId)))actorChoices.push({sampleActorId,label});
  return {ok:true,data:{nodes:entries,initialTemplates,fileOwners,actorChoices}};

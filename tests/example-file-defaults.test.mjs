@@ -32,6 +32,25 @@ test('clock fixtures keep the sample minute and use the scoped clock identity',a
  const copiedClock=other.data.definitions.find(value=>value.name==='story-clock.json');assert.notEqual(copiedClock.targetId,clock.targetId);
  for(const {node} of copied.data.nodes.filter(entry=>entry.node.operation==='time-trigger'))assert.equal(node.clockId,copiedClock.targetId);
 });
+test('authored private reader actors without a file visibility choice remain unchanged',()=>{
+ const graph=installed(30),nodes=entries(graph),reader=nodes.find(entry=>entry.node.operation==='read-file');reader.node.actorId='character:Different.png';delete reader.node.fileTarget;
+ const prepared=api.prepareExampleFileDefaults({exampleId:'lesson-30',nodes,workflowId:context.workflowId,actorBindings:{'character:rowan.png':'character:Actual.png','character:iris.png':'character:Partner.png'}});assert.equal(prepared.ok,true);
+ assert.deepEqual(prepared.data.nodes.find(entry=>entry.node.id===reader.node.id).node,reader.node);
+ assert.equal(Object.hasOwn(prepared.data.initialTemplates,JSON.stringify([reader.address.workflowId,[],reader.node.id])),false);
+});
+test('authored unrelated managed schedule clocks are preserved while exact sample clocks rebase',()=>{
+ const graph=installed(24),nodes=entries(graph),triggers=nodes.filter(entry=>entry.node.operation==='time-trigger');assert.ok(triggers.length>1);
+ triggers[0].node.clockId='managed:authored-other-clock';
+ const first=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes,workflowId:context.workflowId});assert.equal(first.ok,true);
+ assert.equal(first.data.nodes.find(entry=>entry.node.id===triggers[0].node.id).node.clockId,'managed:authored-other-clock');
+ const sample=first.data.nodes.find(entry=>entry.node.operation==='story-clock'),derived=first.data.nodes.find(entry=>entry.node.id===triggers[1].node.id).node.clockId;
+ assert.equal(sample.node.clockId,derived);
+ const copied=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes:first.data.nodes,workflowId:'library:copied',canonicalDocuments:{[derived]:{content:'existing original clock'}}});assert.equal(copied.ok,true);
+ const copiedClock=copied.data.nodes.find(entry=>entry.node.operation==='story-clock');assert.notEqual(copiedClock.node.clockId,derived);
+ assert.equal(copied.data.nodes.find(entry=>entry.node.id===triggers[1].node.id).node.clockId,copiedClock.node.clockId);
+ assert.equal(copied.data.nodes.find(entry=>entry.node.id===triggers[0].node.id).node.clockId,'managed:authored-other-clock');
+ const repeated=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes:copied.data.nodes,workflowId:'library:copied'});assert.equal(repeated.ok,true);assert.deepEqual(repeated.data.nodes,copied.data.nodes);
+});
 test('private samples require trusted character choices and retain connected references',()=>{
  const unknown=prepare(29);assert.equal(unknown.ok,true);assert.deepEqual(unknown.data.actorChoices.map(value=>value.label),['Rowan','Iris']);
  assert.equal(unknown.data.nodes.filter(entry=>entry.node.actorScope==='presence'&&entry.node.operation==='read-file').some(entry=>entry.node.fileTarget?.managed),false);
