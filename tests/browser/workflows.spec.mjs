@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { chooseControl, chooseNodeProfile, openDetailGroup } from './details-helpers.mjs';
+import {installHostFileRoutes,configureWorkflowSelectionPersistence} from './host-file-fixture.mjs';
 
 const preview = page => page.locator('.pc-output-preview');
 const details = page => page.getByRole('region', { name: 'Node details', exact: true });
@@ -366,6 +367,7 @@ async function prepareReviewRoot(page) {
     });
 }
 async function reviewFixture(page) {
+    await installHostFileRoutes(page);
     await page.route('**/scripts/user.js', route => route.fulfill({contentType:'text/javascript',body: "export const getCurrentUserHandle = () => 'workflow-browser-user';"}));
     await page.route('**/script.js', route => route.fulfill({ contentType: 'text/javascript', body: `
         const context = () => globalThis.SillyTavern.getContext();
@@ -374,6 +376,7 @@ async function reviewFixture(page) {
         export function syncSwipeToMes(index, swipeId) { const m = context().chat[index]; m.swipe_id = swipeId; m.mes = m.swipes[swipeId]; Object.assign(m, structuredClone(m.swipe_info[swipeId])); return true; }
     ` }));
     await page.goto('/tests/browser/harness.html'); await page.waitForFunction(() => !!window.canvasHarness);
+    await configureWorkflowSelectionPersistence(page,{chatId:'synthetic-workflow-ui'});
     await page.evaluate(async () => {
         const c = window.canvasHarness.context;
         c.chatId = 'synthetic-workflow-ui';
@@ -579,6 +582,10 @@ test('native camera pan and zoom preserve the focused editor without domain work
     await expect(page.getByRole('button', { name: 'Apply reviewed reply', exact: true })).toBeVisible();
     await inspectOperation(page, 'repair');
     await page.getByLabel('Instructions', { exact: true }).focus();
+    await expect.poll(()=>page.evaluate(async()=>{
+        const h=window.canvasHarness,source=h.S.documentSession.source(),application=(await import('/src/run.js?v='+h.version)).getApplicationFileExperience();
+        return source?.kind==='library'&&h.context.chatMetadata.latticeWorkflowSelection?.id===source.id&&!application.controller.view().autosave.saving;
+    })).toBe(true);
     const measured = await page.evaluate(async () => {
         const { context: c, canvas, settle } = window.canvasHarness;
         const controller = (await import('/src/run.js?v=' + window.canvasHarness.version)).getNativeWorkflowController();

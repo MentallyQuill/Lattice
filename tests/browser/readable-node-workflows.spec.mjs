@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import {installHostFileRoutes,configureWorkflowSelectionPersistence} from './host-file-fixture.mjs';
 
 const elaraReply = 'First.\r\n\r\nElara arrives. Elara waits.\r\n\r\nMiddle.\r\n\r\nElara leaves with Elara.\r\n\r\nLast.';
 const filteredElara = 'First.\r\n\r\nMiddle.\r\n\r\nLast.';
@@ -8,6 +9,7 @@ const preview = page => page.locator('.pc-output-preview');
 // Host-only doubles mirror the public browser adapter fixture. The controller,
 // authoring transactions, source checks, Pattern, Branch, Filter and Join are real.
 async function openLesson(page) {
+    await installHostFileRoutes(page);
     await page.addInitScript(() => {
         window.workflowCopies = [];
         window.workflowEffects = { captures: 0, workers: 0, commits: 0 };
@@ -24,6 +26,7 @@ async function openLesson(page) {
     ` }));
     await page.goto('/tests/browser/harness.html');
     await page.waitForFunction(() => !!window.canvasHarness);
+    await configureWorkflowSelectionPersistence(page,{chatId:'readable-workflow-browser'});
     await page.evaluate(async () => {
         const h = window.canvasHarness;
         const { patternFilterLesson } = await import('/tools/remastered/pattern-filter.mjs');
@@ -210,7 +213,7 @@ for (const scenario of [
 ]) test(`${scenario.name} preserves the native source and holds publication when required`, async ({ page }) => {
     await openLesson(page); await authorTerms(page, 'Elara');
     if (scenario.protectedLiterals) await page.evaluate(async protectedLiterals => {
-        const h = window.canvasHarness, graph = structuredClone(h.graph); graph.nodes.pattern.protectedLiterals = protectedLiterals; await h.activate(graph);
+        const h = window.canvasHarness; h.graph.nodes.pattern.protectedLiterals = protectedLiterals; h.S.touchGraph(h.graph); h.UI.refreshIfOpen(); await h.settle();
     }, scenario.protectedLiterals);
     const run = await generateReply(page, scenario.text);
     expect(run.completedUnits.filter(id => id === 'branch')).toHaveLength(1); expect(run.units.filter.status).toBe(scenario.reason ? 'unresolved' : 'skipped');
