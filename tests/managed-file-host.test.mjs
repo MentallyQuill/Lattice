@@ -52,10 +52,45 @@ test('legacy adoption cannot redirect canonical data appearing after planning',a
  }finally{controller.dispose();}
 });
 
-test('native generation reaches its boundary with an eligible legacy destination under stop policy',async()=>{
+test('legacy adoption rechecks canonical absence after asynchronous provider readiness',async()=>{
+ const graph={id:'legacy-ready-race',name:'Legacy file',schema:3,runtime:2,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'Scene context'},write:{id:'write',type:'workflow',operation:'write-file',destinationMode:'own',targetId:'old-scene',mode:'append',fileTarget:{name:'SceneContext.txt',format:'text',content:'',visibility:{kind:'hidden'}}}},wires:{w:{id:'w',route:'wire',from:'text',fromPort:'out',to:'write',toPort:'text'}},portals:{},definitions:{},runTargets:[]};
+ const c={chatId:'chat',characterId:0,characters:[{name:'Mara'}],chat:[{mes:'Hello',is_user:true}],chatMetadata:{}};
+ const catalog=createChatDocumentCatalog({getContext:()=>c,getUserId:()=> 'u'});let allocations=0;
+ const access={ready:{then(resolve){c.chatMetadata.latticeDocuments={u:{'old-scene':{content:'Canonical bytes restored asynchronously'}}};resolve();}},ensureManaged:async()=>{allocations++;return {ok:false,error:{code:'UNEXPECTED_ALLOCATION',message:'Canonical restore must block replacement allocation.'}};}};
+ const controller=createNativeWorkflowController({context:()=>c,getGraph:()=>graph,userId:()=> 'u',documentCatalog:catalog,nodeFileAccess:access,isBusy:()=>false});
+ try{
+  const result=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'write',portId:'projection'});
+  assert.equal(result.error?.code,'STALE_FILE_SCOPE');assert.equal(allocations,0);
+  assert.equal(c.chatMetadata.latticeDocuments.u['old-scene'].content,'Canonical bytes restored asynchronously');assert.equal(graph.nodes.write.fileTarget.managed,undefined);
+ }finally{controller.dispose();}
+});
+
+test('legacy adoption stops later managed grants when another file becomes canonical',async()=>{
  const graph=reviewGraph({revise:false});
  graph.nodes.text={id:'text',type:'workflow',operation:'text',text:'Scene context'};
- graph.nodes.write={id:'write',type:'workflow',operation:'write-file',destinationMode:'own',targetId:'',mode:'append',fileTarget:{name:'SceneContext.txt',format:'text',content:'',visibility:{kind:'hidden'}}};
+ for(const id of ['first','second']){
+  graph.nodes[id]={id,type:'workflow',operation:'write-file',destinationMode:'own',targetId:'old-'+id,mode:'append',fileTarget:{name:id+'.txt',format:'text',content:'',visibility:{kind:'hidden'}}};
+  graph.wires[id]={id,route:'wire',from:'text',fromPort:'out',to:id,toPort:'text'};graph.runTargets.push({instancePath:[],nodeId:id});
+ }
+ const definitions=[];let providerCurrent;
+ const access={ready:Promise.resolve(),ensureManaged:async(definition,options)=>{
+  f.c.chatMetadata.latticeDocuments={'default-user':{'old-second':{content:'Restored second file'}}};
+  providerCurrent=options.isCurrent();definitions.push(definition);
+  return {ok:true,data:{...definition,bindingId:'managed-binding',storage:'host'}};
+ }};
+ const f=nativeFixture(graph,{ports:{getFailurePolicy:()=> 'stop',stopGeneration:()=>true,nodeFileAccess:access}});f.c.chatMetadata={};
+ try{
+  f.c.chat.pop();await f.c.eventSource.emit('GENERATION_STARTED','normal',{},false);
+  const result=await f.controller.beforeGenerate(f.c.chat,8192,()=>{},'normal');
+  assert.equal(result.error?.code,'STALE_FILE_SCOPE');assert.equal(providerCurrent,false);assert.equal(definitions.length,1);
+  assert.equal(f.c.chatMetadata.latticeDocuments['default-user']['old-second'].content,'Restored second file');assert.equal(result.fallback,undefined);
+ }finally{f.controller.dispose();}
+});
+
+test('native generation reaches its boundary with omitted legacy own-file settings under stop policy',async()=>{
+ const graph=reviewGraph({revise:false});
+ graph.nodes.text={id:'text',type:'workflow',operation:'text',text:'Scene context'};
+ graph.nodes.write={id:'write',type:'workflow',operation:'write-file',destinationMode:'own',mode:'append',phase:'post'};
  graph.wires.file={id:'file',route:'wire',from:'text',fromPort:'out',to:'write',toPort:'text'};graph.runTargets.push({instancePath:[],nodeId:'write'});
  const authored=structuredClone(graph),definitions=[];let writes=0,stops=0,aborts=0;
  const access={ready:Promise.resolve(),ensureManaged:async definition=>{definitions.push(definition);return {ok:true,data:{...definition,bindingId:'managed-binding',storage:'host'}};},backend:defs=>({lookupHistory:async()=>({ok:true,data:{epoch:0,receipt:null,outcomes:[],clockTurn:null,privateActorIds:[],visibility:{kind:'hidden'}}}),load:async targetId=>{const definition=defs.find(value=>value.targetId===targetId);return {ok:true,data:{targetId,revision:0,format:definition.format,content:definition.content,receipts:[]}};},compareAndSwap:async()=>{writes++;return {ok:true};}})};

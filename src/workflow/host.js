@@ -474,7 +474,15 @@ export function createNativeWorkflowController(ports) {
     const fileStamp=value=>JSON.stringify([value.revision,value.format,value.content]);
     async function prepareNodeFiles(run){
         let nodes=Object.values(run.workflowDataNodes??{}).map(entry=>entry.node??entry);if(!nodes.some(node=>nodeFileTargetId(node)!==null||['read-file','write-file','story-clock','commit-outcomes','random-pick'].includes(node.operation)&&Object.keys(node.fileTarget??{}).length))return {ok:true};
-        const live=()=>fresh(run)&&(!run.unified||nativePrefixFresh(run));
+        const migrationsCurrent=()=>{
+            if(!run.legacyFileMigrations?.length)return true;
+            const legacy=documentCatalog.capture();if(!legacy.ok)return false;
+            const current=context();if(!legacy.data.isCurrent())return false;
+            const canonicalDocuments=current.chatMetadata?.latticeDocuments?.[run.userId]??{};
+            return run.legacyFileMigrations.every(node=>migrateUnboundOwnFile(node,{canonicalDocuments,legacyDocuments:legacy.data.documents})!==node);
+        };
+        // Readiness, validation and each provider grant must retain adoption's absence proof.
+        const live=()=>fresh(run)&&(!run.unified||nativePrefixFresh(run))&&migrationsCurrent();
         const priorCatalog=documentCatalog.capture();if(!priorCatalog.ok)return priorCatalog;
         const exampleOrigin=ports.getExampleFileOrigin?.(run.originalGraph);let initialTemplates,fileOwners;
         if(exampleOrigin){
@@ -802,8 +810,9 @@ export function createNativeWorkflowController(ports) {
         },{getSourceProofs:()=>run.sourceCapability,prepareFileNode:node=>{
             if(migrateUnboundOwnFile(node)===node)return {ok:true,data:node};
             const legacy=documentCatalog.capture();if(!legacy.ok)return legacy;
-            const canonicalDocuments=context().chatMetadata?.latticeDocuments?.[legacy.data.scope.userId]??{};
+            const current=context();
             if(!legacy.data.isCurrent())return fail('STALE_FILE_SCOPE','The file scope changed while preparing legacy settings.');
+            const canonicalDocuments=current.chatMetadata?.latticeDocuments?.[legacy.data.scope.userId]??{};
             const migrated=migrateUnboundOwnFile(node,{canonicalDocuments,legacyDocuments:legacy.data.documents});
             if(migrated!==node)(run.legacyFileMigrations??=[]).push(node);
             return {ok:true,data:migrated};
