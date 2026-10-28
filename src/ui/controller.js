@@ -2181,8 +2181,8 @@ function requestNodeCreation(capture, command, at = null, shelf = false) {
     if (!editorCurrent(capture)) return { ok: false, error: { code: 'STALE_CONTEXT', message: 'The graph view changed.' } };
     const { requiresConfiguration, ...plain } = command;
     if (plain.kind === 'create') {
-        const defaults=operationDefaults(plain.operation,{managedFiles:true});
-        plain.controls={...Object.fromEntries(Object.entries(defaults).filter(([key])=>OPERATIONS[plain.operation]?.controls.includes(key))),...plain.controls};
+        const defaults=operationDefaults(plain.operation,{managedFiles:true}),baseline=operationDefaults(plain.operation);
+        plain.controls={...Object.fromEntries(Object.entries(defaults).filter(([key,value])=>OPERATIONS[plain.operation]?.controls.includes(key)&&JSON.stringify(value)!==JSON.stringify(baseline[key]))),...plain.controls};
         const editor = graphViews.readEditor(), origin = plain.connection?.origin;
         const originCard = origin ? editorDraw?.nativeCards[origin.nodeId] : null;
         plain.phase ??= configuredCreationStage(plain.operation, editor.prepared.savedGraph.mode,
