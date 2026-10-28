@@ -1,5 +1,5 @@
-import {validateNodeFileTarget,nodeFileTargetId} from '../workflow/node-file-targets.js?v=0.29.1';
-import {canonicalFileName,inferManagedFileFormat} from '../workflow/managed-file-policy.js?v=0.29.1';
+import {validateNodeFileTarget,nodeFileTargetId} from '../workflow/node-file-targets.js?v=0.30.0';
+import {canonicalFileName,inferManagedFileFormat} from '../workflow/managed-file-policy.js?v=0.30.0';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const keyFor=node=>node.operation==='story-clock'?'clockId':node.operation==='random-pick'?'ledgerId':'targetId';
 /** Qualified authoring actions; picking a handle never persists document contents. */
@@ -9,7 +9,7 @@ export function createNodeFileActions(ports){
    const captured=ports.capture(selection);if(!captured.ok)return captured;
    const previous=captured.data.node.fileTarget??{};
    if(previous.bindingId&&(settings.name!==previous.name||settings.format!==previous.format||(settings.path??'')!==(previous.path??captured.data.view?.settings?.path??'')))return fail('FILE_COPY_REQUIRED','Keep the original file unchanged. Choose Create new copy to use a different name, type or path.');
-   if(previous.managed===true){
+   if(previous.managed===true||captured.data.view?.managed===true&&!previous.bindingId&&!previous.path?.trim()&&!previous.content){
     if(settings.format!==(captured.data.view?.settings?.format??inferManagedFileFormat(captured.data.node)))return fail('FILE_COPY_REQUIRED','Choose a new destination to change this file’s type.');
     const intent={managed:true,name:settings.name,format:settings.format,missing:settings.missing,visibility:settings.visibility};
     const valid=validateNodeFileTarget(intent);if(!valid.ok)return valid;

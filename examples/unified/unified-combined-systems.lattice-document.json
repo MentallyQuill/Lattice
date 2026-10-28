@@ -171,7 +171,7 @@
         "definition": {
           "id": "combined-wand",
           "version": 2,
-          "semanticHash": "sha256:2fc7c28fea568c4998e3c6b0594d5fe0ed6c00de7957133f4377b422a4e2e44c"
+          "semanticHash": "sha256:90174950248eb76d6de56214d0ddb486782dd508709f272f151af1d8c01d11ba"
         },
         "parameterOverrides": {},
         "roleOverrides": {},
@@ -191,7 +191,7 @@
         "definition": {
           "id": "combined-weather",
           "version": 2,
-          "semanticHash": "sha256:d120b495c9ca01fb3e702f7cc623d4d620d2f7be16f901e6ba00cf3f61d7779a"
+          "semanticHash": "sha256:69aad7315ca7218807f5bcd108ab863d63b49a475ccb1f655afb95f9845b1f5c"
         },
         "parameterOverrides": {},
         "roleOverrides": {},
@@ -211,7 +211,7 @@
         "definition": {
           "id": "combined-relationship",
           "version": 2,
-          "semanticHash": "sha256:91eec63a1a8c2f9456122004c36003e18e190b387f3e773cb26d42d55d2f3b1b"
+          "semanticHash": "sha256:7a3c1998987afb1c8c0bc9e048c28e01576ba0dd9c1c9ea8b4c16b90166d64f2"
         },
         "parameterOverrides": {},
         "roleOverrides": {},
@@ -736,10 +736,10 @@
           "definitions": {}
         }
       },
-      "[\"combined-wand\",2,\"sha256:2fc7c28fea568c4998e3c6b0594d5fe0ed6c00de7957133f4377b422a4e2e44c\"]": {
+      "[\"combined-wand\",2,\"sha256:90174950248eb76d6de56214d0ddb486782dd508709f272f151af1d8c01d11ba\"]": {
         "id": "combined-wand",
         "version": 2,
-        "semanticHash": "sha256:2fc7c28fea568c4998e3c6b0594d5fe0ed6c00de7957133f4377b422a4e2e44c",
+        "semanticHash": "sha256:90174950248eb76d6de56214d0ddb486782dd508709f272f151af1d8c01d11ba",
         "name": "Broken wand",
         "interface": [
           {
@@ -900,6 +900,9 @@
               "model": null,
               "modelRole": null,
               "targetId": "wand-holders",
+              "initialization": "require-file",
+              "initializationInstructions": "",
+              "initializationMaxTokens": 2048,
               "schema": "",
               "columns": []
             },
@@ -976,7 +979,7 @@
               "title": "Collection",
               "alias": "Collection",
               "x": 2900,
-              "y": 408,
+              "y": 432,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -1003,7 +1006,7 @@
               "title": "Condition",
               "alias": "Condition",
               "x": 3300,
-              "y": 240,
+              "y": 336,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -1022,7 +1025,7 @@
               "title": "Branch",
               "alias": "Branch",
               "x": 3700,
-              "y": 264,
+              "y": 312,
               "w": 300,
               "h": 168,
               "profileId": null,
@@ -1039,13 +1042,16 @@
               "title": "Read File",
               "alias": "Read File",
               "x": 3300,
-              "y": 444,
+              "y": 936,
               "w": 300,
               "h": 196,
               "profileId": null,
               "model": null,
               "modelRole": null,
               "targetId": "wand-effects",
+              "initialization": "require-file",
+              "initializationInstructions": "",
+              "initializationMaxTokens": 2048,
               "schema": "",
               "columns": []
             },
@@ -1058,7 +1064,7 @@
               "title": "Effect Library",
               "alias": "Effect Library",
               "x": 3700,
-              "y": 496,
+              "y": 936,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -1079,13 +1085,16 @@
               "title": "Read File",
               "alias": "Read File · authorized live target",
               "x": 3300,
-              "y": 696,
+              "y": 552,
               "w": 300,
               "h": 196,
               "profileId": null,
               "model": null,
               "modelRole": null,
               "targetId": "wand-outcomes",
+              "initialization": "require-file",
+              "initializationInstructions": "",
+              "initializationMaxTokens": 2048,
               "schema": "",
               "columns": []
             },
@@ -1098,7 +1107,7 @@
               "title": "JSON Decode",
               "alias": "JSON Decode",
               "x": 3700,
-              "y": 696,
+              "y": 552,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -1400,10 +1409,10 @@
           "portals": {}
         }
       },
-      "[\"combined-weather\",2,\"sha256:d120b495c9ca01fb3e702f7cc623d4d620d2f7be16f901e6ba00cf3f61d7779a\"]": {
+      "[\"combined-weather\",2,\"sha256:69aad7315ca7218807f5bcd108ab863d63b49a475ccb1f655afb95f9845b1f5c\"]": {
         "id": "combined-weather",
         "version": 2,
-        "semanticHash": "sha256:d120b495c9ca01fb3e702f7cc623d4d620d2f7be16f901e6ba00cf3f61d7779a",
+        "semanticHash": "sha256:69aad7315ca7218807f5bcd108ab863d63b49a475ccb1f655afb95f9845b1f5c",
         "name": "Eight-hour rain",
         "interface": [
           {
@@ -1413,7 +1422,7 @@
             "kind": "data",
             "required": true,
             "cardinality": "one",
-            "boundaryNodeId": "boundary-input-5"
+            "boundaryNodeId": "boundary-input-8"
           },
           {
             "id": "output-1",
@@ -1658,8 +1667,8 @@
               "modelRole": null,
               "fileHandling": ""
             },
-            "boundary-input-5": {
-              "id": "boundary-input-5",
+            "boundary-input-8": {
+              "id": "boundary-input-8",
               "type": "subgraph-input",
               "x": 500,
               "y": 504,
@@ -1686,10 +1695,10 @@
               "to": "weather-duration",
               "toPort": "in"
             },
-            "edge-83": {
-              "id": "edge-83",
+            "edge-86": {
+              "id": "edge-86",
               "route": "wire",
-              "from": "boundary-input-5",
+              "from": "boundary-input-8",
               "fromPort": "out",
               "to": "weather-advance",
               "toPort": "clock"
@@ -1702,10 +1711,10 @@
               "to": "weather-advance",
               "toPort": "proposal"
             },
-            "edge-84": {
-              "id": "edge-84",
+            "edge-87": {
+              "id": "edge-87",
               "route": "wire",
-              "from": "boundary-input-5",
+              "from": "boundary-input-8",
               "fromPort": "out",
               "to": "weather-trigger",
               "toPort": "previous"
@@ -1782,8 +1791,8 @@
               "to": "weather-commit-clock",
               "toPort": "occurrences"
             },
-            "edge-85": {
-              "id": "edge-85",
+            "edge-88": {
+              "id": "edge-88",
               "route": "wire",
               "from": "weather-guidance",
               "fromPort": "out",
@@ -1796,10 +1805,10 @@
           "portals": {}
         }
       },
-      "[\"combined-relationship\",2,\"sha256:91eec63a1a8c2f9456122004c36003e18e190b387f3e773cb26d42d55d2f3b1b\"]": {
+      "[\"combined-relationship\",2,\"sha256:7a3c1998987afb1c8c0bc9e048c28e01576ba0dd9c1c9ea8b4c16b90166d64f2\"]": {
         "id": "combined-relationship",
         "version": 2,
-        "semanticHash": "sha256:91eec63a1a8c2f9456122004c36003e18e190b387f3e773cb26d42d55d2f3b1b",
+        "semanticHash": "sha256:7a3c1998987afb1c8c0bc9e048c28e01576ba0dd9c1c9ea8b4c16b90166d64f2",
         "name": "Rowan toward Iris",
         "interface": [
           {
@@ -1809,7 +1818,7 @@
             "kind": "data",
             "required": true,
             "cardinality": "one",
-            "boundaryNodeId": "boundary-input-10"
+            "boundaryNodeId": "boundary-input-13"
           },
           {
             "id": "input-2",
@@ -1818,7 +1827,7 @@
             "kind": "data",
             "required": true,
             "cardinality": "one",
-            "boundaryNodeId": "boundary-input-11"
+            "boundaryNodeId": "boundary-input-14"
           }
         ],
         "parameters": [],
@@ -1990,13 +1999,16 @@
               "title": "Read File",
               "alias": "Read File · authorized live target",
               "x": 1300,
-              "y": 1128,
+              "y": 888,
               "w": 300,
               "h": 196,
               "profileId": null,
               "model": null,
               "modelRole": null,
               "targetId": "rowan-relationship",
+              "initialization": "require-file",
+              "initializationInstructions": "",
+              "initializationMaxTokens": 2048,
               "schema": "",
               "columns": []
             },
@@ -2046,7 +2058,7 @@
               "title": "JSON Decode",
               "alias": "JSON Decode",
               "x": 1700,
-              "y": 648,
+              "y": 792,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -2065,7 +2077,7 @@
               "title": "State",
               "alias": "State",
               "x": 2100,
-              "y": 384,
+              "y": 432,
               "w": 300,
               "h": 168,
               "profileId": null,
@@ -2082,7 +2094,7 @@
               "title": "Text",
               "alias": "Text · authored input",
               "x": 1700,
-              "y": 1272,
+              "y": 1320,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -2100,7 +2112,7 @@
               "title": "JSON Decode",
               "alias": "JSON Decode",
               "x": 2100,
-              "y": 1152,
+              "y": 1056,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -2119,7 +2131,7 @@
               "title": "Event Normalize",
               "alias": "Event Normalize",
               "x": 2100,
-              "y": 624,
+              "y": 672,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -2138,7 +2150,7 @@
               "title": "State",
               "alias": "State",
               "x": 2500,
-              "y": 600,
+              "y": 672,
               "w": 300,
               "h": 168,
               "profileId": null,
@@ -2155,7 +2167,7 @@
               "title": "Format",
               "alias": "Format",
               "x": 2900,
-              "y": 648,
+              "y": 744,
               "w": 300,
               "h": 168,
               "profileId": null,
@@ -2181,7 +2193,7 @@
               "title": "Write to File",
               "alias": "Write to File",
               "x": 3300,
-              "y": 768,
+              "y": 888,
               "w": 300,
               "h": 168,
               "profileId": null,
@@ -2200,8 +2212,8 @@
               "trailingSeparator": false,
               "fileHandling": ""
             },
-            "boundary-input-10": {
-              "id": "boundary-input-10",
+            "boundary-input-13": {
+              "id": "boundary-input-13",
               "type": "subgraph-input",
               "x": 100,
               "y": 672,
@@ -2209,11 +2221,11 @@
               "h": 140,
               "interfacePortId": "input-1"
             },
-            "boundary-input-11": {
-              "id": "boundary-input-11",
+            "boundary-input-14": {
+              "id": "boundary-input-14",
               "type": "subgraph-input",
               "x": 1700,
-              "y": 936,
+              "y": 1032,
               "w": 300,
               "h": 140,
               "interfacePortId": "input-2"
@@ -2239,15 +2251,15 @@
             "edge-29": {
               "id": "edge-29",
               "route": "wire",
-              "from": "boundary-input-10",
+              "from": "boundary-input-13",
               "fromPort": "out",
               "to": "relationship-candidates",
               "toPort": "data"
             },
-            "edge-97": {
-              "id": "edge-97",
+            "edge-100": {
+              "id": "edge-100",
               "route": "wire",
-              "from": "boundary-input-10",
+              "from": "boundary-input-13",
               "fromPort": "out",
               "to": "relationship-events",
               "toPort": "source"
@@ -2316,10 +2328,10 @@
               "to": "relationship-decay",
               "toPort": "rules"
             },
-            "edge-98": {
-              "id": "edge-98",
+            "edge-101": {
+              "id": "edge-101",
               "route": "wire",
-              "from": "boundary-input-11",
+              "from": "boundary-input-14",
               "fromPort": "out",
               "to": "relationship-decay",
               "toPort": "clock"
@@ -2340,10 +2352,10 @@
               "to": "relationship-interaction-events",
               "toPort": "events"
             },
-            "edge-99": {
-              "id": "edge-99",
+            "edge-102": {
+              "id": "edge-102",
               "route": "wire",
-              "from": "boundary-input-11",
+              "from": "boundary-input-14",
               "fromPort": "out",
               "to": "relationship-interaction-events",
               "toPort": "clock"

@@ -18,6 +18,7 @@ export interface ManagedFileContext {
 }
 export interface ManagedFileEntry {node:Record<string,unknown>;address:NodeAddress;inputFormat?:ManagedFileFormat;inputKind?:'data'|'text';inputColumns?:string[];}
 export function canonicalFileName(name:unknown,format?:ManagedFileFormat):string;
+/** Explicit formats lead; otherwise structured schemas and automatic readers use JSON. */
 export function inferManagedFileFormat(node:Record<string,unknown>,input?:{inputFormat?:ManagedFileFormat;inputKind?:'data'|'text'}):ManagedFileFormat;
 export function resolveManagedFileNode(node:Record<string,unknown>,context:ManagedFileContext):Result<{node:Record<string,unknown>;definition:NodeFileDefinition|null}>;
 export function prepareManagedNodeFiles(nodes:(Record<string,unknown>|ManagedFileEntry)[]|Record<string,Record<string,unknown>|ManagedFileEntry>,context:ManagedFileContext&{scope:{userId:string;chatId:string;actorId?:string};isCurrent:()=>boolean;access?:{ensureManaged(definition:NodeFileDefinition,controls:{scope:{userId:string;chatId:string;actorId?:string};isCurrent:()=>boolean;managed:true}):Promise<Result<NodeFileDefinition>>}}):Promise<Result<{nodes:Record<string,unknown>[];definitions:NodeFileDefinition[]}>>;

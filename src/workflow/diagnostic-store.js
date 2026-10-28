@@ -1,4 +1,4 @@
-import {own, plain, dense, bytes} from './record-data.js?v=0.29.1';
+import {own, plain, dense, bytes} from './record-data.js?v=0.30.0';
 
 const DATABASE = 'sillycanvas-owner-diagnostics';
 const USERS = 'users';

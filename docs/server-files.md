@@ -64,7 +64,7 @@ Selecting a path alone does not create or overwrite the file. The existing confi
 
 ## Configure a node
 
-1. Open **Details → File**. New outputs already have automatic destinations, names and types.
+1. Open **Details → File**. New outputs and readers already have automatic destinations, names and types.
 2. Use **Change…** to choose another authorized location. Custom server locations use the folder chooser after optional setup; manual paths remain under **Advanced**.
 3. Choose **File handling → Replace / Append**. Valid configuration changes autosave and grant the chosen destination without writing its output contents. Accepted Apply remains the output-write boundary.
 
@@ -80,6 +80,8 @@ Examples:
 Lattice supplies a filename suffix matching the declared type. Existing physical names and destinations remain stable until explicitly changed; a type or physical destination change uses a new-copy flow. Administrators may configure paths outside their user-data folder. Other users remain within their authorized SillyTavern data folder. The server account's OS permissions also apply.
 
 Read File owns its source. A connected Write to File and Clock Commit inherit their source node's destination. Existing browser/server grants remain with their provider. Ordinary managed outputs use inside-SillyTavern storage; custom paths use the optional server component. Portable exports retain suggested names and types while removing machine paths and writable binding authority.
+
+For an unset reader, **When no file is set → Generate from story** reuses compatible saved state first, otherwise makes one bounded request with the reader's selected model and current conversation and character. **Valid starting template** uses a schema-valid seed without a request; **Require a file** waits for an authorized source. Existing configured paths and grants stay authoritative even when missing or revoked. Initialization settings and schema are portable; generated story contents are not workflow configuration. Generated or template contents are saved only when you accept the reviewed result, and later runs reuse them without another initialization request. Private state retains its character scope.
 
 ## Saving and recovery
 

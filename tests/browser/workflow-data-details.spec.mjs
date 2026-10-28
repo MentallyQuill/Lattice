@@ -35,7 +35,7 @@ async function launch(page){
   c.chatMetadata.latticeDocuments={[userId]:{[clockId]:{targetId:clockId,scope:{userId,chatId},format:'json',content:JSON.stringify(savedClock),revision:7,receipts:[{intentId:'accepted-clock',fingerprint:'sha256:'+'a'.repeat(64),revision:7}]},[outcomesDefinition.targetId]:{targetId:outcomesDefinition.targetId,scope:{userId,chatId},format:'json',content:'[]',revision:1,receipts:[]}}};
   const {operationDefaults}=await import('/src/workflow/catalog.js?v='+v);
   const graph={id:'workflow-data-settings',name:'Node File settings',schema:3,runtime:2,mode:'native-unified',roles:{},nodes:{},wires:{},groups:{},portals:{},definitions:{},view:{x:0,y:0,zoom:1}};
-  for(const [id,operation,x] of [['clock','story-clock',100],['clock-two','story-clock',430],['notes','read-file',760],['outcomes','commit-outcomes',1090]])graph.nodes[id]={...operationDefaults(operation),id,type:'workflow',phase:operation==='commit-outcomes'?'post':'pre',x,y:100};
+  for(const [id,operation,x] of [['clock','story-clock',100],['clock-two','story-clock',430],['notes','read-file',760],['outcomes','commit-outcomes',1090]])graph.nodes[id]={...operationDefaults(operation),...(id==='notes'?{initialization:'require-file',fileTarget:{missing:'error'},targetId:'personal-notes'}:{}),id,type:'workflow',phase:operation==='commit-outcomes'?'post':'pre',x,y:100};
   await h.activate(graph);h.canvas.select({kind:'node',id:'clock'});await h.settle();
  },{userId,chatId,clockId});
  await expect(file(page)).toBeVisible();
@@ -46,7 +46,7 @@ async function advanced(page){const group=file(page).locator('[data-file-advance
 async function legacy(page){return page.evaluate(()=>structuredClone(window.canvasHarness.context.chatMetadata));}
 async function target(page,id){return page.evaluate(id=>structuredClone(window.canvasHarness.graph.nodes[id].fileTarget),id);}
 async function noContentEffects(page){expect(await page.evaluate(()=>({writes:window.workflowFileFixture.writes,metadataSaves:window.workflowFileFixture.metadataSaves,providerCalls:window.canvasHarness.providerCalls()}))).toEqual({writes:0,metadataSaves:0,providerCalls:0});}
-async function hiddenTemplates(page){await expect(file(page).locator('textarea')).toHaveCount(0);await expect(file(page).getByLabel('Initial file content',{exact:true})).toHaveCount(0);await expect(file(page).getByRole('button',{name:'Save file settings',exact:true})).toHaveCount(0);}
+async function hiddenTemplates(page){await expect(file(page).locator('textarea:not([aria-label="Initialization instructions"])')).toHaveCount(0);await expect(file(page).getByLabel('Initial file content',{exact:true})).toHaveCount(0);await expect(file(page).getByRole('button',{name:'Save file settings',exact:true})).toHaveCount(0);}
 async function chooseLocation(page,name){await page.evaluate(name=>{window.workflowFileFixture.nextName=name;},name);await advanced(page);await file(page).getByRole('button',{name:'Choose location…',exact:true}).click();}
 
 test('friendly clock settings autosave without exposing templates or changing canonical time and history',async({page})=>{

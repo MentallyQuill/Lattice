@@ -1,4 +1,4 @@
-import { cloneJsonValue, readJsonPath } from './json-data.js?v=0.29.1';
+import { cloneJsonValue, readJsonPath } from './json-data.js?v=0.30.0';
 
 const invalid = () => ({ok:false,error:{code:'INVALID_FIELDS',message:'Fields must be at most 128 unique named path mappings.'}});
 const ownObject = value => {

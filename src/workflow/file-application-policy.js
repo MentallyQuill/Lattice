@@ -1,7 +1,9 @@
-import {managedNodeFileMigration} from '../ui/node-file-projection.js?v=0.29.1';
-import {nodeFileTargetId} from './node-file-targets.js?v=0.29.1';
+import {managedNodeFileMigration} from '../ui/node-file-projection.js?v=0.30.0';
+import {nodeFileTargetId} from './node-file-targets.js?v=0.30.0';
+import {prepareUnboundReader} from './file-initialization.js?v=0.30.0';
 /** Only a trusted metadata absence check may adopt an empty previously unbound own target. */
-export function migrateUnboundOwnFile(node,{canonicalDocuments={},legacyDocuments=[]}={}){
+export function migrateUnboundOwnFile(node,{canonicalDocuments={},legacyDocuments=[],nodes={},wires={}}={}){
+ if(node.operation==='read-file')return prepareUnboundReader(node,{canonicalDocuments,legacyDocuments,nodes,wires});
  const targetId=nodeFileTargetId(node);
  const hasCanonicalData=Object.hasOwn(canonicalDocuments,targetId)||legacyDocuments.some(document=>document.targetId===targetId);
  const fileTarget=managedNodeFileMigration(node,{hasCanonicalData});

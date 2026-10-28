@@ -1,37 +1,39 @@
-import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.29.1';
-import { executeChunk } from './operations/chunk.js?v=0.29.1';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.29.1';
-import { artifactVisibility, preserveArtifactPrivacy } from './artifact-privacy.js?v=0.29.1';
-import { normalizeRequestFailure } from './request-failure.js?v=0.29.1';
-import { compileIterationHelper, executeCompiledIteration } from './iteration-helpers.js?v=0.29.1';
-import { LIFECYCLE_OPERATIONS, executeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.29.1';
-import { FILE_OPERATIONS, executeFileNode } from './operations/file-nodes.js?v=0.29.1';
-import { TIME_OPERATIONS, executeTimeNode } from './operations/time-nodes.js?v=0.29.1';
-import { EVENT_OPERATIONS, executeEvent } from './operations/event-nodes.js?v=0.29.1';
-import { RANDOM_OPERATIONS, executeRandom } from './operations/random-outcomes.js?v=0.29.1';
-import { COLLECTION_OPERATIONS, executeCollection } from './operations/collection-nodes.js?v=0.29.1';
-import { applyTextModifiers } from './modifiers.js?v=0.29.1';
-import { operationFor } from './catalog.js?v=0.29.1';
-import { cloneWorkflowDocument } from './document.js?v=0.29.1';
-import { prepareWorkflowAttempt } from './resolve.js?v=0.29.1';
-import { compactContext, formatContext } from './compactor.js?v=0.29.1';
-import { repairDraft, validatePatches } from './repair.js?v=0.29.1';
-import { scanPatternDraft } from './operations/pattern-engine.js?v=0.29.1';
-import { patternSettingsForNode } from './operations/pattern-nodes.js?v=0.29.1';
-import { filterPatternDraft, filterTextSettingsForNode } from './operations/filter-text.js?v=0.29.1';
-import { graphSemanticSignature } from './ports.js?v=0.29.1';
-import { executePrimitive, PRIMITIVE_OPERATIONS } from './operations/nodes.js?v=0.29.1';
-import { executeInput, INPUT_OPERATIONS } from './operations/input-nodes.js?v=0.29.1';
-import { executeContextJoin } from './operations/context-join.js?v=0.29.1';
-import { executeControl, CONTROL_OPERATIONS } from './operations/control-nodes.js?v=0.29.1';
-import { executeDecision, DECISION_OPERATIONS } from './operations/decision-nodes.js?v=0.29.1';
-import { executeModelNode, MODEL_OPERATIONS } from './operations/model-nodes.js?v=0.29.1';
-import { executeTranspose, TRANSPOSE_OPERATIONS } from './operations/transpose-nodes.js?v=0.29.1';
-import { cleanupDraft, CLEANUP_MODES } from './operations/prose-cleanup.js?v=0.29.1';
-import { executeIntrospection } from './introspection/nodes.js?v=0.29.1';
-import { INTROSPECTION_NATIVE_OPERATIONS, projectIntrospectionNode } from './introspection/native.js?v=0.29.1';
-import { admitRunPlan, createRunRecorder } from './recording.js?v=0.29.1';
-import { addressKey, freeze, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText } from './record-data.js?v=0.29.1';
+import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.30.0';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.30.0';
+import { definitionRefKey } from './definition-data.js?v=0.30.0';
+import { executeChunk } from './operations/chunk.js?v=0.30.0';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.30.0';
+import { artifactVisibility, preserveArtifactPrivacy } from './artifact-privacy.js?v=0.30.0';
+import { normalizeRequestFailure } from './request-failure.js?v=0.30.0';
+import { compileIterationHelper, executeCompiledIteration } from './iteration-helpers.js?v=0.30.0';
+import { LIFECYCLE_OPERATIONS, executeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.30.0';
+import { FILE_OPERATIONS, executeFileNode } from './operations/file-nodes.js?v=0.30.0';
+import { TIME_OPERATIONS, executeTimeNode } from './operations/time-nodes.js?v=0.30.0';
+import { EVENT_OPERATIONS, executeEvent } from './operations/event-nodes.js?v=0.30.0';
+import { RANDOM_OPERATIONS, executeRandom } from './operations/random-outcomes.js?v=0.30.0';
+import { COLLECTION_OPERATIONS, executeCollection } from './operations/collection-nodes.js?v=0.30.0';
+import { applyTextModifiers } from './modifiers.js?v=0.30.0';
+import { operationFor } from './catalog.js?v=0.30.0';
+import { cloneWorkflowDocument } from './document.js?v=0.30.0';
+import { prepareWorkflowAttempt } from './resolve.js?v=0.30.0';
+import { compactContext, formatContext } from './compactor.js?v=0.30.0';
+import { repairDraft, validatePatches } from './repair.js?v=0.30.0';
+import { scanPatternDraft } from './operations/pattern-engine.js?v=0.30.0';
+import { patternSettingsForNode } from './operations/pattern-nodes.js?v=0.30.0';
+import { filterPatternDraft, filterTextSettingsForNode } from './operations/filter-text.js?v=0.30.0';
+import { graphSemanticSignature } from './ports.js?v=0.30.0';
+import { executePrimitive, PRIMITIVE_OPERATIONS } from './operations/nodes.js?v=0.30.0';
+import { executeInput, INPUT_OPERATIONS } from './operations/input-nodes.js?v=0.30.0';
+import { executeContextJoin } from './operations/context-join.js?v=0.30.0';
+import { executeControl, CONTROL_OPERATIONS } from './operations/control-nodes.js?v=0.30.0';
+import { executeDecision, DECISION_OPERATIONS } from './operations/decision-nodes.js?v=0.30.0';
+import { executeModelNode, MODEL_OPERATIONS } from './operations/model-nodes.js?v=0.30.0';
+import { executeTranspose, TRANSPOSE_OPERATIONS } from './operations/transpose-nodes.js?v=0.30.0';
+import { cleanupDraft, CLEANUP_MODES } from './operations/prose-cleanup.js?v=0.30.0';
+import { executeIntrospection } from './introspection/nodes.js?v=0.30.0';
+import { INTROSPECTION_NATIVE_OPERATIONS, projectIntrospectionNode } from './introspection/native.js?v=0.30.0';
+import { admitRunPlan, createRunRecorder } from './recording.js?v=0.30.0';
+import { addressKey, freeze, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText } from './record-data.js?v=0.30.0';
 
 /** Execution identity shared by the host and UI. Canvas presentation never invalidates work. */
 export const workflowSignature = graphSemanticSignature;
@@ -210,11 +212,23 @@ async function executeWorkflow(original,ports,hooks={}) {
         if(ports.dryRun||ports.preview)return finish({ok:true,preview:true});
         const preparation=await hooks.prepare?.(plan,{cancel,originalGraphSnapshot,workflowDataNodes:freezeArtifact(workflowDataNodes)});if(preparation?.ok===false)return finish(preparation);
         const bindingGraph={...prepared.graph,roles:{}};
+        const authoredNodeAt=address=>{
+            let scope=originalGraphSnapshot;
+            for(const id of address.instancePath){
+                const reference=scope.nodes?.[id]?.definition;if(!reference)return;
+                const definition=originalGraphSnapshot.definitions?.[definitionRefKey(reference)]??scope.definitions?.[definitionRefKey(reference)];if(!definition)return;
+                scope=definition.body;
+            }
+            return scope.nodes?.[address.nodeId];
+        };
         const summarizeBinding=(binding,node,op)=>safeBinding(ports.bindingSummary?.(binding)??{role:node.modelRole??op.modelRole,profileId:binding?.profileId,model:binding?.model,capability:op.requestCapability});
         const bindUnit=async(unit,op,duringExecution=false)=>{
             current=unit;const node=unit.node;
             if(!duringExecution)emit('node-phase',{address:unit.address,phase:'binding'});
-            const resolved=await ports.resolveBinding?.({...node,modelRole:node.modelRole??op.modelRole},bindingGraph,unit.address);
+            // Expansion supplies the descriptor's default role. Only an actually
+            // unbound authored reader may turn that implicit role into Active.
+            const authored=authoredNodeAt(unit.address),automaticProfile=node.operation==='read-file'&&node.profileId==null&&(node.modelRole==null||node.modelRole===op.modelRole&&authored!==undefined&&authored.modelRole==null&&authored.profileId==null);
+            const resolved=await ports.resolveBinding?.({...node,...(automaticProfile?{profileId:ACTIVE_PROFILE_ID}:{}),modelRole:node.modelRole??op.modelRole},bindingGraph,unit.address);
             if(stopped())return failure('ABORTED','Workflow was stopped.',node.id);
             if(!resolved?.ok){const error=resolved??failure('BINDING_MISSING','Resolve the activated model connection before running.');if(!RECOVERABLE_NODE_ERRORS.has(error.error?.code))fatalUnits.set(addressKey(unit.address),error);return error;}
             const binding=resolved.data,key=addressKey(unit.address);bindings.set(key,binding);
@@ -242,7 +256,7 @@ async function executeWorkflow(original,ports,hooks={}) {
             if(stopped())return finish(failure('ABORTED','Workflow was stopped.',node.id));
             const inputs=Object.create(null),inputStates=Object.create(null);
             for(const edge of plan.edges)if(addressKey(edge.to)===key){const state=outputStates.get(artifactKey(edge.from))??{status:'unresolved',reason:{code:'OUTPUT_MISSING',message:'The upstream output has not resolved.'}};inputStates[edge.to.portId]=state;if(state.status==='completed')inputs[edge.to.portId]=artifacts.get(artifactKey(edge.from));}
-            for(const port of unit.inputPorts)if(Object.hasOwn(inputStates,port.id))recorder.capture({address:unit.address,direction:'input',portId:port.id,state:inputStates[port.id],...(Object.hasOwn(inputs,port.id)?{artifact:inputs[port.id],source:inputs[port.id]?.source}:{})});
+            const recordInputs=()=>{for(const port of unit.inputPorts)if(Object.hasOwn(inputStates,port.id))recorder.capture({address:unit.address,direction:'input',portId:port.id,state:inputStates[port.id],...(Object.hasOwn(inputs,port.id)?{artifact:inputs[port.id],source:inputs[port.id]?.source}:{})});};
             // A native ordering dependency carries no artifact, but cannot grant Post
             // execution when generation was skipped or held. Unresolved preparation
             // likewise cannot release the native boundary merely through optional pins.
@@ -253,11 +267,21 @@ async function executeWorkflow(original,ports,hooks={}) {
             const failedInput=plan.edges.find(edge=>addressKey(edge.to)===key&&unit.inputPorts.some(port=>port.id===edge.to.portId&&(port.required||unit===nativeBoundary))&&unavailableOutputs.has(artifactKey(edge.from)));
             const failedStage=stageState?.status==='blocked';
             const skipped=failedInput||failedStage||prepared.graph.runtime===3&&node.operation==='scene-context'&&node.activationMode==='events'&&!inputs.trigger||stageState?.status==='skipped'||unit.inputPorts.some(port=>port.required&&inputStates[port.id]?.status==='skipped');
-            if(unit.systemDisabled||held||skipped){const status=unit.systemDisabled?'skipped':held?'unresolved':'skipped',state={status,reason:unit.systemDisabled?{code:'SYSTEM_DISABLED',message:'The enclosing system is disabled.'}:held?.reason??(failedInput?inputStates[failedInput.to.portId].reason:undefined)??stageState?.reason??{code:'INPUT_SKIPPED',message:'A required branch input was skipped.'}};if(held&&!unit.systemDisabled)unresolved=true;
+            if(unit.systemDisabled||held||skipped){recordInputs();const status=unit.systemDisabled?'skipped':held?'unresolved':'skipped',state={status,reason:unit.systemDisabled?{code:'SYSTEM_DISABLED',message:'The enclosing system is disabled.'}:held?.reason??(failedInput?inputStates[failedInput.to.portId].reason:undefined)??stageState?.reason??{code:'INPUT_SKIPPED',message:'A required branch input was skipped.'}};if(held&&!unit.systemDisabled)unresolved=true;
                 for(const port of unit.outputPorts){if((failedInput||failedStage)&&!held&&!unit.systemDisabled)unavailableOutputs.add(artifactKey({...unit.address,portId:port.id}));outputStates.set(artifactKey({...unit.address,portId:port.id}),state);recorder.capture({address:unit.address,direction:'output',portId:port.id,state});}
                 const nodeStatus=(failedInput||failedStage)&&!held&&!unit.systemDisabled?'blocked':status;unitStates.set(key,{...state,status:nodeStatus});emit('node-settled',{address:unit.address,status:nodeStatus,reason:state.reason});continue;
             }
-            const lazyBinding=(Object.hasOwn(MODEL_OPERATIONS,node.operation)||Object.hasOwn(DECISION_OPERATIONS,node.operation)||Object.hasOwn(EVENT_OPERATIONS,node.operation)||Object.hasOwn(RANDOM_OPERATIONS,node.operation));
+            if(node.operation==='read-file'&&typeof hooks.prepareFileInputs==='function'){
+                const preparedInputs=await hooks.prepareFileInputs({node,address:unit.address,inputs,phase:unit.phase,runtime:unit.runtime});
+                if(stopped())return finish(failure('ABORTED','Workflow was stopped.',node.id));
+                if(preparedInputs?.ok===false)return finish(preparedInputs);
+                for(const [portId,artifact]of Object.entries(preparedInputs?.data??{})){
+                    if(!unit.inputPorts.some(port=>port.id===portId&&port.kind===artifact?.kind))return finish(failure('INVALID_INPUT','The host prepared an undeclared file input.',node.id));
+                    inputs[portId]=artifact;inputStates[portId]={status:'completed'};
+                }
+            }
+            recordInputs();
+            const lazyBinding=(node.operation==='read-file'||Object.hasOwn(MODEL_OPERATIONS,node.operation)||Object.hasOwn(DECISION_OPERATIONS,node.operation)||Object.hasOwn(EVENT_OPERATIONS,node.operation)||Object.hasOwn(RANDOM_OPERATIONS,node.operation));
             if(unit.requestBound&&op.modelRole&&!bindings.has(key)&&!lazyBinding){const bound=await bindUnit(unit,op);if(!bound.ok){if(recoverNode(unit,bound))continue;emit('node-settled',{address:unit.address,status:'failed',error:safeError(bound.error,safePlan,unit.address)});return finish(bound);}binding=bound.data;}
             emit('node-phase',{address:unit.address,phase:'executing'});observe(ports.onStage,freezeArtifact(structuredClone(node)),unit.address);
             const authorizeInputs=async(selectedNode,selectedInputs,address,capability)=>{

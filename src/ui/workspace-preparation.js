@@ -1,37 +1,50 @@
-import { prepareNodeReadiness, readinessFromIssues, summarizeReadiness } from './node-readiness.js?v=0.29.1';
-import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.29.1';
-import { projectNodeControls, projectReasoningControls, detailControl, detailsEditorContractKey } from './node-control-projection.js?v=0.29.1';
-import { ACTIVE_PROFILE_ID } from '../workflow/model-profiles.js?v=0.29.1';
-import { preparedViewContentIdentity } from './graph-view-session.js?v=0.29.1';
-import { iterationHelperChoices } from './configured-node-creation.js?v=0.29.1';
-import { prepareIterationBindings } from './iteration-bindings.js?v=0.29.1';
-import { prepareDefinitionRegistry, inspectPreparedDefinition } from '../workflow/graph-validation.js?v=0.29.1';
-import { projectRunRows } from '../workflow/run-state.js?v=0.29.1';
-import { definitionRefKey, nodeBindingOverrideKey } from '../workflow/definition-data.js?v=0.29.1';
-import { inspectGraphArtifacts } from '../workflow/graph-artifacts.js?v=0.29.1';
-import { prepareWorkflowPlanner, preparedWorkflowSource } from '../workflow/resolve.js?v=0.29.1';
-import { prepareCompositionViews } from '../workflow/composition-views.js?v=0.29.1';
-import { prepareWorkflowProjection, projectPreparedWorkflow } from './workflow-surface.js?v=0.29.1';
-import { ARTIFACT_KINDS, OPERATIONS, operationFor, portsForNode, phaseForNode, describeAuthoredOperation } from '../workflow/catalog.js?v=0.29.1';
-import { definitionChain, ownsDefinitionPath } from '../workflow/composition-edit.js?v=0.29.1';
-import { FAMILY_PALETTE, paletteForOperation, readNodePresentation } from './node-palette.js?v=0.29.1';
-import { isCommentFrame } from '../canvas/comment-frames.js?v=0.29.1';
-import { nodeCard } from '../canvas/presentation.js?v=0.29.1';
-import { modifierTypes, modifierSummary, applyTextModifiers } from '../workflow/modifiers.js?v=0.29.1';
-import { addressKey, boundedText, RENDERED_TEXT_BYTES, freeze } from '../workflow/record-data.js?v=0.29.1';
-import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.29.1';
-import { projectWorkflowData } from './workflow-data-setup.js?v=0.29.1';
-import { projectNodeFile, nodeFileSetupIssue, nodeFileContentIssue } from './node-file-projection.js?v=0.29.1';
-import {migrateUnboundOwnFile,declaredFileInput} from '../workflow/file-application-policy.js?v=0.29.1';
-import { presentDiagnostic, presentDiagnostics } from './diagnostics.js?v=0.29.1';
-import { previewDiagnostics } from './preview-diagnostics.js?v=0.29.1';
-import { projectRecordedPreview, boundReadablePreviewSections } from './recorded-preview.js?v=0.29.1';
+import { prepareNodeReadiness, readinessFromIssues, summarizeReadiness } from './node-readiness.js?v=0.30.0';
+import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.30.0';
+import { projectNodeControls, projectReasoningControls, detailControl, detailsEditorContractKey } from './node-control-projection.js?v=0.30.0';
+import { ACTIVE_PROFILE_ID } from '../workflow/model-profiles.js?v=0.30.0';
+import { preparedViewContentIdentity } from './graph-view-session.js?v=0.30.0';
+import { iterationHelperChoices } from './configured-node-creation.js?v=0.30.0';
+import { prepareIterationBindings } from './iteration-bindings.js?v=0.30.0';
+import { prepareDefinitionRegistry, inspectPreparedDefinition } from '../workflow/graph-validation.js?v=0.30.0';
+import { projectRunRows } from '../workflow/run-state.js?v=0.30.0';
+import { definitionRefKey, nodeBindingOverrideKey } from '../workflow/definition-data.js?v=0.30.0';
+import { inspectGraphArtifacts } from '../workflow/graph-artifacts.js?v=0.30.0';
+import { prepareWorkflowPlanner, preparedWorkflowSource } from '../workflow/resolve.js?v=0.30.0';
+import { prepareCompositionViews } from '../workflow/composition-views.js?v=0.30.0';
+import { prepareWorkflowProjection, projectPreparedWorkflow } from './workflow-surface.js?v=0.30.0';
+import { ARTIFACT_KINDS, OPERATIONS, operationFor, portsForNode, phaseForNode, describeAuthoredOperation } from '../workflow/catalog.js?v=0.30.0';
+import { definitionChain, ownsDefinitionPath } from '../workflow/composition-edit.js?v=0.30.0';
+import { FAMILY_PALETTE, paletteForOperation, readNodePresentation } from './node-palette.js?v=0.30.0';
+import { isCommentFrame } from '../canvas/comment-frames.js?v=0.30.0';
+import { nodeCard } from '../canvas/presentation.js?v=0.30.0';
+import { modifierTypes, modifierSummary, applyTextModifiers } from '../workflow/modifiers.js?v=0.30.0';
+import { addressKey, boundedText, RENDERED_TEXT_BYTES, freeze } from '../workflow/record-data.js?v=0.30.0';
+import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.30.0';
+import { projectWorkflowData } from './workflow-data-setup.js?v=0.30.0';
+import { projectNodeFile, nodeFileSetupIssue, nodeFileContentIssue } from './node-file-projection.js?v=0.30.0';
+import {migrateUnboundOwnFile,declaredFileInput} from '../workflow/file-application-policy.js?v=0.30.0';
+import { presentDiagnostic, presentDiagnostics } from './diagnostics.js?v=0.30.0';
+import { previewDiagnostics } from './preview-diagnostics.js?v=0.30.0';
+import { projectRecordedPreview, boundReadablePreviewSections } from './recorded-preview.js?v=0.30.0';
 const panelCaches = new WeakMap();
 const authoredFieldCaches = new WeakMap();
 const runPanelCaches = new WeakMap();
 const noDisplayRows = Object.freeze([]);
 const unavailablePreviewSource = projectRecordedPreview(undefined).source;
 const rootIdentity = root => ({ kind: 'root', workflowId: root.id });
+function legacyReaderDefault(node,address,resolved){
+    if(node?.operation!=='read-file'||Object.keys(node.fileTarget??{}).length||['initialization','initializationInstructions','initializationMaxTokens'].some(key=>Object.hasOwn(node,key)))return null;
+    const source=resolved??resolveSystemNode(node,address);
+    return source.ok?source.data.defaults.find(document=>document.targetId===source.data.node.targetId)??null:null;
+}
+/** Scoped resolver defaults describe existing legacy provisioning, never new file authority. */
+function defaultFileDisplayState(graph,address,state){
+    const defaults=Object.values(graph.nodes??{}).map(node=>legacyReaderDefault(node,{...address,nodeId:node.id})).filter(Boolean);
+    if(!defaults.length)return state;
+    const documents=[...(state.documents??[])],definitions=Object.fromEntries(defaults.map(document=>[document.targetId,document]));
+    for(const {content,...summary} of defaults)if(!documents.some(document=>document.targetId===summary.targetId))documents.push(summary);
+    return {...state,documents,definitions:{...definitions,...state.definitions}};
+}
 /** First activation favors readable named cards; users can pan or explicitly Fit. */
 export function initialWorkspaceCamera(node, { width, shelf, meter } = {}) {
     if (!node) return { x: 0, y: 0, zoom: 1 };
@@ -58,9 +71,10 @@ export function prepareWorkspaceViews(root, options = {}) {
         const effectiveNodes = Object.fromEntries(Object.entries(view.effectiveNodes).map(([id, node]) => {
             const resolved = resolveSystemNode(node, { workflowId: root.id, instancePath: view.instancePath, nodeId: id });
             const effective=resolved.ok ? resolved.data.node : node;
-            return [id,migrateUnboundOwnFile(effective,{canonicalDocuments:options.workflowData?.legacyDocuments??{},legacyDocuments:options.workflowData?.documents??[]})];
+            const legacyDefault=legacyReaderDefault(node,{workflowId:root.id,instancePath:view.instancePath,nodeId:id},resolved);
+            return [id,legacyDefault?effective:migrateUnboundOwnFile(effective,{canonicalDocuments:options.workflowData?.legacyDocuments??{},legacyDocuments:options.workflowData?.documents??[]})];
         }));
-        const drawBase = prepareEditorDrawBase(view, root.definitions, nodeId => primitivePhases.get(addressKey({ workflowId: root.id, instancePath: view.instancePath, nodeId })));
+        const drawBase = prepareEditorDrawBase({...view,effectiveNodes}, root.definitions, nodeId => primitivePhases.get(addressKey({ workflowId: root.id, instancePath: view.instancePath, nodeId })));
         // Saved primitive null means inheritance; only an explicit enclosing
         // instance null map blocks it. Cache that source distinction with the view.
         drawBase.iterationHelpers = freeze(structuredClone(helperChoices)); drawBase.iterationBindings = {}; drawBase.bindingBlocks = {}; drawBase.instanceBindingSources = {}; drawBase.profileDefaultModels = {}; drawBase.instanceBindingValues = {};
@@ -85,13 +99,14 @@ export function prepareWorkspaceViews(root, options = {}) {
             if (Object.keys(binding).length || chain.some(owner => Object.keys(owner.node.roleOverrides?.[role] ?? {}).some(key => ['profileId','model'].includes(key) && !node[key]))) drawBase.instanceBindingSources[node.id] = true;
         }
         const display = projectPreparedWorkflow(workflow, { viewPath: view.instancePath });
+        const fileState=defaultFileDisplayState(view.savedGraph,{workflowId:root.id,instancePath:view.instancePath},{...options.workflowData,...options.workflowData?.nodeFiles});
         for (const [id, card] of Object.entries(drawBase.nativeCards)) {
             const address = { workflowId: root.id, instancePath: [...view.instancePath], nodeId: id };
             const issues = (card.readiness?.issues ?? []).map(issue => ({...issue,address}));
             for(const issue of primitiveUnits.get(addressKey(address))?.setupIssues ?? [])if(!issues.some(existing=>existing.category==='setup' && existing.code===issue.code && existing.field===issue.field && existing.message===issue.message))issues.unshift({...issue,address,category:'setup'});
             const bound = display.nodes.find(node => node.id === id);
             if (options.resolveBinding && bound?.issue) issues.push({code:'BINDING_UNAVAILABLE',message:bound.issueDiagnostic?.message || presentDiagnostic(bound.issue).message,field:'profileId',address,category:'setup'});
-            const file = options.workflowData?.nodeFiles ? projectNodeFile(effectiveNodes[id],{...options.workflowData,...options.workflowData.nodeFiles,address,...declaredFileInput(effectiveNodes[id],effectiveNodes,view.savedGraph.wires),nodes:effectiveNodes,wires:view.savedGraph.wires}) : null;
+            const file = options.workflowData?.nodeFiles ? projectNodeFile(effectiveNodes[id],{...fileState,address,...declaredFileInput(effectiveNodes[id],effectiveNodes,view.savedGraph.wires),nodes:effectiveNodes,wires:view.savedGraph.wires}) : null;
             const fileIssue=nodeFileSetupIssue(file);
             if(file?.supported&&!fileIssue)for(let index=issues.length-1;index>=0;index--)if(issues[index].code==='FILE_SETUP_REQUIRED'&&issues[index].field==='fileTarget')issues.splice(index,1);
             if(fileIssue){
@@ -197,7 +212,8 @@ export function projectNodeProfiles(editor, workflow, revision) {
     const library = editor.view.identity.kind === 'library', path = editor.view.identity.instancePath ?? [];
     const options = (workflow.profiles ?? []).map(profile => ({ value: profile.id, label: profile.name, api: profile.api || '', source: profile.source || profile.api || '', ...(profile.reasoningProvider ? {reasoningProvider:profile.reasoningProvider} : {}), apiLabel: profile.apiLabel || '', model: profile.model || '', active: profile.active === true }));
     const available = options.length ? options : prepareNodeProfileOptions();
-    const fileState = { ...workflow.workflowData, ...workflow.workflowData?.nodeFiles, nodes: editor.prepared.effectiveNodes, wires: editor.prepared.savedGraph.wires };
+    const baseFileState = { ...workflow.workflowData, ...workflow.workflowData?.nodeFiles, nodes: editor.prepared.effectiveNodes, wires: editor.prepared.savedGraph.wires };
+    const fileState = library?baseFileState:defaultFileDisplayState(editor.prepared.savedGraph,{workflowId:workflow.graphId,instancePath:path},baseFileState);
     return Object.values(editor.prepared.effectiveNodes).flatMap(node => {
         const op = operationFor(node), bound = op?.requestBound;
         const requestBound = typeof bound === 'function' ? bound(node) : bound || 0;
@@ -206,10 +222,11 @@ export function projectNodeProfiles(editor, workflow, revision) {
         const fileLabel = projectNodeFile(node, fileState)?.settings.name?.trim() || '';
         if(!hasProfile && !fileLabel && (!readiness || readiness.state==='ready'))return [];
         const prepared = library ? null : workflow.nodes.find(row => row.id === node.id);
+        const binding = prepared?.requestBound ? prepared : null;
         const role = node.modelRole ?? op?.modelRole;
-        const value = hasProfile ? prepared?.profileId ?? node.profileId ?? editor.prepared.savedGraph.roles?.[role]?.profileId ?? '' : '';
+        const value = hasProfile ? binding?.profileId ?? node.profileId ?? editor.prepared.savedGraph.roles?.[role]?.profileId ?? '' : '';
         const option = available.find(option => option.value === value);
-        const model = hasProfile ? prepared?.model || node.model || prepared?.resolvedModel || (option ? option.model : '') || '' : '';
+        const model = hasProfile ? binding?.model || node.model || binding?.resolvedModel || (option ? option.model : '') || '' : '';
         const label = hasProfile ? option?.label || (value ? 'Unavailable connection · ' + value : 'Choose a connection') : '';
         const address = library ? { kind: 'library', definitionRef: editor.prepared.definitionRef, nodeId: node.id } : { workflowId: workflow.graphId, instancePath: [...path], nodeId: node.id };
         return [{ id: node.id, selection: { selectionKey: JSON.stringify([editor.view.key, node.id]), revision, address }, value, label, model, ...(fileLabel ? {fileLabel} : {}), editable: !library, hasProfile, readiness, compact: readNodePresentation(node).compact, options: available }];
@@ -247,7 +264,9 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
             let fieldCache = immutableScope ? authoredFieldCaches.get(contentIdentity) : null;
             if (!fieldCache) { fieldCache = new Map(); if (immutableScope) authoredFieldCaches.set(contentIdentity, fieldCache); }
             const effectiveFileNode=editor.prepared.effectiveNodes[selectedId]??saved;
-            const nodeFile=workflow.workflowData?.nodeFiles ? projectNodeFile(effectiveFileNode,{...workflow.workflowData,...workflow.workflowData.nodeFiles,address,...declaredFileInput(effectiveFileNode,editor.prepared.effectiveNodes,graph.wires),nodes:editor.prepared.effectiveNodes,wires:graph.wires}) : null;
+            const baseFileState={...workflow.workflowData,...workflow.workflowData?.nodeFiles};
+            const fileState=library?baseFileState:defaultFileDisplayState(graph,{workflowId:workflow.graphId,instancePath:path},baseFileState);
+            const nodeFile=workflow.workflowData?.nodeFiles ? projectNodeFile(effectiveFileNode,{...fileState,address,...declaredFileInput(effectiveFileNode,editor.prepared.effectiveNodes,graph.wires),nodes:editor.prepared.effectiveNodes,wires:graph.wires}) : null;
             const fieldKey = JSON.stringify([selectedId, workflowData?.controlKey,!!nodeFile]);
             let fields = fieldCache.get(fieldKey);
             if (!fields) {
@@ -271,6 +290,7 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
             const profileId = saved?.operation === 'generate-reply' ? ACTIVE_PROFILE_ID : effective?.profileId || effectiveNode?.profileId || graph.roles?.[role]?.profileId;
             const profile = workflow.profiles?.find(profile => profile.id === profileId);
             const model = saved?.operation === 'generate-reply' ? profile?.model : effective?.model || effectiveNode?.model || effective?.resolvedModel || profile?.model;
+            const modelSummary=metadata?.modelRole&&effective?.effective==='No model call'?[profile?.name??profileId,model].filter(Boolean).join(' · ')||'Model connection':effective?.effective;
             const controls = projectReasoningControls(fields.controls, {api:profile?.api,source:profile?.source,model,reasoningProvider:profile?.reasoningProvider});
             const modes = [{ value: 'inherit', label: 'Inherit role' }, { value: 'override', label: 'Override' }];
             const field = (key, options) => {
@@ -299,7 +319,7 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
             const phaseEditable = graph.mode === 'native-unified' && phaseForNode(graph,{...saved,phase:'pre'}) === 'pre' && phaseForNode(graph,{...saved,phase:'post'}) === 'post';
             const phaseSource = graph.mode !== 'native-unified' || saved?.type === 'subgraph' ? 'workflow' : Object.hasOwn(saved ?? {},'phase') ? 'explicit' : effective?.phase && effective.phase !== phaseForNode(graph,saved) ? 'connections' : phaseEditable ? 'default' : 'operation';
             const nodeDetails = saved && metadata && !commentDetails ? { ...selection, guideKey, guideCard, title: boundary?.label ?? (presentation.alias || (typeof saved.title === 'string' ? saved.title : metadata.canonicalTitle)), canonicalTitle: metadata.canonicalTitle, operation: saved.operation, system: saved.type === 'subgraph', iconPath: metadata.iconPath, family: metadata.family, familyColor: metadata.familyColor, phase: effective?.phase ?? phaseForNode(graph,saved) ?? metadata.phase ?? graph.mode.slice(7), phaseEditable, phaseSource, alias: presentation.alias, compact: presentation.compact, enabled: saved.enabled !== false, readOnly: editor.readOnly || library, canPresent: true, controls, ...(fileInput ? { fileInput } : {}), ...(boundary ? { boundary } : {}),
-                model: metadata.modelRole && (effective?.effective !== 'No model call' || saved.model || saved.profileId || Object.keys(editor?.prepared.drawBase.bindingBlocks?.[selectedId] ?? {}).length) ? { role: saved.modelRole ?? metadata.modelRole, roleEditable: true, editable: !library, profileDefaultModel: editor.prepared.drawBase.profileDefaultModels?.[selectedId] ?? !!saved.profileId, profile: field('profileId', workflow.profiles.map(profile => ({ value: profile.id, label: profile.name }))), model: field('model'), effective: effective?.effective || (library ? [editor.prepared.effectiveNodes[selectedId]?.profileId ?? graph.roles?.[saved.modelRole ?? metadata.modelRole]?.profileId,editor.prepared.effectiveNodes[selectedId]?.model ?? graph.roles?.[saved.modelRole ?? metadata.modelRole]?.model].filter(Boolean).join(' · ') : ''), source: editor.prepared.drawBase.instanceBindingSources?.[selectedId] ? 'Containing instance override' : saved.profileId || saved.model ? 'Node override' : 'Inherited from ' + (saved.modelRole ?? metadata.modelRole), ...(effective?.issue ? {issue: effective.issue} : {}) } : null,
+                model: metadata.modelRole && (modelSummary !== 'No model call' || saved.model || saved.profileId || Object.keys(editor?.prepared.drawBase.bindingBlocks?.[selectedId] ?? {}).length) ? { role: saved.modelRole ?? metadata.modelRole, roleEditable: true, editable: !library, profileDefaultModel: editor.prepared.drawBase.profileDefaultModels?.[selectedId] ?? !!saved.profileId, profile: field('profileId', workflow.profiles.map(profile => ({ value: profile.id, label: profile.name }))), model: field('model'), effective: modelSummary || (library ? [editor.prepared.effectiveNodes[selectedId]?.profileId ?? graph.roles?.[saved.modelRole ?? metadata.modelRole]?.profileId,editor.prepared.effectiveNodes[selectedId]?.model ?? graph.roles?.[saved.modelRole ?? metadata.modelRole]?.model].filter(Boolean).join(' · ') : ''), source: editor.prepared.drawBase.instanceBindingSources?.[selectedId] ? 'Containing instance override' : saved.profileId || saved.model ? 'Node override' : 'Inherited from ' + (saved.modelRole ?? metadata.modelRole), ...(effective?.issue ? {issue: effective.issue} : {}) } : null,
                 helperBindings: saved.operation === 'for-each' ? { ...editor.prepared.drawBase.iterationBindings?.[selectedId], editable: !(editor.readOnly || library) } : null,
                 ...(nodeFile ? {nodeFile} : workflowData ? { workflowData } : {}),
                 modifiers: modifierView(saved, metadata, !(editor.readOnly || library)),

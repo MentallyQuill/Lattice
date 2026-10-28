@@ -1,9 +1,9 @@
-import { sha256Text } from './definition-data.js?v=0.29.1';
-import { cloneJsonValue } from './operations/json-data.js?v=0.29.1';
-import { freeze } from './record-data.js?v=0.29.1';
-import { decodeJson, validateJsonSchema } from './operations/json-decode.js?v=0.29.1';
-import { nodeFileTargetId, validateNodeFileTarget } from './node-file-targets.js?v=0.29.1';
-import { validateStoryClock } from './story-time.js?v=0.29.1';
+import { sha256Text } from './definition-data.js?v=0.30.0';
+import { cloneJsonValue } from './operations/json-data.js?v=0.30.0';
+import { freeze } from './record-data.js?v=0.30.0';
+import { decodeJson, validateJsonSchema } from './operations/json-decode.js?v=0.30.0';
+import { nodeFileTargetId, validateNodeFileTarget } from './node-file-targets.js?v=0.30.0';
+import { validateStoryClock } from './story-time.js?v=0.30.0';
 const suffixes=Object.freeze({text:'txt',markdown:'md',json:'json',jsonl:'jsonl',csv:'csv'});
 const fail=(message)=>({ok:false,error:{code:'INVALID_MANAGED_FILE',message,field:'fileTarget'}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=4096;
@@ -11,6 +11,7 @@ export function inferManagedFileFormat(node,{inputFormat,inputKind}={}) {
     if(['story-clock','commit-outcomes','random-pick'].includes(node.operation))return 'json';
     if(node.fileTarget?.format)return node.fileTarget.format;
     if(node.schema||inputKind==='data'||['add','add-unique','upsert','update-fields'].includes(node.mode))return 'json';
+    if(node.operation==='read-file')return 'json';
     return Object.hasOwn(suffixes,inputFormat)?inputFormat:'text';
 }
 function schemaInitial(schema,depth=0){

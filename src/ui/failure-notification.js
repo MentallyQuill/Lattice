@@ -1,5 +1,5 @@
-import { presentDiagnostic, diagnosticSchemaFindings } from './diagnostics.js?v=0.29.1';
-import { own, dense, addressKey, expandRecordAddress } from '../workflow/record-data.js?v=0.29.1';
+import { presentDiagnostic, diagnosticSchemaFindings } from './diagnostics.js?v=0.30.0';
+import { own, dense, addressKey, expandRecordAddress } from '../workflow/record-data.js?v=0.30.0';
 
 const identifier = value => typeof value === 'string' && /^[A-Za-z0-9_.:-]{1,128}$/.test(value) ? value : '';
 const label = value => {

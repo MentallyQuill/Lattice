@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { requestModel, resolveBinding } from '../src/workflow/connections.js';
 import { normalizeRequestFailure } from '../src/workflow/request-failure.js';
-import { executeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.29.1';
+import { executeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.30.0';
 
 const requestWithFailure = async (error, signal) => {
     let calls = 0;

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureGraph as starterGraph } from './helpers/workflow-fixtures.mjs';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.1';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.29.1';
-import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js?v=0.29.1';
-import * as api from '../src/ui/workspace-preparation.js?v=0.29.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.30.0';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.30.0';
+import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js?v=0.30.0';
+import * as api from '../src/ui/workspace-preparation.js?v=0.30.0';
 const activeId = 'lattice:active-sillytavern';
 const profiles = [{ id: 'saved', name: 'Reasoning connection', api: 'openai', apiLabel: 'OpenAI', model: 'profile-model', endpoint: 'private-url', provider: 'private-route', secret: 'private-key' }];
 function fixture(root, options = {}) {
@@ -30,6 +30,55 @@ test('prepared per-node controls expose only safe current profile metadata and q
     assert.ok(!JSON.stringify(rows).includes('private-'));
     assert.ok(!rows.some(row => root.nodes[row.id].operation === 'scene-context'));
     assert.deepEqual(root, before);
+});
+
+test('an unset legacy custom reader exposes initialization model controls without changing its saved graph',()=>{
+ const root={id:'legacy-reader-profiles',schema:3,runtime:2,mode:'native-unified',nodes:{read:{id:'read',type:'workflow',operation:'read-file',targetId:'custom-story-state',modelRole:null,profileId:null,model:null,fileTarget:{missing:'error'}}},wires:{},definitions:{}};
+ const before=structuredClone(root),f=fixture(root,{workflowData:{available:true,documents:[],legacyDocuments:{},nodeFiles:{storage:'host',supported:true,bindings:{}}}});
+ const card=f.session.readEditor().prepared.drawBase.nativeCards.read;
+ assert.equal(card.modelRole,'Prose');
+ assert.equal(card.defaults.initialization,'generate');
+ assert.ok(card.controlDescriptors.initialization);
+ const row=f.rows().find(row=>row.id==='read');
+ assert.equal(row.hasProfile,true);assert.equal(row.value,activeId);assert.equal(row.model,'host-model');
+ const workflow=projectPreparedWorkflow(f.prepared.workflow,{selectedId:'read'});
+ const details=api.projectWorkspacePanels(f.session.readEditor(),workflow,{},'legacy-reader',null,null).nodeDetails;
+ assert.ok(details.model,'automatic initialization needs the ordinary model controls in Details');
+ assert.equal(details.model.role,'Prose');
+ assert.equal(details.model.profile.effectiveValue,activeId);
+ assert.equal(details.model.effective,'Active SillyTavern model · host-model');
+ assert.equal(details.nodeFile.initialization,'generate');
+ assert.deepEqual(root,before);
+});
+
+test('legacy reserved readers keep their model-free defaults at root and inside a system',async()=>{
+ const {computeDefinitionIdentity,definitionRefKey}=await import('../src/workflow/definitions.js');
+ const read={id:'read',type:'workflow',operation:'read-file',targetId:'lattice-default-notes'};
+ const raw={id:'reserved-reader-system',version:1,name:'Reserved reader',parameters:[],interface:[],body:{schema:3,runtime:2,mode:'native-unified',nodes:{read},wires:{}}};
+ const identity=computeDefinitionIdentity(raw);assert.equal(identity.ok,true,JSON.stringify(identity));
+ const definition={...identity.data.materializedDefinition,semanticHash:identity.data.semanticHash};
+ const root={id:'reserved-reader-profiles',schema:3,runtime:2,mode:'native-unified',nodes:{read:structuredClone(read),system:{id:'system',type:'subgraph',definition:{id:definition.id,version:definition.version,semanticHash:definition.semanticHash}}},wires:{},definitions:{[definitionRefKey(definition)]:definition}};
+ const before=structuredClone(root),f=fixture(root,{workflowData:{available:true,documents:[],nodeFiles:{storage:'host',supported:true,bindings:{}}}});
+ assert.equal(f.prepared.preparedViews.length,2);
+ for(const view of f.prepared.preparedViews){
+  const effective=view.effectiveNodes.read,card=view.drawBase.nativeCards.read;
+  assert.equal(effective.initialization,undefined,'reserved readers retain their original default provisioning path');
+  assert.notEqual(effective.fileTarget?.managed,true);
+  assert.equal(card.modelRole,null);
+  assert.equal(card.requestCapability,undefined);
+  assert.equal(card.readiness.state,'ready');
+  const path=view.identity.instancePath??[];
+  if(path.length)assert.equal(f.session.openInstance(path).ok,true);
+  const workflow=projectPreparedWorkflow(f.prepared.workflow,{viewPath:path,selectedId:'read'});
+  const details=api.projectWorkspacePanels(f.session.readEditor(),workflow,{},'reserved-reader',null,null).nodeDetails;
+  assert.equal(details.model,null);
+  assert.equal(details.nodeFile.managed,false);
+  assert.equal(details.nodeFile.legacy,true);
+  assert.ok(f.rows().every(row=>row.hasProfile===false));
+ }
+ assert.equal(f.prepared.preparedViews[0].effectiveNodes.read.targetId,'lattice-default-notes');
+ assert.match(f.prepared.preparedViews[1].effectiveNodes.read.targetId,/^lattice-system-notes-/);
+ assert.deepEqual(root,before);
 });
 test('model metadata remains detectable when completion-policy rejects execution and missing profiles stay unavailable', () => {
     const root = rootFixture(); delete root.nodes['response-plan'].model;
@@ -67,7 +116,7 @@ test('model-free operation mode hides its control and readonly library nodes use
 });
 
 test('imported wand helpers can select Active with no saved profiles and library views retain the choice',async()=>{
- const {installWorkflowExample}=await import('../src/workflow/examples.js?v=0.29.1');
+ const {installWorkflowExample}=await import('../src/workflow/examples.js?v=0.30.0');
  const installed=installWorkflowExample('unified-broken-wand',{graphs:{},nativeBindings:{workflowGraphId:null},enabled:false});
  assert.equal(installed.ok,true,JSON.stringify(installed));
  const root=installed.data.graph, prepared=api.prepareWorkspaceViews(root,{profiles:[],activeModel:{apiLabel:'Host API',model:'host-model'}});
@@ -121,7 +170,7 @@ test('unified deterministic modes and host operations omit profile bars', () => 
         ['extract', { mode: 'literal' }, 'post'], ['extract', { mode: 'literal', inputKind: 'text' }, 'pre'],
         ['item-use-trigger', { itemId: 'wand', mode: 'candidates' }, 'post'],
         ['on-send', {}, 'pre'], ['draft-event-source', {}, 'post'], ['review-publish', {}, 'post'],
-        ['read-file', { targetId: 'story-notes' }, 'pre'], ['story-clock', { clockId: 'story-clock' }, 'pre'],
+        ['read-file', { targetId: 'story-notes', initialization: 'template' }, 'pre'], ['story-clock', { clockId: 'story-clock' }, 'pre'],
         ['time-trigger', { scheduleId: 'curse' }, 'post'], ['state', { mode: 'value' }, 'pre'],
     ]) {
         const created = prepareNativeConnectionEdit(root, { kind: 'create', operation, controls, phase, graphPoint: { x: 0, y: 0 } });

@@ -1,8 +1,8 @@
-import {resolveManagedFileNode,canonicalFileName} from '../workflow/managed-file-policy.js?v=0.29.1';
-import {nodeFileTargetId} from '../workflow/node-file-targets.js?v=0.29.1';
-import {prepareDocumentMutation} from '../workflow/operations/document-mutations.js?v=0.29.1';
-import {sha256Text} from '../workflow/definition-data.js?v=0.29.1';
-import {readTextFile} from './file-input.js?v=0.29.1';
+import {resolveManagedFileNode,canonicalFileName} from '../workflow/managed-file-policy.js?v=0.30.0';
+import {nodeFileTargetId} from '../workflow/node-file-targets.js?v=0.30.0';
+import {prepareDocumentMutation} from '../workflow/operations/document-mutations.js?v=0.30.0';
+import {sha256Text} from '../workflow/definition-data.js?v=0.30.0';
+import {readTextFile} from './file-input.js?v=0.30.0';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const cancelled=()=>({ok:false,cancelled:true});
 /** Browser input import is an explicit checked write to a new host input file. */

@@ -30,6 +30,36 @@ const settle = async () => { await tick(); flushSync(); };
 
 
 const waitSave=async()=>{await new Promise(resolve=>setTimeout(resolve,350));await settle();};
+test('reader initialization changes use bounded top-level controls without changing file authority',async()=>{
+ const edits=[],f=await fixture(model({initialization:'generate',initializationInstructions:'',initializationMaxTokens:2048}),{editControls(s,value){edits.push([s,value]);return {ok:true};}});
+ try{
+  assert.equal(field(f.host,'When no file is set').value,'generate');
+  assert.match(f.host.textContent,/one request.*node.s model.*current conversation and character/i);
+  assert.match(f.host.textContent,/only when you accept/i);
+  const instructions=field(f.host,'Initialization instructions');assert.equal(instructions.maxLength,10000);
+  edit(f.host,'Initialization instructions','Keep unknown relationships unspecified.','change');await settle();
+  edit(f.host,'Initialization completion limit','4096','change');await settle();
+  edit(f.host,'Initialization completion limit','0','change');await settle();
+  edit(f.host,'Initialization completion limit','65537','change');await settle();
+  edit(f.host,'When no file is set','template','change');await settle();
+  assert.deepEqual(edits,[[selection,{initializationInstructions:'Keep unknown relationships unspecified.'}],[selection,{initializationMaxTokens:4096}],[selection,{initialization:'template'}]]);
+  f.update(model({initialization:'template'}));
+  assert.equal(f.host.querySelector('[aria-label="Initialization instructions"]'),null);
+  assert.equal(f.host.querySelector('[aria-label="Initialization completion limit"]'),null);
+ }finally{await f.close();}
+});
+
+test('requiring a file leaves selected sources intact and clears only automatic managed intent',async()=>{
+ const edits=[],f=await fixture(model({initialization:'generate'}),{editControls(s,value){edits.push(value);return {ok:true};}});
+ try{
+  edit(f.host,'When no file is set','require-file','change');await settle();
+  assert.deepEqual(edits,[{initialization:'require-file'}]);
+  f.update(model({managed:true,settings:{...settings,bindingId:''},initialization:'generate'}));
+  edit(f.host,'When no file is set','require-file','change');await settle();
+  assert.deepEqual(edits[1],{initialization:'require-file',fileTarget:{missing:'error'}});
+ }finally{await f.close();}
+});
+
 test('automatic file panel exposes friendly defaults and every saving node retains handling',async()=>{
  for(const operation of ['write-file','story-clock','commit-outcomes','random-pick','commit-clock']){
  const changes=[],f=await fixture(model({operation,managed:true,friendlyName:'Scene Context',typeLabel:'Text document',status:'Ready',saving:true,fileHandling:'replace',mode:operation==='commit-clock'?'inherited':'destination'}),{editControls(s,c){changes.push(c);return {ok:true};}});

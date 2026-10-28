@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { fixture } from './canvas-fixture.mjs';
-import { prepareWorkspaceViews, projectNodeProfiles } from '../src/ui/workspace-preparation.js?v=0.29.1';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.1';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.29.1';
+import { prepareWorkspaceViews, projectNodeProfiles } from '../src/ui/workspace-preparation.js?v=0.30.0';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.30.0';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.30.0';
 
 const fileTarget = { bindingId: 'disk-notes', name: 'campaign-notes.md', format: 'markdown', missing: 'create', content: '', visibility: { kind: 'public' } };
 
 test('ready source and inherited destination retain the configured filename without a model profile', () => {
-    const root = { id: 'canvas-files', schema: 3, runtime: 2, mode: 'native-unified', nodes: { read: { id: 'read', type: 'workflow', operation: 'read-file', targetId: 'notes', fileTarget, x: 0, y: 0 }, write: { id: 'write', type: 'workflow', operation: 'write-file', destinationMode: 'connected', x: 300, y: 0 }, format: { id: 'format', type: 'workflow', operation: 'format', x: 600, y: 0 } }, wires: { reference: { id: 'reference', route: 'wire', from: 'read', fromPort: 'reference', to: 'write', toPort: 'reference' } }, groups: {}, definitions: {}, portals: {} };
+    const root = { id: 'canvas-files', schema: 3, runtime: 2, mode: 'native-unified', nodes: { read: { id: 'read', type: 'workflow', operation: 'read-file', initialization: 'template', targetId: 'notes', fileTarget, x: 0, y: 0 }, write: { id: 'write', type: 'workflow', operation: 'write-file', destinationMode: 'connected', x: 300, y: 0 }, format: { id: 'format', type: 'workflow', operation: 'format', x: 600, y: 0 } }, wires: { reference: { id: 'reference', route: 'wire', from: 'read', fromPort: 'reference', to: 'write', toPort: 'reference' } }, groups: {}, definitions: {}, portals: {} };
     const prepared = prepareWorkspaceViews(root, { workflowData: { available: true, documents: [], nodeFiles: { supported: true, bindings: { 'disk-notes': { name: 'campaign-notes.md', format: 'markdown', status: 'ready' } } } } });
     assert.equal(prepared.ok, true, JSON.stringify(prepared));
     const session = createGraphViewSession({ root, activationId: 'canvas-files', ...prepared.data }).data;

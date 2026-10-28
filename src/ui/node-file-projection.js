@@ -1,10 +1,11 @@
-import {nodeFileTargetId,validateNodeFileTarget} from '../workflow/node-file-targets.js?v=0.29.1';
-import { workflowDataPresetFor } from '../workflow/workflow-data-defaults.js?v=0.29.1';
-import {canonicalFileName,inferManagedFileFormat,resolveManagedFileNode} from '../workflow/managed-file-policy.js?v=0.29.1';
+import {nodeFileTargetId,validateNodeFileTarget} from '../workflow/node-file-targets.js?v=0.30.0';
+import { workflowDataPresetFor } from '../workflow/workflow-data-defaults.js?v=0.30.0';
+import {canonicalFileName,inferManagedFileFormat,resolveManagedFileNode} from '../workflow/managed-file-policy.js?v=0.30.0';
+import {fileInitializationMode,prepareUnboundReader} from '../workflow/file-initialization.js?v=0.30.0';
 const owned = new Set(['read-file','write-file','story-clock','commit-outcomes','random-pick','commit-clock']);
 const extensions = {json:'json',jsonl:'jsonl',csv:'csv',text:'txt',markdown:'md'};
 const types={text:'Text document',markdown:'Markdown document',json:'Structured data',jsonl:'JSON Lines',csv:'Spreadsheet'};
-export function nodeFileOwnsControl(operation,key){return owned.has(operation)&&(['fileTarget','fileHandling','destinationMode','actorScope','actorId'].includes(key)||operation==='write-file'&&key==='mode'||['read-file','write-file','commit-outcomes'].includes(operation)&&key==='targetId'||operation==='story-clock'&&key==='clockId'||operation==='random-pick'&&key==='ledgerId');}
+export function nodeFileOwnsControl(operation,key){return owned.has(operation)&&(['fileTarget','fileHandling','destinationMode','actorScope','actorId'].includes(key)||operation==='read-file'&&['initialization','initializationInstructions','initializationMaxTokens'].includes(key)||operation==='write-file'&&key==='mode'||['read-file','write-file','commit-outcomes'].includes(operation)&&key==='targetId'||operation==='story-clock'&&key==='clockId'||operation==='random-pick'&&key==='ledgerId');}
 export function nodeFileContentIssue(view){return view?.inputIssue?{code:'MISSING_INPUT',field:'text',category:'connection',message:view.inputIssue}:null;}
 /** Adoption needs an explicit trusted absence check; the display must not redirect existing files. */
 export function managedNodeFileMigration(node,{hasCanonicalData}={}){
@@ -18,11 +19,13 @@ function display(view,node,state){
  const saving=node.operation!=='read-file';
  const connected=Object.values(state.wires??{}).filter(wire=>wire.to===node.id&&['text','records'].includes(wire.toPort));
  const inputIssue=node.operation==='write-file'&&node.fileHandling&&state.wires&&(connected.length===0?'Connect Text or Records to provide this file’s content.':new Set(connected.map(wire=>wire.toPort)).size>1?'Connect either Text or Records, using one content input.':undefined);
- return {...view,ownFileConfigured:Object.keys(node.fileTarget??{}).length>0,managed:view.managed===true,friendlyName:view.settings.name.replace(/\.(txt|md|json|jsonl|csv)$/i,''),typeLabel:['story-clock','commit-clock','commit-outcomes','random-pick'].includes(node.operation)?'Lattice data':types[view.settings.format],status:view.issue?'Needs attention':'Ready',saving,fileHandling:node.fileHandling||(['append','add','add-unique'].includes(node.mode)?'append':'replace'),advancedMutation:node.operation==='write-file'&&!node.fileHandling&&!['replace','append',undefined].includes(node.mode)?node.mode:undefined,mutation:node.mode??'replace',actorScope:node.actorScope??'selected',actorId:node.actorId??'',actors:state.actors??[],...(inputIssue?{inputIssue}:{})};
+ return {...view,ownFileConfigured:Object.keys(node.fileTarget??{}).length>0,managed:view.managed===true,friendlyName:view.settings.name.replace(/\.(txt|md|json|jsonl|csv)$/i,''),typeLabel:['story-clock','commit-clock','commit-outcomes','random-pick'].includes(node.operation)?'Lattice data':types[view.settings.format],status:view.issue?'Needs attention':'Ready',saving,...(node.operation==='read-file'?{initialization:fileInitializationMode(node),initializationInstructions:node.initializationInstructions??'',initializationMaxTokens:node.initializationMaxTokens??2048}:{}),fileHandling:node.fileHandling||(['append','add','add-unique'].includes(node.mode)?'append':'replace'),advancedMutation:node.operation==='write-file'&&!node.fileHandling&&!['replace','append',undefined].includes(node.mode)?node.mode:undefined,mutation:node.mode??'replace',actorScope:node.actorScope??'selected',actorId:node.actorId??'',actors:state.actors??[],...(inputIssue?{inputIssue}:{})};
 }
 /** Plain display state only. Native handles never cross this boundary. */
 export function projectNodeFile(node, state = {}) {
  if (!owned.has(node?.operation) || node.operation==='random-pick' && !node.ledgerId && !Object.keys(node.fileTarget??{}).length) return null;
+ if(node.operation==='read-file'&&fileInitializationMode(node)==='require-file'&&node.fileTarget?.managed===true&&validateNodeFileTarget(node.fileTarget).ok)node={...node,fileTarget:{missing:'error'}};
+ node=prepareUnboundReader(node,{legacyDocuments:Array.isArray(state.legacyDocuments)?state.legacyDocuments:state.documents??[],canonicalDocuments:state.canonicalDocuments??(Array.isArray(state.legacyDocuments)?{}:state.legacyDocuments)??{},nodes:state.nodes??{},wires:state.wires??{}});
  const inherited = node.operation === 'commit-clock' || node.operation === 'write-file' && node.destinationMode !== 'own';
  if(!inherited&&node.fileTarget?.managed===true){
   const format=inferManagedFileFormat(node,{inputFormat:state.inputFormat,inputKind:state.inputKind});

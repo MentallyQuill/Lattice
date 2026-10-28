@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { resolveWorkflow, prepareWorkflowPlanner } from '../src/workflow/resolve.js?v=0.29.1';
-import { runWorkflow, runWorkflowForHost } from '../src/workflow/runtime.js?v=0.29.1';
-import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definitions.js?v=0.29.1';
-import { parseRunPlan } from '../src/workflow/record-data.js?v=0.29.1';
+import { resolveWorkflow, prepareWorkflowPlanner } from '../src/workflow/resolve.js?v=0.30.0';
+import { runWorkflow, runWorkflowForHost } from '../src/workflow/runtime.js?v=0.30.0';
+import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definitions.js?v=0.30.0';
+import { parseRunPlan } from '../src/workflow/record-data.js?v=0.30.0';
 
 const node = (id, operation, settings = {}) => ({ id, type: 'workflow', operation, ...settings });
 const wire = (id, from, fromPort, to, toPort) => ({ id, route: 'wire', from, fromPort, to, toPort });
@@ -195,7 +195,7 @@ test('private native boundary receives detached exact binding snapshots without 
     assert.equal(JSON.stringify(result).includes('private-binding-sentinel'), false);
 });
 test('actual native controller releases preparation and resumes an independent Post reply source in the same run', async () => {
-    const { createNativeWorkflowController } = await import('../src/workflow/host.js?v=0.29.1');
+    const { createNativeWorkflowController } = await import('../src/workflow/host.js?v=0.30.0');
     const root = nativeGraph(), listeners = new Map(), results = [];
     const eventNames = ['GENERATION_STARTED', 'GENERATION_ENDED', 'MESSAGE_RECEIVED'];
     const context = { chatId: 'story', characterId: 0, groupId: null, characters: [{ data: { name: 'Mara' } }], chat: [{ mes: 'I open the door.', is_user: true, extra: {} }], extensionPrompts: {}, eventTypes: Object.fromEntries(eventNames.map(name => [name, name])), eventSource: { on(name, callback) { listeners.set(name, callback); }, emit(name, ...args) { return listeners.get(name)?.(...args); } } };

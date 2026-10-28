@@ -26,6 +26,9 @@ export interface NodeFileView {
     typeLabel?: string;
     status?: string;
     saving?: boolean;
+    initialization?: 'generate' | 'template' | 'require-file';
+    initializationInstructions?: string;
+    initializationMaxTokens?: number;
     fileHandling?: 'replace' | 'append';
     advancedMutation?: string;
     mutation?: string;

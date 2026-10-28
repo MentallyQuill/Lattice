@@ -1,6 +1,6 @@
-import { transferDraft } from './reference-transfer.js?v=0.29.1';
-import { mapTerminology } from './terminology-map.js?v=0.29.1';
-import { validatePatches } from '../repair.js?v=0.29.1';
+import { transferDraft } from './reference-transfer.js?v=0.30.0';
+import { mapTerminology } from './terminology-map.js?v=0.30.0';
+import { validatePatches } from '../repair.js?v=0.30.0';
 const port = (id, label, direction, kind, required = false) => ({ id, label, direction, kind, required, cardinality: 'one' });
 const enumeration = (key, label, options) => ({ key, label, type: 'enum', options });
 const scopes = ['authorized', 'whole', 'narration', 'dialogue'];

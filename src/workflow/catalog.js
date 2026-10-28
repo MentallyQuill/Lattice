@@ -1,25 +1,25 @@
-import { FOUNDATION_RELEASE, deferredFoundationControl } from './foundation-release.js?v=0.29.1';
-import { CHUNK_OPERATION, describeChunk } from './operations/chunk-contract.js?v=0.29.1';
-import { graphSatisfies } from './workflow-versions.js?v=0.29.1';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.29.1';
-import { RECALL_OPERATIONS, describeRecallNode } from './operations/recall-nodes.js?v=0.29.1';
-import { LIFECYCLE_OPERATIONS, describeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.29.1';
-import { FILE_OPERATIONS, describeFileNode } from './operations/file-nodes.js?v=0.29.1';
-import { TIME_OPERATIONS, describeTimeNode } from './operations/time-nodes.js?v=0.29.1';
-import { EVENT_OPERATIONS, describeEvent } from './operations/event-nodes.js?v=0.29.1';
-import { RANDOM_OPERATIONS, describeRandom } from './operations/random-outcomes.js?v=0.29.1';
-import { COLLECTION_OPERATIONS, describeCollection } from './operations/collection-nodes.js?v=0.29.1';
-import { PRIMITIVE_OPERATIONS, describePrimitive } from './operations/nodes.js?v=0.29.1';
-import { describeContextJoin } from './operations/context-join.js?v=0.29.1';
-import { TRANSPOSE_OPERATIONS, describeTransposeMetadata } from './operations/transpose-nodes.js?v=0.29.1';
-import { CLEANUP_MODES, validateCleanupSettings } from './operations/prose-cleanup.js?v=0.29.1';
-import { INTROSPECTION_NATIVE_OPERATIONS, describeNativeIntrospection, introspectionDefaults } from './introspection/native.js?v=0.29.1';
-import { INPUT_OPERATIONS, describeInput } from './operations/input-nodes.js?v=0.29.1';
-import { CONTROL_OPERATIONS, describeControl } from './operations/control-nodes.js?v=0.29.1';
-import { DECISION_OPERATIONS, describeDecision } from './operations/decision-nodes.js?v=0.29.1';
-import { MODEL_OPERATIONS, describeModelNode } from './operations/model-nodes.js?v=0.29.1';
-import { PATTERN_OPERATION, describePattern } from './operations/pattern-nodes.js?v=0.29.1';
-import { FILTER_TEXT_OPERATION, describeFilterText } from './operations/filter-text.js?v=0.29.1';
+import { FOUNDATION_RELEASE, deferredFoundationControl } from './foundation-release.js?v=0.30.0';
+import { CHUNK_OPERATION, describeChunk } from './operations/chunk-contract.js?v=0.30.0';
+import { graphSatisfies } from './workflow-versions.js?v=0.30.0';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.30.0';
+import { RECALL_OPERATIONS, describeRecallNode } from './operations/recall-nodes.js?v=0.30.0';
+import { LIFECYCLE_OPERATIONS, describeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.30.0';
+import { FILE_OPERATIONS, describeFileNode } from './operations/file-nodes.js?v=0.30.0';
+import { TIME_OPERATIONS, describeTimeNode } from './operations/time-nodes.js?v=0.30.0';
+import { EVENT_OPERATIONS, describeEvent } from './operations/event-nodes.js?v=0.30.0';
+import { RANDOM_OPERATIONS, describeRandom } from './operations/random-outcomes.js?v=0.30.0';
+import { COLLECTION_OPERATIONS, describeCollection } from './operations/collection-nodes.js?v=0.30.0';
+import { PRIMITIVE_OPERATIONS, describePrimitive } from './operations/nodes.js?v=0.30.0';
+import { describeContextJoin } from './operations/context-join.js?v=0.30.0';
+import { TRANSPOSE_OPERATIONS, describeTransposeMetadata } from './operations/transpose-nodes.js?v=0.30.0';
+import { CLEANUP_MODES, validateCleanupSettings } from './operations/prose-cleanup.js?v=0.30.0';
+import { INTROSPECTION_NATIVE_OPERATIONS, describeNativeIntrospection, introspectionDefaults } from './introspection/native.js?v=0.30.0';
+import { INPUT_OPERATIONS, describeInput } from './operations/input-nodes.js?v=0.30.0';
+import { CONTROL_OPERATIONS, describeControl } from './operations/control-nodes.js?v=0.30.0';
+import { DECISION_OPERATIONS, describeDecision } from './operations/decision-nodes.js?v=0.30.0';
+import { MODEL_OPERATIONS, describeModelNode } from './operations/model-nodes.js?v=0.30.0';
+import { PATTERN_OPERATION, describePattern } from './operations/pattern-nodes.js?v=0.30.0';
+import { FILTER_TEXT_OPERATION, describeFilterText } from './operations/filter-text.js?v=0.30.0';
 
 /** Native operation metadata. Artifact flow, rather than canvas placement, defines execution. */
 export const FAMILIES = ['Input', 'Shaping', 'Surface', 'Transpose', 'Introspection', 'Derive', 'Events', 'Collections', 'Randomness', 'Recall', 'Output'];
@@ -283,6 +283,11 @@ export function semanticControlsForNode(node, operation = operationFor(node)) {
     if (node.operation === 'review-publish' && controls.autoApply === false) delete controls.autoApply;
     if (node.operation === 'review-publish' && controls.autoApplyEffects === false) delete controls.autoApplyEffects;
     if (node.operation === 'read-file' && controls.bindToChat === false) delete controls.bindToChat;
+    if (node.operation === 'read-file') {
+        if(controls.initialization==='generate')delete controls.initialization;
+        if(controls.initializationInstructions==='')delete controls.initializationInstructions;
+        if(controls.initializationMaxTokens===2048)delete controls.initializationMaxTokens;
+    }
     if (node.operation === 'for-each') {
         if (!Object.keys(controls.roleOverrides ?? {}).length) delete controls.roleOverrides;
         else controls.roleOverrides = Object.fromEntries(Object.entries(controls.roleOverrides).map(([role,binding]) => [role,{...(Object.hasOwn(binding,'model') ? {model:binding.model} : {}),...(binding.profileId === ACTIVE_PROFILE_ID ? {profileId:ACTIVE_PROFILE_ID} : {})}]));
@@ -326,6 +331,10 @@ export function operationDefaults(id = 'scene-context', { mode, managedFiles = f
     }
     if (!op) throw new Error(`Unknown workflow operation: ${id}`);
     const defaults = structuredClone(op.defaults);
+    if(id==='read-file'&&!managedFiles){
+        op={...op,modelRole:null};
+        for(const key of ['initialization','initializationInstructions','initializationMaxTokens'])delete defaults[key];
+    }
     delete defaults.reasoningEffort;
     delete defaults.reasoningCustom;
     if (defaults.fileTarget && !Object.keys(defaults.fileTarget).length) delete defaults.fileTarget;
@@ -337,7 +346,7 @@ export function operationDefaults(id = 'scene-context', { mode, managedFiles = f
         if(id==='commit-outcomes')defaults.targetId='';
     }
     if(managedFiles && ['write-file','commit-clock','commit-outcomes'].includes(id))defaults.fileHandling='replace';
-    if(managedFiles && id==='read-file'){defaults.targetId='';defaults.fileTarget={missing:'error'};}
+    if(managedFiles && id==='read-file'){defaults.targetId='';defaults.fileTarget={managed:true};}
     if (id === 'review-publish' && defaults.autoApply === false) delete defaults.autoApply;
     if (id === 'review-publish' && defaults.autoApplyEffects === false) delete defaults.autoApplyEffects;
     if (id === 'read-file' && defaults.bindToChat === false) delete defaults.bindToChat;

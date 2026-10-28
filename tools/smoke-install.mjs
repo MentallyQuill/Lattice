@@ -63,9 +63,13 @@ const publicHostModule = `
     }
 `;
 let foundationStored=null;const foundationIO={saves:0,reads:0};
+const expectedHostMissing=(pathname,method)=>method==='GET'&&(pathname==='/api/plugins/lattice-files/status'||/^\/user\/files\/lattice-[a-f0-9]{24}-setup-[a-f0-9]{32}\.json$/.test(pathname));
 const server = createServer(async (request, response) => {
     try {
         const pathname = new URL(request.url, 'http://localhost').pathname;
+        // Optional service discovery and a fresh user's absent preference are
+        // host responses, separate from the installed extension's asset tree.
+        if(expectedHostMissing(pathname,request.method)){response.writeHead(404,{'Content-Type':'application/json','X-Lattice-Smoke-Host-Missing':'1'}).end(JSON.stringify({ok:false,error:{code:'NOT_FOUND',message:'This synthetic host resource has not been created.'}}));return;}
         if(foundationLesson==='35'&&request.method==='POST'&&['/__foundation__/save','/api/chats/get'].includes(pathname)){
             let body='';for await(const chunk of request){body+=chunk;if(Buffer.byteLength(body)>2000000)throw Error('Oversized synthetic fixture request');}
             if(pathname==='/__foundation__/save'){const value=JSON.parse(body);if(value.chatId!=='foundation-install-practice-35'||!Array.isArray(value.chat))throw Error('Invalid synthetic practice chat');foundationStored=value;foundationIO.saves++;response.writeHead(200,{'Content-Type':'application/json'}).end('{}');return;}
@@ -85,8 +89,8 @@ try {
     if(foundationLesson)await page.addInitScript(()=>{window.showOpenFilePicker=undefined;window.showSaveFilePicker=undefined;});
     const errors = [], missing = [], requests = [];
     page.on('pageerror', error => errors.push(error.message));
-    page.on('response', response => { if (response.status() >= 400) missing.push(response.url()); });
-    page.on('request', request => requests.push(request.url()));
+    page.on('response', response => { if (response.status() >= 400&&!(response.status()===404&&response.headers()['x-lattice-smoke-host-missing']==='1'&&expectedHostMissing(new URL(response.url()).pathname,response.request().method()))) missing.push(response.url()); });
+    page.on('request', request => requests.push({url:request.url(),method:request.method()}));
     await page.goto(`http://127.0.0.1:${server.address().port}/tests/browser/harness.html`); await page.waitForFunction(() => !!window.canvasHarness);
     const result = await page.evaluate(async () => {
         const h = window.canvasHarness, { UI, S, canvas, settle } = h, graph = S.activeWorkflow(), root = document.querySelector('.pc-root');
@@ -106,14 +110,16 @@ try {
             providerCalls: h.providerCalls(), retiredPins: !!root.querySelector('.pc-node-output,.pc-port-key,.pc-port-stage,.pc-tok'), node: !!root.querySelector(`[data-id="${node.id}"]`) };
     });
     if (errors.length || missing.length || !result.publicHelpers || !result.mounted || !result.sharedGraph || !result.launchers || !result.fresh || result.providerCalls || result.retiredPins || !result.node || result.workbench !== 'svelte') throw Error(JSON.stringify({ result, errors, missing }));
-    if (requests.some(url => new URL(url).hostname !== '127.0.0.1')) throw Error('Production smoke made an external request');
-    const apiRequests = requests.filter(url => new URL(url).pathname.startsWith('/api/')).length;
-    if (apiRequests) throw Error('Production smoke made an unexpected host API/model request');
+    if (requests.some(({url}) => new URL(url).hostname !== '127.0.0.1')) throw Error('Production smoke made an external request');
+    const isApi=({url})=>new URL(url).pathname.startsWith('/api/');
+    const optionalHost=({url,method})=>expectedHostMissing(new URL(url).pathname,method);
+    const apiRequests = requests.filter(isApi).length,optionalApiRequests=requests.filter(request=>isApi(request)&&optionalHost(request)).length;
+    if (apiRequests!==optionalApiRequests) throw Error('Production smoke made an unexpected host API/model request');
     const journey=foundationLesson?await (await import('./foundation-install-journey.mjs')).runFoundationInstallJourney(page,{lesson:Number(foundationLesson),root}):undefined;
-    if(errors.length||missing.length||requests.some(url=>new URL(url).hostname!=='127.0.0.1'))throw Error(JSON.stringify({errors,missing}));
-    if(foundationLesson==='34'&&requests.some(url=>new URL(url).pathname.startsWith('/api/')))throw Error('Text journey made an unexpected API call');
+    if(errors.length||missing.length||requests.some(({url})=>new URL(url).hostname!=='127.0.0.1'))throw Error(JSON.stringify({errors,missing}));
+    if(foundationLesson==='34'&&requests.some(request=>isApi(request)&&!optionalHost(request)))throw Error('Text journey made an unexpected API call');
     if(foundationLesson==='35'&&(foundationIO.saves!==1||foundationIO.reads<1))throw Error('Expected one explicit source setup save/readback: '+JSON.stringify(foundationIO));
-    const journeyApiRequests=requests.filter(url=>new URL(url).pathname.startsWith('/api/')).length-apiRequests;
-    if(foundationLesson==='35'&&requests.filter(url=>new URL(url).pathname.startsWith('/api/')).some(url=>new URL(url).pathname!=='/api/chats/get'))throw Error('Unexpected synthetic native API boundary');
-    console.log(JSON.stringify({ startupApiRequests:apiRequests, journeyApiRequests, journey, foundationIO, install, nodeModules: false, developerUiSource: false, requests: requests.length, errors, missing, ...result }, null, 2));
+    const journeyApiRequests=requests.filter(isApi).length-apiRequests;
+    if(foundationLesson==='35'&&requests.filter(request=>isApi(request)&&!optionalHost(request)).some(({url})=>new URL(url).pathname!=='/api/chats/get'))throw Error('Unexpected synthetic native API boundary');
+    console.log(JSON.stringify({ startupApiRequests:apiRequests, startupOptionalApiRequests:optionalApiRequests, expectedHostMissingRequests:requests.filter(optionalHost).length, journeyApiRequests, journey, foundationIO, install, nodeModules: false, developerUiSource: false, requests: requests.length, errors, missing, ...result }, null, 2));
 } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }

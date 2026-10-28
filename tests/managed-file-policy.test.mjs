@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { operationDefaults } from '../src/workflow/catalog.js?v=0.29.1';
-import { validateNodeFileTarget } from '../src/workflow/node-file-targets.js?v=0.29.1';
-import { describeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.29.1';
-const policy=await import('../src/workflow/managed-file-policy.js?v=0.29.1').catch(()=>({}));
+import { operationDefaults } from '../src/workflow/catalog.js?v=0.30.0';
+import { validateNodeFileTarget } from '../src/workflow/node-file-targets.js?v=0.30.0';
+import { describeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.30.0';
+const policy=await import('../src/workflow/managed-file-policy.js?v=0.30.0').catch(()=>({}));
 test('managed names retain interior periods and exactly one safe format suffix',()=>{
  assert.equal(typeof policy.canonicalFileName,'function');
  assert.equal(policy.canonicalFileName('SceneContext.txt','text'),'SceneContext.txt');
@@ -37,12 +37,16 @@ test('new outputs own a managed replace destination while legacy omitted mode st
  const legacy=describeFileNode({id:'old',type:'workflow',operation:'write-file'},{authoring:true});
  assert.equal(legacy.data.ports.find(port=>port.id==='reference').required,true);
 });
-test('new external readers request a real source instead of inventing empty notes',()=>{
+test('new readers initialize managed story data while explicit external readers require a source',()=>{
  const reader={id:'read',type:'workflow',...operationDefaults('read-file',{managedFiles:true})};
- assert.equal(reader.fileTarget?.managed,undefined);
+ assert.equal(reader.fileTarget?.managed,true);
+ assert.equal(reader.initialization,'generate');
  const described=describeFileNode(reader,{authoring:true});
  assert.equal(described.ok,true,JSON.stringify(described));
- assert.equal(described.data.setupIssues.some(issue=>issue.code==='FILE_SETUP_REQUIRED'),true);
+ assert.equal(described.data.setupIssues.some(issue=>issue.code==='FILE_SETUP_REQUIRED'),false);
+ const external=describeFileNode({...reader,initialization:'require-file',fileTarget:{missing:'error'}},{authoring:true});
+ assert.equal(external.ok,true,JSON.stringify(external));
+ assert.equal(external.data.setupIssues.some(issue=>issue.code==='FILE_SETUP_REQUIRED'),true);
 });
 test('trusted preparation allocates bindings for owned writers and state without output writes',async()=>{
  assert.equal(typeof policy.prepareManagedNodeFiles,'function');

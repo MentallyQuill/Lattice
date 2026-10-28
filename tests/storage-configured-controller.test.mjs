@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
-import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.29.1';
-import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v=0.29.1';
-import {OPERATIONS,operationDefaults} from '../src/workflow/catalog.js?v=0.29.1';
-import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.29.1';
-import {createWorkflowDataSetup} from '../src/ui/workflow-data-setup.js?v=0.29.1';
-import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.29.1';
-import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.29.1';
-import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js?v=0.29.1';
-import {safe} from '../src/state.js?v=0.29.1';
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.30.0';
+import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v=0.30.0';
+import {OPERATIONS,operationDefaults} from '../src/workflow/catalog.js?v=0.30.0';
+import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.30.0';
+import {createWorkflowDataSetup} from '../src/ui/workflow-data-setup.js?v=0.30.0';
+import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.30.0';
+import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.30.0';
+import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js?v=0.30.0';
+import {safe} from '../src/state.js?v=0.30.0';
 const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');
 test('retired global file handlers are absent while per-node migration retains its scoped catalog',()=>{
  assert.doesNotMatch(source,/storyDocumentsActions|refreshStoryDocuments|function storySetup\(/);
@@ -60,7 +60,7 @@ test('stale placement capture cannot prepare a node or acquire a document scope'
 });
 
 test('actual controller new data nodes keep independent file intent without an active chat and inherit the selected response stage',async()=>{
- for(const [operation,key,fileTarget] of [['read-file','targetId',{missing:'error'}],['story-clock','clockId',{managed:true}],['commit-outcomes','targetId',{managed:true}]]){
+ for(const [operation,key,fileTarget] of [['read-file','targetId',{managed:true}],['story-clock','clockId',{managed:true}],['commit-outcomes','targetId',{managed:true}]]){
   const f=fixture();f.env.workflowRuntime={getStoryDocumentCatalog:()=>undefined};
   const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation,graphPoint:{x:25,y:30}});
   const prepared=await pending;
@@ -73,7 +73,7 @@ test('actual controller new data nodes keep independent file intent without an a
 test('actual controller automatic pin creation keeps the origin response stage and commits once through its capture',async()=>{
  const f=fixture();f.env.workflowRuntime={getStoryDocumentCatalog:()=>undefined};
  const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',graphPoint:{x:25,y:30},connection:{origin:{nodeId:'compose',portId:'section.body'},portId:'text'}});assert.equal(f.env.view,undefined);const prepared=await pending;
- assert.equal(prepared.ok,true,JSON.stringify(prepared));const id=prepared.data.addedNodeIds[0],node=prepared.data.candidate.nodes[id];assert.equal(node.phase,'post');assert.equal(node.targetId,'');assert.deepEqual(node.fileTarget,{missing:'error'});
+ assert.equal(prepared.ok,true,JSON.stringify(prepared));const id=prepared.data.addedNodeIds[0],node=prepared.data.candidate.nodes[id];assert.equal(node.phase,'post');assert.equal(node.targetId,'');assert.deepEqual(node.fileTarget,{managed:true});
  assert.equal(Object.values(prepared.data.candidate.wires).some(wire=>wire.from===id&&wire.fromPort==='text'&&wire.to==='compose'&&wire.toPort==='section.body'),true);
  assert.equal(f.env.commitNodeCreation(f.capture,prepared).ok,true);assert.equal(f.commits(),1);
 });

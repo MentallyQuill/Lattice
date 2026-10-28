@@ -7,6 +7,13 @@ import {validateDefinition} from '../src/workflow/definitions.js';
 import {editableCombinedExample} from '../tools/combined-system-example.mjs';
 import {parseWorkflow} from '../src/workflow/packages.js';
 
+test('combined reference readers deliberately require authored source files',()=>{
+ const graph=buildCombinedExample();
+ const readers=Object.values(graph.definitions).flatMap(definition=>Object.values(definition.body.nodes)).filter(node=>node.operation==='read-file');
+ assert.ok(readers.length>0);
+ for(const reader of readers)assert.equal(reader.initialization,'require-file',reader.id);
+});
+
 test('combined native reply receives ordered item/weather guidance and settles three targets once', async () => {
  const graph=buildCombinedExample();
  assert.equal(graph.schema,3);assert.equal(graph.runtime,2);

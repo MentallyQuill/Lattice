@@ -1,11 +1,11 @@
-import {inspectNativeCharacterProjection} from './native-source-projections.js?v=0.29.1';
+import {inspectNativeCharacterProjection} from './native-source-projections.js?v=0.30.0';
 /** Host-only bounded reader. DTOs describe sources; only registry snapshots supply authority. */
-import {inspectNativeSourceSnapshot} from './native-source-registry.js?v=0.29.1';
-import {cloneJsonValue} from './operations/json-data.js?v=0.29.1';
-import {parseRuntimeContext} from './operations/context-data.js?v=0.29.1';
-import {parseReaderCursor} from './source-manifests.js?v=0.29.1';
-import {sha256Text} from './definition-data.js?v=0.29.1';
-import {freeze,plain} from './record-data.js?v=0.29.1';
+import {inspectNativeSourceSnapshot} from './native-source-registry.js?v=0.30.0';
+import {cloneJsonValue} from './operations/json-data.js?v=0.30.0';
+import {parseRuntimeContext} from './operations/context-data.js?v=0.30.0';
+import {parseReaderCursor} from './source-manifests.js?v=0.30.0';
+import {sha256Text} from './definition-data.js?v=0.30.0';
+import {freeze,plain} from './record-data.js?v=0.30.0';
 const pages=new WeakMap();
 const fail=code=>({ok:false,error:{code,message:'Current authorized bounded source material is required.'}});
 const good=data=>({ok:true,data});

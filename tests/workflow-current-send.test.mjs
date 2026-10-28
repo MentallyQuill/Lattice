@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { registerHooks } from 'node:module';
 import { installMock } from './mock.js';
-import * as S from '../src/state.js?v=0.29.1';
-import { starterGraph } from '../src/workflow/starters.js?v=0.29.1';
+import * as S from '../src/state.js?v=0.30.0';
+import { starterGraph } from '../src/workflow/starters.js?v=0.30.0';
 import { createHostFileFixture } from './helpers/host-file-fixture.mjs';
 const moduleUrl = source => 'data:text/javascript,' + encodeURIComponent(source);
 const hooks = registerHooks({ resolve(specifier, context, next) {
@@ -39,7 +39,7 @@ test('production Send follows the current unified document and Enable Lattice', 
         return host.fetch(url,options);
     };
     try {
-        const facade = await import('../src/run.js?v=0.29.1');
+        const facade = await import('../src/run.js?v=0.30.0');
         await facade.initializeNativeWorkflowController();
         controller = facade.getNativeWorkflowController(); application = facade.getApplicationFileExperience();
         S.activateWorkflow(currentGraph('Current first file.')); S.settings().enabled = true;

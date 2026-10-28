@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.29.1';
-import {iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.29.1';
-import {prepareWorkspaceViews} from '../src/ui/workspace-preparation.js?v=0.29.1';
+import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.30.0';
+import {iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.30.0';
+import {prepareWorkspaceViews} from '../src/ui/workspace-preparation.js?v=0.30.0';
 import {siblingWorkflow} from './fixtures/workflow-prepared-fixture.mjs';
 
 function itemHelper() {

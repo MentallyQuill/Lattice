@@ -1,48 +1,49 @@
-import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.29.1';
-import { captureNodeFileTargets, nodeFileTargetId } from './node-file-targets.js?v=0.29.1';
-import { prepareManagedNodeFiles } from './managed-file-policy.js?v=0.29.1';
-import {migrateUnboundOwnFile} from './file-application-policy.js?v=0.29.1';
-import {prepareManagedBranchFiles} from './managed-branch-files.js?v=0.29.1';
-import {createScopedNodeFileBackend} from './scoped-node-file-backend.js?v=0.29.1';
-import {prepareExampleFileDefaults} from './example-file-defaults.js?v=0.29.1';
-import { getNodeFileAccess } from '../ui/node-file-access.js?v=0.29.1';
-import { randomUuid } from '../random-id.js?v=0.29.1';
-import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.29.1';
-import {cloneJsonValue} from './operations/json-data.js?v=0.29.1';
-import {captureNativeCharacterProjection} from './native-source-projections.js?v=0.29.1';
-import {createNativeSourceRegistry} from './native-source-registry.js?v=0.29.1';
-import {createSourceReader,inspectSourcePage} from './source-reader.js?v=0.29.1';
-import {createSourceProofRegistry} from './source-provenance.js?v=0.29.1';
-import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.29.1';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.29.1';
-import { sha256Text } from './definition-data.js?v=0.29.1';
-import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.29.1';
-import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.29.1';
-import { reasoningRequestOverrides } from './reasoning.js?v=0.29.1';
-import { addressKey, safeError } from './record-data.js?v=0.29.1';
-import { createRunState, reduceRunState } from './run-state.js?v=0.29.1';
-import { cloneWorkflowDocument } from './document.js?v=0.29.1';
-import { prepareWorkflowAttempt, resolveWorkflow } from './resolve.js?v=0.29.1';
-import { projectIntrospectionNode } from './introspection/native.js?v=0.29.1';
-import { executeIntrospection } from './introspection/nodes.js?v=0.29.1';
-import { parseRecord } from './introspection/contracts.js?v=0.29.1';
-import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.29.1';
-import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.29.1';
-import { createChatPrefixBinding } from './chat-prefix-binding.js?v=0.29.1';
-import {queryProgressionHistory} from './progression.js?v=0.29.1';
-import { createChatDocumentCatalog } from './document-catalog.js?v=0.29.1';
-import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.29.1';
-import { createNativePersistenceVerifier } from './native-persistence.js?v=0.29.1';
-import { createNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.29.1';
-import { createNativeActorContext } from './native-actor-context.js?v=0.29.1';
-import { createNativeRecallController } from './native-recall.js?v=0.29.1';
-import { createNativeStoryState, createNativeOutcomeCache } from './native-story-state.js?v=0.29.1';
-import { executeTimeNode } from './operations/time-nodes.js?v=0.29.1';
-import { executeRandom } from './operations/random-outcomes.js?v=0.29.1';
-import { executeFileNode } from './operations/file-nodes.js?v=0.29.1';
-import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.29.1';
-import { snapshotPromptSource, promptSourceFingerprint } from './prompt-source.js?v=0.29.1';
-import { createNativeMemoryAdapter, nativeMemoryFingerprint, nativeMemoryScope, nativeVisibility } from './introspection/host-memory.js?v=0.29.1';
+import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.30.0';
+import { captureNodeFileTargets, nodeFileTargetId } from './node-file-targets.js?v=0.30.0';
+import { prepareManagedNodeFiles } from './managed-file-policy.js?v=0.30.0';
+import {migrateUnboundOwnFile} from './file-application-policy.js?v=0.30.0';
+import {fileInitializationMode,prepareUnboundReader,generateFileContents} from './file-initialization.js?v=0.30.0';
+import {prepareManagedBranchFiles} from './managed-branch-files.js?v=0.30.0';
+import {createScopedNodeFileBackend} from './scoped-node-file-backend.js?v=0.30.0';
+import {prepareExampleFileDefaults} from './example-file-defaults.js?v=0.30.0';
+import { getNodeFileAccess } from '../ui/node-file-access.js?v=0.30.0';
+import { randomUuid } from '../random-id.js?v=0.30.0';
+import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.30.0';
+import {cloneJsonValue} from './operations/json-data.js?v=0.30.0';
+import {captureNativeCharacterProjection} from './native-source-projections.js?v=0.30.0';
+import {createNativeSourceRegistry} from './native-source-registry.js?v=0.30.0';
+import {createSourceReader,inspectSourcePage} from './source-reader.js?v=0.30.0';
+import {createSourceProofRegistry} from './source-provenance.js?v=0.30.0';
+import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.30.0';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.30.0';
+import { sha256Text } from './definition-data.js?v=0.30.0';
+import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.30.0';
+import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.30.0';
+import { reasoningRequestOverrides } from './reasoning.js?v=0.30.0';
+import { addressKey, safeError } from './record-data.js?v=0.30.0';
+import { createRunState, reduceRunState } from './run-state.js?v=0.30.0';
+import { cloneWorkflowDocument } from './document.js?v=0.30.0';
+import { prepareWorkflowAttempt, resolveWorkflow } from './resolve.js?v=0.30.0';
+import { projectIntrospectionNode } from './introspection/native.js?v=0.30.0';
+import { executeIntrospection } from './introspection/nodes.js?v=0.30.0';
+import { parseRecord } from './introspection/contracts.js?v=0.30.0';
+import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.30.0';
+import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.30.0';
+import { createChatPrefixBinding } from './chat-prefix-binding.js?v=0.30.0';
+import {queryProgressionHistory} from './progression.js?v=0.30.0';
+import { createChatDocumentCatalog } from './document-catalog.js?v=0.30.0';
+import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.30.0';
+import { createNativePersistenceVerifier } from './native-persistence.js?v=0.30.0';
+import { createNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.30.0';
+import { createNativeActorContext } from './native-actor-context.js?v=0.30.0';
+import { createNativeRecallController } from './native-recall.js?v=0.30.0';
+import { createNativeStoryState, createNativeOutcomeCache } from './native-story-state.js?v=0.30.0';
+import { executeTimeNode } from './operations/time-nodes.js?v=0.30.0';
+import { executeRandom } from './operations/random-outcomes.js?v=0.30.0';
+import { executeFileNode } from './operations/file-nodes.js?v=0.30.0';
+import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.30.0';
+import { snapshotPromptSource, promptSourceFingerprint } from './prompt-source.js?v=0.30.0';
+import { createNativeMemoryAdapter, nativeMemoryFingerprint, nativeMemoryScope, nativeVisibility } from './introspection/host-memory.js?v=0.30.0';
 
 // Internal review seam: observations contain no authority or retained payload values.
 const retentionInspectors=new WeakMap();
@@ -277,7 +278,7 @@ export function createNativeWorkflowController(ports) {
     const fileBarriers=new Map();
     const documentHistory=createNativeDocumentHistory({catalog:documentCatalog,context,userId:()=>ports.userId?.(),actorId:()=>{const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);return actor.ok?actor.data.actorId:null;},isBusy:()=>applying||active!==null||ports.isBusy?.()===true,barriers:fileBarriers,persistenceVerifier,onApplied:()=>cancel('Workflow history checkpoint applied')});
     const outcomeCache=createNativeOutcomeCache({...(typeof ports.random==='function'?{random:ports.random}:{})});
-    function releaseRun(run) {if(!run||run.resourcesReleased)return;run.resourcesReleased=true;run.sourceProofs?.clear();run.sourceActorService?.release();run.sourceActorService=null;run.actorArtifactOwners=new WeakMap();for(const reader of run.sourceReaders??[])reader.release();run.sourceReaders?.clear();run.sourcePages?.clear();run.sourceCaptures?.clear();run.guidanceComposition?.clear();run.modelScopes?.clear();run.modelAddresses=new WeakMap();recall.releaseRun(run);run.memorySession?.release();run.memorySession=null;run.storySession?.release();run.storySession=null;run.draftEvidence?.release();run.draftEvidence=null;run.draftSources?.clear();delete run.nativeContext;for(const session of run.fileSessions?.values()??[])session.release();run.fileSessions?.clear();run.fileSession?.release();run.fileSession=null;run.actorContext?.release();run.actorContext=null;for(const session of run.actorMemorySessions?.values()??[])session.release();run.actorMemorySessions?.clear();run.stagedFiles.length=0;run.memoryIntents.clear();run.memoryTerminals.clear();}
+    function releaseRun(run) {if(!run||run.resourcesReleased)return;run.resourcesReleased=true;run.sourceProofs?.clear();run.sourceActorService?.release();run.sourceActorService=null;run.actorArtifactOwners=new WeakMap();for(const reader of run.sourceReaders??[])reader.release();run.sourceReaders?.clear();run.sourcePages?.clear();run.sourceCaptures?.clear();run.guidanceComposition?.clear();run.modelScopes?.clear();run.modelAddresses=new WeakMap();recall.releaseRun(run);run.memorySession?.release();run.memorySession=null;run.storySession?.release();run.storySession=null;run.draftEvidence?.release();run.draftEvidence=null;run.draftSources?.clear();delete run.nativeContext;for(const session of run.fileSessions?.values()??[])session.release();run.fileSessions?.clear();run.fileSession?.release();run.fileSession=null;run.actorContext?.release();run.actorContext=null;for(const session of run.actorMemorySessions?.values()??[])session.release();run.actorMemorySessions?.clear();run.stagedFiles.length=0;run.fileInitializations?.clear();run.memoryIntents.clear();run.memoryTerminals.clear();}
     let epoch=0, active=null, result=null, automaticResult=null, applying=false, settling=false, automaticApplication=null, internalEvents=0, unsubscribe=null;
     let branchCapture=null;
     function captureBranchPoint(){
@@ -406,13 +407,13 @@ export function createNativeWorkflowController(ports) {
         catch {return false;}
     };
     const playerSourceFresh=run=>{try{return !run.playerSourceCurrent||run.playerSourceCurrent()===true;}catch{return false;}};
-    const sourceFresh=run=>run.nodeFileFresh!==false && [...(run.sourcePages??[])].every(page=>inspectSourcePage(page).ok) && playerSourceFresh(run) && memoryFresh(run) && promptFresh(run) && [...(run.pendingSources?.values()??[])].every(validSource) && [...(run.sceneSources??[])].every(entry=>entry.text!==null && sourceText(entry.chat)===entry.text && (entry.characterVisibility===undefined || (entry.characterVisibility!==null && characterVisibility(context())===entry.characterVisibility)) && (entry.characterSnapshots??[]).every(captured=>characterText(snapshotContext(context(),{chat:entry.chat,node:captured.node}))===captured.text));
+    const sourceFresh=run=>run.nodeFileFresh!==false && [...(run.fileInitializations?.values()??[])].every(entry=>!entry.contextCurrent||entry.contextCurrent()) && [...(run.sourcePages??[])].every(page=>inspectSourcePage(page).ok) && playerSourceFresh(run) && memoryFresh(run) && promptFresh(run) && [...(run.pendingSources?.values()??[])].every(validSource) && [...(run.sceneSources??[])].every(entry=>entry.text!==null && sourceText(entry.chat)===entry.text && (entry.characterVisibility===undefined || (entry.characterVisibility!==null && characterVisibility(context())===entry.characterVisibility)) && (entry.characterSnapshots??[]).every(captured=>characterText(snapshotContext(context(),{chat:entry.chat,node:captured.node}))===captured.text));
     const start=(graph,native=false,abortPrimary=null,target)=>{
         const policyOwner=generation,policyPassport=native?nativeStopPassport(context):null;
         const failurePolicy=normalizeWorkflowFailurePolicy(ports.getFailurePolicy?.());
         const runId=token(),diagnosticCapture=captureDiagnostics(graph,native,target,runId);
         cancel('Superseded by a new workflow');
-        const run={epoch,runId,diagnosticCapture,failurePolicy,policyOwner,policyPassport,controller:new AbortController(),originalGraph:graph,documentToken:ports.getDocumentToken?.(),native,abortPrimary,pending:true,target,mode:target===undefined?'root':'target',pendingSources:new Map(),sceneSources:[],promptSources:new Map(),bindingContexts:new Map(),modelAddresses:new WeakMap(),modelScopes:new Map(),bindingChecks:[],reviewHandles:[],memoryTerminals:new Map(),memoryIntents:new Map(),memorySession:null,invalidMemoryEvidence:false,fileSession:null,fileSessions:new Map(),fileReferences:new WeakMap(),actorContext:null,guidanceComposition:createNativeGuidanceComposition(),actorMemorySessions:new Map(),stagedFiles:[],retainResources:false,resourcesReleased:false};
+        const run={epoch,runId,diagnosticCapture,failurePolicy,policyOwner,policyPassport,controller:new AbortController(),originalGraph:graph,documentToken:ports.getDocumentToken?.(),native,abortPrimary,pending:true,target,mode:target===undefined?'root':'target',pendingSources:new Map(),sceneSources:[],promptSources:new Map(),bindingContexts:new Map(),modelAddresses:new WeakMap(),modelScopes:new Map(),bindingChecks:[],reviewHandles:[],memoryTerminals:new Map(),memoryIntents:new Map(),memorySession:null,invalidMemoryEvidence:false,fileSession:null,fileSessions:new Map(),fileReferences:new WeakMap(),fileInitializations:new Map(),actorContext:null,guidanceComposition:createNativeGuidanceComposition(),actorMemorySessions:new Map(),stagedFiles:[],retainResources:false,resourcesReleased:false};
         run.sourcePages=new Set();run.sourceCaptures=new Set();run.sourceReaders=new Set();run.actorArtifactOwners=new WeakMap();run.sourceProofs=createSourceProofRegistry({signal:run.controller.signal,isCurrent:()=>fresh(run)&&!run.resourcesReleased});
         run.sourceCapability=Object.freeze({authorizeSource:artifact=>run.sourceProofs.authorizeSource(artifact),authorizePairing:(artifact,manifest)=>run.sourceProofs.authorizePairing(artifact,manifest),validateCurrent:artifact=>run.sourceProofs.validateCurrent(artifact)});
         active=run;runState=createRunState(runId);publishActivity();return run;
@@ -490,10 +491,13 @@ export function createNativeWorkflowController(ports) {
             if(example.data.actorChoices.length)return fail('EXAMPLE_ACTOR_REQUIRED','Choose the story characters for '+example.data.actorChoices.map(choice=>choice.label).join(' and ')+' in the example setup before running.');
             run.managedFileEntries=example.data.nodes;initialTemplates=example.data.initialTemplates;fileOwners=example.data.fileOwners;nodes=example.data.nodes.map(entry=>entry.node);
         }
+        run.trustedFileTemplates=new Set(Object.keys(initialTemplates??{}));
         if(run.workflowDataDefaults?.length||run.workflowDataHelperNodes?.length){const installed=ensureWorkflowDataDefaults({catalog:documentCatalog,graph:{nodes:Object.fromEntries((run.workflowDataHelperNodes??[]).map((node,index)=>[index,node]))},defaults:run.workflowDataDefaults,scope:{userId:run.userId,chatId:run.identity.chatId},context,isCurrent:live});if(!installed.ok)return installed;}
         const legacy=documentCatalog.capture();if(!legacy.ok)return legacy;
         const canonicalDocuments=context().chatMetadata?.latticeDocuments?.[run.userId]??{};
         if(run.legacyFileMigrations?.some(node=>migrateUnboundOwnFile(node,{canonicalDocuments,legacyDocuments:legacy.data.documents})===node))return fail('STALE_FILE_SCOPE','Existing file data appeared while preparing legacy settings.');
+        // Scoped preflight already inferred reader schemas within their actual
+        // instance. This second absence check must not consult same-ID root nodes.
         run.managedFileEntries=run.managedFileEntries.map(entry=>({...entry,node:migrateUnboundOwnFile(entry.node,{canonicalDocuments,legacyDocuments:legacy.data.documents})}));
         nodes=run.managedFileEntries.map(entry=>entry.node);
         const access=ports.nodeFileAccess??getNodeFileAccess();
@@ -529,13 +533,71 @@ export function createNativeWorkflowController(ports) {
         run.nodeFileBackend=createScopedNodeFileBackend(access,run.nodeFileDefinitions,{scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:live,isActorAvailable:actorId=>actorAvailable(run,actorId),signal:run.controller.signal,getBranchBinding:()=>live()&&run.acceptedBranchBinding?run.acceptedBranchBinding:undefined});
         for(const adoption of branchPrepared.data.adoptions){const adopted=await run.nodeFileBackend.adoptLegacy(adoption.snapshot.targetId,{snapshot:adoption.snapshot,pages:adoption.pages});if(!adopted.ok)return adopted;if(adopted.data?.adopted!==true)return fail('BRANCH_POINT_UNAVAILABLE','The independent branch state could not be prepared safely.');}
         for(const definition of run.nodeFileDefinitions){const loaded=await run.nodeFileBackend.load(definition.targetId);if(!loaded.ok)return {...loaded,error:{...loaded.error,field:'fileTarget'}};if(!live())return fail('STALE_FILE_SCOPE','File scope changed while validating access.');run.nodeFileObserved.set(definition.targetId,fileStamp(loaded.data));}
+        run.nodeFileRawBackend=run.nodeFileBackend;
+        // The original revision and checked absence remain authoritative while dependent
+        // operations read a generated virtual document. Every load checks the real file.
+        run.nodeFileBackend=Object.freeze({...run.nodeFileRawBackend,
+            load:async(targetId,options)=>{
+                const loaded=await run.nodeFileRawBackend.load(targetId,options);if(!loaded.ok)return loaded;
+                const initialized=run.fileInitializations.get(targetId);if(!initialized?.active)return loaded;
+                if(fileStamp(loaded.data)!==initialized.stamp)return fail('FILE_REVISION_CONFLICT','The file appeared or changed during initialization.');
+                return {ok:true,data:{...loaded.data,content:initialized.content,...(initialized.sourceBinding?{sourceBinding:initialized.sourceBinding}:{})}};
+            },
+            compareAndSwap:async(update,controls)=>{
+                const initialized=run.fileInitializations.get(update.targetId);
+                if(!initialized?.active)return run.nodeFileRawBackend.compareAndSwap(update,controls);
+                const loaded=await run.nodeFileRawBackend.load(update.targetId);if(!loaded.ok)return loaded;
+                if(fileStamp(loaded.data)!==initialized.stamp)return fail('FILE_REVISION_CONFLICT','The file appeared or changed during initialization.');
+                const saved=await run.nodeFileRawBackend.compareAndSwap({...update,expectedContent:loaded.data.content,...(update.expectedBindingFingerprint?{expectedBindingFingerprint:sha256Text(JSON.stringify(loaded.data.sourceBinding??null))}:{})},controls);
+                if(saved.ok)initialized.active=false;return saved;
+            }});
         return {ok:true};
     }
     async function verifyNodeFiles(run){
         if(!run.nodeFileBackend)return {ok:true};
         if(run.nodeFileFresh===false)return fail('FILE_REVISION_CONFLICT','A selected file changed after this workflow captured it. Run it again.');
-        for(const [targetId,stamp] of run.nodeFileObserved??[]){const loaded=await run.nodeFileBackend.load(targetId);if(!loaded.ok){run.nodeFileFresh=false;return loaded;}if(fileStamp(loaded.data)!==stamp){run.nodeFileFresh=false;return fail('FILE_REVISION_CONFLICT','A selected file changed after this workflow captured it. Run it again.');}}
+        for(const [targetId,stamp] of run.nodeFileObserved??[]){const loaded=await (run.nodeFileRawBackend??run.nodeFileBackend).load(targetId);if(!loaded.ok){run.nodeFileFresh=false;return loaded;}if(fileStamp(loaded.data)!==stamp){run.nodeFileFresh=false;return fail('FILE_REVISION_CONFLICT','A selected file changed after this workflow captured it. Run it again.');}}
         return {ok:true};
+    }
+    async function prepareFileInputs(run,payload,options){
+        const node=managedNode(run,payload.address)??payload.node;
+        const mode=run.trustedFileTemplates?.has(addressKey(payload.address))?'template':fileInitializationMode(node);
+        if(node.operation!=='read-file'||!['generate','template'].includes(mode))return {ok:true};
+        const authored=run.managedFileEntries?.find(entry=>addressKey(entry.address)===addressKey(payload.address))?.node;
+        if(authored?.fileTarget?.managed!==true)return {ok:true};
+        const targetId=nodeFileTargetId(node),loaded=await run.nodeFileRawBackend?.load(targetId);
+        if(!loaded?.ok)return loaded??fail('FILE_ACCESS_REQUIRED','The managed file is unavailable.');
+        if(typeof loaded.data.revision!=='string'||!loaded.data.revision.startsWith('missing:')||run.fileInitializations.has(targetId))return {ok:true};
+        const checked=await verifyNodeFiles(run);if(!checked.ok)return checked;
+        if(mode==='template'){
+            run.fileInitializations.set(targetId,{node,address:payload.address,stamp:fileStamp(loaded.data),initialContent:loaded.data.content,content:loaded.data.content,active:true});
+            return {ok:true};
+        }
+        const definition=run.nodeFileDefinitions.find(value=>value.targetId===targetId),visibilityMode=definition.visibility.kind==='actor-private'?'actor':'public';
+        const sourceNode={id:node.id,type:'workflow',operation:'scene-context',selection:'recent',recentMessages:12,includeCharacter:true,maxMessages:1000,maxTextUnits:100000,visibilityMode};
+        let artifact=payload.inputs.context,contextCurrent;
+        if(!artifact){
+            const sourceChat=run.unified?run.nativeCapture.refs:options.chat??context().chat;
+            if(visibilityMode==='actor'){
+                const service=scopedActors(run);if(!service.ok)return service;
+                let grant;
+                if(node.actorScope==='presence'){
+                    const captured=scopedFiles(run,{actorScope:'presence',actorId:node.actorId,presence:payload.inputs.presence});if(!captured.ok)return captured;grant={ok:true,data:{grant:captured.data.actorGrant}};
+                }else grant=service.data.authorizeSelectedActor();
+                if(!grant.ok)return grant;
+                const captured=service.data.captureSourceContext(grant.data.grant,{prefix:run.unified?run.nativeCapture.refs:context().chat});if(!captured.ok)return captured;
+                artifact=captured.data.artifact;run.actorArtifactOwners.set(artifact,service.data);
+                contextCurrent=captured.data.isCurrent;
+            }else{
+                const captured=payload.runtime===3?await sourceScene(run,sourceNode,{},payload,options):selectedSnapshot(run,'pre',sourceNode,{...options,chat:sourceChat});
+                if(captured?.ok===false)return captured;
+                artifact=freezeArtifact(captured.outputs?.out??captured.artifact??captured);
+            }
+        }
+        const mark=artifactVisibility(artifact);
+        if(mark.kind!=='public'&&!(mark.kind==='actor-private'&&definition.visibility.kind==='actor-private'&&mark.actorId===definition.visibility.actorId))return fail('PRIVATE_DESTINATION','Initialization context must match the file visibility.');
+        run.fileInitializations.set(targetId,{node,address:payload.address,stamp:fileStamp(loaded.data),initialContent:loaded.data.content,active:false,...(contextCurrent?{contextCurrent}:{})});
+        return {ok:true,data:{context:artifact}};
     }
     function scopedActors(run){
         if(run.actorContext)return {ok:true,data:run.actorContext};
@@ -682,6 +744,17 @@ export function createNativeWorkflowController(ports) {
         run.bindingChecks=bindingChecks(run,transport.bindings);
         const effective=bindingFresh(run);if(!effective.ok)return effective;
         if(transport.mode==='target')return {ok:true};
+        for(const [targetId,initialized]of run.fileInitializations){
+            if(!initialized.active||run.stagedFiles.some(effect=>effect.targetId==='file:'+targetId))continue;
+            // A connected writer already owns its final projection. Standalone
+            // initialization instead prepares from the original, still-missing seed.
+            initialized.active=false;
+            const captured=initialized.files?{ok:true,data:initialized.files}:scopedFiles(run);if(!captured.ok)return captured;
+            const files=captured.data,read=await files.store.read(targetId,{bindToChat:initialized.node.bindToChat===true});if(!read.ok)return read;
+            const intent=await files.intentId(initialized.node,[],initialized.address,read.data.fileRef);if(!intent.ok)return intent;
+            const prepared=await files.store.prepare(read.data.fileRef,{operation:'replace',content:initialized.content},{intentId:intent.data,evidence:[]});if(!prepared.ok)return prepared;
+            const staged=files.stage(prepared.data,[]);if(!staged.ok)return staged;
+        }
         const memoryOutputs=[];
         for(const output of transport.terminals) {
             const record=output.artifact?.kind==='data'?parseRecord(output.artifact):null;
@@ -807,16 +880,16 @@ export function createNativeWorkflowController(ports) {
             retainNativeOutcome:async payload=>run.storySession?run.storySession.retainNativeOutcome(payload):{ok:true}}:{}),
             ...(run.diagnosticCapture?{onDiagnostic:event=>observe(()=>run.diagnosticCapture.model?.(event)),diagnosticResponseText:run.diagnosticCapture.captureResponses!==false,isDiagnosticResponseCurrent:()=>run.diagnosticCapture.captureResponses!==false}:{}),
             onStage:ports.onStage,onEvent:event=>{if(active===run){const next=reduceRunState(runState,event);if(next!==runState){runState=next;publishProgress();}}if(run.diagnosticCapture)observe(()=>run.diagnosticCapture.event?.(event));observe(ports.onEvent,event);observe(options.onEvent,event);},
-        },{getSourceProofs:()=>run.sourceCapability,prepareFileNode:node=>{
-            if(migrateUnboundOwnFile(node)===node)return {ok:true,data:node};
+        },{getSourceProofs:()=>run.sourceCapability,prepareFileNode:(node,address,localGraph)=>{
+            if(node.operation!=='read-file'&&migrateUnboundOwnFile(node)===node)return {ok:true,data:node};
             const legacy=documentCatalog.capture();if(!legacy.ok)return legacy;
             const current=context();
             if(!legacy.data.isCurrent())return fail('STALE_FILE_SCOPE','The file scope changed while preparing legacy settings.');
             const canonicalDocuments=current.chatMetadata?.latticeDocuments?.[legacy.data.scope.userId]??{};
             const migrated=migrateUnboundOwnFile(node,{canonicalDocuments,legacyDocuments:legacy.data.documents});
             if(migrated!==node)(run.legacyFileMigrations??=[]).push(node);
-            return {ok:true,data:migrated};
-        },prepare:(plan,controls)=>prepareRun(run,plan,controls,options),executeIntrospection:(node,inputs,operationPorts)=>introspect(run,node,inputs,operationPorts),...(run.unified||run.graph?.runtime===3||Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{executeHostOperation:(node,inputs,operationPorts)=>nativeOperation(run,node,inputs,operationPorts,options)}:{}),authorizeModelInputs:async payload=>{const files=await verifyNodeFiles(run);if(!files.ok)return files;const checked=authorizeModelScope(run,payload);if(checked.ok)run.modelScopes.set(addressKey(payload.address),Object.freeze({node:payload.node,inputs:payload.inputs,capability:payload.capability}));return checked;},retainScopedOutput:payload=>retainActorOutput(run,payload),retainRecallProvenance:payload=>run.recallCaptured?recall.retain(run,payload):{ok:true,data:{retained:true}},settle:transport=>settleRun(run,transport)});}
+            return {ok:true,data:prepareUnboundReader(migrated,{canonicalDocuments,legacyDocuments:legacy.data.documents,nodes:localGraph?.nodes??run.originalGraph.nodes,wires:localGraph?.wires??run.originalGraph.wires})};
+        },prepareFileInputs:payload=>prepareFileInputs(run,payload,options),prepare:(plan,controls)=>prepareRun(run,plan,controls,options),executeIntrospection:(node,inputs,operationPorts)=>introspect(run,node,inputs,operationPorts),...(run.unified||run.graph?.runtime===3||Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{executeHostOperation:(node,inputs,operationPorts)=>nativeOperation(run,node,inputs,operationPorts,options)}:{}),authorizeModelInputs:async payload=>{const files=await verifyNodeFiles(run);if(!files.ok)return files;const checked=authorizeModelScope(run,payload);if(checked.ok)run.modelScopes.set(addressKey(payload.address),Object.freeze({node:payload.node,inputs:payload.inputs,capability:payload.capability}));return checked;},retainScopedOutput:payload=>retainActorOutput(run,payload),retainRecallProvenance:payload=>run.recallCaptured?recall.retain(run,payload):{ok:true,data:{retained:true}},settle:transport=>settleRun(run,transport)});}
         finally {delete run.cancel;run.bindingContexts.clear();run.modelScopes.clear();run.modelAddresses=new WeakMap();if(!run.retainResources)releaseRun(run);}
         if(!value.ok||run.mode==='target') {releaseRun(run);run.pendingSources.clear();run.sceneSources.length=0;run.promptSources.clear();run.bindingChecks=[];for(const [id,entry]of candidates)if(entry.run===run)candidates.delete(id);for(const [id,entry]of sources)if(entry.run===run)sources.delete(id);if(run.native)clear();}
         else run.pendingSources.clear();
@@ -1146,6 +1219,17 @@ export function createNativeWorkflowController(ports) {
             const captured=scopedFiles(run,scopeRequest);if(!captured.ok)return captured;
             if(node.operation==='write-file'&&inputs.evidence!==undefined){const state=await scopedStoryState(run);if(!state.ok)return state;}
             const files=captured.data;
+            const initialized=node.operation==='read-file'?run.fileInitializations.get(nodeFileTargetId(node)):undefined;
+            if(initialized)initialized.files=files;
+            let initializationReports=[];
+            if(initialized&&!initialized.active){
+                const generated=await generateFileContents(node,{context:inputs.context,initialContent:initialized.initialContent,request:operationPorts.request,signal:run.controller.signal,phase:operationPorts.phase});if(!generated.ok)return generated;
+                const checked=await verifyNodeFiles(run);if(!checked.ok)return checked;
+                if(!fresh(run)||!sourceFresh(run))return fail('STALE_SOURCE','The source changed during file initialization.');
+                initialized.content=generated.data.content;initialized.active=true;initialized.node=node;initialized.files=files;
+                initialized.sourceBinding=createChatPrefixBinding(run.nativeCapture?.refs??context().chat,sourceText)?.stamp;
+                initializationReports=generated.data.reports??[];
+            }
             let read;const result=await executeFileNode(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,authorizeActorFileScope:({actorId,presence,reference})=>{if(actorId!==files.actorId||presence!==files.presence||reference&&run.fileReferences.get(reference)!==files)return fail('ACTOR_FILE_SCOPE_MISMATCH','The present-actor file capture changed.');const scoped=scopedActors(run);if(!scoped.ok)return scoped;const checked=scoped.data.checkActorGrant(files.actorGrant);return checked.ok?{ok:true,data:{actorId}}:checked;},files:{read:async (target,options)=>{const visibility=files.visibility(target);if(!visibility.ok)return visibility;read=await files.store.read(target,options);if(read.ok)run.fileReferences.set(read.data.fileRef,files);return read;},prepare:files.store.prepare},fileVisibility:({reference})=>files.visibility(reference.targetId),authorizeFileWrite:({reference})=>{const mark=files.visibility(reference.targetId);return mark.ok?{ok:true,data:{destinationVisibility:mark.data}}:mark;},createIntentId:(producer,evidence,reference)=>files.intentId(producer,evidence,operationPorts.address,reference),stageFileIntent:files.stage});
             if(node.operation==='read-file'&&result.ok&&artifactVisibility(result.outputs).kind==='actor-private'){const scoped=scopedActors(run);if(!scoped.ok)return scoped;const selected=files.actorGrant?{ok:true,data:{grant:files.actorGrant,scope:{actorId:files.actorId}}}:scoped.data.authorizeSelectedActor();if(!selected.ok)return selected;if(selected.data.scope.actorId!==files.actorId)return fail('ACTOR_FILE_SCOPE_MISMATCH','The private file belongs to a changed native actor.');const retained=scoped.data.captureScopedResult(result,selected.data.grant);if(!retained.ok)return retained;}
             if(run.recallCaptured&&node.operation==='read-file'&&result.ok&&read?.ok&&result.outputs?.reference?.value===read.data.fileRef){
@@ -1156,7 +1240,7 @@ export function createNativeWorkflowController(ports) {
                 const captured=recall.capture(run,result,{kind:'file',recordValue,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&files.visibility(snapshot.targetId).ok&&(diskBacked?run.nodeFileFresh!==false:legacyFingerprint()===storedFingerprint)});
                 if(!captured.ok)return captured;
             }
-            return result;
+            return result.ok&&initializationReports.length?{...result,reports:[...initializationReports,...(result.reports??[])]}:result;
         }
         if(node.operation==='scene-context'&&operationPorts.runtime===3)return sourceScene(run,node,inputs,operationPorts,options);
         if(['scene-context','reply-snapshot','prompt-source'].includes(node.operation)) {

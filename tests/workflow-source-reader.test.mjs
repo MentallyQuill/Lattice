@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.29.1';
-import {createNativeSourceRegistry,inspectNativeSourceSnapshot} from '../src/workflow/native-source-registry.js?v=0.29.1';
-import {cloneJsonValue} from '../src/workflow/operations/json-data.js?v=0.29.1';
-const api=await import('../src/workflow/source-reader.js?v=0.29.1').catch(()=>({}));
+import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.0';
+import {createNativeSourceRegistry,inspectNativeSourceSnapshot} from '../src/workflow/native-source-registry.js?v=0.30.0';
+import {cloneJsonValue} from '../src/workflow/operations/json-data.js?v=0.30.0';
+const api=await import('../src/workflow/source-reader.js?v=0.30.0').catch(()=>({}));
 export async function sourceFixture(chat,ports={}){
  let serial=0,saved,savedChat,user='user',saves=0,reads=0;
  const context={chatId:'story',characterId:0,groupId:null,chat,characters:[{name:'Mara',avatar:'Mara.png',chat:'Story'}],chatMetadata:{},getRequestHeaders:()=>({'Content-Type':'application/json'}),saveMetadata:async()=>{saves++;saved=structuredClone(context.chatMetadata);savedChat=structuredClone(context.chat);}};

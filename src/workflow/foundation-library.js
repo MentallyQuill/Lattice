@@ -1,8 +1,8 @@
 /** Keep explicitly deferred saved revisions cold without admitting them to the live shelf. */
-import {cloneDefinitionData,definitionRefKey} from './definition-data.js?v=0.29.1';
-import {FOUNDATION_RELEASE,deferredFoundationControl} from './foundation-release.js?v=0.29.1';
-import {referencedDefinitionKeys} from './retired-workflows.js?v=0.29.1';
-import {validateGraphStructure} from './contracts.js?v=0.29.1';
+import {cloneDefinitionData,definitionRefKey} from './definition-data.js?v=0.30.0';
+import {FOUNDATION_RELEASE,deferredFoundationControl} from './foundation-release.js?v=0.30.0';
+import {referencedDefinitionKeys} from './retired-workflows.js?v=0.30.0';
+import {validateGraphStructure} from './contracts.js?v=0.30.0';
 const record=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const keyText=value=>typeof value==='string'&&value.length>0&&!['__proto__','constructor','prototype'].includes(value);
 const fail=(code,message)=>({ok:false,error:{code,message}});

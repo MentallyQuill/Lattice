@@ -10,7 +10,7 @@ Open the [editable document](../examples/unified/unified-combined-systems.lattic
 
 Choose the intended Rowan and Iris characters by name in the relevant character settings. Configure the Item Use Trigger, Model Call and confirmation helper model connections. The native reply uses your ordinary SillyTavern connection.
 
-This standalone imported document needs your input choices; it does not inherit the trusted automatic sample setup of the numbered Examples browser. Select each reader or clock node inside its system and use its **File** section to choose an authorized existing file, or **Import from device** to create a separate copy of the linked demonstration file. Choose each private character by name. The internal names below identify which input belongs to which system; you do not enter them as logical target IDs.
+This standalone imported document needs your input choices; it does not inherit the trusted automatic sample setup of the numbered Examples browser. Its reference readers deliberately use **When no file is set → Require a file** to keep authored effect libraries, holders and relationship rules under your control. Select each reader or clock node inside its system and use its **File** section to choose an authorized existing file, or **Import from device** to create a separate copy of the linked demonstration file. Choose each private character by name. The internal names below identify which input belongs to which system; you do not enter them as logical target IDs.
 
 | Input | Scope | Optional demonstration copy |
 | --- | --- | --- |

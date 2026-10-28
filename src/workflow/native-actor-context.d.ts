@@ -22,6 +22,8 @@ export interface NativeActorContext {
     authorizeEventInputs(node: NativeNode, inputs: Record<string, WorkflowArtifact>): Result<{grant?: ActorGrant; scope?: ActorScope}>;
     captureScopedResult(exactRawResult: unknown, exactGrant: ActorGrant): Result<{retained: true}>;
     checkActorGrant(exactGrant: ActorGrant): Result<{scope: ActorScope}>;
+    /** Bounded conversation and card projection of this exact captured actor grant, without memory reads. */
+    captureSourceContext(exactGrant: ActorGrant, options?: {prefix?: unknown[]}): Result<{artifact: import('./operations/context-data').RuntimeContext; grant: ActorGrant; isCurrent(): boolean}>;
     actorContext(actorId: string, request: ActorContextRequest, exactPresence: WorkflowArtifact): Promise<Result<ScopedActorContext>>;
     retainScopedArtifact(exactFrozenArtifact: WorkflowArtifact, exactGrant: ActorGrant): Result<{retained: true}>;
     authorizeModelInputs(inputs: Record<string, WorkflowArtifact>): Result<{scope: null} | {scope: ActorScope; grant: ActorGrant}>;

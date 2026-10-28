@@ -144,7 +144,7 @@ test('duplicate protected literals retain the helper unique-pin semantics', asyn
 });
 
 test('public Transpose metadata detaches every mutable nested field while catalog metadata stays bounded', async () => {
-    const { describeOperation } = await import('../src/workflow/catalog.js?v=0.29.1');
+    const { describeOperation } = await import('../src/workflow/catalog.js?v=0.30.0');
     const node = { type: 'workflow', operation: 'style-transfer', inputKind: 'text', phase: 'pre' };
     const first = must(transpose.describeTranspose(node)).descriptor;
     const untouched = must(transpose.describeTranspose(node)).descriptor;

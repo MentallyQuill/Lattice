@@ -104,6 +104,14 @@ test('managed autosave commits only intent and bound rename requires an explicit
  assert.equal(commits.length,1);
 });
 
+test('saving an automatically prepared reader retains initialization and stores only managed intent',()=>{
+ let node={id:'read',operation:'read-file',initialization:'generate',initializationInstructions:'Only established facts.',initializationMaxTokens:1024};
+ const actions=createNodeFileActions({capture:()=>({ok:true,data:{node,view:{managed:true,settings:{format:'json'}}}}),commit:(_c,_s,value)=>{node={...node,...value};return {ok:true};}});
+ const result=actions.saveNodeFile({}, {...settings,managed:true,name:'Story state',format:'json',content:'[]'});
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.deepEqual(node,{id:'read',operation:'read-file',initialization:'generate',initializationInstructions:'Only established facts.',initializationMaxTokens:1024,fileTarget:{managed:true,name:'Story state.json',format:'json',missing:'create',visibility:{kind:'public'}}});
+});
+
 test('a generic external reader can open a real file without first naming it',async()=>{
  const f=fixture(async request=>request.name.trim()?{ok:true,data:{bindingId:'chosen',name:'Actual name.txt'}}:{ok:false,error:{code:'INVALID_FILE_SELECTION',message:'Name required'}});
  const result=await f.actions.chooseNodeFile({}, {mode:'open',settings:{...settings,name:''}});

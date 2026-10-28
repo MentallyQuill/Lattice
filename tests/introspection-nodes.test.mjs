@@ -4,7 +4,7 @@ import {state,proposal} from './fixtures/introspection.mjs';
 import {createActorState,makeRecord} from '../src/workflow/introspection/contracts.js';
 import {createMemoryService,createInMemoryBackend} from '../src/workflow/introspection/memory.js';
 import {executeModelNode} from '../src/workflow/operations/model-nodes.js';
-import {createDraftRevision} from '../src/workflow/draft-revisions.js?v=0.29.1';
+import {createDraftRevision} from '../src/workflow/draft-revisions.js?v=0.30.0';
 const api=await import('../src/workflow/introspection/nodes.js').catch(()=>({}));
 const node=(operation,settings={})=>({type:'workflow',operation,operationVersion:1,...settings});
 const recallFixture=()=>{

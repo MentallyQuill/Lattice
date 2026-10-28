@@ -1,9 +1,9 @@
-import { prepareGraphArtifacts, inspectGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.29.1';
-import { resolveSystemNode } from './system-capabilities.js?v=0.29.1';
-import { inspectExpandedGraph, nodeAddressKey, safeWorkflowData } from './graph-validation.js?v=0.29.1';
-import { artifactAddressKey } from './definition-data.js?v=0.29.1';
-import { operationFor, describeOperation, describeAuthoredOperation } from './catalog.js?v=0.29.1';
-import { freeze } from './record-data.js?v=0.29.1';
+import { prepareGraphArtifacts, inspectGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.30.0';
+import { resolveSystemNode } from './system-capabilities.js?v=0.30.0';
+import { inspectExpandedGraph, nodeAddressKey, safeWorkflowData } from './graph-validation.js?v=0.30.0';
+import { artifactAddressKey } from './definition-data.js?v=0.30.0';
+import { operationFor, describeOperation, describeAuthoredOperation } from './catalog.js?v=0.30.0';
+import { freeze } from './record-data.js?v=0.30.0';
 
 const fail = (code, message, address, inputPortId) => ({ ok: false, error: { code, message, ...(address ? { nodeId: address.nodeId, address } : {}), ...(inputPortId ? { inputPortId } : {}) } });
 const planners = new WeakMap();
@@ -117,15 +117,29 @@ export function prepareWorkflowAttempt(root, options = {}, prepareFileNode) {
     // Do this on detached expanded nodes before any strict setup check or effect.
     if (prepareFileNode) {
         const selected=selectClosure(indexExpansion(expanded.data,root),options.target,false);if(!selected.ok)return selected;
-        const primitives=[];
+        const primitives=[],fileGraphs=new Map();
+        const graphKey=address=>JSON.stringify([address.workflowId,address.instancePath]);
+        const fileGraph=address=>{
+            const scopeKey=graphKey(address);if(fileGraphs.has(scopeKey))return fileGraphs.get(scopeKey);
+            const nodes=Object.fromEntries(expanded.data.primitives.filter(unit=>graphKey(unit.address)===scopeKey).map(unit=>[unit.node.id,unit.node]));
+            const wires=Object.fromEntries(expanded.data.edges.filter(edge=>graphKey(edge.from)===scopeKey&&graphKey(edge.to)===scopeKey).map((edge,index)=>{
+                const id='prepared-file-edge:'+index;
+                return [id,{id,route:'wire',from:edge.from.nodeId,fromPort:edge.from.portId,to:edge.to.nodeId,toPort:edge.to.portId}];
+            }));
+            const local={nodes,wires};fileGraphs.set(scopeKey,local);return local;
+        };
         for (const unit of expanded.data.primitives) {
-            // Valid legacy presets and optional blank ledgers keep their existing
-            // provisioning order; only blocked file setup needs early adoption.
-            if (unit.systemDisabled || !selected.data.included.has(nodeAddressKey(unit.address)) || !unit.setupIssues?.some(issue=>issue.code==='FILE_SETUP_REQUIRED'&&issue.field==='fileTarget') || !['write-file','story-clock','commit-outcomes','random-pick'].includes(unit.node.operation)) { primitives.push(unit); continue; }
-            const prepared=prepareFileNode(unit.node,unit.address);if(!prepared.ok)return prepared;
+            // Readers require the trusted absence/catalog check even when their
+            // automatic managed intent already satisfies authoring setup.
+            const reader=unit.node.operation==='read-file';
+            const blockedFile=['write-file','story-clock','commit-outcomes','random-pick'].includes(unit.node.operation)&&unit.setupIssues?.some(issue=>issue.code==='FILE_SETUP_REQUIRED'&&issue.field==='fileTarget');
+            if (unit.systemDisabled || !selected.data.included.has(nodeAddressKey(unit.address)) || !reader&&!blockedFile) { primitives.push(unit); continue; }
+            const prepared=prepareFileNode(unit.node,unit.address,fileGraph(unit.address));if(!prepared.ok)return prepared;
             if(prepared.data===unit.node){primitives.push(unit);continue;}
+            if(['id','type','operation','operationVersion','phase'].some(key=>prepared.data?.[key]!==unit.node[key]))return fail('INVALID_FILE_PREPARATION','File preparation must preserve the selected operation identity.',unit.address);
             const described=describeAuthoredOperation({schema:unit.schema,runtime:unit.runtime,mode:'native-unified'},{...prepared.data,phase:unit.phase});if(!described.ok)return described;
-            primitives.push({...unit,node:prepared.data,setupIssues:described.data.setupIssues});
+            const descriptor=described.data.descriptor,requestBound=typeof descriptor.requestBound==='function'?descriptor.requestBound(prepared.data):descriptor.requestBound;
+            primitives.push({...unit,node:prepared.data,setupIssues:described.data.setupIssues,requestBound,inputPorts:described.data.ports.filter(port=>port.direction==='input'),outputPorts:described.data.ports.filter(port=>port.direction==='output')});
         }
         expanded.data={...expanded.data,primitives};
     }

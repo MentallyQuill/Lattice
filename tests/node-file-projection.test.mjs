@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { projectNodeFile, nodeFileSetupIssue } from '../src/ui/node-file-projection.js';
 
-test('new file reader requires a node-owned destination and pure transforms do not', () => {
- const node={id:'reader',operation:'read-file'};
+test('a reader can require a selected file while pure transforms have no destination', () => {
+ const node={id:'reader',operation:'read-file',initialization:'require-file'};
  const view=projectNodeFile(node,{supported:true,bindings:{}});
  assert.equal(view.mode,'source');
  assert.equal(view.settings.bindingId,'');
@@ -13,13 +13,36 @@ test('new file reader requires a node-owned destination and pure transforms do n
  assert.equal(projectNodeFile({operation:'project-document'},{}),null);
 });
 
+test('unset readers prepare automatic managed data and retain initialization controls',()=>{
+ for(const initialization of ['generate','template']){
+  const node={id:'reader',operation:'read-file',initialization,initializationInstructions:'Keep unknown facts unspecified.',initializationMaxTokens:4096};
+  const view=projectNodeFile(node,{supported:true,storage:'host',bindings:{}});
+  assert.equal(view.managed,true);
+  assert.equal(view.status,'Ready');
+  assert.equal(view.settings.format,'json');
+  assert.equal(nodeFileSetupIssue(view),null);
+  assert.equal(view.initialization,initialization);
+  assert.equal(view.initializationInstructions,'Keep unknown facts unspecified.');
+  assert.equal(view.initializationMaxTokens,4096);
+  assert.equal(Object.hasOwn(node,'fileTarget'),false,'display preparation does not edit workflow settings');
+ }
+});
+
+test('a reader requiring a file cannot become ready from an unbound managed marker',()=>{
+ const node={id:'reader',operation:'read-file',initialization:'require-file',fileTarget:{managed:true}};
+ const view=projectNodeFile(node,{supported:true,storage:'host',bindings:{}});
+ assert.equal(view.managed,false);
+ assert.match(nodeFileSetupIssue(view)?.message??'',/Choose.*file/i);
+ assert.deepEqual(node.fileTarget,{managed:true});
+});
+
 test('browser file access guidance is retained separately from the setup caution', () => {
  const accessIssue={code:'FILE_ACCESS_BRAVE',message:'Brave is not exposing direct file saving. Enable File System Access API and relaunch Brave.'};
  const view=projectNodeFile({id:'writer',operation:'write-file',destinationMode:'own'},{supported:false,accessIssue,bindings:{}});
  assert.deepEqual(view.accessIssue,accessIssue);
  assert.match(nodeFileSetupIssue(view).message,/browser setup.*File section/i);
  assert.doesNotMatch(nodeFileSetupIssue(view).message,/Open Lattice in a browser|Choose.*location/);
- const supported=projectNodeFile({operation:'read-file'},{supported:true,accessIssue,bindings:{}});
+ const supported=projectNodeFile({operation:'read-file',initialization:'require-file'},{supported:true,accessIssue,bindings:{}});
  assert.equal(supported.accessIssue,undefined,'the live capability check takes precedence over a stale diagnostic');
 });
 
@@ -30,7 +53,7 @@ test('server bindings expose their resolved path and server setup without requir
  assert.equal(view.settings.path,'/stories/SceneContext.txt');
  assert.equal(view.issue,undefined);
  assert.equal(view.location.basePath,'/data/user/files/lattice');
- const unavailable=projectNodeFile({operation:'read-file'},{storage:'server',supported:false,bindings:{}});
+ const unavailable=projectNodeFile({operation:'read-file',initialization:'require-file'},{storage:'server',supported:false,bindings:{}});
  assert.match(unavailable.accessIssue.message,/server.*locations|File storage setup/i);
  assert.doesNotMatch(unavailable.issue,/browser/i);
  const native=projectNodeFile({operation:'read-file',fileTarget},{storage:'server',supported:false,nativeSupported:true,bindings:{'server-1':{name:'SceneContext.txt',status:'ready',storage:'native'}}});
@@ -80,7 +103,7 @@ test('connected writes display the upstream file and missing references have an 
 
 test('inherited files retain the browser setup instructions from their owning node', () => {
  const accessIssue={code:'FILE_ACCESS_BRAVE',message:'Brave is not exposing direct file saving. Enable File System Access API and relaunch Brave.'};
- const read={id:'read',operation:'read-file'},write={id:'write',operation:'write-file'};
+ const read={id:'read',operation:'read-file',initialization:'require-file'},write={id:'write',operation:'write-file'};
  const view=projectNodeFile(write,{supported:false,accessIssue,nodes:{read,write},wires:{w:{from:'read',fromPort:'reference',to:'write',toPort:'reference'}}});
  assert.equal(view.mode,'inherited');
  assert.deepEqual(view.accessIssue,accessIssue);
@@ -88,8 +111,8 @@ test('inherited files retain the browser setup instructions from their owning no
 });
 
 test('workspace surfaces file configuration as the existing above-node setup caution', async () => {
- const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.29.1');
- const graph={id:'file-workflow',schema:3,runtime:2,mode:'native-unified',name:'Files',nodes:{reader:{id:'reader',type:'workflow',operation:'read-file',x:0,y:0}},wires:{},groups:{}};
+ const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.30.0');
+ const graph={id:'file-workflow',schema:3,runtime:2,mode:'native-unified',name:'Files',nodes:{reader:{id:'reader',type:'workflow',operation:'read-file',initialization:'require-file',x:0,y:0}},wires:{},groups:{}};
  const result=prepareWorkspaceViews(graph,{workflowData:{nodeFiles:{supported:true,bindings:{}}}});
  assert.equal(result.ok,true,JSON.stringify(result));
  const readiness=result.data.preparedViews[0].drawBase.nativeCards.reader.readiness;
@@ -98,7 +121,7 @@ test('workspace surfaces file configuration as the existing above-node setup cau
 });
 
 test('workspace recomputes live file permissions rather than trusting saved binding IDs', async () => {
- const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.29.1');
+ const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.30.0');
  const fileTarget={bindingId:'disk-1',name:'notes.txt',format:'text',missing:'create',content:'',visibility:{kind:'public'}};
  const graph={id:'file-workflow',schema:3,runtime:2,mode:'native-unified',name:'Files',nodes:{reader:{id:'reader',type:'workflow',operation:'read-file',targetId:'notes',fileTarget,x:0,y:0}},wires:{},groups:{}};
  const result=prepareWorkspaceViews(graph,{workflowData:{nodeFiles:{supported:true,bindings:{'disk-1':{name:'notes.txt',status:'permission-required'}}}}});
@@ -108,7 +131,7 @@ test('workspace recomputes live file permissions rather than trusting saved bind
 });
 
 test('an unconfigured file remains editable so its caution can be resolved',()=>{
- const view=projectNodeFile({operation:'read-file'},{available:true,supported:true,bindings:{}});
+ const view=projectNodeFile({operation:'read-file',initialization:'require-file'},{available:true,supported:true,bindings:{}});
  assert.equal(view.available,true);
  assert.ok(view.issue);
 });
@@ -120,7 +143,7 @@ test('a disconnected writer can switch to its own destination without an upstrea
 });
 
 test('disk file setup is available before a chat catalog exists',()=>{
- const view=projectNodeFile({operation:'read-file'},{available:false,supported:true,bindings:{}});
+ const view=projectNodeFile({operation:'read-file',initialization:'require-file'},{available:false,supported:true,bindings:{}});
  assert.equal(view.available,true);
 });
 
@@ -170,6 +193,7 @@ test('migration adopts only trusted empty unbound own files and preserves privac
 test('File owns duplicate handling, mutation, destination and character identifiers; writer content is a connection caution',async()=>{
  const {nodeFileOwnsControl,nodeFileContentIssue}=await import('../src/ui/node-file-projection.js');
  assert.equal(nodeFileOwnsControl('write-file','fileHandling'),true);assert.equal(nodeFileOwnsControl('write-file','mode'),true);assert.equal(nodeFileOwnsControl('project-document','mode'),false);assert.equal(nodeFileOwnsControl('story-clock','clockId'),true);
+ for(const key of ['initialization','initializationInstructions','initializationMaxTokens'])assert.equal(nodeFileOwnsControl('read-file',key),true,'reader initialization belongs to the File section');
  const view=projectNodeFile({id:'writer',operation:'write-file',destinationMode:'own',fileHandling:'replace',fileTarget:{managed:true}},{supported:true,storage:'host',wires:{}});
  assert.equal(view.status,'Ready');assert.equal(nodeFileSetupIssue(view),null);assert.equal(nodeFileContentIssue(view).code,'MISSING_INPUT');assert.match(view.inputIssue,/Connect Text or Records/);
 });

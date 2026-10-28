@@ -1,11 +1,12 @@
-import type { RootWorkflow, WorkflowTarget, Result, ResolvedPlan, NodeAddress, ResolvedPrimitive, RunHierarchyEntry, TerminalTarget } from './types';
+import type { RootWorkflow, WorkflowTarget, Result, ResolvedPlan, NodeAddress, ResolvedPrimitive, RunHierarchyEntry, TerminalTarget, DirectWire } from './types';
 export interface WorkflowPolicy { callBound:number; requiredBindingAddresses:NodeAddress[]; requiresNativeGeneration:boolean; }
 export interface PreparedWorkflowPlanner {
     readonly inventory: { workflowId:string; phase:string; primitives:ResolvedPrimitive[]; pins:unknown[]; hierarchy:RunHierarchyEntry[]; terminals:TerminalTarget[] };
     policy(target?:WorkflowTarget):Result<WorkflowPolicy>;
     summarize(target?:WorkflowTarget):Result<WorkflowPolicy>;
 }
-export function prepareWorkflowAttempt(root: RootWorkflow | unknown, options?: {target?:WorkflowTarget}, prepareFileNode?:(node:ResolvedPrimitive['node'],address:NodeAddress)=>Result<ResolvedPrimitive['node']>):Result<{selection:ResolvedPlan;preflight:Result<ResolvedPlan>}>;
+export interface PreparedFileGraph { nodes:Record<string,ResolvedPrimitive['node']>;wires:Record<string,DirectWire>; }
+export function prepareWorkflowAttempt(root: RootWorkflow | unknown, options?: {target?:WorkflowTarget}, prepareFileNode?:(node:ResolvedPrimitive['node'],address:NodeAddress,graph:PreparedFileGraph)=>Result<ResolvedPrimitive['node']>):Result<{selection:ResolvedPlan;preflight:Result<ResolvedPlan>}>;
 export function resolveWorkflow(root: RootWorkflow | unknown, options?: {target?:WorkflowTarget}):Result<ResolvedPlan>;
 export function prepareWorkflowPlanner(root:RootWorkflow | unknown, artifacts?:object):Result<PreparedWorkflowPlanner>;
 export function preparedWorkflowExpansion(root:RootWorkflow, planner:PreparedWorkflowPlanner):Result<any>;

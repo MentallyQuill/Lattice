@@ -28,7 +28,7 @@ export interface FileNodeExecution {
     stageFileIntent?: (prepared: PreparedFileIntent, evidence: JsonValue[]) => Result<void> | Promise<Result<void>>;
 }
 export const FILE_OPERATIONS: Record<FileOperationId, OperationDescriptor>;
-/** Native control descriptors and explicit phase-dependent ports. All operations reserve zero requests. */
+/** Native controls and explicit ports. Generate initialization reserves at most one request. */
 export function describeFileNode(node: NativeNode | Record<string, unknown>, options?: { phase?: WorkflowPhase; authoring?: boolean }): Result<OperationDescription>;
 /** Project Document is pure: source Text + records/Text emits projected text/data/receipt without authority or staging.`n * Format is pure. Read/Write use exclusively injected trusted host capabilities.
  * Format emits records/text/report. Read emits text/document/value/reference; value is skipped for plain text/Markdown, and reference.value preserves
@@ -40,5 +40,7 @@ export function describeFileNode(node: NativeNode | Record<string, unknown>, opt
  * Mapped defaults are scanned for restrictions before records, serialized Text and reports are emitted.
  * Capability failures expose known bounded codes and locally authored messages only; raw diagnostics are private.
  * JSON Read schemas describe the entire document; JSONL/CSV schemas describe each record.
+ * Initializing readers expose optional Context for the trusted host; ordinary saved reads ignore it.
+ * Legacy readers with omitted initialization controls retain their original ports and zero-request descriptor.
  */
 export function executeFileNode(node: NativeNode | Record<string, unknown>, inputs: Record<string, unknown>, execution?: FileNodeExecution): Promise<OperationResult>;

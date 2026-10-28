@@ -73,6 +73,13 @@
  function destination(value:string){if(!canAct||!actions.editControls||value===model.destinationMode||!['connected','own'].includes(value))return;void perform('destination',captured=>actions.editControls!(captured,{destinationMode:value,...(value==='own'&&!model.ownFileConfigured?{fileTarget:{managed:true}}:{})}));}
  function mutation(value:string){if(!canAct||!actions.editControls||!['replace','append','add','add-unique','upsert','update-fields'].includes(value))return;void perform('mutation',captured=>actions.editControls!(captured,{mode:value,fileHandling:''}));}
  function accessCharacter(value:string){if(!canAct||!actions.editControls)return;if(value==='selected')void perform('character',captured=>actions.editControls!(captured,{actorScope:'selected',actorId:''}));else if((model.actors??[]).some(actor=>actor.id===value))void perform('character',captured=>actions.editControls!(captured,{actorScope:'presence',actorId:value}));}
+ function initializationControl(field:'initialization'|'initializationInstructions'|'initializationMaxTokens',value:string){
+  if(!canAct||model.operation!=='read-file'||!actions.editControls)return;
+  if(field==='initialization'&&!['generate','template','require-file'].includes(value)||field==='initializationInstructions'&&value.length>10000)return;
+  const next=field==='initializationMaxTokens'?Number(value):value;
+  if(field==='initializationMaxTokens'&&(!Number.isInteger(next)||Number(next)<1||Number(next)>65536))return;
+  void perform('initialization',captured=>actions.editControls!(captured,{[field]:next,...(field==='initialization'&&value==='require-file'&&model.managed&&!model.settings.bindingId&&!model.settings.path?{fileTarget:{missing:'error'}}:{})}));
+ }
  function resetDraft(){drafts.delete(identity);expectedSave=null;name=model.friendlyName??model.settings.name;path=model.settings.path??'';format=model.settings.format;missing=model.settings.missing;visibility=model.settings.visibility.kind;actorId=model.settings.visibility.kind==='actor-private'?model.settings.visibility.actorId:'';dirty=false;staleDraft=false;baseline=configurationKey(model.settings);}
 </script>
 
@@ -85,6 +92,15 @@
   <label class="pc-nf-field">Name<input id={idPrefix+'-fileTarget-name'} aria-label="File name" value={name} maxlength="256" disabled={!canEdit} placeholder="Scene Context" oninput={event=>edit('name',event.currentTarget.value)} /></label>
  {/if}
  <div class="pc-nf-field"><span>Type</span><output aria-label="File type">{model.typeLabel??formats.find(option=>option.value===model.settings.format)?.label??'Document'} · Automatic</output></div>
+ {#if model.operation==='read-file'}
+  <label class="pc-nf-field">When no file is set<select aria-label="When no file is set" value={model.initialization??'generate'} disabled={!canAct||!actions.editControls} onchange={event=>initializationControl('initialization',event.currentTarget.value)}><option value="generate">Generate from story</option><option value="template">Valid starting template</option><option value="require-file">Require a file</option></select></label>
+  <p class="pc-nf-help">Existing files and saved chat data are reused. This choice applies only when no file is set.</p>
+  {#if (model.initialization??'generate')==='generate'}
+   <label class="pc-nf-field">Initialization instructions<textarea aria-label="Initialization instructions" value={model.initializationInstructions??''} maxlength="10000" rows="3" disabled={!canAct||!actions.editControls} onchange={event=>initializationControl('initializationInstructions',event.currentTarget.value)}></textarea></label>
+   <label class="pc-nf-field">Completion limit<input aria-label="Initialization completion limit" type="number" min="1" max="65536" step="1" value={model.initializationMaxTokens??2048} disabled={!canAct||!actions.editControls} onchange={event=>initializationControl('initializationMaxTokens',event.currentTarget.value)} /></label>
+   <p class="pc-nf-help">If no saved data exists, makes one request using this node’s model and the current conversation and character. Saved only when you accept the reviewed result.</p>
+  {/if}
+ {/if}
  {#if saving}<label class="pc-nf-field">File handling<select aria-label="File handling" value={model.fileHandling??'replace'} disabled={!canAct||!actions.editControls} onchange={event=>handling(event.currentTarget.value)}><option value="replace">Replace</option><option value="append">Append</option></select></label>{/if}
  {#if model.advancedMutation}<p class="pc-nf-help">Custom mutation: {model.advancedMutation}. Choose Replace or Append to change it.</p>{/if}
  {#if model.managed}<p class="pc-nf-help">Automatic — managed by Lattice. Saved in SillyTavern when you apply the reviewed result.</p>{/if}
@@ -108,7 +124,7 @@
    {#if model.storage==='server'}<label class="pc-nf-field">File path<input aria-label="File path" value={path} maxlength="4096" disabled={!canEdit} oninput={event=>edit('path',event.currentTarget.value)} /></label><p class="pc-nf-help">Paths are on the computer running SillyTavern. Relative paths use {model.location?.basePath??'your user files folder'}.</p>{/if}
    {#if !specialized}<label class="pc-nf-field">Format<select aria-label="Advanced file format" value={format} disabled={!canEdit} onchange={event=>edit('format',event.currentTarget.value)}>{#each formats as option}<option value={option.value}>{option.label}</option>{/each}</select></label>{/if}
    <label class="pc-nf-field">Missing file<select aria-label="Missing file" value={missing} disabled={!canEdit} onchange={event=>edit('missing',event.currentTarget.value)}><option value="create">Create if missing</option><option value="error">Report an error</option></select></label>
-   <p class="pc-nf-help">New files start from an automatic valid template. Existing file contents are preserved.</p>
+   <p class="pc-nf-help">Missing configured files follow this creation policy. Existing file contents are preserved.</p>
    <label class="pc-nf-field">Visibility<select aria-label="File visibility" value={visibility} disabled={!canEdit} onchange={event=>edit('visibility',event.currentTarget.value)}><option value="public">Public</option><option value="hidden">Hidden</option><option value="actor-private">Character private</option></select></label>
    {#if visibility==='actor-private'}<label class="pc-nf-field">Character<select aria-label="File character" value={actorId} disabled={!canEdit} onchange={event=>edit('actor',event.currentTarget.value)}><option value="" disabled>Choose character</option>{#if actorId&&!(model.actors??[]).some(actor=>actor.id===actorId)}<option value={actorId}>Previously selected character (unavailable)</option>{/if}{#each model.actors??[] as actor}<option value={actor.id}>{actor.label}</option>{/each}</select></label>{/if}
    <div class="pc-nf-actions"><button type="button" data-choose-node-file="save" disabled={!canAct||!model.supported||!actions.chooseNodeFile||!valid} onclick={()=>choose('save')}>Choose location…</button>{#if actions.setupNodeFiles}<button type="button" disabled={!canAct} onclick={()=>perform('setup',()=>actions.setupNodeFiles!())}>File storage…</button>{/if}</div>
@@ -131,7 +147,8 @@
     .pc-node-file * { box-sizing: border-box; }
     h3 { margin: 0 0 8px; color: var(--pc-text); font-size: 12px; font-weight: 600; }
     .pc-nf-field { display: grid; grid-template-columns: minmax(60px, 30%) minmax(0, 1fr); align-items: center; gap: 7px; margin: 9px 0; color: var(--pc-muted); font-size: 11px; }
-    :is(input, select) { display: block; width: 100%; min-width: 0; margin: 0; min-height: 29px; padding: 5px 7px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-field); color: var(--pc-text); font: inherit; }
+    :is(input, select, textarea) { display: block; width: 100%; min-width: 0; margin: 0; min-height: 29px; padding: 5px 7px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-field); color: var(--pc-text); font: inherit; }
+    textarea { resize: vertical; }
     select { background: var(--pc-control); }
     .pc-nf-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
     button { min-width: 0; min-height: 28px; padding: 5px 7px; border: 1px solid var(--pc-border); border-radius: 4px; background: var(--pc-control); color: var(--pc-text); font: inherit; font-size: 11px; cursor: pointer; overflow-wrap: anywhere; }
@@ -139,6 +156,6 @@
     .pc-nf-status { margin: 0 0 4px; color: var(--pc-text); font-size: 11px; overflow-wrap: anywhere; }
     .pc-nf-help { margin: 7px 0 0; color: var(--pc-muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
     .pc-nf-error { margin: 7px 0 0; color: var(--pc-error); font-size: 11px; overflow-wrap: anywhere; }
-    :is(button, input, select):focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
+    :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--pc-accent); outline-offset: 1px; }
     :disabled { opacity: .55; cursor: default; }
 </style>

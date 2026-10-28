@@ -31,7 +31,7 @@ Choose **Save As…** and enter a different friendly name when you want an indep
 
 ## Let nodes manage their files
 
-Select a file node and open **Details → File**. New file outputs have an automatic destination and suggested friendly name. Clocks and outcomes start with valid state; users do not need to paste their storage JSON.
+Select a file node and open **Details → File**. New file outputs and readers have an automatic destination and suggested friendly name. Clocks and outcomes start with valid state; users do not need to paste their storage JSON.
 
 The type follows the node's purpose and declared inputs. Lattice supplies the correct filename suffix automatically. Entering an existing suffix does not double it. Changing a name never converts the contents to another type.
 
@@ -48,13 +48,17 @@ Use **Change…** to choose another destination. Wider server locations use the 
 
 ## Choose an input
 
-A reader cannot guess which personal file you want. Use **Import from device…** to bring in a managed copy, or choose an existing source. Changes to the original device file will not update an imported copy.
+Read File reuses compatible saved chat data and existing files first. When no file is set, **Generate from story** is the default: the first run makes one bounded request using the reader's selected model, current conversation and character. Initialization instructions and the completion limit are in **Details → File**. The result must match the declared schema, format and CSV columns; unknown story facts remain unspecified.
+
+Choose **Valid starting template** for valid initial state without a model request, or **Require a file** to keep the reader waiting for a selected source. These choices apply only when no file is set. A missing configured path or revoked grant remains an access problem and is never replaced by a new automatic file.
+
+Use **Import from device…** to bring in a managed copy of a personal file, or choose an existing source. Changes to the original device file will not update an imported copy. Initialization settings and schema travel with workflow exports; generated story contents and local file authority do not.
 
 A connected writer uses the exact source reference. **Clock Commit** uses its Story Clock's destination. Separate workflows own separate state by default; deliberate connections or choosing existing data establish sharing.
 
 ## Understand when saving happens
 
-Editing a workflow saves its configuration. Previewing or rejecting a result does not write its output files. Accepting a reviewed result saves the staged changes attached to that result. Importing an input copy is a separate, explicit action.
+Editing a workflow saves its configuration. Previewing, rejecting, cancelling or failing a result does not publish initialized or updated file contents. Accepting a reviewed result saves the staged changes attached to that result, including a reader's initialized document when no downstream writer updates it. Later runs reuse that accepted file without another initialization request. Importing an input copy is a separate, explicit action.
 
 Read each save's result if a workflow writes several files. A confirmed first save and an uncertain second save can require different recovery actions. Follow the offered retry or recovery action; Lattice retains identities so a retry does not append the same accepted material twice.
 

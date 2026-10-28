@@ -61,6 +61,9 @@ export function buildCombinedExample({waitMinutes=480}={}){
   if(prefix!=='relationship')r.connect(prefix+'-guidance','out','compose','section.'+(prefix==='wand'?'Wand':'Weather'));
   selections.push({prefix,nodeIds:ids.map(translate)});
  }
+ // These are authored effect libraries, holders and relationship rules, rather
+ // than state that a model may invent from the conversation.
+ for(const node of Object.values(graph.nodes))if(node.operation==='read-file')node.initialization='require-file';
  graph.runTargets=must(inspectExpandedGraph(graph),'Flat Main').primitives.filter(unit=>unit.terminal).map(unit=>({instancePath:unit.address.instancePath,nodeId:unit.address.nodeId}));
  layout(graph);must(validateWorkflow(graph),'Flat Main');let candidate=graph;
  for(const {prefix,nodeIds} of selections){const proposal=must(prepareCreateFromSelection(candidate,{nodeIds,definitionId:'combined-'+prefix,instanceId:prefix,name:prefix==='wand'?'Broken wand':prefix==='weather'?'Eight-hour rain':'Rowan toward Iris'}),'Extract '+prefix);candidate=proposal.candidate;}

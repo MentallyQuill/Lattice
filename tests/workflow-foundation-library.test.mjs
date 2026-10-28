@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
-import {installMock} from './mock.js';import * as S from '../src/state.js?v=0.29.1';import * as L from '../src/library.js?v=0.29.1';
+import {installMock} from './mock.js';import * as S from '../src/state.js?v=0.30.0';import * as L from '../src/library.js?v=0.30.0';
 import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definitions.js';
 function definition(runtime=3){const result=computeDefinitionIdentity({id:runtime===3?'foundation-passages':'legacy-text',version:1,name:'Saved passages',interface:[],parameters:[],body:{schema:runtime===3?4:3,runtime,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'A\n\nB'},...(runtime===3?{chunk:{id:'chunk',type:'workflow',operation:'chunk',targetSize:4}}:{})},wires:runtime===3?{input:{id:'input',route:'wire',from:'text',fromPort:'out',to:'chunk',toPort:'in'}}:{}}});assert.equal(result.ok,true,JSON.stringify(result.error));return {...result.data.materializedDefinition,semanticHash:result.data.semanticHash};}
 test('foundation shelf admits supported runtime3 snapshots alongside the original runtime2 entries',()=>{

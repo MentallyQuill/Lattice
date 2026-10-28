@@ -1,7 +1,7 @@
 /** Descriptive singleton metadata. It never binds resources or grants execution. */
-import {safeWorkflowData} from './contracts.js?v=0.29.1';
-import {portsForNode} from './catalog.js?v=0.29.1';
-import {definitionRefKey} from './definition-data.js?v=0.29.1';
+import {safeWorkflowData} from './contracts.js?v=0.30.0';
+import {portsForNode} from './catalog.js?v=0.30.0';
+import {definitionRefKey} from './definition-data.js?v=0.30.0';
 const fail=(code,message)=>({ok:false,error:{code,message}}),good=data=>({ok:true,data});
 const text=(v,max=256)=>typeof v==='string'&&v.length>0&&v.length<=max;
 const closed=(v,required,optional=[])=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&required.every(k=>Object.hasOwn(v,k))&&Object.keys(v).every(k=>required.includes(k)||optional.includes(k));

@@ -1,7 +1,7 @@
-import {nativeVisibility} from './introspection/host-memory.js?v=0.29.1';
-import {artifactVisibility,validVisibilityMetadata} from './artifact-privacy.js?v=0.29.1';
-import {cloneJsonValue} from './operations/json-data.js?v=0.29.1';
-import {plain,freeze} from './record-data.js?v=0.29.1';
+import {nativeVisibility} from './introspection/host-memory.js?v=0.30.0';
+import {artifactVisibility,validVisibilityMetadata} from './artifact-privacy.js?v=0.30.0';
+import {cloneJsonValue} from './operations/json-data.js?v=0.30.0';
+import {plain,freeze} from './record-data.js?v=0.30.0';
 const good=data=>({ok:true,data});
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const id=value=>typeof value==='string'&&!!value.trim()&&value.length<=256;
@@ -27,20 +27,20 @@ export function createNativeActorContext(rawPorts){
  let ports;try{ports=configPorts(rawPorts);}catch{}if(!ports)return fail('INVALID_ACTOR_PORTS','Actor context requires trusted own host capabilities.');
  const grants=new WeakMap(),artifacts=new WeakMap(),guidances=new WeakMap(),contexts=new WeakMap(),producers=new WeakMap();let closed=false;
  const current=()=>{try{if(closed||ports.signal?.aborted)return false;const live=ports.isCurrent()===true;return live&&!closed&&!ports.signal?.aborted;}catch{return false;}};
- function host(){
-  if(!current())throw Error();const userId=ports.userId(),c=ports.context();if(!id(userId)||!plain(c))throw Error();
+ function host(checkLive=true){
+  if(checkLive&&!current())throw Error();const userId=ports.userId(),c=ports.context();if(!id(userId)||!plain(c))throw Error();
   const getChat=own(c,'getCurrentChatId'),chatId=typeof getChat==='function'?getChat.call(c):own(c,'chatId');
   const characters=own(c,'characters'),chat=own(c,'chat'),selectedIndex=own(c,'characterId');if(!id(chatId)||!Array.isArray(characters)||characters.length>10000||!Array.isArray(chat)||chat.length>10000)throw Error();
   const actors=new Map();for(let index=0;index<characters.length;index++){const wrapper=own(characters,String(index));if(!wrapper)continue;if(!plain(wrapper))throw Error();const avatar=own(wrapper,'avatar');if(avatar!==undefined&&(!id(avatar)||avatar.length>240))throw Error();const actorId='character:'+(avatar??index);if(actors.has(actorId))throw Error();actors.set(actorId,{wrapper,data:own(wrapper,'data')??wrapper,index});}
   const selected=typeof ports.selectActor==='function'?ports.selectActor(c):[...actors].find(([,actor])=>actor.index===selectedIndex)?.[0];
-  if(!id(selected)||!actors.has(selected)||!current()||ports.userId()!==userId)throw Error();return {c,userId,chatId,chat,characters,actors,selected,selectedIndex};
+  if(!id(selected)||!actors.has(selected)||checkLive&&!current()||ports.userId()!==userId)throw Error();return {c,userId,chatId,chat,characters,actors,selected,selectedIndex};
  }
- function material(actorId,frame){
+ function material(actorId,frame,checkLive=true){
   const actor=frame.actors.get(actorId);if(!actor||!plain(actor.data))throw Error();
   const wrapperLabel=disclosure(actor.wrapper),dataLabel=disclosure(actor.data),fields={};
   for(const key of keys){const value=own(actor.data,key);if(value!==undefined&&typeof value!=='string')throw Error();if(typeof value==='string'){if(value.length>100000)throw Error();fields[key]=value;}}
   const start=Math.max(0,frame.chat.length-1000),refs=frame.chat.slice(start),messages=refs.map((message,index)=>{
-   if(!plain(message))throw Error();const projected=ports.projectMessage?ports.projectMessage(message,start+index):message;if(!current()||!plain(projected))throw Error();const text=own(projected,'mes'),isUser=own(message,'is_user'),isSystem=own(message,'is_system'),swipeId=own(projected,'swipe_id'),label=disclosure(message);
+   if(!plain(message))throw Error();const projected=ports.projectMessage?ports.projectMessage(message,start+index):message;if(checkLive&&!current()||!plain(projected))throw Error();const text=own(projected,'mes'),isUser=own(message,'is_user'),isSystem=own(message,'is_system'),swipeId=own(projected,'swipe_id'),label=disclosure(message);
    if(text!==undefined&&typeof text!=='string'||typeof text==='string'&&text.length>100000)throw Error();
    return {id:'chat:'+(start+index),text,role:isUser?'user':isSystem?'system':'assistant',swipeId,label,tool:own(message,'is_tool')===true};
   });
@@ -60,14 +60,41 @@ export function createNativeActorContext(rawPorts){
    const grant=Object.freeze({}),entry={actorId,presence,frame,source,scope:freeze({userId:frame.userId,chatId:frame.chatId,actorId})};grants.set(grant,entry);const checked=checkActorGrant(grant);return checked.ok?good({grant,scope:entry.scope}):checked;
   }catch{return fail(current()?'INVALID_ACTOR_SOURCE':'STALE_ACTOR_SCOPE','Actor source or scope is unavailable.');}
  }
+ function actorSourceCurrent(entry){
+  try{if(closed||ports.signal?.aborted)return false;const frame=host(false),actor=frame.actors.get(entry.actorId);if(frame.userId!==entry.scope.userId||frame.chatId!==entry.scope.chatId||frame.chat!==entry.frame.chat||frame.characters!==entry.frame.characters||frame.selected!==entry.frame.selected||frame.selectedIndex!==entry.frame.selectedIndex||actor?.wrapper!==entry.source.actor.wrapper||actor?.data!==entry.source.actor.data||!entry.source.refs.every((message,index)=>frame.chat[entry.source.start+index]===message))return false;
+   const captured={...frame,chat:frame.chat.slice(0,entry.source.start+entry.source.refs.length)};return material(entry.actorId,captured,false).stamp===entry.source.stamp;
+  }catch{return false;}
+ }
  function checkActorGrant(grant){
   const entry=grants.get(grant);if(!entry)return fail('ACTOR_GRANT_REQUIRED','Use the exact privately captured actor grant.');
-  try{const verified=entry.presence?verify(entry.presence,entry.actorId):good({});if(!verified.ok)return verified;const frame=host(),actor=frame.actors.get(entry.actorId);if(frame.userId!==entry.scope.userId||frame.chatId!==entry.scope.chatId||frame.chat!==entry.frame.chat||frame.characters!==entry.frame.characters||frame.selected!==entry.frame.selected||frame.selectedIndex!==entry.frame.selectedIndex||actor?.wrapper!==entry.source.actor.wrapper||actor?.data!==entry.source.actor.data||!entry.source.refs.every((message,index)=>frame.chat[entry.source.start+index]===message))throw Error();
-   const captured={...frame,chat:frame.chat.slice(0,entry.source.start+entry.source.refs.length)};const source=material(entry.actorId,captured);if(source.stamp!==entry.source.stamp||!current())throw Error();return good({scope:entry.scope});
-  }catch{return fail('STALE_ACTOR_SCOPE','Actor scope, source or loaded selection changed.');}
+  const verified=entry.presence?verify(entry.presence,entry.actorId):good({});if(!verified.ok)return verified;
+  return actorSourceCurrent(entry)&&current()?good({scope:entry.scope}):fail('STALE_ACTOR_SCOPE','Actor scope, source or loaded selection changed.');
  }
  function authorizeSelectedActor(){
   try{const frame=host(),actorId=frame.selected,source=material(actorId,frame),grant=Object.freeze({}),entry={actorId,presence:null,frame,source,scope:freeze({userId:frame.userId,chatId:frame.chatId,actorId})};grants.set(grant,entry);const checked=checkActorGrant(grant);return checked.ok?good({grant,scope:entry.scope}):checked;}catch{return fail('STALE_ACTOR_SCOPE','The loaded native actor scope is unavailable.');}
+ }
+ function captureSourceContext(grant,options={}){
+  const checked=checkActorGrant(grant);if(!checked.ok)return checked;
+  let entry=grants.get(grant);
+  if(!plain(options)||Object.keys(options).some(key=>key!=='prefix'))return fail('INVALID_ACTOR_REQUEST','Use an exact captured native prefix.');
+  if(options.prefix!==undefined){
+   const prefix=options.prefix;
+   if(!Array.isArray(prefix)||prefix.length>entry.frame.chat.length||!prefix.every((message,index)=>entry.frame.chat[index]===message))return fail('STALE_ACTOR_SCOPE','The actor source prefix changed.');
+   const source=material(entry.actorId,{...entry.frame,chat:prefix});grant=Object.freeze({});entry={...entry,source};grants.set(grant,entry);
+  }
+  const actorId=entry.actorId,messages=[],omissions=[];let remaining=100000;
+  if(permits(entry.source.wrapperLabel,actorId)&&permits(entry.source.dataLabel,actorId))for(const [key,text]of Object.entries(entry.source.fields)){
+   if(text.length>16000||text.length>remaining){omissions.push({id:'character:'+key,reason:'character field limit'});continue;}
+   remaining-=text.length;messages.push({id:'character:'+key,role:'system',text,source:'character'});
+  }
+  for(const message of entry.source.messages.slice(-12)){
+   if(typeof message.text!=='string'||message.tool||!permits(message.label,actorId)){omissions.push({id:message.id,reason:'restricted or unsupported source'});continue;}
+   if(message.text.length>remaining)return fail('ACTOR_CONTEXT_LIMIT','Narrow the bounded actor scene source.');
+   remaining-=message.text.length;messages.push({id:message.id,role:message.role,text:message.text,source:'chat'});
+  }
+  const live=checkActorGrant(grant);if(!live.ok)return live;
+  const artifact=freeze({kind:'context',messages,source:{...entry.scope},visibility:{kind:'actor-private',actorId},report:{code:'BOUNDED_ACTOR_CONTEXT',omissions,limitCharacters:100000}});
+  const retained=retainScopedArtifact(artifact,grant);return retained.ok?good({artifact,grant,isCurrent:()=>actorSourceCurrent(entry)}):retained;
  }
  async function actorContext(actorId,request,presence){
   let checked,exactData;try{if(!plain(request)||Reflect.ownKeys(request).some(key=>typeof key!=='string'||!['sceneId','sourceId','revision','signal','data'].includes(key)))throw Error();const signal=own(request,'signal');if(signal!==undefined&&signal!==ports.signal)throw Error();exactData=own(request,'data');checked=cloneJsonValue(Object.fromEntries(['sceneId','sourceId','revision'].map(key=>[key,own(request,key)])));}catch{}
@@ -102,5 +129,5 @@ export function createNativeActorContext(rawPorts){
   try{const {node,inputs,artifact,rawResult}=payload;if(node.operation!=='character-direction'||rawResult?.ok!==true||!rawResult.reports?.some(report=>report.operation==='character-direction'&&report.actualCalls===1)||artifact.kind!=='guidance'||artifact.text!==rawResult.artifact?.text||artifact.scope?.actorId!==node.actorId)return fail('ACTOR_GUIDANCE_UNVERIFIED','Retain only the exact checked Character Direction output.');const authorized=authorizeEventInputs(node,inputs);if(!authorized.ok)return authorized;const retained=retainScopedArtifact(artifact,authorized.data.grant);if(retained.ok)guidances.set(artifact,authorized.data.grant);return retained;}catch{return fail('ACTOR_GUIDANCE_UNVERIFIED','Character guidance source is unavailable.');}
  }
  function authorizeGuidance(artifact){const grant=guidances.get(artifact);if(!grant)return fail('ACTOR_GUIDANCE_UNVERIFIED','Private native guidance requires its exact retained actor producer.');const checked=checkActorGrant(grant);if(!checked.ok)return checked;try{return host().selected===checked.data.scope.actorId?good({authorized:true,scope:checked.data.scope}):fail('ACTOR_GUIDANCE_SCOPE','Native generation requires the currently selected actor’s guidance.');}catch{return fail('STALE_ACTOR_SCOPE','Native actor selection changed.');}}
- return good(Object.freeze({actorContext,authorizeActor,authorizeSelectedActor,checkActorGrant,authorizeEventInputs,captureScopedResult,retainScopedArtifact,retainScopedOutput,authorizeModelInputs,retainGuidance,authorizeGuidance,release(){closed=true;}}));
+ return good(Object.freeze({actorContext,authorizeActor,authorizeSelectedActor,checkActorGrant,captureSourceContext,authorizeEventInputs,captureScopedResult,retainScopedArtifact,retainScopedOutput,authorizeModelInputs,retainGuidance,authorizeGuidance,release(){closed=true;}}));
 }
