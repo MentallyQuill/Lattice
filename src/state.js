@@ -1,20 +1,47 @@
-import {inspectSingletonMetadata} from './workflow/example-metadata.js?v=0.28.1';
+import {inspectSingletonMetadata} from './workflow/example-metadata.js?v=0.29.0';
 /** Current Lattice documents and settings. SillyTavern owns its normal prompt. */
-import { starterGraph } from './workflow/starters.js?v=0.28.1';
-import { exportWorkflow, parseWorkflow } from './workflow/packages.js?v=0.28.1';
-import { safeWorkflowData } from './workflow/contracts.js?v=0.28.1';
-import { cloneWorkflowDocument } from './workflow/document.js?v=0.28.1';
-import { serializeWorkflowDocument } from './workflow/document-file.js?v=0.28.1';
-import { createWorkflowDocumentSession } from './ui/document-session.js?v=0.28.1';
-import { commitPreparedGraph, graphEditSignature, committedGraphChange } from './workflow/transactions.js?v=0.28.1';
-import * as graphHistory from './history.js?v=0.28.1';
-import { definitionRefKey } from './workflow/definition-data.js?v=0.28.1';
-import { containsRetiredModelCall, cloneArchivedWorkflow, retiredLibraryKeys, recoveryLibraryKeys, portableArchivedWorkflow, portableArchivedDefinition } from './workflow/retired-workflows.js?v=0.28.1';
+import { starterGraph } from './workflow/starters.js?v=0.29.0';
+import { exportWorkflow, parseWorkflow } from './workflow/packages.js?v=0.29.0';
+import { safeWorkflowData } from './workflow/contracts.js?v=0.29.0';
+import { cloneWorkflowDocument } from './workflow/document.js?v=0.29.0';
+import { serializeWorkflowDocument } from './workflow/document-file.js?v=0.29.0';
+import { createWorkflowDocumentSession } from './ui/document-session.js?v=0.29.0';
+import { commitPreparedGraph, graphEditSignature, committedGraphChange } from './workflow/transactions.js?v=0.29.0';
+import * as graphHistory from './history.js?v=0.29.0';
+import { definitionRefKey } from './workflow/definition-data.js?v=0.29.0';
+import { containsRetiredModelCall, cloneArchivedWorkflow, retiredLibraryKeys, recoveryLibraryKeys, portableArchivedWorkflow, portableArchivedDefinition } from './workflow/retired-workflows.js?v=0.29.0';
 
-import { isWorkflowFailurePolicy, normalizeWorkflowFailurePolicy } from './workflow/failure-policy.js?v=0.28.1';
+import { isWorkflowFailurePolicy, normalizeWorkflowFailurePolicy } from './workflow/failure-policy.js?v=0.29.0';
 
 export const MODULE = 'lattice';
 export const ctx = () => globalThis.SillyTavern.getContext();
+/** A chat stores only its selected shared identity. The injected host boundary must verify persistence. */
+export function createWorkflowChatSelection({getContext=ctx,saveAndVerify}) {
+    const pending=new WeakSet(),key='latticeWorkflowSelection';
+    const valid=value=>value?.kind==='library'&&typeof value.id==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(value.id);
+    // SillyTavern may construct a fresh context wrapper on every getContext call.
+    const sameContext=captured=>{const next=getContext();return captured?.chatMetadata===next?.chatMetadata&&captured?.chatId===next?.chatId&&captured?.characterId===next?.characterId&&captured?.groupId===next?.groupId;};
+    return Object.freeze({
+        get(){const value=getContext()?.chatMetadata?.[key];return valid(value)?{kind:'library',id:value.id}:null;},
+        async persist(value,captured=getContext()) {
+            const metadata=captured?.chatMetadata;
+            if(!valid(value)||!metadata||typeof metadata!=='object'||!sameContext(captured))return {ok:false,error:{code:'STALE_WORKFLOW_SELECTION',message:'The chat changed before its workflow selection could be saved.'}};
+            if(pending.has(metadata))return {ok:false,error:{code:'WORKFLOW_SELECTION_BUSY',message:'The chat workflow selection is already being saved.'}};
+            if(typeof saveAndVerify!=='function')return {ok:false,error:{code:'WORKFLOW_SELECTION_ACK_MISSING',message:'Verified chat persistence is unavailable.'}};
+            const previous=metadata[key],had=Object.hasOwn(metadata,key),selected={kind:'library',id:value.id};
+            pending.add(metadata);metadata[key]=selected;
+            try {
+                const result=await saveAndVerify(captured,{key,value:selected});
+                if(result?.ok&&result.data?.acknowledged===true)return sameContext(captured)?result:{ok:false,error:{code:'STALE_WORKFLOW_SELECTION',message:'The chat changed while saving its workflow selection.'}};
+                if(metadata[key]===selected){if(had)metadata[key]=previous;else delete metadata[key];}
+                return result?.ok===false?result:{ok:false,error:{code:'WORKFLOW_SELECTION_ACK_MISSING',message:'The chat workflow selection was not acknowledged.'}};
+            }catch{
+                if(metadata[key]===selected){if(had)metadata[key]=previous;else delete metadata[key];}
+                return {ok:false,error:{code:'WORKFLOW_SELECTION_FAILED',message:'The chat workflow selection could not be saved.'}};
+            }finally{pending.delete(metadata);}
+        },
+    });
+}
 export function uid(prefix = 'n') { return prefix + '_' + (globalThis.crypto?.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).slice(2)); }
 export function safe(fn, fallback = undefined) { try { return fn(); } catch { return fallback; } }
 // Public and cache-versioned module URLs must share document authority.

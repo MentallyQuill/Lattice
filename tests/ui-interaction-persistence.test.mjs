@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.28.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.0';
 
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function controllerFunction(name, env) {
@@ -66,6 +66,7 @@ test('graph navigation flushes the cancelled source camera before changing the a
 test('close flushes the final cancelled camera before deactivating the view session', () => {
     const f = persistenceFixture();let sourceCancels=0;f.env.nativeSourceSetup={cancel(){sourceCancels++;}};
     f.env.pendingDocumentPrompt = null; f.env.documentCommands = null;
+    f.env.pendingServerChooser = null; f.env.pendingFileRecovery = null; f.env.libraryOpen = false;
     f.env.chooseDocumentPrompt = controllerFunction('chooseDocumentPrompt', f.env);
     f.env.workflowActivityUnsubscribe = null;
     f.env.workflowProgressUnsubscribe = null;

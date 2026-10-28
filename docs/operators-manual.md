@@ -59,7 +59,7 @@ The menus group the main actions:
 | Edit | Undo, redo, copy, cut, paste, duplicate, delete, and selection. |
 | View | Show/hide panels, follow or pin Preview, fit the graph, and choose a theme. |
 | Graph | Add nodes, rename, group, make subgraphs, add comments, and manage portals. |
-| Workflow | Enable Lattice, validate, review the result, inspect a run, add systems, and manage Workflow Data or recall. |
+| Workflow | Enable Lattice, validate, review the result, inspect a run, add systems, and manage recall. |
 | Help | Workspace guide, node reference, shortcuts, and version. |
 
 **Enable Lattice** makes the open workflow participate when you use SillyTavern's normal **Send**. Opening or saving a workflow does not switch this setting. Opening a different workflow changes which document Send will use, so check the name in the workflow bar before sending.
@@ -95,7 +95,7 @@ These actions have different purposes:
 | **Apply reviewed reply** | Accepts the current reviewed reply and its attached proposals. |
 | **Reject reply** | Declines the reviewed result and the pending changes that wait for its acceptance. |
 | **Stop** | Cancels active work. An answer arriving after cancellation cannot resume that run. |
-| **Save workflow / Save As…** | Saves your workflow design. It does not run it or accept a story result. |
+| **Save workflow / Save As…** | Save the shared workflow design, or create an independent workflow. This does not run it or accept a story result. |
 
 If you disable Lattice, normal SillyTavern Send continues without this workflow. Closing the workspace retains the current draft and view; use **Enable Lattice** to control integration.
 
@@ -443,27 +443,29 @@ See [reply review and save limits](native-workflows.md#review-a-reply-repair) fo
 
 ## Save, import, and share
 
-Save your workflow after useful changes. **Save settings** inside a node commits that editor; **Save workflow** writes the complete workflow design to a file. Apply accepts a story result. They serve different purposes.
+Workflow design edits autosave. **Save settings** inside a structured editor commits that draft; **Save workflow** requests an immediate save of the shared design. Accepting a reviewed result saves its staged story effects separately.
 
 ![File menu with open, save, import, export, and recovery actions](images/file-menu.png)
 
-*Use Save for your editable working document, and Export workflow JSON for a copy you want to share.*
+*Use Save for your working document, Save As for an independent workflow, and Download / share workflow for a portable copy.*
 
 ### Save a working document
 
-In a browser that supports direct file access, choose **File → Save workflow**. On the first save, choose a destination. **Save As…** chooses another destination. If a file changed outside Lattice, use Save As rather than overwriting those changes. A cancelled picker, denied permission, or failed write leaves the draft open and modified.
+Workflow edits save inside SillyTavern automatically. **Saved in SillyTavern** means the contents were verified; **Unsaved draft**, **Saving…**, or **Save needs attention** describes work that has not reached that checkpoint. **File → Save workflow** saves immediately. A failed or conflicting save retains the draft.
 
-Browsers without direct file access offer **Save As…** to download an editable JSON copy. Lattice cannot confirm that the browser completed the save, so the draft stays marked modified. Confirm the file in your browser's downloads. In a replacement prompt, Save As gives you the copy and keeps the current document open; repeat the opening action and choose **Don't Save** when you are ready to switch.
+**Open saved…** opens a shared saved workflow. Saving an edit changes that design everywhere it is used; each chat keeps separate story state. **Save As…** asks for a friendly name and creates an independent workflow. **Rename workflow…** retains the current identity. Browser-native file access is optional, and a downloaded copy is separate from the live saved document.
 
 An editable `lattice-document` retains local connection bindings, the full graph, saved subgraph contents, overrides, and supported workspace views. It excludes credentials and runtime recall queues.
 
+For node output destinations, automatic file types, input copies and version recovery, see [saving workflows and files](file-storage.md). First-run storage choices and **File → File storage…** control whether custom server locations are available; they do not create a required global file catalog.
+
 ### Replace the open document deliberately
 
-New, Open, Open Recent, examples, and recovery can replace the current document. If it has committed changes, Lattice offers **Save**, **Don't Save**, or **Cancel**.
+New, Open saved, Import workflow, Open Recent, examples, and recovery can replace the current document. If work still needs saving, Lattice offers **Save**, **Don't Save**, or **Cancel**.
 
 ![The prompt to save changed work before replacing the document](images/save-changes.png)
 
-*Save completes before replacement where direct saving is available. Don't Save continues; Cancel keeps the current canvas.*
+*An acknowledged save completes before replacement. Don't Save continues; Cancel keeps the current canvas.*
 
 A cancelled file picker or invalid imported file also keeps your current document. **Modified** means committed authoring changes; panning, selection, tab navigation, and runtime recall queues do not mark the file modified.
 
@@ -472,12 +474,14 @@ A cancelled file picker or invalid imported file also keeps your current documen
 | Action | Use it when |
 | --- | --- |
 | **New workflow** | You want a fresh Untitled workflow. |
-| **Open workflow…** | You want to replace the current document with a saved editable or portable JSON workflow. |
-| **Open Recent** | You want to reopen a previously accessed file in a supported browser. Permission may be requested again. |
+| **Open saved…** | You want a workflow from the shared saved library. Its saved edits apply wherever it is used. |
+| **Import workflow…** | You want a copy of an editable or portable workflow from your device. |
+| **Open Recent** | You want a previously accessed native file in a supported browser; permission may be requested again. The saved library is available independently. |
 | **Open examples…** | You want a fresh editable lesson. |
 | **Recover previous workflows** | You want an earlier retained unified workflow as an unsaved draft. |
 | **Import into graph…** | You want to add a compatible fragment to the graph you are already editing. |
-| **Export workflow JSON…** | You want a portable `.workflow.json` copy to share. |
+| **Download / share workflow…** | You want a portable copy without local connection identifiers, writable file bindings or machine paths. |
+| **File storage…** | You want to change default storage availability or resume optional custom-location setup. |
 | **Export archived workflows** | You need the originals of retired pre/post workflows for reference or rebuilding. |
 | **Close workspace** | You want to close the editor while retaining its current recovery draft and views. |
 
@@ -485,7 +489,7 @@ The recovery draft is retained in SillyTavern settings across reloads. It helps 
 
 **Import into graph…** is additive. Review its stage requirements, model needs, final outputs, and maximum extra requests before accepting. It gives inserted nodes fresh identities and keeps their internal connections and relative arrangement. Insertion is undoable and makes no request.
 
-Portable Export includes the complete graph and the saved definitions needed by its subgraphs. It strips local saved-profile IDs; recipients choose their own fixed profiles. Nodes set to **Active SillyTavern model** continue to follow the recipient's configured connection. Both editable and portable files open through **Open workflow…**.
+Portable Export includes the complete graph and the saved definitions needed by its subgraphs. It strips local saved-profile IDs; recipients choose their own fixed profiles. Nodes set to **Active SillyTavern model** continue to follow the recipient's configured connection. Both editable and portable files open through **File → Import workflow…**.
 
 Retired separate pre/post workflows remain archived originals. They cannot run, open as current documents, or import into current graphs. Export the archive to keep a recovery copy, then rebuild needed logic in a unified workflow with explicit Preparation and Response stages.
 
@@ -517,36 +521,26 @@ Start by asking what material the operation needs and whether it must stay curre
 | **Scene Context** | Selected story context with source and visibility information. Check its perspective and budget. |
 | **Generate Reply / Reply Snapshot** | The completed reply as a source-linked Draft in the appropriate response context. |
 | **Player Event Source** | The actual current player message, useful for rules before the reply is written. |
-| **Read File** | A current authorized Workflow Data document, plus the live reference needed to propose a write. |
+| **Read File** | Its selected authorized file, plus the live reference needed to propose a write. |
 | **Memory / Actor Context** | The selected or authorized actor's stored material, with its privacy and participation checks. |
 
-File Input does not stay linked to an operating-system file and cannot authorize a live write. Workflow Data is stored with the story; a name such as `campaign-notes.md` identifies a scoped story document, not an arbitrary path on your computer.
+File Input imports a portable snapshot and cannot authorize a live write. Read File uses its chosen source or a managed input copy. Older chat-stored documents and configured grants remain available through the node's File settings.
 
-### Workflow Data defaults and shared sources
+### Node files and shared destinations
 
-New **Story Clock**, **Read File**, and **Outcome Commit** nodes provide convenient starting sources:
+Open **Details → File** on a file node. New output and story-state nodes have automatic destinations, friendly names, correct types and valid starting state. Lattice supplies filename suffixes. Every saving node offers **Replace / Append**, including connected writers and Clock Commit. An unknown personal input needs a source choice or **Import from device…**. Character-private access uses a familiar character selector.
 
-| Node | Default source |
-| --- | --- |
-| Story Clock | **Chat clock**, starting at Day 1, 00:00 with a 24-hour day. |
-| Read File | **Chat notes**, initially empty plain text. |
-| Outcome Commit | **Chat outcomes**, initially an empty JSON list. |
+Valid file settings autosave. Choosing a destination does not write its output contents; accepting the corresponding result does. Input import is a separate explicit copy action. Existing canonical contents and privacy are preserved. Custom locations, explicit types, creation policy and specialized mutations remain under **Advanced**.
 
-A unified run supplies the referenced defaults for the active user/chat and retains saved content. In Details, change **Starting values**, **Initial content**, or **Initial outcomes** to set the template for a new source. **Load initial values** loads an existing source's template for editing. **Save settings** updates that template; it does not reset saved time, notes, or outcomes.
+The global chat-document manager stays removed. Configure each node directly. An imported name or path does not grant access. Use [file storage](file-storage.md) for the ordinary save and recovery experience; optional server setup is guided from **File → File storage…**.
 
-Open **Advanced** to choose a compatible source or use **+** beside it to create a separate named source. Notes support JSON, JSON Lines, CSV, Plain text, and Markdown. Clock and outcome sources require their JSON format. Choose **Public**, **Hidden**, or **Actor private** visibility; Actor private also requires the actor ID.
+CSV requires declared columns. External file edits invalidate captured results and require a fresh run. Removing authorization revokes access without deleting the operating-system file.
 
-![Workflow Data manager with authorized sources for the current story](images/workflow-data.png)
+Choose the same physical file when nodes should share a clock, notebook, or ledger. Choosing a different file separates that node's destination. Keep one final writer per shared target; two proposed writers for the same target are rejected.
 
-*Open Workflow → Configure → Workflow Data… to manage custom sources. Imported target names do not automatically grant access.*
+Read File has Text, document Data, and reference outputs. Connect its **exact reference** to a writer using **Connected document**; new standalone writers own an automatic destination. Clock Commit inherits its Story Clock destination. Ordinary Append handles text or structured records according to their declared type. **Format** checks and serializes records; **Project Document** previews updated content without saving it. Prose still needs extraction before it becomes reliable structured records.
 
-For a custom source, give it a unique target ID, display name, format, visibility, and initial template. CSV requires declared columns. Updating a template leaves existing saved content intact. **Remove authorization** revokes access; it does not delete an operating-system file.
-
-The default Chat clock is shared through Main and its systems. Default notes and outcomes inside each system have separate stable sources. Choose the same explicit source when you want systems to share a notebook or ledger. A skipped system does not create its unused defaults. Keep one final writer per shared target; two proposed writers for the same target are rejected.
-
-Read File has Text, document Data, and reference outputs. Connect its **exact reference** to Write to File for the same target. Use Text append for plain-text/Markdown notes and structured mutations for JSON collections. **Format** checks and serializes records; **Project Document** previews the proposed updated content without saving it. Prose needs extraction before it becomes reliable structured records.
-
-Write to File stages the change. It becomes accepted only with the corresponding reviewed reply. See [Workflow Data setup and write modes](unified-workflows.md#authorize-workflow-data-and-preserve-its-structure) for nested collections, unique IDs, and field updates.
+Write to File stages the change. It becomes accepted only with the corresponding reviewed reply. See [file setup and write modes](unified-workflows.md#configure-files-in-each-node) for nested collections, unique IDs, and field updates.
 
 ### Story time and scheduled events
 
@@ -795,7 +789,7 @@ Choose **Workflow → Validate workflow** before running an unfamiliar or substa
 | A system is skipped or blocks a consumer | Check Run this system, input optionality, and Compose's Skipped source setting. |
 | No recorded output | The step may not have run or participated. Select the right output and inspect Run details; recording limits may omit it. |
 | Stale result / Apply unavailable | Something changed after the result was produced. Make a fresh Send with the intended chat, actor, and workflow. |
-| Missing Workflow Data | Choose or authorize the compatible source for the current user/chat/actor. An imported name is not authorization. |
+| File input needs a source | Import a device copy or choose an existing authorized source in the node's File section. New output destinations are automatic. |
 | Recall does not appear in the reply | Check its queue/automatic condition, matching records, target, actor/presence, and wire into the operation that needs Guidance. |
 | Save failed or is unconfirmed | Read the individual receipt. Retry only where offered; an unknown result may need reconciliation. |
 | An edit did not take effect | Leave a normal field to commit it, or use its Save action. Invalid JSON is still a draft. |
@@ -839,7 +833,7 @@ These shortcuts apply when the graph is focused, outside typing fields. Menus sh
 | Double-click direct wire | Insert a typed Reroute. |
 | Right-click pin | Break bindings or navigate to a connected source. |
 | Double-click subgraph | Open its body in a graph tab. |
-| Ctrl/Cmd+S | Save workflow, or Save As where direct saving is unavailable. |
+| Ctrl/Cmd+S | Save the shared workflow immediately. |
 | Ctrl/Cmd+Shift+S | Save As in a browser with direct file access. |
 | Escape | Cancel an unfinished gesture or chooser. |
 

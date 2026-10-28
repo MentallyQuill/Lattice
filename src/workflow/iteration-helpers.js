@@ -1,15 +1,15 @@
-import { graphVersionSupported } from './workflow-versions.js?v=0.28.1';
-import {cloneDefinitionData,inspectPinnedDefinitionIdentity,definitionRefKey,artifactAddressKey,nodeBindingOverrideKey} from './definition-data.js?v=0.28.1';
-import {inspectDefinitionGraph,nodeAddressKey} from './graph-validation.js?v=0.28.1';
-import {prepareWorkflowPlanner,preparedWorkflowExpansion,resolveWorkflow} from './resolve.js?v=0.28.1';
-import {definitionChain} from './composition-edit.js?v=0.28.1';
-import {operationFor} from './catalog.js?v=0.28.1';
-import {validIterationRoleOverrides} from './operations/control-nodes.js?v=0.28.1';
-import {own,plain,freeze,nodeAddress} from './record-data.js?v=0.28.1';
-import {cloneJsonValue} from './operations/json-data.js?v=0.28.1';
-import {artifactVisibility,preserveArtifactPrivacy,validVisibilityMetadata} from './artifact-privacy.js?v=0.28.1';
-import {applyTextModifiers} from './modifiers.js?v=0.28.1';
-import {workflowDataPresetFor} from './workflow-data-defaults.js?v=0.28.1';
+import { graphVersionSupported } from './workflow-versions.js?v=0.29.0';
+import {cloneDefinitionData,inspectPinnedDefinitionIdentity,definitionRefKey,artifactAddressKey,nodeBindingOverrideKey} from './definition-data.js?v=0.29.0';
+import {inspectDefinitionGraph,nodeAddressKey} from './graph-validation.js?v=0.29.0';
+import {prepareWorkflowPlanner,preparedWorkflowExpansion,resolveWorkflow} from './resolve.js?v=0.29.0';
+import {definitionChain} from './composition-edit.js?v=0.29.0';
+import {operationFor} from './catalog.js?v=0.29.0';
+import {validIterationRoleOverrides} from './operations/control-nodes.js?v=0.29.0';
+import {own,plain,freeze,nodeAddress} from './record-data.js?v=0.29.0';
+import {cloneJsonValue} from './operations/json-data.js?v=0.29.0';
+import {artifactVisibility,preserveArtifactPrivacy,validVisibilityMetadata} from './artifact-privacy.js?v=0.29.0';
+import {applyTextModifiers} from './modifiers.js?v=0.29.0';
+import {workflowDataPresetFor} from './workflow-data-defaults.js?v=0.29.0';
 
 const programs=new WeakMap(),MOUNT='iteration-helper',ITEM_TEXT='iteration-item-text',ITEM_DATA='iteration-item-data',STATE_TEXT='iteration-state-text',STATE_DATA='iteration-state-data';
 const fail=(code,message)=>({ok:false,error:{code,message}});
@@ -70,13 +70,14 @@ export function compileIterationHelper(root,options) {
     }catch{return fail('INVALID_ITERATION_SETTINGS','The iteration helper could not be compiled from bounded own data.');}
 }
 /** Detached logical bindings from included units; compiler tokens and host authority stay private. */
-function workflowDataBindings(program) {
+function workflowDataBindings(program,owner=program.owner) {
     const bindings=[];
     for(const unit of program.units){
         const preset=workflowDataPresetFor(unit.node.operation),target=preset&&unit.node[preset.controlKey];
-        if(preset&&typeof target==='string'&&target!=='')bindings.push({operation:unit.node.operation,[preset.controlKey]:target});
+        const address={workflowId:owner.workflowId,instancePath:[...owner.instancePath,owner.nodeId,'iteration-*',...unit.address.instancePath.slice(1)],nodeId:unit.address.nodeId};
+        if(preset&&(typeof target==='string'&&target!==''||unit.node.fileTarget?.managed===true))bindings.push({operation:unit.node.operation,...(target?{[preset.controlKey]:target}:{}),node:unit.node,address});
         const nested=program.nested.get(nodeAddressKey(unit.address));
-        if(nested)bindings.push(...workflowDataBindings(nested));
+        if(nested)bindings.push(...workflowDataBindings(nested,address));
     }
     return bindings;
 }

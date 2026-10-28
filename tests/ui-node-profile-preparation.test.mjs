@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureGraph as starterGraph } from './helpers/workflow-fixtures.mjs';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.28.1';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.28.1';
-import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js?v=0.28.1';
-import * as api from '../src/ui/workspace-preparation.js?v=0.28.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.0';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.29.0';
+import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js?v=0.29.0';
+import * as api from '../src/ui/workspace-preparation.js?v=0.29.0';
 const activeId = 'lattice:active-sillytavern';
 const profiles = [{ id: 'saved', name: 'Reasoning connection', api: 'openai', apiLabel: 'OpenAI', model: 'profile-model', endpoint: 'private-url', provider: 'private-route', secret: 'private-key' }];
 function fixture(root, options = {}) {
@@ -26,7 +26,7 @@ test('prepared per-node controls expose only safe current profile metadata and q
     assert.equal(plan.editable, true);
     assert.deepEqual(plan.selection, { selectionKey: JSON.stringify([f.session.readEditor().view.key, 'response-plan']), revision: 'profiles:7', address: { workflowId: root.id, instancePath: [], nodeId: 'response-plan' } });
     assert.equal(f.session.readEditor().view.selection.primary, null);
-    assert.deepEqual(plan.options, [{ value: activeId, label: 'Active SillyTavern model', apiLabel: 'OpenAI', model: 'host-model', active: true }, { value: 'saved', label: 'Reasoning connection', apiLabel: 'OpenAI', model: 'profile-model', active: false }]);
+    assert.deepEqual(plan.options, [{ value: activeId, label: 'Active SillyTavern model', api: 'openai', source: 'openai', apiLabel: 'OpenAI', model: 'host-model', active: true }, { value: 'saved', label: 'Reasoning connection', api: 'openai', source: 'openai', apiLabel: 'OpenAI', model: 'profile-model', active: false }]);
     assert.ok(!JSON.stringify(rows).includes('private-'));
     assert.ok(!rows.some(row => root.nodes[row.id].operation === 'scene-context'));
     assert.deepEqual(root, before);
@@ -67,7 +67,7 @@ test('model-free operation mode hides its control and readonly library nodes use
 });
 
 test('imported wand helpers can select Active with no saved profiles and library views retain the choice',async()=>{
- const {installWorkflowExample}=await import('../src/workflow/examples.js?v=0.28.1');
+ const {installWorkflowExample}=await import('../src/workflow/examples.js?v=0.29.0');
  const installed=installWorkflowExample('unified-broken-wand',{graphs:{},nativeBindings:{workflowGraphId:null},enabled:false});
  assert.equal(installed.ok,true,JSON.stringify(installed));
  const root=installed.data.graph, prepared=api.prepareWorkspaceViews(root,{profiles:[],activeModel:{apiLabel:'Host API',model:'host-model'}});

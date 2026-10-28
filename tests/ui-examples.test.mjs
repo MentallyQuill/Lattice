@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { createWorkflowDocumentController } from '../src/ui/document-controller.js';
 import { createWorkflowDocumentSession } from '../src/ui/document-session.js';
 import { installWorkflowExample } from '../src/workflow/examples.js';
-import { diagnosticText, presentDiagnostic } from '../src/ui/diagnostics.js?v=0.28.1';
+import { diagnosticText, presentDiagnostic } from '../src/ui/diagnostics.js?v=0.29.0';
 const graph = id => ({ id, name: id, schema: 3, runtime: 2, mode: 'native-unified', nodes: {}, wires: {}, groups: {}, roles: {}, portals: {}, definitions: {} });
 async function controllerFunction(name, env) {
     const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8'); let start = source.indexOf('function ' + name + '(');
@@ -56,7 +56,7 @@ test('stale example results cannot install their primary document or retain comp
 test('example fitting remains attached to the opened root when a child tab is entered before layout settles', async () => {
     for (const enterChild of [false, true]) {
         const f = fixture(), frames = [], authority = {}; let fitted = 0, kind = 'root';
-        const env = { current: f.original, uiEpoch: 1, exampleContextCurrent: value => value === authority, ensureDocumentCommands: () => f.controller, requestAnimationFrame: callback => frames.push(callback), stillEditing: (value, epoch) => env.current === value && env.uiEpoch === epoch, graphViews: { readEditor: () => ({ view: { identity: { kind } } }) }, canvas: { fit() { fitted++; } } };
+        const env = { current: f.original, uiEpoch: 1, openExampleFileSetup(){}, exampleContextCurrent: value => value === authority, ensureDocumentCommands: () => f.controller, requestAnimationFrame: callback => frames.push(callback), stillEditing: (value, epoch) => env.current === value && env.uiEpoch === epoch, graphViews: { readEditor: () => ({ view: { identity: { kind } } }) }, canvas: { fit() { fitted++; } } };
         f.env.activate = (value, options) => { f.session.activate(value, options); env.current = value; env.uiEpoch++; };
         assert.equal(await (await controllerFunction('onOpenExample', env))('lesson-01', authority), true); if (enterChild) kind = 'instance'; while (frames.length) frames.shift()(); assert.equal(fitted, enterChild ? 0 : 1);
     }

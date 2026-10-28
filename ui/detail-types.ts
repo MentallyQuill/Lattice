@@ -73,6 +73,7 @@ export interface NodeDetailsView extends DetailSelection {
     phaseSource?: 'default' | 'connections' | 'explicit' | 'workflow' | 'operation';
     alias: string; compact: boolean; enabled: boolean; readOnly: boolean; canPresent: boolean;
     controls: DetailControl[]; model: DetailModelBinding | null; helperBindings?: DetailHelperBindings | null;
+    nodeFile?: import('./node-file-types').NodeFileView | null;
     workflowData?: WorkflowDataView | null;
     sourceSetup?:import('../src/ui/native-source-setup').NativeSourceSetupView;
     tokenizerSetup?:{available:boolean;binding?:import('../src/workflow/operations/chunk').ChunkTokenizerBinding;issue?:string};
@@ -83,6 +84,9 @@ export interface NodeDetailsView extends DetailSelection {
     status?: string; issues?: string[];
 }
 export interface NodeDetailsActions {
+    chooseNodeFile?: import('./node-file-types').NodeFileActions['chooseNodeFile'];
+    saveNodeFile?: import('./node-file-types').NodeFileActions['saveNodeFile'];
+    refreshNodeFiles?:()=>DetailEditResponse;
     sourceSetup?:(selection:DetailSelection,key:string,action:'setup'|'verify'|'reconcile')=>Promise<import('../src/workflow/types').Result<unknown>>;
     refreshSourceSetup?:(selection:DetailSelection)=>DetailEditResponse;
     openReadinessIssue?: (selection: DetailSelection, issue: import('./readiness-types').ReadinessIssue) => void;

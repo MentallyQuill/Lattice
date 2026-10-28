@@ -1,13 +1,13 @@
-import { graphVersionSupported, semanticShapeAssignable } from './workflow-versions.js?v=0.28.1';
-import { expandedRunTargets } from './run-targets.js?v=0.28.1';
-import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.28.1';
-import { cloneJsonValue } from './operations/json-data.js?v=0.28.1';
-import { freeze } from './record-data.js?v=0.28.1';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.1';
-import { validateNodeModifiers } from './modifiers.js?v=0.28.1';
-import { ARTIFACT_KINDS, operationFor, describeAuthoredOperation, portsForNode, phaseForNode } from './catalog.js?v=0.28.1';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, describeExposedParameter, nodeBindingOverrideKey, artifactAddressKey } from './definition-data.js?v=0.28.1';
-import { samePath, safeId } from './composition-edit.js?v=0.28.1';
+import { graphVersionSupported, semanticShapeAssignable } from './workflow-versions.js?v=0.29.0';
+import { expandedRunTargets } from './run-targets.js?v=0.29.0';
+import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.29.0';
+import { cloneJsonValue } from './operations/json-data.js?v=0.29.0';
+import { freeze } from './record-data.js?v=0.29.0';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.29.0';
+import { validateNodeModifiers } from './modifiers.js?v=0.29.0';
+import { ARTIFACT_KINDS, operationFor, describeAuthoredOperation, portsForNode, phaseForNode } from './catalog.js?v=0.29.0';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, describeExposedParameter, nodeBindingOverrideKey, artifactAddressKey } from './definition-data.js?v=0.29.0';
+import { samePath, safeId } from './composition-edit.js?v=0.29.0';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const idText = value => typeof value === 'string' && value.length > 0;
@@ -51,6 +51,7 @@ function controlValid(value, descriptor) {
         : descriptor.type === 'object' ? record(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value)) && (descriptor.max === undefined || Object.keys(value).length <= descriptor.max) && cloneDefinitionData(value).ok
         : descriptor.type === 'array' ? Array.isArray(value) && (descriptor.items === 'json' ? cloneDefinitionData(value).ok : value.every(item => typeof item === 'string' || ['string-or-record', 'record', 'context-slot'].includes(descriptor.items) && record(item)))
         : descriptor.type === 'json-value' ? cloneJsonValue(value).ok
+        : descriptor.type === 'string' ? typeof value === 'string' && (descriptor.maxLength === undefined || value.length <= descriptor.maxLength)
         : typeof value === descriptor.type;
 }
 

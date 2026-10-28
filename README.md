@@ -8,6 +8,7 @@
   <a href="#install-and-try-it">Install</a> ·
   <a href="docs/operators-manual.md">Operator’s manual</a> ·
   <a href="docs/developer-guide.md">Developer guide</a> ·
+  <a href="docs/releases/README.md">Release Notes</a> ·
   <a href="LICENSE">MIT license</a>
 </p>
 
@@ -18,22 +19,6 @@ Your usual SillyTavern model writes the reply. Lattice can prepare guidance for 
 ![Wand, weather, and relationship systems connected to one SillyTavern reply](docs/images/beta-overview.png)
 
 *Several story systems can share one workflow. Open a system to inspect its rules, edit it, or switch it off.*
-
-## New in 0.28.1: recover model steps
-
-Choose up to five additional attempts on individual model nodes, inspect each attempt in run details, and receive persistent failure notices. Structured output tolerates complete JSON fences while retaining strict validation. Mobile startup also works on LAN HTTP connections. [Read the 0.28.1 release notes](docs/releases/0.28.1.md) for update instructions and the original release behavior.
-
-## New in 0.28.0: work with smaller passages
-
-A lore chapter or a long conversation is easier to work with a passage at a time. **Chunk** divides supplied material into smaller pieces. Choose their size, decide how much neighboring passages share, and inspect the result before using it to guide a reply.
-
-Two new lessons bring the examples browser to **32 editable workflows**. **Split a lore chapter into useful passages** includes a chapter you can experiment with. **Group replies into three-turn passages** works with older conversation turns while protecting the newest ones. Both include practice files, and the original conversation stays intact.
-
-![The lore passage lesson open in Lattice, with Chunk settings and its prepared result](docs/images/foundation-chunk.png)
-
-*Change the passage settings and use Run to here to see the result. This preparation makes no model request.*
-
-[Read the 0.28.0 release notes](docs/releases/0.28.0.md) for a short walkthrough and what this release includes.
 
 ## What could you build?
 
@@ -83,10 +68,13 @@ With SillyTavern installed and your usual model connection working:
 1. Open **Extensions → Install extension** in SillyTavern.
 2. Enter `https://github.com/MentallyQuill/Lattice`. Leave the branch blank to install `main`, then reload SillyTavern.
 3. Click the Lattice logo beside the chat bar, or type `/lattice`. A fresh installation opens **Unified story workflow** with Lattice disabled.
-4. Select **Enable Lattice**, then send a player message normally. The starter uses your usual SillyTavern generation and makes no extra model requests.
-5. Select **Review / Publish**, choose **Host result** in Preview, and apply or reject the reviewed reply.
+4. Choose saving inside SillyTavern to start immediately, or follow the optional setup wizard for other locations on its host machine.
+5. Select **Enable Lattice**, then send a player message normally. The starter uses your usual SillyTavern generation and makes no extra model requests.
+6. Select **Review / Publish**, choose **Host result** in Preview, and apply or reject the reviewed reply.
 
-Next, choose **File → Open examples…**. Try **Give this scene one clear direction** for a simple editable instruction, or choose a lesson that fits your story. Each lesson explains its setup and model request budget. Model-based lessons need their connections configured; some also need story documents in Workflow Data.
+Next, choose **File → Open examples…**. Try **Give this scene one clear direction** for a simple editable instruction, or choose a lesson that fits your story. Each lesson explains its setup and model request budget. Model-based lessons need their connections configured. File outputs use automatic destinations; readers ask you to choose an input when its source is unknown.
+
+On first use, choose saving inside SillyTavern or choosing locations elsewhere on its host machine. Inside saving works immediately; the second option guides any required component setup. Workflows autosave, and file nodes manage names and types automatically. See [saving workflows and files](docs/file-storage.md).
 
 ![The examples browser in Lattice 0.28.0, filtered to its two new passage lessons](docs/images/examples-curriculum.png)
 

@@ -28,7 +28,9 @@ test('controller and preparation admit only current workflow documents', async (
     const [controller, projection, preparation] = await Promise.all(['src/ui/controller.js', 'src/ui/workflow-surface.js', 'src/ui/workspace-preparation.js'].map(read));
     for (const source of [controller, projection, preparation]) assert.doesNotMatch(source, /normalizeNativeGraph|schema2Review|schema2Selector|projectLegacyWorkflow|owner\.legacy|workflowMode/);
     // Ban the retired preview helper, while allowing current qualified output diagnostics.
-    assert.doesNotMatch(controller, /compile\.js|memory\.js|clip\.js|domain-surfaces|graph-analysis|scheduleTokenCount|\brunPreview\b|renderNodeInspector/);
+    const retiredHelpers = /(?:^|\/)(?:compile|memory|clip)\.js\b|domain-surfaces|graph-analysis|scheduleTokenCount|\brunPreview\b|renderNodeInspector/;
+    for (const module of ['../compile.js?v=0.29.0', '../memory.js?v=0.29.0', '../clip.js?v=0.29.0']) assert.match(module, retiredHelpers);
+    assert.doesNotMatch(controller, retiredHelpers);
     assert.match(projection, /cloneWorkflowDocument/);
     assert.match(controller, /isWorkflowGraph/);
 });

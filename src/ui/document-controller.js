@@ -1,5 +1,5 @@
-import { parseWorkflowDocument, serializeWorkflowDocument } from '../workflow/document-file.js?v=0.28.1';
-import { diagnosticText, presentDiagnostic } from './diagnostics.js?v=0.28.1';
+import { parseWorkflowDocument, serializeWorkflowDocument, workflowDocumentSnapshot } from '../workflow/document-file.js?v=0.29.0';
+import { diagnosticText, presentDiagnostic } from './diagnostics.js?v=0.29.0';
 
 const cancelled = () => ({ok:false,cancelled:true});
 const failure = message => ({ok:false,error:{message}});
@@ -13,6 +13,9 @@ export function createWorkflowDocumentController(env) {
     const error = result => {if (!result?.cancelled) {const issue=presentDiagnostic(result?.error,{action:'update the workflow document'});status=issue.message;env.report?.(issue.message,issue.severity,result?.error);changed();}return result;};
     async function save(saveAs=false, insideReplacement=false) {
         if (saving || replacing && !insideReplacement) return cancelled();
+        // Library saves use their acknowledged host boundary; native export remains available separately.
+        const library=typeof env.libraryController==='function'?env.libraryController():env.libraryController;
+        if(library)return saveAs?library.saveAs(session.current()?.name||'Untitled'):library.save();
         const graph=session.current();if (!graph) return error(failure('No workflow document is open.'));
         const token=session.capture(),workspaceViews=env.views?.() ?? null,snapshot=session.snapshot(graph);
         const encoded=serializeWorkflowDocument(graph,workspaceViews,{exampleMetadata:session.exampleMetadata?.()});if (!encoded.ok) return error(encoded);
@@ -29,35 +32,47 @@ export function createWorkflowDocumentController(env) {
         } catch {return session.stillCurrent(token) ? error(failure('The workflow save could not be completed. Your draft remains open.')) : cancelled();}
         finally {saving=false;changed();}
     }
-    async function guard(token) {
+    async function guard(token,current=()=>true) {
         if (!session.dirty()) return true;
         const before=session.snapshot(),choice=await env.prompt(session.source()?.name || session.current()?.name || 'Untitled');
-        if (!session.stillCurrent(token) || choice==='cancel') return false;
+        if (!session.stillCurrent(token) || !current() || choice==='cancel') return false;
         if (choice==='discard') {
             if (session.snapshot()!==before) {report('The document changed while the prompt was open. Try again.');return false;}
             return true;
         }
         if (choice!=='save') return false;
         const result=await save(false,true);
-        if (!result.ok || !session.stillCurrent(token)) return false;
+        const savedToken=result.data?.activationToken??token;
+        if (!result.ok || !session.stillCurrent(savedToken)) return false;
         if (result.data.downloaded) {report('Finish saving the JSON copy, then choose Don’t Save when you are ready to switch documents.','info');return false;}
         if (session.snapshot()!==result.data.snapshot) {report('New changes arrived while saving. Save them before switching documents.','info');return false;}
-        return true;
+        return {token:savedToken};
     }
-    async function replace(load,clean=false) {
+    async function replace(load,clean=false,{reloadAfterSave=false,isCurrent=()=>true}={}) {
         if (replacing || saving) return cancelled();
-        const token=session.capture(),epoch=++replacementEpoch;
-        const current=()=>epoch===replacementEpoch && session.stillCurrent(token);
+        let token=session.capture();const epoch=++replacementEpoch;
+        const current=()=>epoch===replacementEpoch && session.stillCurrent(token) && isCurrent();
         replacing=true;
         try {
             // Invoke the picker in the click's turn, before any asynchronous guard.
             const candidatePromise=load();changed();
-            const result=await candidatePromise;
+            let result=await candidatePromise;
             if (!current()) return cancelled();
             if (!result.ok) return error(result);
-            const next=result.data, admitted=serializeWorkflowDocument(next.graph,next.workspaceViews ?? null,{exampleMetadata:next.exampleMetadata});
+            let next=result.data, admitted=serializeWorkflowDocument(next.graph,next.workspaceViews ?? null,{exampleMetadata:next.exampleMetadata});
             if (!admitted.ok) return error(admitted);
-            if (!await guard(token) || !current()) return cancelled();
+            // A recovery envelope may already be the acknowledged selected document.
+            if(session.source()?.kind==='recovery' && next.source?.kind==='library' && session.snapshot()===workflowDocumentSnapshot(next.graph,next.workspaceViews??null,next.exampleMetadata)) session.markSaved(token,session.snapshot(),next.source);
+            const guarded=await guard(token,current);if(!guarded)return cancelled();
+            if(guarded.token)token=guarded.token;
+            if(!current())return cancelled();
+            if(reloadAfterSave&&guarded.token) {
+                const savedSnapshot=session.snapshot();result=await load();
+                if(!current()||session.snapshot()!==savedSnapshot)return cancelled();
+                if(!result.ok)return error(result);
+                next=result.data;admitted=serializeWorkflowDocument(next.graph,next.workspaceViews??null,{exampleMetadata:next.exampleMetadata});
+                if(!admitted.ok)return error(admitted);
+            }
             const activated=env.activate(next.graph,{source:next.source ?? null,workspaceViews:next.workspaceViews ?? null,exampleMetadata:admitted.data.recovery.exampleMetadata,clean});
             if (activated?.ok===false) return error(activated);
             if (next.companions?.length) env.retainCompanions?.(next.companions);
@@ -72,6 +87,7 @@ export function createWorkflowDocumentController(env) {
     };
     return {
         save,
+        replace,
         storageIssue(message) {storageWarning=diagnosticText({code:'RECENT_STORAGE_FAILED',message});changed();},
         cancelReplacement() {replacementEpoch++;},
         newDocument:()=>replace(()=>({ok:true,data:{graph:env.create()}})),

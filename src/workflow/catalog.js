@@ -1,25 +1,25 @@
-import { FOUNDATION_RELEASE, deferredFoundationControl } from './foundation-release.js?v=0.28.1';
-import { CHUNK_OPERATION, describeChunk } from './operations/chunk-contract.js?v=0.28.1';
-import { graphSatisfies } from './workflow-versions.js?v=0.28.1';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.28.1';
-import { RECALL_OPERATIONS, describeRecallNode } from './operations/recall-nodes.js?v=0.28.1';
-import { LIFECYCLE_OPERATIONS, describeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.28.1';
-import { FILE_OPERATIONS, describeFileNode } from './operations/file-nodes.js?v=0.28.1';
-import { TIME_OPERATIONS, describeTimeNode } from './operations/time-nodes.js?v=0.28.1';
-import { EVENT_OPERATIONS, describeEvent } from './operations/event-nodes.js?v=0.28.1';
-import { RANDOM_OPERATIONS, describeRandom } from './operations/random-outcomes.js?v=0.28.1';
-import { COLLECTION_OPERATIONS, describeCollection } from './operations/collection-nodes.js?v=0.28.1';
-import { PRIMITIVE_OPERATIONS, describePrimitive } from './operations/nodes.js?v=0.28.1';
-import { describeContextJoin } from './operations/context-join.js?v=0.28.1';
-import { TRANSPOSE_OPERATIONS, describeTransposeMetadata } from './operations/transpose-nodes.js?v=0.28.1';
-import { CLEANUP_MODES, validateCleanupSettings } from './operations/prose-cleanup.js?v=0.28.1';
-import { INTROSPECTION_NATIVE_OPERATIONS, describeNativeIntrospection, introspectionDefaults } from './introspection/native.js?v=0.28.1';
-import { INPUT_OPERATIONS, describeInput } from './operations/input-nodes.js?v=0.28.1';
-import { CONTROL_OPERATIONS, describeControl } from './operations/control-nodes.js?v=0.28.1';
-import { DECISION_OPERATIONS, describeDecision } from './operations/decision-nodes.js?v=0.28.1';
-import { MODEL_OPERATIONS, describeModelNode } from './operations/model-nodes.js?v=0.28.1';
-import { PATTERN_OPERATION, describePattern } from './operations/pattern-nodes.js?v=0.28.1';
-import { FILTER_TEXT_OPERATION, describeFilterText } from './operations/filter-text.js?v=0.28.1';
+import { FOUNDATION_RELEASE, deferredFoundationControl } from './foundation-release.js?v=0.29.0';
+import { CHUNK_OPERATION, describeChunk } from './operations/chunk-contract.js?v=0.29.0';
+import { graphSatisfies } from './workflow-versions.js?v=0.29.0';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.29.0';
+import { RECALL_OPERATIONS, describeRecallNode } from './operations/recall-nodes.js?v=0.29.0';
+import { LIFECYCLE_OPERATIONS, describeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.29.0';
+import { FILE_OPERATIONS, describeFileNode } from './operations/file-nodes.js?v=0.29.0';
+import { TIME_OPERATIONS, describeTimeNode } from './operations/time-nodes.js?v=0.29.0';
+import { EVENT_OPERATIONS, describeEvent } from './operations/event-nodes.js?v=0.29.0';
+import { RANDOM_OPERATIONS, describeRandom } from './operations/random-outcomes.js?v=0.29.0';
+import { COLLECTION_OPERATIONS, describeCollection } from './operations/collection-nodes.js?v=0.29.0';
+import { PRIMITIVE_OPERATIONS, describePrimitive } from './operations/nodes.js?v=0.29.0';
+import { describeContextJoin } from './operations/context-join.js?v=0.29.0';
+import { TRANSPOSE_OPERATIONS, describeTransposeMetadata } from './operations/transpose-nodes.js?v=0.29.0';
+import { CLEANUP_MODES, validateCleanupSettings } from './operations/prose-cleanup.js?v=0.29.0';
+import { INTROSPECTION_NATIVE_OPERATIONS, describeNativeIntrospection, introspectionDefaults } from './introspection/native.js?v=0.29.0';
+import { INPUT_OPERATIONS, describeInput } from './operations/input-nodes.js?v=0.29.0';
+import { CONTROL_OPERATIONS, describeControl } from './operations/control-nodes.js?v=0.29.0';
+import { DECISION_OPERATIONS, describeDecision } from './operations/decision-nodes.js?v=0.29.0';
+import { MODEL_OPERATIONS, describeModelNode } from './operations/model-nodes.js?v=0.29.0';
+import { PATTERN_OPERATION, describePattern } from './operations/pattern-nodes.js?v=0.29.0';
+import { FILTER_TEXT_OPERATION, describeFilterText } from './operations/filter-text.js?v=0.29.0';
 
 /** Native operation metadata. Artifact flow, rather than canvas placement, defines execution. */
 export const FAMILIES = ['Input', 'Shaping', 'Surface', 'Transpose', 'Introspection', 'Derive', 'Events', 'Collections', 'Randomness', 'Recall', 'Output'];
@@ -73,6 +73,19 @@ Object.assign(OPERATIONS, INPUT_OPERATIONS);
 Object.assign(OPERATIONS, CONTROL_OPERATIONS);
 Object.assign(OPERATIONS, DECISION_OPERATIONS);
 Object.assign(OPERATIONS, MODEL_OPERATIONS, LIFECYCLE_OPERATIONS, FILE_OPERATIONS, TIME_OPERATIONS, EVENT_OPERATIONS, RANDOM_OPERATIONS, COLLECTION_OPERATIONS, RECALL_OPERATIONS);
+const REASONING_VALUES = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'enabled', 'adaptive', 'custom'];
+function withReasoningControls(descriptor) {
+    if (!descriptor.modelRole && !descriptor.nativeBoundary && !['context', 'express', 'item-use-trigger'].includes(descriptor.id) && !OPERATIONS[descriptor.id]?.controls.includes('reasoningEffort')) return descriptor;
+    return { ...descriptor,
+        controls: [...descriptor.controls.filter(key => !['reasoningEffort', 'reasoningCustom'].includes(key)), 'reasoningEffort', 'reasoningCustom'],
+        defaults: { ...descriptor.defaults, reasoningEffort: 'none', reasoningCustom: '' },
+        controlDescriptors: { ...descriptor.controlDescriptors,
+            reasoningEffort: { type: 'enum', values: REASONING_VALUES, default: 'none', label: 'Reasoning' },
+            reasoningCustom: { type: 'string', maxLength: 128, default: '', label: 'Custom reasoning' },
+        },
+    };
+}
+for (const [id, operation] of Object.entries(OPERATIONS)) OPERATIONS[id] = withReasoningControls(operation);
 OPERATIONS.repair.controlDescriptors.categories.label = 'Policy categories (empty selects all)';
 for (const [key, label] of Object.entries({ mode: 'Mode', scope: 'Scope', caseSensitive: 'Case sensitive', strength: 'Strength', instructions: 'Instructions', maxTokens: 'Output tokens', protectedLiterals: 'Protected literals' })) OPERATIONS.repair.controlDescriptors[key].label = label;
 const contextJoinDescriptor = source => ({ ...source, controlDescriptors: { inputs: { ...source.controlDescriptors.inputs, label: 'Inputs', editor: 'json', exposable: false } } });
@@ -106,6 +119,10 @@ export function phaseForNode(graph, node) {
     } catch { return null; }
 }
 function dynamicDescription(node, phase, authoring = false) {
+    const result = dynamicBaseDescription(node, phase, authoring);
+    return result.ok ? { ...result, data: { ...result.data, descriptor: withReasoningControls(result.data.descriptor) } } : result;
+}
+function dynamicBaseDescription(node, phase, authoring = false) {
     if (node.operation === 'chunk') return describeChunk(node, {phase});
     if (node.operation === 'filter-text') return phase === 'post' ? describeFilterText(node) : failure('INVALID_PHASE', 'Filter Text requires post phase.');
     if (node.operation === 'pattern') return phase === 'post' ? describePattern(node) : failure('INVALID_PHASE', 'Pattern requires post phase.');
@@ -132,7 +149,8 @@ function dynamicDescription(node, phase, authoring = false) {
             }));
             if (!['repair', 'scan', ...CLEANUP_MODES].includes(settings.mode)) return failure('INVALID_SETTINGS', 'Select a supported Repair mode.');
             if (CLEANUP_MODES.includes(settings.mode)) {
-                const checked = validateCleanupSettings(settings);
+                const { reasoningEffort, reasoningCustom, ...cleanupSettings } = settings;
+                const checked = validateCleanupSettings(cleanupSettings);
                 if (!checked.ok) return checked;
             } else {
                 descriptor.controls = descriptor.controls.filter(key => !['scope', 'categories', 'caseSensitive'].includes(key));
@@ -251,7 +269,12 @@ export function semanticControlsForNode(node, operation = operationFor(node)) {
         if (Array.isArray(controls.sections)) controls.sections = controls.sections.map(section => { const normalized = { ...section }; if (normalized.kind === 'text') delete normalized.kind; if (normalized.required === false) delete normalized.required; if (normalized.onSkipped === 'fallback') delete normalized.onSkipped; return normalized; });
     }
     // Additive editor controls must preserve existing version-1 semantic pins.
+    if (controls.fileTarget && !Object.keys(controls.fileTarget).length) delete controls.fileTarget;
+    if(controls.fileHandling==='')delete controls.fileHandling;
+    if (node.operation === 'write-file' && controls.destinationMode === 'connected') { delete controls.destinationMode; if (controls.targetId === '') delete controls.targetId; }
     if (controls.maxRetries === 0) delete controls.maxRetries;
+    if (controls.reasoningEffort === 'none') delete controls.reasoningEffort;
+    if (controls.reasoningCustom === '') delete controls.reasoningCustom;
     if (node.operation === 'generate-reply') {
         if (controls.injectionRole === 'system') delete controls.injectionRole;
         if (controls.injectionPosition === 'in-chat') delete controls.injectionPosition;
@@ -292,7 +315,8 @@ export function portsForNode(graph, node) {
     const described = describeAuthoredOperation(graph, node);
     return described.ok ? described.data.ports : [];
 }
-export function operationDefaults(id = 'scene-context', { mode } = {}) {
+/** @param {string} [id] @param {{mode?:string,managedFiles?:boolean}} [options] */
+export function operationDefaults(id = 'scene-context', { mode, managedFiles = false } = {}) {
     const registered = Object.hasOwn(OPERATIONS, id) ? OPERATIONS[id] : null;
     let op = registered;
     if (registered && Object.hasOwn(INTROSPECTION_NATIVE_OPERATIONS, id) && mode !== undefined) {
@@ -302,6 +326,18 @@ export function operationDefaults(id = 'scene-context', { mode } = {}) {
     }
     if (!op) throw new Error(`Unknown workflow operation: ${id}`);
     const defaults = structuredClone(op.defaults);
+    delete defaults.reasoningEffort;
+    delete defaults.reasoningCustom;
+    if (defaults.fileTarget && !Object.keys(defaults.fileTarget).length) delete defaults.fileTarget;
+    if(defaults.fileHandling==='')delete defaults.fileHandling;
+    if (managedFiles && ['write-file','story-clock','commit-outcomes','random-pick'].includes(id)) {
+        defaults.fileTarget={managed:true};
+        if(id==='write-file'){defaults.destinationMode='own';defaults.targetId='';}
+        if(id==='story-clock')defaults.clockId='';
+        if(id==='commit-outcomes')defaults.targetId='';
+    }
+    if(managedFiles && ['write-file','commit-clock','commit-outcomes'].includes(id))defaults.fileHandling='replace';
+    if(managedFiles && id==='read-file'){defaults.targetId='';defaults.fileTarget={missing:'error'};}
     if (id === 'review-publish' && defaults.autoApply === false) delete defaults.autoApply;
     if (id === 'review-publish' && defaults.autoApplyEffects === false) delete defaults.autoApplyEffects;
     if (id === 'read-file' && defaults.bindToChat === false) delete defaults.bindToChat;

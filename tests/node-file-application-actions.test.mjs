@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {createNodeFileApplicationActions} from '../src/ui/node-file-application-actions.js';
+import {sha256Text} from '../src/workflow/definition-data.js';
+let content='',committed=null,live=true,writes=0;
+const captured={node:{id:'reader',operation:'read-file'},address:{nodeId:'reader',instancePath:[]},view:{settings:{format:'text',visibility:{kind:'public'}}}};
+const backend={load:async()=>({ok:true,data:{content,revision:sha256Text(content),format:'text'}}),compareAndSwap:async change=>{writes++;content=change.projectedDocument.content;return {ok:true,data:{acknowledged:true}};}};
+const access={choose:async()=>({ok:true,data:{bindingId:'binding',name:'Personal.txt'}}),backend:()=>backend};
+const actions=createNodeFileApplicationActions({access:()=>access,getScope:()=>({userId:'alice',chatId:'chat'}),isCurrent:()=>live,commit:(_captured,_selection,controls)=>{committed=controls;return {ok:true};},pickFile:async()=>({name:'Personal.txt',size:6,arrayBuffer:async()=>new TextEncoder().encode('secret').buffer})});
+assert.equal((await actions.importFile(captured,{})).ok,true);
+assert.equal(content,'secret');assert.equal(writes,1);assert.equal(committed.fileTarget.content,'','private bytes stay out of authored workflow');
+assert.equal(committed.fileTarget.bindingId,'binding');assert.equal(committed.fileTarget.missing,'error');
+committed=null;live=false;assert.equal((await actions.importFile(captured,{})).ok,false);assert.equal(committed,null);assert.equal(writes,1);
+assert.equal((await actions.importFile({...captured,node:{id:'writer',operation:'write-file'}},{})).ok,false);
+console.log('node-file application actions: checked private input copy, stale cancellation and output prohibition passed');

@@ -22,6 +22,6 @@ export interface IterationUnitExecution {
 export type IterationUnitExecutor = (unit: IterationUnit, inputs: Readonly<Record<string, WorkflowArtifact>>, local: IterationUnitExecution) => OperationResult | Promise<OperationResult>;
 export interface IterationExecutorPorts { executeUnit: IterationUnitExecutor; request?: IterationRequest; signal?: AbortSignal; }
 /** Synchronous whole-graph validation includes unused branches and recursive pinned helpers. */
-export function compileIterationHelper(root: NativeGraph3 | unknown, options: IterationCompileOptions): Result<{ token: CompiledIterationToken; description: IterationDescription; workflowDataNodes: ReadonlyArray<Readonly<{ operation: string; clockId?: string; targetId?: string; ledgerId?: string }>> }>;
+export function compileIterationHelper(root: NativeGraph3 | unknown, options: IterationCompileOptions): Result<{ token: CompiledIterationToken; description: IterationDescription; workflowDataNodes: ReadonlyArray<Readonly<{ operation: string; clockId?: string; targetId?: string; ledgerId?: string;node:import('./types').NativeNode;address:NodeAddress }>> }>;
 /** Detached bounded invocation; planning seeds never become user effects or recording units. */
 export function executeCompiledIteration(token: CompiledIterationToken, invocation: IterationInvocation, ports: IterationExecutorPorts): Promise<IterationResult>;

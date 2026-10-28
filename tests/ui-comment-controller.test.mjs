@@ -1,24 +1,24 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { prepareWorkspaceViews, prepareLibraryViews, projectEditorDraw, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.28.1';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.28.1';
-import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.28.1';
-import { prepareCommentEdit } from '../src/workflow/comment-edits.js?v=0.28.1';
-import { prepareSubgraphNodeDeletion } from '../src/workflow/subgraph-authoring.js?v=0.28.1';
-import { createCommentFrame, fitCommentFrame, containedCommentNodes, isCommentFrame } from '../src/canvas/comment-frames.js?v=0.28.1';
-import { captureCommentPresentation, applyCommentPresentation, applyCommentGroupPresentation } from '../src/ui/comment-presentation.js?v=0.28.1';
-import { viewIdentityKey } from '../src/ui/view-state.js?v=0.28.1';
-import { restoreSystemViews } from '../src/ui/system-authoring-views.js?v=0.28.1';
-import { workflowSignature } from '../src/workflow/runtime.js?v=0.28.1';
-import { makeLocalCopy, prepareQualifiedScopeEdit, reconcileOwners } from '../src/workflow/definition-library.js?v=0.28.1';
-import { ownershipEntries, prunePrivateSnapshots } from '../src/workflow/composition-edit.js?v=0.28.1';
-import { makeClip, makeDefinitionClip, readClip, prepareClipPaste } from '../src/workflow/clipboard.js?v=0.28.1';
-import { graphSemanticSignature } from '../src/workflow/ports.js?v=0.28.1';
-import { definitionRefKey } from '../src/workflow/definition-data.js?v=0.28.1';
+import { prepareWorkspaceViews, prepareLibraryViews, projectEditorDraw, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.29.0';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.0';
+import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.29.0';
+import { prepareCommentEdit } from '../src/workflow/comment-edits.js?v=0.29.0';
+import { prepareSubgraphNodeDeletion } from '../src/workflow/subgraph-authoring.js?v=0.29.0';
+import { createCommentFrame, fitCommentFrame, containedCommentNodes, isCommentFrame } from '../src/canvas/comment-frames.js?v=0.29.0';
+import { captureCommentPresentation, applyCommentPresentation, applyCommentGroupPresentation } from '../src/ui/comment-presentation.js?v=0.29.0';
+import { viewIdentityKey } from '../src/ui/view-state.js?v=0.29.0';
+import { restoreSystemViews } from '../src/ui/system-authoring-views.js?v=0.29.0';
+import { workflowSignature } from '../src/workflow/runtime.js?v=0.29.0';
+import { makeLocalCopy, prepareQualifiedScopeEdit, reconcileOwners } from '../src/workflow/definition-library.js?v=0.29.0';
+import { ownershipEntries, prunePrivateSnapshots } from '../src/workflow/composition-edit.js?v=0.29.0';
+import { makeClip, makeDefinitionClip, readClip, prepareClipPaste } from '../src/workflow/clipboard.js?v=0.29.0';
+import { graphSemanticSignature } from '../src/workflow/ports.js?v=0.29.0';
+import { definitionRefKey } from '../src/workflow/definition-data.js?v=0.29.0';
 import { siblingWorkflow, nestedWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
-import * as H from '../src/history.js?v=0.28.1';
-import { diagnosticText } from '../src/ui/diagnostics.js?v=0.28.1';
+import * as H from '../src/history.js?v=0.29.0';
+import { diagnosticText } from '../src/ui/diagnostics.js?v=0.29.0';
 
 const controllerText = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function controllerFunction(name, env) {
@@ -51,7 +51,7 @@ function fixture(root = { id:'comment-controller-' + ++sequence,schema:3,runtime
     const session = createGraphViewSession({root,activationId:'comment-'+sequence,navigation:[...prepared.data.navigation,...library.data.navigation],preparedViews:[...prepared.data.preparedViews,...library.data.preparedViews]}).data;
     const stored = {workspaceViews:{}}, failures = []; let commits = 0;
     const canvas = {multi:new Set(),selection:null,pointer:{x:12,y:18},host:{getBoundingClientRect:()=>({left:0,top:0,width:800,height:600})},widthOf:n=>n.w ?? 160,heightOf:n=>n.h ?? 48,toGraph:(x,y)=>({x,y}),setMulti(ids){this.multi=new Set(ids);},select(item){this.selection=item;},cancelGesture(){}};
-    const env = { current:root,graphViews:session,canvas,editorDraw:projectEditorDraw(session.readEditor()),editorCaptures:new WeakMap(),commentCaptures:new WeakMap(),commentPresentationEffects:new WeakMap(),pendingCommentPresentation:new WeakMap(),pendingSubgraphPresentation:new WeakMap(),pendingSystemPresentation:new WeakMap(),restoreSystemViews,workspaceRevision:0,workspaceIssue:'',selected:null,selectedKind:null,pendingDocumentPrompt:null,
+    const env = { current:root,graphViews:session,canvas,editorDraw:projectEditorDraw(session.readEditor()),editorCaptures:new WeakMap(),commentCaptures:new WeakMap(),commentPresentationEffects:new WeakMap(),pendingCommentPresentation:new WeakMap(),pendingSubgraphPresentation:new WeakMap(),pendingSystemPresentation:new WeakMap(),restoreSystemViews,workspaceRevision:0,workspaceIssue:'',selected:null,selectedKind:null,pendingDocumentPrompt:null,libraryOpen:false,pendingServerChooser:null,pendingFileRecovery:null,pendingExampleFileSetup:null,applicationFiles:()=>null,
         isOpen:()=>true,activeEditRoot:()=>env.current,readGraphEditContext:()=>env.graphViews.readEditContext(),captureGraphEditContext,prepareCommentEdit,createCommentFrame,fitCommentFrame,containedCommentNodes,isCommentFrame,captureCommentPresentation,applyCommentPresentation,applyCommentGroupPresentation,viewIdentityKey,projectEditorDraw,definitionRefKey,H,groupMembers:(graph,id)=>Object.values(graph.nodes).filter(node=>node.inGroup===id),
         prepareSubgraphNodeDeletion,prepareQualifiedScopeEdit,reconcileOwners,ownershipEntries,prunePrivateSnapshots,makeClip,makeDefinitionClip,readClip,prepareClipPaste,okToDelete:()=>true,detachedClip:null,flashHistoryNote(){},navigator:{clipboard:{async writeText(value){env.copied=value;}}},
         activeWorkflow:()=>root,activeWorkspaceViews:()=>stored.workspaceViews[root.id],setActiveWorkspaceViews:data=>{stored.workspaceViews[root.id]=data;},settings:()=>stored,save(){},toast(message){failures.push(message);},persistGraphViews(){const saved=env.graphViews?.serialize();if(saved?.ok)stored.workspaceViews[root.id]=saved.data;},workbench:{focusCommentTitle(id,check){if(check())env.focused=id;}},graphDocumentHooks:{},

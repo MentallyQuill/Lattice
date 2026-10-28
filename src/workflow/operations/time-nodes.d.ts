@@ -9,7 +9,7 @@ export interface TimeNodeExecution {
     /** Required true for Story Clock. Pure projections may execute in pinned helpers. */
     root?: boolean;
     retainTimeProjection?: (projection:import('../native-story-state').NativeTimeProjection)=>Result<void>|Promise<Result<void>>;
-    stageStoryClock?: (report:unknown,occurrences?:unknown)=>Result<Record<string,unknown>>|Promise<Result<Record<string,unknown>>>;
+    stageStoryClock?: (report:unknown,occurrences?:unknown,options?:{fileHandling?:import('../node-file-targets').FileHandling})=>Result<Record<string,unknown>>|Promise<Result<Record<string,unknown>>>;
     signal?: AbortSignal;
     /** Trusted captured user/chat-scoped accepted clock, schemaVersion 1 and positive revision.
      * The host supplies scoped presets, initialization and currentness policy. No wall clock is used.

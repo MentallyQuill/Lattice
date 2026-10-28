@@ -38,7 +38,7 @@ export function advanced() {
     {
         r = builder(19, 'Turn narrated actions into confirmed events', 'Normalize exact native body evidence against closed canonical identities, then deliberately confirm each actual event.', 'Draft Event Source, Event Normalize, Decision, Confirm Events');
         const source = draftEvidence(r), candidates = eventCandidates(r, source, { eventType: 'scene-action', instructions: 'Collect only actions involving the listed actors, at most three.' }), confirmed = confirmEach(r, candidates);
-        r.requirements = ['Replace canonical Rowan/Iris avatar IDs with actors actually loaded in this disposable story.'];
+        r.requirements = ['Choose the intended Rowan and Iris characters by name for this disposable story.'];
         r.steps = ['Native Draft Event Source owns the unchanged body, source revision and exact evidence spans.', 'The extraction model yields candidates; confirmation alone can mark an actual event confirmed.', 'A negated, proposed or uncertain action is excluded or holds; notes never establish canon.'];
         r.budget = 'At most 4 auxiliary requests: 1 candidate extraction + up to 3 Decision confirmations; one ordinary native generation.';
         r.check(confirmed, 'out', 'Only exact, actual, accepted occurrences reach public event notes.');
@@ -54,7 +54,7 @@ export function advanced() {
         r.add('actual-uses', 'collection', { mode: 'filter', fieldPath: ['eventType'], value: 'item-used' });
         r.connect('holder', 'events', 'actual-uses', 'in');
         r.guidance('actual-uses', 'out', 'Resolve the supplied ordered confirmed signal-lantern uses for their actual holders. Do not invent another use or choose the player’s next action.');
-        r.requirements = ['accepted-item-holders contains {"signal-lantern":"character:rowan.png"} only when this is established accepted ownership. Replace avatar IDs for this story.'];
+        r.requirements = ['The sample holder map prepares automatically for practice; real-story holder data must reflect established accepted ownership.'];
         r.steps = ['Trace the new real player message through extraction and bounded confirmation.', 'Current Holder applies intervening confirmed transfers in order; mention alone does not establish use.'];
         r.budget = 'At most 4 auxiliary requests: 1 Item Use Trigger extraction + up to 3 Decision confirmations; one ordinary native generation.';
         r.check('holder', 'events', 'Confirmed uses receive actual holder IDs after ordered transfers.');
@@ -67,7 +67,7 @@ export function advanced() {
         r.add('direction', 'character-direction', { actorId: actor, systemPrompt: 'Portray Rowan with patient attention to concrete evidence and restrained humor. Preserve the player’s agency. These instructions apply only while Rowan participates.' });
         r.connect(presence, 'out', 'direction', 'presence');
         r.connect('direction', 'out', 'generate', 'guidance');
-        r.requirements = ['Select native Rowan and replace character:rowan.png with the actual loaded canonical avatar ID.'];
+        r.requirements = ['Choose the intended Rowan character by name.'];
         r.steps = ['Inspect cast evidence; name mention or character-card text cannot establish presence.', 'Character Direction.systemPrompt is literal, separately authored text for this actor.', 'Absent skips the direction; unresolved holds. The private result may guide only the selected native actor.'];
         r.budget = 'At most 2 auxiliary requests: 1 participation interpretation + 1 Character Direction only if present; one ordinary native generation.';
         r.check('direction', 'out', 'Only the genuinely present selected native actor contributes private Guidance.');
@@ -112,7 +112,7 @@ export function advanced() {
         r.connect('memories', 'reference', 'save', 'reference');
         r.connect('remember', 'out', 'save', 'records');
         r.connect(event, 'out', 'save', 'evidence');
-        r.requirements = ['Select native Rowan and existing accepted native memory episodes associated with the signal lantern. Prompted Memory recall reads that host episode store; the output file cannot seed native memory authority.', 'Accepted item-holders must identify Rowan as holder; a mention by another actor grants no ownership. Create actor-private JSON Workflow Data rowan-item-memories as an initially empty output array.'];
+        r.requirements = ['Select native Rowan and existing accepted native memory episodes associated with the signal lantern. Prompted Memory recall reads that host episode store; the output file cannot seed native memory authority.', 'Accepted item-holders must identify Rowan as holder; a mention by another actor grants no ownership. The private sample reminder file starts empty after choosing its character by name.'];
         r.steps = ['This reminder pipeline watches the exact just-generated owned native Draft, after generation. A real on-page signal-lantern mention triggers current post presence, native episode recall and private save staging. It stages a remembered event for later portrayal; it does not inject Guidance into this generation.', 'This root is scoped to Rowan: another holder yields no matching private proposal.', 'Default recall/allowCreate false requires existing permitted memories; a checked model no-match skips the reminder and save while the ordinary reply remains reviewable. No available authorized memories holds recall before a request. Opt-in exercise may explicitly permit a new pending invented memory.', 'Review the private receipt separately; private memory never enters public notes.'];
         r.budget = 'At most 2 auxiliary requests: cast interpretation and prompted memory when holder/presence match; one ordinary native generation.';
         r.check('save', 'receipt', 'Only Rowan’s private target receives a pending memory with canonical mention evidence.');
@@ -132,7 +132,7 @@ export function advanced() {
         r.add('commit-clock', 'commit-clock');
         r.connect('advance', 'report', 'commit-clock', 'projection');
         r.connect('advance', 'occurrences', 'commit-clock', 'occurrences');
-        r.requirements = ['Create/authorize Story Clock Workflow Data story-clock with calendarId campaign-days, dayLengthMinutes 1440, accepted absoluteMinute and positive revision.'];
+        r.requirements = ['The isolated sample clock prepares automatically at minute 780; author only an agreed elapsed duration.'];
         r.steps = ['Edit the sixty-minute authored proposal only to an actually agreed duration.', 'Inspect previous/effective clock, report and remainder. Reject leaves the accepted clock untouched.'];
         r.check('commit-clock', 'receipt', 'Clock settlement is pending; Apply advances the genuine accepted clock once.');
         entries.push(r.finish());
@@ -228,7 +228,7 @@ export function advanced() {
         r.connect(presence, 'out', 'recall', 'presence');
         r.connect('player', 'out', 'recall', 'source');
         r.connect('recall', 'out', 'generate', 'guidance');
-        r.requirements = ['Select native Rowan; replace canonical avatar ID. Authorize actor-private JSON rowan-moments with accepted Recall-compatible {id,actorId,text} records.'];
+        r.requirements = ['Choose the intended Rowan character by name; its isolated private Recall sample prepares automatically.'];
         r.steps = ['Recall Shortcut configures Ctrl+Shift+M; use Queue recall on a relevant node, Node → Memory recall, or the shortcut before an owned generation. Preview never queues recall.', 'Use target reply/swipe/both deliberately; this default one-per-type consumes only on Apply.', 'The keyword watches real player text; rejected or stopped replies retain the queued recall request.'];
         r.budget = '1 auxiliary cast interpretation; Recall tokenization and accepted activation settlement make no model requests. One ordinary native generation.';
         r.check('recall', 'report', 'Selected accepted records retain provenance, private scope and pending consumption.');

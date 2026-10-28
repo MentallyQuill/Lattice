@@ -12,7 +12,7 @@ async function assertAutomaticRead(page,before,phase){
  await expect(page.getByRole('dialog',{name:'Configure node',exact:true})).toHaveCount(0);
  await expect.poll(()=>page.evaluate(()=>Object.keys(window.canvasHarness.graph.nodes).length)).toBe(before.length+1);
  const added=await page.evaluate(before=>Object.values(window.canvasHarness.graph.nodes).filter(node=>!before.includes(node.id)),before);
- expect(added).toHaveLength(1);expect(added[0]).toMatchObject({operation:'read-file',targetId:'lattice-default-notes',phase});
+ expect(added).toHaveLength(1);expect(added[0]).toMatchObject({operation:'read-file',targetId:'',fileTarget:{missing:'error'},phase});
  expect(await page.evaluate(before=>before.every(id=>!!window.canvasHarness.graph.nodes[id]),before)).toBe(true);
  await expect(page.getByRole('dialog',{name:'Workflow Data',exact:true})).toHaveCount(0);
  expect(await page.evaluate(()=>({chatId:window.canvasHarness.context.chatId,chat:window.canvasHarness.context.chat,metadata:window.canvasHarness.context.chatMetadata,calls:window.canvasHarness.providerCalls()}))).toEqual({chatId:null,chat:[],metadata:{},calls:0});
@@ -44,9 +44,11 @@ async function readHistory(page,before,read){
 
 test('automatic data targets place immediately without active chat or setup',async({page})=>{
  await launchWithoutChat(page);
- for(const [operation,label,key,targetId,phase] of [['story-clock','Story Clock','clockId','lattice-default-clock','pre'],['read-file','Read File','targetId','lattice-default-notes','pre'],['commit-outcomes','Outcome Commit','targetId','lattice-default-outcomes','post']]){
+ for(const [operation,label,key,phase] of [['story-clock','Story Clock','clockId','pre'],['read-file','Read File','targetId','pre'],['commit-outcomes','Outcome Commit','targetId','post']]){
   const before=await page.evaluate(()=>Object.keys(window.canvasHarness.graph.nodes));
-  const node=await addFromSearch(page,operation,label);expect(node[key]).toBe(targetId);expect(node.phase).toBe(phase);
+  const node=await addFromSearch(page,operation,label);expect(node[key]).toBe('');expect(node.phase).toBe(phase);
+  expect(node.fileTarget).toEqual(operation==='read-file'?{missing:'error'}:{managed:true});
+  if(operation==='commit-outcomes')expect(node.fileHandling).toBe('replace');
   await expect(page.getByRole('dialog',{name:/Configure|Workflow Data/})).toHaveCount(0);
   if(operation==='read-file')await readHistory(page,before,node);
  }
@@ -66,7 +68,7 @@ test('automatic reads added beside a response node retain its effective response
  await page.locator('.pc-family-row[data-family="Input"]').click();await page.locator('[data-shelf-choice="operation:read-file"]').click();
  await assertAutomaticRead(page,before,'post');
  await expect.poll(()=>page.evaluate(()=>Object.values(window.canvasHarness.graph.nodes).filter(node=>node.operation==='read-file').length)).toBe(1);
- const read=await page.evaluate(()=>Object.values(window.canvasHarness.graph.nodes).find(node=>node.operation==='read-file'));expect(read.phase).toBe('post');expect(read.targetId).toBe('lattice-default-notes');
+ const read=await page.evaluate(()=>Object.values(window.canvasHarness.graph.nodes).find(node=>node.operation==='read-file'));expect(read.phase).toBe('post');expect(read.targetId).toBe('');expect(read.fileTarget).toEqual({missing:'error'});
  await readHistory(page,before,read);
  expect(await page.evaluate(()=>({chatId:window.canvasHarness.context.chatId,chat:window.canvasHarness.context.chat,metadata:window.canvasHarness.context.chatMetadata,calls:window.canvasHarness.providerCalls()}))).toEqual({chatId:null,chat:[],metadata:{},calls:0});
 });

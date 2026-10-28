@@ -1,9 +1,9 @@
-import { parseRuntimeContext } from './context-data.js?v=0.28.1';
-import { validateStoryClock } from '../story-time.js?v=0.28.1';
-import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.28.1';
-import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.28.1';
-import { normalizeOccurrences, confirmOccurrences, resolveItemHolders, matchLiteralTrigger, validateOccurrences, toProgressionEvents, sourceFromDraft } from './event-data.js?v=0.28.1';
-import { own, plain, freeze } from '../record-data.js?v=0.28.1';
+import { parseRuntimeContext } from './context-data.js?v=0.29.0';
+import { validateStoryClock } from '../story-time.js?v=0.29.0';
+import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from '../artifact-privacy.js?v=0.29.0';
+import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.29.0';
+import { normalizeOccurrences, confirmOccurrences, resolveItemHolders, matchLiteralTrigger, validateOccurrences, toProgressionEvents, sourceFromDraft } from './event-data.js?v=0.29.0';
+import { own, plain, freeze } from '../record-data.js?v=0.29.0';
 
 const fail = (code,message) => ({ ok:false,error:{code,message} });
 const pin = (id,kind,direction,required=false) => ({ id,label:id,kind,direction,required,cardinality:'one' });

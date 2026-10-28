@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {configuredCreationStage,nodeNeedsConfiguration} from '../src/ui/configured-node-creation.js';
-import {OPERATIONS} from '../src/workflow/catalog.js';
+import {OPERATIONS,operationDefaults} from '../src/workflow/catalog.js';
 import {prepareNativeSearchCatalog,resolveNativeSearchChoice} from '../src/ui/native-search-catalog.js';
 import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js';
 import {definitionRefKey} from '../src/workflow/definitions.js';
@@ -17,7 +17,7 @@ function fixture(){
  const root={id:'immediate-placement',schema:3,runtime:2,mode:'native-unified',nodes:{},wires:{},definitions:{},portals:{}};
  const prepared=[],updates=[],capture={},result={ok:true,data:{addedNodeIds:['placed']}};
  let current=true,configurationCount=0;
- const env={current:root,selected:null,nodeNeedsConfiguration,configuredCreationStage,
+ const env={current:root,selected:null,nodeNeedsConfiguration,configuredCreationStage,OPERATIONS,operationDefaults,
   graphViews:{readEditor:()=>({view:{identity:{kind:'root'}},prepared:{savedGraph:root}})},editorDraw:{nativeCards:{}},
   editorCurrent:value=>current&&value===capture,
   prepareNativeCreation:(value,command)=>{prepared.push({value,command});return result;},

@@ -397,6 +397,10 @@ test('catalog-described primitive controls stay ordinary explicit editors with n
             assert.match(f.host.textContent, new RegExp('Canonical type: ' + descriptor.title));
             assert.equal(f.host.querySelector('[data-model-controls]'), null);
             for (const control of controls) {
+                if (control.key === 'reasoningCustom' && !controls.some(item => item.key === 'reasoningEffort' && item.value === 'custom')) {
+                    assert.equal(f.host.querySelector('[aria-label="' + control.label + '"]'), null);
+                    continue;
+                }
                 const editor = f.host.querySelector('[aria-label="' + control.label + '"]'); assert.ok(editor, operation + '/' + control.key);
                 if (control.editor === 'json') assert.equal(editor.value, control.representation === 'json-text' ? control.value : JSON.stringify(control.value, null, 2));
             }

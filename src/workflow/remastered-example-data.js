@@ -779,7 +779,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "You are a concise scene designer. Return one practical complication, preserve player agency, and never write the finished reply.",
               "outputKind": "text",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "guidance": {
               "id": "guidance",
@@ -1594,7 +1595,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "protectedLiterals": [
                 "North Harbor"
               ],
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "lesson-note": {
               "id": "lesson-note",
@@ -1853,7 +1855,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               ],
               "caseSensitive": true,
               "match": "substring",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "notes": {
               "id": "notes",
@@ -2636,7 +2639,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "patterns": [],
               "caseSensitive": true,
               "match": "substring",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "notes": {
               "id": "notes",
@@ -3511,7 +3515,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Make narration clear and concise. Copy dialogue, facts and actions unchanged.",
               "scope": "narration",
               "protectedLiterals": [],
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "items": {
               "id": "items",
@@ -3537,7 +3542,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "patterns": [],
               "caseSensitive": true,
               "match": "substring",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "suggestions": {
               "id": "suggestions",
@@ -3557,7 +3563,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "phase": "post",
               "alias": "Enrich",
               "instructions": "For each observed item suggest one sensory detail consistent with public context. Label additions as suggestions, never observed facts.",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "notes": {
               "id": "notes",
@@ -5122,33 +5129,33 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
     "lesson": {
       "difficulty": "Composition",
       "learn": [
-        "Read an authorized story document through Workflow Data.",
+        "Read the current contents of an authorized file.",
         "Distinguish a current document from an imported copy.",
-        "An Initial template supplies a new document’s starting contents. Once a saved document exists, editing the template does not overwrite it."
+        "Known sample content initializes automatically; existing saved content stays authoritative."
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Open Workflow → Configure → Workflow Data. Set Logical target ID and Document name to campaign-notebook, Format to Plain text, and Visibility to Public. Paste the contents of examples/remastered/fixtures/campaign-notebook.txt into Initial template, or enter your own campaign facts, then choose Save authorization.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "The sample campaign notebook prepares automatically for this copy. Its File section shows the name, automatic type and readiness. Use Choose file or Import from device for a personal notebook.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Check that Read File points to campaign-notebook. Follow its text output through Compose to the guidance input of Generate Reply.",
         "Send a message about the harbor and inspect the notebook text used for this run.",
-        "For this fresh notebook, select its authorization in Workflow Data and choose Load initial template. Change the lighthouse from dark to lit and choose Save authorization. Send again and compare the supplied text. This works while no saved notebook exists; lesson 17 introduces Write to File for updating saved contents.",
+        "For a personal exercise, import a notebook copy where the lighthouse is lit using Read File → File → Import from device. Send again and compare the supplied text. Lesson 17 introduces Write to File for updating saved contents.",
         "Compare this with File Input in lesson 6. That box keeps its imported copy until you replace it; Read File consults the current document.",
         "Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes."
       ],
       "checkpoints": [
         {
-          "node": "Read File · live Workflow Data",
+          "node": "Read File · sample notebook",
           "port": "text",
           "expect": "The current notebook text reaches the advice supplied before the reply is written."
         }
       ],
       "experiments": [
         {
-          "change": "For a notebook with no saved contents yet, change its Initial template and save its authorization after a run starts but before you accept the result.",
-          "expect": "The workflow reports that its source changed. Run again to use the new version. Editing a template never overwrites an already saved notebook."
+          "change": "Edit the chosen notebook between runs.",
+          "expect": "The next live read sees the new content. If a captured file changes during a run, rerun before accepting; an imported copy remains independent of its original."
         }
       ],
       "cases": [
@@ -5168,7 +5175,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-16",
           "name": "16. Consult the current campaign notebook",
-          "description": "Learn to consult a notebook that can change between runs. Unlike the imported lore sheet in lesson 6, Read File fetches the current contents of a story document each time you use it.\n\nWhat you'll learn:\n• Read an authorized story document through Workflow Data.\n• Distinguish a current document from an imported copy.\n• An Initial template supplies a new document’s starting contents. Once a saved document exists, editing the template does not overwrite it.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Open Workflow → Configure → Workflow Data. Set Logical target ID and Document name to campaign-notebook, Format to Plain text, and Visibility to Public. Paste the contents of examples/remastered/fixtures/campaign-notebook.txt into Initial template, or enter your own campaign facts, then choose Save authorization.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Check that Read File points to campaign-notebook. Follow its text output through Compose to the guidance input of Generate Reply.\n2. Send a message about the harbor and inspect the notebook text used for this run.\n3. For this fresh notebook, select its authorization in Workflow Data and choose Load initial template. Change the lighthouse from dark to lit and choose Save authorization. Send again and compare the supplied text. This works while no saved notebook exists; lesson 17 introduces Write to File for updating saved contents.\n4. Compare this with File Input in lesson 6. That box keeps its imported copy until you replace it; Read File consults the current document.\n5. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRead File · live Workflow Data → text: The current notebook text reaches the advice supplied before the reply is written.\n\nTry this:\nFor a notebook with no saved contents yet, change its Initial template and save its authorization after a run starts but before you accept the result.\nThe workflow reports that its source changed. Run again to use the new version. Editing a template never overwrites an already saved notebook.\n\nIf something is different:\nThe document is missing or unavailable: Read File shows the problem so you can correct the target or its access.\n\nModel requests: No extra model requests. SillyTavern writes one reply.",
+          "description": "Learn to consult a notebook that can change between runs. Unlike the imported lore sheet in lesson 6, Read File fetches the current contents of a story document each time you use it.\n\nWhat you'll learn:\n• Read the current contents of an authorized file.\n• Distinguish a current document from an imported copy.\n• Known sample content initializes automatically; existing saved content stays authoritative.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The sample campaign notebook prepares automatically for this copy. Its File section shows the name, automatic type and readiness. Use Choose file or Import from device for a personal notebook.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Check that Read File points to campaign-notebook. Follow its text output through Compose to the guidance input of Generate Reply.\n2. Send a message about the harbor and inspect the notebook text used for this run.\n3. For a personal exercise, import a notebook copy where the lighthouse is lit using Read File → File → Import from device. Send again and compare the supplied text. Lesson 17 introduces Write to File for updating saved contents.\n4. Compare this with File Input in lesson 6. That box keeps its imported copy until you replace it; Read File consults the current document.\n5. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRead File · sample notebook → text: The current notebook text reaches the advice supplied before the reply is written.\n\nTry this:\nEdit the chosen notebook between runs.\nThe next live read sees the new content. If a captured file changes during a run, rerun before accepting; an imported copy remains independent of its original.\n\nIf something is different:\nThe document is missing or unavailable: Read File shows the problem so you can correct the target or its access.\n\nModel requests: No extra model requests. SillyTavern writes one reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -5181,7 +5188,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "On Send",
               "enabled": true,
               "x": 500,
-              "y": 947,
+              "y": 878,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -5197,7 +5204,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Generate Reply · SillyTavern",
               "enabled": true,
               "x": 900,
-              "y": 995,
+              "y": 926,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -5217,7 +5224,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Review / Publish",
               "enabled": true,
               "x": 1300,
-              "y": 995,
+              "y": 926,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -5233,13 +5240,13 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Read File",
               "enabled": true,
               "x": 100,
-              "y": 1163,
+              "y": 1094,
               "w": 300,
               "h": 196,
               "profileId": null,
               "model": null,
               "modelRole": null,
-              "alias": "Read File · live Workflow Data",
+              "alias": "Read File · sample notebook",
               "targetId": "campaign-notebook",
               "schema": "",
               "columns": [],
@@ -5254,7 +5261,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Compose",
               "enabled": true,
               "x": 500,
-              "y": 1151,
+              "y": 1082,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -5281,8 +5288,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "x": 100,
               "y": 0,
               "w": 900,
-              "h": 867,
-              "content": "Learn to consult a notebook that can change between runs. Unlike the imported lore sheet in lesson 6, Read File fetches the current contents of a story document each time you use it.\n\nWhat you'll learn:\n• Read an authorized story document through Workflow Data.\n• Distinguish a current document from an imported copy.\n• An Initial template supplies a new document’s starting contents. Once a saved document exists, editing the template does not overwrite it.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Open Workflow → Configure → Workflow Data. Set Logical target ID and Document name to campaign-notebook, Format to Plain text, and Visibility to Public. Paste the contents of examples/remastered/fixtures/campaign-notebook.txt into Initial template, or enter your own campaign facts, then choose Save authorization.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Check that Read File points to campaign-notebook. Follow its text output through Compose to the guidance input of Generate Reply.\n2. Send a message about the harbor and inspect the notebook text used for this run.\n3. For this fresh notebook, select its authorization in Workflow Data and choose Load initial template. Change the lighthouse from dark to lit and choose Save authorization. Send again and compare the supplied text. This works while no saved notebook exists; lesson 17 introduces Write to File for updating saved contents.\n4. Compare this with File Input in lesson 6. That box keeps its imported copy until you replace it; Read File consults the current document.\n5. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRead File · live Workflow Data → text: The current notebook text reaches the advice supplied before the reply is written.\n\nTry this:\nFor a notebook with no saved contents yet, change its Initial template and save its authorization after a run starts but before you accept the result.\nThe workflow reports that its source changed. Run again to use the new version. Editing a template never overwrites an already saved notebook.\n\nIf something is different:\nThe document is missing or unavailable: Read File shows the problem so you can correct the target or its access.\n\nModel requests: No extra model requests. SillyTavern writes one reply.",
+              "h": 798,
+              "content": "Learn to consult a notebook that can change between runs. Unlike the imported lore sheet in lesson 6, Read File fetches the current contents of a story document each time you use it.\n\nWhat you'll learn:\n• Read the current contents of an authorized file.\n• Distinguish a current document from an imported copy.\n• Known sample content initializes automatically; existing saved content stays authoritative.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The sample campaign notebook prepares automatically for this copy. Its File section shows the name, automatic type and readiness. Use Choose file or Import from device for a personal notebook.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Check that Read File points to campaign-notebook. Follow its text output through Compose to the guidance input of Generate Reply.\n2. Send a message about the harbor and inspect the notebook text used for this run.\n3. For a personal exercise, import a notebook copy where the lighthouse is lit using Read File → File → Import from device. Send again and compare the supplied text. Lesson 17 introduces Write to File for updating saved contents.\n4. Compare this with File Input in lesson 6. That box keeps its imported copy until you replace it; Read File consults the current document.\n5. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRead File · sample notebook → text: The current notebook text reaches the advice supplied before the reply is written.\n\nTry this:\nEdit the chosen notebook between runs.\nThe next live read sees the new content. If a captured file changes during a run, rerun before accepting; an imported copy remains independent of its original.\n\nIf something is different:\nThe document is missing or unavailable: Read File shows the problem so you can correct the target or its access.\n\nModel requests: No extra model requests. SillyTavern writes one reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -5357,15 +5364,15 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Create a Workflow Data document as in lesson 16, using accepted-scene-journal for its Logical target ID and Document name. Choose Format JSON, Visibility Public, and Initial template [], then Save authorization. Choose a model connection for Extract.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "The empty sample journal prepares automatically. Keep its Read File Reference connected to Write to File so the exact source remains the destination. Choose a model connection for Extract.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Follow Read File’s two outputs: text supplies the current journal, while reference identifies the exact document and version that can be saved.",
         "Send a message and inspect Extract’s records of completed public actions. Format keeps an id and quoted text for each record so every journal entry has the same shape.",
         "Inspect Project Document’s receipt and proposed text. Its add-unique mode adds new IDs while keeping an existing ID from appearing twice.",
         "Inspect Write to File’s receipt before Apply. It describes a proposed replacement of the journal; the saved document should still have its old contents.",
-        "Apply the reply, then read the journal in Workflow Data. Check both the chat and the file receipt: they are saved separately, so a file error needs attention even if the reply was published.",
+        "Apply the reply, then use the node File section to Open or Download the journal. Check both the chat and the file receipt: they are saved separately, so a file error needs attention even if the reply was published.",
         "Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes."
       ],
       "checkpoints": [
@@ -5402,7 +5409,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-17",
           "name": "17. Record only the scene you accept",
-          "description": "Learn to save a scene summary only when you accept the reply. The workflow prepares a journal update, avoids duplicate entries, and waits for Apply before saving it.\n\nWhat you'll learn:\n• Use Format to give records a consistent shape.\n• Use Project Document to prepare an updated journal and Write to File to save it after acceptance.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Create a Workflow Data document as in lesson 16, using accepted-scene-journal for its Logical target ID and Document name. Choose Format JSON, Visibility Public, and Initial template [], then Save authorization. Choose a model connection for Extract.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Follow Read File’s two outputs: text supplies the current journal, while reference identifies the exact document and version that can be saved.\n2. Send a message and inspect Extract’s records of completed public actions. Format keeps an id and quoted text for each record so every journal entry has the same shape.\n3. Inspect Project Document’s receipt and proposed text. Its add-unique mode adds new IDs while keeping an existing ID from appearing twice.\n4. Inspect Write to File’s receipt before Apply. It describes a proposed replacement of the journal; the saved document should still have its old contents.\n5. Apply the reply, then read the journal in Workflow Data. Check both the chat and the file receipt: they are saved separately, so a file error needs attention even if the reply was published.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nWrite to File → receipt: The journal replacement stays a proposal until you accept the reply.\n\nTry this:\nRun another scene and choose Reject at review.\nThe proposed journal entries are discarded and the saved journal keeps its previous contents.\n\nIf something is different:\nA record with the same ID is already saved: The journal keeps one copy of that record.\nYou preview or reject the update: The journal is not saved.\n\nModel requests: One extra request to extract scene records. Formatting and preparing the save need no model. SillyTavern writes one reply.",
+          "description": "Learn to save a scene summary only when you accept the reply. The workflow prepares a journal update, avoids duplicate entries, and waits for Apply before saving it.\n\nWhat you'll learn:\n• Use Format to give records a consistent shape.\n• Use Project Document to prepare an updated journal and Write to File to save it after acceptance.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The empty sample journal prepares automatically. Keep its Read File Reference connected to Write to File so the exact source remains the destination. Choose a model connection for Extract.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Follow Read File’s two outputs: text supplies the current journal, while reference identifies the exact document and version that can be saved.\n2. Send a message and inspect Extract’s records of completed public actions. Format keeps an id and quoted text for each record so every journal entry has the same shape.\n3. Inspect Project Document’s receipt and proposed text. Its add-unique mode adds new IDs while keeping an existing ID from appearing twice.\n4. Inspect Write to File’s receipt before Apply. It describes a proposed replacement of the journal; the saved document should still have its old contents.\n5. Apply the reply, then use the node File section to Open or Download the journal. Check both the chat and the file receipt: they are saved separately, so a file error needs attention even if the reply was published.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nWrite to File → receipt: The journal replacement stays a proposal until you accept the reply.\n\nTry this:\nRun another scene and choose Reject at review.\nThe proposed journal entries are discarded and the saved journal keeps its previous contents.\n\nIf something is different:\nA record with the same ID is already saved: The journal keeps one copy of that record.\nYou preview or reject the update: The journal is not saved.\n\nModel requests: One extra request to extract scene records. Formatting and preparing the save need no model. SillyTavern writes one reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -5505,7 +5512,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "patterns": [],
               "caseSensitive": true,
               "match": "substring",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "record-array": {
               "id": "record-array",
@@ -5661,6 +5669,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "separator": "\n",
               "emptyPolicy": "omit",
               "trailingSeparator": false,
+              "destinationMode": "connected",
+              "targetId": "",
               "actorScope": "selected",
               "actorId": ""
             },
@@ -5673,7 +5683,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "y": 0,
               "w": 900,
               "h": 833,
-              "content": "Learn to save a scene summary only when you accept the reply. The workflow prepares a journal update, avoids duplicate entries, and waits for Apply before saving it.\n\nWhat you'll learn:\n• Use Format to give records a consistent shape.\n• Use Project Document to prepare an updated journal and Write to File to save it after acceptance.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Create a Workflow Data document as in lesson 16, using accepted-scene-journal for its Logical target ID and Document name. Choose Format JSON, Visibility Public, and Initial template [], then Save authorization. Choose a model connection for Extract.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Follow Read File’s two outputs: text supplies the current journal, while reference identifies the exact document and version that can be saved.\n2. Send a message and inspect Extract’s records of completed public actions. Format keeps an id and quoted text for each record so every journal entry has the same shape.\n3. Inspect Project Document’s receipt and proposed text. Its add-unique mode adds new IDs while keeping an existing ID from appearing twice.\n4. Inspect Write to File’s receipt before Apply. It describes a proposed replacement of the journal; the saved document should still have its old contents.\n5. Apply the reply, then read the journal in Workflow Data. Check both the chat and the file receipt: they are saved separately, so a file error needs attention even if the reply was published.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nWrite to File → receipt: The journal replacement stays a proposal until you accept the reply.\n\nTry this:\nRun another scene and choose Reject at review.\nThe proposed journal entries are discarded and the saved journal keeps its previous contents.\n\nIf something is different:\nA record with the same ID is already saved: The journal keeps one copy of that record.\nYou preview or reject the update: The journal is not saved.\n\nModel requests: One extra request to extract scene records. Formatting and preparing the save need no model. SillyTavern writes one reply.",
+              "content": "Learn to save a scene summary only when you accept the reply. The workflow prepares a journal update, avoids duplicate entries, and waits for Apply before saving it.\n\nWhat you'll learn:\n• Use Format to give records a consistent shape.\n• Use Project Document to prepare an updated journal and Write to File to save it after acceptance.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The empty sample journal prepares automatically. Keep its Read File Reference connected to Write to File so the exact source remains the destination. Choose a model connection for Extract.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Follow Read File’s two outputs: text supplies the current journal, while reference identifies the exact document and version that can be saved.\n2. Send a message and inspect Extract’s records of completed public actions. Format keeps an id and quoted text for each record so every journal entry has the same shape.\n3. Inspect Project Document’s receipt and proposed text. Its add-unique mode adds new IDs while keeping an existing ID from appearing twice.\n4. Inspect Write to File’s receipt before Apply. It describes a proposed replacement of the journal; the saved document should still have its old contents.\n5. Apply the reply, then use the node File section to Open or Download the journal. Check both the chat and the file receipt: they are saved separately, so a file error needs attention even if the reply was published.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nWrite to File → receipt: The journal replacement stays a proposal until you accept the reply.\n\nTry this:\nRun another scene and choose Reject at review.\nThe proposed journal entries are discarded and the saved journal keeps its previous contents.\n\nIf something is different:\nA record with the same ID is already saved: The journal keeps one copy of that record.\nYou preview or reject the update: The journal is not saved.\n\nModel requests: One extra request to extract scene records. Formatting and preparing the save need no model. SillyTavern writes one reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -5827,8 +5837,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Select the loaded Rowan actor and replace character:rowan.png everywhere with that actor’s actual avatar ID. Use Rowan’s authorized native memory store.",
-        "For a useful recall test, have an accepted native episode about Rowan and the lighthouse. A JSON fixture or an imported story paragraph cannot create native memory records."
+        "Select the intended Rowan character by name in the character settings. Use Rowan’s authorized native memory store.",
+        "For a useful recall test, have an accepted native episode about Rowan and the lighthouse. A JSON fixture or an imported story paragraph cannot create native memory records.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Build on lesson 17’s proposed-save pattern. Establish Rowan as participating in the current scene, then send: “Rowan returns to the lighthouse and studies the dark lantern.”",
@@ -5872,7 +5883,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-18",
           "name": "18. Let existing memories shape the next reply",
-          "description": "Teach Rowan to draw on existing private memories, then propose a memory update from the reply you accept. You will follow memory into portrayal and inspect the proposed update before it is saved.\n\nWhat you'll learn:\n• Memory Read supplies the selected actor’s stored state; Memory Recall searches that actor’s existing episodes, or remembered scenes. A connected Text Query replaces its saved query.\n• Reflect interprets those records. Express turns the interpretation into portrayal hints; neither makes an interpretation a fact.\n• Internalize proposes changes from native event evidence. Memory Commit saves the proposal only when the reply is accepted.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the loaded Rowan actor and replace character:rowan.png everywhere with that actor’s actual avatar ID. Use Rowan’s authorized native memory store.\n• For a useful recall test, have an accepted native episode about Rowan and the lighthouse. A JSON fixture or an imported story paragraph cannot create native memory records.\n\nSteps:\n1. Build on lesson 17’s proposed-save pattern. Establish Rowan as participating in the current scene, then send: “Rowan returns to the lighthouse and studies the dark lantern.”\n2. Follow Text · episode search into Memory Recall.query. Its lighthouse text overrides the saved current scene query; the limit is four. Compare Memory Read’s state with the recalled episodes and check which recorded scenes actually reached Reflect.\n3. Follow Reflect into Express and Collect, then into Character Direction. Look for a restrained Rowan reaction that draws on the supplied memories while leaving the player’s response open.\n4. After generation, inspect the post-generation Memory Read events and Internalize.out. The proposed changes should cite the native event records they came from, including the completed reply’s exact evidence.\n5. Compare the memory store before and after Apply. Reject a second test: its proposed episode should never become a stored memory.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nInternalize → out: Internalize.out shows proposed private changes backed by the supplied native events. Rowan’s stored memory stays unchanged until Apply.\n\nTry this:\nEdit Text · episode search from lighthouse to another phrase in an accepted Rowan episode and reduce Memory Recall limit from 4 to 1.\nReflect receives only the matching permitted episode returned by the connected Text search; changing the saved query has no effect while the Query wire is connected. Inspect its input rather than expecting a particular sentence in the reply.\n\nIf something is different:\nThere are no eligible native event records.: Internalize stops and reports the missing evidence. Imported prose cannot fill that gap.\nThe reply is rejected.: The proposed update is discarded and the stored actor memory remains unchanged.\n\nModel requests: Up to four extra model requests: Reflect, the participation check, Character Direction and Internalize. Express and Memory read, recall and commit make no model requests. There is also one ordinary SillyTavern reply.",
+          "description": "Teach Rowan to draw on existing private memories, then propose a memory update from the reply you accept. You will follow memory into portrayal and inspect the proposed update before it is saved.\n\nWhat you'll learn:\n• Memory Read supplies the selected actor’s stored state; Memory Recall searches that actor’s existing episodes, or remembered scenes. A connected Text Query replaces its saved query.\n• Reflect interprets those records. Express turns the interpretation into portrayal hints; neither makes an interpretation a fact.\n• Internalize proposes changes from native event evidence. Memory Commit saves the proposal only when the reply is accepted.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan character by name in the character settings. Use Rowan’s authorized native memory store.\n• For a useful recall test, have an accepted native episode about Rowan and the lighthouse. A JSON fixture or an imported story paragraph cannot create native memory records.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Build on lesson 17’s proposed-save pattern. Establish Rowan as participating in the current scene, then send: “Rowan returns to the lighthouse and studies the dark lantern.”\n2. Follow Text · episode search into Memory Recall.query. Its lighthouse text overrides the saved current scene query; the limit is four. Compare Memory Read’s state with the recalled episodes and check which recorded scenes actually reached Reflect.\n3. Follow Reflect into Express and Collect, then into Character Direction. Look for a restrained Rowan reaction that draws on the supplied memories while leaving the player’s response open.\n4. After generation, inspect the post-generation Memory Read events and Internalize.out. The proposed changes should cite the native event records they came from, including the completed reply’s exact evidence.\n5. Compare the memory store before and after Apply. Reject a second test: its proposed episode should never become a stored memory.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nInternalize → out: Internalize.out shows proposed private changes backed by the supplied native events. Rowan’s stored memory stays unchanged until Apply.\n\nTry this:\nEdit Text · episode search from lighthouse to another phrase in an accepted Rowan episode and reduce Memory Recall limit from 4 to 1.\nReflect receives only the matching permitted episode returned by the connected Text search; changing the saved query has no effect while the Query wire is connected. Inspect its input rather than expecting a particular sentence in the reply.\n\nIf something is different:\nThere are no eligible native event records.: Internalize stops and reports the missing evidence. Imported prose cannot fill that gap.\nThe reply is rejected.: The proposed update is discarded and the stored actor memory remains unchanged.\n\nModel requests: Up to four extra model requests: Reflect, the participation check, Character Direction and Internalize. Express and Memory read, recall and commit make no model requests. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -5885,7 +5896,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "On Send",
               "enabled": true,
               "x": 2100,
-              "y": 1117,
+              "y": 1169,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -5901,7 +5912,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Generate Reply · SillyTavern",
               "enabled": true,
               "x": 2500,
-              "y": 1141,
+              "y": 1193,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -5921,7 +5932,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Review / Publish",
               "enabled": true,
               "x": 2900,
-              "y": 1117,
+              "y": 1169,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -5936,7 +5947,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Scene Context",
               "enabled": true,
               "x": 500,
-              "y": 1988,
+              "y": 2040,
               "w": 300,
               "h": 140,
               "inGroup": "processing-context",
@@ -5956,7 +5967,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Memory",
               "enabled": true,
               "x": 100,
-              "y": 1508,
+              "y": 1560,
               "w": 300,
               "h": 140,
               "inGroup": "processing-context",
@@ -5975,7 +5986,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 100,
-              "y": 1712,
+              "y": 1764,
               "w": 300,
               "h": 140,
               "inGroup": "processing-context",
@@ -5993,7 +6004,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Memory",
               "enabled": true,
               "x": 500,
-              "y": 1652,
+              "y": 1704,
               "w": 300,
               "h": 140,
               "inGroup": "processing-context",
@@ -6013,7 +6024,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Memory",
               "enabled": true,
               "x": 100,
-              "y": 2383,
+              "y": 2435,
               "w": 300,
               "h": 140,
               "inGroup": "processing-settled",
@@ -6033,7 +6044,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Reflect",
               "enabled": true,
               "x": 900,
-              "y": 1580,
+              "y": 1632,
               "w": 300,
               "h": 168,
               "inGroup": "processing-context",
@@ -6053,7 +6064,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Express",
               "enabled": true,
               "x": 1300,
-              "y": 1436,
+              "y": 1488,
               "w": 300,
               "h": 224,
               "inGroup": "processing-context",
@@ -6073,7 +6084,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Collect",
               "enabled": true,
               "x": 1700,
-              "y": 1640,
+              "y": 1692,
               "w": 300,
               "h": 140,
               "inGroup": "processing-context",
@@ -6098,7 +6109,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 900,
-              "y": 1892,
+              "y": 1944,
               "w": 300,
               "h": 140,
               "inGroup": "processing-context",
@@ -6117,7 +6128,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Model Call",
               "enabled": true,
               "x": 1300,
-              "y": 2060,
+              "y": 2112,
               "w": 300,
               "h": 168,
               "inGroup": "processing-context",
@@ -6129,7 +6140,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Interpret genuine scene participation from the unchanged supplied source; copy its IDs and evidence exactly.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "cast-presence-0": {
               "id": "cast-presence-0",
@@ -6139,7 +6151,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Scene Presence",
               "enabled": true,
               "x": 1700,
-              "y": 1436,
+              "y": 1488,
               "w": 300,
               "h": 140,
               "inGroup": "processing-context",
@@ -6158,7 +6170,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Character Direction",
               "enabled": true,
               "x": 2100,
-              "y": 1436,
+              "y": 1488,
               "w": 300,
               "h": 140,
               "inGroup": "processing-context",
@@ -6178,7 +6190,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Internalize",
               "enabled": true,
               "x": 500,
-              "y": 2383,
+              "y": 2435,
               "w": 300,
               "h": 140,
               "inGroup": "processing-settled",
@@ -6199,7 +6211,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Memory",
               "enabled": true,
               "x": 900,
-              "y": 2383,
+              "y": 2435,
               "w": 300,
               "h": 140,
               "inGroup": "processing-settled",
@@ -6218,8 +6230,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "x": 100,
               "y": 0,
               "w": 900,
-              "h": 989,
-              "content": "Teach Rowan to draw on existing private memories, then propose a memory update from the reply you accept. You will follow memory into portrayal and inspect the proposed update before it is saved.\n\nWhat you'll learn:\n• Memory Read supplies the selected actor’s stored state; Memory Recall searches that actor’s existing episodes, or remembered scenes. A connected Text Query replaces its saved query.\n• Reflect interprets those records. Express turns the interpretation into portrayal hints; neither makes an interpretation a fact.\n• Internalize proposes changes from native event evidence. Memory Commit saves the proposal only when the reply is accepted.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the loaded Rowan actor and replace character:rowan.png everywhere with that actor’s actual avatar ID. Use Rowan’s authorized native memory store.\n• For a useful recall test, have an accepted native episode about Rowan and the lighthouse. A JSON fixture or an imported story paragraph cannot create native memory records.\n\nSteps:\n1. Build on lesson 17’s proposed-save pattern. Establish Rowan as participating in the current scene, then send: “Rowan returns to the lighthouse and studies the dark lantern.”\n2. Follow Text · episode search into Memory Recall.query. Its lighthouse text overrides the saved current scene query; the limit is four. Compare Memory Read’s state with the recalled episodes and check which recorded scenes actually reached Reflect.\n3. Follow Reflect into Express and Collect, then into Character Direction. Look for a restrained Rowan reaction that draws on the supplied memories while leaving the player’s response open.\n4. After generation, inspect the post-generation Memory Read events and Internalize.out. The proposed changes should cite the native event records they came from, including the completed reply’s exact evidence.\n5. Compare the memory store before and after Apply. Reject a second test: its proposed episode should never become a stored memory.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nInternalize → out: Internalize.out shows proposed private changes backed by the supplied native events. Rowan’s stored memory stays unchanged until Apply.\n\nTry this:\nEdit Text · episode search from lighthouse to another phrase in an accepted Rowan episode and reduce Memory Recall limit from 4 to 1.\nReflect receives only the matching permitted episode returned by the connected Text search; changing the saved query has no effect while the Query wire is connected. Inspect its input rather than expecting a particular sentence in the reply.\n\nIf something is different:\nThere are no eligible native event records.: Internalize stops and reports the missing evidence. Imported prose cannot fill that gap.\nThe reply is rejected.: The proposed update is discarded and the stored actor memory remains unchanged.\n\nModel requests: Up to four extra model requests: Reflect, the participation check, Character Direction and Internalize. Express and Memory read, recall and commit make no model requests. There is also one ordinary SillyTavern reply.",
+              "h": 1041,
+              "content": "Teach Rowan to draw on existing private memories, then propose a memory update from the reply you accept. You will follow memory into portrayal and inspect the proposed update before it is saved.\n\nWhat you'll learn:\n• Memory Read supplies the selected actor’s stored state; Memory Recall searches that actor’s existing episodes, or remembered scenes. A connected Text Query replaces its saved query.\n• Reflect interprets those records. Express turns the interpretation into portrayal hints; neither makes an interpretation a fact.\n• Internalize proposes changes from native event evidence. Memory Commit saves the proposal only when the reply is accepted.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan character by name in the character settings. Use Rowan’s authorized native memory store.\n• For a useful recall test, have an accepted native episode about Rowan and the lighthouse. A JSON fixture or an imported story paragraph cannot create native memory records.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Build on lesson 17’s proposed-save pattern. Establish Rowan as participating in the current scene, then send: “Rowan returns to the lighthouse and studies the dark lantern.”\n2. Follow Text · episode search into Memory Recall.query. Its lighthouse text overrides the saved current scene query; the limit is four. Compare Memory Read’s state with the recalled episodes and check which recorded scenes actually reached Reflect.\n3. Follow Reflect into Express and Collect, then into Character Direction. Look for a restrained Rowan reaction that draws on the supplied memories while leaving the player’s response open.\n4. After generation, inspect the post-generation Memory Read events and Internalize.out. The proposed changes should cite the native event records they came from, including the completed reply’s exact evidence.\n5. Compare the memory store before and after Apply. Reject a second test: its proposed episode should never become a stored memory.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nInternalize → out: Internalize.out shows proposed private changes backed by the supplied native events. Rowan’s stored memory stays unchanged until Apply.\n\nTry this:\nEdit Text · episode search from lighthouse to another phrase in an accepted Rowan episode and reduce Memory Recall limit from 4 to 1.\nReflect receives only the matching permitted episode returned by the connected Text search; changing the saved query has no effect while the Query wire is connected. Inspect its input rather than expecting a particular sentence in the reply.\n\nIf something is different:\nThere are no eligible native event records.: Internalize stops and reports the missing evidence. Imported prose cannot fill that gap.\nThe reply is rejected.: The proposed update is discarded and the stored actor memory remains unchanged.\n\nModel requests: Up to four extra model requests: Reflect, the participation check, Character Direction and Internalize. Express and Memory read, recall and commit make no model requests. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -6368,7 +6380,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Recall character memories",
               "description": "These connected boxes work together. Follow their wires to see how each result is used.",
               "x": 75,
-              "y": 1386,
+              "y": 1438,
               "w": 2350,
               "h": 867,
               "color": "#284e67",
@@ -6392,7 +6404,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Update saved story data",
               "description": "These connected boxes work together. Follow their wires to see how each result is used.",
               "x": 75,
-              "y": 2333,
+              "y": 2385,
               "w": 1150,
               "h": 215,
               "color": "#57416e",
@@ -6457,8 +6469,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Use a disposable story with loaded Rowan and Iris actors. Replace character:rowan.png and character:iris.png consistently with their actual avatar IDs.",
-        "Arrange a simple scene that can produce an observable action by either listed actor. This lesson reads the newly generated reply, rather than treating your request as the event itself."
+        "Use a disposable story and select the intended Rowan and Iris characters by name.",
+        "Arrange a simple scene that can produce an observable action by either listed actor. This lesson reads the newly generated reply, rather than treating your request as the event itself.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Recall lesson 8: a literal mention proved only that a word appeared. This lesson adds the Decision check from lesson 10 to determine whether an action actually occurred.",
@@ -6506,7 +6519,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-19",
           "name": "19. Turn narrated actions into confirmed events",
-          "description": "Turn actions in a generated reply into carefully checked event records. You will distinguish something that happened from something merely planned, mentioned or denied, then append the confirmed records as public notes.\n\nWhat you'll learn:\n• Draft Event Source supplies the unchanged reply and the exact position of each quoted action.\n• Event Normalize checks suggested events against that source and the allowed actor IDs. A candidate is a suggestion, not a confirmed occurrence.\n• Decision checks each candidate; Confirm Events keeps accepted occurrences and stops on an unresolved answer.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Use a disposable story with loaded Rowan and Iris actors. Replace character:rowan.png and character:iris.png consistently with their actual avatar IDs.\n• Arrange a simple scene that can produce an observable action by either listed actor. This lesson reads the newly generated reply, rather than treating your request as the event itself.\n\nSteps:\n1. Recall lesson 8: a literal mention proved only that a word appeared. This lesson adds the Decision check from lesson 10 to determine whether an action actually occurred.\n2. Send: “Continue the scene as Rowan opens the lighthouse door.” Check that the resulting reply actually describes Rowan opening it before expecting an event record.\n3. Inspect Draft Event Source.out, then Event Normalize.out. Compare each candidate’s evidence text and position with the unchanged reply; actorId should match a loaded actor.\n4. Select For Each and read its limit and Helper model bindings in Details. Its helper checks at most three candidates separately, then Collection flattens the confirmed results. Compare the candidate evidence with the confirmed collection.\n5. Read the appended event notes alongside the narration. The notes report confirmed evidence; adding a note does not create an additional story action.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCollection → out: The final Collection.out contains only confirmed occurrences whose exact quoted actions appear in the native reply. Public notes show those records.\n\nTry this:\nUse a scene where the reply says “Rowan plans to open the door” or “Rowan did not open the door.”\nThe planned or negated action is excluded or rejected. Compare that result with the completed-action test.\n\nIf something is different:\nDecision cannot tell whether a candidate happened.: A null answer stops confirmation for the collection; uncertain events are not partly accepted.\nThe reply contains no eligible completed action.: No confirmed action is added. The lesson does not invent one to fill the notes.\nMore than three candidates reach For Each.: The limit stops the run rather than silently checking only part of the evidence.\n\nModel requests: Up to four extra model requests: one extraction and one Decision for each of at most three candidates. There is also one ordinary SillyTavern reply.",
+          "description": "Turn actions in a generated reply into carefully checked event records. You will distinguish something that happened from something merely planned, mentioned or denied, then append the confirmed records as public notes.\n\nWhat you'll learn:\n• Draft Event Source supplies the unchanged reply and the exact position of each quoted action.\n• Event Normalize checks suggested events against that source and the allowed actor IDs. A candidate is a suggestion, not a confirmed occurrence.\n• Decision checks each candidate; Confirm Events keeps accepted occurrences and stops on an unresolved answer.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Use a disposable story and select the intended Rowan and Iris characters by name.\n• Arrange a simple scene that can produce an observable action by either listed actor. This lesson reads the newly generated reply, rather than treating your request as the event itself.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Recall lesson 8: a literal mention proved only that a word appeared. This lesson adds the Decision check from lesson 10 to determine whether an action actually occurred.\n2. Send: “Continue the scene as Rowan opens the lighthouse door.” Check that the resulting reply actually describes Rowan opening it before expecting an event record.\n3. Inspect Draft Event Source.out, then Event Normalize.out. Compare each candidate’s evidence text and position with the unchanged reply; actorId should match a loaded actor.\n4. Select For Each and read its limit and Helper model bindings in Details. Its helper checks at most three candidates separately, then Collection flattens the confirmed results. Compare the candidate evidence with the confirmed collection.\n5. Read the appended event notes alongside the narration. The notes report confirmed evidence; adding a note does not create an additional story action.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCollection → out: The final Collection.out contains only confirmed occurrences whose exact quoted actions appear in the native reply. Public notes show those records.\n\nTry this:\nUse a scene where the reply says “Rowan plans to open the door” or “Rowan did not open the door.”\nThe planned or negated action is excluded or rejected. Compare that result with the completed-action test.\n\nIf something is different:\nDecision cannot tell whether a candidate happened.: A null answer stops confirmation for the collection; uncertain events are not partly accepted.\nThe reply contains no eligible completed action.: No confirmed action is added. The lesson does not invent one to fill the notes.\nMore than three candidates reach For Each.: The limit stops the run rather than silently checking only part of the evidence.\n\nModel requests: Up to four extra model requests: one extraction and one Decision for each of at most three candidates. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -6519,7 +6532,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "On Send",
               "enabled": true,
               "x": 100,
-              "y": 1082,
+              "y": 1117,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -6535,7 +6548,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Generate Reply · SillyTavern",
               "enabled": true,
               "x": 500,
-              "y": 1106,
+              "y": 1141,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -6555,7 +6568,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Review / Publish",
               "enabled": true,
               "x": 4100,
-              "y": 1226,
+              "y": 1261,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -6571,7 +6584,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Select Fields",
               "enabled": true,
               "x": 900,
-              "y": 1521,
+              "y": 1556,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -6618,7 +6631,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Draft Event Source",
               "enabled": true,
               "x": 1300,
-              "y": 1521,
+              "y": 1556,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -6635,7 +6648,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 1300,
-              "y": 1953,
+              "y": 1988,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -6654,7 +6667,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "JSON Decode",
               "enabled": true,
               "x": 1700,
-              "y": 1809,
+              "y": 1844,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -6674,7 +6687,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 1300,
-              "y": 2169,
+              "y": 2204,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -6693,7 +6706,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Model Call",
               "enabled": true,
               "x": 1700,
-              "y": 2025,
+              "y": 2060,
               "w": 300,
               "h": 168,
               "inGroup": "processing-draft-scope",
@@ -6705,7 +6718,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract candidates only; never confirm or fabricate evidence.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "events": {
               "id": "events",
@@ -6715,7 +6729,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Event Normalize",
               "enabled": true,
               "x": 2100,
-              "y": 1737,
+              "y": 1772,
               "w": 300,
               "h": 168,
               "inGroup": "processing-draft-scope",
@@ -6736,7 +6750,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "For Each",
               "enabled": true,
               "x": 2500,
-              "y": 1641,
+              "y": 1676,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -6767,7 +6781,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Collection",
               "enabled": true,
               "x": 2900,
-              "y": 1593,
+              "y": 1628,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -6796,7 +6810,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Compose",
               "enabled": true,
               "x": 3300,
-              "y": 1569,
+              "y": 1604,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -6820,7 +6834,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Append",
               "enabled": true,
               "x": 3700,
-              "y": 1521,
+              "y": 1556,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -6839,8 +6853,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "x": 100,
               "y": 0,
               "w": 900,
-              "h": 954,
-              "content": "Turn actions in a generated reply into carefully checked event records. You will distinguish something that happened from something merely planned, mentioned or denied, then append the confirmed records as public notes.\n\nWhat you'll learn:\n• Draft Event Source supplies the unchanged reply and the exact position of each quoted action.\n• Event Normalize checks suggested events against that source and the allowed actor IDs. A candidate is a suggestion, not a confirmed occurrence.\n• Decision checks each candidate; Confirm Events keeps accepted occurrences and stops on an unresolved answer.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Use a disposable story with loaded Rowan and Iris actors. Replace character:rowan.png and character:iris.png consistently with their actual avatar IDs.\n• Arrange a simple scene that can produce an observable action by either listed actor. This lesson reads the newly generated reply, rather than treating your request as the event itself.\n\nSteps:\n1. Recall lesson 8: a literal mention proved only that a word appeared. This lesson adds the Decision check from lesson 10 to determine whether an action actually occurred.\n2. Send: “Continue the scene as Rowan opens the lighthouse door.” Check that the resulting reply actually describes Rowan opening it before expecting an event record.\n3. Inspect Draft Event Source.out, then Event Normalize.out. Compare each candidate’s evidence text and position with the unchanged reply; actorId should match a loaded actor.\n4. Select For Each and read its limit and Helper model bindings in Details. Its helper checks at most three candidates separately, then Collection flattens the confirmed results. Compare the candidate evidence with the confirmed collection.\n5. Read the appended event notes alongside the narration. The notes report confirmed evidence; adding a note does not create an additional story action.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCollection → out: The final Collection.out contains only confirmed occurrences whose exact quoted actions appear in the native reply. Public notes show those records.\n\nTry this:\nUse a scene where the reply says “Rowan plans to open the door” or “Rowan did not open the door.”\nThe planned or negated action is excluded or rejected. Compare that result with the completed-action test.\n\nIf something is different:\nDecision cannot tell whether a candidate happened.: A null answer stops confirmation for the collection; uncertain events are not partly accepted.\nThe reply contains no eligible completed action.: No confirmed action is added. The lesson does not invent one to fill the notes.\nMore than three candidates reach For Each.: The limit stops the run rather than silently checking only part of the evidence.\n\nModel requests: Up to four extra model requests: one extraction and one Decision for each of at most three candidates. There is also one ordinary SillyTavern reply.",
+              "h": 989,
+              "content": "Turn actions in a generated reply into carefully checked event records. You will distinguish something that happened from something merely planned, mentioned or denied, then append the confirmed records as public notes.\n\nWhat you'll learn:\n• Draft Event Source supplies the unchanged reply and the exact position of each quoted action.\n• Event Normalize checks suggested events against that source and the allowed actor IDs. A candidate is a suggestion, not a confirmed occurrence.\n• Decision checks each candidate; Confirm Events keeps accepted occurrences and stops on an unresolved answer.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Use a disposable story and select the intended Rowan and Iris characters by name.\n• Arrange a simple scene that can produce an observable action by either listed actor. This lesson reads the newly generated reply, rather than treating your request as the event itself.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Recall lesson 8: a literal mention proved only that a word appeared. This lesson adds the Decision check from lesson 10 to determine whether an action actually occurred.\n2. Send: “Continue the scene as Rowan opens the lighthouse door.” Check that the resulting reply actually describes Rowan opening it before expecting an event record.\n3. Inspect Draft Event Source.out, then Event Normalize.out. Compare each candidate’s evidence text and position with the unchanged reply; actorId should match a loaded actor.\n4. Select For Each and read its limit and Helper model bindings in Details. Its helper checks at most three candidates separately, then Collection flattens the confirmed results. Compare the candidate evidence with the confirmed collection.\n5. Read the appended event notes alongside the narration. The notes report confirmed evidence; adding a note does not create an additional story action.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCollection → out: The final Collection.out contains only confirmed occurrences whose exact quoted actions appear in the native reply. Public notes show those records.\n\nTry this:\nUse a scene where the reply says “Rowan plans to open the door” or “Rowan did not open the door.”\nThe planned or negated action is excluded or rejected. Compare that result with the completed-action test.\n\nIf something is different:\nDecision cannot tell whether a candidate happened.: A null answer stops confirmation for the collection; uncertain events are not partly accepted.\nThe reply contains no eligible completed action.: No confirmed action is added. The lesson does not invent one to fill the notes.\nMore than three candidates reach For Each.: The limit stops the run rather than silently checking only part of the evidence.\n\nModel requests: Up to four extra model requests: one extraction and one Decision for each of at most three candidates. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -6981,7 +6995,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Check story event evidence",
               "description": "These connected boxes work together. Follow their wires to see how each result is used.",
               "x": 875,
-              "y": 1471,
+              "y": 1506,
               "w": 3150,
               "h": 863,
               "color": "#57416e",
@@ -7249,9 +7263,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "In Workflow › Configure › Workflow Data, set Logical target ID to accepted-item-holders, Format to JSON and Visibility to Public. Paste fixtures/accepted-item-holders.json into Initial template and choose Save authorization. Its signal-lantern entry must name the accepted holder.",
-        "Load Rowan and Iris, then replace both example avatar IDs throughout the graph and holder file with their actual IDs. Keep the item ID signal-lantern.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "The public sample holder map prepares automatically with Rowan holding the signal lantern. It is demonstration state for this independent practice copy.",
+        "Choose the intended Rowan and Iris characters by name and keep the holder map consistent with that choice. Keep the item ID signal-lantern.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Start with the confirmation process from lesson 19, now placed before the reply. Send: “Rowan uses the signal lantern to flash a signal toward the harbor.”",
@@ -7299,7 +7313,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-20",
           "name": "20. React when an item is actually used",
-          "description": "Make the next reply react to an item that was actually used. You will check actions in the player message, follow transfers in their written order and attach the consequence to the holder at the moment of use.\n\nWhat you'll learn:\n• Player Event Source reads the new player message before generation; lesson 19 instead inspected the generated reply.\n• Item Use Trigger suggests uses and transfers. Decision confirms completed actions, and Current Holder applies confirmed transfers in order.\n• A mention can identify an item without proving use or ownership. Only confirmed item-used events reach the consequence guidance.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, set Logical target ID to accepted-item-holders, Format to JSON and Visibility to Public. Paste fixtures/accepted-item-holders.json into Initial template and choose Save authorization. Its signal-lantern entry must name the accepted holder.\n• Load Rowan and Iris, then replace both example avatar IDs throughout the graph and holder file with their actual IDs. Keep the item ID signal-lantern.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Start with the confirmation process from lesson 19, now placed before the reply. Send: “Rowan uses the signal lantern to flash a signal toward the harbor.”\n2. Compare the player source with Item Use Trigger’s candidates and the confirmed collection. Check that the use is an actual action with an exact quote, rather than an intention.\n3. Inspect Current Holder.events. The use should carry Rowan’s holderId from the accepted holder map.\n4. Follow the item-used filter into Compose and Generate Reply.guidance. The reply should respond to the supplied use without inventing a second use or choosing what the player does next.\n5. Test a transfer with: “Rowan hands the signal lantern to Iris. Iris uses it to flash a signal.” Check that Iris receives the use consequence. This recipe reads ownership and resolves this message; it does not save a changed holder map.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCurrent Holder → events: Current Holder.events attaches the holder at each confirmed use, including transfers that came earlier in the player message.\n\nTry this:\nCompare “Rowan uses the signal lantern. Rowan hands it to Iris.” with the transfer-then-use message.\nThe earlier use belongs to Rowan. Reversing the action order changes who holds the item when it is used.\n\nIf something is different:\nThe message says only “Rowan talks about the signal lantern.”: No item-use consequence is supplied.\nA proposed transfer is not confirmed.: It cannot establish a new holder. Inspect rejected or unresolved evidence before trusting the resulting use.\nThe accepted holder data is missing or invalid.: Resolve that setup error instead of assuming the person mentioning the item owns it.\n\nModel requests: Up to four extra model requests: one Item Use Trigger extraction and up to three Decision checks. There is also one ordinary SillyTavern reply.",
+          "description": "Make the next reply react to an item that was actually used. You will check actions in the player message, follow transfers in their written order and attach the consequence to the holder at the moment of use.\n\nWhat you'll learn:\n• Player Event Source reads the new player message before generation; lesson 19 instead inspected the generated reply.\n• Item Use Trigger suggests uses and transfers. Decision confirms completed actions, and Current Holder applies confirmed transfers in order.\n• A mention can identify an item without proving use or ownership. Only confirmed item-used events reach the consequence guidance.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The public sample holder map prepares automatically with Rowan holding the signal lantern. It is demonstration state for this independent practice copy.\n• Choose the intended Rowan and Iris characters by name and keep the holder map consistent with that choice. Keep the item ID signal-lantern.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Start with the confirmation process from lesson 19, now placed before the reply. Send: “Rowan uses the signal lantern to flash a signal toward the harbor.”\n2. Compare the player source with Item Use Trigger’s candidates and the confirmed collection. Check that the use is an actual action with an exact quote, rather than an intention.\n3. Inspect Current Holder.events. The use should carry Rowan’s holderId from the accepted holder map.\n4. Follow the item-used filter into Compose and Generate Reply.guidance. The reply should respond to the supplied use without inventing a second use or choosing what the player does next.\n5. Test a transfer with: “Rowan hands the signal lantern to Iris. Iris uses it to flash a signal.” Check that Iris receives the use consequence. This recipe reads ownership and resolves this message; it does not save a changed holder map.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCurrent Holder → events: Current Holder.events attaches the holder at each confirmed use, including transfers that came earlier in the player message.\n\nTry this:\nCompare “Rowan uses the signal lantern. Rowan hands it to Iris.” with the transfer-then-use message.\nThe earlier use belongs to Rowan. Reversing the action order changes who holds the item when it is used.\n\nIf something is different:\nThe message says only “Rowan talks about the signal lantern.”: No item-use consequence is supplied.\nA proposed transfer is not confirmed.: It cannot establish a new holder. Inspect rejected or unresolved evidence before trusting the resulting use.\nThe accepted holder data is missing or invalid.: Resolve that setup error instead of assuming the person mentioning the item owns it.\n\nModel requests: Up to four extra model requests: one Item Use Trigger extraction and up to three Decision checks. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -7616,7 +7630,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "y": 0,
               "w": 900,
               "h": 1007,
-              "content": "Make the next reply react to an item that was actually used. You will check actions in the player message, follow transfers in their written order and attach the consequence to the holder at the moment of use.\n\nWhat you'll learn:\n• Player Event Source reads the new player message before generation; lesson 19 instead inspected the generated reply.\n• Item Use Trigger suggests uses and transfers. Decision confirms completed actions, and Current Holder applies confirmed transfers in order.\n• A mention can identify an item without proving use or ownership. Only confirmed item-used events reach the consequence guidance.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, set Logical target ID to accepted-item-holders, Format to JSON and Visibility to Public. Paste fixtures/accepted-item-holders.json into Initial template and choose Save authorization. Its signal-lantern entry must name the accepted holder.\n• Load Rowan and Iris, then replace both example avatar IDs throughout the graph and holder file with their actual IDs. Keep the item ID signal-lantern.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Start with the confirmation process from lesson 19, now placed before the reply. Send: “Rowan uses the signal lantern to flash a signal toward the harbor.”\n2. Compare the player source with Item Use Trigger’s candidates and the confirmed collection. Check that the use is an actual action with an exact quote, rather than an intention.\n3. Inspect Current Holder.events. The use should carry Rowan’s holderId from the accepted holder map.\n4. Follow the item-used filter into Compose and Generate Reply.guidance. The reply should respond to the supplied use without inventing a second use or choosing what the player does next.\n5. Test a transfer with: “Rowan hands the signal lantern to Iris. Iris uses it to flash a signal.” Check that Iris receives the use consequence. This recipe reads ownership and resolves this message; it does not save a changed holder map.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCurrent Holder → events: Current Holder.events attaches the holder at each confirmed use, including transfers that came earlier in the player message.\n\nTry this:\nCompare “Rowan uses the signal lantern. Rowan hands it to Iris.” with the transfer-then-use message.\nThe earlier use belongs to Rowan. Reversing the action order changes who holds the item when it is used.\n\nIf something is different:\nThe message says only “Rowan talks about the signal lantern.”: No item-use consequence is supplied.\nA proposed transfer is not confirmed.: It cannot establish a new holder. Inspect rejected or unresolved evidence before trusting the resulting use.\nThe accepted holder data is missing or invalid.: Resolve that setup error instead of assuming the person mentioning the item owns it.\n\nModel requests: Up to four extra model requests: one Item Use Trigger extraction and up to three Decision checks. There is also one ordinary SillyTavern reply.",
+              "content": "Make the next reply react to an item that was actually used. You will check actions in the player message, follow transfers in their written order and attach the consequence to the holder at the moment of use.\n\nWhat you'll learn:\n• Player Event Source reads the new player message before generation; lesson 19 instead inspected the generated reply.\n• Item Use Trigger suggests uses and transfers. Decision confirms completed actions, and Current Holder applies confirmed transfers in order.\n• A mention can identify an item without proving use or ownership. Only confirmed item-used events reach the consequence guidance.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The public sample holder map prepares automatically with Rowan holding the signal lantern. It is demonstration state for this independent practice copy.\n• Choose the intended Rowan and Iris characters by name and keep the holder map consistent with that choice. Keep the item ID signal-lantern.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Start with the confirmation process from lesson 19, now placed before the reply. Send: “Rowan uses the signal lantern to flash a signal toward the harbor.”\n2. Compare the player source with Item Use Trigger’s candidates and the confirmed collection. Check that the use is an actual action with an exact quote, rather than an intention.\n3. Inspect Current Holder.events. The use should carry Rowan’s holderId from the accepted holder map.\n4. Follow the item-used filter into Compose and Generate Reply.guidance. The reply should respond to the supplied use without inventing a second use or choosing what the player does next.\n5. Test a transfer with: “Rowan hands the signal lantern to Iris. Iris uses it to flash a signal.” Check that Iris receives the use consequence. This recipe reads ownership and resolves this message; it does not save a changed holder map.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCurrent Holder → events: Current Holder.events attaches the holder at each confirmed use, including transfers that came earlier in the player message.\n\nTry this:\nCompare “Rowan uses the signal lantern. Rowan hands it to Iris.” with the transfer-then-use message.\nThe earlier use belongs to Rowan. Reversing the action order changes who holds the item when it is used.\n\nIf something is different:\nThe message says only “Rowan talks about the signal lantern.”: No item-use consequence is supplied.\nA proposed transfer is not confirmed.: It cannot establish a new holder. Inspect rejected or unresolved evidence before trusting the resulting use.\nThe accepted holder data is missing or invalid.: Resolve that setup error instead of assuming the person mentioning the item owns it.\n\nModel requests: Up to four extra model requests: one Item Use Trigger extraction and up to three Decision checks. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -7996,8 +8010,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Select the loaded Rowan actor. Replace character:rowan.png with Rowan’s actual avatar ID in the presence check and Character Direction.",
-        "Establish a recent scene where Rowan visibly participates, such as Rowan and Iris standing beside the lighthouse door. No workflow data file is needed."
+        "Select the intended Rowan character by name for the presence check and Character Direction.",
+        "Establish a recent scene where Rowan visibly participates, such as Rowan and Iris standing beside the lighthouse door. No workflow data file is needed.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Lesson 18 used memories to shape portrayal. Here, remove that mental overhead and study only participation plus one explicit character instruction.",
@@ -8045,7 +8060,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-21",
           "name": "21. Give one present character their own direction",
-          "description": "Give one participating character a private portrayal instruction. You will verify that Rowan is actually in the scene, then see how a separate Character Direction prompt influences Rowan’s next reply.\n\nWhat you'll learn:\n• Scene Presence checks current participation using scene evidence. A name in a memory or character card is not enough.\n• Character Direction.systemPrompt is the instruction you author for this actor; it is separate from the ordinary reply prompt.\n• The resulting private Guidance can shape Rowan’s portrayal while leaving player actions and other actors’ private feelings open.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the loaded Rowan actor. Replace character:rowan.png with Rowan’s actual avatar ID in the presence check and Character Direction.\n• Establish a recent scene where Rowan visibly participates, such as Rowan and Iris standing beside the lighthouse door. No workflow data file is needed.\n\nSteps:\n1. Lesson 18 used memories to shape portrayal. Here, remove that mental overhead and study only participation plus one explicit character instruction.\n2. Read Character Direction.systemPrompt. The default asks for patient attention to evidence and restrained humor. Identify those traits in a scene where Rowan can express them.\n3. Send: “Iris points to fresh scratches on the lighthouse door and asks Rowan what they suggest.” Read Scene Context.out and the cast answer, then find the participation quote in Scene Presence.out.\n4. Inspect Character Direction.out before comparing Rowan’s generated response with the instruction. Check both the participation status and the supplied direction, rather than judging only the prose.\n5. Create a later scene that clearly places Rowan elsewhere while Iris examines the door. A mention such as “Iris remembers Rowan’s advice” should not make Rowan a participant.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCharacter Direction → out: Character Direction.out contributes private Guidance only when the supplied scene evidence verifies Rowan’s current participation.\n\nTry this:\nEdit systemPrompt to ask Rowan for careful, concise observations and one dry joke. Repeat the same participating scene.\nThe supplied portrayal direction changes for Rowan. Compare the direction input as well as the prose; exact wording is still generated by the model.\n\nIf something is different:\nScene Presence reports absent.: Character Direction skips its model request; the ordinary reply can continue.\nScene Presence reports unresolved.: The private direction stops for clarification of the evidence. A name mention does not resolve participation.\nThe selected actor and configured actorId do not match.: Correct the identity setup before expecting private character access.\n\nModel requests: Up to two extra model requests: one participation check and one Character Direction request if Rowan is present. There is also one ordinary SillyTavern reply.",
+          "description": "Give one participating character a private portrayal instruction. You will verify that Rowan is actually in the scene, then see how a separate Character Direction prompt influences Rowan’s next reply.\n\nWhat you'll learn:\n• Scene Presence checks current participation using scene evidence. A name in a memory or character card is not enough.\n• Character Direction.systemPrompt is the instruction you author for this actor; it is separate from the ordinary reply prompt.\n• The resulting private Guidance can shape Rowan’s portrayal while leaving player actions and other actors’ private feelings open.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan character by name for the presence check and Character Direction.\n• Establish a recent scene where Rowan visibly participates, such as Rowan and Iris standing beside the lighthouse door. No workflow data file is needed.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Lesson 18 used memories to shape portrayal. Here, remove that mental overhead and study only participation plus one explicit character instruction.\n2. Read Character Direction.systemPrompt. The default asks for patient attention to evidence and restrained humor. Identify those traits in a scene where Rowan can express them.\n3. Send: “Iris points to fresh scratches on the lighthouse door and asks Rowan what they suggest.” Read Scene Context.out and the cast answer, then find the participation quote in Scene Presence.out.\n4. Inspect Character Direction.out before comparing Rowan’s generated response with the instruction. Check both the participation status and the supplied direction, rather than judging only the prose.\n5. Create a later scene that clearly places Rowan elsewhere while Iris examines the door. A mention such as “Iris remembers Rowan’s advice” should not make Rowan a participant.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCharacter Direction → out: Character Direction.out contributes private Guidance only when the supplied scene evidence verifies Rowan’s current participation.\n\nTry this:\nEdit systemPrompt to ask Rowan for careful, concise observations and one dry joke. Repeat the same participating scene.\nThe supplied portrayal direction changes for Rowan. Compare the direction input as well as the prose; exact wording is still generated by the model.\n\nIf something is different:\nScene Presence reports absent.: Character Direction skips its model request; the ordinary reply can continue.\nScene Presence reports unresolved.: The private direction stops for clarification of the evidence. A name mention does not resolve participation.\nThe selected actor and configured actorId do not match.: Correct the identity setup before expecting private character access.\n\nModel requests: Up to two extra model requests: one participation check and one Character Direction request if Rowan is present. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -8058,7 +8073,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "On Send",
               "enabled": true,
               "x": 1300,
-              "y": 1069,
+              "y": 1104,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -8074,7 +8089,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Generate Reply · SillyTavern",
               "enabled": true,
               "x": 1700,
-              "y": 1117,
+              "y": 1152,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -8094,7 +8109,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Review / Publish",
               "enabled": true,
               "x": 2100,
-              "y": 1117,
+              "y": 1152,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -8109,7 +8124,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Scene Context",
               "enabled": true,
               "x": 100,
-              "y": 1429,
+              "y": 1464,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -8128,7 +8143,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 100,
-              "y": 1213,
+              "y": 1248,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -8146,7 +8161,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Model Call",
               "enabled": true,
               "x": 500,
-              "y": 1285,
+              "y": 1320,
               "w": 300,
               "h": 168,
               "profileId": "lattice:active-sillytavern",
@@ -8157,7 +8172,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Interpret genuine scene participation from the unchanged supplied source; copy its IDs and evidence exactly.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "cast-presence-0": {
               "id": "cast-presence-0",
@@ -8167,7 +8183,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Scene Presence",
               "enabled": true,
               "x": 900,
-              "y": 1261,
+              "y": 1296,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -8185,7 +8201,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Character Direction",
               "enabled": true,
               "x": 1300,
-              "y": 1273,
+              "y": 1308,
               "w": 300,
               "h": 140,
               "profileId": "lattice:active-sillytavern",
@@ -8204,8 +8220,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "x": 100,
               "y": 0,
               "w": 900,
-              "h": 989,
-              "content": "Give one participating character a private portrayal instruction. You will verify that Rowan is actually in the scene, then see how a separate Character Direction prompt influences Rowan’s next reply.\n\nWhat you'll learn:\n• Scene Presence checks current participation using scene evidence. A name in a memory or character card is not enough.\n• Character Direction.systemPrompt is the instruction you author for this actor; it is separate from the ordinary reply prompt.\n• The resulting private Guidance can shape Rowan’s portrayal while leaving player actions and other actors’ private feelings open.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the loaded Rowan actor. Replace character:rowan.png with Rowan’s actual avatar ID in the presence check and Character Direction.\n• Establish a recent scene where Rowan visibly participates, such as Rowan and Iris standing beside the lighthouse door. No workflow data file is needed.\n\nSteps:\n1. Lesson 18 used memories to shape portrayal. Here, remove that mental overhead and study only participation plus one explicit character instruction.\n2. Read Character Direction.systemPrompt. The default asks for patient attention to evidence and restrained humor. Identify those traits in a scene where Rowan can express them.\n3. Send: “Iris points to fresh scratches on the lighthouse door and asks Rowan what they suggest.” Read Scene Context.out and the cast answer, then find the participation quote in Scene Presence.out.\n4. Inspect Character Direction.out before comparing Rowan’s generated response with the instruction. Check both the participation status and the supplied direction, rather than judging only the prose.\n5. Create a later scene that clearly places Rowan elsewhere while Iris examines the door. A mention such as “Iris remembers Rowan’s advice” should not make Rowan a participant.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCharacter Direction → out: Character Direction.out contributes private Guidance only when the supplied scene evidence verifies Rowan’s current participation.\n\nTry this:\nEdit systemPrompt to ask Rowan for careful, concise observations and one dry joke. Repeat the same participating scene.\nThe supplied portrayal direction changes for Rowan. Compare the direction input as well as the prose; exact wording is still generated by the model.\n\nIf something is different:\nScene Presence reports absent.: Character Direction skips its model request; the ordinary reply can continue.\nScene Presence reports unresolved.: The private direction stops for clarification of the evidence. A name mention does not resolve participation.\nThe selected actor and configured actorId do not match.: Correct the identity setup before expecting private character access.\n\nModel requests: Up to two extra model requests: one participation check and one Character Direction request if Rowan is present. There is also one ordinary SillyTavern reply.",
+              "h": 1024,
+              "content": "Give one participating character a private portrayal instruction. You will verify that Rowan is actually in the scene, then see how a separate Character Direction prompt influences Rowan’s next reply.\n\nWhat you'll learn:\n• Scene Presence checks current participation using scene evidence. A name in a memory or character card is not enough.\n• Character Direction.systemPrompt is the instruction you author for this actor; it is separate from the ordinary reply prompt.\n• The resulting private Guidance can shape Rowan’s portrayal while leaving player actions and other actors’ private feelings open.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan character by name for the presence check and Character Direction.\n• Establish a recent scene where Rowan visibly participates, such as Rowan and Iris standing beside the lighthouse door. No workflow data file is needed.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Lesson 18 used memories to shape portrayal. Here, remove that mental overhead and study only participation plus one explicit character instruction.\n2. Read Character Direction.systemPrompt. The default asks for patient attention to evidence and restrained humor. Identify those traits in a scene where Rowan can express them.\n3. Send: “Iris points to fresh scratches on the lighthouse door and asks Rowan what they suggest.” Read Scene Context.out and the cast answer, then find the participation quote in Scene Presence.out.\n4. Inspect Character Direction.out before comparing Rowan’s generated response with the instruction. Check both the participation status and the supplied direction, rather than judging only the prose.\n5. Create a later scene that clearly places Rowan elsewhere while Iris examines the door. A mention such as “Iris remembers Rowan’s advice” should not make Rowan a participant.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nCharacter Direction → out: Character Direction.out contributes private Guidance only when the supplied scene evidence verifies Rowan’s current participation.\n\nTry this:\nEdit systemPrompt to ask Rowan for careful, concise observations and one dry joke. Repeat the same participating scene.\nThe supplied portrayal direction changes for Rowan. Compare the direction input as well as the prose; exact wording is still generated by the model.\n\nIf something is different:\nScene Presence reports absent.: Character Direction skips its model request; the ordinary reply can continue.\nScene Presence reports unresolved.: The private direction stops for clarification of the evidence. A name mention does not resolve participation.\nThe selected actor and configured actorId do not match.: Correct the identity setup before expecting private character access.\n\nModel requests: Up to two extra model requests: one participation check and one Character Direction request if Rowan is present. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -8314,9 +8330,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Select loaded Rowan and replace both example actor IDs consistently. Have an accepted native Rowan episode associated with the signal lantern, using the native memory work from lesson 18.",
-        "In Workflow › Configure › Workflow Data, authorize JSON targets accepted-item-holders and rowan-item-memories using their fixtures as Initial template. Choose Public for the holder map and Actor private with Rowan’s Actor ID for the empty reminder array; choose Save authorization. The map must establish Rowan’s ownership.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "Select the intended Rowan and Iris characters by name. Have an accepted native Rowan episode associated with the signal lantern, using the native memory work from lesson 18.",
+        "The public sample holder map and empty private reminder file prepare automatically. Choose the intended Rowan character by name for the private file. Its holder map must establish that same character’s ownership.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Combine the holder check from lesson 20 and the participation check from lesson 21. Send: “Rowan holds the signal lantern beside the lighthouse.” Confirm that the generated reply itself mentions signal lantern or lantern.",
@@ -8367,7 +8383,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-22",
           "name": "22. Let an item remind its actual holder",
-          "description": "Let a mentioned item remind its actual holder of an existing memory. You will connect item ownership and scene participation to a private recall, then stage a separate output record for Rowan.\n\nWhat you'll learn:\n• Item Mention Trigger watches the newly generated reply after generation. A mention starts a reminder, not an item-use consequence.\n• Prompted Memory selects from authorized native actor episodes. Its default mode recall and allowCreate false prevent invention; a checked model no-match skips the reminder and save path.\n• The output is a private remembered-event record for later use; this workflow does not feed that reminder back into the reply just generated.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select loaded Rowan and replace both example actor IDs consistently. Have an accepted native Rowan episode associated with the signal lantern, using the native memory work from lesson 18.\n• In Workflow › Configure › Workflow Data, authorize JSON targets accepted-item-holders and rowan-item-memories using their fixtures as Initial template. Choose Public for the holder map and Actor private with Rowan’s Actor ID for the empty reminder array; choose Save authorization. The map must establish Rowan’s ownership.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine the holder check from lesson 20 and the participation check from lesson 21. Send: “Rowan holds the signal lantern beside the lighthouse.” Confirm that the generated reply itself mentions signal lantern or lantern.\n2. Follow the mention into Current Holder, then the Rowan filter. The mentioned item must belong to Rowan for this Rowan-only reminder path to continue.\n3. Inspect the post-generation Scene Presence result and Prompted Memory output. The recalled memory should identify an existing permitted episode, with its text kept private.\n4. Inspect Write to File.receipt. Apply should add one event-linked record to rowan-item-memories; Reject should leave the array unchanged. Check the file rather than expecting extra prose in the same reply.\n5. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nWrite to File → receipt: Write to File.receipt proposes a Rowan-private reminder record backed by the exact item mention. It is pending until Apply.\n\nTry this:\nWith explicit authoring permission, change Prompted Memory mode to recall-or-create and allowCreate to true in this disposable story.\nIf no existing memory fits, a newly invented recollection may be proposed and labelled accordingly. Saving the output record does not silently add a native episode.\n\nIf something is different:\nNo matching mention, Rowan is absent, or another actor holds the item.: No Rowan reminder record is staged.\nThe model returns an explicit no-match result for the authorized memories.: Prompted Memory.out and the connected save path skip, so the ordinary reply remains reviewable and no reminder is staged.\nNo authorized native memories are available in default recall mode.: Recall stays unresolved before making a request. Changing mode alone does not grant creation permission.\nThe reply is rejected.: The private output file remains unchanged.\n\nModel requests: Up to two extra model requests: the post-generation participation check and Prompted Memory when its prerequisites match. There is also one ordinary SillyTavern reply.",
+          "description": "Let a mentioned item remind its actual holder of an existing memory. You will connect item ownership and scene participation to a private recall, then stage a separate output record for Rowan.\n\nWhat you'll learn:\n• Item Mention Trigger watches the newly generated reply after generation. A mention starts a reminder, not an item-use consequence.\n• Prompted Memory selects from authorized native actor episodes. Its default mode recall and allowCreate false prevent invention; a checked model no-match skips the reminder and save path.\n• The output is a private remembered-event record for later use; this workflow does not feed that reminder back into the reply just generated.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan and Iris characters by name. Have an accepted native Rowan episode associated with the signal lantern, using the native memory work from lesson 18.\n• The public sample holder map and empty private reminder file prepare automatically. Choose the intended Rowan character by name for the private file. Its holder map must establish that same character’s ownership.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine the holder check from lesson 20 and the participation check from lesson 21. Send: “Rowan holds the signal lantern beside the lighthouse.” Confirm that the generated reply itself mentions signal lantern or lantern.\n2. Follow the mention into Current Holder, then the Rowan filter. The mentioned item must belong to Rowan for this Rowan-only reminder path to continue.\n3. Inspect the post-generation Scene Presence result and Prompted Memory output. The recalled memory should identify an existing permitted episode, with its text kept private.\n4. Inspect Write to File.receipt. Apply should add one event-linked record to rowan-item-memories; Reject should leave the array unchanged. Check the file rather than expecting extra prose in the same reply.\n5. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nWrite to File → receipt: Write to File.receipt proposes a Rowan-private reminder record backed by the exact item mention. It is pending until Apply.\n\nTry this:\nWith explicit authoring permission, change Prompted Memory mode to recall-or-create and allowCreate to true in this disposable story.\nIf no existing memory fits, a newly invented recollection may be proposed and labelled accordingly. Saving the output record does not silently add a native episode.\n\nIf something is different:\nNo matching mention, Rowan is absent, or another actor holds the item.: No Rowan reminder record is staged.\nThe model returns an explicit no-match result for the authorized memories.: Prompted Memory.out and the connected save path skip, so the ordinary reply remains reviewable and no reminder is staged.\nNo authorized native memories are available in default recall mode.: Recall stays unresolved before making a request. Changing mode alone does not grant creation permission.\nThe reply is rejected.: The private output file remains unchanged.\n\nModel requests: Up to two extra model requests: the post-generation participation check and Prompted Memory when its prerequisites match. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -8380,7 +8396,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "On Send",
               "enabled": true,
               "x": 100,
-              "y": 1169,
+              "y": 1152,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -8396,7 +8412,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Generate Reply · SillyTavern",
               "enabled": true,
               "x": 500,
-              "y": 1193,
+              "y": 1176,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -8416,7 +8432,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Review / Publish",
               "enabled": true,
               "x": 900,
-              "y": 1145,
+              "y": 1128,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -8432,7 +8448,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Select Fields",
               "enabled": true,
               "x": 900,
-              "y": 2112,
+              "y": 2095,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8479,7 +8495,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Draft Event Source",
               "enabled": true,
               "x": 1300,
-              "y": 2184,
+              "y": 2167,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8497,7 +8513,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 900,
-              "y": 1704,
+              "y": 1687,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8516,7 +8532,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "JSON Decode",
               "enabled": true,
               "x": 1300,
-              "y": 1716,
+              "y": 1699,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8536,7 +8552,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Item Mention Trigger",
               "enabled": true,
               "x": 1700,
-              "y": 2232,
+              "y": 2215,
               "w": 300,
               "h": 168,
               "inGroup": "processing-draft-scope",
@@ -8563,7 +8579,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Read File",
               "enabled": true,
               "x": 1300,
-              "y": 1920,
+              "y": 1903,
               "w": 300,
               "h": 196,
               "inGroup": "processing-draft-scope",
@@ -8586,7 +8602,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "JSON Decode",
               "enabled": true,
               "x": 1700,
-              "y": 1800,
+              "y": 1783,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8606,7 +8622,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Current Holder",
               "enabled": true,
               "x": 2100,
-              "y": 1776,
+              "y": 1759,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8624,7 +8640,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Collection",
               "enabled": true,
               "x": 2500,
-              "y": 1632,
+              "y": 1615,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8655,7 +8671,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Collection",
               "enabled": true,
               "x": 2900,
-              "y": 1800,
+              "y": 1783,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8684,7 +8700,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Condition",
               "enabled": true,
               "x": 3300,
-              "y": 1792,
+              "y": 1775,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8705,7 +8721,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Branch",
               "enabled": true,
               "x": 3700,
-              "y": 1740,
+              "y": 1723,
               "w": 300,
               "h": 168,
               "inGroup": "processing-draft-scope",
@@ -8724,7 +8740,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Collection",
               "enabled": true,
               "x": 4100,
-              "y": 1800,
+              "y": 1783,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8755,7 +8771,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Select Fields",
               "enabled": true,
               "x": 4500,
-              "y": 1848,
+              "y": 1831,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8903,7 +8919,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 2900,
-              "y": 1512,
+              "y": 1495,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8922,7 +8938,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Model Call",
               "enabled": true,
               "x": 3300,
-              "y": 1560,
+              "y": 1543,
               "w": 300,
               "h": 168,
               "inGroup": "processing-draft-scope",
@@ -8934,7 +8950,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Interpret genuine scene participation from the unchanged supplied source; copy its IDs and evidence exactly.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "cast-presence-0": {
               "id": "cast-presence-0",
@@ -8944,7 +8961,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Scene Presence",
               "enabled": true,
               "x": 3700,
-              "y": 1536,
+              "y": 1519,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8963,7 +8980,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Condition",
               "enabled": true,
               "x": 4100,
-              "y": 1584,
+              "y": 1567,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -8986,7 +9003,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Branch",
               "enabled": true,
               "x": 4500,
-              "y": 1488,
+              "y": 1471,
               "w": 300,
               "h": 168,
               "inGroup": "processing-draft-scope",
@@ -9005,7 +9022,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Prompted Memory",
               "enabled": true,
               "x": 4900,
-              "y": 1920,
+              "y": 1903,
               "w": 300,
               "h": 140,
               "inGroup": "processing-draft-scope",
@@ -9028,7 +9045,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Read File",
               "enabled": true,
               "x": 4900,
-              "y": 2184,
+              "y": 2167,
               "w": 300,
               "h": 196,
               "inGroup": "processing-draft-scope",
@@ -9051,7 +9068,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Write to File",
               "enabled": true,
               "x": 5300,
-              "y": 1776,
+              "y": 1759,
               "w": 300,
               "h": 196,
               "inGroup": "processing-draft-scope",
@@ -9071,6 +9088,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "separator": "\n",
               "emptyPolicy": "omit",
               "trailingSeparator": false,
+              "destinationMode": "connected",
+              "targetId": "",
               "actorScope": "presence",
               "actorId": "character:rowan.png"
             },
@@ -9082,8 +9101,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "x": 100,
               "y": 0,
               "w": 900,
-              "h": 1041,
-              "content": "Let a mentioned item remind its actual holder of an existing memory. You will connect item ownership and scene participation to a private recall, then stage a separate output record for Rowan.\n\nWhat you'll learn:\n• Item Mention Trigger watches the newly generated reply after generation. A mention starts a reminder, not an item-use consequence.\n• Prompted Memory selects from authorized native actor episodes. Its default mode recall and allowCreate false prevent invention; a checked model no-match skips the reminder and save path.\n• The output is a private remembered-event record for later use; this workflow does not feed that reminder back into the reply just generated.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select loaded Rowan and replace both example actor IDs consistently. Have an accepted native Rowan episode associated with the signal lantern, using the native memory work from lesson 18.\n• In Workflow › Configure › Workflow Data, authorize JSON targets accepted-item-holders and rowan-item-memories using their fixtures as Initial template. Choose Public for the holder map and Actor private with Rowan’s Actor ID for the empty reminder array; choose Save authorization. The map must establish Rowan’s ownership.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine the holder check from lesson 20 and the participation check from lesson 21. Send: “Rowan holds the signal lantern beside the lighthouse.” Confirm that the generated reply itself mentions signal lantern or lantern.\n2. Follow the mention into Current Holder, then the Rowan filter. The mentioned item must belong to Rowan for this Rowan-only reminder path to continue.\n3. Inspect the post-generation Scene Presence result and Prompted Memory output. The recalled memory should identify an existing permitted episode, with its text kept private.\n4. Inspect Write to File.receipt. Apply should add one event-linked record to rowan-item-memories; Reject should leave the array unchanged. Check the file rather than expecting extra prose in the same reply.\n5. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nWrite to File → receipt: Write to File.receipt proposes a Rowan-private reminder record backed by the exact item mention. It is pending until Apply.\n\nTry this:\nWith explicit authoring permission, change Prompted Memory mode to recall-or-create and allowCreate to true in this disposable story.\nIf no existing memory fits, a newly invented recollection may be proposed and labelled accordingly. Saving the output record does not silently add a native episode.\n\nIf something is different:\nNo matching mention, Rowan is absent, or another actor holds the item.: No Rowan reminder record is staged.\nThe model returns an explicit no-match result for the authorized memories.: Prompted Memory.out and the connected save path skip, so the ordinary reply remains reviewable and no reminder is staged.\nNo authorized native memories are available in default recall mode.: Recall stays unresolved before making a request. Changing mode alone does not grant creation permission.\nThe reply is rejected.: The private output file remains unchanged.\n\nModel requests: Up to two extra model requests: the post-generation participation check and Prompted Memory when its prerequisites match. There is also one ordinary SillyTavern reply.",
+              "h": 1024,
+              "content": "Let a mentioned item remind its actual holder of an existing memory. You will connect item ownership and scene participation to a private recall, then stage a separate output record for Rowan.\n\nWhat you'll learn:\n• Item Mention Trigger watches the newly generated reply after generation. A mention starts a reminder, not an item-use consequence.\n• Prompted Memory selects from authorized native actor episodes. Its default mode recall and allowCreate false prevent invention; a checked model no-match skips the reminder and save path.\n• The output is a private remembered-event record for later use; this workflow does not feed that reminder back into the reply just generated.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan and Iris characters by name. Have an accepted native Rowan episode associated with the signal lantern, using the native memory work from lesson 18.\n• The public sample holder map and empty private reminder file prepare automatically. Choose the intended Rowan character by name for the private file. Its holder map must establish that same character’s ownership.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine the holder check from lesson 20 and the participation check from lesson 21. Send: “Rowan holds the signal lantern beside the lighthouse.” Confirm that the generated reply itself mentions signal lantern or lantern.\n2. Follow the mention into Current Holder, then the Rowan filter. The mentioned item must belong to Rowan for this Rowan-only reminder path to continue.\n3. Inspect the post-generation Scene Presence result and Prompted Memory output. The recalled memory should identify an existing permitted episode, with its text kept private.\n4. Inspect Write to File.receipt. Apply should add one event-linked record to rowan-item-memories; Reject should leave the array unchanged. Check the file rather than expecting extra prose in the same reply.\n5. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nWrite to File → receipt: Write to File.receipt proposes a Rowan-private reminder record backed by the exact item mention. It is pending until Apply.\n\nTry this:\nWith explicit authoring permission, change Prompted Memory mode to recall-or-create and allowCreate to true in this disposable story.\nIf no existing memory fits, a newly invented recollection may be proposed and labelled accordingly. Saving the output record does not silently add a native episode.\n\nIf something is different:\nNo matching mention, Rowan is absent, or another actor holds the item.: No Rowan reminder record is staged.\nThe model returns an explicit no-match result for the authorized memories.: Prompted Memory.out and the connected save path skip, so the ordinary reply remains reviewable and no reminder is staged.\nNo authorized native memories are available in default recall mode.: Recall stays unresolved before making a request. Changing mode alone does not grant creation permission.\nThe reply is rejected.: The private output file remains unchanged.\n\nModel requests: Up to two extra model requests: the post-generation participation check and Prompted Memory when its prerequisites match. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -9344,7 +9363,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Update saved story data",
               "description": "These connected boxes work together. Follow their wires to see how each result is used.",
               "x": 875,
-              "y": 1438,
+              "y": 1421,
               "w": 4750,
               "h": 987,
               "color": "#57416e",
@@ -9424,9 +9443,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "In Workflow › Configure › Workflow Data, set Logical target ID to story-clock, Format JSON and Visibility Public. Paste fixtures/story-clock.json into Initial template and choose Save authorization. Keep calendarId campaign-days, dayLengthMinutes 1440 and a positive revision.",
-        "The fixture starts at absoluteMinute 780, or 13:00 on day zero. Set up the live authorized clock; importing JSON alone does not create the host’s clock access.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "The sample clock prepares automatically with calendar campaign-days, 1440-minute days and a positive revision. Its internal identity belongs to this independent copy.",
+        "The sample starts at minute 780, or 13:00 on Day 1. Preparing it does not advance time or write a real story file.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Use lesson 17’s distinction between a proposed change and a saved change, now for time. Note the starting absoluteMinute and revision in the clock’s initial template.",
@@ -9446,7 +9465,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       "experiments": [
         {
           "change": "Use another practice chat with a fresh fixture clock, and edit the authored duration’s minutes from 60 to 30 for an agreed shorter journey.",
-          "expect": "The proposed clock becomes absoluteMinute 810, or 13:30. Sending more messages does not itself advance time. Editing Initial template does not reset a clock that has already been saved."
+          "expect": "The proposed clock becomes absoluteMinute 810, or 13:30. Sending more messages does not itself advance time. Reopening the same copy does not reset accepted time; open another independent copy for a fresh exercise."
         }
       ],
       "cases": [
@@ -9474,7 +9493,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-23",
           "name": "23. Advance the story clock when the scene is accepted",
-          "description": "Advance story time by an agreed duration and save that advance only with the accepted scene. You will compare the current clock with a proposed clock and test that rejection preserves the original time.\n\nWhat you'll learn:\n• Story Clock reads accepted time in story minutes, independent of message count and time spent at the computer.\n• Advance Time projects a forward duration. A projection is the proposed result, not a saved clock change.\n• Clock Commit stages that result for Apply and protects against saving the same accepted advance twice.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, set Logical target ID to story-clock, Format JSON and Visibility Public. Paste fixtures/story-clock.json into Initial template and choose Save authorization. Keep calendarId campaign-days, dayLengthMinutes 1440 and a positive revision.\n• The fixture starts at absoluteMinute 780, or 13:00 on day zero. Set up the live authorized clock; importing JSON alone does not create the host’s clock access.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Use lesson 17’s distinction between a proposed change and a saved change, now for time. Note the starting absoluteMinute and revision in the clock’s initial template.\n2. Inspect Text · authored input feeding duration. It declares minutes 60 with the agreed-hour-of-travel reason. Agree on that hour in the test story; the workflow does not infer it from your wording.\n3. Send: “Rowan and Iris spend the agreed hour traveling along the harbor road.” Inspect Advance Time.clock and report: from the fixture, the proposed destination is absoluteMinute 840, or 14:00.\n4. Check that no remainder is left by this simple duration. The guidance tells the reply to continue after the agreed hour, without deciding the player’s next action.\n5. Apply and reread the live clock: it should now show 840 and the next revision. In another practice chat with a fresh clock initialized from the fixture, Reject and verify that time stays at 780.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nClock Commit → receipt: Clock Commit.receipt proposes the sixty-minute advance. The live clock changes once on Apply and stays at its starting time on Reject.\n\nTry this:\nUse another practice chat with a fresh fixture clock, and edit the authored duration’s minutes from 60 to 30 for an agreed shorter journey.\nThe proposed clock becomes absoluteMinute 810, or 13:30. Sending more messages does not itself advance time. Editing Initial template does not reset a clock that has already been saved.\n\nIf something is different:\nThe scene is rejected or stopped.: The accepted clock keeps its original minute and revision.\nThe authorized clock or required clock fields are missing.: The run reports a setup error rather than choosing a time.\nThe same accepted review is applied again.: The clock does not advance for a second copy of that review.\n\nModel requests: No extra model requests. Clock reading, projection and commit are deterministic; the workflow generates one ordinary SillyTavern reply.",
+          "description": "Advance story time by an agreed duration and save that advance only with the accepted scene. You will compare the current clock with a proposed clock and test that rejection preserves the original time.\n\nWhat you'll learn:\n• Story Clock reads accepted time in story minutes, independent of message count and time spent at the computer.\n• Advance Time projects a forward duration. A projection is the proposed result, not a saved clock change.\n• Clock Commit stages that result for Apply and protects against saving the same accepted advance twice.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The sample clock prepares automatically with calendar campaign-days, 1440-minute days and a positive revision. Its internal identity belongs to this independent copy.\n• The sample starts at minute 780, or 13:00 on Day 1. Preparing it does not advance time or write a real story file.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Use lesson 17’s distinction between a proposed change and a saved change, now for time. Note the starting absoluteMinute and revision in the clock’s initial template.\n2. Inspect Text · authored input feeding duration. It declares minutes 60 with the agreed-hour-of-travel reason. Agree on that hour in the test story; the workflow does not infer it from your wording.\n3. Send: “Rowan and Iris spend the agreed hour traveling along the harbor road.” Inspect Advance Time.clock and report: from the fixture, the proposed destination is absoluteMinute 840, or 14:00.\n4. Check that no remainder is left by this simple duration. The guidance tells the reply to continue after the agreed hour, without deciding the player’s next action.\n5. Apply and reread the live clock: it should now show 840 and the next revision. In another practice chat with a fresh clock initialized from the fixture, Reject and verify that time stays at 780.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nClock Commit → receipt: Clock Commit.receipt proposes the sixty-minute advance. The live clock changes once on Apply and stays at its starting time on Reject.\n\nTry this:\nUse another practice chat with a fresh fixture clock, and edit the authored duration’s minutes from 60 to 30 for an agreed shorter journey.\nThe proposed clock becomes absoluteMinute 810, or 13:30. Sending more messages does not itself advance time. Reopening the same copy does not reset accepted time; open another independent copy for a fresh exercise.\n\nIf something is different:\nThe scene is rejected or stopped.: The accepted clock keeps its original minute and revision.\nThe authorized clock or required clock fields are missing.: The run reports a setup error rather than choosing a time.\nThe same accepted review is applied again.: The clock does not advance for a second copy of that review.\n\nModel requests: No extra model requests. Clock reading, projection and commit are deterministic; the workflow generates one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -9487,7 +9506,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "On Send",
               "enabled": true,
               "x": 1300,
-              "y": 1082,
+              "y": 1065,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -9503,7 +9522,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Generate Reply · SillyTavern",
               "enabled": true,
               "x": 1700,
-              "y": 1106,
+              "y": 1089,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -9523,7 +9542,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Review / Publish",
               "enabled": true,
               "x": 2100,
-              "y": 1082,
+              "y": 1065,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -9539,7 +9558,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Story Clock",
               "enabled": true,
               "x": 500,
-              "y": 1809,
+              "y": 1792,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -9558,7 +9577,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 100,
-              "y": 1569,
+              "y": 1552,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -9577,7 +9596,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "JSON Decode",
               "enabled": true,
               "x": 500,
-              "y": 1593,
+              "y": 1576,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -9597,7 +9616,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Advance Time",
               "enabled": true,
               "x": 900,
-              "y": 1641,
+              "y": 1624,
               "w": 300,
               "h": 196,
               "inGroup": "processing-clock",
@@ -9618,7 +9637,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Compose",
               "enabled": true,
               "x": 1300,
-              "y": 1449,
+              "y": 1432,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -9641,7 +9660,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Clock Commit",
               "enabled": true,
               "x": 1300,
-              "y": 1665,
+              "y": 1648,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -9658,8 +9677,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "x": 100,
               "y": 0,
               "w": 900,
-              "h": 954,
-              "content": "Advance story time by an agreed duration and save that advance only with the accepted scene. You will compare the current clock with a proposed clock and test that rejection preserves the original time.\n\nWhat you'll learn:\n• Story Clock reads accepted time in story minutes, independent of message count and time spent at the computer.\n• Advance Time projects a forward duration. A projection is the proposed result, not a saved clock change.\n• Clock Commit stages that result for Apply and protects against saving the same accepted advance twice.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, set Logical target ID to story-clock, Format JSON and Visibility Public. Paste fixtures/story-clock.json into Initial template and choose Save authorization. Keep calendarId campaign-days, dayLengthMinutes 1440 and a positive revision.\n• The fixture starts at absoluteMinute 780, or 13:00 on day zero. Set up the live authorized clock; importing JSON alone does not create the host’s clock access.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Use lesson 17’s distinction between a proposed change and a saved change, now for time. Note the starting absoluteMinute and revision in the clock’s initial template.\n2. Inspect Text · authored input feeding duration. It declares minutes 60 with the agreed-hour-of-travel reason. Agree on that hour in the test story; the workflow does not infer it from your wording.\n3. Send: “Rowan and Iris spend the agreed hour traveling along the harbor road.” Inspect Advance Time.clock and report: from the fixture, the proposed destination is absoluteMinute 840, or 14:00.\n4. Check that no remainder is left by this simple duration. The guidance tells the reply to continue after the agreed hour, without deciding the player’s next action.\n5. Apply and reread the live clock: it should now show 840 and the next revision. In another practice chat with a fresh clock initialized from the fixture, Reject and verify that time stays at 780.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nClock Commit → receipt: Clock Commit.receipt proposes the sixty-minute advance. The live clock changes once on Apply and stays at its starting time on Reject.\n\nTry this:\nUse another practice chat with a fresh fixture clock, and edit the authored duration’s minutes from 60 to 30 for an agreed shorter journey.\nThe proposed clock becomes absoluteMinute 810, or 13:30. Sending more messages does not itself advance time. Editing Initial template does not reset a clock that has already been saved.\n\nIf something is different:\nThe scene is rejected or stopped.: The accepted clock keeps its original minute and revision.\nThe authorized clock or required clock fields are missing.: The run reports a setup error rather than choosing a time.\nThe same accepted review is applied again.: The clock does not advance for a second copy of that review.\n\nModel requests: No extra model requests. Clock reading, projection and commit are deterministic; the workflow generates one ordinary SillyTavern reply.",
+              "h": 937,
+              "content": "Advance story time by an agreed duration and save that advance only with the accepted scene. You will compare the current clock with a proposed clock and test that rejection preserves the original time.\n\nWhat you'll learn:\n• Story Clock reads accepted time in story minutes, independent of message count and time spent at the computer.\n• Advance Time projects a forward duration. A projection is the proposed result, not a saved clock change.\n• Clock Commit stages that result for Apply and protects against saving the same accepted advance twice.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The sample clock prepares automatically with calendar campaign-days, 1440-minute days and a positive revision. Its internal identity belongs to this independent copy.\n• The sample starts at minute 780, or 13:00 on Day 1. Preparing it does not advance time or write a real story file.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Use lesson 17’s distinction between a proposed change and a saved change, now for time. Note the starting absoluteMinute and revision in the clock’s initial template.\n2. Inspect Text · authored input feeding duration. It declares minutes 60 with the agreed-hour-of-travel reason. Agree on that hour in the test story; the workflow does not infer it from your wording.\n3. Send: “Rowan and Iris spend the agreed hour traveling along the harbor road.” Inspect Advance Time.clock and report: from the fixture, the proposed destination is absoluteMinute 840, or 14:00.\n4. Check that no remainder is left by this simple duration. The guidance tells the reply to continue after the agreed hour, without deciding the player’s next action.\n5. Apply and reread the live clock: it should now show 840 and the next revision. In another practice chat with a fresh clock initialized from the fixture, Reject and verify that time stays at 780.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nClock Commit → receipt: Clock Commit.receipt proposes the sixty-minute advance. The live clock changes once on Apply and stays at its starting time on Reject.\n\nTry this:\nUse another practice chat with a fresh fixture clock, and edit the authored duration’s minutes from 60 to 30 for an agreed shorter journey.\nThe proposed clock becomes absoluteMinute 810, or 13:30. Sending more messages does not itself advance time. Reopening the same copy does not reset accepted time; open another independent copy for a fresh exercise.\n\nIf something is different:\nThe scene is rejected or stopped.: The accepted clock keeps its original minute and revision.\nThe authorized clock or required clock fields are missing.: The run reports a setup error rather than choosing a time.\nThe same accepted review is applied again.: The clock does not advance for a second copy of that review.\n\nModel requests: No extra model requests. Clock reading, projection and commit are deterministic; the workflow generates one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -9744,7 +9763,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Update saved story data",
               "description": "These connected boxes work together. Follow their wires to see how each result is used.",
               "x": 75,
-              "y": 1399,
+              "y": 1382,
               "w": 1550,
               "h": 575,
               "color": "#284e67",
@@ -9799,8 +9818,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Authorize a fresh story-clock in a new practice chat as in lesson 23, using the provided fixture’s absoluteMinute 780 so the expected times below match. Editing Initial template leaves an already saved clock unchanged.",
-        "Read the three schedules in Advance Time and their matching Time Trigger nodes: midnight minuteOfDay 0, daily-routine minuteOfDay 840, and eight-hour-pulse intervalMinutes 480 with anchorMinute 0."
+        "Open a fresh independent copy for a sample clock at minute 780, as in lesson 23. Existing accepted time stays authoritative when reopening the same copy.",
+        "Read the three schedules in Advance Time and their matching Time Trigger nodes: midnight minuteOfDay 0, daily-routine minuteOfDay 840, and eight-hour-pulse intervalMinutes 480 with anchorMinute 0.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Start with lesson 23’s forward-time proposal. This duration is 1500 minutes, or 25 hours. Send: “Rowan rests for the agreed duration, unless the next scheduled occurrence interrupts.”",
@@ -9849,7 +9869,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-24",
           "name": "24. Make curses and routines happen on schedule",
-          "description": "Run story events at scheduled times during an agreed rest. You will stop at the first due event, inspect the time still remaining, then compare that interruption with processing the whole duration.\n\nWhat you'll learn:\n• A Time Trigger describes a story schedule: daily midnight, daily 14:00, or every eight hours counted from minute zero.\n• Advance Time policy interrupt stops at the first due boundary. Policy catch-up processes all due events within the configured limit.\n• Accepted clock records remember which scheduled occurrences were consumed so replay cannot repeat them.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Authorize a fresh story-clock in a new practice chat as in lesson 23, using the provided fixture’s absoluteMinute 780 so the expected times below match. Editing Initial template leaves an already saved clock unchanged.\n• Read the three schedules in Advance Time and their matching Time Trigger nodes: midnight minuteOfDay 0, daily-routine minuteOfDay 840, and eight-hour-pulse intervalMinutes 480 with anchorMinute 0.\n\nSteps:\n1. Start with lesson 23’s forward-time proposal. This duration is 1500 minutes, or 25 hours. Send: “Rowan rests for the agreed duration, unless the next scheduled occurrence interrupts.”\n2. Leave policy interrupt. From 13:00, the first due event is daily-routine at 14:00. Inspect the effective clock at 840 and the remainder of 1440 minutes: only one hour has passed.\n3. Inspect the three Time Trigger outputs and the flattened due-events collection. Only the routine is due at this first interruption; the reply receives those due events rather than spending the remaining day.\n4. Apply and inspect the live clock’s pendingTimeAdvance and consumed event IDs. The unprocessed duration remains recorded for continuation; this example does not run a background timer.\n5. Use another practice chat with a fresh clock initialized from the original fixture for the catch-up experiment, so both policies start from the same time.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nAdvance Time → remainder: Advance Time.remainder retains 1440 unprocessed minutes for the fixture’s interrupt run.\nCollection → out: The due-events Collection.out gathers occurrences from all three Time Triggers. The first interrupt has one routine occurrence; catch-up from the fixture has six total.\n\nTry this:\nChange Advance Time policy from interrupt to catch-up, keeping the 1500-minute duration and limit 12.\nThe proposed destination is absoluteMinute 2280, the next day at 14:00, with no remainder. Six occurrences are due, including both midnight and the eight-hour pulse at minute 1440.\n\nIf something is different:\nA longer catch-up would exceed the configured occurrence limit.: The run stops and reports the limit instead of silently omitting scheduled events.\nThe review is rejected.: Neither the clock advance nor the consumed occurrence IDs are saved.\n\nModel requests: No extra model requests. Time projection and triggers calculate their results directly; the workflow generates one ordinary SillyTavern reply.",
+          "description": "Run story events at scheduled times during an agreed rest. You will stop at the first due event, inspect the time still remaining, then compare that interruption with processing the whole duration.\n\nWhat you'll learn:\n• A Time Trigger describes a story schedule: daily midnight, daily 14:00, or every eight hours counted from minute zero.\n• Advance Time policy interrupt stops at the first due boundary. Policy catch-up processes all due events within the configured limit.\n• Accepted clock records remember which scheduled occurrences were consumed so replay cannot repeat them.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Open a fresh independent copy for a sample clock at minute 780, as in lesson 23. Existing accepted time stays authoritative when reopening the same copy.\n• Read the three schedules in Advance Time and their matching Time Trigger nodes: midnight minuteOfDay 0, daily-routine minuteOfDay 840, and eight-hour-pulse intervalMinutes 480 with anchorMinute 0.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Start with lesson 23’s forward-time proposal. This duration is 1500 minutes, or 25 hours. Send: “Rowan rests for the agreed duration, unless the next scheduled occurrence interrupts.”\n2. Leave policy interrupt. From 13:00, the first due event is daily-routine at 14:00. Inspect the effective clock at 840 and the remainder of 1440 minutes: only one hour has passed.\n3. Inspect the three Time Trigger outputs and the flattened due-events collection. Only the routine is due at this first interruption; the reply receives those due events rather than spending the remaining day.\n4. Apply and inspect the live clock’s pendingTimeAdvance and consumed event IDs. The unprocessed duration remains recorded for continuation; this example does not run a background timer.\n5. Use another practice chat with a fresh clock initialized from the original fixture for the catch-up experiment, so both policies start from the same time.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nAdvance Time → remainder: Advance Time.remainder retains 1440 unprocessed minutes for the fixture’s interrupt run.\nCollection → out: The due-events Collection.out gathers occurrences from all three Time Triggers. The first interrupt has one routine occurrence; catch-up from the fixture has six total.\n\nTry this:\nChange Advance Time policy from interrupt to catch-up, keeping the 1500-minute duration and limit 12.\nThe proposed destination is absoluteMinute 2280, the next day at 14:00, with no remainder. Six occurrences are due, including both midnight and the eight-hour pulse at minute 1440.\n\nIf something is different:\nA longer catch-up would exceed the configured occurrence limit.: The run stops and reports the limit instead of silently omitting scheduled events.\nThe review is rejected.: Neither the clock advance nor the consumed occurrence IDs are saved.\n\nModel requests: No extra model requests. Time projection and triggers calculate their results directly; the workflow generates one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -9862,7 +9882,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "On Send",
               "enabled": true,
               "x": 2500,
-              "y": 1082,
+              "y": 1135,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -9878,7 +9898,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Generate Reply · SillyTavern",
               "enabled": true,
               "x": 2900,
-              "y": 1106,
+              "y": 1159,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -9898,7 +9918,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Review / Publish",
               "enabled": true,
               "x": 3300,
-              "y": 1082,
+              "y": 1135,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -9914,7 +9934,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Story Clock",
               "enabled": true,
               "x": 500,
-              "y": 2265,
+              "y": 2318,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -9933,7 +9953,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 100,
-              "y": 1929,
+              "y": 1982,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -9952,7 +9972,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "JSON Decode",
               "enabled": true,
               "x": 500,
-              "y": 1953,
+              "y": 2006,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -9972,7 +9992,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Advance Time",
               "enabled": true,
               "x": 900,
-              "y": 2265,
+              "y": 2318,
               "w": 300,
               "h": 196,
               "inGroup": "processing-clock",
@@ -10013,7 +10033,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Collect",
               "enabled": true,
               "x": 1700,
-              "y": 1593,
+              "y": 1646,
               "w": 300,
               "h": 168,
               "inGroup": "processing-clock",
@@ -10048,7 +10068,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Time Trigger",
               "enabled": true,
               "x": 1300,
-              "y": 1401,
+              "y": 1454,
               "w": 300,
               "h": 168,
               "inGroup": "processing-clock",
@@ -10078,7 +10098,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Time Trigger",
               "enabled": true,
               "x": 1300,
-              "y": 1689,
+              "y": 1742,
               "w": 300,
               "h": 168,
               "inGroup": "processing-clock",
@@ -10108,7 +10128,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Time Trigger",
               "enabled": true,
               "x": 1300,
-              "y": 1913,
+              "y": 1966,
               "w": 300,
               "h": 168,
               "inGroup": "processing-clock",
@@ -10138,7 +10158,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Collection",
               "enabled": true,
               "x": 2100,
-              "y": 1497,
+              "y": 1550,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -10166,7 +10186,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Compose",
               "enabled": true,
               "x": 2500,
-              "y": 1401,
+              "y": 1454,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -10189,7 +10209,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Clock Commit",
               "enabled": true,
               "x": 1300,
-              "y": 2289,
+              "y": 2342,
               "w": 300,
               "h": 140,
               "inGroup": "processing-clock",
@@ -10206,8 +10226,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "x": 100,
               "y": 0,
               "w": 900,
-              "h": 954,
-              "content": "Run story events at scheduled times during an agreed rest. You will stop at the first due event, inspect the time still remaining, then compare that interruption with processing the whole duration.\n\nWhat you'll learn:\n• A Time Trigger describes a story schedule: daily midnight, daily 14:00, or every eight hours counted from minute zero.\n• Advance Time policy interrupt stops at the first due boundary. Policy catch-up processes all due events within the configured limit.\n• Accepted clock records remember which scheduled occurrences were consumed so replay cannot repeat them.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Authorize a fresh story-clock in a new practice chat as in lesson 23, using the provided fixture’s absoluteMinute 780 so the expected times below match. Editing Initial template leaves an already saved clock unchanged.\n• Read the three schedules in Advance Time and their matching Time Trigger nodes: midnight minuteOfDay 0, daily-routine minuteOfDay 840, and eight-hour-pulse intervalMinutes 480 with anchorMinute 0.\n\nSteps:\n1. Start with lesson 23’s forward-time proposal. This duration is 1500 minutes, or 25 hours. Send: “Rowan rests for the agreed duration, unless the next scheduled occurrence interrupts.”\n2. Leave policy interrupt. From 13:00, the first due event is daily-routine at 14:00. Inspect the effective clock at 840 and the remainder of 1440 minutes: only one hour has passed.\n3. Inspect the three Time Trigger outputs and the flattened due-events collection. Only the routine is due at this first interruption; the reply receives those due events rather than spending the remaining day.\n4. Apply and inspect the live clock’s pendingTimeAdvance and consumed event IDs. The unprocessed duration remains recorded for continuation; this example does not run a background timer.\n5. Use another practice chat with a fresh clock initialized from the original fixture for the catch-up experiment, so both policies start from the same time.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nAdvance Time → remainder: Advance Time.remainder retains 1440 unprocessed minutes for the fixture’s interrupt run.\nCollection → out: The due-events Collection.out gathers occurrences from all three Time Triggers. The first interrupt has one routine occurrence; catch-up from the fixture has six total.\n\nTry this:\nChange Advance Time policy from interrupt to catch-up, keeping the 1500-minute duration and limit 12.\nThe proposed destination is absoluteMinute 2280, the next day at 14:00, with no remainder. Six occurrences are due, including both midnight and the eight-hour pulse at minute 1440.\n\nIf something is different:\nA longer catch-up would exceed the configured occurrence limit.: The run stops and reports the limit instead of silently omitting scheduled events.\nThe review is rejected.: Neither the clock advance nor the consumed occurrence IDs are saved.\n\nModel requests: No extra model requests. Time projection and triggers calculate their results directly; the workflow generates one ordinary SillyTavern reply.",
+              "h": 1007,
+              "content": "Run story events at scheduled times during an agreed rest. You will stop at the first due event, inspect the time still remaining, then compare that interruption with processing the whole duration.\n\nWhat you'll learn:\n• A Time Trigger describes a story schedule: daily midnight, daily 14:00, or every eight hours counted from minute zero.\n• Advance Time policy interrupt stops at the first due boundary. Policy catch-up processes all due events within the configured limit.\n• Accepted clock records remember which scheduled occurrences were consumed so replay cannot repeat them.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Open a fresh independent copy for a sample clock at minute 780, as in lesson 23. Existing accepted time stays authoritative when reopening the same copy.\n• Read the three schedules in Advance Time and their matching Time Trigger nodes: midnight minuteOfDay 0, daily-routine minuteOfDay 840, and eight-hour-pulse intervalMinutes 480 with anchorMinute 0.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Start with lesson 23’s forward-time proposal. This duration is 1500 minutes, or 25 hours. Send: “Rowan rests for the agreed duration, unless the next scheduled occurrence interrupts.”\n2. Leave policy interrupt. From 13:00, the first due event is daily-routine at 14:00. Inspect the effective clock at 840 and the remainder of 1440 minutes: only one hour has passed.\n3. Inspect the three Time Trigger outputs and the flattened due-events collection. Only the routine is due at this first interruption; the reply receives those due events rather than spending the remaining day.\n4. Apply and inspect the live clock’s pendingTimeAdvance and consumed event IDs. The unprocessed duration remains recorded for continuation; this example does not run a background timer.\n5. Use another practice chat with a fresh clock initialized from the original fixture for the catch-up experiment, so both policies start from the same time.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nAdvance Time → remainder: Advance Time.remainder retains 1440 unprocessed minutes for the fixture’s interrupt run.\nCollection → out: The due-events Collection.out gathers occurrences from all three Time Triggers. The first interrupt has one routine occurrence; catch-up from the fixture has six total.\n\nTry this:\nChange Advance Time policy from interrupt to catch-up, keeping the 1500-minute duration and limit 12.\nThe proposed destination is absoluteMinute 2280, the next day at 14:00, with no remainder. Six occurrences are due, including both midnight and the eight-hour pulse at minute 1440.\n\nIf something is different:\nA longer catch-up would exceed the configured occurrence limit.: The run stops and reports the limit instead of silently omitting scheduled events.\nThe review is rejected.: Neither the clock advance nor the consumed occurrence IDs are saved.\n\nModel requests: No extra model requests. Time projection and triggers calculate their results directly; the workflow generates one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -10372,7 +10392,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Update saved story data",
               "description": "These connected boxes work together. Follow their wires to see how each result is used.",
               "x": 75,
-              "y": 1351,
+              "y": 1404,
               "w": 2750,
               "h": 1135,
               "color": "#284e67",
@@ -10433,9 +10453,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "In Workflow › Configure › Workflow Data, create JSON target player-progression with Visibility Public. Paste its fixture into Initial template and choose Save authorization: experience starts at 80 and ledger is empty.",
-        "Load the participating Rowan and Iris actors and replace their example avatar IDs. This lesson extracts completed objectives from the generated reply, using lesson 19’s evidence checks.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "The public sample progression file prepares automatically: experience starts at 80 and its pacing ledger is empty.",
+        "Select the participating Rowan and Iris characters by name. This lesson extracts completed objectives from the generated reply, using lesson 19’s evidence checks.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Combine lesson 19’s confirmed actions with lesson 17’s proposed file save. Establish an objective such as delivering the harbor chart, then Send a request for the scene where Rowan completes that delivery.",
@@ -10465,7 +10485,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       "experiments": [
         {
           "change": "In another practice chat, initialize a fresh player-progression document with experience 260 and arrange two distinct completed objectives in the reply.",
-          "expect": "Two confirmed rewards of 20 project a final value of 300 and a crossing at 300. Inspect both receipts and the final comparison; changing Initial template does not reset an already saved progression document."
+          "expect": "Two confirmed rewards of 20 project a final value of 300 and a crossing at 300. Inspect both receipts and the final comparison; importing creates a new input copy rather than resetting an existing saved progression file."
         }
       ],
       "cases": [
@@ -10493,7 +10513,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-25",
           "name": "25. Award experience from confirmed progress",
-          "description": "Award experience for completed objectives and report the levels crossed by the full award. You will project a reusable State rule, prevent duplicate rewards and save the result only with the accepted reply.\n\nWhat you'll learn:\n• State stores values and a ledger of processed occurrence IDs. The ledger prevents the same objective occurrence from earning another reward.\n• Read File’s Parsed value feeds the state directly; its separate live Reference authorizes the proposed save.\n• A progression rule describes an authored change: here, add 20 to experience for each confirmed objective, within 0–1000.\n• Collection threshold compares the original value with the final projected value and reports every threshold crossed.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, create JSON target player-progression with Visibility Public. Paste its fixture into Initial template and choose Save authorization: experience starts at 80 and ledger is empty.\n• Load the participating Rowan and Iris actors and replace their example avatar IDs. This lesson extracts completed objectives from the generated reply, using lesson 19’s evidence checks.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine lesson 19’s confirmed actions with lesson 17’s proposed file save. Establish an objective such as delivering the harbor chart, then Send a request for the scene where Rowan completes that delivery.\n2. Inspect the generated reply and confirmed events. A plan to deliver the chart is insufficient. Follow the completed action through Event Normalize’s progression mode into State.\n3. Follow Read File.value directly into State.state and the original-experience lookup. Read State.receipt for each processed occurrence. With one new confirmed objective, the fixture projects experience from 80 to 100 and adds its occurrence ID to the ledger.\n4. Inspect Select Fields.out for the original and final experience values, then Collection.out for the thresholds [100,300,600]. The public notes should report crossing 100.\n5. Apply and inspect player-progression: both the experience value and ledger should be saved. Reject a fresh test to confirm that neither changes.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nState → receipt: State.receipt lists the result for each confirmed objective, including duplicate records that earned no additional reward.\nSelect Fields → out: Select Fields.out shows the original experience and the final value after all rewards, rather than just one intermediate award.\nCollection → out: The threshold Collection.out reports every crossed threshold from that complete before-and-after comparison.\n\nTry this:\nIn another practice chat, initialize a fresh player-progression document with experience 260 and arrange two distinct completed objectives in the reply.\nTwo confirmed rewards of 20 project a final value of 300 and a crossing at 300. Inspect both receipts and the final comparison; changing Initial template does not reset an already saved progression document.\n\nIf something is different:\nAn already processed occurrence ID repeats.: The ledger reports a duplicate and grants no additional experience.\nNo objective is confirmed.: Experience stays unchanged and there is no threshold crossing.\nThe experience record is missing or appears ambiguously more than once.: The run stops for correction rather than guessing which value to use.\n\nModel requests: Up to four extra model requests: one extraction and up to three Decision checks. State, thresholds and file staging make no model requests. There is also one ordinary SillyTavern reply.",
+          "description": "Award experience for completed objectives and report the levels crossed by the full award. You will project a reusable State rule, prevent duplicate rewards and save the result only with the accepted reply.\n\nWhat you'll learn:\n• State stores values and a ledger of processed occurrence IDs. The ledger prevents the same objective occurrence from earning another reward.\n• Read File’s Parsed value feeds the state directly; its separate live Reference authorizes the proposed save.\n• A progression rule describes an authored change: here, add 20 to experience for each confirmed objective, within 0–1000.\n• Collection threshold compares the original value with the final projected value and reports every threshold crossed.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The public sample progression file prepares automatically: experience starts at 80 and its pacing ledger is empty.\n• Select the participating Rowan and Iris characters by name. This lesson extracts completed objectives from the generated reply, using lesson 19’s evidence checks.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine lesson 19’s confirmed actions with lesson 17’s proposed file save. Establish an objective such as delivering the harbor chart, then Send a request for the scene where Rowan completes that delivery.\n2. Inspect the generated reply and confirmed events. A plan to deliver the chart is insufficient. Follow the completed action through Event Normalize’s progression mode into State.\n3. Follow Read File.value directly into State.state and the original-experience lookup. Read State.receipt for each processed occurrence. With one new confirmed objective, the fixture projects experience from 80 to 100 and adds its occurrence ID to the ledger.\n4. Inspect Select Fields.out for the original and final experience values, then Collection.out for the thresholds [100,300,600]. The public notes should report crossing 100.\n5. Apply and inspect player-progression: both the experience value and ledger should be saved. Reject a fresh test to confirm that neither changes.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nState → receipt: State.receipt lists the result for each confirmed objective, including duplicate records that earned no additional reward.\nSelect Fields → out: Select Fields.out shows the original experience and the final value after all rewards, rather than just one intermediate award.\nCollection → out: The threshold Collection.out reports every crossed threshold from that complete before-and-after comparison.\n\nTry this:\nIn another practice chat, initialize a fresh player-progression document with experience 260 and arrange two distinct completed objectives in the reply.\nTwo confirmed rewards of 20 project a final value of 300 and a crossing at 300. Inspect both receipts and the final comparison; importing creates a new input copy rather than resetting an existing saved progression file.\n\nIf something is different:\nAn already processed occurrence ID repeats.: The ledger reports a duplicate and grants no additional experience.\nNo objective is confirmed.: Experience stays unchanged and there is no threshold crossing.\nThe experience record is missing or appears ambiguously more than once.: The run stops for correction rather than guessing which value to use.\n\nModel requests: Up to four extra model requests: one extraction and up to three Decision checks. State, thresholds and file staging make no model requests. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -10692,7 +10712,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract candidates only; never confirm or fabricate evidence.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "events": {
               "id": "events",
@@ -11092,6 +11113,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "separator": "\n",
               "emptyPolicy": "omit",
               "trailingSeparator": false,
+              "destinationMode": "connected",
+              "targetId": "",
               "actorScope": "selected",
               "actorId": ""
             },
@@ -11147,7 +11170,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "y": 0,
               "w": 900,
               "h": 1094,
-              "content": "Award experience for completed objectives and report the levels crossed by the full award. You will project a reusable State rule, prevent duplicate rewards and save the result only with the accepted reply.\n\nWhat you'll learn:\n• State stores values and a ledger of processed occurrence IDs. The ledger prevents the same objective occurrence from earning another reward.\n• Read File’s Parsed value feeds the state directly; its separate live Reference authorizes the proposed save.\n• A progression rule describes an authored change: here, add 20 to experience for each confirmed objective, within 0–1000.\n• Collection threshold compares the original value with the final projected value and reports every threshold crossed.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, create JSON target player-progression with Visibility Public. Paste its fixture into Initial template and choose Save authorization: experience starts at 80 and ledger is empty.\n• Load the participating Rowan and Iris actors and replace their example avatar IDs. This lesson extracts completed objectives from the generated reply, using lesson 19’s evidence checks.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine lesson 19’s confirmed actions with lesson 17’s proposed file save. Establish an objective such as delivering the harbor chart, then Send a request for the scene where Rowan completes that delivery.\n2. Inspect the generated reply and confirmed events. A plan to deliver the chart is insufficient. Follow the completed action through Event Normalize’s progression mode into State.\n3. Follow Read File.value directly into State.state and the original-experience lookup. Read State.receipt for each processed occurrence. With one new confirmed objective, the fixture projects experience from 80 to 100 and adds its occurrence ID to the ledger.\n4. Inspect Select Fields.out for the original and final experience values, then Collection.out for the thresholds [100,300,600]. The public notes should report crossing 100.\n5. Apply and inspect player-progression: both the experience value and ledger should be saved. Reject a fresh test to confirm that neither changes.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nState → receipt: State.receipt lists the result for each confirmed objective, including duplicate records that earned no additional reward.\nSelect Fields → out: Select Fields.out shows the original experience and the final value after all rewards, rather than just one intermediate award.\nCollection → out: The threshold Collection.out reports every crossed threshold from that complete before-and-after comparison.\n\nTry this:\nIn another practice chat, initialize a fresh player-progression document with experience 260 and arrange two distinct completed objectives in the reply.\nTwo confirmed rewards of 20 project a final value of 300 and a crossing at 300. Inspect both receipts and the final comparison; changing Initial template does not reset an already saved progression document.\n\nIf something is different:\nAn already processed occurrence ID repeats.: The ledger reports a duplicate and grants no additional experience.\nNo objective is confirmed.: Experience stays unchanged and there is no threshold crossing.\nThe experience record is missing or appears ambiguously more than once.: The run stops for correction rather than guessing which value to use.\n\nModel requests: Up to four extra model requests: one extraction and up to three Decision checks. State, thresholds and file staging make no model requests. There is also one ordinary SillyTavern reply.",
+              "content": "Award experience for completed objectives and report the levels crossed by the full award. You will project a reusable State rule, prevent duplicate rewards and save the result only with the accepted reply.\n\nWhat you'll learn:\n• State stores values and a ledger of processed occurrence IDs. The ledger prevents the same objective occurrence from earning another reward.\n• Read File’s Parsed value feeds the state directly; its separate live Reference authorizes the proposed save.\n• A progression rule describes an authored change: here, add 20 to experience for each confirmed objective, within 0–1000.\n• Collection threshold compares the original value with the final projected value and reports every threshold crossed.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The public sample progression file prepares automatically: experience starts at 80 and its pacing ledger is empty.\n• Select the participating Rowan and Iris characters by name. This lesson extracts completed objectives from the generated reply, using lesson 19’s evidence checks.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine lesson 19’s confirmed actions with lesson 17’s proposed file save. Establish an objective such as delivering the harbor chart, then Send a request for the scene where Rowan completes that delivery.\n2. Inspect the generated reply and confirmed events. A plan to deliver the chart is insufficient. Follow the completed action through Event Normalize’s progression mode into State.\n3. Follow Read File.value directly into State.state and the original-experience lookup. Read State.receipt for each processed occurrence. With one new confirmed objective, the fixture projects experience from 80 to 100 and adds its occurrence ID to the ledger.\n4. Inspect Select Fields.out for the original and final experience values, then Collection.out for the thresholds [100,300,600]. The public notes should report crossing 100.\n5. Apply and inspect player-progression: both the experience value and ledger should be saved. Reject a fresh test to confirm that neither changes.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nState → receipt: State.receipt lists the result for each confirmed objective, including duplicate records that earned no additional reward.\nSelect Fields → out: Select Fields.out shows the original experience and the final value after all rewards, rather than just one intermediate award.\nCollection → out: The threshold Collection.out reports every crossed threshold from that complete before-and-after comparison.\n\nTry this:\nIn another practice chat, initialize a fresh player-progression document with experience 260 and arrange two distinct completed objectives in the reply.\nTwo confirmed rewards of 20 project a final value of 300 and a crossing at 300. Inspect both receipts and the final comparison; importing creates a new input copy rather than resetting an existing saved progression file.\n\nIf something is different:\nAn already processed occurrence ID repeats.: The ledger reports a duplicate and grants no additional experience.\nNo objective is confirmed.: Experience stays unchanged and there is no threshold crossing.\nThe experience record is missing or appears ambiguously more than once.: The run stops for correction rather than guessing which value to use.\n\nModel requests: Up to four extra model requests: one extraction and up to three Decision checks. State, thresholds and file staging make no model requests. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -11697,9 +11720,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Select loaded Rowan and replace character:rowan.png with that actor’s actual avatar ID. Establish Rowan’s current participation using the presence work from lesson 21.",
-        "In Workflow › Configure › Workflow Data, create JSON target rowan-moments with Visibility Actor private and Rowan’s Actor ID. Paste its fixture into Initial template and Save authorization. Records need id, actorId and text; adjust the example actorId consistently.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "Select the intended Rowan character by name. Establish Rowan’s current participation using the presence work from lesson 21.",
+        "Choose the intended Rowan character by name for the private File scope. The sample memory file then prepares automatically with its demonstration lighthouse record; it grants no native memory access.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Read the rowan-moments initial template. Confirm that the lighthouse-promise record belongs to Rowan and is the accepted text you intend to reuse.",
@@ -11747,7 +11770,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-26",
           "name": "26. Recall a memory with a hotkey or a story trigger",
-          "description": "Bring an accepted private memory into the next reply using a shortcut or a player-message keyword. You will queue recall, inspect the selected record and see when the queued request is consumed.\n\nWhat you'll learn:\n• Recall selects unchanged accepted records from an actor-private workflow file. Unlike Prompted Memory in lesson 22, it does not ask a model to choose or invent an episode.\n• Recall Shortcut queues an activation for a reply, a swipe, or both. One-per-type gives separate available uses for those generation types.\n• A queued request is consumed on Apply, so rejecting or stopping a reply keeps it available.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select loaded Rowan and replace character:rowan.png with that actor’s actual avatar ID. Establish Rowan’s current participation using the presence work from lesson 21.\n• In Workflow › Configure › Workflow Data, create JSON target rowan-moments with Visibility Actor private and Rowan’s Actor ID. Paste its fixture into Initial template and Save authorization. Records need id, actorId and text; adjust the example actorId consistently.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Read the rowan-moments initial template. Confirm that the lighthouse-promise record belongs to Rowan and is the accepted text you intend to reuse.\n2. Read Recall Shortcut settings: target both, uses one-per-type, consumeOn accepted. Queue recall on the relevant node, use Node → Memory recall, or press Ctrl+Shift+M before generating.\n3. For the shortcut test, send: “Rowan walks along the harbor wall.” This avoids the lighthouse keyword. Inspect Recall.records, Recall.report and Generate Reply.guidance for the selected private record.\n4. Reject that reply and check that the queued recall remains available. Try again and Apply: the reply use should now be consumed, with the separate swipe use still available.\n5. Test the other trigger with “Rowan visits the lighthouse.” The actual player-message keyword can activate recall without a queued shortcut. Compare both reports; neither path edits the memory text.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRecall → report: Recall.report identifies the accepted private records supplied to guidance and reports the recall activation. Queued consumption stays pending until Apply.\n\nTry this:\nSet Recall Shortcut target to swipe. Queue recall, use a player message without lighthouse, and compare a new reply with a new swipe.\nThe queued request can be reserved by the swipe, not the reply. The keyword is a separate trigger, so omit it while testing the shortcut target.\n\nIf something is different:\nThe workflow is only previewed.: Preview does not queue a recall request.\nRowan is absent or neither activation matches.: No private record is supplied to portrayal.\nA queued reply is rejected or stopped.: The available recall use and accepted memory file are preserved.\n\nModel requests: One extra model request checks participation. Recall selection and queued-use tracking make no model requests. There is also one ordinary SillyTavern reply.",
+          "description": "Bring an accepted private memory into the next reply using a shortcut or a player-message keyword. You will queue recall, inspect the selected record and see when the queued request is consumed.\n\nWhat you'll learn:\n• Recall selects unchanged accepted records from an actor-private workflow file. Unlike Prompted Memory in lesson 22, it does not ask a model to choose or invent an episode.\n• Recall Shortcut queues an activation for a reply, a swipe, or both. One-per-type gives separate available uses for those generation types.\n• A queued request is consumed on Apply, so rejecting or stopping a reply keeps it available.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan character by name. Establish Rowan’s current participation using the presence work from lesson 21.\n• Choose the intended Rowan character by name for the private File scope. The sample memory file then prepares automatically with its demonstration lighthouse record; it grants no native memory access.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Read the rowan-moments initial template. Confirm that the lighthouse-promise record belongs to Rowan and is the accepted text you intend to reuse.\n2. Read Recall Shortcut settings: target both, uses one-per-type, consumeOn accepted. Queue recall on the relevant node, use Node → Memory recall, or press Ctrl+Shift+M before generating.\n3. For the shortcut test, send: “Rowan walks along the harbor wall.” This avoids the lighthouse keyword. Inspect Recall.records, Recall.report and Generate Reply.guidance for the selected private record.\n4. Reject that reply and check that the queued recall remains available. Try again and Apply: the reply use should now be consumed, with the separate swipe use still available.\n5. Test the other trigger with “Rowan visits the lighthouse.” The actual player-message keyword can activate recall without a queued shortcut. Compare both reports; neither path edits the memory text.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRecall → report: Recall.report identifies the accepted private records supplied to guidance and reports the recall activation. Queued consumption stays pending until Apply.\n\nTry this:\nSet Recall Shortcut target to swipe. Queue recall, use a player message without lighthouse, and compare a new reply with a new swipe.\nThe queued request can be reserved by the swipe, not the reply. The keyword is a separate trigger, so omit it while testing the shortcut target.\n\nIf something is different:\nThe workflow is only previewed.: Preview does not queue a recall request.\nRowan is absent or neither activation matches.: No private record is supplied to portrayal.\nA queued reply is rejected or stopped.: The available recall use and accepted memory file are preserved.\n\nModel requests: One extra model request checks participation. Recall selection and queued-use tracking make no model requests. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -11862,7 +11885,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Interpret genuine scene participation from the unchanged supplied source; copy its IDs and evidence exactly.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "cast-presence-0": {
               "id": "cast-presence-0",
@@ -12010,7 +12034,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "y": 0,
               "w": 900,
               "h": 989,
-              "content": "Bring an accepted private memory into the next reply using a shortcut or a player-message keyword. You will queue recall, inspect the selected record and see when the queued request is consumed.\n\nWhat you'll learn:\n• Recall selects unchanged accepted records from an actor-private workflow file. Unlike Prompted Memory in lesson 22, it does not ask a model to choose or invent an episode.\n• Recall Shortcut queues an activation for a reply, a swipe, or both. One-per-type gives separate available uses for those generation types.\n• A queued request is consumed on Apply, so rejecting or stopping a reply keeps it available.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select loaded Rowan and replace character:rowan.png with that actor’s actual avatar ID. Establish Rowan’s current participation using the presence work from lesson 21.\n• In Workflow › Configure › Workflow Data, create JSON target rowan-moments with Visibility Actor private and Rowan’s Actor ID. Paste its fixture into Initial template and Save authorization. Records need id, actorId and text; adjust the example actorId consistently.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Read the rowan-moments initial template. Confirm that the lighthouse-promise record belongs to Rowan and is the accepted text you intend to reuse.\n2. Read Recall Shortcut settings: target both, uses one-per-type, consumeOn accepted. Queue recall on the relevant node, use Node → Memory recall, or press Ctrl+Shift+M before generating.\n3. For the shortcut test, send: “Rowan walks along the harbor wall.” This avoids the lighthouse keyword. Inspect Recall.records, Recall.report and Generate Reply.guidance for the selected private record.\n4. Reject that reply and check that the queued recall remains available. Try again and Apply: the reply use should now be consumed, with the separate swipe use still available.\n5. Test the other trigger with “Rowan visits the lighthouse.” The actual player-message keyword can activate recall without a queued shortcut. Compare both reports; neither path edits the memory text.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRecall → report: Recall.report identifies the accepted private records supplied to guidance and reports the recall activation. Queued consumption stays pending until Apply.\n\nTry this:\nSet Recall Shortcut target to swipe. Queue recall, use a player message without lighthouse, and compare a new reply with a new swipe.\nThe queued request can be reserved by the swipe, not the reply. The keyword is a separate trigger, so omit it while testing the shortcut target.\n\nIf something is different:\nThe workflow is only previewed.: Preview does not queue a recall request.\nRowan is absent or neither activation matches.: No private record is supplied to portrayal.\nA queued reply is rejected or stopped.: The available recall use and accepted memory file are preserved.\n\nModel requests: One extra model request checks participation. Recall selection and queued-use tracking make no model requests. There is also one ordinary SillyTavern reply.",
+              "content": "Bring an accepted private memory into the next reply using a shortcut or a player-message keyword. You will queue recall, inspect the selected record and see when the queued request is consumed.\n\nWhat you'll learn:\n• Recall selects unchanged accepted records from an actor-private workflow file. Unlike Prompted Memory in lesson 22, it does not ask a model to choose or invent an episode.\n• Recall Shortcut queues an activation for a reply, a swipe, or both. One-per-type gives separate available uses for those generation types.\n• A queued request is consumed on Apply, so rejecting or stopping a reply keeps it available.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan character by name. Establish Rowan’s current participation using the presence work from lesson 21.\n• Choose the intended Rowan character by name for the private File scope. The sample memory file then prepares automatically with its demonstration lighthouse record; it grants no native memory access.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Read the rowan-moments initial template. Confirm that the lighthouse-promise record belongs to Rowan and is the accepted text you intend to reuse.\n2. Read Recall Shortcut settings: target both, uses one-per-type, consumeOn accepted. Queue recall on the relevant node, use Node → Memory recall, or press Ctrl+Shift+M before generating.\n3. For the shortcut test, send: “Rowan walks along the harbor wall.” This avoids the lighthouse keyword. Inspect Recall.records, Recall.report and Generate Reply.guidance for the selected private record.\n4. Reject that reply and check that the queued recall remains available. Try again and Apply: the reply use should now be consumed, with the separate swipe use still available.\n5. Test the other trigger with “Rowan visits the lighthouse.” The actual player-message keyword can activate recall without a queued shortcut. Compare both reports; neither path edits the memory text.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRecall → report: Recall.report identifies the accepted private records supplied to guidance and reports the recall activation. Queued consumption stays pending until Apply.\n\nTry this:\nSet Recall Shortcut target to swipe. Queue recall, use a player message without lighthouse, and compare a new reply with a new swipe.\nThe queued request can be reserved by the swipe, not the reply. The keyword is a separate trigger, so omit it while testing the shortcut target.\n\nIf something is different:\nThe workflow is only previewed.: Preview does not queue a recall request.\nRowan is absent or neither activation matches.: No private record is supplied to portrayal.\nA queued reply is rejected or stopped.: The available recall use and accepted memory file are preserved.\n\nModel requests: One extra model request checks participation. Recall selection and queued-use tracking make no model requests. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -12161,9 +12185,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "In Workflow › Configure › Workflow Data, authorize wand-holders, wand-effects and wand-outcomes as Public JSON. Paste their fixtures into Initial template and Save authorization. The map must establish Rowan’s ownership; outcomes starts as [].",
-        "Replace Rowan and Iris avatar IDs consistently with loaded actors. Keep libraryId wand-effects, revision r1 and itemId broken-wand. The fixture weights are 80 for blue sparks and 20 for a generated wild effect.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "The public sample holder map, effect library and empty outcomes ledger prepare automatically. Random Pick and Outcome Commit share the same scoped ledger; keep their connection.",
+        "Select the intended Rowan and Iris characters by name. Keep libraryId wand-effects, revision r1 and itemId broken-wand. The fixture weights are 80 for blue sparks and 20 for a generated wild effect.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Combine lesson 20’s confirmed item use with lesson 14’s per-item processing. Send: “Rowan uses the broken wand to cast a spell toward the empty harbor wall.” Include at most one use and two transfers.",
@@ -12187,7 +12211,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "experiments": [
         {
-          "change": "Use fixtures/wand-effects.txt in a separate Plain text document and bind Read File to it. Set Parse Effect Library format to text; preserve library, item and revision settings.",
+          "change": "Import the optional wand-effects.txt reference as a separate input copy in Read File’s File section. Set Parse Effect Library format to text; preserve library, item and revision settings.",
           "expect": "Both weighted choices remain available. Changing formats does not reroll an existing event; saved documents keep their original format."
         }
       ],
@@ -12216,7 +12240,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-27",
           "name": "27. The broken wand: stable randomness with a wild branch",
-          "description": "Give a broken wand a weighted effect that stays stable on replay. You will confirm one use and resolve either a fixed effect or a checked new effect.\n\nWhat you'll learn:\n• Random Pick ties a weighted draw to the confirmed event ID. Reuse preserves it when that event is processed again.\n• A fixed library effect needs no effect-writing model. A generate selection calls Effect Author, then Decision checks whether the proposal is distinct and allowed.\n• Outcome Commit saves the resolved effect in a ledger only with the accepted reply.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, authorize wand-holders, wand-effects and wand-outcomes as Public JSON. Paste their fixtures into Initial template and Save authorization. The map must establish Rowan’s ownership; outcomes starts as [].\n• Replace Rowan and Iris avatar IDs consistently with loaded actors. Keep libraryId wand-effects, revision r1 and itemId broken-wand. The fixture weights are 80 for blue sparks and 20 for a generated wild effect.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine lesson 20’s confirmed item use with lesson 14’s per-item processing. Send: “Rowan uses the broken wand to cast a spell toward the empty harbor wall.” Include at most one use and two transfers.\n2. Inspect Current Holder.events and Random Pick.out. Record the confirmed event ID, selected effect and frozen library identity.\n3. Follow the resolver helper. A fixed draw supplies blue sparks directly. A wild draw asks Effect Author for one effect with an explicit spellOutcome, duration and consequence, then checks novelty and the mechanical policy.\n4. Inspect the revised narration, notes and Outcome Commit.receipt. The prose should preserve the confirmed use, holder and resolved effect.\n5. Apply and inspect wand-outcomes. That same event reuses its outcome; a new use has a new ID and may draw differently.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRandom Pick → out: Random Pick.out ties the draw to the confirmed event ID and freezes the effect and library for reuse.\nOutcome Commit → receipt: Outcome Commit.receipt proposes the result for wand-outcomes; Apply saves it.\n\nTry this:\nUse fixtures/wand-effects.txt in a separate Plain text document and bind Read File to it. Set Parse Effect Library format to text; preserve library, item and revision settings.\nBoth weighted choices remain available. Changing formats does not reroll an existing event; saved documents keep their original format.\n\nIf something is different:\nA second actual use reaches the resolver.: The one-use limit stops the run instead of dropping an effect.\nWild-effect novelty is false or null.: The invented effect cannot resolve or be saved; the existing draw is retained.\nReview is rejected.: No outcome is saved and the event’s draw is not silently rerolled.\n\nModel requests: Up to seven extra model requests: extraction, three confirmations, wild Effect Author, novelty Decision and narration revision. A fixed effect uses at most five. There is also one ordinary SillyTavern reply.",
+          "description": "Give a broken wand a weighted effect that stays stable on replay. You will confirm one use and resolve either a fixed effect or a checked new effect.\n\nWhat you'll learn:\n• Random Pick ties a weighted draw to the confirmed event ID. Reuse preserves it when that event is processed again.\n• A fixed library effect needs no effect-writing model. A generate selection calls Effect Author, then Decision checks whether the proposal is distinct and allowed.\n• Outcome Commit saves the resolved effect in a ledger only with the accepted reply.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The public sample holder map, effect library and empty outcomes ledger prepare automatically. Random Pick and Outcome Commit share the same scoped ledger; keep their connection.\n• Select the intended Rowan and Iris characters by name. Keep libraryId wand-effects, revision r1 and itemId broken-wand. The fixture weights are 80 for blue sparks and 20 for a generated wild effect.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine lesson 20’s confirmed item use with lesson 14’s per-item processing. Send: “Rowan uses the broken wand to cast a spell toward the empty harbor wall.” Include at most one use and two transfers.\n2. Inspect Current Holder.events and Random Pick.out. Record the confirmed event ID, selected effect and frozen library identity.\n3. Follow the resolver helper. A fixed draw supplies blue sparks directly. A wild draw asks Effect Author for one effect with an explicit spellOutcome, duration and consequence, then checks novelty and the mechanical policy.\n4. Inspect the revised narration, notes and Outcome Commit.receipt. The prose should preserve the confirmed use, holder and resolved effect.\n5. Apply and inspect wand-outcomes. That same event reuses its outcome; a new use has a new ID and may draw differently.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRandom Pick → out: Random Pick.out ties the draw to the confirmed event ID and freezes the effect and library for reuse.\nOutcome Commit → receipt: Outcome Commit.receipt proposes the result for wand-outcomes; Apply saves it.\n\nTry this:\nImport the optional wand-effects.txt reference as a separate input copy in Read File’s File section. Set Parse Effect Library format to text; preserve library, item and revision settings.\nBoth weighted choices remain available. Changing formats does not reroll an existing event; saved documents keep their original format.\n\nIf something is different:\nA second actual use reaches the resolver.: The one-use limit stops the run instead of dropping an effect.\nWild-effect novelty is false or null.: The invented effect cannot resolve or be saved; the existing draw is retained.\nReview is rejected.: No outcome is saved and the event’s draw is not silently rerolled.\n\nModel requests: Up to seven extra model requests: extraction, three confirmations, wild Effect Author, novelty Decision and narration revision. A fixed effect uses at most five. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -12895,7 +12919,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Clarify the observed wand effect without changing the confirmed use, holder, frozen effect or player choice.",
               "scope": "narration",
               "protectedLiterals": [],
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "outcome-notes": {
               "id": "outcome-notes",
@@ -12980,7 +13005,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "y": 0,
               "w": 900,
               "h": 989,
-              "content": "Give a broken wand a weighted effect that stays stable on replay. You will confirm one use and resolve either a fixed effect or a checked new effect.\n\nWhat you'll learn:\n• Random Pick ties a weighted draw to the confirmed event ID. Reuse preserves it when that event is processed again.\n• A fixed library effect needs no effect-writing model. A generate selection calls Effect Author, then Decision checks whether the proposal is distinct and allowed.\n• Outcome Commit saves the resolved effect in a ledger only with the accepted reply.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, authorize wand-holders, wand-effects and wand-outcomes as Public JSON. Paste their fixtures into Initial template and Save authorization. The map must establish Rowan’s ownership; outcomes starts as [].\n• Replace Rowan and Iris avatar IDs consistently with loaded actors. Keep libraryId wand-effects, revision r1 and itemId broken-wand. The fixture weights are 80 for blue sparks and 20 for a generated wild effect.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine lesson 20’s confirmed item use with lesson 14’s per-item processing. Send: “Rowan uses the broken wand to cast a spell toward the empty harbor wall.” Include at most one use and two transfers.\n2. Inspect Current Holder.events and Random Pick.out. Record the confirmed event ID, selected effect and frozen library identity.\n3. Follow the resolver helper. A fixed draw supplies blue sparks directly. A wild draw asks Effect Author for one effect with an explicit spellOutcome, duration and consequence, then checks novelty and the mechanical policy.\n4. Inspect the revised narration, notes and Outcome Commit.receipt. The prose should preserve the confirmed use, holder and resolved effect.\n5. Apply and inspect wand-outcomes. That same event reuses its outcome; a new use has a new ID and may draw differently.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRandom Pick → out: Random Pick.out ties the draw to the confirmed event ID and freezes the effect and library for reuse.\nOutcome Commit → receipt: Outcome Commit.receipt proposes the result for wand-outcomes; Apply saves it.\n\nTry this:\nUse fixtures/wand-effects.txt in a separate Plain text document and bind Read File to it. Set Parse Effect Library format to text; preserve library, item and revision settings.\nBoth weighted choices remain available. Changing formats does not reroll an existing event; saved documents keep their original format.\n\nIf something is different:\nA second actual use reaches the resolver.: The one-use limit stops the run instead of dropping an effect.\nWild-effect novelty is false or null.: The invented effect cannot resolve or be saved; the existing draw is retained.\nReview is rejected.: No outcome is saved and the event’s draw is not silently rerolled.\n\nModel requests: Up to seven extra model requests: extraction, three confirmations, wild Effect Author, novelty Decision and narration revision. A fixed effect uses at most five. There is also one ordinary SillyTavern reply.",
+              "content": "Give a broken wand a weighted effect that stays stable on replay. You will confirm one use and resolve either a fixed effect or a checked new effect.\n\nWhat you'll learn:\n• Random Pick ties a weighted draw to the confirmed event ID. Reuse preserves it when that event is processed again.\n• A fixed library effect needs no effect-writing model. A generate selection calls Effect Author, then Decision checks whether the proposal is distinct and allowed.\n• Outcome Commit saves the resolved effect in a ledger only with the accepted reply.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The public sample holder map, effect library and empty outcomes ledger prepare automatically. Random Pick and Outcome Commit share the same scoped ledger; keep their connection.\n• Select the intended Rowan and Iris characters by name. Keep libraryId wand-effects, revision r1 and itemId broken-wand. The fixture weights are 80 for blue sparks and 20 for a generated wild effect.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine lesson 20’s confirmed item use with lesson 14’s per-item processing. Send: “Rowan uses the broken wand to cast a spell toward the empty harbor wall.” Include at most one use and two transfers.\n2. Inspect Current Holder.events and Random Pick.out. Record the confirmed event ID, selected effect and frozen library identity.\n3. Follow the resolver helper. A fixed draw supplies blue sparks directly. A wild draw asks Effect Author for one effect with an explicit spellOutcome, duration and consequence, then checks novelty and the mechanical policy.\n4. Inspect the revised narration, notes and Outcome Commit.receipt. The prose should preserve the confirmed use, holder and resolved effect.\n5. Apply and inspect wand-outcomes. That same event reuses its outcome; a new use has a new ID and may draw differently.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nRandom Pick → out: Random Pick.out ties the draw to the confirmed event ID and freezes the effect and library for reuse.\nOutcome Commit → receipt: Outcome Commit.receipt proposes the result for wand-outcomes; Apply saves it.\n\nTry this:\nImport the optional wand-effects.txt reference as a separate input copy in Read File’s File section. Set Parse Effect Library format to text; preserve library, item and revision settings.\nBoth weighted choices remain available. Changing formats does not reroll an existing event; saved documents keep their original format.\n\nIf something is different:\nA second actual use reaches the resolver.: The one-use limit stops the run instead of dropping an effect.\nWild-effect novelty is false or null.: The invented effect cannot resolve or be saved; the existing draw is retained.\nReview is rejected.: No outcome is saved and the event’s draw is not silently rerolled.\n\nModel requests: Up to seven extra model requests: extraction, three confirmations, wild Effect Author, novelty Decision and narration revision. A fixed effect uses at most five. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -13844,9 +13869,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "In Workflow › Configure › Workflow Data, create JSON target sword-souls with Visibility Public. Paste fixtures/sword-souls-99.json into Initial template and Save authorization. These 99 demonstration records are for the disposable test only.",
-        "Use loaded Rowan and Iris as attacker and opponent for this test, replacing both example avatar IDs consistently. Other victims require the corresponding actual actor identities; do not substitute an unlisted name.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "The sample sword ledger prepares automatically with 99 demonstration records in this independent practice copy. Those records are never evidence of real story events.",
+        "Choose the intended Rowan and Iris characters by name as attacker and opponent for this test. Other victims require the corresponding actual actor identities; do not substitute an unlisted name.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Combine confirmed actions from lesson 19, unique-record saves from lesson 17 and thresholds from lesson 25. Note the fixture’s starting count of 99.",
@@ -13899,7 +13924,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-28",
           "name": "28. The soul-stealing sword: an event ledger and a threshold",
-          "description": "Let a soul-stealing sword gain a tier from recorded kills. You will add one confirmed victim to a 99-record test ledger, detect the crossing to 100 and revise the narration only when a threshold is crossed.\n\nWhat you'll learn:\n• The soul ledger is the source of the count; a separate stored level cannot drift away from it.\n• Project Document add-unique uses the victim ID to allow one soul per victim, while retaining the event ID and exact kill evidence.\n• Collection threshold compares counts before and after the proposed additions. A crossing activates the optional narration revision.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, create JSON target sword-souls with Visibility Public. Paste fixtures/sword-souls-99.json into Initial template and Save authorization. These 99 demonstration records are for the disposable test only.\n• Use loaded Rowan and Iris as attacker and opponent for this test, replacing both example avatar IDs consistently. Other victims require the corresponding actual actor identities; do not substitute an unlisted name.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine confirmed actions from lesson 19, unique-record saves from lesson 17 and thresholds from lesson 25. Note the fixture’s starting count of 99.\n2. Send a continuation request for a disposable, already resolved combat scene where the reply describes Rowan killing Iris with the soul-stealing sword. Inspect the reply; a threat or intention should not count.\n3. Inspect the exact candidate quote and Decision answer. Follow the confirmed kill into Format: id and victimId should identify Iris, and the quote should match the native reply.\n4. Inspect count-pair.out for before 99 and after 100. Then inspect tier.out against thresholds [100,250,500]. The crossing at 100 should activate the narration pass describing the new tier.\n5. Compare the revision with the original kill: attacker, victim, dialogue and chronology should be preserved. Apply replaces the same sword-souls file that was read; Reject leaves its 99 records unchanged.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nSelect Fields → out: count-pair.out shows 99 before and 100 after one new confirmed victim is proposed for the test ledger.\nCollection → out: tier.out derives the new tier and crossing at 100 from those counts. Without a crossing, the original reply survives the skipped revision.\n\nTry this:\nReject the proposed 99-to-100 crossing, then reread sword-souls.\nThe ledger still has 99 entries, and the revised tier narration was not accepted.\n\nIf something is different:\nThe same victim is submitted again with identical evidence.: The unique victim record grants no second soul.\nAn existing victim arrives with changed event or source evidence.: IDENTITY_CONFLICT stops the run. Compare the records and reconcile the conflict without rewriting prior evidence.\nThe kill is planned, denied or rejected by Decision.: No soul is added and no threshold revision is triggered.\n\nModel requests: Up to five extra model requests: one extraction, up to three Decision checks and one revision only if a threshold is crossed. There is also one ordinary SillyTavern reply.",
+          "description": "Let a soul-stealing sword gain a tier from recorded kills. You will add one confirmed victim to a 99-record test ledger, detect the crossing to 100 and revise the narration only when a threshold is crossed.\n\nWhat you'll learn:\n• The soul ledger is the source of the count; a separate stored level cannot drift away from it.\n• Project Document add-unique uses the victim ID to allow one soul per victim, while retaining the event ID and exact kill evidence.\n• Collection threshold compares counts before and after the proposed additions. A crossing activates the optional narration revision.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The sample sword ledger prepares automatically with 99 demonstration records in this independent practice copy. Those records are never evidence of real story events.\n• Choose the intended Rowan and Iris characters by name as attacker and opponent for this test. Other victims require the corresponding actual actor identities; do not substitute an unlisted name.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine confirmed actions from lesson 19, unique-record saves from lesson 17 and thresholds from lesson 25. Note the fixture’s starting count of 99.\n2. Send a continuation request for a disposable, already resolved combat scene where the reply describes Rowan killing Iris with the soul-stealing sword. Inspect the reply; a threat or intention should not count.\n3. Inspect the exact candidate quote and Decision answer. Follow the confirmed kill into Format: id and victimId should identify Iris, and the quote should match the native reply.\n4. Inspect count-pair.out for before 99 and after 100. Then inspect tier.out against thresholds [100,250,500]. The crossing at 100 should activate the narration pass describing the new tier.\n5. Compare the revision with the original kill: attacker, victim, dialogue and chronology should be preserved. Apply replaces the same sword-souls file that was read; Reject leaves its 99 records unchanged.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nSelect Fields → out: count-pair.out shows 99 before and 100 after one new confirmed victim is proposed for the test ledger.\nCollection → out: tier.out derives the new tier and crossing at 100 from those counts. Without a crossing, the original reply survives the skipped revision.\n\nTry this:\nReject the proposed 99-to-100 crossing, then reread sword-souls.\nThe ledger still has 99 entries, and the revised tier narration was not accepted.\n\nIf something is different:\nThe same victim is submitted again with identical evidence.: The unique victim record grants no second soul.\nAn existing victim arrives with changed event or source evidence.: IDENTITY_CONFLICT stops the run. Compare the records and reconcile the conflict without rewriting prior evidence.\nThe kill is planned, denied or rejected by Decision.: No soul is added and no threshold revision is triggered.\n\nModel requests: Up to five extra model requests: one extraction, up to three Decision checks and one revision only if a threshold is crossed. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -14098,7 +14123,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract candidates only; never confirm or fabricate evidence.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "events": {
               "id": "events",
@@ -14527,7 +14553,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Describe the sword’s new tier after this confirmed soul-count crossing. Preserve the exact kill, actor/victim identity, dialogue and chronology. A count of 99 reaching 100 unlocks the first tier; do not add another kill.",
               "scope": "narration",
               "protectedLiterals": [],
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "draft-join": {
               "id": "draft-join",
@@ -14588,6 +14615,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "separator": "\n",
               "emptyPolicy": "omit",
               "trailingSeparator": false,
+              "destinationMode": "connected",
+              "targetId": "",
               "actorScope": "selected",
               "actorId": ""
             },
@@ -14600,7 +14629,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "y": 0,
               "w": 900,
               "h": 1007,
-              "content": "Let a soul-stealing sword gain a tier from recorded kills. You will add one confirmed victim to a 99-record test ledger, detect the crossing to 100 and revise the narration only when a threshold is crossed.\n\nWhat you'll learn:\n• The soul ledger is the source of the count; a separate stored level cannot drift away from it.\n• Project Document add-unique uses the victim ID to allow one soul per victim, while retaining the event ID and exact kill evidence.\n• Collection threshold compares counts before and after the proposed additions. A crossing activates the optional narration revision.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• In Workflow › Configure › Workflow Data, create JSON target sword-souls with Visibility Public. Paste fixtures/sword-souls-99.json into Initial template and Save authorization. These 99 demonstration records are for the disposable test only.\n• Use loaded Rowan and Iris as attacker and opponent for this test, replacing both example avatar IDs consistently. Other victims require the corresponding actual actor identities; do not substitute an unlisted name.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine confirmed actions from lesson 19, unique-record saves from lesson 17 and thresholds from lesson 25. Note the fixture’s starting count of 99.\n2. Send a continuation request for a disposable, already resolved combat scene where the reply describes Rowan killing Iris with the soul-stealing sword. Inspect the reply; a threat or intention should not count.\n3. Inspect the exact candidate quote and Decision answer. Follow the confirmed kill into Format: id and victimId should identify Iris, and the quote should match the native reply.\n4. Inspect count-pair.out for before 99 and after 100. Then inspect tier.out against thresholds [100,250,500]. The crossing at 100 should activate the narration pass describing the new tier.\n5. Compare the revision with the original kill: attacker, victim, dialogue and chronology should be preserved. Apply replaces the same sword-souls file that was read; Reject leaves its 99 records unchanged.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nSelect Fields → out: count-pair.out shows 99 before and 100 after one new confirmed victim is proposed for the test ledger.\nCollection → out: tier.out derives the new tier and crossing at 100 from those counts. Without a crossing, the original reply survives the skipped revision.\n\nTry this:\nReject the proposed 99-to-100 crossing, then reread sword-souls.\nThe ledger still has 99 entries, and the revised tier narration was not accepted.\n\nIf something is different:\nThe same victim is submitted again with identical evidence.: The unique victim record grants no second soul.\nAn existing victim arrives with changed event or source evidence.: IDENTITY_CONFLICT stops the run. Compare the records and reconcile the conflict without rewriting prior evidence.\nThe kill is planned, denied or rejected by Decision.: No soul is added and no threshold revision is triggered.\n\nModel requests: Up to five extra model requests: one extraction, up to three Decision checks and one revision only if a threshold is crossed. There is also one ordinary SillyTavern reply.",
+              "content": "Let a soul-stealing sword gain a tier from recorded kills. You will add one confirmed victim to a 99-record test ledger, detect the crossing to 100 and revise the narration only when a threshold is crossed.\n\nWhat you'll learn:\n• The soul ledger is the source of the count; a separate stored level cannot drift away from it.\n• Project Document add-unique uses the victim ID to allow one soul per victim, while retaining the event ID and exact kill evidence.\n• Collection threshold compares counts before and after the proposed additions. A crossing activates the optional narration revision.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• The sample sword ledger prepares automatically with 99 demonstration records in this independent practice copy. Those records are never evidence of real story events.\n• Choose the intended Rowan and Iris characters by name as attacker and opponent for this test. Other victims require the corresponding actual actor identities; do not substitute an unlisted name.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine confirmed actions from lesson 19, unique-record saves from lesson 17 and thresholds from lesson 25. Note the fixture’s starting count of 99.\n2. Send a continuation request for a disposable, already resolved combat scene where the reply describes Rowan killing Iris with the soul-stealing sword. Inspect the reply; a threat or intention should not count.\n3. Inspect the exact candidate quote and Decision answer. Follow the confirmed kill into Format: id and victimId should identify Iris, and the quote should match the native reply.\n4. Inspect count-pair.out for before 99 and after 100. Then inspect tier.out against thresholds [100,250,500]. The crossing at 100 should activate the narration pass describing the new tier.\n5. Compare the revision with the original kill: attacker, victim, dialogue and chronology should be preserved. Apply replaces the same sword-souls file that was read; Reject leaves its 99 records unchanged.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nSelect Fields → out: count-pair.out shows 99 before and 100 after one new confirmed victim is proposed for the test ledger.\nCollection → out: tier.out derives the new tier and crossing at 100 from those counts. Without a crossing, the original reply survives the skipped revision.\n\nTry this:\nReject the proposed 99-to-100 crossing, then reread sword-souls.\nThe ledger still has 99 entries, and the revised tier narration was not accepted.\n\nIf something is different:\nThe same victim is submitted again with identical evidence.: The unique victim record grants no second soul.\nAn existing victim arrives with changed event or source evidence.: IDENTITY_CONFLICT stops the run. Compare the records and reconcile the conflict without rewriting prior evidence.\nThe kill is planned, denied or rejected by Decision.: No soul is added and no threshold revision is triggered.\n\nModel requests: Up to five extra model requests: one extraction, up to three Decision checks and one revision only if a threshold is crossed. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -15166,9 +15195,9 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Replace both avatar IDs with loaded actors. In Workflow › Configure › Workflow Data, authorize JSON targets rowan-moments and iris-moments as [], with Visibility Actor private and the respective Actor ID. Choose Save authorization for each.",
+        "Choose the intended Rowan and Iris characters by name. Each actor-private sample file prepares automatically as an empty array with its own scope. Neither character gains access to the other file.",
         "Choose Active SillyTavern or an ordinary connection on Decision’s node bar. Both allowModelAuthoredReflection flags start false; enable each only with that actor’s authoring permission, especially for a player-controlled actor.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Combine lessons 19, 21 and 17: confirmation, presence and file staging. Prepare a scene where both actors participate and agreed to a brief kiss. If permitted, enable only Rowan’s reflection flag before testing.",
@@ -15233,7 +15262,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-29",
           "name": "29. One kiss, two private perspectives",
-          "description": "Record separate private perspectives on one shared kiss. You will confirm the action, verify both participants and separately permit each model-authored reflection.\n\nWhat you'll learn:\n• Confirming the observed kiss does not establish consent, future intimacy or either actor’s private feelings.\n• Actor Context supplies each actor’s own private material. The shared quote stays separate from inner interpretation.\n• Each file has its own save receipt. One successful save does not guarantee that the other file was saved.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Replace both avatar IDs with loaded actors. In Workflow › Configure › Workflow Data, authorize JSON targets rowan-moments and iris-moments as [], with Visibility Actor private and the respective Actor ID. Choose Save authorization for each.\n• Choose Active SillyTavern or an ordinary connection on Decision’s node bar. Both allowModelAuthoredReflection flags start false; enable each only with that actor’s authoring permission, especially for a player-controlled actor.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine lessons 19, 21 and 17: confirmation, presence and file staging. Prepare a scene where both actors participate and agreed to a brief kiss. If permitted, enable only Rowan’s reflection flag before testing.\n2. Send a continuation request. Inspect the actual kiss quote, kiss-decision answer and confirmed-kiss.out. Planned or remembered intimacy is insufficient.\n3. Inspect Rowan’s Actor Context and reflection inputs: the shared event and Rowan’s records may be included, never Iris’s private history. Both false permission flags skip both reflections.\n4. Inspect sharedQuote and reflectionOrigin in the proposed record. The quote records observation; model-authored labels interpretation. These private records add no public notes.\n5. After Apply, check each file receipt. Rowan’s permitted record should be saved; Iris’s disabled path stays skipped. If permitting both later, inspect both save results.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nConfirm Events → out: confirmed-kiss.out contains the accepted shared-action evidence for the permitted reflection paths.\nWrite to File → receipt: Rowan’s Write to File.receipt proposes a private rowan-moments record independently of Iris’s receipt.\n\nTry this:\nPermit only Rowan’s reflection while both actors are verified present.\nOnly Rowan’s reflection model request and file proposal run; Iris’s private reflection path stays skipped.\n\nIf something is different:\nNo kiss candidate exists or participation is unresolved.: The run stops before Review with no private reflections or saves.\nDecision rejects the kiss.: No reflection is requested or staged; the original reply remains available for Review.\nDecision answers null.: Confirm Events reports UNRESOLVED_INPUT before Review; no private reflection or write runs.\nEither actor is absent.: Both private reflection and save paths skip; the original reply remains available.\nOnly one actor’s permission is enabled.: Only that actor’s private reflection path may run after both participation checks pass.\nOne private save fails.: Inspect each receipt. The accepted reply and other successful file save are not automatically undone.\n\nModel requests: Up to three extra requests by default: extraction, Decision and participation. One permitted reflection raises the maximum to four; both raise it to five. There is also one ordinary SillyTavern reply.",
+          "description": "Record separate private perspectives on one shared kiss. You will confirm the action, verify both participants and separately permit each model-authored reflection.\n\nWhat you'll learn:\n• Confirming the observed kiss does not establish consent, future intimacy or either actor’s private feelings.\n• Actor Context supplies each actor’s own private material. The shared quote stays separate from inner interpretation.\n• Each file has its own save receipt. One successful save does not guarantee that the other file was saved.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Choose the intended Rowan and Iris characters by name. Each actor-private sample file prepares automatically as an empty array with its own scope. Neither character gains access to the other file.\n• Choose Active SillyTavern or an ordinary connection on Decision’s node bar. Both allowModelAuthoredReflection flags start false; enable each only with that actor’s authoring permission, especially for a player-controlled actor.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine lessons 19, 21 and 17: confirmation, presence and file staging. Prepare a scene where both actors participate and agreed to a brief kiss. If permitted, enable only Rowan’s reflection flag before testing.\n2. Send a continuation request. Inspect the actual kiss quote, kiss-decision answer and confirmed-kiss.out. Planned or remembered intimacy is insufficient.\n3. Inspect Rowan’s Actor Context and reflection inputs: the shared event and Rowan’s records may be included, never Iris’s private history. Both false permission flags skip both reflections.\n4. Inspect sharedQuote and reflectionOrigin in the proposed record. The quote records observation; model-authored labels interpretation. These private records add no public notes.\n5. After Apply, check each file receipt. Rowan’s permitted record should be saved; Iris’s disabled path stays skipped. If permitting both later, inspect both save results.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nConfirm Events → out: confirmed-kiss.out contains the accepted shared-action evidence for the permitted reflection paths.\nWrite to File → receipt: Rowan’s Write to File.receipt proposes a private rowan-moments record independently of Iris’s receipt.\n\nTry this:\nPermit only Rowan’s reflection while both actors are verified present.\nOnly Rowan’s reflection model request and file proposal run; Iris’s private reflection path stays skipped.\n\nIf something is different:\nNo kiss candidate exists or participation is unresolved.: The run stops before Review with no private reflections or saves.\nDecision rejects the kiss.: No reflection is requested or staged; the original reply remains available for Review.\nDecision answers null.: Confirm Events reports UNRESOLVED_INPUT before Review; no private reflection or write runs.\nEither actor is absent.: Both private reflection and save paths skip; the original reply remains available.\nOnly one actor’s permission is enabled.: Only that actor’s private reflection path may run after both participation checks pass.\nOne private save fails.: Inspect each receipt. The accepted reply and other successful file save are not automatically undone.\n\nModel requests: Up to three extra requests by default: extraction, Decision and participation. One permitted reflection raises the maximum to four; both raise it to five. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -15432,7 +15461,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract candidates only; never confirm or fabricate evidence.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "events": {
               "id": "events",
@@ -15773,7 +15803,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Interpret genuine scene participation from the unchanged supplied source; copy its IDs and evidence exactly.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "cast-presence-0": {
               "id": "cast-presence-0",
@@ -16212,7 +16243,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Private reflection belongs only to character:rowan.png. Label it model-authored; do not invent another shared action.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "rowan-prior": {
               "id": "rowan-prior",
@@ -16398,6 +16430,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "separator": "\n",
               "emptyPolicy": "omit",
               "trailingSeparator": false,
+              "destinationMode": "connected",
+              "targetId": "",
               "actorScope": "presence",
               "actorId": "character:rowan.png"
             },
@@ -16761,7 +16795,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Private reflection belongs only to character:iris.png. Label it model-authored; do not invent another shared action.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "iris-prior": {
               "id": "iris-prior",
@@ -16947,6 +16982,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "separator": "\n",
               "emptyPolicy": "omit",
               "trailingSeparator": false,
+              "destinationMode": "connected",
+              "targetId": "",
               "actorScope": "presence",
               "actorId": "character:iris.png"
             },
@@ -16959,7 +16996,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "y": 0,
               "w": 900,
               "h": 1076,
-              "content": "Record separate private perspectives on one shared kiss. You will confirm the action, verify both participants and separately permit each model-authored reflection.\n\nWhat you'll learn:\n• Confirming the observed kiss does not establish consent, future intimacy or either actor’s private feelings.\n• Actor Context supplies each actor’s own private material. The shared quote stays separate from inner interpretation.\n• Each file has its own save receipt. One successful save does not guarantee that the other file was saved.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Replace both avatar IDs with loaded actors. In Workflow › Configure › Workflow Data, authorize JSON targets rowan-moments and iris-moments as [], with Visibility Actor private and the respective Actor ID. Choose Save authorization for each.\n• Choose Active SillyTavern or an ordinary connection on Decision’s node bar. Both allowModelAuthoredReflection flags start false; enable each only with that actor’s authoring permission, especially for a player-controlled actor.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine lessons 19, 21 and 17: confirmation, presence and file staging. Prepare a scene where both actors participate and agreed to a brief kiss. If permitted, enable only Rowan’s reflection flag before testing.\n2. Send a continuation request. Inspect the actual kiss quote, kiss-decision answer and confirmed-kiss.out. Planned or remembered intimacy is insufficient.\n3. Inspect Rowan’s Actor Context and reflection inputs: the shared event and Rowan’s records may be included, never Iris’s private history. Both false permission flags skip both reflections.\n4. Inspect sharedQuote and reflectionOrigin in the proposed record. The quote records observation; model-authored labels interpretation. These private records add no public notes.\n5. After Apply, check each file receipt. Rowan’s permitted record should be saved; Iris’s disabled path stays skipped. If permitting both later, inspect both save results.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nConfirm Events → out: confirmed-kiss.out contains the accepted shared-action evidence for the permitted reflection paths.\nWrite to File → receipt: Rowan’s Write to File.receipt proposes a private rowan-moments record independently of Iris’s receipt.\n\nTry this:\nPermit only Rowan’s reflection while both actors are verified present.\nOnly Rowan’s reflection model request and file proposal run; Iris’s private reflection path stays skipped.\n\nIf something is different:\nNo kiss candidate exists or participation is unresolved.: The run stops before Review with no private reflections or saves.\nDecision rejects the kiss.: No reflection is requested or staged; the original reply remains available for Review.\nDecision answers null.: Confirm Events reports UNRESOLVED_INPUT before Review; no private reflection or write runs.\nEither actor is absent.: Both private reflection and save paths skip; the original reply remains available.\nOnly one actor’s permission is enabled.: Only that actor’s private reflection path may run after both participation checks pass.\nOne private save fails.: Inspect each receipt. The accepted reply and other successful file save are not automatically undone.\n\nModel requests: Up to three extra requests by default: extraction, Decision and participation. One permitted reflection raises the maximum to four; both raise it to five. There is also one ordinary SillyTavern reply.",
+              "content": "Record separate private perspectives on one shared kiss. You will confirm the action, verify both participants and separately permit each model-authored reflection.\n\nWhat you'll learn:\n• Confirming the observed kiss does not establish consent, future intimacy or either actor’s private feelings.\n• Actor Context supplies each actor’s own private material. The shared quote stays separate from inner interpretation.\n• Each file has its own save receipt. One successful save does not guarantee that the other file was saved.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Choose the intended Rowan and Iris characters by name. Each actor-private sample file prepares automatically as an empty array with its own scope. Neither character gains access to the other file.\n• Choose Active SillyTavern or an ordinary connection on Decision’s node bar. Both allowModelAuthoredReflection flags start false; enable each only with that actor’s authoring permission, especially for a player-controlled actor.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine lessons 19, 21 and 17: confirmation, presence and file staging. Prepare a scene where both actors participate and agreed to a brief kiss. If permitted, enable only Rowan’s reflection flag before testing.\n2. Send a continuation request. Inspect the actual kiss quote, kiss-decision answer and confirmed-kiss.out. Planned or remembered intimacy is insufficient.\n3. Inspect Rowan’s Actor Context and reflection inputs: the shared event and Rowan’s records may be included, never Iris’s private history. Both false permission flags skip both reflections.\n4. Inspect sharedQuote and reflectionOrigin in the proposed record. The quote records observation; model-authored labels interpretation. These private records add no public notes.\n5. After Apply, check each file receipt. Rowan’s permitted record should be saved; Iris’s disabled path stays skipped. If permitting both later, inspect both save results.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nConfirm Events → out: confirmed-kiss.out contains the accepted shared-action evidence for the permitted reflection paths.\nWrite to File → receipt: Rowan’s Write to File.receipt proposes a private rowan-moments record independently of Iris’s receipt.\n\nTry this:\nPermit only Rowan’s reflection while both actors are verified present.\nOnly Rowan’s reflection model request and file proposal run; Iris’s private reflection path stays skipped.\n\nIf something is different:\nNo kiss candidate exists or participation is unresolved.: The run stops before Review with no private reflections or saves.\nDecision rejects the kiss.: No reflection is requested or staged; the original reply remains available for Review.\nDecision answers null.: Confirm Events reports UNRESOLVED_INPUT before Review; no private reflection or write runs.\nEither actor is absent.: Both private reflection and save paths skip; the original reply remains available.\nOnly one actor’s permission is enabled.: Only that actor’s private reflection path may run after both participation checks pass.\nOne private save fails.: Inspect each receipt. The accepted reply and other successful file save are not automatically undone.\n\nModel requests: Up to three extra requests by default: extraction, Decision and participation. One permitted reflection raises the maximum to four; both raise it to five. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -17881,16 +17918,16 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "requirements": [
         "Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.",
-        "Select loaded Rowan and replace both avatar IDs consistently. In Workflow › Configure › Workflow Data, authorize JSON rowan-relationship with Visibility Actor private and Rowan’s Actor ID. Paste its fixture into Initial template and Save authorization: trust/desire/excitement 0, tension 2, empty ledger.",
-        "Keep each row’s subjectId Rowan, objectId Iris and private visibility for Rowan. Authorize story-clock and accept elapsed time using lesson 23.",
-        "For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization."
+        "Select the intended Rowan and Iris characters by name. The Rowan-private sample relationship file prepares automatically: trust, desire and excitement start at 0, tension at 2, with an empty ledger.",
+        "Keep each relationship row directed from Rowan toward Iris and private to Rowan. This independent copy has its own sample clock; accept an authored elapsed duration using its connected time path.",
+        "Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy."
       ],
       "steps": [
         "Combine lessons 25, 23 and 21: State, time and Character Direction. Establish both actors’ participation, then send: “Rowan finishes repairing Iris’s lantern and hands it back to her.”",
         "Follow Read File.value directly into the decay State.state input, preserving Rowan’s private visibility. Inspect the confirmed interaction. Decay runs first; progression then proposes trust +1, desire +0.1, tension −0.25 and excitement +0.5, subject to pacing.",
         "Read State.receipt for changes and reasons. Cooldowns are trust/desire 1440 minutes, tension 720, excitement 120. For trust/desire/excitement, positive scene caps are 1/0.1/0.5 and day caps 1/0.2/1. Diminishing factors are 1, 0.5 and 0.25.",
         "Inspect Character Direction’s values and Rowan’s reply for gradual reactions that leave player choice open. Apply saves values and pacing records; Reject preserves the previous file.",
-        "Accept time using lesson 23, then test without support. Per point, trust/tension ease over 10080 minutes, desire 40320, excitement 480. The first run starts decay at initialMinute 0; the fixture’s minute 780 already eases some tension.",
+        "To advance this copy’s clock, add the Advance Time and Clock Commit wiring taught in lesson 23 to this same workflow. A separate example copy has separate time. Then test without support: trust/tension ease per 10080 minutes, desire 40320, excitement 480. The first decay starts at initialMinute 0; the sample minute 780 already eases some tension.",
         "Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes."
       ],
       "checkpoints": [
@@ -17902,8 +17939,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
       ],
       "experiments": [
         {
-          "change": "Save some positive values, accept a week in lesson 23 and run without new support.",
-          "expect": "Trust/tension move one point toward zero, desire 0.25; excitement fades to zero within eight hours. Values cannot drop below zero."
+          "change": "Save positive values, add an authored one-week Advance Time and Clock Commit path to this same copy, accept it, then run without new support.",
+          "expect": "Trust/tension move one point toward zero, desire 0.25; excitement fades to zero within eight hours. Values cannot drop below zero. A separate lesson copy does not advance this clock."
         }
       ],
       "cases": [
@@ -17931,7 +17968,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
         "graph": {
           "id": "remastered-lesson-30",
           "name": "30. A relationship that changes slowly over weeks",
-          "description": "Make Rowan’s feelings toward Iris change gradually through confirmed support and story time. You will inspect private values and pacing limits, then use the proposed state to guide portrayal.\n\nWhat you'll learn:\n• Directional state describes Rowan toward Iris, separately from Iris toward Rowan. Values guide portrayal, never consent or player decisions.\n• Read File’s Parsed value supplies private state directly to decay, while its separate live Reference authorizes the save.\n• Cooldowns require story time between rewards; scene/day caps limit gains, and diminishing factors reduce repeated rewards.\n• Time decay moves values toward zero using accepted Story Clock minutes, rather than messages or wall time.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select loaded Rowan and replace both avatar IDs consistently. In Workflow › Configure › Workflow Data, authorize JSON rowan-relationship with Visibility Actor private and Rowan’s Actor ID. Paste its fixture into Initial template and Save authorization: trust/desire/excitement 0, tension 2, empty ledger.\n• Keep each row’s subjectId Rowan, objectId Iris and private visibility for Rowan. Authorize story-clock and accept elapsed time using lesson 23.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine lessons 25, 23 and 21: State, time and Character Direction. Establish both actors’ participation, then send: “Rowan finishes repairing Iris’s lantern and hands it back to her.”\n2. Follow Read File.value directly into the decay State.state input, preserving Rowan’s private visibility. Inspect the confirmed interaction. Decay runs first; progression then proposes trust +1, desire +0.1, tension −0.25 and excitement +0.5, subject to pacing.\n3. Read State.receipt for changes and reasons. Cooldowns are trust/desire 1440 minutes, tension 720, excitement 120. For trust/desire/excitement, positive scene caps are 1/0.1/0.5 and day caps 1/0.2/1. Diminishing factors are 1, 0.5 and 0.25.\n4. Inspect Character Direction’s values and Rowan’s reply for gradual reactions that leave player choice open. Apply saves values and pacing records; Reject preserves the previous file.\n5. Accept time using lesson 23, then test without support. Per point, trust/tension ease over 10080 minutes, desire 40320, excitement 480. The first run starts decay at initialMinute 0; the fixture’s minute 780 already eases some tension.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nState → receipt: State.receipt shows Rowan-toward-Iris values before and after, reward limits, processed occurrence IDs and pending private changes.\n\nTry this:\nSave some positive values, accept a week in lesson 23 and run without new support.\nTrust/tension move one point toward zero, desire 0.25; excitement fades to zero within eight hours. Values cannot drop below zero.\n\nIf something is different:\nRowan is absent.: Character Direction skips. Authorized selected-actor file access still permits elapsed-time decay to be saved; absence does not invent a supportive interaction.\nAn occurrence repeats or a cooldown applies.: No extra reward is granted. Inspect the receipt’s reason instead of inferring progress from repeated prose.\nReview is rejected.: Private values, pacing records and decay timestamps remain unchanged.\n\nModel requests: Up to six extra requests: extraction, three confirmations, participation and private portrayal. State rules, decay and file staging make no model requests. There is also one ordinary SillyTavern reply.",
+          "description": "Make Rowan’s feelings toward Iris change gradually through confirmed support and story time. You will inspect private values and pacing limits, then use the proposed state to guide portrayal.\n\nWhat you'll learn:\n• Directional state describes Rowan toward Iris, separately from Iris toward Rowan. Values guide portrayal, never consent or player decisions.\n• Read File’s Parsed value supplies private state directly to decay, while its separate live Reference authorizes the save.\n• Cooldowns require story time between rewards; scene/day caps limit gains, and diminishing factors reduce repeated rewards.\n• Time decay moves values toward zero using accepted Story Clock minutes, rather than messages or wall time.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan and Iris characters by name. The Rowan-private sample relationship file prepares automatically: trust, desire and excitement start at 0, tension at 2, with an empty ledger.\n• Keep each relationship row directed from Rowan toward Iris and private to Rowan. This independent copy has its own sample clock; accept an authored elapsed duration using its connected time path.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine lessons 25, 23 and 21: State, time and Character Direction. Establish both actors’ participation, then send: “Rowan finishes repairing Iris’s lantern and hands it back to her.”\n2. Follow Read File.value directly into the decay State.state input, preserving Rowan’s private visibility. Inspect the confirmed interaction. Decay runs first; progression then proposes trust +1, desire +0.1, tension −0.25 and excitement +0.5, subject to pacing.\n3. Read State.receipt for changes and reasons. Cooldowns are trust/desire 1440 minutes, tension 720, excitement 120. For trust/desire/excitement, positive scene caps are 1/0.1/0.5 and day caps 1/0.2/1. Diminishing factors are 1, 0.5 and 0.25.\n4. Inspect Character Direction’s values and Rowan’s reply for gradual reactions that leave player choice open. Apply saves values and pacing records; Reject preserves the previous file.\n5. To advance this copy’s clock, add the Advance Time and Clock Commit wiring taught in lesson 23 to this same workflow. A separate example copy has separate time. Then test without support: trust/tension ease per 10080 minutes, desire 40320, excitement 480. The first decay starts at initialMinute 0; the sample minute 780 already eases some tension.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nState → receipt: State.receipt shows Rowan-toward-Iris values before and after, reward limits, processed occurrence IDs and pending private changes.\n\nTry this:\nSave positive values, add an authored one-week Advance Time and Clock Commit path to this same copy, accept it, then run without new support.\nTrust/tension move one point toward zero, desire 0.25; excitement fades to zero within eight hours. Values cannot drop below zero. A separate lesson copy does not advance this clock.\n\nIf something is different:\nRowan is absent.: Character Direction skips. Authorized selected-actor file access still permits elapsed-time decay to be saved; absence does not invent a supportive interaction.\nAn occurrence repeats or a cooldown applies.: No extra reward is granted. Inspect the receipt’s reason instead of inferring progress from repeated prose.\nReview is rejected.: Private values, pacing records and decay timestamps remain unchanged.\n\nModel requests: Up to six extra requests: extraction, three confirmations, participation and private portrayal. State rules, decay and file staging make no model requests. There is also one ordinary SillyTavern reply.",
           "schema": 3,
           "runtime": 2,
           "mode": "native-unified",
@@ -17944,7 +17981,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "On Send",
               "enabled": true,
               "x": 2900,
-              "y": 1222,
+              "y": 1256,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -17960,7 +17997,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Generate Reply · SillyTavern",
               "enabled": true,
               "x": 3300,
-              "y": 1246,
+              "y": 1280,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -17980,7 +18017,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Review / Publish",
               "enabled": true,
               "x": 3700,
-              "y": 1222,
+              "y": 1256,
               "w": 300,
               "h": 140,
               "profileId": null,
@@ -17996,7 +18033,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Player Event Source",
               "enabled": true,
               "x": 100,
-              "y": 2813,
+              "y": 2847,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18013,7 +18050,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 100,
-              "y": 1805,
+              "y": 1839,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18032,7 +18069,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "JSON Decode",
               "enabled": true,
               "x": 500,
-              "y": 1877,
+              "y": 1911,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18052,7 +18089,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 100,
-              "y": 2477,
+              "y": 2511,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18071,7 +18108,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Model Call",
               "enabled": true,
               "x": 500,
-              "y": 2741,
+              "y": 2775,
               "w": 300,
               "h": 168,
               "inGroup": "processing-player",
@@ -18083,7 +18120,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Extract candidates only; never confirm or fabricate evidence.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "events": {
               "id": "events",
@@ -18093,7 +18131,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Event Normalize",
               "enabled": true,
               "x": 900,
-              "y": 1973,
+              "y": 2007,
               "w": 300,
               "h": 168,
               "inGroup": "processing-player",
@@ -18114,7 +18152,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "For Each",
               "enabled": true,
               "x": 1300,
-              "y": 1709,
+              "y": 1743,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18145,7 +18183,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Collection",
               "enabled": true,
               "x": 1700,
-              "y": 1541,
+              "y": 1575,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18173,7 +18211,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Scene Context",
               "enabled": true,
               "x": 900,
-              "y": 2669,
+              "y": 2703,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18193,7 +18231,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 900,
-              "y": 2453,
+              "y": 2487,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18212,7 +18250,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Model Call",
               "enabled": true,
               "x": 1300,
-              "y": 2573,
+              "y": 2607,
               "w": 300,
               "h": 168,
               "inGroup": "processing-player",
@@ -18224,7 +18262,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "instructions": "Interpret genuine scene participation from the unchanged supplied source; copy its IDs and evidence exactly.",
               "outputKind": "data",
               "schema": "",
-              "maxTokens": 2048
+              "maxTokens": 2048,
+              "maxRetries": 0
             },
             "cast-presence-0": {
               "id": "cast-presence-0",
@@ -18234,7 +18273,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Scene Presence",
               "enabled": true,
               "x": 1700,
-              "y": 2597,
+              "y": 2631,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18253,7 +18292,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Condition",
               "enabled": true,
               "x": 2100,
-              "y": 2669,
+              "y": 2703,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18276,7 +18315,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Branch",
               "enabled": true,
               "x": 2500,
-              "y": 2573,
+              "y": 2607,
               "w": 300,
               "h": 168,
               "inGroup": "processing-player",
@@ -18295,7 +18334,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Read File",
               "enabled": true,
               "x": 1700,
-              "y": 2813,
+              "y": 2847,
               "w": 300,
               "h": 196,
               "inGroup": "processing-player",
@@ -18317,7 +18356,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Story Clock",
               "enabled": true,
               "x": 1700,
-              "y": 1757,
+              "y": 1791,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18336,7 +18375,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 1300,
-              "y": 1949,
+              "y": 1983,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18355,7 +18394,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "JSON Decode",
               "enabled": true,
               "x": 1700,
-              "y": 1973,
+              "y": 2007,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18375,7 +18414,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "State",
               "enabled": true,
               "x": 2100,
-              "y": 1877,
+              "y": 1911,
               "w": 300,
               "h": 168,
               "inGroup": "processing-player",
@@ -18393,7 +18432,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Text",
               "enabled": true,
               "x": 1700,
-              "y": 2213,
+              "y": 2247,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18412,7 +18451,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "JSON Decode",
               "enabled": true,
               "x": 2100,
-              "y": 2357,
+              "y": 2391,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18432,7 +18471,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Event Normalize",
               "enabled": true,
               "x": 2100,
-              "y": 1613,
+              "y": 1647,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18452,7 +18491,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "State",
               "enabled": true,
               "x": 2500,
-              "y": 1853,
+              "y": 1887,
               "w": 300,
               "h": 168,
               "inGroup": "processing-player",
@@ -18470,7 +18509,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Character Direction",
               "enabled": true,
               "x": 2900,
-              "y": 1829,
+              "y": 1863,
               "w": 300,
               "h": 140,
               "inGroup": "processing-player",
@@ -18490,7 +18529,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Format",
               "enabled": true,
               "x": 2900,
-              "y": 3260,
+              "y": 3294,
               "w": 300,
               "h": 168,
               "inGroup": "processing-save-format",
@@ -18517,7 +18556,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Write to File",
               "enabled": true,
               "x": 3300,
-              "y": 3212,
+              "y": 3246,
               "w": 300,
               "h": 168,
               "inGroup": "processing-save-format",
@@ -18536,6 +18575,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "separator": "\n",
               "emptyPolicy": "omit",
               "trailingSeparator": false,
+              "destinationMode": "connected",
+              "targetId": "",
               "actorScope": "selected",
               "actorId": ""
             },
@@ -18547,8 +18588,8 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "x": 100,
               "y": 0,
               "w": 900,
-              "h": 1094,
-              "content": "Make Rowan’s feelings toward Iris change gradually through confirmed support and story time. You will inspect private values and pacing limits, then use the proposed state to guide portrayal.\n\nWhat you'll learn:\n• Directional state describes Rowan toward Iris, separately from Iris toward Rowan. Values guide portrayal, never consent or player decisions.\n• Read File’s Parsed value supplies private state directly to decay, while its separate live Reference authorizes the save.\n• Cooldowns require story time between rewards; scene/day caps limit gains, and diminishing factors reduce repeated rewards.\n• Time decay moves values toward zero using accepted Story Clock minutes, rather than messages or wall time.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select loaded Rowan and replace both avatar IDs consistently. In Workflow › Configure › Workflow Data, authorize JSON rowan-relationship with Visibility Actor private and Rowan’s Actor ID. Paste its fixture into Initial template and Save authorization: trust/desire/excitement 0, tension 2, empty ledger.\n• Keep each row’s subjectId Rowan, objectId Iris and private visibility for Rowan. Authorize story-clock and accept elapsed time using lesson 23.\n• For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.\n\nSteps:\n1. Combine lessons 25, 23 and 21: State, time and Character Direction. Establish both actors’ participation, then send: “Rowan finishes repairing Iris’s lantern and hands it back to her.”\n2. Follow Read File.value directly into the decay State.state input, preserving Rowan’s private visibility. Inspect the confirmed interaction. Decay runs first; progression then proposes trust +1, desire +0.1, tension −0.25 and excitement +0.5, subject to pacing.\n3. Read State.receipt for changes and reasons. Cooldowns are trust/desire 1440 minutes, tension 720, excitement 120. For trust/desire/excitement, positive scene caps are 1/0.1/0.5 and day caps 1/0.2/1. Diminishing factors are 1, 0.5 and 0.25.\n4. Inspect Character Direction’s values and Rowan’s reply for gradual reactions that leave player choice open. Apply saves values and pacing records; Reject preserves the previous file.\n5. Accept time using lesson 23, then test without support. Per point, trust/tension ease over 10080 minutes, desire 40320, excitement 480. The first run starts decay at initialMinute 0; the fixture’s minute 780 already eases some tension.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nState → receipt: State.receipt shows Rowan-toward-Iris values before and after, reward limits, processed occurrence IDs and pending private changes.\n\nTry this:\nSave some positive values, accept a week in lesson 23 and run without new support.\nTrust/tension move one point toward zero, desire 0.25; excitement fades to zero within eight hours. Values cannot drop below zero.\n\nIf something is different:\nRowan is absent.: Character Direction skips. Authorized selected-actor file access still permits elapsed-time decay to be saved; absence does not invent a supportive interaction.\nAn occurrence repeats or a cooldown applies.: No extra reward is granted. Inspect the receipt’s reason instead of inferring progress from repeated prose.\nReview is rejected.: Private values, pacing records and decay timestamps remain unchanged.\n\nModel requests: Up to six extra requests: extraction, three confirmations, participation and private portrayal. State rules, decay and file staging make no model requests. There is also one ordinary SillyTavern reply.",
+              "h": 1128,
+              "content": "Make Rowan’s feelings toward Iris change gradually through confirmed support and story time. You will inspect private values and pacing limits, then use the proposed state to guide portrayal.\n\nWhat you'll learn:\n• Directional state describes Rowan toward Iris, separately from Iris toward Rowan. Values guide portrayal, never consent or player decisions.\n• Read File’s Parsed value supplies private state directly to decay, while its separate live Reference authorizes the save.\n• Cooldowns require story time between rewards; scene/day caps limit gains, and diminishing factors reduce repeated rewards.\n• Time decay moves values toward zero using accepted Story Clock minutes, rather than messages or wall time.\n\nBefore you start:\n• Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.\n• Select the intended Rowan and Iris characters by name. The Rowan-private sample relationship file prepares automatically: trust, desire and excitement start at 0, tension at 2, with an empty ledger.\n• Keep each relationship row directed from Rowan toward Iris and private to Rowan. This independent copy has its own sample clock; accept an authored elapsed duration using its connected time path.\n• Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.\n\nSteps:\n1. Combine lessons 25, 23 and 21: State, time and Character Direction. Establish both actors’ participation, then send: “Rowan finishes repairing Iris’s lantern and hands it back to her.”\n2. Follow Read File.value directly into the decay State.state input, preserving Rowan’s private visibility. Inspect the confirmed interaction. Decay runs first; progression then proposes trust +1, desire +0.1, tension −0.25 and excitement +0.5, subject to pacing.\n3. Read State.receipt for changes and reasons. Cooldowns are trust/desire 1440 minutes, tension 720, excitement 120. For trust/desire/excitement, positive scene caps are 1/0.1/0.5 and day caps 1/0.2/1. Diminishing factors are 1, 0.5 and 0.25.\n4. Inspect Character Direction’s values and Rowan’s reply for gradual reactions that leave player choice open. Apply saves values and pacing records; Reject preserves the previous file.\n5. To advance this copy’s clock, add the Advance Time and Clock Commit wiring taught in lesson 23 to this same workflow. A separate example copy has separate time. Then test without support: trust/tension ease per 10080 minutes, desire 40320, excitement 480. The first decay starts at initialMinute 0; the sample minute 780 already eases some tension.\n6. Review the final reply and any proposed saved changes at Review / Publish. Choose Apply reviewed candidate to accept them, or Reject candidate to discard them. Preview alone does not save changes.\n\nCheckpoints:\nState → receipt: State.receipt shows Rowan-toward-Iris values before and after, reward limits, processed occurrence IDs and pending private changes.\n\nTry this:\nSave positive values, add an authored one-week Advance Time and Clock Commit path to this same copy, accept it, then run without new support.\nTrust/tension move one point toward zero, desire 0.25; excitement fades to zero within eight hours. Values cannot drop below zero. A separate lesson copy does not advance this clock.\n\nIf something is different:\nRowan is absent.: Character Direction skips. Authorized selected-actor file access still permits elapsed-time decay to be saved; absence does not invent a supportive interaction.\nAn occurrence repeats or a cooldown applies.: No extra reward is granted. Inspect the receipt’s reason instead of inferring progress from repeated prose.\nReview is rejected.: Private values, pacing records and decay timestamps remain unchanged.\n\nModel requests: Up to six extra requests: extraction, three confirmations, participation and private portrayal. State rules, decay and file staging make no model requests. There is also one ordinary SillyTavern reply.",
               "commentFrame": true,
               "moveContents": false
             }
@@ -18817,7 +18858,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Check story event evidence",
               "description": "These connected boxes work together. Follow their wires to see how each result is used.",
               "x": 75,
-              "y": 1491,
+              "y": 1525,
               "w": 3150,
               "h": 1543,
               "color": "#284e67",
@@ -18854,7 +18895,7 @@ export const REMASTERED_WORKFLOW_EXAMPLE_DATA = [
               "title": "Update saved story data",
               "description": "These connected boxes work together. Follow their wires to see how each result is used.",
               "x": 2875,
-              "y": 3162,
+              "y": 3196,
               "w": 750,
               "h": 291,
               "color": "#57416e",

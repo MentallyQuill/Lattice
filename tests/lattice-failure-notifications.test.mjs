@@ -7,7 +7,7 @@ import {runWorkflow} from '../src/workflow/runtime.js';
 import {decodeJson} from '../src/workflow/operations/json-decode.js';
 const source=fs.readFileSync(new URL('../src/run.js', import.meta.url),'utf8');
 const start=source.indexOf('onResult: ');const expression=start<0?source.trim():source.slice(start+'onResult: '.length,source.indexOf('\n    });',start)).trim().replace(/,$/,'');
-function fixture(){const calls=[],events=[],kinds=[];const scope={console:{info(){}},presentFailureNotification,safe:fn=>{try{return fn();}catch{}},toastr:{error(...args){calls.push(args);kinds.push('error');},info(...args){calls.push(args);kinds.push('info');},warning(...args){calls.push(args);kinds.push('warning');}},document:{dispatchEvent(event){events.push(event.type);}},CustomEvent:class{constructor(type){this.type=type;}}};return {calls,events,kinds,onResult:vm.runInNewContext('('+expression+')',scope)};}
+function fixture(){const calls=[],events=[],kinds=[];const scope={console:{info(){}},presentFailureNotification,refreshAfterNativeReview(){},safe:fn=>{try{return fn();}catch{}},toastr:{error(...args){calls.push(args);kinds.push('error');},info(...args){calls.push(args);kinds.push('info');},warning(...args){calls.push(args);kinds.push('warning');}},document:{dispatchEvent(event){events.push(event.type);}},CustomEvent:class{constructor(type){this.type=type;}}};return {calls,events,kinds,onResult:vm.runInNewContext('('+expression+')',scope)};}
 const automatic={kind:'send',phase:'unified',runId:'synthetic'};
 
 // Dropping recording metadata from presentation hides the actual failing node and retry count.

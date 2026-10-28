@@ -9,9 +9,13 @@ if (new URLSearchParams(location.search).has('hostCss')) {
     document.getElementById('synthetic-host-css')?.remove();
 }
 const context = installMock();
+const existingFixtureSettings=context.extensionSettings.lattice;
 // Exercise startup with no saved Lattice namespace; do not pick a fixture here.
 delete context.extensionSettings.lattice;
 const freshSettingsAbsent = !Object.hasOwn(context.extensionSettings, 'lattice');
+// Restore the existing-install fixture before any transitive runtime imports.
+// The explicit freshFiles journey keeps the namespace absent through startup.
+if(!new URLSearchParams(location.search).has('freshFiles'))context.extensionSettings.lattice=existingFixtureSettings;
 let providerCalls = 0;
 context.ConnectionManagerRequestService = { getProfile: () => null, sendRequest() { providerCalls++; throw Error('Browser fixtures must never request a model.'); } };
 context.ChatCompletionService = { processRequest() { providerCalls++; throw Error('Browser fixtures must never request a model.'); } };
@@ -28,6 +32,9 @@ const toasts = [];
 globalThis.toastr = Object.fromEntries(['info', 'success', 'warning', 'error'].map(type => [type, message => toasts.push({ type, message })]));
 const version = (await (await fetch('/manifest.json')).json()).version;
 const S = await import(`/src/state.js?v=${version}`);
+// Most browser journeys represent an existing installation. Explicit first-run
+// storage journeys retain the genuinely absent namespace through module startup.
+if(!new URLSearchParams(location.search).has('freshFiles'))S.settings();
 const { Canvas } = await import(`/src/canvas.js?v=${version}`);
 let canvas;
 const setGraph = Canvas.prototype.setGraph;

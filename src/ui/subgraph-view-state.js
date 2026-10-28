@@ -1,4 +1,4 @@
-import { viewIdentityKey } from './view-state.js?v=0.28.1';
+import { viewIdentityKey } from './view-state.js?v=0.29.0';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 

@@ -8,7 +8,7 @@ Your usual SillyTavern connection writes the main reply. Lattice’s model tools
 
 If you have not installed Lattice, follow the [quick start](lattice-workspace.md). A fresh workspace opens **Unified story workflow** with Lattice disabled.
 
-Choose **File → Open examples…** and read the lesson’s setup. Configure its model tools and any **For Each** helper roles. Automatic Workflow Data sources need no setup; authorize custom story documents through **Workflow → Configure → Workflow Data…**.
+Choose **File → Open examples…** and read the lesson’s setup. Configure its model tools and any **For Each** helper roles. New file outputs and internal story state use automatic destinations, names and types in **Details → File**. Readers ask for an input when its source is unknown. Saving inside SillyTavern needs no extra component; **File → File storage…** guides optional access to other server locations. A **Setup Required** tag opens a genuine missing choice. Existing data and grants remain preserved. See [file storage](file-storage.md).
 
 Keep that document open, select **Enable Lattice**, and Send normally in SillyTavern. After the reply finishes, select **Review / Publish → Host result** in Preview. Apply adds the reviewed version as a new swipe and accepts its staged effects. **Run to here** only tests supported steps. See [applying an example to your story](unified-workflows.md#apply-an-example-to-your-story).
 
@@ -25,6 +25,22 @@ Click the grey connection bar on an ordinary model node:
 Configure **For Each → Helper model bindings** separately. Choosing a connection for an extraction tool does not assign the helper’s confirmation model.
 
 Each request uses the tool’s own instructions and connected material. Lattice does not switch SillyTavern’s main connection globally or copy the main prompt into every extra request. Credentials stay in SillyTavern’s secret store.
+
+Choose **Details → Limits & retries → Reasoning** on a model node to control
+that node's requests. **None** is the default. Available choices follow the
+effective connection and model; **Custom** opens a field for a provider effort
+value. The value is saved with the node and reused on retries. Inside a helper
+or subgraph, configure the node that makes the request. **Generate Reply** uses
+the active SillyTavern model and applies its setting to that reply alone.
+
+None disables optional thinking when the provider and installed SillyTavern
+adapter support it. Some models always reason; their control explains how None
+is handled. Providers use different effort names, thinking switches, or token
+budgets, and some host adapters cannot forward every provider setting. Unsupported
+Custom values produce an error instead of silently using a different effort.
+These controls do not change the saved connection profile or global sampler.
+See [reasoning controls and provider adapter limits](reasoning-controls.md) for
+the supported routes and model capability rules.
 
 **Run to here** can spend tokens when the tested path includes model tools. A later Send runs its own preparation; it does not reuse that diagnostic result. Update the extension through **Manage Extensions**, then reload.
 
@@ -101,7 +117,7 @@ Before saving, Lattice checks current evidence, scope, source revisions, and the
 
 ## Share JSON
 
-Use **File → Open workflow…** to validate and replace the active document after handling unsaved work. **Import into graph…** previews an additive edit. The [remastered examples](../examples/remastered/) use portable schema-3/runtime-2 workflows.
+Use **File → Import workflow…** to validate and open a device copy after handling unsaved work. **Open saved…** opens the shared saved design; **Import into graph…** previews an additive edit. **Download / share workflow…** creates a portable copy. The [remastered examples](../examples/remastered/) use portable schema-3/runtime-2 workflows.
 
 Portable exports preserve saved definitions and supported controls while omitting local profile identifiers and credentials, including helper overrides. Recipients reselect fixed profiles and helper roles. **Active SillyTavern model** remains portable and follows the recipient’s connection. Confirm that any retained custom model name is valid for that route.
 
@@ -126,7 +142,7 @@ A thinking model may spend much of its completion allowance on reasoning. Reachi
 | Apply unavailable or stale | Send again with the current workflow and inspect its fresh Review / Publish result. |
 | Preparation holds | Read its report and fix the connection or context before the next Send. |
 | Changes missing after reload | Inspect the per-effect save status and SillyTavern’s save/network status. Local Apply and durable saving are separate. |
-| Memory updated; save unconfirmed / `PERSISTENCE_UNKNOWN` | Confirm fresh saved metadata containing the receipt before another affected write. Do not blindly retry or change the receipt key. |
+| Save is unconfirmed / `PERSISTENCE_UNKNOWN` | Keep the retained work and follow the offered retry or recovery action. Lattice checks the original save identity before retrying; an uncertain save is not reported as complete. |
 | Actor required or invalid memory evidence | Select the active group actor. Use current settled public text and extract fresh evidence after edits, swipes, or deletion. |
-| Receipt conflict or stale version | Read fresh state. Use a transaction key for the intended proposal rather than reusing one for changed content. |
+| Conflicting saved version | Preserve your draft, inspect the current saved version, and use the offered new-copy or recovery action. Changed contents need a fresh run and review. |
 | Old assets after an update | Hard reload SillyTavern with **Ctrl+Shift+R** so versioned modules load together. |

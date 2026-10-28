@@ -231,3 +231,14 @@ test('clipboard rejection stays local and mode/copy controls isolate canvas keyb
         assert.deepEqual(leaked, []); assert.equal(key.defaultPrevented, false); assert.equal(paste.defaultPrevented, false);
     } finally { await f.close(); }
 });
+
+test('save results use readable file labels with technical receipt identity only in Details',async()=>{
+ const f=await fixture(preview({settlement:{status:'settled',published:true,receipts:[{intentId:'intent-secret-123',targetId:'managed:opaque-456',name:'Scene Context',status:'confirmed'}]}}));
+ try{const result=f.host.querySelector('.pc-preview-settlement');assert.match(result.querySelector('[data-file-save-result]').textContent,/Scene Context.*Saved/);assert.doesNotMatch(result.querySelector('[data-file-save-result]').textContent,/managed:|intent-secret/);const details=result.querySelector('details');assert.equal(details.open,false);assert.match(details.textContent,/managed:opaque-456/);assert.match(details.textContent,/intent-secret-123/);}finally{await f.close();}
+});
+
+test('a recorded staged file receipt is readable with identifiers kept inside collapsed Details',async()=>{
+ const data=JSON.stringify({status:'staged',intentId:'internal-intent',targetId:'managed:internal',operation:'replace'}),item={...target,portId:'receipt'};
+ const f=await fixture(preview({choices:[{key:'receipt',label:'File result',kind:'data',target:item}],selectedKey:'receipt',sections:[section('out','Output',data)]}));
+ try{const article=f.host.querySelector('[data-artifact-kind]');assert.match(article.querySelector('[data-staged-file-result]').textContent,/Ready.*Apply/);const details=article.querySelector('details');assert.equal(details.open,false);assert.match(details.textContent,/internal-intent/);}finally{await f.close();}
+});

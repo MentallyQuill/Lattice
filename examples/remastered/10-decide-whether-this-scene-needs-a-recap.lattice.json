@@ -177,7 +177,8 @@
         "patterns": [],
         "caseSensitive": true,
         "match": "substring",
-        "maxTokens": 2048
+        "maxTokens": 2048,
+        "maxRetries": 0
       },
       "notes": {
         "id": "notes",

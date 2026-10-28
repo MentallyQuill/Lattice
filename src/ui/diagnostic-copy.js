@@ -1,7 +1,7 @@
-import { stateCopy, knownTextCopy } from './diagnostic-states.js?v=0.28.1';
-import { modelCopy, modelVariants } from './diagnostic-model.js?v=0.28.1';
-import { resourceCopy } from './diagnostic-resources.js?v=0.28.1';
-import { workflowCopy, nativeSourceVariants } from './diagnostic-workflow.js?v=0.28.1';
+import { stateCopy, knownTextCopy } from './diagnostic-states.js?v=0.29.0';
+import { modelCopy, modelVariants } from './diagnostic-model.js?v=0.29.0';
+import { resourceCopy } from './diagnostic-resources.js?v=0.29.0';
+import { workflowCopy, nativeSourceVariants } from './diagnostic-workflow.js?v=0.29.0';
 
 // Only catalog-owned copy reaches a diagnostic surface. Unknown source text is
 // intentionally omitted, including in the technical disclosure.
@@ -17,17 +17,18 @@ const variants = [
     ['INVALID_FILE_BACKEND_RESULT', /CAS|acknowledge|durable/i, unverified],
     ['INVALID_MEMORY_BACKEND_RESULT', /CAS|acknowledge/i, unverified],
     ['INVALID_PORT', /editable subgraph|boundary whose port/i, { id: 'boundary-port', severity: 'error', title: 'Open an editable subgraph', message: 'Open an editable subgraph and select its Input or Output boundary to edit the port.' }],
-    ['FILE_NOT_FOUND', /logical document|creation template/i, { id: 'logical-document-missing', severity: 'error', title: 'Workflow document is missing', message: 'Choose an existing document or configure an initial template in Workflow Data before reading this target.' }],
+    ['FILE_NOT_FOUND', /logical document|creation template/i, { id: 'logical-document-missing', severity: 'error', title: 'Workflow document is missing', message: 'Select the reader node and open Details → File to choose an existing source or import a copy from your device.' }],
     ['MISSING_INPUT', /wrapper output.*no connected source/i, { id: 'subgraph-output-missing', severity: 'error', title: 'Subgraph output needs a source', message: 'Open the subgraph and connect a source to its Output boundary before previewing this output.' }],
     ['STALE_SOURCE', /memory/i, { id: 'memory-source-changed', severity: 'error', title: 'Memory evidence changed', message: 'The memory evidence changed after it was read. Inspect the current memory and its source before preparing another change.' }],
 ];
 const extraCopy = {
     MISSING_RUN_TARGETS: { id: 'workflow-outputs-missing', severity: 'error', title: 'Choose workflow outputs', message: 'Open Workflow > Workflow outputs and select the output steps this workflow should run.' },
     INVALID_RUN_TARGETS: { id: 'workflow-outputs-invalid', severity: 'error', title: 'Workflow outputs need updating', message: 'Open Workflow > Workflow outputs and choose existing output steps again before running.' },
-    CLOCK_LEDGER_FULL: {id:'clock-history-full',severity:'warning',title:'Clock history is full',message:'Open Workflow Data, select the clock and choose Preview history checkpoint before continuing.'},
-    FILE_RECEIPT_LIMIT: {id:'save-history-full',severity:'warning',title:'Save history is full',message:'Open Workflow Data, select the document and choose Preview history checkpoint before continuing.'},
-    PERSISTENCE_UNKNOWN: {id:'native-save-held',severity:'warning',title:'The previous save is unverified',message:'Further writes are held until the previous save is verified. For a history checkpoint, open Workflow Data and choose Inspect saved history.'},
-    DOCUMENT_HISTORY_CHANGED: {id:'document-history-changed',severity:'error',title:'Document history changed',message:'Read the document again and prepare a fresh workflow result or checkpoint preview. Preserve its existing history marker.'},
+    WORKFLOW_SELECTION_PENDING: {id:'workflow-selection-pending',severity:'warning',title:'Choose the workflow for this chat',message:'Unsaved workflow changes need review. Open Lattice to choose the workflow for this chat. Your draft is kept.'},
+    CLOCK_LEDGER_FULL: {id:'clock-history-full',severity:'warning',title:'Clock history is full',message:'Saving stopped because the clock history reached its limit. Select the clock node and check Details → File. Preserve the clock and its saved history before further changes.'},
+    FILE_RECEIPT_LIMIT: {id:'save-history-full',severity:'warning',title:'Save history is full',message:'Saving stopped because the file history reached its limit. Select the file node and check Details → File. Preserve the file and its saved history before further changes.'},
+    PERSISTENCE_UNKNOWN: {id:'native-save-held',severity:'warning',title:'The previous save is unverified',message:'Further writes are held until the previous save is verified. Check the affected save status before making another change. For file saves, select the node and open Details → File.'},
+    DOCUMENT_HISTORY_CHANGED: {id:'document-history-changed',severity:'error',title:'Document history changed',message:'Read the document again and prepare a fresh workflow result. Keep its saved history intact.'},
     DOCUMENT_HISTORY_LIMIT: {id:'document-history-full',severity:'warning',title:'Saved history reached its capacity',message:'The native history archive reached its supported capacity. Preserve the saved history before reconciling this document.'},
     DOCUMENT_HISTORY_MISSING: {id:'document-history-missing',severity:'error',title:'Saved history is missing',message:'A required saved history page is missing. Restore the document’s complete history before continuing.'},
     INVALID_DOCUMENT_HISTORY: {id:'document-history-invalid',severity:'error',title:'Saved history is invalid',message:'The document history is invalid. Preserve it and restore a complete valid history before continuing.'},

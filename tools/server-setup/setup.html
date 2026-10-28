@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Lattice file setup</title>
+<style>body{font:17px/1.5 system-ui;margin:3rem auto;padding:0 1rem;max-width:42rem;background:#f9fafc;color:#17243b}input[type=text]{width:100%;box-sizing:border-box;padding:.7rem;font:inherit}button{font:inherit;padding:.6rem 1rem;margin:.6rem .5rem .6rem 0;cursor:pointer}label{display:block;margin:1rem 0}#result{white-space:pre-wrap}small{display:block}</style>
+<h1>Choose where Lattice saves files</h1><p>This setup works on the computer running SillyTavern. It installs the component included with Lattice and preserves your current files.</p>
+<form id="setup"><label for="folder">SillyTavern installation folder</label><input id="folder" type="text" required placeholder="Choose the folder containing server.js"><button id="choose" type="button">Choose folder…</button>
+<label><input id="enable" type="checkbox"> Enable server plugins in SillyTavern</label><p>This permits SillyTavern to run installed server plugins. Setup backs up config.yaml before changing this setting. If it is already enabled, no configuration change is needed.</p>
+<button id="install" type="submit">Install file support</button><button id="close" type="button">Close setup</button></form><p id="result" role="status" aria-live="polite"></p>
+<script>
+const token=location.hash.slice(1);history.replaceState(null,'','/');
+const result=document.getElementById('result'),folder=document.getElementById('folder'),button=document.getElementById('install');
+async function action(route,body={}){const response=await fetch(route,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(body)});const data=await response.json();if(!data.ok)throw Error(data.error);return data.data;}
+document.getElementById('choose').onclick=async()=>{try{folder.value=(await action('/select-folder')).path;result.textContent='';}catch(error){result.textContent=error.message;}};
+document.getElementById('setup').onsubmit=async event=>{event.preventDefault();button.disabled=true;result.textContent='Installing and verifying…';try{const data=await action('/install',{sillyTavernPath:folder.value,enableServerPlugins:document.getElementById('enable').checked});result.textContent='File support installed and verified.\n'+(data.configBackup?'Configuration backup: '+data.configBackup+'\n':'')+(data.enabled?'Restart SillyTavern, return to Lattice File storage, and choose Check again.':'Ask the host owner to enable server plugins in config.yaml, restart SillyTavern, then choose Check again in Lattice.');}catch(error){result.textContent=error.message;}finally{button.disabled=false;}};
+document.getElementById('close').onclick=async()=>{try{await action('/close');result.textContent='Setup closed. You can continue saving inside SillyTavern.';}catch(error){result.textContent=error.message;}};
+if(!/^[a-f0-9]{64}$/.test(token)){button.disabled=true;result.textContent='Open the complete link printed by the setup launcher.';}
+</script></html>

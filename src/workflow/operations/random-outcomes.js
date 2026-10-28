@@ -1,8 +1,9 @@
-import { preserveArtifactPrivacy, validVisibilityMetadata, artifactVisibility } from '../artifact-privacy.js?v=0.28.1';
-import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.28.1';
-import { validateOccurrences } from './event-data.js?v=0.28.1';
-import { own, plain, freeze, safeUsage } from '../record-data.js?v=0.28.1';
-import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.28.1';
+import { FILE_HANDLING_CONTROL, NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.29.0';
+import { preserveArtifactPrivacy, validVisibilityMetadata, artifactVisibility } from '../artifact-privacy.js?v=0.29.0';
+import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.29.0';
+import { validateOccurrences } from './event-data.js?v=0.29.0';
+import { own, plain, freeze, safeUsage } from '../record-data.js?v=0.29.0';
+import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.29.0';
 
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const exact=(value,keys)=>plain(value)&&Object.keys(value).every(key=>keys.includes(key));
@@ -154,8 +155,8 @@ const string=(value,maxLength=256)=>({type:'string',default:value,maxLength});
 const register=(id,title,defaults,controls,extra={})=>({id,title,family:'Randomness',phase:'both',minimumSchema:3,minimumRuntime:2,operationVersion:1,input:'data',output:'data',defaults,controls:Object.keys(defaults),controlDescriptors:controls,requestBound:0,modelRole:null,terminal:false,dynamicPorts:true,...extra});
 export const RANDOM_OPERATIONS = {
     'parse-effect-library':register('parse-effect-library','Effect Library',{format:'json',libraryId:'',revision:'',itemId:'',mechanicalPolicy:'narrative-only'},{format:{type:'enum',default:'json',values:['data','json','text']},libraryId:string(''),revision:string(''),itemId:string(''),mechanicalPolicy:{type:'enum',default:'narrative-only',values:['narrative-only','require-mechanics']}}),
-    'random-pick':register('random-pick','Random Pick',{rerollPolicy:'reuse',rerollId:'',ledgerId:''},{rerollPolicy:{type:'enum',default:'reuse',values:['reuse','explicit']},rerollId:string(''),ledgerId:{...string(''),label:'Outcomes ID (optional)'}}),
-    'commit-outcomes':register('commit-outcomes','Outcome Commit',{targetId:workflowDataPresetFor('commit-outcomes').targetId},{targetId:string(workflowDataPresetFor('commit-outcomes').targetId)},{family:'Output',phase:'post',rootOnly:true,hostOperation:true,terminal:true}),
+    'random-pick':register('random-pick','Random Pick',{rerollPolicy:'reuse',rerollId:'',ledgerId:'',fileTarget:{}},{fileTarget:NODE_FILE_TARGET_CONTROL,rerollPolicy:{type:'enum',default:'reuse',values:['reuse','explicit']},rerollId:string(''),ledgerId:{...string(''),label:'Outcomes ID (optional)'}}),
+    'commit-outcomes':register('commit-outcomes','Outcome Commit',{targetId:workflowDataPresetFor('commit-outcomes').targetId,fileTarget:{},fileHandling:''},{fileHandling:FILE_HANDLING_CONTROL,fileTarget:NODE_FILE_TARGET_CONTROL,targetId:string(workflowDataPresetFor('commit-outcomes').targetId)},{family:'Output',phase:'post',rootOnly:true,hostOperation:true,terminal:true}),
     'saved-outcome':register('saved-outcome','Saved Outcome',{},{}),
     'effect-author':register('effect-author','Effect Author',{instructions:'',maxTokens:2048},{instructions:string('',4096),maxTokens:{type:'integer',default:2048,min:1,max:8192}},{requestBound:1,modelRole:'effectAuthor'}),
     'stage-outcome':register('stage-outcome','Stage Outcome',{},{}),
@@ -183,6 +184,7 @@ function resolve(node,options={}) {
     }
     if(operation==='commit-outcomes'&&settings.targetId==='')settings.targetId=base.defaults.targetId;
     const setupIssues=[];
+    if(Object.hasOwn(settings,'fileTarget')){const target=validateNodeFileTarget(settings.fileTarget);if(!target.ok)return target;settings.fileTarget=target.data;if(options.authoring&&!target.data.managed&&Object.keys(target.data).length&&(operation==='commit-outcomes'||settings.ledgerId!==''||Object.keys(target.data).length)&&(!target.data.bindingId||!target.data.name))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose an outcomes file and filename in the File section.',field:'fileTarget'});}
     let ports;
     if(operation==='commit-outcomes') {if(!id(settings.targetId))return fail('INVALID_SETTINGS','Choose an authorized outcomes source.');ports=[pin('outcomes','data','input',true),pin('receipt','data','output')];}
     else if(operation==='parse-effect-library') {
@@ -228,14 +230,14 @@ async function executeRandomRaw(node,namedInputs,local={}) {
         if(descriptor.id==='random-pick') {
             const nativeSelect=own(local,'selectNativeRandomOutcomes');
             if(nativeSelect!==undefined&&typeof nativeSelect!=='function')return fail('RANDOM_FAILED','Native selection requires a trusted host capability.');
-            const result=nativeSelect?await nativeSelect({events:inputs.events.value,library:inputs.library.value,saved:inputs.saved?.value??[],ledgerId:settings.ledgerId,visibility:artifactVisibility(namedInputs),...(settings.rerollPolicy==='explicit'?{rerollId:settings.rerollId}:{})}):await selectRandomOutcomes(inputs.events.value,inputs.library.value,inputs.saved?.value??[],{random:own(local,'random'),signal:own(local,'signal'),...(settings.rerollPolicy==='explicit'?{rerollId:settings.rerollId,rerollPolicy:'explicit'}:{})});if(!result.ok)return result;
+            const result=nativeSelect?await nativeSelect({events:inputs.events.value,library:inputs.library.value,saved:inputs.saved?.value??[],ledgerId:settings.ledgerId,visibility:artifactVisibility(namedInputs),...(own(local,'address')?{address:own(local,'address')}:{}),...(settings.rerollPolicy==='explicit'?{rerollId:settings.rerollId}:{})}):await selectRandomOutcomes(inputs.events.value,inputs.library.value,inputs.saved?.value??[],{random:own(local,'random'),signal:own(local,'signal'),...(settings.rerollPolicy==='explicit'?{rerollId:settings.rerollId,rerollPolicy:'explicit'}:{})});if(!result.ok)return result;
             const latest=stringifyJsonValue(namedInputs);if(own(local,'signal')?.aborted)return fail('ABORTED','Random selection was stopped.');if(!latest.ok||latest.data.text!==snapshot.data.text)return fail('STALE_INPUT','Random selection evidence changed during capture.');
             return {ok:true,artifact:{kind:'data',value:result.data.outcomes,...(result.data.visibility?{visibility:result.data.visibility}:{})},reports:[{operation:descriptor.id,actualCalls:0,draws:result.data.draws}]};
         }
         if(descriptor.id==='commit-outcomes') {
             if(own(local,'root')!==true)return fail('ROOT_ONLY','Outcome Commit requires a root workflow.');
             const stage=own(local,'stageNativeOutcomes');if(typeof stage!=='function')return fail('HOST_OPERATION_REQUIRED','Outcome Commit requires a trusted accepted-state host.');
-            const staged=await stage(settings.targetId,namedInputs.outcomes.value);if(own(local,'signal')?.aborted)return fail('ABORTED','Outcome staging was stopped.');
+            const staged=await stage(settings.targetId,namedInputs.outcomes.value,undefined,{fileHandling:settings.fileHandling});if(own(local,'signal')?.aborted)return fail('ABORTED','Outcome staging was stopped.');
             if(staged?.ok!==true)return fail('OUTCOME_COMMIT_FAILED','The resolved native outcomes could not be staged; verify their event sources and authorized outcome data.');
             const bounded=cloneJsonValue(staged.data);if(!bounded.ok)return fail('OUTCOME_COMMIT_FAILED','Outcome staging requires a bounded descriptive receipt.');
             const receipt={kind:'data',value:bounded.data.value};return {ok:true,artifact:receipt,outputs:{receipt},reports:[{operation:descriptor.id,actualCalls:0,status:'staged'}]};

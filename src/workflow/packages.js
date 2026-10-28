@@ -1,15 +1,16 @@
-import {inspectSingletonMetadata,remapExampleMetadata} from './example-metadata.js?v=0.28.1';
-import { workflowPackageVersion, subgraphPackageVersion, packageVersionMatches, packageVersionSupported } from './workflow-versions.js?v=0.28.1';
-import { workflowRunTargets } from './run-targets.js?v=0.28.1';
-import { inspectDefinitionGraph } from './graph-validation.js?v=0.28.1';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.28.1';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.28.1';
-import { OPERATIONS, operationFor, phaseForNode, describeAuthoredOperation } from './catalog.js?v=0.28.1';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata } from './definitions.js?v=0.28.1';
+import {inspectSingletonMetadata,remapExampleMetadata} from './example-metadata.js?v=0.29.0';
+import { workflowPackageVersion, subgraphPackageVersion, packageVersionMatches, packageVersionSupported } from './workflow-versions.js?v=0.29.0';
+import { workflowRunTargets } from './run-targets.js?v=0.29.0';
+import { inspectDefinitionGraph } from './graph-validation.js?v=0.29.0';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.29.0';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.29.0';
+import { OPERATIONS, operationFor, phaseForNode, describeAuthoredOperation } from './catalog.js?v=0.29.0';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata } from './definitions.js?v=0.29.0';
 const limit = 2000000;
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const pick = (value, keys) => Object.fromEntries(keys.filter(key => Object.hasOwn(value, key)).map(key => [key, value[key]]));
 const portableBindings = bindings => Object.fromEntries(Object.entries(bindings ?? {}).map(([id, binding]) => [id, { ...pick(binding, ['model']), ...(Object.hasOwn(binding, 'profileId') ? { profileId: binding.profileId === ACTIVE_PROFILE_ID ? ACTIVE_PROFILE_ID : null } : {}) }]));
+const portableFileTarget=value=>({...Object.fromEntries(Object.entries(value).filter(([key])=>key!=='path')),bindingId:''});
 // Parameter values are authored JSON unless the exact exposed control is a binding.
 // Resolve against the original flat table before any portable hashes are changed.
 function exposedParameterNode(definition, parameter, snapshots) {
@@ -50,7 +51,8 @@ function portableProjection(snapshots) {
         },
         parameters(node) {
             return Object.fromEntries(instanceParameterTargets(node, snapshots).map(parameter => [parameter.id,
-                parameter.target?.operation === 'fast-decision' && ['fastConnectionId', 'fallbackProfileId'].includes(parameter.controlId) ? ''
+                parameter.controlId === 'fileTarget' && parameter.value && typeof parameter.value === 'object' ? portableFileTarget(parameter.value)
+                    : parameter.target?.operation === 'fast-decision' && ['fastConnectionId', 'fallbackProfileId'].includes(parameter.controlId) ? ''
                     : parameter.target?.operation === 'fast-decision' && parameter.controlId === 'fallbackEnabled' ? false
                     : parameter.target?.operation === 'for-each' && parameter.controlId === 'roleOverrides' ? portableBindings(parameter.value)
                     : parameter.target?.operation === 'for-each' && parameter.controlId === 'helper' ? context.reference(parameter.value) : parameter.value,
@@ -91,6 +93,7 @@ function portableNativeDocument(graph, context) {
         ...portableControlKeys(graph,node), ...(node.operation === 'validate-patches' ? ['protectedLiterals'] : []),
     ])]));
     for (const [id, node] of Object.entries(copy.nodes)) {
+        if (node.fileTarget && typeof node.fileTarget === 'object') { if (Object.keys(node.fileTarget).length) node.fileTarget=portableFileTarget(node.fileTarget); else delete node.fileTarget; }
         if (Object.hasOwn(node, 'profileId') && node.profileId !== ACTIVE_PROFILE_ID) node.profileId = null;
         if (node.type === 'workflow' && node.operation === 'fast-decision') {
             node.fastConnectionId = '';

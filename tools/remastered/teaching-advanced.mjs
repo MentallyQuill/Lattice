@@ -8,7 +8,7 @@ export const ADVANCED_TEACHING = {
             'Internalize proposes changes from native event evidence. Memory Commit saves the proposal only when the reply is accepted.'
         ],
         requirements: [
-            'Select the loaded Rowan actor and replace character:rowan.png everywhere with that actor’s actual avatar ID. Use Rowan’s authorized native memory store.',
+            'Select the intended Rowan character by name in the character settings. Use Rowan’s authorized native memory store.',
             'For a useful recall test, have an accepted native episode about Rowan and the lighthouse. A JSON fixture or an imported story paragraph cannot create native memory records.'
         ],
         steps: [
@@ -34,7 +34,7 @@ export const ADVANCED_TEACHING = {
             'Decision checks each candidate; Confirm Events keeps accepted occurrences and stops on an unresolved answer.'
         ],
         requirements: [
-            'Use a disposable story with loaded Rowan and Iris actors. Replace character:rowan.png and character:iris.png consistently with their actual avatar IDs.',
+            'Use a disposable story and select the intended Rowan and Iris characters by name.',
             'Arrange a simple scene that can produce an observable action by either listed actor. This lesson reads the newly generated reply, rather than treating your request as the event itself.'
         ],
         steps: [
@@ -61,8 +61,8 @@ export const ADVANCED_TEACHING = {
             'A mention can identify an item without proving use or ownership. Only confirmed item-used events reach the consequence guidance.'
         ],
         requirements: [
-            'In Workflow › Configure › Workflow Data, set Logical target ID to accepted-item-holders, Format to JSON and Visibility to Public. Paste fixtures/accepted-item-holders.json into Initial template and choose Save authorization. Its signal-lantern entry must name the accepted holder.',
-            'Load Rowan and Iris, then replace both example avatar IDs throughout the graph and holder file with their actual IDs. Keep the item ID signal-lantern.'
+            'The public sample holder map prepares automatically with Rowan holding the signal lantern. It is demonstration state for this independent practice copy.',
+            'Choose the intended Rowan and Iris characters by name and keep the holder map consistent with that choice. Keep the item ID signal-lantern.'
         ],
         steps: [
             'Start with the confirmation process from lesson 19, now placed before the reply. Send: “Rowan uses the signal lantern to flash a signal toward the harbor.”',
@@ -88,7 +88,7 @@ export const ADVANCED_TEACHING = {
             'The resulting private Guidance can shape Rowan’s portrayal while leaving player actions and other actors’ private feelings open.'
         ],
         requirements: [
-            'Select the loaded Rowan actor. Replace character:rowan.png with Rowan’s actual avatar ID in the presence check and Character Direction.',
+            'Select the intended Rowan character by name for the presence check and Character Direction.',
             'Establish a recent scene where Rowan visibly participates, such as Rowan and Iris standing beside the lighthouse door. No workflow data file is needed.'
         ],
         steps: [
@@ -115,8 +115,8 @@ export const ADVANCED_TEACHING = {
             'The output is a private remembered-event record for later use; this workflow does not feed that reminder back into the reply just generated.'
         ],
         requirements: [
-            'Select loaded Rowan and replace both example actor IDs consistently. Have an accepted native Rowan episode associated with the signal lantern, using the native memory work from lesson 18.',
-            'In Workflow › Configure › Workflow Data, authorize JSON targets accepted-item-holders and rowan-item-memories using their fixtures as Initial template. Choose Public for the holder map and Actor private with Rowan’s Actor ID for the empty reminder array; choose Save authorization. The map must establish Rowan’s ownership.'
+            'Select the intended Rowan and Iris characters by name. Have an accepted native Rowan episode associated with the signal lantern, using the native memory work from lesson 18.',
+            'The public sample holder map and empty private reminder file prepare automatically. Choose the intended Rowan character by name for the private file. Its holder map must establish that same character’s ownership.'
         ],
         steps: [
             'Combine the holder check from lesson 20 and the participation check from lesson 21. Send: “Rowan holds the signal lantern beside the lighthouse.” Confirm that the generated reply itself mentions signal lantern or lantern.',
@@ -142,8 +142,8 @@ export const ADVANCED_TEACHING = {
             'Clock Commit stages that result for Apply and protects against saving the same accepted advance twice.'
         ],
         requirements: [
-            'In Workflow › Configure › Workflow Data, set Logical target ID to story-clock, Format JSON and Visibility Public. Paste fixtures/story-clock.json into Initial template and choose Save authorization. Keep calendarId campaign-days, dayLengthMinutes 1440 and a positive revision.',
-            'The fixture starts at absoluteMinute 780, or 13:00 on day zero. Set up the live authorized clock; importing JSON alone does not create the host’s clock access.'
+            'The sample clock prepares automatically with calendar campaign-days, 1440-minute days and a positive revision. Its internal identity belongs to this independent copy.',
+            'The sample starts at minute 780, or 13:00 on Day 1. Preparing it does not advance time or write a real story file.'
         ],
         steps: [
             'Use lesson 17’s distinction between a proposed change and a saved change, now for time. Note the starting absoluteMinute and revision in the clock’s initial template.',
@@ -153,7 +153,7 @@ export const ADVANCED_TEACHING = {
             'Apply and reread the live clock: it should now show 840 and the next revision. In another practice chat with a fresh clock initialized from the fixture, Reject and verify that time stays at 780.'
         ],
         checkpoints: ['Clock Commit.receipt proposes the sixty-minute advance. The live clock changes once on Apply and stays at its starting time on Reject.'],
-        experiments: [{ change: 'Use another practice chat with a fresh fixture clock, and edit the authored duration’s minutes from 60 to 30 for an agreed shorter journey.', expect: 'The proposed clock becomes absoluteMinute 810, or 13:30. Sending more messages does not itself advance time. Editing Initial template does not reset a clock that has already been saved.' }],
+        experiments: [{ change: 'Use another practice chat with a fresh fixture clock, and edit the authored duration’s minutes from 60 to 30 for an agreed shorter journey.', expect: 'The proposed clock becomes absoluteMinute 810, or 13:30. Sending more messages does not itself advance time. Reopening the same copy does not reset accepted time; open another independent copy for a fresh exercise.' }],
         cases: [
             { when: 'The scene is rejected or stopped.', expect: 'The accepted clock keeps its original minute and revision.' },
             { when: 'The authorized clock or required clock fields are missing.', expect: 'The run reports a setup error rather than choosing a time.' },
@@ -169,7 +169,7 @@ export const ADVANCED_TEACHING = {
             'Accepted clock records remember which scheduled occurrences were consumed so replay cannot repeat them.'
         ],
         requirements: [
-            'Authorize a fresh story-clock in a new practice chat as in lesson 23, using the provided fixture’s absoluteMinute 780 so the expected times below match. Editing Initial template leaves an already saved clock unchanged.',
+            'Open a fresh independent copy for a sample clock at minute 780, as in lesson 23. Existing accepted time stays authoritative when reopening the same copy.',
             'Read the three schedules in Advance Time and their matching Time Trigger nodes: midnight minuteOfDay 0, daily-routine minuteOfDay 840, and eight-hour-pulse intervalMinutes 480 with anchorMinute 0.'
         ],
         steps: [
@@ -199,8 +199,8 @@ export const ADVANCED_TEACHING = {
             'Collection threshold compares the original value with the final projected value and reports every threshold crossed.'
         ],
         requirements: [
-            'In Workflow › Configure › Workflow Data, create JSON target player-progression with Visibility Public. Paste its fixture into Initial template and choose Save authorization: experience starts at 80 and ledger is empty.',
-            'Load the participating Rowan and Iris actors and replace their example avatar IDs. This lesson extracts completed objectives from the generated reply, using lesson 19’s evidence checks.'
+            'The public sample progression file prepares automatically: experience starts at 80 and its pacing ledger is empty.',
+            'Select the participating Rowan and Iris characters by name. This lesson extracts completed objectives from the generated reply, using lesson 19’s evidence checks.'
         ],
         steps: [
             'Combine lesson 19’s confirmed actions with lesson 17’s proposed file save. Establish an objective such as delivering the harbor chart, then Send a request for the scene where Rowan completes that delivery.',
@@ -214,7 +214,7 @@ export const ADVANCED_TEACHING = {
             'Select Fields.out shows the original experience and the final value after all rewards, rather than just one intermediate award.',
             'The threshold Collection.out reports every crossed threshold from that complete before-and-after comparison.'
         ],
-        experiments: [{ change: 'In another practice chat, initialize a fresh player-progression document with experience 260 and arrange two distinct completed objectives in the reply.', expect: 'Two confirmed rewards of 20 project a final value of 300 and a crossing at 300. Inspect both receipts and the final comparison; changing Initial template does not reset an already saved progression document.' }],
+        experiments: [{ change: 'In another practice chat, initialize a fresh player-progression document with experience 260 and arrange two distinct completed objectives in the reply.', expect: 'Two confirmed rewards of 20 project a final value of 300 and a crossing at 300. Inspect both receipts and the final comparison; importing creates a new input copy rather than resetting an existing saved progression file.' }],
         cases: [
             { when: 'An already processed occurrence ID repeats.', expect: 'The ledger reports a duplicate and grants no additional experience.' },
             { when: 'No objective is confirmed.', expect: 'Experience stays unchanged and there is no threshold crossing.' },
@@ -230,8 +230,8 @@ export const ADVANCED_TEACHING = {
             'A queued request is consumed on Apply, so rejecting or stopping a reply keeps it available.'
         ],
         requirements: [
-            'Select loaded Rowan and replace character:rowan.png with that actor’s actual avatar ID. Establish Rowan’s current participation using the presence work from lesson 21.',
-            'In Workflow › Configure › Workflow Data, create JSON target rowan-moments with Visibility Actor private and Rowan’s Actor ID. Paste its fixture into Initial template and Save authorization. Records need id, actorId and text; adjust the example actorId consistently.'
+            'Select the intended Rowan character by name. Establish Rowan’s current participation using the presence work from lesson 21.',
+            'Choose the intended Rowan character by name for the private File scope. The sample memory file then prepares automatically with its demonstration lighthouse record; it grants no native memory access.'
         ],
         steps: [
             'Read the rowan-moments initial template. Confirm that the lighthouse-promise record belongs to Rowan and is the accepted text you intend to reuse.',
@@ -257,8 +257,8 @@ export const ADVANCED_TEACHING = {
             'Outcome Commit saves the resolved effect in a ledger only with the accepted reply.'
         ],
         requirements: [
-            'In Workflow › Configure › Workflow Data, authorize wand-holders, wand-effects and wand-outcomes as Public JSON. Paste their fixtures into Initial template and Save authorization. The map must establish Rowan’s ownership; outcomes starts as [].',
-            'Replace Rowan and Iris avatar IDs consistently with loaded actors. Keep libraryId wand-effects, revision r1 and itemId broken-wand. The fixture weights are 80 for blue sparks and 20 for a generated wild effect.'
+            'The public sample holder map, effect library and empty outcomes ledger prepare automatically. Random Pick and Outcome Commit share the same scoped ledger; keep their connection.',
+            'Select the intended Rowan and Iris characters by name. Keep libraryId wand-effects, revision r1 and itemId broken-wand. The fixture weights are 80 for blue sparks and 20 for a generated wild effect.'
         ],
         steps: [
             'Combine lesson 20’s confirmed item use with lesson 14’s per-item processing. Send: “Rowan uses the broken wand to cast a spell toward the empty harbor wall.” Include at most one use and two transfers.',
@@ -271,7 +271,7 @@ export const ADVANCED_TEACHING = {
             'Random Pick.out ties the draw to the confirmed event ID and freezes the effect and library for reuse.',
             'Outcome Commit.receipt proposes the result for wand-outcomes; Apply saves it.'
         ],
-        experiments: [{ change: 'Use fixtures/wand-effects.txt in a separate Plain text document and bind Read File to it. Set Parse Effect Library format to text; preserve library, item and revision settings.', expect: 'Both weighted choices remain available. Changing formats does not reroll an existing event; saved documents keep their original format.' }],
+        experiments: [{ change: 'Import the optional wand-effects.txt reference as a separate input copy in Read File’s File section. Set Parse Effect Library format to text; preserve library, item and revision settings.', expect: 'Both weighted choices remain available. Changing formats does not reroll an existing event; saved documents keep their original format.' }],
         cases: [
             { when: 'A second actual use reaches the resolver.', expect: 'The one-use limit stops the run instead of dropping an effect.' },
             { when: 'Wild-effect novelty is false or null.', expect: 'The invented effect cannot resolve or be saved; the existing draw is retained.' },
@@ -287,8 +287,8 @@ export const ADVANCED_TEACHING = {
             'Collection threshold compares counts before and after the proposed additions. A crossing activates the optional narration revision.'
         ],
         requirements: [
-            'In Workflow › Configure › Workflow Data, create JSON target sword-souls with Visibility Public. Paste fixtures/sword-souls-99.json into Initial template and Save authorization. These 99 demonstration records are for the disposable test only.',
-            'Use loaded Rowan and Iris as attacker and opponent for this test, replacing both example avatar IDs consistently. Other victims require the corresponding actual actor identities; do not substitute an unlisted name.'
+            'The sample sword ledger prepares automatically with 99 demonstration records in this independent practice copy. Those records are never evidence of real story events.',
+            'Choose the intended Rowan and Iris characters by name as attacker and opponent for this test. Other victims require the corresponding actual actor identities; do not substitute an unlisted name.'
         ],
         steps: [
             'Combine confirmed actions from lesson 19, unique-record saves from lesson 17 and thresholds from lesson 25. Note the fixture’s starting count of 99.',
@@ -317,7 +317,7 @@ export const ADVANCED_TEACHING = {
             'Each file has its own save receipt. One successful save does not guarantee that the other file was saved.'
         ],
         requirements: [
-            'Replace both avatar IDs with loaded actors. In Workflow › Configure › Workflow Data, authorize JSON targets rowan-moments and iris-moments as [], with Visibility Actor private and the respective Actor ID. Choose Save authorization for each.',
+            'Choose the intended Rowan and Iris characters by name. Each actor-private sample file prepares automatically as an empty array with its own scope. Neither character gains access to the other file.',
             'Choose Active SillyTavern or an ordinary connection on Decision’s node bar. Both allowModelAuthoredReflection flags start false; enable each only with that actor’s authoring permission, especially for a player-controlled actor.'
         ],
         steps: [
@@ -351,18 +351,18 @@ export const ADVANCED_TEACHING = {
             'Time decay moves values toward zero using accepted Story Clock minutes, rather than messages or wall time.'
         ],
         requirements: [
-            'Select loaded Rowan and replace both avatar IDs consistently. In Workflow › Configure › Workflow Data, authorize JSON rowan-relationship with Visibility Actor private and Rowan’s Actor ID. Paste its fixture into Initial template and Save authorization: trust/desire/excitement 0, tension 2, empty ledger.',
-            'Keep each row’s subjectId Rowan, objectId Iris and private visibility for Rowan. Authorize story-clock and accept elapsed time using lesson 23.'
+            'Select the intended Rowan and Iris characters by name. The Rowan-private sample relationship file prepares automatically: trust, desire and excitement start at 0, tension at 2, with an empty ledger.',
+            'Keep each relationship row directed from Rowan toward Iris and private to Rowan. This independent copy has its own sample clock; accept an authored elapsed duration using its connected time path.'
         ],
         steps: [
             'Combine lessons 25, 23 and 21: State, time and Character Direction. Establish both actors’ participation, then send: “Rowan finishes repairing Iris’s lantern and hands it back to her.”',
             'Follow Read File.value directly into the decay State.state input, preserving Rowan’s private visibility. Inspect the confirmed interaction. Decay runs first; progression then proposes trust +1, desire +0.1, tension −0.25 and excitement +0.5, subject to pacing.',
             'Read State.receipt for changes and reasons. Cooldowns are trust/desire 1440 minutes, tension 720, excitement 120. For trust/desire/excitement, positive scene caps are 1/0.1/0.5 and day caps 1/0.2/1. Diminishing factors are 1, 0.5 and 0.25.',
             'Inspect Character Direction’s values and Rowan’s reply for gradual reactions that leave player choice open. Apply saves values and pacing records; Reject preserves the previous file.',
-            'Accept time using lesson 23, then test without support. Per point, trust/tension ease over 10080 minutes, desire 40320, excitement 480. The first run starts decay at initialMinute 0; the fixture’s minute 780 already eases some tension.'
+            'To advance this copy’s clock, add the Advance Time and Clock Commit wiring taught in lesson 23 to this same workflow. A separate example copy has separate time. Then test without support: trust/tension ease per 10080 minutes, desire 40320, excitement 480. The first decay starts at initialMinute 0; the sample minute 780 already eases some tension.'
         ],
         checkpoints: ['State.receipt shows Rowan-toward-Iris values before and after, reward limits, processed occurrence IDs and pending private changes.'],
-        experiments: [{ change: 'Save some positive values, accept a week in lesson 23 and run without new support.', expect: 'Trust/tension move one point toward zero, desire 0.25; excitement fades to zero within eight hours. Values cannot drop below zero.' }],
+        experiments: [{ change: 'Save positive values, add an authored one-week Advance Time and Clock Commit path to this same copy, accept it, then run without new support.', expect: 'Trust/tension move one point toward zero, desire 0.25; excitement fades to zero within eight hours. Values cannot drop below zero. A separate lesson copy does not advance this clock.' }],
         cases: [
             { when: 'Rowan is absent.', expect: 'Character Direction skips. Authorized selected-actor file access still permits elapsed-time decay to be saved; absence does not invent a supportive interaction.' },
             { when: 'An occurrence repeats or a cooldown applies.', expect: 'No extra reward is granted. Inspect the receipt’s reason instead of inferring progress from repeated prose.' },

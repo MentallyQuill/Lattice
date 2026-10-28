@@ -36,7 +36,7 @@ test('native File commands own document creation opening and saving', async () =
     const commands = [], localCommands = [];
     const f = await fixture('WorkspaceMenus', state({ name: 'draft.json', dirty: true, busy: false, native: true, recents: [], recovery: [] }), { command: command => commands.push(command) }, command => localCommands.push(command));
     try {
-        for (const [label, command] of [['New workflow', 'new'], ['Open workflow…', 'open-workflow'], ['Save workflow', 'save'], ['Save As…', 'save-as'], ['Import into graph…', 'import-into-graph'], ['Export workflow JSON…', 'export']]) {
+        for (const [label, command] of [['New workflow', 'new'], ['Open saved…', 'open-saved'], ['Import workflow…', 'open-workflow'], ['Save workflow', 'save'], ['Save As…', 'save-as'], ['Import into graph…', 'import-into-graph'], ['Download / share workflow…', 'download-document'], ['Download workflow backup…', 'download-recovery']]) {
             await f.open(); await click(f.item(label)); assert.equal(commands.at(-1), command); assert.equal(f.menu('File'), null);
         }
         await f.open(); await click(f.item('Open examples…')); assert.deepEqual(localCommands, ['examples']);
@@ -44,13 +44,22 @@ test('native File commands own document creation opening and saving', async () =
     } finally { await f.close(); }
 });
 
-test('fallback File offers Save As without promising same-file saving', async () => {
+test('File keeps shared host save commands available without browser file support', async () => {
     const commands = [];
     const f = await fixture('WorkspaceMenus', state({ name: 'Untitled', dirty: true, busy: false, native: false, recents: [], recovery: [] }), { command: command => commands.push(command) });
     try {
         await f.open();
-        assert.equal(f.item('Save workflow'), undefined);
-        await click(f.item('Save As…')); assert.deepEqual(commands, ['download-document']);
+        assert.equal(f.item('Save workflow').disabled, false);
+        await click(f.item('Save workflow')); assert.deepEqual(commands, ['save']);
+        await f.open(); await click(f.item('Save As…')); assert.deepEqual(commands, ['save', 'save-as']);
+        await f.open(); await click(f.item('Download / share workflow…')); assert.deepEqual(commands, ['save', 'save-as', 'download-document']);
+        await f.update(state({ name: 'Untitled', dirty: true, busy: true, native: false, recents: [], recovery: [] }));
+        await f.open();
+        for (const label of ['Save workflow', 'Save As…', 'Open saved…', 'Import workflow…']) {
+            assert.equal(f.item(label).disabled, true, label + ' remains blocked during document work');
+            f.item(label).click(); await settle();
+        }
+        assert.deepEqual(commands, ['save', 'save-as', 'download-document']);
     } finally { await f.close(); }
 });
 

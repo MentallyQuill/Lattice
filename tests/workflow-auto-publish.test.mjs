@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { starterGraph } from '../src/workflow/starters.js?v=0.28.1';
+import { starterGraph } from '../src/workflow/starters.js?v=0.29.0';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
 
 function revisionGraph({ autoApply = true, revise = true } = {}) {

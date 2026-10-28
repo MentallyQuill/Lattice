@@ -4,7 +4,7 @@ Choose a route based on what you want to do. The [project README](../README.md) 
 
 ## Start using Lattice
 
-[What’s new in 0.28.0](releases/0.28.0.md) introduces the two new passage lessons and explains how to try them.
+[Release Notes](releases/README.md) collects the changes and upgrade guidance for every documented version.
 
 1. [Quick start](lattice-workspace.md) — install the extension in SillyTavern, send your first reply, review it, and save your workflow.
 2. [Operator’s manual](operators-manual.md) — learn the canvas, node settings, Preview, connections, subgraphs, and file commands through illustrated instructions.
@@ -19,6 +19,8 @@ For a particular node, click its **?** button in the editor. Its guide explains 
 | [Story systems](story-systems.md) | Build a weighted chaos wand, gradual relationships, private perspectives, timed events, or an accepted campaign notebook. |
 | [Unified workflows](unified-workflows.md) | Connect preparation and reply processing, combine reusable systems, and manage memories, documents, clocks, and accepted changes. |
 | [Model setup and troubleshooting](native-workflows.md) | Choose a connection for each model tool, understand request budgets, and investigate reply or save problems. |
+| [Saving workflows and files](file-storage.md) | Automatic saves, shared saved workflows, Save As, per-node files, input copies and recovery. |
+| [Optional server file setup](server-files.md) | Use the guided wizard for custom Windows, macOS or Linux locations on the SillyTavern machine. |
 | [Reference tools and workflow library](lattice-reference-library.md) | Apply style or terminology references, inspect repeated wording, and reuse context or cleanup tools. |
 | [Connections and workflow comments](connection-comments.md) | Follow typed connections and label, move, or resize sections of the canvas. |
 | [Node reference](node-reference.md) | Look up the complete inputs, outputs, controls, and limits when you need detail beyond the in-editor guide. |

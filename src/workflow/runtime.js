@@ -1,37 +1,37 @@
-import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.28.1';
-import { executeChunk } from './operations/chunk.js?v=0.28.1';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.1';
-import { artifactVisibility, preserveArtifactPrivacy } from './artifact-privacy.js?v=0.28.1';
-import { normalizeRequestFailure } from './request-failure.js?v=0.28.1';
-import { compileIterationHelper, executeCompiledIteration } from './iteration-helpers.js?v=0.28.1';
-import { LIFECYCLE_OPERATIONS, executeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.28.1';
-import { FILE_OPERATIONS, executeFileNode } from './operations/file-nodes.js?v=0.28.1';
-import { TIME_OPERATIONS, executeTimeNode } from './operations/time-nodes.js?v=0.28.1';
-import { EVENT_OPERATIONS, executeEvent } from './operations/event-nodes.js?v=0.28.1';
-import { RANDOM_OPERATIONS, executeRandom } from './operations/random-outcomes.js?v=0.28.1';
-import { COLLECTION_OPERATIONS, executeCollection } from './operations/collection-nodes.js?v=0.28.1';
-import { applyTextModifiers } from './modifiers.js?v=0.28.1';
-import { operationFor } from './catalog.js?v=0.28.1';
-import { cloneWorkflowDocument } from './document.js?v=0.28.1';
-import { prepareWorkflowAttempt } from './resolve.js?v=0.28.1';
-import { compactContext, formatContext } from './compactor.js?v=0.28.1';
-import { repairDraft, validatePatches } from './repair.js?v=0.28.1';
-import { scanPatternDraft } from './operations/pattern-engine.js?v=0.28.1';
-import { patternSettingsForNode } from './operations/pattern-nodes.js?v=0.28.1';
-import { filterPatternDraft, filterTextSettingsForNode } from './operations/filter-text.js?v=0.28.1';
-import { graphSemanticSignature } from './ports.js?v=0.28.1';
-import { executePrimitive, PRIMITIVE_OPERATIONS } from './operations/nodes.js?v=0.28.1';
-import { executeInput, INPUT_OPERATIONS } from './operations/input-nodes.js?v=0.28.1';
-import { executeContextJoin } from './operations/context-join.js?v=0.28.1';
-import { executeControl, CONTROL_OPERATIONS } from './operations/control-nodes.js?v=0.28.1';
-import { executeDecision, DECISION_OPERATIONS } from './operations/decision-nodes.js?v=0.28.1';
-import { executeModelNode, MODEL_OPERATIONS } from './operations/model-nodes.js?v=0.28.1';
-import { executeTranspose, TRANSPOSE_OPERATIONS } from './operations/transpose-nodes.js?v=0.28.1';
-import { cleanupDraft, CLEANUP_MODES } from './operations/prose-cleanup.js?v=0.28.1';
-import { executeIntrospection } from './introspection/nodes.js?v=0.28.1';
-import { INTROSPECTION_NATIVE_OPERATIONS, projectIntrospectionNode } from './introspection/native.js?v=0.28.1';
-import { admitRunPlan, createRunRecorder } from './recording.js?v=0.28.1';
-import { addressKey, freeze, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText } from './record-data.js?v=0.28.1';
+import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.29.0';
+import { executeChunk } from './operations/chunk.js?v=0.29.0';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.29.0';
+import { artifactVisibility, preserveArtifactPrivacy } from './artifact-privacy.js?v=0.29.0';
+import { normalizeRequestFailure } from './request-failure.js?v=0.29.0';
+import { compileIterationHelper, executeCompiledIteration } from './iteration-helpers.js?v=0.29.0';
+import { LIFECYCLE_OPERATIONS, executeLifecycleNode } from './operations/lifecycle-nodes.js?v=0.29.0';
+import { FILE_OPERATIONS, executeFileNode } from './operations/file-nodes.js?v=0.29.0';
+import { TIME_OPERATIONS, executeTimeNode } from './operations/time-nodes.js?v=0.29.0';
+import { EVENT_OPERATIONS, executeEvent } from './operations/event-nodes.js?v=0.29.0';
+import { RANDOM_OPERATIONS, executeRandom } from './operations/random-outcomes.js?v=0.29.0';
+import { COLLECTION_OPERATIONS, executeCollection } from './operations/collection-nodes.js?v=0.29.0';
+import { applyTextModifiers } from './modifiers.js?v=0.29.0';
+import { operationFor } from './catalog.js?v=0.29.0';
+import { cloneWorkflowDocument } from './document.js?v=0.29.0';
+import { prepareWorkflowAttempt } from './resolve.js?v=0.29.0';
+import { compactContext, formatContext } from './compactor.js?v=0.29.0';
+import { repairDraft, validatePatches } from './repair.js?v=0.29.0';
+import { scanPatternDraft } from './operations/pattern-engine.js?v=0.29.0';
+import { patternSettingsForNode } from './operations/pattern-nodes.js?v=0.29.0';
+import { filterPatternDraft, filterTextSettingsForNode } from './operations/filter-text.js?v=0.29.0';
+import { graphSemanticSignature } from './ports.js?v=0.29.0';
+import { executePrimitive, PRIMITIVE_OPERATIONS } from './operations/nodes.js?v=0.29.0';
+import { executeInput, INPUT_OPERATIONS } from './operations/input-nodes.js?v=0.29.0';
+import { executeContextJoin } from './operations/context-join.js?v=0.29.0';
+import { executeControl, CONTROL_OPERATIONS } from './operations/control-nodes.js?v=0.29.0';
+import { executeDecision, DECISION_OPERATIONS } from './operations/decision-nodes.js?v=0.29.0';
+import { executeModelNode, MODEL_OPERATIONS } from './operations/model-nodes.js?v=0.29.0';
+import { executeTranspose, TRANSPOSE_OPERATIONS } from './operations/transpose-nodes.js?v=0.29.0';
+import { cleanupDraft, CLEANUP_MODES } from './operations/prose-cleanup.js?v=0.29.0';
+import { executeIntrospection } from './introspection/nodes.js?v=0.29.0';
+import { INTROSPECTION_NATIVE_OPERATIONS, projectIntrospectionNode } from './introspection/native.js?v=0.29.0';
+import { admitRunPlan, createRunRecorder } from './recording.js?v=0.29.0';
+import { addressKey, freeze, own, plain, parseRunPlan, safeBinding, safeError, safeIteration, safeUsage, boundedText } from './record-data.js?v=0.29.0';
 
 /** Execution identity shared by the host and UI. Canvas presentation never invalidates work. */
 export const workflowSignature = graphSemanticSignature;
@@ -132,7 +132,7 @@ async function executeNode(node,inputs,op,local) {
         }
         case 'repair': {
             if(!CLEANUP_MODES.includes(node.mode))return repairDraft(input,node,local);
-            const settings=Object.fromEntries(op.controls.filter(key=>key!=='policyVersion').map(key=>[key,node[key]===undefined?op.defaults[key]:node[key]]));
+            const settings=Object.fromEntries(op.controls.filter(key=>!['policyVersion','reasoningEffort','reasoningCustom'].includes(key)).map(key=>[key,node[key]===undefined?op.defaults[key]:node[key]]));
             const result=await cleanupDraft(input,settings,{request:local.request,countTokens:local.countTokens,binding:local.binding,...(local.signal?{signal:local.signal}:{}),...(inputs.context?{context:inputs.context}:{})});
             return result.ok?{ok:true,artifact:result.data.artifact,reports:result.data.report}:result;
         }
@@ -327,7 +327,8 @@ async function executeWorkflow(original,ports,hooks={}) {
                         if(!diagnosticRequestOpen||closed||!operationOpen||stopped()||!mayCaptureDiagnosticResponse())return;
                         const text=own(value,'text');if(typeof text==='string')diagnosticCompletion=text;
                     }:undefined;
-                    try{response=await ports.request({...options,binding:requestBinding,signal:ports.signal,onDiagnosticResponse,isDiagnosticResponseCurrent:diagnosticResponses?mayCaptureDiagnosticResponse:undefined});}
+                    const reasoning=node.operation==='for-each'?{reasoningEffort:own(options,'reasoningEffort')??'none',reasoningCustom:own(options,'reasoningCustom')??''}:{reasoningEffort:node.reasoningEffort??'none',reasoningCustom:node.reasoningCustom??''};
+                    try{response=await ports.request({...options,...reasoning,binding:requestBinding,signal:ports.signal,onDiagnosticResponse,isDiagnosticResponseCurrent:diagnosticResponses?mayCaptureDiagnosticResponse:undefined});}
                     catch(error){response=normalizeRequestFailure(error,{aborted:stopped()});}
                     finally{diagnosticRequestOpen=false;}
                     if(closed||!operationOpen)return requestFailure();
@@ -394,7 +395,7 @@ async function executeWorkflow(original,ports,hooks={}) {
                     }
                     if(typeof childLocal.request!=='function')return failure('REQUEST_MISSING','The helper requires its bounded per-iteration request capability.',node.id);
                     const before=nodeCalls.get(key)??0;childCalls++;
-                    try{return await childLocal.request({...options,capability,binding:childBindings.get(capability),modelRole:role,childAddress:child.address});}
+                    try{return await childLocal.request({...options,reasoningEffort:childNode.reasoningEffort??'none',reasoningCustom:childNode.reasoningCustom??'',capability,binding:childBindings.get(capability),modelRole:role,childAddress:child.address});}
                     finally{childCalls+=(nodeCalls.get(key)??0)-before-1;}
                 };
                 try{const result=await executeNode(childNode,childInputs,childOp,{...ports,...childLocal,iterateHelper:childIterate,isRecoveredIterationResult:result=>recovered.has(result),binding:undefined,request:childRequest,onModelValidation,onRetry:details=>{if(childOpen&&childCalls>0&&childCalls<child.requestBound)onRetry(details);},getRequestCount:()=>childCalls,executeIntrospection:hooks.executeIntrospection,executeHostOperation:undefined,sourceProofs:prepared.graph.runtime===3&&typeof hooks.getSourceProofs==='function'?hooks.getSourceProofs():undefined});if(!result?.ok)onModelValidation(result?.error);return result;}

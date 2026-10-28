@@ -1,40 +1,48 @@
-import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.28.1';
-import { randomUuid } from '../random-id.js?v=0.28.1';
-import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.28.1';
-import {cloneJsonValue} from './operations/json-data.js?v=0.28.1';
-import {captureNativeCharacterProjection} from './native-source-projections.js?v=0.28.1';
-import {createNativeSourceRegistry} from './native-source-registry.js?v=0.28.1';
-import {createSourceReader,inspectSourcePage} from './source-reader.js?v=0.28.1';
-import {createSourceProofRegistry} from './source-provenance.js?v=0.28.1';
-import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.28.1';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.28.1';
-import { sha256Text } from './definition-data.js?v=0.28.1';
-import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.28.1';
-import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.28.1';
-import { addressKey, safeError } from './record-data.js?v=0.28.1';
-import { createRunState, reduceRunState } from './run-state.js?v=0.28.1';
-import { cloneWorkflowDocument } from './document.js?v=0.28.1';
-import { prepareWorkflowAttempt, resolveWorkflow } from './resolve.js?v=0.28.1';
-import { projectIntrospectionNode } from './introspection/native.js?v=0.28.1';
-import { executeIntrospection } from './introspection/nodes.js?v=0.28.1';
-import { parseRecord } from './introspection/contracts.js?v=0.28.1';
-import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.28.1';
-import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.28.1';
-import { createChatPrefixBinding } from './chat-prefix-binding.js?v=0.28.1';
-import {queryProgressionHistory} from './progression.js?v=0.28.1';
-import { createChatDocumentCatalog } from './document-catalog.js?v=0.28.1';
-import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.28.1';
-import { createNativePersistenceVerifier } from './native-persistence.js?v=0.28.1';
-import { createNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.28.1';
-import { createNativeActorContext } from './native-actor-context.js?v=0.28.1';
-import { createNativeRecallController } from './native-recall.js?v=0.28.1';
-import { createNativeStoryState, createNativeOutcomeCache } from './native-story-state.js?v=0.28.1';
-import { executeTimeNode } from './operations/time-nodes.js?v=0.28.1';
-import { executeRandom } from './operations/random-outcomes.js?v=0.28.1';
-import { executeFileNode } from './operations/file-nodes.js?v=0.28.1';
-import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.28.1';
-import { snapshotPromptSource, promptSourceFingerprint } from './prompt-source.js?v=0.28.1';
-import { createNativeMemoryAdapter, nativeMemoryFingerprint, nativeMemoryScope, nativeVisibility } from './introspection/host-memory.js?v=0.28.1';
+import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.29.0';
+import { captureNodeFileTargets, nodeFileTargetId } from './node-file-targets.js?v=0.29.0';
+import { prepareManagedNodeFiles } from './managed-file-policy.js?v=0.29.0';
+import {migrateUnboundOwnFile} from './file-application-policy.js?v=0.29.0';
+import {prepareManagedBranchFiles} from './managed-branch-files.js?v=0.29.0';
+import {createScopedNodeFileBackend} from './scoped-node-file-backend.js?v=0.29.0';
+import {prepareExampleFileDefaults} from './example-file-defaults.js?v=0.29.0';
+import { getNodeFileAccess } from '../ui/node-file-access.js?v=0.29.0';
+import { randomUuid } from '../random-id.js?v=0.29.0';
+import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.29.0';
+import {cloneJsonValue} from './operations/json-data.js?v=0.29.0';
+import {captureNativeCharacterProjection} from './native-source-projections.js?v=0.29.0';
+import {createNativeSourceRegistry} from './native-source-registry.js?v=0.29.0';
+import {createSourceReader,inspectSourcePage} from './source-reader.js?v=0.29.0';
+import {createSourceProofRegistry} from './source-provenance.js?v=0.29.0';
+import { createNativeGuidanceComposition } from './native-guidance-compose.js?v=0.29.0';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.29.0';
+import { sha256Text } from './definition-data.js?v=0.29.0';
+import { runWorkflowForHost, freezeArtifact, workflowSignature } from './runtime.js?v=0.29.0';
+import { resolveBinding, requestModel, bindingStatus, bindingSummary } from './connections.js?v=0.29.0';
+import { reasoningRequestOverrides } from './reasoning.js?v=0.29.0';
+import { addressKey, safeError } from './record-data.js?v=0.29.0';
+import { createRunState, reduceRunState } from './run-state.js?v=0.29.0';
+import { cloneWorkflowDocument } from './document.js?v=0.29.0';
+import { prepareWorkflowAttempt, resolveWorkflow } from './resolve.js?v=0.29.0';
+import { projectIntrospectionNode } from './introspection/native.js?v=0.29.0';
+import { executeIntrospection } from './introspection/nodes.js?v=0.29.0';
+import { parseRecord } from './introspection/contracts.js?v=0.29.0';
+import { artifactVisibility, preserveArtifactPrivacy, validVisibilityMetadata } from './artifact-privacy.js?v=0.29.0';
+import { createAcceptedNativeSettlement, createNativeFileSession, createNativeDocumentHistory, validateNativeFileEvidence } from './native-settlement.js?v=0.29.0';
+import { createChatPrefixBinding } from './chat-prefix-binding.js?v=0.29.0';
+import {queryProgressionHistory} from './progression.js?v=0.29.0';
+import { createChatDocumentCatalog } from './document-catalog.js?v=0.29.0';
+import { ensureWorkflowDataDefaults } from './workflow-data-defaults.js?v=0.29.0';
+import { createNativePersistenceVerifier } from './native-persistence.js?v=0.29.0';
+import { createNativeDraftEvidenceRegistry } from './native-draft-evidence.js?v=0.29.0';
+import { createNativeActorContext } from './native-actor-context.js?v=0.29.0';
+import { createNativeRecallController } from './native-recall.js?v=0.29.0';
+import { createNativeStoryState, createNativeOutcomeCache } from './native-story-state.js?v=0.29.0';
+import { executeTimeNode } from './operations/time-nodes.js?v=0.29.0';
+import { executeRandom } from './operations/random-outcomes.js?v=0.29.0';
+import { executeFileNode } from './operations/file-nodes.js?v=0.29.0';
+import { snapshotDraft, readDraftBody } from './draft-revisions.js?v=0.29.0';
+import { snapshotPromptSource, promptSourceFingerprint } from './prompt-source.js?v=0.29.0';
+import { createNativeMemoryAdapter, nativeMemoryFingerprint, nativeMemoryScope, nativeVisibility } from './introspection/host-memory.js?v=0.29.0';
 
 // Internal review seam: observations contain no authority or retained payload values.
 const retentionInspectors=new WeakMap();
@@ -255,6 +263,9 @@ export function snapshotReply(context,messageIndex=context.chat?.length-1) {
 
 /** Owns cancellation, guidance lifetime and explicit local revision commits. */
 export function createNativeWorkflowController(ports) {
+    const managedNamespace=token(),managedDocumentOwners=new WeakMap();
+    const managedAddressKey=address=>addressKey({...address,instancePath:address.instancePath.map(part=>/^iteration-\d+$/.test(part)?'iteration-*':part)});
+    const managedNode=(run,address)=>run.managedFileNodes?.get(addressKey(address))??run.managedFileNodes?.get(managedAddressKey(address));
     const context=ports.context;
     // Separate native read-only capability, captured once. General userId freshness
     // callbacks may have effects and cannot serve as final private transport authority.
@@ -267,7 +278,22 @@ export function createNativeWorkflowController(ports) {
     const documentHistory=createNativeDocumentHistory({catalog:documentCatalog,context,userId:()=>ports.userId?.(),actorId:()=>{const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);return actor.ok?actor.data.actorId:null;},isBusy:()=>applying||active!==null||ports.isBusy?.()===true,barriers:fileBarriers,persistenceVerifier,onApplied:()=>cancel('Workflow history checkpoint applied')});
     const outcomeCache=createNativeOutcomeCache({...(typeof ports.random==='function'?{random:ports.random}:{})});
     function releaseRun(run) {if(!run||run.resourcesReleased)return;run.resourcesReleased=true;run.sourceProofs?.clear();run.sourceActorService?.release();run.sourceActorService=null;run.actorArtifactOwners=new WeakMap();for(const reader of run.sourceReaders??[])reader.release();run.sourceReaders?.clear();run.sourcePages?.clear();run.sourceCaptures?.clear();run.guidanceComposition?.clear();run.modelScopes?.clear();run.modelAddresses=new WeakMap();recall.releaseRun(run);run.memorySession?.release();run.memorySession=null;run.storySession?.release();run.storySession=null;run.draftEvidence?.release();run.draftEvidence=null;run.draftSources?.clear();delete run.nativeContext;for(const session of run.fileSessions?.values()??[])session.release();run.fileSessions?.clear();run.fileSession?.release();run.fileSession=null;run.actorContext?.release();run.actorContext=null;for(const session of run.actorMemorySessions?.values()??[])session.release();run.actorMemorySessions?.clear();run.stagedFiles.length=0;run.memoryIntents.clear();run.memoryTerminals.clear();}
-    let epoch=0, active=null, result=null, automaticResult=null, applying=false, automaticApplication=null, internalEvents=0, unsubscribe=null;
+    let epoch=0, active=null, result=null, automaticResult=null, applying=false, settling=false, automaticApplication=null, internalEvents=0, unsubscribe=null;
+    let branchCapture=null;
+    function captureBranchPoint(){
+        const c=context(),metadata=c.chatMetadata,userId=ports.userId?.(),chatId=identity(c).chatId,parent=Object.getOwnPropertyDescriptor(metadata??{},'main_chat')?.value,integrity=Object.getOwnPropertyDescriptor(metadata??{},'integrity')?.value;
+        const prefix=createChatPrefixBinding(c.chat,sourceText);
+        // Preserve the host's original chat-open prefix even when the separately
+        // imported user module has not initialized. This is no file authority:
+        // parent lookup still requires a later matching authenticated scope.
+        if(branchCapture?.chatId===chatId&&branchCapture.metadata===metadata&&branchCapture.integrity===integrity&&branchCapture.parentChatId===parent)return;
+        branchCapture=typeof chatId==='string'&&typeof parent==='string'&&parent&&parent!==chatId&&parent.length<=128&&typeof integrity==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(integrity)&&prefix?{userId:typeof userId==='string'&&userId?userId:null,chatId,metadata,integrity,parentChatId:parent,binding:prefix.stamp}:null;
+    }
+    function actorAvailable(run,actorId){
+        if(!fresh(run))return false;
+        const actors=context().characters;if(!Array.isArray(actors))return false;
+        return actors.some((actor,index)=>{const avatar=Object.getOwnPropertyDescriptor(actor??{},'avatar');return (!avatar||Object.hasOwn(avatar,'value'))&&actorId==='character:'+(avatar?.value??index);});
+    }
     let generationSequence=0, generation={dryRun:false,type:'normal'}, generationInvocationDryRun=false;
     const activityListeners=new Set(), progressListeners=new Set();
     let runState=null,progressRevision=0,nativeStopListener=null,invokingPolicyStop=null;
@@ -350,6 +376,7 @@ export function createNativeWorkflowController(ports) {
         epoch++; sources.clear(); candidates.clear(); clear();
         if(active) {active.controller.abort(reason); const abort=active.abortPrimary;active.abortPrimary=null;try{abort?.(true);}catch{/* Native abort callback is best effort. */}}
         active=null;publishActivity();
+        observe(ports.onReviewChanged);
     };
     const bindingChecks=(run,entries)=>entries.map(({address,binding})=>({address,binding,...run.bindingContexts.get(binding)}));
     const bindingFresh=(run)=>{
@@ -379,7 +406,7 @@ export function createNativeWorkflowController(ports) {
         catch {return false;}
     };
     const playerSourceFresh=run=>{try{return !run.playerSourceCurrent||run.playerSourceCurrent()===true;}catch{return false;}};
-    const sourceFresh=run=>[...(run.sourcePages??[])].every(page=>inspectSourcePage(page).ok) && playerSourceFresh(run) && memoryFresh(run) && promptFresh(run) && [...(run.pendingSources?.values()??[])].every(validSource) && [...(run.sceneSources??[])].every(entry=>entry.text!==null && sourceText(entry.chat)===entry.text && (entry.characterVisibility===undefined || (entry.characterVisibility!==null && characterVisibility(context())===entry.characterVisibility)) && (entry.characterSnapshots??[]).every(captured=>characterText(snapshotContext(context(),{chat:entry.chat,node:captured.node}))===captured.text));
+    const sourceFresh=run=>run.nodeFileFresh!==false && [...(run.sourcePages??[])].every(page=>inspectSourcePage(page).ok) && playerSourceFresh(run) && memoryFresh(run) && promptFresh(run) && [...(run.pendingSources?.values()??[])].every(validSource) && [...(run.sceneSources??[])].every(entry=>entry.text!==null && sourceText(entry.chat)===entry.text && (entry.characterVisibility===undefined || (entry.characterVisibility!==null && characterVisibility(context())===entry.characterVisibility)) && (entry.characterSnapshots??[]).every(captured=>characterText(snapshotContext(context(),{chat:entry.chat,node:captured.node}))===captured.text));
     const start=(graph,native=false,abortPrimary=null,target)=>{
         const policyOwner=generation,policyPassport=native?nativeStopPassport(context):null;
         const failurePolicy=normalizeWorkflowFailurePolicy(ports.getFailurePolicy?.());
@@ -390,12 +417,25 @@ export function createNativeWorkflowController(ports) {
         run.sourceCapability=Object.freeze({authorizeSource:artifact=>run.sourceProofs.authorizeSource(artifact),authorizePairing:(artifact,manifest)=>run.sourceProofs.authorizePairing(artifact,manifest),validateCurrent:artifact=>run.sourceProofs.validateCurrent(artifact)});
         active=run;runState=createRunState(runId);publishActivity();return run;
     };
-    function prepareRun(run,plan,controls,options) {
+    async function prepareRun(run,plan,controls,options) {
         run.cancel=controls.cancel;
         const captured=controls.originalGraphSnapshot;
         run.graph={id:captured.id,name:captured.name,schema:captured.schema,runtime:captured.runtime,mode:captured.mode};
-        run.workflowDataDefaults=plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled).flatMap(unit=>unit.systemDefaults??[]);
+        for(const unit of plan.primitives)if(unit.included&&!unit.systemDisabled&&unit.node.operation==='write-file'&&unit.node.fileHandling&&plan.edges.filter(edge=>addressKey(edge.to)===addressKey(unit.address)&&['text','records'].includes(edge.to.portId)).length>1)return fail('AMBIGUOUS_FILE_INPUT','Connect either Text or Records to this output.');
+        run.workflowDataHelperNodes=controls.workflowDataNodes??[];
+        run.workflowDataDefaults=plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled&&!unit.node.fileTarget?.managed).flatMap(unit=>unit.systemDefaults??[]);
         run.workflowDataNodes=Object.fromEntries([...plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled).map(unit=>unit.node),...(controls.workflowDataNodes??[])].map((node,index)=>[index,node]));
+        run.managedFileEntries=[...plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled).map(unit=>{
+            const incoming=plan.edges.find(edge=>addressKey(edge.to)===addressKey(unit.address)&&['text','records'].includes(edge.to.portId)),source=incoming&&plan.primitives.find(candidate=>addressKey(candidate.address)===addressKey(incoming.from))?.node;
+            return {node:unit.node,address:unit.address,...(source?.operation==='format'?{inputFormat:source.format??'json',inputColumns:source.columns}:source?.operation==='json-encode'?{inputFormat:'json'}:{}),...(incoming?.to.portId==='records'?{inputKind:'data'}:{})};
+        }),...(controls.workflowDataNodes??[]).filter(entry=>entry.node&&entry.address)];
+        run.managedFileEdges=plan.edges;
+        let managedOwner=ports.getWorkflowIdentity?.();
+        if(typeof managedOwner!=='string'||!managedOwner.trim()){
+            if(run.documentToken!==undefined)managedOwner=managedNamespace+':'+String(run.documentToken);
+            else {if(!managedDocumentOwners.has(run.originalGraph))managedDocumentOwners.set(run.originalGraph,token());managedOwner=managedNamespace+':'+managedDocumentOwners.get(run.originalGraph);}
+        }
+        run.managedWorkflowId=managedOwner;
         run.signature=workflowSignature(captured);run.identity=identity(context());run.hostUnified=captured.mode==='native-unified';if((run.hostUnified||captured.runtime===3)&&!run.unified)run.userId=ports.userId?.();
         if(run.diagnosticCapture){
             // A start observer may have selected another user/chat before
@@ -428,6 +468,64 @@ export function createNativeWorkflowController(ports) {
             if([tail,liveTail].some(message=>message?.is_tool || message?.extra?.tool_invocations?.length))return fail('INTERNAL_TOOL_CONTINUATION','Internal tool continuation does not run guidance.');
             generation.originalTail??={message:liveTail,text:liveTail?.mes};
         }
+        if(run.hostUnified){const files=await prepareNodeFiles(run);if(!files.ok)return files;}
+        return {ok:true};
+    }
+    const fileStamp=value=>JSON.stringify([value.revision,value.format,value.content]);
+    async function prepareNodeFiles(run){
+        let nodes=Object.values(run.workflowDataNodes??{}).map(entry=>entry.node??entry);if(!nodes.some(node=>nodeFileTargetId(node)!==null||['read-file','write-file','story-clock','commit-outcomes','random-pick'].includes(node.operation)&&Object.keys(node.fileTarget??{}).length))return {ok:true};
+        const live=()=>fresh(run)&&(!run.unified||nativePrefixFresh(run));
+        const priorCatalog=documentCatalog.capture();if(!priorCatalog.ok)return priorCatalog;
+        const exampleOrigin=ports.getExampleFileOrigin?.(run.originalGraph);let initialTemplates,fileOwners;
+        if(exampleOrigin){
+            const example=prepareExampleFileDefaults({exampleId:exampleOrigin.exampleId,nodes:run.managedFileEntries,workflowId:run.managedWorkflowId,previousWorkflowId:exampleOrigin.fileWorkflowId,actorBindings:exampleOrigin.actorBindings,legacyDocuments:priorCatalog.data.documents,canonicalDocuments:context().chatMetadata?.latticeDocuments?.[run.userId]??{}});if(!example.ok)return example;
+            if(example.data.actorChoices.length)return fail('EXAMPLE_ACTOR_REQUIRED','Choose the story characters for '+example.data.actorChoices.map(choice=>choice.label).join(' and ')+' in the example setup before running.');
+            run.managedFileEntries=example.data.nodes;initialTemplates=example.data.initialTemplates;fileOwners=example.data.fileOwners;nodes=example.data.nodes.map(entry=>entry.node);
+        }
+        if(run.workflowDataDefaults?.length||run.workflowDataHelperNodes?.length){const installed=ensureWorkflowDataDefaults({catalog:documentCatalog,graph:{nodes:Object.fromEntries((run.workflowDataHelperNodes??[]).map((node,index)=>[index,node]))},defaults:run.workflowDataDefaults,scope:{userId:run.userId,chatId:run.identity.chatId},context,isCurrent:live});if(!installed.ok)return installed;}
+        const legacy=documentCatalog.capture();if(!legacy.ok)return legacy;
+        const canonicalDocuments=context().chatMetadata?.latticeDocuments?.[run.userId]??{};
+        run.managedFileEntries=run.managedFileEntries.map(entry=>({...entry,node:migrateUnboundOwnFile(entry.node,{canonicalDocuments,legacyDocuments:legacy.data.documents})}));
+        nodes=run.managedFileEntries.map(entry=>entry.node);
+        const access=ports.nodeFileAccess??getNodeFileAccess();
+        if(run.managedFileEntries?.some(entry=>entry.node.fileTarget?.managed===true)){
+            await access?.ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring managed files.');
+            const existing=captureNodeFileTargets(nodes.filter(node=>!node.fileTarget?.managed),{legacyDocuments:legacy.data.documents});if(!existing.ok)return existing;
+            if(existing.data.definitions.length){
+                if(typeof access?.backend!=='function')return fail('FILE_ACCESS_REQUIRED','Choose an available file for the connected commit.');
+                const checked=createScopedNodeFileBackend(access,existing.data.definitions,{scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:live,isActorAvailable:actorId=>actorAvailable(run,actorId),signal:run.controller.signal});
+                for(const definition of existing.data.definitions){const loaded=await checked.load(definition.targetId);if(!live())return fail('STALE_FILE_SCOPE','The file scope changed while validating an existing destination.');if(!loaded.ok)return loaded;if(loaded.data.format!==definition.format)return fail('FILE_FORMAT_CONFLICT','The existing file type changed; choose it again.');}
+            }
+            const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);
+            const managed=await prepareManagedNodeFiles(run.managedFileEntries,{workflowId:run.managedWorkflowId,edges:run.managedFileEdges,initialTemplates,fileOwners,scope:{userId:run.userId,chatId:run.identity.chatId},actorId:actor.ok?actor.data.actorId:undefined,isActorAvailable:actorId=>actorAvailable(run,actorId),legacyDocuments:legacy.data.documents,authorizedDefinitions:existing.data.definitions,isCurrent:live,access});if(!managed.ok)return managed;
+            run.managedFileNodes=new Map(run.managedFileEntries.map((entry,index)=>[addressKey(entry.address),managed.data.nodes[index]]));
+            nodes=managed.data.nodes;run.workflowDataNodes=Object.fromEntries(nodes.map((node,index)=>[index,node]));
+        }
+        const captured=captureNodeFileTargets(nodes,{legacyDocuments:legacy.data.documents});if(!captured.ok)return captured;
+        run.nodeFileDefinitions=captured.data.definitions;run.nodeFileObserved=new Map();run.nodeFileFresh=true;
+        if(!run.nodeFileDefinitions.length)return {ok:true};
+        if(!access||typeof access.backend!=='function')return fail('FILE_ACCESS_REQUIRED','Choose an available local file in the File section for this node.');
+        // Each captured backend validates its own readiness. An unused server adapter
+        // may be unavailable while an existing native destination remains valid.
+        await access.ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring file access.');
+        const prefix=createChatPrefixBinding(run.nativeCapture?.refs??context().chat,sourceText);
+        const metadata=context().chatMetadata,openedHere=branchCapture?.chatId===run.identity.chatId&&branchCapture.metadata===metadata&&branchCapture.integrity===Object.getOwnPropertyDescriptor(metadata??{},'integrity')?.value&&branchCapture.parentChatId===Object.getOwnPropertyDescriptor(metadata??{},'main_chat')?.value&&prefix?.matches(branchCapture.binding);
+        if(openedHere&&branchCapture.userId===null&&typeof run.userId==='string'&&run.userId)branchCapture={...branchCapture,userId:run.userId};
+        const branch=openedHere&&branchCapture.userId===run.userId?branchCapture:null;
+        if((branchCapture||metadata?.main_chat)&&!branch)return fail('BRANCH_POINT_UNAVAILABLE','The original branch point could not be verified. Reopen the chat before preparing its state.');
+        const managedIds=new Set([...run.managedFileNodes?.values()??[]].map(node=>nodeFileTargetId(node)));
+        const branchPrepared=await prepareManagedBranchFiles({definitions:run.nodeFileDefinitions.filter(definition=>managedIds.has(definition.targetId)),access,scope:{userId:run.userId,chatId:run.identity.chatId},branch,isCurrent:live});if(!branchPrepared.ok)return branchPrepared;
+        const branchDefinitions=new Map(branchPrepared.data.definitions.map(definition=>[definition.targetId,definition]));
+        run.nodeFileDefinitions=run.nodeFileDefinitions.map(definition=>branchDefinitions.get(definition.targetId)??definition);
+        run.nodeFileBackend=createScopedNodeFileBackend(access,run.nodeFileDefinitions,{scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:live,isActorAvailable:actorId=>actorAvailable(run,actorId),signal:run.controller.signal,getBranchBinding:()=>live()&&run.acceptedBranchBinding?run.acceptedBranchBinding:undefined});
+        for(const adoption of branchPrepared.data.adoptions){const adopted=await run.nodeFileBackend.adoptLegacy(adoption.snapshot.targetId,{snapshot:adoption.snapshot,pages:adoption.pages});if(!adopted.ok)return adopted;if(adopted.data?.adopted!==true)return fail('BRANCH_POINT_UNAVAILABLE','The independent branch state could not be prepared safely.');}
+        for(const definition of run.nodeFileDefinitions){const loaded=await run.nodeFileBackend.load(definition.targetId);if(!loaded.ok)return {...loaded,error:{...loaded.error,field:'fileTarget'}};if(!live())return fail('STALE_FILE_SCOPE','File scope changed while validating access.');run.nodeFileObserved.set(definition.targetId,fileStamp(loaded.data));}
+        return {ok:true};
+    }
+    async function verifyNodeFiles(run){
+        if(!run.nodeFileBackend)return {ok:true};
+        if(run.nodeFileFresh===false)return fail('FILE_REVISION_CONFLICT','A selected file changed after this workflow captured it. Run it again.');
+        for(const [targetId,stamp] of run.nodeFileObserved??[]){const loaded=await run.nodeFileBackend.load(targetId);if(!loaded.ok){run.nodeFileFresh=false;return loaded;}if(fileStamp(loaded.data)!==stamp){run.nodeFileFresh=false;return fail('FILE_REVISION_CONFLICT','A selected file changed after this workflow captured it. Run it again.');}}
         return {ok:true};
     }
     function scopedActors(run){
@@ -570,6 +668,7 @@ export function createNativeWorkflowController(ports) {
         return snapshot;
     }
     async function settleRun(run,transport) {
+        const files=await verifyNodeFiles(run);if(!files.ok)return files;
         if(!fresh(run)||!sourceFresh(run)||run.recallCaptured&&!recall.fresh(run))return fail('STALE_SOURCE','The workflow source changed during preparation.');
         run.bindingChecks=bindingChecks(run,transport.bindings);
         const effective=bindingFresh(run);if(!effective.ok)return effective;
@@ -607,6 +706,10 @@ export function createNativeWorkflowController(ports) {
                 validateFinal:({body,originalBody,effects})=>{acceptedBody=body;for(const effect of effects){if(effect.proposed.kind==='file'){const evidence=run.storySession?run.storySession.validateEvidence(effect.proposed.evidence,body,originalBody,{draftEvidence:run.draftEvidence,finalDraft:entry.finalDraft}):validateNativeFileEvidence(effect.proposed.evidence,body,originalBody,{draftEvidence:run.draftEvidence,finalDraft:entry.finalDraft});if(!evidence.ok)return evidence;}}return {ok:true};},
                 publish:async()=>{
                     const applied=await publishCandidate(entry.handle);if(!applied.ok)return applied;
+                    // Recovery records the independently verified assistant-inclusive
+                    // publication, separately from execution and source authority.
+                    let verified;try{verified=await persistenceVerifier.verify?.({kind:'chat-prefix'});}catch{/* Unverified publication retains no branch stamp. */}
+                    if(verified?.ok&&verified.data?.acknowledged===true&&acceptedSourceFresh(entry)&&sourceFresh(run))run.acceptedBranchBinding=createChatPrefixBinding(context().chat,sourceText)?.stamp;
                     // Effects-only acceptance keeps the preflighted original memory source;
                     // only a new reply revision needs accepted-publication rebasing.
                     if(run.memorySession&&memoryOutputs.length&&!entry.effectsOnlyPublication){const authorized=run.memorySession.authorizeAcceptedPublication({body:acceptedBody,finalText:entry.candidate.text,messageIndex:entry.source.messageIndex,originalSwipeId:entry.source.swipeId,finalSwipeId:applied.swipeId});if(!authorized.ok)return authorized;}
@@ -690,12 +793,12 @@ export function createNativeWorkflowController(ports) {
             ...(Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{actorContext:(actorId,request,presence)=>{const scoped=scopedActors(run);return scoped.ok?scoped.data.actorContext(actorId,request,presence):scoped;}}:{}),
             ...(run.unified?{retainDraftEventSource:payload=>{if(!run.draftEvidence){const captured=createNativeDraftEvidenceRegistry({getOriginalDraft:()=>run.nativeDraft,isCurrent:()=>fresh(run)&&nativePrefixFresh(run)&&sourceFresh(run),signal:run.controller.signal});if(!captured.ok)return captured;run.draftEvidence=captured.data;}const retained=run.draftEvidence.retain(payload);if(retained.ok){const source=retained.data.source??payload.source;run.draftSources??=new Map();run.draftSources.set(JSON.stringify([source.value.sourceId,source.value.revision,source.value.sceneId,source.value.visibility,source.value.actorId??null]),payload.draft);if(run.recallCaptured){const captured=recall.captureSourceArtifact(run,source,{source:source.value,text:source.value.text,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&sourceFresh(run)&&run.draftEvidence.validate([],payload.draft).ok});if(!captured.ok)return captured;}}return retained;}}:{}),
             ...(Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{retainTimeProjection:async payload=>{const state=await scopedStoryState(run);return state.ok?state.data.retainTimeProjection(payload):state;},
-            selectNativeRandomOutcomes:async payload=>{const state=await scopedStoryState(run);return state.ok?state.data.selectNativeRandomOutcomes(payload):state;},
+            selectNativeRandomOutcomes:async payload=>{const state=await scopedStoryState(run);const selected=payload.address&&managedNode(run,payload.address);return state.ok?state.data.selectNativeRandomOutcomes({...payload,...(selected?.operation==='random-pick'?{ledgerId:selected.ledgerId}:{})}):state;},
             reuseNativeOutcome:outcome=>run.storySession?run.storySession.reuseNativeOutcome(outcome):{ok:true,data:null},
             retainNativeOutcome:async payload=>run.storySession?run.storySession.retainNativeOutcome(payload):{ok:true}}:{}),
             ...(run.diagnosticCapture?{onDiagnostic:event=>observe(()=>run.diagnosticCapture.model?.(event)),diagnosticResponseText:run.diagnosticCapture.captureResponses!==false,isDiagnosticResponseCurrent:()=>run.diagnosticCapture.captureResponses!==false}:{}),
             onStage:ports.onStage,onEvent:event=>{if(active===run){const next=reduceRunState(runState,event);if(next!==runState){runState=next;publishProgress();}}if(run.diagnosticCapture)observe(()=>run.diagnosticCapture.event?.(event));observe(ports.onEvent,event);observe(options.onEvent,event);},
-        },{getSourceProofs:()=>run.sourceCapability,prepare:(plan,controls)=>prepareRun(run,plan,controls,options),executeIntrospection:(node,inputs,operationPorts)=>introspect(run,node,inputs,operationPorts),...(run.unified||run.graph?.runtime===3||Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{executeHostOperation:(node,inputs,operationPorts)=>nativeOperation(run,node,inputs,operationPorts,options)}:{}),authorizeModelInputs:payload=>{const checked=authorizeModelScope(run,payload);if(checked.ok)run.modelScopes.set(addressKey(payload.address),Object.freeze({node:payload.node,inputs:payload.inputs,capability:payload.capability}));return checked;},retainScopedOutput:payload=>retainActorOutput(run,payload),retainRecallProvenance:payload=>run.recallCaptured?recall.retain(run,payload):{ok:true,data:{retained:true}},settle:transport=>settleRun(run,transport)});}
+        },{getSourceProofs:()=>run.sourceCapability,prepare:(plan,controls)=>prepareRun(run,plan,controls,options),executeIntrospection:(node,inputs,operationPorts)=>introspect(run,node,inputs,operationPorts),...(run.unified||run.graph?.runtime===3||Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{executeHostOperation:(node,inputs,operationPorts)=>nativeOperation(run,node,inputs,operationPorts,options)}:{}),authorizeModelInputs:async payload=>{const files=await verifyNodeFiles(run);if(!files.ok)return files;const checked=authorizeModelScope(run,payload);if(checked.ok)run.modelScopes.set(addressKey(payload.address),Object.freeze({node:payload.node,inputs:payload.inputs,capability:payload.capability}));return checked;},retainScopedOutput:payload=>retainActorOutput(run,payload),retainRecallProvenance:payload=>run.recallCaptured?recall.retain(run,payload):{ok:true,data:{retained:true}},settle:transport=>settleRun(run,transport)});}
         finally {delete run.cancel;run.bindingContexts.clear();run.modelScopes.clear();run.modelAddresses=new WeakMap();if(!run.retainResources)releaseRun(run);}
         if(!value.ok||run.mode==='target') {releaseRun(run);run.pendingSources.clear();run.sceneSources.length=0;run.promptSources.clear();run.bindingChecks=[];for(const [id,entry]of candidates)if(entry.run===run)candidates.delete(id);for(const [id,entry]of sources)if(entry.run===run)sources.delete(id);if(run.native)clear();}
         else run.pendingSources.clear();
@@ -728,11 +831,109 @@ export function createNativeWorkflowController(ports) {
         if(run.nativeTimer)clearTimeout(run.nativeTimer);run.nativeTimer=null;
         run.nativeFailed=true;run.nativeCompletion?.resolve(error);run.nativeReady?.resolve(error);clear();
     }
+    const ownsNativeStop=run=>active===run && run.epoch===epoch && run.policyOwner===generation && sameNativeStopPassport(run.policyPassport,nativeStopPassport(context));
+    function stopNativeGeneration(run,stop) {
+        if(run.nativeStopReceipt)return run.nativeStopReceipt;
+        if(!ownsNativeStop(run)||typeof stop!=='function')return Promise.resolve(false);
+        try {
+            // Observe the owned Stop before another async listener can deliver
+            // that event to a replacement Send.
+            const c=context(),events=c.eventTypes??c.event_types??{};
+            if(nativeStopListener && events.GENERATION_STOPPED)c.eventSource?.makeFirst?.(events.GENERATION_STOPPED,nativeStopListener);
+            if(!ownsNativeStop(run))return Promise.resolve(false);
+        } catch {return Promise.resolve(false);}
+        // Publish the receipt before calling the host: stopping may reenter us.
+        const receipt=deferred();run.nativeStopReceipt=receipt.promise;
+        const previous=invokingPolicyStop;invokingPolicyStop=run.policyOwner;
+        try {Promise.resolve(stop()).then(value=>receipt.resolve(value!==false),()=>receipt.resolve(false));}
+        catch {receipt.resolve(false);}
+        finally {invokingPolicyStop=previous;}
+        return receipt.promise;
+    }
+    function stopNativeReasoning(run) {
+        try {const c=context(),stop=c.stopGeneration;void stopNativeGeneration(run,typeof stop==='function'?()=>stop.call(c):undefined);}
+        catch {/* Keep the reasoning failure when native stopping is unavailable. */}
+    }
+    const nativeReasoningTarget=(c,payload)=>({api:payload?'openai':c.mainApi,source:payload?.chat_completion_source??c.chatCompletionSettings?.chat_completion_source,model:payload?.model??c.getChatCompletionModel?.(c.chatCompletionSettings),endpoint:payload?.custom_url??c.chatCompletionSettings?.custom_url??null});
+    function nativeReasoningOverrides(target,controls,payload) {
+        const mapped=reasoningRequestOverrides(target,controls);if(!mapped.ok)return mapped;
+        if(!Object.hasOwn(mapped.data,'custom_include_body'))return mapped;
+        try {
+            const object=value=>value&&typeof value==='object'&&!Array.isArray(value);
+            const parse=value=>{
+                try{return JSON.parse(value);}catch{
+                    const yaml=globalThis.SillyTavern?.libs?.yaml;
+                    if(typeof yaml?.parse==='function')return yaml.parse(value);
+                    if(typeof value==='string'&&/^[\w.-]+$/.test(value))return value;
+                    throw Error();
+                }
+            };
+            const overlay=JSON.parse(mapped.data.custom_include_body||'{}');
+            if(payload?.custom_exclude_body){
+                const excluded=parse(payload.custom_exclude_body),keys=Array.isArray(excluded)?excluded.filter(key=>typeof key==='string'):object(excluded)?Object.keys(excluded):typeof excluded==='string'?[excluded]:[];
+                if(keys.some(key=>Object.hasOwn(overlay,key)))return fail('REASONING_UNSUPPORTED','The native custom exclusion body removes a required reasoning field.');
+            }
+            const existing=payload?.custom_include_body;
+            if(existing===undefined||existing===null||existing==='')return mapped;
+            const parsed=parse(existing),body=Array.isArray(parsed)?Object.assign({},...parsed.filter(object)):object(parsed)?{...parsed}:{};
+            // Node controls own reasoning; stale custom fields must not restore
+            // a preset effort or conflict with a different provider's mapping.
+            for(const key of ['reasoning','reasoning_effort','thinking','reasoning_budget','thinking_budget','thinking_config','thinkingConfig','enable_thinking','include_reasoning'])delete body[key];
+            if(object(body.extra_body?.google))delete body.extra_body.google.thinking_config;
+            if(object(body.extra_body)&&object(overlay.extra_body)){
+                if(object(body.extra_body.google)&&object(overlay.extra_body.google))overlay.extra_body.google={...body.extra_body.google,...overlay.extra_body.google};
+                overlay.extra_body={...body.extra_body,...overlay.extra_body};
+            }
+            return {ok:true,data:{...mapped.data,custom_include_body:JSON.stringify({...body,...overlay})}};
+        } catch {return fail('REASONING_UNSUPPORTED','Native custom reasoning requires readable JSON or the host YAML parser for custom include and exclusion bodies.');}
+    }
+    function prepareNativeReasoning(run,node) {
+        const c=context(),controls=Object.freeze({reasoningEffort:node.reasoningEffort??'none',reasoningCustom:node.reasoningCustom??''});
+        const surface=!!unsubscribe&&c.mainApi==='openai'&&!!(c.eventTypes??c.event_types)?.CHAT_COMPLETION_SETTINGS_READY&&typeof c.eventSource?.on==='function';
+        if(!surface){
+            if(controls.reasoningEffort!=='none')return fail('REASONING_UNSUPPORTED','The host has no supported final native reasoning settings surface.');
+            run.nativeReasoningSkipped=true;run.nativeReasoningSkipReason='The host has no supported native reasoning settings surface.';return {ok:true};
+        }
+        const target=nativeReasoningTarget(c),mapped=nativeReasoningOverrides(target,controls,c.chatCompletionSettings);
+        if(!mapped.ok)return mapped;
+        run.nativeReasoning=controls;return {ok:true};
+    }
+    async function applyNativeReasoning(payload) {
+        const run=active;
+        // This event is emitted only by the native chat send, after its final
+        // settings conversion. Auxiliary services never emit it.
+        const current=()=>active===run&&run?.native&&run.unified&&run.nativePrepared&&!run.nativeResolved&&!run.nativeFailed&&!run.nativeReasoningApplied&&run.nativeReasoning&&payload?.type===run.nativeType&&!generationInvocationDryRun&&!generation.dryRun&&!generation.aborted&&nativePrefixFresh(run);
+        if(!current()||!sourceFresh(run))return;
+        const reject=error=>{
+            run.nativeReasoningFailure=error;holdNative(run,error);const abort=run.abortPrimary;run.abortPrimary=null;run.nativeOwner.aborted=true;
+            try{abort?.(true);}catch{/* The installed native abort callback is best effort. */}
+            stopNativeReasoning(run);
+        };
+        if(run.nodeFileBackend){
+            const files=await verifyNodeFiles(run);
+            if(!current())return;
+            if(!files.ok){reject(files);return;}
+            if(!sourceFresh(run))return;
+        }
+        const target=nativeReasoningTarget(context(),payload);
+        const mapped=nativeReasoningOverrides(target,run.nativeReasoning,payload);
+        // The public YAML parser can be supplied by the host. Recheck ownership
+        // after that callback before altering or stopping a native request.
+        if(!current()||!sourceFresh(run))return;
+        if(!mapped.ok){reject(mapped);return;}
+        if(!payload||typeof payload!=='object'||Array.isArray(payload))return;
+        try{Object.assign(payload,mapped.data);run.nativeReasoningApplied=true;}
+        catch{reject(fail('REASONING_UNSUPPORTED','The final native settings could not accept this reasoning override.'));}
+    }
     function checkNativeCompletion(run) {
         run.nativeTimer=null;
         if(active!==run || run.nativeResolved || !run.nativeEnded)return;
         if(!run.nativePrepared)return holdNative(run,fail('NATIVE_GENERATION_MISMATCH','Native generation ended before its preparation was released.'));
         if(!nativePrefixFresh(run))return holdNative(run,fail('STALE_SOURCE','The owned native chat, prefix, user or workflow changed.'));
+        if(run.nativeReasoning&&!run.nativeReasoningApplied){
+            if(run.nativeReasoning.reasoningEffort!=='none')return holdNative(run,fail('REASONING_UNSUPPORTED','The native generation did not expose its final reasoning settings.'));
+            run.nativeReasoningSkipped=true;run.nativeReasoningSkipReason='The native generation did not expose its final reasoning settings.';
+        }
         if(!run.nativeReceived)return holdNative(run,fail('NATIVE_REPLY_MISSING','Generation ended without its matching received reply.'));
         if(ports.isBusy?.()) {
             if(Date.now()-run.nativeEndedAt>=5000)return holdNative(run,fail('NATIVE_COMPLETION_TIMEOUT','Native generation did not become settled after End.'));
@@ -755,7 +956,7 @@ export function createNativeWorkflowController(ports) {
         const entry={message:m,chat:c.chat,refs:[...c.chat],prefix:sourceText(c.chat),swipeText:m.swipes[draft.source.swipeId],source:draft.source,run};
         run.pendingSources.set(draft.source.token,entry);run.nativeDraft=draft;run.nativeResolved=true;run.nativeOwner.finished=true;run.abortPrimary=null;clear();
         const metadata=freezeArtifact({kind:'data',value:{type:'native-generation',schemaVersion:1,runId:run.runId,attemptId:run.nativeOwner.id,generationType:run.nativeType,source:{...run.identity,userId:run.userId,messageIndex:captured.expectedIndex,swipeId:captured.expectedSwipe},started,finished}});
-        const completedResult={ok:true,outputs:{draft,metadata},reports:[{code:'NATIVE_GENERATION_COMPLETED',generationType:run.nativeType,reviewRequired:true}]};
+        const completedResult={ok:true,outputs:{draft,metadata},reports:[{code:'NATIVE_GENERATION_COMPLETED',generationType:run.nativeType,reviewRequired:true},...(run.nativeReasoningSkipped?[{code:'REASONING_SKIPPED',reason:run.nativeReasoningSkipReason}]:[])]};
         if(run.recallCaptured){const retained=recall.capture(run,completedResult,{kind:'source',source:{sourceId:draft.source.sourceId,revision:draft.source.revision,sceneId:draft.source.sceneId,watch:'draft'},text:draft.text,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&sourceFresh(run)});if(!retained.ok)return holdNative(run,retained);}
         run.nativeCompletion.resolve(completedResult);
     }
@@ -771,12 +972,12 @@ export function createNativeWorkflowController(ports) {
         }else{if(run.fileSession)return {ok:true,data:run.fileSession};const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);actorId=actor.ok?actor.data.actorId:undefined;}
         const live=()=>fresh(run)&&(!run.unified||nativePrefixFresh(run))&&(!run.effectEntry||acceptedSourceFresh(run.effectEntry)&&sourceFresh(run))&&(!actorGrant||actors.checkActorGrant(actorGrant).ok);
         if(!run.workflowDataDefaultsPrepared){
-            const prepared=ensureWorkflowDataDefaults({catalog:documentCatalog,graph:{nodes:run.workflowDataNodes},defaults:run.workflowDataDefaults,scope:{userId:run.userId,chatId:run.identity.chatId},context,isCurrent:live});
+            const prepared=ensureWorkflowDataDefaults({catalog:documentCatalog,graph:{nodes:{}},defaults:run.workflowDataDefaults,scope:{userId:run.userId,chatId:run.identity.chatId},context,isCurrent:live});
             if(!prepared.ok)return prepared;
             run.workflowDataDefaultsPrepared=true;
         }
         const chatSource=createChatPrefixBinding(run.nativeCapture?.refs??context().chat,sourceText);
-        const session=createNativeFileSession({catalog:documentCatalog,scope:{userId:run.userId,chatId:run.identity.chatId,...(actorId?{actorId}:{})},context,userId:()=>ports.userId?.(),persistenceVerifier,signal:run.controller.signal,isCurrent:live,barriers:fileBarriers,workflowId:run.graph.id,chatSource,maintainHistory:run.unified===true,getOriginalDraft:()=>run.nativeDraft??{source:{messageIndex:context().chat.length-1,swipeId:context().chat.at(-1)?.swipe_id??0,originalText:context().chat.at(-1)?.mes??''}},validateEvidence:()=>({ok:true}),stage:effect=>{if(!live())return fail('STALE_RUN','The accepted effect source changed.');run.stagedFiles.push(effect);return {ok:true};}});
+        const session=createNativeFileSession({catalog:documentCatalog,nodeFileDefinitions:run.nodeFileDefinitions??[],diskBackend:run.nodeFileBackend,scope:{userId:run.userId,chatId:run.identity.chatId,...(actorId?{actorId}:{})},context,userId:()=>ports.userId?.(),persistenceVerifier,signal:run.controller.signal,isCurrent:live,barriers:fileBarriers,workflowId:run.graph.id,chatSource,maintainHistory:run.unified===true,getOriginalDraft:()=>run.nativeDraft??{source:{messageIndex:context().chat.length-1,swipeId:context().chat.at(-1)?.swipe_id??0,originalText:context().chat.at(-1)?.mes??''}},validateEvidence:()=>({ok:true}),stage:effect=>{if(!live())return fail('STALE_RUN','The accepted effect source changed.');run.stagedFiles.push(effect);return {ok:true};}});
         if(!session.ok)return session;if(!live()){session.data.release();return fail('STALE_RUN','The native file scope changed during capture.');}const captured=Object.freeze({...session.data,actorId,...(actorGrant?{actorGrant,presence:request.presence}:{})});run.fileSessions.set(key,captured);if(key==='selected')run.fileSession=captured;return {ok:true,data:captured};
     }
     async function scopedStoryState(run){
@@ -840,6 +1041,7 @@ export function createNativeWorkflowController(ports) {
         run.sourcePages.add(page.data);run.sourceCaptures.add({nativeChat:c.chat,metadata:c.chatMetadata,references:[...chat],scope:state.data.scope,sourceEpoch:captured.data.sourceEpoch,revision:captured.data.revision,watchCharacter:node.includeCharacter!==false||grant!==null,characterKeys});const registered=run.sourceProofs.registerReaderResult(page.data.result,page.data);return registered.ok?page.data.result:registered;
     }
     async function nativeOperation(run,node,inputs,operationPorts,options) {
+        node=managedNode(run,operationPorts.address)??node;
         if(operationPorts.root!==true&&!isScopedSystemOperation(node))return fail('HOST_OPERATION_REQUIRED','Nested operations require the trusted static system capability.');
         if(!fresh(run) || run.unified&&!nativePrefixFresh(run))return fail('STALE_RUN','Native workflow source changed.');
         if(['on-send','generate-reply'].includes(node.operation)&&(!run.native||!run.unified))return fail('NATIVE_OWNER_MISSING','Native activation requires its owned generation event.');
@@ -861,6 +1063,7 @@ export function createNativeWorkflowController(ports) {
         if(node.operation==='generate-reply') {
             if(inputs.activation!==run.activation || !run.activation)return fail('NATIVE_ACTIVATION_REQUIRED','Generation requires this run’s owned On Send activation.');
             if(run.nativeBoundary)return fail('MULTIPLE_NATIVE_GENERATIONS','One native generation boundary is supported.');
+            const fileAccess=await verifyNodeFiles(run);if(!fileAccess.ok)return fileAccess;
             run.nativeBoundary=true;
             // This is a private runtime snapshot: opaque binding identity must be
             // retained through preparation and native release.
@@ -905,14 +1108,17 @@ export function createNativeWorkflowController(ports) {
                 prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);
             }
             prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);
-            run.pending=false;run.nativePrepared=true;run.nativeReady.resolve({ok:true,prepared:true,awaitingNative:true,runId:run.runId,published:inputs.guidance!==undefined});
+            const reasoning=prepareNativeReasoning(run,node);if(!reasoning.ok)return rejectPreparation(reasoning);
+            const finalFiles=await verifyNodeFiles(run);if(!finalFiles.ok)return rejectPreparation(finalFiles);
+            prepared=preparationFresh();if(!prepared.ok)return rejectPreparation(prepared);
+            run.pending=false;run.nativePrepared=true;run.nativeReady.resolve({ok:true,prepared:true,awaitingNative:true,runId:run.runId,published:inputs.guidance!==undefined,...(run.nativeReasoningSkipped?{reasoningSkipped:true}:{})});
             return run.nativeCompletion.promise;
         }
         if(['recall','hotkey-arm'].includes(node.operation)){if(!run.unified||run.mode==='target')return {ok:true,outputStates:Object.fromEntries((node.operation==='recall'?['out','records','report']:['proposal']).map(id=>[id,{status:'skipped',reason:{code:'RECALL_PREVIEW_NO_ACTIVATION',message:'Recall activates only on an owned ordinary Send or generated swipe.'}}])),reports:[]};const result=await recall.execute(run,node,inputs,{phase:operationPorts.phase,address:operationPorts.address,countTokens:ports.countTokens});if(result.ok&&artifactVisibility(result.outputs).kind==='actor-private'){const scoped=scopedActors(run);if(!scoped.ok)return scoped;const grant=scoped.data.authorizeSelectedActor();if(!grant.ok)return grant;const retained=scoped.data.captureScopedResult(result,grant.data.grant);if(!retained.ok)return retained;}return result;}
         if(['story-clock','commit-clock','commit-outcomes'].includes(node.operation)){
             const state=await scopedStoryState(run);if(!state.ok)return state;
-            if(node.operation==='commit-outcomes')return executeRandom(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,stageNativeOutcomes:(target,values)=>state.data.stageOutcomes(target,values,operationPorts.address)});
-            const result=await executeTimeNode(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,readStoryClock:state.data.readClock,stageStoryClock:(report,occurrences)=>state.data.stageClock(report,occurrences,operationPorts.address)});
+            if(node.operation==='commit-outcomes')return executeRandom(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,stageNativeOutcomes:(target,values,unused,handling)=>state.data.stageOutcomes(target,values,operationPorts.address,handling)});
+            const result=await executeTimeNode(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,readStoryClock:state.data.readClock,stageStoryClock:(report,occurrences,handling)=>state.data.stageClock(report,occurrences,operationPorts.address,handling)});
             if(result.ok&&node.operation==='story-clock'){const registered=state.data.registerClock(result.outputs.out.value,result.outputs.out.value.clockId);if(!registered.ok)return registered;}
             return result;
         }
@@ -924,7 +1130,14 @@ export function createNativeWorkflowController(ports) {
             const files=captured.data;
             let read;const result=await executeFileNode(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,authorizeActorFileScope:({actorId,presence,reference})=>{if(actorId!==files.actorId||presence!==files.presence||reference&&run.fileReferences.get(reference)!==files)return fail('ACTOR_FILE_SCOPE_MISMATCH','The present-actor file capture changed.');const scoped=scopedActors(run);if(!scoped.ok)return scoped;const checked=scoped.data.checkActorGrant(files.actorGrant);return checked.ok?{ok:true,data:{actorId}}:checked;},files:{read:async (target,options)=>{const visibility=files.visibility(target);if(!visibility.ok)return visibility;read=await files.store.read(target,options);if(read.ok)run.fileReferences.set(read.data.fileRef,files);return read;},prepare:files.store.prepare},fileVisibility:({reference})=>files.visibility(reference.targetId),authorizeFileWrite:({reference})=>{const mark=files.visibility(reference.targetId);return mark.ok?{ok:true,data:{destinationVisibility:mark.data}}:mark;},createIntentId:(producer,evidence,reference)=>files.intentId(producer,evidence,operationPorts.address,reference),stageFileIntent:files.stage});
             if(node.operation==='read-file'&&result.ok&&artifactVisibility(result.outputs).kind==='actor-private'){const scoped=scopedActors(run);if(!scoped.ok)return scoped;const selected=files.actorGrant?{ok:true,data:{grant:files.actorGrant,scope:{actorId:files.actorId}}}:scoped.data.authorizeSelectedActor();if(!selected.ok)return selected;if(selected.data.scope.actorId!==files.actorId)return fail('ACTOR_FILE_SCOPE_MISMATCH','The private file belongs to a changed native actor.');const retained=scoped.data.captureScopedResult(result,selected.data.grant);if(!retained.ok)return retained;}
-            if(run.recallCaptured&&node.operation==='read-file'&&result.ok&&read?.ok&&result.outputs?.reference?.value===read.data.fileRef){const snapshot=read.data.snapshot;let recordValue;try{recordValue=JSON.parse((read.data.readView??snapshot).content);}catch{}const originalStored=context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId],storedFingerprint=originalStored===undefined?null:JSON.stringify(originalStored);const captured=recall.capture(run,result,{kind:'file',recordValue,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&files.visibility(snapshot.targetId).ok&&(context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId]===undefined?null:JSON.stringify(context().chatMetadata.latticeDocuments[run.userId][snapshot.targetId]))===storedFingerprint});if(!captured.ok)return captured;}
+            if(run.recallCaptured&&node.operation==='read-file'&&result.ok&&read?.ok&&result.outputs?.reference?.value===read.data.fileRef){
+                const snapshot=read.data.snapshot;let recordValue;try{recordValue=JSON.parse((read.data.readView??snapshot).content);}catch{}
+                const diskBacked=run.nodeFileDefinitions?.some(definition=>definition.targetId===snapshot.targetId);
+                const legacyFingerprint=()=>{const stored=context().chatMetadata?.latticeDocuments?.[run.userId]?.[snapshot.targetId];return stored===undefined?null:JSON.stringify(stored);};
+                const storedFingerprint=diskBacked?null:legacyFingerprint();
+                const captured=recall.capture(run,result,{kind:'file',recordValue,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&files.visibility(snapshot.targetId).ok&&(diskBacked?run.nodeFileFresh!==false:legacyFingerprint()===storedFingerprint)});
+                if(!captured.ok)return captured;
+            }
             return result;
         }
         if(node.operation==='scene-context'&&operationPorts.runtime===3)return sourceScene(run,node,inputs,operationPorts,options);
@@ -942,29 +1155,17 @@ export function createNativeWorkflowController(ports) {
     async function failureDisposition(run,value) {
         if(value.ok)return {...value,...(value.recovered?{failureDisposition:'continued'}:{})};
         const ownsRun=()=>active===run && run.epoch===epoch && run.policyOwner===generation;
-        const owns=()=>ownsRun() && sameNativeStopPassport(run.policyPassport,nativeStopPassport(context));
         if(!ownsRun() || run.controller.signal.aborted)return value;
         if(run.failurePolicy==='native-fallback')return {...value,failureDisposition:generation.aborted?'stopped':run.nativeResolved?'reply-preserved':'native-fallback'};
         run.policyStopping=true;
         const abort=run.abortPrimary;run.abortPrimary=null;
         try{abort?.(true);}catch{/* Native callback is best effort; real stop follows. */}
         let stopped=false;
-        try {if(owns() && typeof ports.stopGeneration==='function'){
-            // SillyTavern emits Stop without awaiting its async event dispatch.
-            // Observe our own stop synchronously before another listener can yield
-            // and deliver that old event to a replacement generation.
-            const c=context(),events=c.eventTypes??c.event_types??{};
-            if(nativeStopListener && events.GENERATION_STOPPED)c.eventSource?.makeFirst?.(events.GENERATION_STOPPED,nativeStopListener);
-            if(owns()){
-                let pending;invokingPolicyStop=run.policyOwner;
-                try{pending=ports.stopGeneration();}finally{invokingPolicyStop=null;}
-                stopped=(await pending)!==false;
-            }
-        }}
+        try {stopped=await stopNativeGeneration(run,ports.stopGeneration);}
         catch {/* Keep the node failure and report that host stopping was unconfirmed. */}
         finally {run.policyStopping=false;}
         run.controller.abort('Workflow failed');
-        if(owns()) {generation.aborted=true;clear();}
+        if(ownsNativeStop(run)) {generation.aborted=true;clear();}
         return {...value,failureDisposition:stopped?'stopped':'stop-unavailable'};
     }
     async function beforeUnified(graph,chat,abort,type) {
@@ -997,11 +1198,14 @@ export function createNativeWorkflowController(ports) {
         if(generation.aborted) {abort?.(true);return notify(fail('ABORTED','The native generation was stopped before workflow preparation.'));}
         if(generation.dryRun || !['normal','swipe','regenerate','continue'].includes(type)) {if(active)cancel('Overlapping background generation');return {ok:true,skipped:true};}
         if(ports.isEnabled?.()===false)return {ok:true,skipped:true};
+        const preflight=await ports.beforeRun?.({kind:'send'});if(preflight?.ok===false){abort?.(true);return notify(preflight);}
         const unified=ports.getGraph?.('unified');
         if(Object.getOwnPropertyDescriptor(unified??{},'mode')?.value==='native-unified')return beforeUnified(unified,chat,abort,type);
         return {ok:true,skipped:true};
     }
     async function runTarget(graph,target,{messageIndex,onEvent}={}) {
+        const preflight=await ports.beforeRun?.({kind:'preview',graph,target});if(preflight?.ok===false)return notify(preflight);
+        if(preflight&&ports.getGraph){const latest=ports.getGraph('unified');if(latest)graph=latest;}
         // Admit before replacing run authority or consulting the host. Runtime owns
         // the bounded malformed result, including getter-free version metadata.
         const admitted=cloneWorkflowDocument(graph);
@@ -1072,7 +1276,14 @@ export function createNativeWorkflowController(ports) {
         return notify(value,recovered?run:null,run);
     };
     async function apply(selector) {
-        const entry=candidateEntry(selector);if(!entry?.settlement)return publishCandidate(selector);
+        if(settling)return fail('BUSY','A review settlement is already in progress.');
+        settling=true;
+        try{return await applyInternal(selector);}finally{settling=false;observe(ports.onReviewChanged);}
+    }
+    async function applyInternal(selector) {
+        const entry=candidateEntry(selector);
+        if(entry&&!entry.applied){const files=await verifyNodeFiles(entry.run);if(!files.ok)return applicationResult(files,entry.run);}
+        if(!entry?.settlement)return publishCandidate(selector);
         if(!acceptedSourceFresh(entry))return applicationResult(fail('STALE_SOURCE','The accepted reply or its captured scope changed.'),entry.run);
         if(entry.settlementResult?.status==='settled')return entry.applied;
         const settled=await entry.settlement.accept(entry.finalDraft);if(!settled.ok)return applicationResult(settled,entry.run);
@@ -1083,7 +1294,9 @@ export function createNativeWorkflowController(ports) {
     }
     function settlementStatus(selector) {const entry=candidateEntry(selector);if(!entry?.settlement)return fail('SETTLEMENT_UNAVAILABLE','This review has no retained consequence bundle.');return entry.settlementResult?{ok:true,data:entry.settlementResult}:entry.settlement.inspect();}
     function retryPersistence(selector) {const entry=candidateEntry(selector);return entry?.settlementResult?.status==='partial'?apply(selector):Promise.resolve(fail('PERSISTENCE_RECOVERY_UNAVAILABLE','Only failed targets in a partially settled accepted review may retry persistence.'));}
-    function reject(selector) {const entry=candidateEntry(selector);if(!entry)return fail('STALE_CANDIDATE','This review is no longer retained.');entry.settlement?.reject();releaseRun(entry.run);candidates.delete(entry.handle.handleId);return {ok:true};}
+    function hasRetainedReview(){return applying||settling||automaticApplication!==null||[...candidates.values()].some(entry=>entry.reviewBusy!==false&&(!entry.applied||entry.settlementResult?.status==='partial'));}
+    function hasPendingReview(){if(applying||settling||automaticApplication!==null)return true;let pending=false;for(const entry of candidates.values()){entry.reviewBusy=candidateStatus(entry.handle).ok===true;pending ||= entry.reviewBusy;}return pending;}
+    function reject(selector) {const entry=candidateEntry(selector);if(!entry)return fail('STALE_CANDIDATE','This review is no longer retained.');entry.settlement?.reject();releaseRun(entry.run);candidates.delete(entry.handle.handleId);observe(ports.onReviewChanged);return {ok:true};}
     async function publishCandidate(selector) {
         const entry=candidateEntry(selector),candidate=entry?.candidate;
         if(!entry)return notify(fail('STALE_CANDIDATE','This candidate is no longer available; run the workflow again.'));
@@ -1149,8 +1362,10 @@ export function createNativeWorkflowController(ports) {
     function subscribe() {
         if(unsubscribe)return unsubscribe;
         recall.sync();
+        captureBranchPoint();
         const c=context(),events=c.eventTypes ?? c.event_types ?? {},subscriptions=[];
         const on=(name,fn)=>{if(events[name] && c.eventSource?.on){c.eventSource.on(events[name],fn);subscriptions.push([events[name],fn]);}};
+        on('CHAT_COMPLETION_SETTINGS_READY',applyNativeReasoning);
         on('GENERATION_STARTED',(type,options,dryRun)=>{
             generationInvocationDryRun=!!dryRun;if(dryRun)return;
             generation={overlap:!!active?.unified && !active.nativeResolved,observed:true,id:++generationSequence,startedAt:Date.now(),type:type || 'normal',dryRun:!!dryRun,aborted:!!options?.signal?.aborted,originalTail:{message:context().chat?.at(-1),text:context().chat?.at(-1)?.mes}};
@@ -1158,7 +1373,7 @@ export function createNativeWorkflowController(ports) {
             const owner=generation;
             if(options?.signal)options.signal.addEventListener('abort',()=>{if(generation===owner){generation.aborted=true;if(!active?.policyStopping)cancel('Generation aborted');}},{once:true});
         });
-        nativeStopListener=()=>{if(invokingPolicyStop){if(generation===invokingPolicyStop)generation.aborted=true;return;}generation.aborted=true;if(active?.policyStopping)return;const m=context().chat?.at(-1);if(m && !m.is_user && (!generation.originalTail || m!==generation.originalTail.message || m.mes!==generation.originalTail.text || incompleteStream(context(),context().chat.length-1)))rememberStopped(context());cancel('Generation stopped');};
+        nativeStopListener=()=>{if(invokingPolicyStop){if(generation===invokingPolicyStop)generation.aborted=true;return;}generation.aborted=true;if(active?.policyStopping)return;const m=context().chat?.at(-1);if(m && !m.is_user && (!generation.originalTail || m!==generation.originalTail.message || m.mes!==generation.originalTail.text || incompleteStream(context(),context().chat.length-1)))rememberStopped(context());if(active?.nativeReasoningFailure){clear();return;}cancel('Generation stopped');};
         on('GENERATION_STOPPED',nativeStopListener);
         on('GENERATION_ENDED',()=>{
             if(active?.unified && !active.nativeResolved){active.nativeEnded=true;active.nativeEndedAt??=Date.now();active.abortPrimary=null;clear();scheduleNative(active);return;}
@@ -1188,14 +1403,14 @@ export function createNativeWorkflowController(ports) {
             }
             if(!internalEvents)cancel('MESSAGE_SWIPE_DELETED');
         });
-        for(const name of ['CHAT_CHANGED','CHARACTER_SELECTED','MESSAGE_SENT','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_EDITED','MESSAGE_UPDATED'])on(name,()=>{if(!internalEvents){cancel(name);recall.sync();}});
+        for(const name of ['CHAT_CHANGED','CHARACTER_SELECTED','MESSAGE_SENT','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_EDITED','MESSAGE_UPDATED'])on(name,()=>{if(!internalEvents){cancel(name);if(name==='CHAT_CHANGED'){captureBranchPoint();ports.onChatChanged?.();}recall.sync();}});
         unsubscribe=()=>{cancel('Controller disposed');for(const [event,fn]of subscriptions)(c.eventSource.removeListener ?? c.eventSource.off)?.call(c.eventSource,event,fn);unsubscribe=null;recall.dispose();};
         return unsubscribe;
     }
     /** @type {import('./types').NativeSourceControllerActions} */
     const sourceActions={inspectSources:()=>getSourceRegistry().inspect(),setupSources:controls=>{cancel('Source setup');const state=getSourceRegistry().inspect();return state.ok?getSourceRegistry().synchronize({expectedRevision:state.data.revision,cause:'enroll'},controls):Promise.resolve(state);},reconcileSources:controls=>{cancel('Source reconciliation');const state=getSourceRegistry().inspect();return state.ok?getSourceRegistry().synchronize({expectedRevision:state.data.revision,cause:'explicit-reconcile'},controls):Promise.resolve(state);},verifySources:controls=>{cancel('Source verification');return getSourceRegistry().verifyPending(controls);},resetSourceEpoch:(command,controls)=>{cancel('Source epoch reset');return getSourceRegistry().resetSourceEpoch(command,controls);}};
     const inspectChunkTokenizer=()=>{try{const tokenizer=ports.chunkTokenizer,binding=Object.getOwnPropertyDescriptor(tokenizer??{},'binding')?.value,counter=Object.getOwnPropertyDescriptor(tokenizer??{},'countTokens')?.value,checked=cloneJsonValue(binding);if(typeof counter!=='function'||!checked.ok||Object.keys(checked.data.value??{}).length!==3||!['tokenizerId','version','model'].every(key=>typeof checked.data.value[key]==='string'&&checked.data.value[key].trim()&&checked.data.value[key].length<=256))return fail('TOKEN_COUNT_FAILED','This host has no exact Chunk tokenizer. Use UTF-16 sizing, or select an available exact tokenizer before choosing Tokens.');return {ok:true,data:{binding:checked.data.value}};}catch{return fail('TOKEN_COUNT_FAILED','The exact Chunk tokenizer is unavailable.');}};
-    const controller={...sourceActions,inspectChunkTokenizer,beforeGenerate,runTarget,apply,reject,previewStoryHistoryCheckpoint:documentHistory.preview,applyStoryHistoryCheckpoint:documentHistory.apply,inspectStoryHistory:documentHistory.inspect,syncRecall:recall.sync,statusRecall:recall.status,queueRecall:recall.queue,cancelRecall:recall.cancel,captureRecall:recall.captureQueueCommand,changeRecallQueues:recall.changeQueues,resetRecallDocument:recall.resetDocument,subscribeRecall:recall.subscribe,settlementStatus,retryPersistence,candidateStatus,cancel,activity,subscribeActivity,progress,subscribeProgress,lastResult:()=>result,lastAutomaticResult:()=>automaticResult,subscribe,dispose:()=>{if(unsubscribe)unsubscribe();else recall.dispose();sourceRegistry?.release();activityListeners.clear();progressListeners.clear();}};
+    const controller={...sourceActions,inspectChunkTokenizer,beforeGenerate,runTarget,apply,reject,hasPendingReview,hasRetainedReview,previewStoryHistoryCheckpoint:documentHistory.preview,applyStoryHistoryCheckpoint:documentHistory.apply,inspectStoryHistory:documentHistory.inspect,syncRecall:recall.sync,statusRecall:recall.status,queueRecall:recall.queue,cancelRecall:recall.cancel,captureRecall:recall.captureQueueCommand,changeRecallQueues:recall.changeQueues,resetRecallDocument:recall.resetDocument,subscribeRecall:recall.subscribe,settlementStatus,retryPersistence,candidateStatus,cancel,activity,subscribeActivity,progress,subscribeProgress,lastResult:()=>result,lastAutomaticResult:()=>automaticResult,subscribe,dispose:()=>{if(unsubscribe)unsubscribe();else recall.dispose();sourceRegistry?.release();activityListeners.clear();progressListeners.clear();}};
     retentionInspectors.set(controller,()=>{
         const runs=new Set([active,...[...sources.values(),...candidates.values()].map(entry=>entry.run)].filter(Boolean));
         const recordings=new Set([result?.recording,automaticResult?.result.recording,...[...runs].map(run=>run.publicResult?.recording),...[...candidates.values()].map(entry=>entry.applied?.recording)].filter(Boolean));

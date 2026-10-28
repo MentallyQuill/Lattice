@@ -67,6 +67,14 @@
         const terminal = { kind: 'terminal' as const, address: { ...value.terminal.address, instancePath: [...value.terminal.address.instancePath] } };
         return { handleId: value.handleId, runId: value.runId, terminal };
     }
+    const fileLabel=(receipt:{targetId:string},index:number)=>{
+        const labels=receipt as {name?:string;targetLabel?:string};
+        return labels.targetLabel?.trim()||labels.name?.trim()||'File '+(index+1);
+    };
+    function stagedFileResult(text:string){
+        if(!selected||'kind' in selected.target||selected.target.portId!=='receipt')return false;
+        try{const value=JSON.parse(text);return value?.status==='staged'&&typeof value.targetId==='string'&&typeof value.intentId==='string';}catch{return false;}
+    }
 </script>
 
 <section class="pc-output-preview" aria-label="Output preview" onkeydowncapture={event => { if (!(event.target as Element).closest('[role="tab"]')) event.stopPropagation(); }} onpastecapture={event => event.stopPropagation()}>
@@ -105,6 +113,9 @@
                 <article data-artifact-kind={section.kind}>
                     <div class="pc-preview-section-heading"><span>{section.label}</span><small>{section.kind}</small></div>
                     {#if section.format === 'omitted'}<DiagnosticMessage issue={section.text} />
+                    {:else if section.readable.kind==='json'&&stagedFileResult(section.readable.text)}
+                        <p data-staged-file-result>Ready to save. Apply the reviewed result to save this file change.</p>
+                        <details><summary>Details</summary><ReadableContent content={section.readable} onCopyText={copy} onCopyMessage={copyMessage} /></details>
                     {:else if section.collapsed}
                         {#key sectionScope + ':' + section.id}
                             <details data-preview-context><summary>{section.label}</summary><ReadableContent content={section.readable} onCopyText={copy} onCopyMessage={copyMessage} /></details>
@@ -119,9 +130,10 @@
         {#if view.settlement}
             <section aria-label="Accepted consequences" class="pc-preview-settlement">
                 <strong>Accepted consequences · {view.settlement.status === 'settled' ? 'Saved' : view.settlement.status === 'partial' ? 'Some targets failed' : 'Save confirmation needed'}</strong>
-                {#each view.settlement.receipts as receipt (receipt.intentId + ':' + receipt.targetId)}
-                    <p class="pc-preview-note">{receipt.targetId} · {receipt.status === 'confirmed' || receipt.status === 'persisted' ? 'Saved' : receipt.status === 'failed' ? 'Save failed' : receipt.status === 'unknown' ? 'Save outcome unknown' : receipt.status === 'save-unverified' || receipt.status === 'unverified' ? 'Save not verified' : receipt.status === 'unchanged' ? 'Already current' : receipt.status}</p>
-                    {#if receipt.error}<DiagnosticMessage issue={receipt.error} context={{ operation: 'save', nodeTitle: receipt.targetId }} />{/if}
+                {#each view.settlement.receipts as receipt,index (receipt.intentId + ':' + receipt.targetId)}
+                    <p class="pc-preview-note" data-file-save-result>{fileLabel(receipt,index)} · {receipt.status === 'confirmed' || receipt.status === 'persisted' ? 'Saved' : receipt.status === 'failed' ? 'Save failed' : receipt.status === 'unknown' ? 'Save outcome unknown' : receipt.status === 'save-unverified' || receipt.status === 'unverified' ? 'Save not verified' : receipt.status === 'unchanged' ? 'Already current' : receipt.status}</p>
+                    {#if receipt.error}<DiagnosticMessage issue={receipt.error} context={{ operation: 'save', nodeTitle: fileLabel(receipt,index) }} />{/if}
+                    <details class="pc-preview-note"><summary>Details</summary><p>Target: {receipt.targetId}</p><p>Receipt: {receipt.intentId}</p></details>
                 {/each}
             </section>
         {/if}

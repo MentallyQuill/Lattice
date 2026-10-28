@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {executeFileNode} from '../src/workflow/operations/file-nodes.js';
+import {createFileStore} from '../src/workflow/file-store.js';
+import {operationDefaults} from '../src/workflow/catalog.js';
+import {resolveManagedFileNode} from '../src/workflow/managed-file-policy.js';
+const authored={id:'writer',type:'workflow',...operationDefaults('write-file',{managedFiles:true}),schema:JSON.stringify({type:'object',properties:{scene:{type:'string'}},required:['scene']})};
+const definition=resolveManagedFileNode(authored,{workflowId:'trusted',address:{nodeId:'writer',instancePath:[]},inputKind:'data'});assert.equal(definition.ok,true);assert.equal(definition.data.definition.format,'json');assert.match(definition.data.definition.name,/\.json$/);
+let staged;
+const files=createFileStore({scope:{userId:'u',chatId:'c'},authorizedTargets:[definition.data.definition.targetId],load:async()=>({ok:true,data:{targetId:definition.data.definition.targetId,revision:0,format:'json',content:'{"scene":"before"}',receipts:[]}}),compareAndSwap:async()=>{throw Error('Preview must not write');},isCurrent:()=>true,validateEvidence:async()=>({ok:true})});
+const result=await executeFileNode({...definition.data.node,fileHandling:'replace'},{records:{kind:'data',value:{scene:'after'}}},{phase:'post',root:true,files,createIntentId:()=>({ok:true,data:'replace-object'}),fileVisibility:()=>({ok:true,data:{kind:'public'}}),authorizeFileWrite:()=>({ok:true,data:{destinationVisibility:{kind:'public'}}}),stageFileIntent:value=>{staged=value;return {ok:true};}});
+assert.equal(result.ok,true,JSON.stringify(result));assert.deepEqual(JSON.parse(staged.plan.projectedDocument.content),{scene:'after'});
+console.log('automatic structured file: declared JSON object Replace preserves object shape without writes');

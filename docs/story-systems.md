@@ -17,8 +17,8 @@ Imagine a broken wand that usually casts its intended spell but sometimes produc
 
 The chaos entries add up to 10 out of 100. Weights are relative: changing the total changes the probabilities. Every entry is `kind: "fixed"`; selecting one requires no Effect Author request. This varies [lesson 27](../examples/remastered/27-the-broken-wand-stable-randomness-with-a-wild-branch.lattice.json), whose supplied library uses fixed blue sparks at weight 80 and a model-authored wild branch at weight 20.
 
-1. Open lesson 27 as an independent copy and read its setup. Replace demonstration actor and item IDs with your story’s identities.
-2. Authorize its holder, library, and outcome JSON targets in **Workflow → Configure → Workflow Data…**. For `wand-effects`, use the JSON below as initial content in a fresh target, or deliberately update an existing authorized library. Changing an initial template does not overwrite saved content. Set the **Effect Library** node’s **Revision** to `fixed-chaos-r1` as well, so its identity matches the JSON.
+1. Open lesson 27 as an independent practice copy and read its setup. Choose the intended characters by name and adapt its item to your story.
+2. The sample holder map, library and outcomes file prepare automatically. To try the library below, save it as a JSON file and use the library reader’s **File → Import from device**, which creates a separate input copy. Existing saved data stays intact. Set the **Effect Library** node’s **Revision** to `fixed-chaos-r1` as well, so its identity matches the JSON.
 3. Bind action extraction and confirmation models. Keep the event confirmation and accepted-holder checks: a hypothetical use should not count as an actual cast.
 4. Random Pick selects from the live library for that eligible event. This fixed-only library leaves the wild-effect branch unused. Configure that branch’s model bindings if validation requires them, or deliberately remove the unused branch.
 5. Inspect the effect, narration, and proposed outcome. Apply the final reviewed reply to accept it. Reject leaves it unaccepted. While the pending draw is retained, rerunning the same event reuses it.
@@ -45,7 +45,7 @@ The first selection uses randomness. Lattice reuses a matching pending draw or s
 
 This lesson moves each value one point toward baseline per authored interval of accepted story time: one week for trust and tension, four weeks for desire, and eight hours for temporary excitement. These are editable example rules. Rowan → Iris and Iris → Rowan are separate directions. Private state guides the selected NPC’s portrayal without selecting the player’s response.
 
-Configure real actor IDs, authorize the actor-private document, and supply a genuine accepted story clock. Message count and real-world waiting do not advance it. Apply accepts the proposed state and pacing records; Reject preserves the prior state.
+Choose the intended characters by name. The independent lesson copy prepares its private sample relationship file and clock automatically, without inventing participation or native memory. For a real story, choose your authorized files in the relevant nodes. Message count and real-world waiting do not advance time. Apply accepts the proposed state and pacing records; Reject preserves the prior state.
 
 ## One scene, two private perspectives
 
@@ -69,7 +69,7 @@ The [combined example](combined-system-example.md) connects a wand, an eight-hou
 
 [Lesson 16](../examples/remastered/16-consult-the-current-campaign-notebook.lattice.json) reads an authorized notebook into the story process. [Lesson 17](../examples/remastered/17-record-only-the-scene-you-accept.lattice.json) proposes a scene record and saves it with the accepted reply. Discarded drafts stay out of campaign history.
 
-Use it for established clues, summaries, or commitments, with an authored structure and identity rules. Read File and Write to File use scoped Workflow Data targets stored with the chat. Saves and reply publication have separate receipts; check failed or unconfirmed saves in Preview.
+Use it for established clues, summaries, or commitments, with an authored structure and identity rules. The sample notebook and journal prepare automatically. For your own material, use the node **File** section to choose a file or import a separate copy. Keep the read Reference connected to its writer and choose **Replace / Append** for file handling. Saves and reply publication have separate receipts; check failed or unconfirmed saves in Preview.
 
 ## A narrator with an editorial team
 

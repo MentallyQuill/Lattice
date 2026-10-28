@@ -24,6 +24,8 @@ export interface RandomPorts {
     random?: () => number; signal?: AbortSignal; rerollId?: string; rerollPolicy?: 'explicit';
 }
 export interface RandomExecution extends Omit<RandomPorts, 'rerollId' | 'rerollPolicy'> {
+    /** Trusted runtime address used to resolve a managed accepted-outcome ledger. */
+    address?:import('../types').NodeAddress;
     phase?: WorkflowPhase;
     root?:boolean;
     selectNativeRandomOutcomes?: import('../native-story-state').NativeStoryState['selectNativeRandomOutcomes'];

@@ -53,6 +53,9 @@ export interface NativeNode extends Binding {
     modifiers?: import('./modifiers').NodeModifier[];
     enabled?: boolean;
     modelRole?: string | null;
+    /** Per-request reasoning; omitted legacy controls select None. */
+    reasoningEffort?: import('./reasoning').ReasoningEffort;
+    reasoningCustom?: string;
     artifactKind?: ArtifactKind;
     /** Explicit Text Transpose runs in either phase; omitted preserves legacy post Draft mode. */
     inputKind?: 'text' | 'draft';

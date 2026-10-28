@@ -24,7 +24,7 @@ node tools/build-documentation-banner.mjs
 | Change settings | [Compose](images/compose-details.png), [Select Fields](images/select-fields-details.png), [JSON Decode](images/json-decode-details.png), [Text Rules](images/text-rules-details.png), [text modifiers](images/text-modifiers.png), [Smart Compactor](images/compactor-details.png), [model settings](images/model-details.png), [connection picker](images/profile-picker.png) |
 | Keep the graph readable | [Comment frame](images/workflow-comments.png), [portals](images/portals.png), [themes and type cues](images/themes.png) |
 | Save and share | [File menu](images/file-menu.png), [save choice](images/save-changes.png) |
-| Set up story data | [Workflow Data](images/workflow-data.png), [clock settings](images/clock-settings.png), [recall overview](images/recall-controls.png) |
+| Set up story data | [File storage guide](file-storage.md), [clock settings](images/clock-settings.png), [recall overview](images/recall-controls.png). The retained [workflow-data.png](images/workflow-data.png) is a historical manager capture; that interface has been removed. |
 | Inspect placement readiness | [Setup Required](images/node-setup-required.png), [setup reasons in Details](images/node-setup-details.png), [Input Required](images/node-input-required.png) |
 | Diagnose a problem | [Valid starter](images/workflow-validation.png), [missing reply connection](images/validation-issue.png) |
 

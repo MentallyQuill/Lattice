@@ -10,9 +10,9 @@ declare const intentAuthority:unique symbol;
 export interface FileReference { readonly [referenceAuthority]:true; readonly kind:'file-reference'; readonly backend:'host-store'; readonly scope:StorageScope; readonly targetId:string; readonly revision:DocumentRevision; }
 export interface FileIntentHandle { readonly [intentAuthority]:true; readonly intentId:string; }
 export interface StoredFileReceipt { intentId:string; fingerprint:string; revision:DocumentRevision; }
-export interface StoredDocument extends DocumentSnapshot { receipts:StoredFileReceipt[]; history?:DocumentHistoryHeader; sourceBinding?:unknown; copiedScope?:true; }
+export interface StoredDocument extends DocumentSnapshot { receipts:StoredFileReceipt[]; history?:DocumentHistoryHeader; branchBinding?:ChatSourceBinding; sourceBinding?:unknown; copiedScope?:true; }
 export interface FileSettlementReceipt { intentId:string; targetId:string; status:'ready'|'confirmed'|'save-unverified'|'unknown'|'unchanged'; applied:boolean|null; acknowledged:boolean; revision?:DocumentRevision; }
-export interface FileCasUpdate { targetId:string; expectedRevision:DocumentRevision; expectedContent:string; projectedDocument:ProjectedDocument; intentId:string; fingerprint:string; sourceBinding?:ChatSourceBinding; expectedBindingFingerprint?:string; }
+export interface FileCasUpdate { targetId:string; expectedRevision:DocumentRevision; expectedContent:string; projectedDocument:ProjectedDocument; intentId:string; fingerprint:string; historyHandling?:'replace'|'append'; sourceBinding?:ChatSourceBinding; expectedBindingFingerprint?:string; }
 export interface FileReadOptions {bindToChat?:boolean;}
 export interface FileBackendPorts {
     load:(targetId:string,options?:FileReadOptions)=>Promise<Result<StoredDocument>>;
@@ -29,7 +29,7 @@ export interface FileStoreConfiguration extends FileBackendPorts {
 export interface PreparedFileIntent { handle:FileIntentHandle; plan:PreparedDocumentMutation; status:'staged'; }
 export interface FileStore {
     read(targetId:string,options?:FileReadOptions):Promise<Result<{snapshot:DocumentSnapshot;fileRef:FileReference;readView?:DocumentSnapshot}>>;
-    prepare(fileRef:FileReference|unknown,settings:DocumentMutationSettings,options:{intentId:string;evidence:JsonValue[]}):Promise<Result<PreparedFileIntent>>;
+    prepare(fileRef:FileReference|unknown,settings:DocumentMutationSettings,options:{intentId:string;evidence:JsonValue[];historyHandling?:'replace'|'append'}):Promise<Result<PreparedFileIntent>>;
     preflight(handle:FileIntentHandle|unknown):Promise<Result<FileSettlementReceipt>>;
     commit(handle:FileIntentHandle|unknown,controls?:{root?:boolean;accepted?:boolean;preview?:boolean;dryRun?:boolean}):Promise<Result<FileSettlementReceipt>>;
     release():void;

@@ -1,5 +1,5 @@
-import {inspectSingletonMetadata} from '../workflow/example-metadata.js?v=0.28.1';
-import { workflowDocumentSnapshot } from '../workflow/document-file.js?v=0.28.1';
+import {inspectSingletonMetadata} from '../workflow/example-metadata.js?v=0.29.0';
+import { workflowDocumentSnapshot } from '../workflow/document-file.js?v=0.29.0';
 
 /** One active document, exact activation identity and successful save checkpoint. */
 export function createWorkflowDocumentSession() {
@@ -28,6 +28,7 @@ export function createWorkflowDocumentSession() {
         workspaceViews(next) { if (arguments.length) { workspaceViews = next; notify('views'); } return workspaceViews; },
         capture: () => token,
         draftNamespace,
+        workflowIdentity: () => source?.kind === 'library' ? source.id : draftNamespace(),
         stillCurrent: captured => !!captured && captured === token,
         snapshot,
         dirty: () => !!graph && (checkpoint === null || snapshot() !== checkpoint),

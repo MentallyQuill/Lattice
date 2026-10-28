@@ -61,7 +61,7 @@ const controls = catalog.OPERATIONS['smart-compactor'].controlDescriptors;
 assert.equal(controls.targetTokens.type, 'integer');
 assert.equal(controls.targetTokens.min, 1);
 assert.deepEqual(controls.method.values, ['select', 'compress']);
-assert.deepEqual(catalog.OPERATIONS['smart-compactor'].controls, ['targetTokens', 'purpose', 'method', 'keepRecent', 'pins', 'maxTokens']);
+assert.deepEqual(catalog.OPERATIONS['smart-compactor'].controls, ['targetTokens', 'purpose', 'method', 'keepRecent', 'pins', 'maxTokens', 'reasoningEffort', 'reasoningCustom']);
 const ports = await import('../src/workflow/ports.js').catch(() => ({}));
 assert.equal(typeof ports.prepareConnection, 'function');
 const connect = (graph, from, to, replace = false) => ports.prepareConnection(graph, { from: { nodeId: from, portId: 'out' }, to: { nodeId: to, portId: 'in' }, replace });

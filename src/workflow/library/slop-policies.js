@@ -1,4 +1,4 @@
-import { cloneJsonValue } from '../operations/json-data.js?v=0.28.1';
+import { cloneJsonValue } from '../operations/json-data.js?v=0.29.0';
 
 const modes = new Set(['inspect', 'contextual', 'strict']);
 const scopes = new Set(['authorized', 'narration', 'dialogue', 'whole']);

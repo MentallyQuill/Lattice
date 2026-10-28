@@ -34,6 +34,8 @@ export function describeFileNode(node: NativeNode | Record<string, unknown>, opt
  * Format emits records/text/report. Read emits text/document/value/reference; value is skipped for plain text/Markdown, and reference.value preserves
  * the exact opaque FileReference identity. Copied/imported reference DTOs cannot authorize Write.
  * Write consumes reference + records or text + optional evidence and emits projection/receipt,
+ * explicit fileHandling replaces legacy mode with Replace or format-aware Append. JSON input
+ * text is parsed into records and the complete projected JSON schema is checked before staging.
  * retaining handles only through stageFileIntent. No execution path commits or writes a backend.
  * Mapped defaults are scanned for restrictions before records, serialized Text and reports are emitted.
  * Capability failures expose known bounded codes and locally authored messages only; raw diagnostics are private.

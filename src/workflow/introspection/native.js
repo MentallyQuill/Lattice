@@ -1,6 +1,6 @@
 /** Native envelope adaptation; the portable engines receive only their declared settings. */
-import { INTROSPECTION_OPERATIONS, describeIntrospection } from './nodes.js?v=0.28.1';
-import { ownData } from './contracts.js?v=0.28.1';
+import { INTROSPECTION_OPERATIONS, describeIntrospection } from './nodes.js?v=0.29.0';
+import { ownData } from './contracts.js?v=0.29.0';
 
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 const finiteBounds = { min: -Number.MAX_VALUE, max: Number.MAX_VALUE, step: 'any' };

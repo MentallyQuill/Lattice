@@ -15,29 +15,31 @@ async function launch(page){
   c.chatMetadata.latticeDocuments={'default-user':{notes:{targetId:'notes',revision:2,format:'text',content:'Accepted campaign notes.',receipts:[{intentId:'old',fingerprint:'sha256:'+'a'.repeat(64),revision:2}],scope:{userId:'default-user',chatId:'Story-2'}}}};
   document.dispatchEvent(new CustomEvent('pc-state'));await h.settle();
  });
- await page.getByRole('menuitem',{name:'Workflow',exact:true}).click();await page.getByRole('menuitem',{name:'Configure',exact:true}).hover();await page.getByRole('menuitem',{name:'Workflow Data…',exact:true}).click();
- const dialog=page.getByRole('dialog',{name:'Workflow Data',exact:true});await dialog.getByLabel('Workflow data document',{exact:true}).selectOption('notes');return dialog;
 }
 
-test('history preview and cancel leave data untouched; Apply saves once and lists archive metadata',async({page})=>{
- const dialog=await launch(page),before=await page.evaluate(()=>JSON.stringify(window.canvasHarness.context.chatMetadata));
- await dialog.getByRole('button',{name:'Preview history checkpoint',exact:true}).click();await expect(dialog.getByRole('region',{name:'History checkpoint preview'})).toContainText('Save receipts: 1');
- await page.screenshot({path:'test-results/history-checkpoint-preview.png'});
- expect(await page.evaluate(()=>JSON.stringify(window.canvasHarness.context.chatMetadata))).toBe(before);
- await dialog.getByRole('button',{name:'Cancel checkpoint',exact:true}).click();await expect(dialog.getByRole('region',{name:'History checkpoint preview'})).toHaveCount(0);
- await dialog.getByRole('button',{name:'Preview history checkpoint',exact:true}).click();await dialog.getByRole('button',{name:'Cancel checkpoint',exact:true}).focus();await page.keyboard.press('Tab');await expect(dialog.getByRole('button',{name:'Apply checkpoint',exact:true})).toBeFocused();await page.keyboard.press('Enter');await expect(dialog.getByRole('status')).toContainText('History checkpoint saved');
- expect(await page.evaluate(()=>window.canvasHarness.context.historySaves)).toBe(1);
- expect(await page.evaluate(()=>window.canvasHarness.context.chatMetadata.latticeDocuments['default-user'].notes.content)).toBe('Accepted campaign notes.');
- await dialog.getByRole('button',{name:'Inspect saved history',exact:true}).click();await expect(dialog.getByRole('region',{name:'Saved history'})).toContainText('receipts · 1 record');
- await page.screenshot({path:'test-results/history-checkpoint-desktop.png'});
- await page.setViewportSize({width:600,height:850});await expect(dialog).toBeVisible();
- expect(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);await page.screenshot({path:'test-results/history-checkpoint-narrow.png'});
+test('retired global file configuration is absent while saved chat documents remain untouched',async({page})=>{
+ await launch(page);const before=await page.evaluate(()=>({metadata:JSON.stringify(window.canvasHarness.context.chatMetadata),saves:window.canvasHarness.context.historySaves}));
+ await page.getByRole('menuitem',{name:'Workflow',exact:true}).click();
+ await expect(page.getByRole('menuitem',{name:'Configure',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('menuitem',{name:'Legacy chat data…',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('dialog',{name:'Legacy chat data',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Preview history checkpoint',exact:true})).toHaveCount(0);
+ expect(await page.evaluate(()=>({metadata:JSON.stringify(window.canvasHarness.context.chatMetadata),saves:window.canvasHarness.context.historySaves}))).toEqual(before);
 });
 
-test('unverified checkpoint feedback holds further previews and read-only inspection verifies without resaving',async({page})=>{
- const dialog=await launch(page);await page.route('**/api/chats/get',route=>route.fulfill({contentType:'application/json',body:'[{"chat_metadata":{}}]'}));
- await dialog.getByRole('button',{name:'Preview history checkpoint',exact:true}).click();await dialog.getByRole('button',{name:'Apply checkpoint',exact:true}).click();await expect(dialog.getByRole('status')).toContainText('durable save is unverified');
- await dialog.getByRole('button',{name:'Preview history checkpoint',exact:true}).click();await expect(dialog).toContainText('PERSISTENCE_UNKNOWN');
- await page.unroute('**/api/chats/get');await page.route('**/api/chats/get',async route=>route.fulfill({contentType:'application/json',body:JSON.stringify([{chat_metadata:await page.evaluate(()=>window.canvasHarness.context.chatMetadata)}])}));
- await dialog.getByRole('button',{name:'Inspect saved history',exact:true}).click();await expect(dialog.getByRole('region',{name:'Saved history'})).toBeVisible();expect(await page.evaluate(()=>window.canvasHarness.context.historySaves)).toBe(1);
+test('current workflow tools preserve retained private documents and their archive metadata',async({page})=>{
+ await launch(page);await page.evaluate(()=>{
+  const c=window.canvasHarness.context;
+  c.chatMetadata.latticeDocuments['default-user'].notes.visibility={kind:'actor-private',actorId:'mara'};
+  c.chatMetadata.latticeDocumentHistory={'default-user':{retainedArchive:{kind:'legacy-archive',targetId:'notes',privateActorIds:['mara'],receipts:[{intentId:'retired-intent',revision:1}]}}};
+ });
+ const before=await page.evaluate(()=>JSON.stringify(window.canvasHarness.context.chatMetadata));
+ await page.getByRole('menuitem',{name:'Workflow',exact:true}).click();
+ await page.getByRole('menuitem',{name:'Memory recall',exact:true}).hover();
+ await page.getByRole('menuitem',{name:'Memory recall overview…',exact:true}).click();
+ await expect(page.getByRole('dialog',{name:'Memory recall',exact:true})).toBeVisible();
+ await expect(page.getByRole('dialog',{name:'Legacy chat data',exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'Close',exact:true}).click();
+ expect(await page.evaluate(()=>JSON.stringify(window.canvasHarness.context.chatMetadata))).toBe(before);
+ expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
 });

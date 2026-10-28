@@ -1,7 +1,7 @@
-import { validateStoryClock } from './story-time.js?v=0.28.1';
-import { cloneJsonValue } from './operations/json-data.js?v=0.28.1';
-import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.28.1';
-import { freeze } from './record-data.js?v=0.28.1';
+import { validateStoryClock } from './story-time.js?v=0.29.0';
+import { cloneJsonValue } from './operations/json-data.js?v=0.29.0';
+import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.29.0';
+import { freeze } from './record-data.js?v=0.29.0';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const own = (value, key) => {
@@ -49,7 +49,9 @@ export function workflowDataKind(definition) {
 export function ensureWorkflowDataDefaults({ catalog, graph, defaults = [], scope, context, isCurrent }) {
     try {
         const required = new Map(defaults.map(preset => [preset.targetId, preset]));
-        for (const node of Object.values(own(graph, 'nodes') ?? {})) {
+        for (const entry of Object.values(own(graph, 'nodes') ?? {})) {
+            const node=own(entry,'node')??entry;
+            if(own(node,'fileTarget')?.managed===true)continue;
             const operation = own(node, 'operation'), preset = workflowDataPresetFor(operation);
             if (!preset) continue;
             const configured = own(node, preset.controlKey);

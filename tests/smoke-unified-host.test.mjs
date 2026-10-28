@@ -28,5 +28,6 @@ test('served production modules are limited to the verified dependency closure',
     assert.ok(modules.size > 1 && modules.size < 200);
     assert.match(modules.get('http://127.0.0.1:8000/__lattice-unified-host-test/src/workflow/host.js?v=0.27.0'), /export function createNativeWorkflowController/);
     assert.match(modules.get('http://127.0.0.1:8000/__lattice-unified-host-test/src/random-id.js'), /export function randomUuid/);
+    assert.match(modules.get('http://127.0.0.1:8000/__lattice-unified-host-test/src/ui/server-file-access.js'), /export function createServerFileAccess/);
     for (const path of ['src/random-id-other.js', 'src/random-id.js?secret=value', 'src/state.js', 'tools/smoke-unified-host.mjs', 'src/workflow/not-real.js', 'src/workflow/host.js?secret=value', 'src/workflow/host.js#fragment', '../script.js', 'src/workflow/%68ost.js']) assert.throws(() => modules.get('http://127.0.0.1:8000/__lattice-unified-host-test/' + path));
 });

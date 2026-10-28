@@ -1,20 +1,20 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { prepareWorkspaceViews, projectWorkspacePanels, projectEditorDraw } from '../src/ui/workspace-preparation.js?v=0.28.1';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.28.1';
-import { createWorkflowSession, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.28.1';
+import { prepareWorkspaceViews, projectWorkspacePanels, projectEditorDraw } from '../src/ui/workspace-preparation.js?v=0.29.0';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.0';
+import { createWorkflowSession, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.29.0';
 import { siblingWorkflow, twoOutputWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
-import { diagnosticText } from '../src/ui/diagnostics.js?v=0.28.1';
-import { isCommentFrame } from '../src/canvas/comment-frames.js?v=0.28.1';
+import { diagnosticText } from '../src/ui/diagnostics.js?v=0.29.0';
+import { isCommentFrame } from '../src/canvas/comment-frames.js?v=0.29.0';
 
-import {workflowRunTargets,setWorkflowRunTargets} from '../src/workflow/run-targets.js?v=0.28.1';
-import {captureGraphEditContext,commitPreparedGraph} from '../src/workflow/transactions.js?v=0.28.1';
-import {prepareGraphCandidate} from '../src/workflow/prepared-graph-edit.js?v=0.28.1';
-import {exportWorkflow,parseWorkflow} from '../src/workflow/packages.js?v=0.28.1';
-import {operationFor} from '../src/workflow/catalog.js?v=0.28.1';
-import {runWorkflow,workflowSignature} from '../src/workflow/runtime.js?v=0.28.1';
-import * as H from '../src/history.js?v=0.28.1';
+import {workflowRunTargets,setWorkflowRunTargets} from '../src/workflow/run-targets.js?v=0.29.0';
+import {captureGraphEditContext,commitPreparedGraph} from '../src/workflow/transactions.js?v=0.29.0';
+import {prepareGraphCandidate} from '../src/workflow/prepared-graph-edit.js?v=0.29.0';
+import {exportWorkflow,parseWorkflow} from '../src/workflow/packages.js?v=0.29.0';
+import {operationFor} from '../src/workflow/catalog.js?v=0.29.0';
+import {runWorkflow,workflowSignature} from '../src/workflow/runtime.js?v=0.29.0';
+import * as H from '../src/history.js?v=0.29.0';
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function actual(name, env) {
     const functionStart = source.indexOf('function ' + name + '(');
@@ -22,7 +22,8 @@ function actual(name, env) {
     assert.ok(start >= 0, 'Actual controller function ' + name);
     const line = source.slice(start, source.indexOf('\n', start));
     const end = functionStart < 0 || line.includes('} ') || line.endsWith('}') ? start + line.length : source.indexOf('\n}', start) + 2;
-    return Function('env', 'with(env){' + source.slice(start, end) + ';return ' + name + ';}')(env);
+    const prefix = functionStart >= 0 && source.slice(start - 6, start) === 'async ' ? 'async ' : '';
+    return Function('env', 'with(env){' + prefix + source.slice(start, end) + ';return ' + name + ';}')(env);
 }
 function fixture(graph = siblingWorkflow(), path = ['second']) {
     let bindingReads = 0;
@@ -34,9 +35,10 @@ function fixture(graph = siblingWorkflow(), path = ['second']) {
         workspaceRevision: 0, workflowState: { busy: false }, pinnedPreview: null, targetedPreview: null, selectedPreview: null, selectedKind: null, selected: null,
         editorCaptures: new WeakMap(), isOpen: () => true, activeEditRoot: () => graph, projectPreparedWorkflow, diagnosticText, isCommentFrame,
         workflowRuntime: { getNativeWorkflowController: () => ({ activity: () => null }) },
+        applicationFiles: () => null, toast() {},
         updateWorkflowProjection() {}, workbench: { revealPreview() {} }, applyPreviewReview() {}, rejectPreviewReview() {},
     };
-    for (const name of ['previewAddress', 'effectivePreview', 'nodePreviewChoices', 'togglePreviewTarget', 'captureEditor', 'editorCurrent', 'runPreviewHere']) env[name] = actual(name, env);
+    for (const name of ['previewAddress', 'effectivePreview', 'nodePreviewChoices', 'togglePreviewTarget', 'captureEditor', 'editorCurrent', 'runCurrentWorkflow', 'runPreviewHere']) env[name] = actual(name, env);
     const start = source.indexOf('const outputPreviewActions = {'), end = source.indexOf('\n};', start) + 3;
     env.outputPreviewActions = Function('env', 'with(env){' + source.slice(start, end) + ';return outputPreviewActions;}')(env);
     env.canvasPreviewMenuItems = actual('canvasPreviewMenuItems', env);
@@ -64,78 +66,82 @@ test('a wrapper with several outputs pins the explicitly chosen port', () => {
     assert.deepEqual(f.env.pinnedPreview, { workflowId: 'two-output-root', instancePath: [], nodeId: 'wrapper', portId: 'second' });
 });
 
-test('Run to here is a direct action for the primary output of a multi-output node', () => {
+test('Run to here is a direct action for the primary output of a multi-output node', async () => {
     const f = fixture(twoOutputWorkflow(), []);
-    let launched = null;
+    let launched = null, preflights = 0;
+    f.env.applicationFiles = () => ({controller:{async beforeRun(){preflights++;return {ok:true};}}});
     f.env.workflowSession = { run({ target }) { launched = target; } };
     const run = f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.wrapper, f.token).find(item => item.id === 'run-to-here');
     assert.equal(run.children, undefined);
     assert.equal(run.shortcut, 'R');
-    run.action();
+    const running = run.action();
+    assert.equal(launched, null, 'the real run wrapper awaits application preflight before dispatch');
+    await running;
+    assert.equal(preflights, 1);
     assert.deepEqual(launched, { workflowId: 'two-output-root', instancePath: [], nodeId: 'wrapper', portId: 'first' });
 });
 
-test('direct Run to here respects the node output chosen in Preview without running another node', () => {
+test('direct Run to here respects the node output chosen in Preview without running another node', async () => {
     const f = fixture(twoOutputWorkflow(), []);
     let launched = null;
     f.env.workflowSession = { run({ target }) { launched = target; } };
     const wanted = { workflowId: 'two-output-root', instancePath: [], nodeId: 'wrapper', portId: 'second' };
     f.env.selectedPreview = wanted;
     f.env.pinnedPreview = { workflowId: 'two-output-root', instancePath: ['wrapper'], nodeId: 'alpha', portId: 'out' };
-    f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.wrapper, f.token).find(item => item.id === 'run-to-here').action();
+    await f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.wrapper, f.token).find(item => item.id === 'run-to-here').action();
     assert.deepEqual(launched, wanted);
     f.env.selectedPreview = f.env.pinnedPreview;
     f.env.pinnedPreview = wanted;
-    f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.wrapper, f.token).find(item => item.id === 'run-to-here').action();
+    await f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.wrapper, f.token).find(item => item.id === 'run-to-here').action();
     assert.deepEqual(launched, wanted);
     f.env.selectedPreview = { workflowId: 'two-output-root', instancePath: ['wrapper'], nodeId: 'alpha', portId: 'out' };
     f.env.pinnedPreview = { ...wanted, instancePath: ['other-instance'] };
-    f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.wrapper, f.token).find(item => item.id === 'run-to-here').action();
+    await f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.wrapper, f.token).find(item => item.id === 'run-to-here').action();
     assert.deepEqual(launched, { ...wanted, portId: 'first' });
 });
 
-test('direct Run to here cannot dispatch after changing graph views or during native host activity', () => {
+test('direct Run to here cannot dispatch after changing graph views or during native host activity', async () => {
     const f = fixture();
     let launched = null;
     f.env.workflowSession = { run({ target }) { launched = target; } };
     const run = f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.work, f.token).find(item => item.id === 'run-to-here');
     f.env.workflowRuntime.getNativeWorkflowController = () => ({ activity: () => ({ busy: true }) });
-    run.action();
+    await run.action();
     assert.equal(launched, null);
     f.env.workflowRuntime.getNativeWorkflowController = () => ({ activity: () => null });
     f.session.focusView(f.session.project().graphViews.tabs[0].key);
-    run.action();
+    await run.action();
     assert.equal(launched, null);
 });
 
-test('Run to here rechecks busy state before dispatching the captured qualified target', () => {
+test('Run to here rechecks busy state before dispatching the captured qualified target', async () => {
     const f = fixture();
     let launched = null;
     f.env.workflowSession = { run({ target }) { launched = target; } };
     const run = f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.work, f.token).find(item => item.id === 'run-to-here');
     assert.ok(run); assert.equal(run.disabled, false);
-    f.env.workflowState.busy = true; run.action();
+    f.env.workflowState.busy = true; await run.action();
     assert.equal(launched, null);
-    f.env.workflowState.busy = false; run.action();
+    f.env.workflowState.busy = false; await run.action();
     assert.deepEqual(launched, { workflowId: 'prepared-root', instancePath: ['second'], nodeId: 'work', portId: 'out' });
 });
 
 
-test('Run to here admits an incomplete selected closure so the session can diagnose it', () => {
+test('Run to here admits an incomplete selected closure so the session can diagnose it', async () => {
     const graph = siblingWorkflow(); delete graph.wires.c;
     const f = fixture(graph); let launched = null;
     f.env.workflowSession = { run({target}) { launched = target; } };
     const run = f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.work, f.token).find(item => item.id === 'run-to-here');
-    assert.equal(run.disabled, false); run.action();
+    assert.equal(run.disabled, false); await run.action();
     assert.deepEqual(launched, {workflowId:graph.id,instancePath:['second'],nodeId:'work',portId:'out'});
 });
 
-test('direct Run to here rejects native generation even when activation input is missing', () => {
+test('direct Run to here rejects native generation even when activation input is missing', async () => {
     const graph = {id:'native-incomplete',schema:3,runtime:2,mode:'native-unified',runTargets:[],nodes:{generate:{id:'generate',type:'workflow',operation:'generate-reply'}},wires:{},definitions:{},portals:{}};
     const f = fixture(graph, []); let launched = null;
     f.env.workflowSession = { run({target}) { launched = target; } };
     const target = {workflowId:graph.id,instancePath:[],nodeId:'generate',portId:'draft'};
-    f.env.runPreviewHere(f.session.readEditContext().sessionId + ':0', target);
+    await f.env.runPreviewHere(f.session.readEditContext().sessionId + ':0', target);
     assert.equal(launched, null);
     const run = f.env.canvasPreviewMenuItems(f.env.editorDraw.nodes.generate, f.token).find(item => item.id === 'run-to-here');
     assert.equal(run.disabled, true);

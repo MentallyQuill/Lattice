@@ -1,8 +1,8 @@
-import {cloneJsonValue} from './operations/json-data.js?v=0.28.1';
-import {artifactVisibility,validVisibilityMetadata} from './artifact-privacy.js?v=0.28.1';
-import {validateStoryClock} from './story-time.js?v=0.28.1';
-import {applyProgressionEvents} from './progression.js?v=0.28.1';
-import {validateRandomOutcome} from './operations/random-outcomes.js?v=0.28.1';
+import {cloneJsonValue} from './operations/json-data.js?v=0.29.0';
+import {artifactVisibility,validVisibilityMetadata} from './artifact-privacy.js?v=0.29.0';
+import {validateStoryClock} from './story-time.js?v=0.29.0';
+import {applyProgressionEvents} from './progression.js?v=0.29.0';
+import {validateRandomOutcome} from './operations/random-outcomes.js?v=0.29.0';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const good=data=>({ok:true,data});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
@@ -109,7 +109,18 @@ export function lookupDocumentHistory(request,rawQuery){
 
 /** Pure projection: only the native backend may install these immutable pages. */
 export async function prepareDocumentCheckpoint(rawSnapshot,rawOptions){
-    const checked=cloneJsonValue(rawSnapshot),options=cloneJsonValue(rawOptions);
+    // Document bytes and receipt metadata have independent admission bounds.
+    // Combining them would reject an otherwise valid near-limit document.
+    let checked;
+    try{
+        if(!plain(rawSnapshot)||![Object.prototype,null].includes(Object.getPrototypeOf(rawSnapshot)))throw Error('Own snapshot required');
+        const metadata={},descriptors=Object.getOwnPropertyDescriptors(rawSnapshot);
+        for(const key of Reflect.ownKeys(rawSnapshot)){const property=descriptors[key];if(typeof key!=='string'||!property.enumerable||!Object.hasOwn(property,'value'))throw Error('Own snapshot required');if(key!=='content')Object.defineProperty(metadata,key,{value:property.value,enumerable:true});}
+        const content=descriptors.content?.value,admitted=cloneJsonValue(metadata);
+        if(typeof content!=='string'||new TextEncoder().encode(content).byteLength>262144||!admitted.ok)throw Error('Bounded snapshot required');
+        checked={ok:true,data:{value:{...admitted.data.value,content}}};
+    }catch{checked={ok:false};}
+    const options=cloneJsonValue(rawOptions);
     if(!checked.ok||!options.ok)return fail('INVALID_DOCUMENT_CHECKPOINT','Checkpoint inputs must be bounded own data.');
     const snapshot=checked.data.value,o=options.data.value,header=documentHistoryHeader(snapshot?.history);
     if(!header.ok)return header;

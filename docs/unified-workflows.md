@@ -11,9 +11,9 @@ Your usual SillyTavern connection writes the main reply. Other model tools can p
 1. Open your SillyTavern chat and select the character who will reply. User, chat, and character selection determine live sources and private stores.
 2. Open Lattice beside the chat bar, or enter `/lattice`. A fresh workspace opens **Unified story workflow** with Lattice disabled. Existing installations restore a recovery draft; **File → Recover previous workflows** offers previous unified documents.
 3. Choose **File → Open examples…** and read a lesson’s requirements. Opening creates an editable copy, makes no model request, and does not change **Enable Lattice**.
-4. Replace sample instructions, actor/item identities, and document targets with your story’s values. Loaded character IDs normally use `character:<avatar filename>`; a display name alone is not a live actor identity.
+4. Replace sample instructions and actor/item identities with your story’s values. Loaded character IDs normally use `character:<avatar filename>`; a display name alone is not a live actor identity.
 5. Click each model tool’s grey bar and choose **Active SillyTavern model** or a saved Connection Manager profile. Leave **Advanced model settings → Model mode → Use profile model** unless that tool needs a different identifier. Configure any **For Each → Helper model bindings** separately.
-6. Automatic Story Clock, Read File, and Outcome Commit sources need no setup. Authorize named lesson targets in **Workflow → Configure → Workflow Data…** and resolve validation or connection issues.
+6. Keep automatic destinations for new output and story-state nodes. In **Details → File**, resolve any requested input or character choice; unknown personal inputs need **Choose file…** or **Import from device…**. Resolve **Setup Required**, validation, and connection issues. Older saved chat data remains available through these node settings.
 7. Select **Enable Lattice** with this document open. Switching between Main and its subgraph tabs changes your view, not the workflow used by Send.
 8. Send your player message normally. Lattice prepares connected guidance, continues from the completed reply, and records its response processing. A generated swipe can use the same workflow when its sources and policies permit it.
 9. Select **Review / Publish → Host result** in Preview. Compare the original, proposed reply, appended notes, model trace, and staged changes. Choose **Apply reviewed reply** or **Reject reply**.
@@ -163,23 +163,25 @@ Character Direction’s system prompt stays literal. Its private Guidance can re
 
 **One kiss, two private perspectives** confirms actual shared evidence before reflection. Missing evidence holds before Review. A false Decision skips reflections and leaves the ordinary reply reviewable; null holds Confirm Events before Review. Both actors must be verified present. Absence skips both private branches; unresolved participation holds.
 
-The `rowan-permission-text` and `iris-permission-text` values each start with `allowModelAuthoredReflection: false`. Enable them separately with the actor’s authoring permission, especially for a player-controlled character. Set each Read File and Write to File to **Actor scope → presence**, with that actor’s ID and exact Scene Presence input.
+The `rowan-permission-text` and `iris-permission-text` values each start with `allowModelAuthoredReflection: false`. Enable them separately with the actor’s authoring permission, especially for a player-controlled character. In each Read File and Write to File node's **File → Advanced → Access character**, choose the intended character by name and connect that character's exact Scene Presence input.
 
 Saved `sharedQuote` and `sceneEvidence` retain the shared observation. `reflection` and Recall-compatible `text` contain private model interpretation, labeled `reflectionOrigin: "model-authored"`. The stable record ID derives from the event. Each document has its own save receipt; one successful save does not guarantee the other.
 
 Native generation has one selected actor. Separate Actor Context branches do not let another actor’s private direction guide that selected actor or automatically generate a group’s private prompts.
 
-## Authorize Workflow Data and preserve its structure
+## Configure files in each node
 
-New **Story Clock**, **Read File**, and **Outcome Commit** nodes select automatic sources: **Chat clock**, empty plain-text **Chat notes**, and an empty JSON **Chat outcomes** list. A unified run makes only the referenced defaults available in the active user/chat. Change starting values or content in Details; use **Advanced** for source, Format, and Visibility. Clock and outcomes require JSON. Changing settings retains saved content.
+Select a file node and open **Details → File**. New outputs have an automatic destination and suggested friendly name. Lattice chooses a type from the node and its declared inputs, supplies the filename suffix, and creates valid clock/outcome starting state. A working automatic destination is Ready. Unknown external inputs offer a source choice or **Import from device…**; imported copies do not track the original device file.
 
-The default clock is shared across Main and systems. Default notes and outcomes inside separate systems have stable separate sources; explicit named targets keep their selected sharing. Disabled systems do not create unused defaults. Use one final writer for a shared source: two staged writes to one target are rejected.
+**Read File** owns its source. A new **Write to File** owns an automatic destination; **Connected document** inherits Read File’s exact live reference. **Story Clock** owns its state and **Clock Commit** inherits it. **Outcome Commit** owns its ledger; connected picks share that authorized ledger. Format and Project Document prepare content without saving it. File Input continues importing a portable snapshot into the workflow.
 
-**Workflow → Configure → Workflow Data…** manages custom targets for the current user and chat. A name such as `souls.json` identifies a scoped story document stored in chat metadata; it is not a computer file path.
+Every saving node offers **File handling → Replace / Append**, including inherited destinations. Replace updates the same file and is the default for new nodes; Append retains existing material and adds the accepted material once, preserving structured data. **Advanced** contains custom locations, explicit formats, creation and access policies. Character-private access uses familiar names. Configuration autosaves; choosing a destination, previewing or rejecting does not write output contents. Accepting the reviewed result saves its staged changes. Inspect each save result; independent files may have different outcomes.
 
-Supply a unique target ID, display name, format, visibility, and initial template. Formats are **JSON**, **JSON Lines**, **CSV**, **Plain text**, and **Markdown**. CSV needs declared columns. Actor-private documents also need the canonical actor ID. Changing a label does not expose Hidden data to public models or notes.
+On first use, choose saving inside SillyTavern or choosing locations elsewhere on its host machine. Inside saving works immediately. The optional wizard checks and installs the matching server support for custom locations. Reopen it through **File → File storage…**. Remote paths belong to the SillyTavern server, while imports/downloads use your browser's device. See [file storage](file-storage.md) and [optional server setup](server-files.md). Existing explicit destinations and browser grants retain their authority; portable sharing removes machine paths and writable bindings.
 
-Initial templates seed unsaved content. Updating a template does not overwrite saved data. For an existing authorization, use **Load initial template** before editing that template. **Remove authorization** revokes workflow access.
+History maintenance runs automatically at accepted save boundaries before active clock/receipt limits interrupt ordinary use. Recovery retains prior content versions separately from replay history, so restoring contents does not enable duplicate story effects. A missing verified version or conflicting external edit requires a clear recovery choice.
+
+Older chat-stored documents, canonical values, privacy and accepted history remain preserved. Safe unbound destinations can adopt automatic storage; existing configured files are not silently redirected. The global Workflow Data / Legacy chat data dialog stays removed; configure each node directly.
 
 All available nodes place directly, including nodes with missing settings or an unselected helper. A red border and **Setup Required** wrench lead to the relevant Details fields; complete them progressively. **Input Required** identifies missing required wiring. You can save an unfinished workflow and run a complete independent branch; an unfinished dependency blocks its requested run before any work begins.
 
@@ -220,26 +222,9 @@ State and projection receipts shown before Apply are proposed diagnostics. Save 
 
 ## Story time: midnight, 14:00 and eight-hour intervals
 
-Story time uses authored integer minutes, separately from wall-clock time and message count. **Story Clock** defaults to **Chat clock**, Day 1 at midnight, with a 24-hour day. Change **Starting values** in Details; **Advanced** contains source, Visibility, JSON Format, and calendar settings. Saved time stays intact.
+Story time uses authored integer minutes, separately from wall-clock time and message count. A new **Story Clock** starts automatically with valid state in **Details → File**. Existing clocks retain their accepted time and access settings; no storage JSON setup is required.
 
-Nodes selecting the same source share its timeline. Use **+** beside the source for an independent named clock. Separate clocks do not synchronize automatically. Story Clock reads accepted time when the workflow runs.
-
-For a custom target, **Workflow → Configure → Workflow Data… → Story clock template** supplies a valid starting schema. Its `clockId` must match the target. This example starts Day 1 at midnight:
-
-```json
-{
-  "schemaVersion": 1,
-  "clockId": "story-clock",
-  "calendarId": "story-calendar",
-  "dayLengthMinutes": 1440,
-  "absoluteMinute": 0,
-  "revision": 1,
-  "unit": "minute",
-  "originMinute": 0,
-  "originDay": 1,
-  "timeEvidence": { "kind": "explicit" }
-}
-```
+Nodes selecting the same clock file share its timeline. Select a different file for an independent clock. Separate clocks do not synchronize automatically. Story Clock reads accepted time when the workflow runs.
 
 Give **Advance Time** an explicit proposal such as `{"kind":"duration","minutes":120}` or `{"kind":"destination","absoluteMinute":840}`. A model can extract a stated duration; “a while later” does not automatically establish time. Estimated evidence needs an explicit supported acceptance policy.
 

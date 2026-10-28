@@ -153,9 +153,9 @@ export function composition() {
     }
     {
         r = builder(16, 'Consult the current campaign notebook', 'Read an authorized live campaign notebook and causally guide the reply from its current contents.', 'Read File live reference versus imported snapshot');
-        r.add('notebook', 'read-file', { targetId: 'campaign-notebook' }, 'live Workflow Data');
+        r.add('notebook', 'read-file', { targetId: 'campaign-notebook' }, 'sample notebook');
         r.textGuidance('notebook', 'text');
-        r.requirements = ['Create/authorize a public Text Workflow Data target campaign-notebook containing current campaign facts.'];
+        r.requirements = ['The sample campaign notebook prepares automatically; choose or import a file for personal facts.'];
         r.steps = ['Read File captures a live target and revision; edit the target and compare the next run.', 'Contrast lesson6 File Input: imported content is a snapshot and cannot supply a live write reference.'];
         r.check('notebook', 'text', 'The current authorized notebook text reaches native Guidance.');
         entries.push(r.finish());
@@ -186,7 +186,7 @@ export function composition() {
         r.add('save', 'write-file', { mode: 'replace', schema });
         r.connect('journal', 'reference', 'save', 'reference');
         r.connect('project', 'text', 'save', 'text');
-        r.requirements = ['Create public JSON Workflow Data accepted-scene-journal as []. Bind Prose for extraction.'];
+        r.requirements = ['The empty sample journal prepares automatically. Bind Prose for extraction.'];
         r.steps = ['Inspect Format.records and Project Document.receipt before Apply.', 'Write to File.reference is the exact live Read File reference; preview never saves.', 'Each file receipt is separate from native chat durability.'];
         r.budget = '1 auxiliary Extract request; one ordinary native generation. Formatting, projection and staging make no model requests.';
         r.check('save', 'receipt', 'The same-target journal replacement is pending until acceptance.');

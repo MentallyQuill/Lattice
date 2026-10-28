@@ -1,19 +1,20 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { presentDiagnostic, diagnosticText } from '../src/ui/diagnostics.js?v=0.28.1';
-import { presentFailureNotification } from '../src/ui/failure-notification.js?v=0.28.1';
-import { createWorkflowDocumentController } from '../src/ui/document-controller.js?v=0.28.1';
-import { createWorkflowDocumentSession } from '../src/ui/document-session.js?v=0.28.1';
+import { presentDiagnostic, diagnosticText } from '../src/ui/diagnostics.js?v=0.29.0';
+import { presentFailureNotification } from '../src/ui/failure-notification.js?v=0.29.0';
+import { createWorkflowDocumentController } from '../src/ui/document-controller.js?v=0.29.0';
+import { createWorkflowDocumentSession } from '../src/ui/document-session.js?v=0.29.0';
 import { JSDOM } from 'jsdom';
-import { showContextMenu } from '../src/ui/context-menu.js?v=0.28.1';
-import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.28.1';
-import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.28.1';
+import { showContextMenu } from '../src/ui/context-menu.js?v=0.29.0';
+import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.29.0';
+import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.29.0';
 
 const controllerSource = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 const runSource = await readFile(new URL('../src/run.js', import.meta.url), 'utf8');
 function actual(source, name, env) {
-    const start = source.indexOf('function ' + name + '('), end = source.indexOf('\n}', start) + 2;
+    const start = source.indexOf('function ' + name + '('), lineEnd = source.indexOf('\n', start);
+    const end = source.slice(start, lineEnd).trim().endsWith('}') ? lineEnd : source.indexOf('\n}', start) + 2;
     assert.ok(start >= 0);
     return Function('env', 'with(env){' + source.slice(start, end) + ';return ' + name + ';}')(env);
 }
@@ -48,6 +49,7 @@ test('native workflow failures are errors and do not expose unknown host excepti
         onWorkflowActivated() {}, getStoryDocumentCatalog() {}, getNativePersistenceVerifier() {}, bindingStatus() {},
         documentSession: {}, ctx() {}, currentUser() {}, transportUserId() {}, settings() {}, activeWorkflow() {}, getWorkflowFailurePolicy: () => 'native-fallback',
         safe: fn => fn(), presentDiagnostic, diagnosticText, presentFailureNotification };
+    env.refreshAfterNativeReview = actual(runSource, 'refreshAfterNativeReview', { applicationFiles: null, queueMicrotask });
     try {
         actual(runSource, 'getNativeWorkflowController', env)();
         options.onResult({ ok: false, error: { code: 'UNKNOWN_HOST_ERROR', message: 'private prompt text' } });

@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fixture, mouse, dom } from './canvas-fixture.mjs';
-import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.28.1';
-import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.28.1';
+import { createNativeWireBridge } from '../src/ui/native-wire-bridge.js?v=0.29.0';
+import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v=0.29.0';
 
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function controllerKeydown(env) {
@@ -32,7 +32,7 @@ function workspaceFixture() {
     });
     const root = document.createElement('div'); root.className = 'pc-root pc-open'; document.body.append(root); root.append(f.host);
     let closes = 0;
-    const listener = controllerKeydown({ pendingDocumentPrompt: null, isOpen: () => root.classList.contains('pc-open'), typing: () => false, canvas: f.canvas,
+    const listener = controllerKeydown({ pendingDocumentPrompt: null, libraryOpen: false, pendingServerChooser: null, pendingFileRecovery: null, pendingExampleFileSetup: null, applicationFiles: () => null, isOpen: () => root.classList.contains('pc-open'), typing: () => false, canvas: f.canvas,
         close() { closes++; root.classList.remove('pc-open'); } });
     // Canvas installs its real document listener first, as production build does.
     document.addEventListener('keydown', listener);

@@ -76,7 +76,7 @@ test('Add system from pinned child previews an effective template merge, support
     await expect.poll(() => page.evaluate(() => systemDisk.text.length)).toBeGreaterThan(0);
     const saved = await page.evaluate(() => JSON.parse(systemDisk.text));
     expect(saved.workspaceViews.views.filter(v => v.identity.kind === 'instance' && v.open).length).toBeGreaterThanOrEqual(2);
-    await menu(page, 'File', 'Open workflow…');
+    await menu(page, 'File', 'Import workflow…');
     await expect(page.locator('.pc-graph-tabs [role="tab"][aria-selected="true"]')).toContainText('Weather');
     expect(await page.evaluate(id => window.canvasHarness.graph.nodes[id].enabled, instanceId)).toBe(false);
     await page.locator('.pc-graph-tabs [role="tab"]').first().click();

@@ -1,17 +1,17 @@
-import { nodeDecorationElements, measureDecorationExtents } from './ui/node-decorations.js?v=0.28.1';
-import { projectRunDiagnostics, retainRunDiagnostics } from './ui/canvas-run-diagnostics.js?v=0.28.1';
-import { summarizeReadiness } from './ui/node-readiness.js?v=0.28.1';
-import { beginNodeHold } from './ui/node-hold.js?v=0.28.1';
-import { graphPoint, zoomAt, zoomTo, wheelFactor, zoomShortcutFactor } from './canvas/camera.js?v=0.28.1';
-import { createFrameScheduler } from './canvas/frame.js?v=0.28.1';
-import { selectionMode, rectangle, intersects, combineSelection } from './canvas/selection.js?v=0.28.1';
-import { createGeometryCache, indexIncidentWires } from './canvas/geometry.js?v=0.28.1';
-import { nodeCards, preparedCardFor } from './canvas/presentation.js?v=0.28.1';
-import { buildConnectionRoute, buildDragConnectionRoute } from './canvas/connection-route.js?v=0.28.1';
-import { alignCardsPins } from './canvas/pin-alignment.js?v=0.28.1';
-import { isCommentFrame, containedCommentNodes } from './canvas/comment-frames.js?v=0.28.1';
-import { retainSlots, cardLayoutKey } from './canvas/retained-scene.js?v=0.28.1';
-import { mountCanvas } from '../dist/lattice-ui.js?v=0.28.1';
+import { nodeDecorationElements, measureDecorationExtents } from './ui/node-decorations.js?v=0.29.0';
+import { projectRunDiagnostics, retainRunDiagnostics } from './ui/canvas-run-diagnostics.js?v=0.29.0';
+import { summarizeReadiness } from './ui/node-readiness.js?v=0.29.0';
+import { beginNodeHold } from './ui/node-hold.js?v=0.29.0';
+import { graphPoint, zoomAt, zoomTo, wheelFactor, zoomShortcutFactor } from './canvas/camera.js?v=0.29.0';
+import { createFrameScheduler } from './canvas/frame.js?v=0.29.0';
+import { selectionMode, rectangle, intersects, combineSelection } from './canvas/selection.js?v=0.29.0';
+import { createGeometryCache, indexIncidentWires } from './canvas/geometry.js?v=0.29.0';
+import { nodeCards, preparedCardFor } from './canvas/presentation.js?v=0.29.0';
+import { buildConnectionRoute, buildDragConnectionRoute } from './canvas/connection-route.js?v=0.29.0';
+import { alignCardsPins } from './canvas/pin-alignment.js?v=0.29.0';
+import { isCommentFrame, containedCommentNodes } from './canvas/comment-frames.js?v=0.29.0';
+import { retainSlots, cardLayoutKey } from './canvas/retained-scene.js?v=0.29.0';
+import { mountCanvas } from '../dist/lattice-ui.js?v=0.29.0';
 const groupOf = (graph, node) => node && graph?.groups?.[node.inGroup];
 const inNodeProfile = event => event.target?.closest?.('.pc-node-profile');
 const samePaintValues = (previous, next) => previous && previous.length === next.length && next.every((value, index) => value === previous[index]);
@@ -279,7 +279,7 @@ export class Canvas {
     visualBoundsOf(node) {
         const w=this.widthOf(node),h=this.heightOf(node),extents=this.decorationExtents.get(node.id);
         const row=this.nodeProfiles.find(row=>row.id===node.id),compact=node.presentation?.compact;
-        const estimate={left:0,top:row?.model || row?.readiness?.state && row.readiness.state!=='ready' ? -12-(row.model?31:0)-(row.readiness?.state && row.readiness.state!=='ready'?29:0) : 0,right:w,bottom:h+(row && row.hasProfile!==false ? 42+(compact?38:0) : compact?38:0)};
+        const estimate={left:0,top:row?.model || row?.fileLabel || row?.readiness?.state && row.readiness.state!=='ready' ? -12-(row.model?31:0)-(row.fileLabel?31+(row.model?5:0):0)-(row.readiness?.state && row.readiness.state!=='ready'?29:0) : 0,right:w,bottom:h+(row && row.hasProfile!==false ? 42+(compact?38:0) : compact?38:0)};
         const bounds=extents ?? estimate;
         return {x:(node.x??0)+bounds.left,y:(node.y??0)+bounds.top,w:bounds.right-bounds.left,h:bounds.bottom-bounds.top};
     }
@@ -290,7 +290,7 @@ export class Canvas {
         const visibleBounds = { x: -view.x / zoom, y: -view.y / zoom, w: rect.width / zoom, h: rect.height / zoom };
         return this.nodeProfiles.flatMap(row => {
             const node = this.graph.nodes[row.id];
-            if (!node || isCommentFrame(node) || this.#folded(node) || row.hasProfile===false && !row.model && (!row.readiness || row.readiness.state==='ready')) return [];
+            if (!node || isCommentFrame(node) || this.#folded(node) || row.hasProfile===false && !row.model && !row.fileLabel && (!row.readiness || row.readiness.state==='ready')) return [];
             return [{ ...row, selected: this.selection?.kind==='node' && this.selection.id===node.id || this.multi.has(node.id), x: node.x, y: node.y, w: this.widthOf(node), h: this.heightOf(node),
                 clearance: node.presentation?.compact ? 38 : 0, authorityVersion: this.nodeProfileVersion, visibleBounds }];
         });

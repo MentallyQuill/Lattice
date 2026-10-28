@@ -28,13 +28,13 @@ test('menu keys and paste cannot edit or move the selected background graph', as
 
 test('submenus preserve hover session, keyboard focus and action dismissal', async ({ page }) => {
     await start(page); await root(page,'Workflow').focus(); await page.keyboard.press('ArrowDown');
-    const configure=menu(page,'Workflow').getByRole('menuitem',{name:'Configure',exact:true});
-    await configure.focus(); await page.keyboard.press('ArrowRight');
-    const submenu=menu(page,'Configure options'); await expect(submenu).toBeVisible();
-    await expect(submenu.getByRole('menuitem',{name:'Workflow Data…',exact:true})).toBeFocused();
-    await page.keyboard.press('End'); await expect(submenu.getByRole('menuitem',{name:'Workflow Data…',exact:true})).toBeFocused();
-    await page.keyboard.press('Home'); await page.keyboard.press('w'); await expect(submenu.getByRole('menuitem',{name:'Workflow Data…',exact:true})).toBeFocused();
-    await page.keyboard.press('ArrowLeft'); await expect(submenu).toHaveCount(0); await expect(configure).toBeFocused();
+    const recall=menu(page,'Workflow').getByRole('menuitem',{name:'Memory recall',exact:true});
+    await recall.focus(); await page.keyboard.press('ArrowRight');
+    const submenu=menu(page,'Memory recall options'); await expect(submenu).toBeVisible();
+    await expect(submenu.getByRole('menuitem',{name:'Memory recall overview…',exact:true})).toBeFocused();
+    await page.keyboard.press('End'); await expect(submenu.getByRole('menuitem',{name:'Memory recall overview…',exact:true})).toBeFocused();
+    await page.keyboard.press('Home'); await page.keyboard.press('m'); await expect(submenu.getByRole('menuitem',{name:'Memory recall overview…',exact:true})).toBeFocused();
+    await page.keyboard.press('ArrowLeft'); await expect(submenu).toHaveCount(0); await expect(recall).toBeFocused();
     await root(page,'Graph').hover(); await expect(menu(page,'Graph')).toBeVisible();
     await menu(page,'Graph').getByRole('menuitemradio',{name:'Pan tool',exact:true}).click();
     await expect(page.getByRole('menu')).toHaveCount(0);await expect(root(page,'Graph')).toBeFocused();
@@ -49,9 +49,9 @@ test('menu hit targets and column rails remain reachable in narrow viewports', a
     const rowSizes=await menu(page,'Edit').locator('button').evaluateAll(items=>items.map(item=>item.getBoundingClientRect().height));expect(Math.min(...rowSizes)).toBe(34);
     const rails=await menu(page,'Edit').locator('button').evaluateAll(items=>items.map(item=>[...item.children].map(child=>child.getBoundingClientRect().left)));
     expect(rails.every(row=>JSON.stringify(row)===JSON.stringify(rails[0]))).toBe(true);
-    await page.setViewportSize({width:360,height:520}); await root(page,'Workflow').click();await menu(page,'Workflow').getByRole('menuitem',{name:'Configure',exact:true}).hover();
-    for(const name of ['Workflow','Configure options']){const box=await menu(page,name).boundingBox();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(360);expect(box.y+box.height).toBeLessThanOrEqual(520);}
-    await menu(page,'Configure options').getByRole('menuitem',{name:'Workflow Data…',exact:true}).focus(); await page.keyboard.press('Escape');await expect(menu(page,'Workflow').getByRole('menuitem',{name:'Configure',exact:true})).toBeFocused();await expect(menu(page,'Configure options')).toHaveCount(0);await page.keyboard.press('Escape');await expect(root(page,'Workflow')).toBeFocused();
+    await page.setViewportSize({width:360,height:520}); await root(page,'Workflow').click();await menu(page,'Workflow').getByRole('menuitem',{name:'Memory recall',exact:true}).hover();
+    for(const name of ['Workflow','Memory recall options']){const box=await menu(page,name).boundingBox();expect(box.x).toBeGreaterThanOrEqual(0);expect(box.x+box.width).toBeLessThanOrEqual(360);expect(box.y+box.height).toBeLessThanOrEqual(520);}
+    await menu(page,'Memory recall options').getByRole('menuitem',{name:'Memory recall overview…',exact:true}).focus(); await page.keyboard.press('Escape');await expect(menu(page,'Workflow').getByRole('menuitem',{name:'Memory recall',exact:true})).toBeFocused();await expect(menu(page,'Memory recall options')).toHaveCount(0);await page.keyboard.press('Escape');await expect(root(page,'Workflow')).toBeFocused();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 test('checkbox choices and root toggle both reset hover, and Tab resumes outside the menu', async ({ page }) => {
@@ -65,7 +65,7 @@ test('coarse pointers provide 44 pixel targets and all menu roots remain reachab
     const context=await browser.newContext({hasTouch:true,viewport:{width:360,height:640}});const page=await context.newPage();await page.goto(`${baseURL}/tests/browser/harness.html`);await page.waitForFunction(()=>!!window.canvasHarness);await page.evaluate(()=>window.canvasHarness.reset());
     await root(page,'Workflow').tap();const sizes=await menu(page,'Workflow').locator('button').evaluateAll(items=>items.map(item=>item.getBoundingClientRect().height));expect(Math.min(...sizes)).toBeGreaterThanOrEqual(44);
     const targets=await page.locator('.pc-flat-menu').evaluateAll(items=>items.map(item=>({width:item.getBoundingClientRect().width,height:item.getBoundingClientRect().height,right:item.getBoundingClientRect().right,top:item.getBoundingClientRect().top})));expect(targets.every(item=>item.width>=44 && item.height>=44 && item.right<=360 && item.top===targets[0].top)).toBe(true);
-    await menu(page,'Workflow').getByRole('menuitem',{name:'Configure',exact:true}).tap();await expect(menu(page,'Configure options')).toBeVisible();await context.close();
+    await menu(page,'Workflow').getByRole('menuitem',{name:'Memory recall',exact:true}).tap();await expect(menu(page,'Memory recall options')).toBeVisible();await context.close();
 });
 
 test('heading text gaps stay consistent and all six headings fit a narrow screen', async ({ page }) => {
@@ -108,17 +108,17 @@ test('host keyboard styles cannot add badges or empty bars to any workspace drop
             expect(shortcut.text.length).toBeGreaterThan(0);
         }
         const rows = await popup.locator('.pc-workspace-menu-item').evaluateAll(items => items.map(item => ({
-            height: item.getBoundingClientRect().height, rails: [...item.children].map(child => child.getBoundingClientRect().left),
+            height: item.getBoundingClientRect().height, reason:!!item.querySelector('.pc-workspace-menu-label small'), rails: [...item.children].map(child => child.getBoundingClientRect().left),
         })));
-        expect(rows.every(row => row.height === 34 && JSON.stringify(row.rails) === JSON.stringify(rows[0].rails))).toBe(true);
+        expect(rows.every(row => (row.reason ? row.height >= 34 : row.height === 34) && JSON.stringify(row.rails) === JSON.stringify(rows[0].rails))).toBe(true);
     };
     for (const name of ['File', 'Edit', 'View', 'Graph', 'Workflow', 'Help']) {
         await root(page, name).click();
         await checkShortcuts(menu(page, name));
         if (name === 'File' || name === 'View') await page.screenshot({ path: testInfo.outputPath(`${name.toLowerCase()}-desktop.png`) });
         if (name === 'Workflow') {
-            await menu(page, name).getByRole('menuitem', { name: 'Configure', exact: true }).hover();
-            await checkShortcuts(menu(page, 'Configure options'));
+            await menu(page, name).getByRole('menuitem', { name: 'Memory recall', exact: true }).hover();
+            await checkShortcuts(menu(page, 'Memory recall options'));
             await page.keyboard.press('Escape');
         }
         await page.keyboard.press('Escape');
@@ -166,15 +166,14 @@ test('dropdown icons use selective reference colors with readable theme and disa
         expect(save.label).toBe(open.label); expect(save.caret).toBe(open.caret);
         await page.keyboard.press('Escape');
         await root(page, 'Workflow').click();
-        const configure = await paint('Workflow', 'configure'), recall = await paint('Workflow', 'memory-recall-menu'), stop = await paint('Workflow', 'stop-workflow');
-        if (preset !== 'signal') { expect(configure.icon).toBe(save.icon); expect(recall.icon).not.toBe(configure.icon); expect(stop.icon).not.toBe(recall.icon); }
-        for (const icon of [configure, recall]) expect(icon.contrast).toBeGreaterThanOrEqual(3);
+        const validate = await paint('Workflow', 'validate-workflow'), recall = await paint('Workflow', 'memory-recall-menu'), stop = await paint('Workflow', 'stop-workflow');
+        if (preset !== 'signal') { expect(validate.icon).not.toBe(save.icon); expect(recall.icon).not.toBe(validate.icon); expect(stop.icon).not.toBe(recall.icon); }
+        for (const icon of [validate, recall]) expect(icon.contrast).toBeGreaterThanOrEqual(3);
         expect(stop.disabled).toBe(true); expect(Number(stop.opacity)).toBeLessThan(0.5);
-        await menu(page, 'Workflow').getByRole('menuitem', { name: 'Configure', exact: true }).hover();
-        const dataIcon = menu(page, 'Configure options').locator('.pc-workspace-menu-icon');
-        await expect(dataIcon).toHaveCount(1);
-        if (preset !== 'signal') expect(await dataIcon.evaluate(icon => getComputedStyle(icon).color)).not.toBe(configure.icon);
-        expect((await paint('Configure options', 'story-documents')).contrast).toBeGreaterThanOrEqual(3);
+        await menu(page, 'Workflow').getByRole('menuitem', { name: 'Memory recall', exact: true }).hover();
+        const overview = await paint('Memory recall options', 'memory-recall');
+        if (preset !== 'signal') expect(overview.icon).toBe(recall.icon);
+        expect(overview.contrast).toBeGreaterThanOrEqual(3);
         await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
         await root(page, 'View').click();
         const reset = await paint('View', 'reset-layout'), theme = await paint('View', 'theme');

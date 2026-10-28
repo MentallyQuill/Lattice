@@ -1,5 +1,5 @@
-import { cloneJsonValue, stringifyJsonValue } from './operations/json-data.js?v=0.28.1';
-import { own, plain, freeze } from './record-data.js?v=0.28.1';
+import { cloneJsonValue, stringifyJsonValue } from './operations/json-data.js?v=0.29.0';
+import { own, plain, freeze } from './record-data.js?v=0.29.0';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const good=data=>({ok:true,data:freeze(data)});
 const id=value=>typeof value==='string'&&!!value.trim()&&value.length<=256;

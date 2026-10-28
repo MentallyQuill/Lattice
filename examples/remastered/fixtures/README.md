@@ -1,6 +1,8 @@
 # Disposable curriculum fixtures
 
-These files supply demonstration bytes only. They do not grant canonical event proof, accepted story history, host write references, private access, memory settlement or clock authority. Use a disposable story and explicitly authorize each logical Workflow Data target before running its lesson. Replace `character:rowan.png` and `character:iris.png` consistently with loaded canonical actor IDs.
+These optional files let you inspect the demonstration bytes used by the numbered lessons. Opening a registered lesson prepares its known sample files automatically in an independent scope; no JSON paste or logical target setup is required. Choose private characters by name when requested. Opening and previewing do not write output contents or make paid requests. Existing saved content always wins when reopening a copy.
+
+Demonstration bytes grant no canonical event proof, accepted story history, private access, memory settlement or scene participation. For a personal input, use the node **File** section to **Choose file** or **Import from device**. Import creates an independent input copy. Never replace real accepted story data with disposable demonstration history.
 
 | Fixture | Logical target / lesson | Shape and setup |
 | --- | --- | --- |
@@ -19,4 +21,4 @@ These files supply demonstration bytes only. They do not grant canonical event p
 | sword-souls-99.json | sword-souls, 28 | Disposable 99-record demonstration ledger for the 99→100 threshold. Seed records explicitly are not real kill evidence. |
 | rowan-relationship.json | rowan-relationship, 30 | Actor-private directional Generic State: trust 0, desire 0, tension 2, temporary excitement 0; each row carries subject, object and `{kind:'actor-private',actorId:Rowan}` visibility. |
 
-The clock and ownership shapes above are setup examples; each lesson still requires genuine sources and host authorization. Private fixtures must be assigned actor-private targets scoped to their named actor. Never import these disposable histories over a real story's accepted data. Portable packages include no provider credentials, private host context or secret local profiles.
+The table documents the demonstration schemas, including their internal identities. Private samples stay scoped to their chosen character. Lesson 29 starts both reflection files empty even though the optional Rowan Recall fixture contains a demonstration record for lesson 26. Portable packages include no provider credentials, private host context or secret local profiles. A raw portable import requires explicit input choices; only the registered Examples browser prepares trusted sample defaults automatically.

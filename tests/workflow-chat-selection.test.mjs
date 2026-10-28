@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {createWorkflowChatSelection} from '../src/state.js';
+const a={chatMetadata:{}},b={chatMetadata:{}};let context=a;
+const selection=createWorkflowChatSelection({getContext:()=>context,saveAndVerify:async(host)=>({ok:true,data:{acknowledged:host===context}})});
+assert.equal((await selection.persist({kind:'library',id:'shared'},a)).ok,true);
+context=b;assert.equal(selection.get(),null);
+assert.equal((await selection.persist({kind:'library',id:'copy'},b)).ok,true);
+context=a;assert.equal(selection.get().id,'shared');
+const unsafe=createWorkflowChatSelection({getContext:()=>context,saveAndVerify:async()=>({ok:true,data:{submitted:true}})});
+assert.equal((await unsafe.persist({kind:'library',id:'new'},a)).ok,false);
+assert.equal(selection.get().id,'shared','missing acknowledgement restores previous selection');
+console.log('workflow-chat-selection: acknowledged independent chat selection ok');

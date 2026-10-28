@@ -1,4 +1,4 @@
-import { decodeJson } from './json-decode.js?v=0.28.1';
+import { decodeJson } from './json-decode.js?v=0.29.0';
 
 /** Decode a complete model JSON document without repairing its contents. */
 export function decodeModelJson(input, options = {}) {

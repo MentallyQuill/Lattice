@@ -1,8 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-const api=await import('../src/workflow/native-persistence.js?v=0.28.1').catch(()=>({}));
+const api=await import('../src/workflow/native-persistence.js?v=0.29.0').catch(()=>({}));
 function fixture(options={}){let user='default-user',saves=0,requests=0;const packet={scope:{userId:user,chatId:'story'},targetId:'souls.json',format:'json',content:'[{"id":"s1"}]',revision:1,receipts:[]};const c={chatId:'story',characterId:0,groupId:null,chat:[],characters:[{name:'Mara',avatar:'Mara.png',chat:'Story-2'}],chatMetadata:{latticeDocuments:{[user]:{'souls.json':packet}}},getRequestHeaders:()=>({'Content-Type':'application/json','X-CSRF-Token':'PRIVATE_CSRF'}),saveMetadata:async()=>{saves++;await options.onSave?.();}};return {c,user:value=>{user=value;},counts:()=>({saves,requests}),create:()=>api.createNativePersistenceVerifier({getContext:()=>c,getUserId:()=>user,fetch:async(url,request)=>{requests++;assert.equal(url,'/api/chats/get');assert.deepEqual(JSON.parse(request.body),{ch_name:'Mara',file_name:'Story-2',avatar_url:'Mara.png'});await options.onFetch?.();return options.response??{ok:true,text:async()=>JSON.stringify([{chat_metadata:options.savedMetadata??c.chatMetadata}])};}})};}
 const selection={kind:'document',targetId:'souls.json'};
+test('shared workflow selection is acknowledged only by the saved active-chat pointer',async()=>{
+ for(const match of [true,false]){const f=fixture();f.c.chatMetadata.latticeWorkflowSelection={kind:'library',id:'shared-1'};const metadata=structuredClone(f.c.chatMetadata);if(!match)metadata.latticeWorkflowSelection.id='another';const verifier=api.createNativePersistenceVerifier({getContext:()=>f.c,getUserId:()=> 'default-user',fetch:async()=>({ok:true,text:async()=>JSON.stringify([{chat_metadata:metadata}])})});assert.equal((await verifier.saveAndVerify({kind:'workflow-selection'})).data.acknowledged,match);}
+});
+test('accepted branch prefixes verify exact saved assistant bytes without another metadata write',async()=>{
+ const f=fixture();f.c.chat=[{mes:'Question',is_user:true},{mes:'Accepted reply',is_user:false}];
+ const verifier=api.createNativePersistenceVerifier({getContext:()=>f.c,getUserId:()=> 'default-user',fetch:async()=>({ok:true,text:async()=>JSON.stringify([{chat_metadata:{}},...f.c.chat])})});
+ assert.equal((await verifier.verify({kind:'chat-prefix'})).data.acknowledged,true);assert.equal(f.counts().saves,0);
+ const changed=api.createNativePersistenceVerifier({getContext:()=>f.c,getUserId:()=> 'default-user',fetch:async()=>({ok:true,text:async()=>JSON.stringify([{chat_metadata:{}},f.c.chat[0],{mes:'Different reply',is_user:false}])})});
+ assert.equal((await changed.verify({kind:'chat-prefix'})).data.acknowledged,false);
+});
 test('checkpoint durability requires the exact active packet and every newly installed archive page',async()=>{
  for(const corruption of ['none','missing','changed']){
   let savedMetadata;const f=fixture({response:{ok:true,text:async()=>JSON.stringify([{chat_metadata:savedMetadata}])}});

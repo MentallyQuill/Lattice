@@ -32,7 +32,7 @@ export async function productionModules(repo = root) {
     while (queue.length) {
         const name = queue.pop();
         if (allowed.has(name)) continue;
-        if (name !== 'src/random-id.js' && !/^src\/workflow\/[a-z0-9/-]+\.js$/.test(name)) throw Error('Unapproved production dependency.');
+        if (!['src/random-id.js','src/ui/node-file-access.js','src/ui/node-file-service.js','src/ui/server-file-access.js','src/ui/host-file-access.js','src/ui/host-file-store.js','src/ui/node-file-projection.js'].includes(name) && !/^src\/workflow\/[a-z0-9/-]+\.js$/.test(name)) throw Error('Unapproved production dependency: '+name);
         const target = await realpath(resolve(base, name));
         const rel = relative(base, target);
         if (rel === '..' || rel.startsWith('..' + sep) || isAbsolute(rel)) throw Error('Production dependency escaped the repository.');

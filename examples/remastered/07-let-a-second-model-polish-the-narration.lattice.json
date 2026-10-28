@@ -126,7 +126,8 @@
         "protectedLiterals": [
           "North Harbor"
         ],
-        "maxTokens": 2048
+        "maxTokens": 2048,
+        "maxRetries": 0
       },
       "lesson-note": {
         "id": "lesson-note",

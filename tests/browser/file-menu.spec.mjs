@@ -28,7 +28,7 @@ async function discard(page) { await expect(prompt(page)).toBeVisible(); await p
 
 test('fallback Open uses the system JSON picker and replaces the current document', async ({ page }) => {
     await load(page); const before = await snapshot(page), file = await workflowFile(page);
-    const chooser = await choose(page, 'Open workflow…', file);
+    const chooser = await choose(page, 'Import workflow…', file);
     expect(chooser.isMultiple()).toBe(false);
     await expect.poll(() => page.evaluate(() => window.canvasHarness.graph.name)).toBe('Opened JSON workflow');
     const after = await snapshot(page); expect(after.graph.id).toBe(file.graph.id); expect(after.enabled).toBe(before.enabled);
@@ -55,10 +55,10 @@ test('fallback Save As preserves local bindings and camera without declaring a d
 test('portable export removes local connection references and Open accepts that package', async ({ page }) => {
     await load(page); await page.evaluate(() => { const h = window.canvasHarness; h.graph.roles.Analysis = { profileId: 'local-profile', model: 'local-model' }; h.S.touchGraph(h.graph); });
     const before = await snapshot(page);
-    const [download] = await Promise.all([page.waitForEvent('download'), menu(page, 'Export workflow JSON…')]);
+    const [download] = await Promise.all([page.waitForEvent('download'), menu(page, 'Download / share workflow…')]);
     const file = await downloaded(download); expect(file).toMatchObject({ kind: 'lattice-workflow', schema: 2, minRuntime: 2 });
     expect(file.graph.roles.Analysis).toEqual({ profileId: null, model: 'local-model' }); expect(await snapshot(page)).toEqual(before);
-    await choose(page, 'Open workflow…', file); await discard(page);
+    await choose(page, 'Import workflow…', file); await discard(page);
     await expect.poll(() => page.evaluate(() => window.canvasHarness.graph.roles.Analysis.profileId)).toBe(null);
     expect(await page.evaluate(() => window.canvasHarness.graph.id)).toBe(file.graph.id);
 });
@@ -125,7 +125,7 @@ test('the document guard blocks canvas shortcuts and traps forward and backward 
 
 test('cancelled fallback pickers preserve the document and produce no import review', async ({ page }) => {
     await load(page); const before = await snapshot(page);
-    for (const action of ['Open workflow…','Import into graph…']) {
+    for (const action of ['Import workflow…','Import into graph…']) {
         const [chooser] = await Promise.all([page.waitForEvent('filechooser'),menu(page,action)]); await chooser.setFiles([]);
         await chooser.element().evaluate(input => input.dispatchEvent(new Event('cancel',{bubbles:true}))); await page.evaluate(() => window.canvasHarness.settle());
         expect(await snapshot(page)).toEqual(before);
@@ -135,19 +135,19 @@ test('cancelled fallback pickers preserve the document and produce no import rev
 
 test('invalid and unreadable fallback selections report errors without replacing current work', async ({ page }) => {
     const errors = []; page.on('pageerror',error => errors.push(error.message)); await load(page); const before = await snapshot(page), file = await workflowFile(page);
-    for (const action of ['Open workflow…','Import into graph…']) for (const value of ['{invalid',{kind:'lattice-workflow',schema:99,minRuntime:2}]) {
+    for (const action of ['Import workflow…','Import into graph…']) for (const value of ['{invalid',{kind:'lattice-workflow',schema:99,minRuntime:2}]) {
         const count = await page.evaluate(() => window.canvasHarness.toasts.length); await choose(page,action,value);
         await expect.poll(() => page.evaluate(() => window.canvasHarness.toasts.length)).toBeGreaterThan(count); expect(await snapshot(page)).toEqual(before);
     }
     await page.evaluate(() => { File.prototype.text = async () => { throw new Error('Simulated file read failure'); }; });
-    for (const action of ['Open workflow…','Import into graph…']) { const count = await page.evaluate(() => window.canvasHarness.toasts.length); await choose(page,action,file); await expect.poll(() => page.evaluate(() => window.canvasHarness.toasts.length)).toBeGreaterThan(count); expect(await snapshot(page)).toEqual(before); }
+    for (const action of ['Import workflow…','Import into graph…']) { const count = await page.evaluate(() => window.canvasHarness.toasts.length); await choose(page,action,file); await expect.poll(() => page.evaluate(() => window.canvasHarness.toasts.length)).toBeGreaterThan(count); expect(await snapshot(page)).toEqual(before); }
     expect(errors).toEqual([]);
 });
 
 test('delayed fallback Open loses authority after document activation or workspace close', async ({ page }) => {
     await load(page); await page.evaluate(() => { const read = File.prototype.text; File.prototype.text = async function () { const text = await read.call(this); return new Promise(resolve => { window.releaseFileMenuRead = () => resolve(text); }); }; });
     for (const change of ['switch','close']) {
-        await page.evaluate(() => { delete window.releaseFileMenuRead; }); await choose(page,'Open workflow…',await workflowFile(page));
+        await page.evaluate(() => { delete window.releaseFileMenuRead; }); await choose(page,'Import workflow…',await workflowFile(page));
         await page.waitForFunction(() => !!window.releaseFileMenuRead);
         if (change === 'switch') await page.evaluate(() => window.canvasHarness.activate(window.canvasHarness.S.createGraph('Another document')));
         else await menu(page,'Close workspace');

@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {createWorkflowExampleOrigins,withWorkflowExampleOrigins} from '../src/ui/workflow-example-origin.js';
+import {createWorkflowLibrary} from '../src/ui/workflow-library.js';
+import {createWorkflowDocumentSession} from '../src/ui/document-session.js';
+import {serializeWorkflowDocument} from '../src/workflow/document-file.js';
+import {memoryStore,graph} from './workflow-saved-library.test.mjs';
+const store=memoryStore(),session=createWorkflowDocumentSession();let user='alice',sequence=0,failOrigin=false;
+const wrapped={read:name=>store.read(name),write:request=>failOrigin&&request.name.startsWith('workflow-origin-')?Promise.resolve({ok:false,error:{code:'OFFLINE',message:'offline'}}):store.write(request)};
+const origins=createWorkflowExampleOrigins({store:wrapped,getUserId:()=>user}),base=createWorkflowLibrary({store:wrapped,createId:()=> 'saved-'+(++sequence)}),library=withWorkflowExampleOrigins(base,origins,session);
+const document=graph();session.activate(document);assert.equal(origins.get({...document,template:'lesson-22'}),null);
+origins.remember(document,{schemaVersion:1,exampleId:'lesson-22'});const json=serializeWorkflowDocument(document).data.json;
+failOrigin=true;assert.equal((await library.adopt({json})).ok,false);const created=sequence;
+failOrigin=false;const retried=await library.adopt({json});assert.equal(retried.ok,true);assert.equal(sequence,created,'sidecar retry preserves acknowledged saved identity');
+const loaded=await library.read(retried.data.id);assert.equal(origins.get(loaded.data.graph).exampleId,'lesson-22');
+session.activate(loaded.data.graph,{source:loaded.data.source,clean:true});const copy=await library.saveAs({json:serializeWorkflowDocument(session.current()).data.json});assert.equal(copy.ok,true);assert.notEqual(copy.data.id,loaded.data.id);assert.equal(origins.get(copy.data.graph).exampleId,'lesson-22');
+user='bob';assert.equal(origins.get(copy.data.graph),null);session.activate(graph());assert.equal(origins.get(session.current()),null);
+console.log('workflow example origins: trusted metadata, acknowledged retry, shared read, Save As and user isolation passed');

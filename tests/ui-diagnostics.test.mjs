@@ -3,10 +3,19 @@ import assert from 'node:assert/strict';
 import { formatRecordedArtifact } from '../src/workflow/recording.js';
 
 const api = await import('../src/ui/diagnostics.js').catch(() => ({}));
-test('native history capacity and unverified saves point to the explicit Workflow Data actions',()=>{
- for(const code of ['CLOCK_LEDGER_FULL','FILE_RECEIPT_LIMIT']){const view=api.presentDiagnostic({code,message:'PRIVATE HOST DETAIL'});assert.match(view.message,/Workflow Data.*Preview history checkpoint/);assert.equal(JSON.stringify(view).includes('PRIVATE HOST DETAIL'),false);}
- const held=api.presentDiagnostic({code:'PERSISTENCE_UNKNOWN',message:'PRIVATE CHECKPOINT DETAIL'});assert.match(held.message,/Inspect saved history/);assert.equal(JSON.stringify(held).includes('PRIVATE CHECKPOINT DETAIL'),false);
+test('native history capacity and unverified saves preserve the hold and name current file controls',()=>{
+ for(const code of ['CLOCK_LEDGER_FULL','FILE_RECEIPT_LIMIT']){const view=api.presentDiagnostic({code,message:'PRIVATE HOST DETAIL'});assert.match(view.message,/Details.*File/);assert.match(view.message,/history.*limit/i);assert.doesNotMatch(view.message,/Workflow Data|checkpoint|automatically|retry/i);assert.equal(JSON.stringify(view).includes('PRIVATE HOST DETAIL'),false);}
+ const held=api.presentDiagnostic({code:'PERSISTENCE_UNKNOWN',message:'PRIVATE CHECKPOINT DETAIL'});assert.match(held.message,/held.*verified/);assert.match(held.message,/Details.*File/);assert.doesNotMatch(held.message,/Workflow Data|Inspect saved history|retry/);assert.equal(JSON.stringify(held).includes('PRIVATE CHECKPOINT DETAIL'),false);
  const corrupt=api.presentDiagnostic({code:'INVALID_DOCUMENT_HISTORY',message:'secret old action'});assert.match(corrupt.message,/history.*invalid/i);assert.equal(JSON.stringify(corrupt).includes('secret old action'),false);
+});
+
+test('pending workflow selection is an owned warning that keeps untrusted details private',()=>{
+ const source={code:'WORKFLOW_SELECTION_PENDING',message:'PRIVATE DRAFT CONTENT password=hidden'},before=structuredClone(source);
+ const view=api.presentDiagnostic(source);
+ assert.equal(view.severity,'warning');assert.equal(view.technical.code,'WORKFLOW_SELECTION_PENDING');
+ assert.match(view.message,/Open Lattice.*choose.*workflow.*chat/);assert.match(view.message,/draft is kept/i);
+ assert.doesNotMatch(view.id,/^unknown-/);assert.doesNotMatch(JSON.stringify(view),/PRIVATE DRAFT CONTENT|password=hidden/);
+ assert.equal(api.diagnosticText(view.message),view.message);assert.deepEqual(source,before);
 });
 
 test('unknown exceptions do not disclose private text or invent a remedy', () => {
@@ -154,8 +163,8 @@ test('file, revision, privacy, setup, import and graph families offer cause-spec
         ['PRIVATE_DESTINATION', /visibility|private/, 'error'],
         ['ACTOR_REQUIRED', /character/, 'info'],
         ['CHAT_REQUIRED', /chat/, 'info'],
-        ['DOCUMENT_SETUP_UNAVAILABLE', /Workflow Data/, 'info'],
-        ['DOCUMENT_NOT_AUTHORIZED', /Workflow.*Configure.*Workflow Data/, 'error'],
+        ['DOCUMENT_SETUP_UNAVAILABLE', /Details.*File/, 'info'],
+        ['DOCUMENT_NOT_AUTHORIZED', /Details.*File/, 'error'],
         ['RECALL_UNAVAILABLE', /Enable Lattice/, 'info'],
         ['RECALL_QUEUE_CONFLICT', /matching.*settings/i, 'error'],
         ['RECALL_NOT_QUEUED', /Queue recall/, 'info'],
@@ -249,7 +258,7 @@ test('oversized inputs stay bounded and unknown support codes retain only safe g
 
 test('source-backed file and subgraph variants do not inherit the wrong family remedy', () => {
     const logical = api.presentDiagnostic({ code: 'FILE_NOT_FOUND', message: 'Select an existing logical document or an explicit creation template.' });
-    assert.match(logical.message, /Workflow Data.*template|template.*Workflow Data/i);
+    assert.match(logical.message, /Details.*File/);
     assert.doesNotMatch(logical.message, /Save As/);
     const missingOutput = api.presentDiagnostic({ code: 'MISSING_INPUT', message: 'The selected wrapper output has no connected source.' });
     assert.match(missingOutput.message, /subgraph.*Output boundary/i);
@@ -266,20 +275,21 @@ test('source-backed file and subgraph variants do not inherit the wrong family r
     }
 });
 
-test('Workflow Data validation names the controls needed to correct the draft', () => {
+test('legacy file validation text names current controls without restoring removed setup actions', () => {
     const cases = [
-        ['Use a positive starting day, a time within the day, and a day length in whole minutes.', /Starting day.*Starting time.*Hours per day/],
-        ['Load a valid clock template before changing its starting values.', /Load initial values.*clock template/],
-        ['Load the initial template before saving.', /Load initial values.*Save settings/],
-        ['Choose an actor for private data.', /Actor ID.*Actor private/],
-        ['The initial template could not be loaded.', /initial template.*Workflow Data/],
-        ['Check the initial settings.', /initial.*Workflow Data/i],
-        ['Check the new data settings.', /Name.*Format.*Visibility/],
+        ['Use a positive starting day, a time within the day, and a day length in whole minutes.', /clock.*Details.*File/i],
+        ['Load a valid clock template before changing its starting values.', /clock.*Details.*File/i],
+        ['Load the initial template before saving.', /Details.*File/],
+        ['Choose an actor for private data.', /Character.*File.*Advanced/],
+        ['The initial template could not be loaded.', /Details.*File/],
+        ['Check the initial settings.', /Details.*File/],
+        ['Check the new data settings.', /Name.*Advanced.*visibility/],
     ];
     for (const [source, remedy] of cases) {
         const view = api.presentDiagnostic(source);
         assert.equal(view.severity, 'error', source);
         assert.match(view.message, remedy, source);
+        assert.doesNotMatch(view.message, /Workflow Data|Load initial values|Save settings|Actor ID/);
         assert.equal(view.technical, null);
         assert.equal(api.diagnosticText(view.message), view.message);
         const untrusted = api.presentDiagnostic(source + ' Private diary: a secret scene.');

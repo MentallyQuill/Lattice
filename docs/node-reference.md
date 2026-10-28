@@ -4,7 +4,7 @@
 
 This reference covers the registered reusable operations, their implemented modes, and the structural nodes used by subgraphs. A starter is a complete workflow built from operations; a subgraph is a reusable process with its own interface. Neither is an extra model engine.
 
-For an in-app explanation, select a node and click **?** beside its name in Details. The guide shows the current node, practical steps, and explanations of its visible settings. Expand **Example** to explore a complete graph rendered with the current canvas theme. **Add example to current tab** inserts a compatible example as one undoable edit. Each example lists the chat, model connection, or Workflow Data setup it needs. Examples that need sample files include copyable **Setup data**. Adding an example does not run it.
+For an in-app explanation, select a node and click **?** beside its name in Details. The guide shows the current node, practical steps, and explanations of its visible settings. Expand **Example** to explore a complete graph rendered with the current canvas theme. **Add example to current tab** inserts a compatible example as one undoable edit. Each example lists the chat, model connection or source input it needs. File outputs and internal state have automatic defaults; an unknown personal input still needs an explicit choice. Adding an example does not run it.
 
 ## Enter node settings
 
@@ -14,15 +14,15 @@ For terms, separate entries with commas or newlines and quote phrases containing
 
 CSV applies to declared list or table controls. Prose, templates, file paths and regex expressions keep their syntax. Expression rows never split a quantifier such as `a{1,3}`. Numeric lists, including Collection thresholds, validate numbers; path rows preserve literal keys and use array indices only where the consuming node supports them. Typed values distinguish null, false, zero, empty strings, arrays and objects; optional defaults can remain absent. A form that cannot represent an advanced shape keeps it in Advanced JSON instead of dropping fields. Table import uses explicit column mappings and **Add rows** or **Replace rows**, previews the result, then uses the ordinary Save action.
 
-## Checkpoint accepted document history
+## Accepted document history
 
-Long-running stories can fill the active clock-turn, save-receipt, accepted-outcome or progression history. Open **Workflow › Configure › Workflow Data**, select the authorized document, then choose **Preview history checkpoint**. Review the counts and choose **Apply checkpoint** or **Cancel checkpoint**. Preview and Cancel make no storage change.
+Long-running stories can fill the active clock-turn, save-receipt, accepted-outcome or progression history. Existing checkpoints and archives remain preserved during file migration. The former global chat-document manager has been removed, and the node File panel does not currently create additional history checkpoints.
 
-Apply archives the exact accepted history while retaining current document values, clock/calendar/remainder, progression budgets, cooldowns, repetition totals and decay times. Future or unrecognized consumed clock IDs remain active. Archived intent fingerprints, original draws, clock turns and authored progression identities still prevent duplicate actions. Archive pages retain their original document and payload privacy, including actor restrictions after the catalog changes.
+Saved checkpoints retain current document values, clock/calendar/remainder, progression budgets, cooldowns, repetition totals and decay times. Future or unrecognized consumed clock IDs remain active. Archived intent fingerprints, original draws, clock turns and authored progression identities still prevent duplicate actions. Archive pages retain their original document and payload privacy, including actor restrictions after the catalog changes.
 
 A checkpoint invalidates captured file references and reviewed results; run the workflow again before acceptance. Checkpointed progression requires its authorized native history lookup. Copying its marker into an offline graph does not supply that authority. Ordinary writes preserve the marker.
 
-Local application and durable saving have separate status. If saving is unverified, further writes to that target remain held. **Inspect saved history** checks the exact checkpoint without another save and lists archive metadata when authorized. Missing or corrupt history fails closed. Active limits stay bounded; archives also have an explicit native capacity of 4,096 pages and 30 MB per user, with each page obeying existing JSON limits. History is never automatically pruned.
+Local application and durable saving have separate status. If saving is unverified, further writes to that target remain held. Missing or corrupt history fails closed. Active limits stay bounded; legacy archives also have an explicit native capacity of 4,096 pages and 30 MB per user, with each page obeying existing JSON limits. History is never automatically pruned.
 
 ## Read the graph's types
 
@@ -634,7 +634,7 @@ Strict **recall** selects an authorized existing memory ID and preserves its sto
 
 ### Read File
 
-**Both stages; root or static system body; zero calls.** Reads an authorized logical workflow data target in the active user/chat, producing serialized `text`, parsed `document` Data and exact live `reference` Data. Controls: Authorized target, optional Schema/CSV columns, Actor scope (`selected`/`presence`) and Present actor identity. Presence scope adds required exact live presence Data for the configured actor. Selected scope uses the native actor and no authored actor ID. It is distinct from File Input's portable imported snapshot. Authorize targets in **Workflow → Configure → Workflow Data…**; no arbitrary OS paths are exposed.
+**Both stages; root or static system body; zero calls.** Reads an authorized source in the active user/chat, producing serialized `text`, parsed `document` Data and exact live `reference` Data. Use **Details → File** to choose a source or **Import from device…** to create a managed copy; changing the original does not update that copy. An unknown source needs a choice. Type and filename suffix are automatic, while schema/CSV columns and specialized actor-scope controls remain available. Presence scope requires exact live presence for the configured actor; selected scope uses the native actor. File Input remains a distinct portable imported snapshot. Existing chat documents and granted browser files remain preserved. See [file storage](file-storage.md) for defaults and optional custom server locations.
 
 The additive **Parsed value** (`value`) Data output exposes only the parsed structured content, without the `document` wrapper's target/revision/format metadata or top-level provenance. It inherits the file's visibility. JSON, JSON Lines and CSV can supply this value; Text and Markdown skip that output with `FILE_VALUE_UNAVAILABLE`. Existing Text, Parsed document and Live file reference outputs retain their contracts.
 
@@ -648,9 +648,9 @@ The additive **Parsed value** (`value`) Data output exposes only the parsed stru
 
 ### Write to File
 
-**Response/Post terminal; root or static system body; zero calls.** Required exact Read File reference plus records Data or serialized Text according to Mutation; optional canonical evidence; outputs projected document and staging receipt. Presence actor scope adds required exact actor presence. Controls: Mutation (`append`, `add`, `add-unique`, `upsert`, `update-fields`, `replace`), Collection JSON Pointer, Missing collection (`error`/`create`), Identity field, Upsert merge/replace policy, Updated fields, Schema/CSV columns and separator policies.
+**Response/Post terminal; root or static system body; zero calls.** New nodes own an automatic destination in **Details → File**. Choose **Connected document** to retain an exact Read File reference. Ordinary **File handling → Replace / Append** controls updates; new nodes default to Replace. Supply Text or Records, with optional canonical evidence; outputs are the projected document and staging receipt. Presence actor scope requires exact actor presence. Advanced retains specialized mutations (`add`, `add-unique`, `upsert`, `update-fields`), Collection JSON Pointer, missing-collection policy, identities, merge/update fields, schema/CSV columns and separators. Existing configured mutation modes are preserved.
 
-Append is Text/Markdown concatenation; JSON uses structured collection mutation. JSON keyed modes need explicit identities; update-fields permits only named fields of existing records. JSON Lines and CSV support Add/Replace. Replace validates the complete destination content before staging. A copied or differently scoped reference cannot authorize a write. In a unified run, this terminal stages an effect for the exact reviewed root's Apply; target previews and failures do not write. Multi-target writes report confirmed partial results and unknown-save barriers honestly. See [document setup](unified-workflows.md#authorize-workflow-data-and-preserve-its-structure).
+Append concatenates text or adds structured records according to the declared type; it never joins JSON documents into invalid JSON. Advanced keyed mutations need explicit identities; update-fields permits only named fields of existing records. Replace validates the complete destination before staging. A copied or differently scoped reference cannot authorize a write. The terminal stages an effect for the exact reviewed root's Apply; previews and failures do not write output bytes. Multi-target results distinguish confirmed and uncertain saves. See [file storage](file-storage.md).
 
 ### Collection
 
@@ -704,7 +704,7 @@ When used inside a system, this terminal stages its proposal for Main's exact ac
 
 ### Story Clock
 
-**Both stages; root or static system body; zero calls.** No inputs; returns the accepted clock Data for **Accepted clock identity**, with optional expected Calendar identity. Authorize its JSON target and use Workflow Data's clock template. A valid native clock has an explicit calendar, nonnegative integer absolute minute, positive revision and day length. It tracks story time, not real time or message count.
+**Both stages; root or static system body; zero calls.** No inputs; returns the accepted clock Data for **Accepted clock identity**, with optional expected Calendar identity. New clocks start automatically with valid state in Details → File; existing clocks retain their accepted time and access settings. Choose an existing clock file only when deliberately sharing its timeline. Clock Commit inherits that captured destination. A valid native clock has an explicit calendar, nonnegative integer absolute minute, positive revision and day length. It tracks story time, not real time or message count.
 
 ### Advance Time
 

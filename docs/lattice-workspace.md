@@ -12,6 +12,8 @@ This guide assumes SillyTavern is installed and your usual model connection work
 
 A fresh installation opens **Unified story workflow** with Lattice disabled. Existing installations restore their recovery draft. **File → Recover previous workflows** offers earlier unified documents.
 
+On first use, choose **Save only inside SillyTavern** to continue immediately, or follow the optional wizard for locations elsewhere on its host machine. Reopen this choice through **File → File storage…**.
+
 ## Run your first unified workflow
 
 The starter connects **On Send → Generate Reply · SillyTavern → Review / Publish**. Your usual SillyTavern connection writes the reply; the starter makes no extra model requests.
@@ -40,9 +42,9 @@ Click a node’s **?** button for its guide. It explains the job, settings, conn
 
 ## Save your work
 
-Use **File → Save workflow** or **Save As…** to keep an editable file. In browsers without direct file access, Save As downloads a JSON copy. The document stays marked modified because Lattice cannot confirm the download finished.
+Workflow edits autosave. **Saved in SillyTavern** confirms that the saved contents were verified. Use **File → Open saved…** to reopen a workflow, or **Save workflow** to save immediately.
 
-A recovery draft keeps saved editor changes across reloads, but does not update your file on disk. **Open Recent** reopens previously accessed files in supported browsers. **Export workflow JSON…** creates a sharing copy without local connection identifiers or credentials. See [save, import, and share](operators-manual.md#save-import-and-share).
+Saving an edit to a workflow changes that workflow everywhere it is used. **Save As…** creates an independent workflow for a chat that needs different settings. Story data stays separate between chats. **Download / share workflow…** creates a portable copy without local connection identifiers, writable bindings or credentials. See [saving workflows and files](file-storage.md).
 
 ## Find your way around
 
@@ -54,21 +56,15 @@ Use **Graph → Add node…** to search the shelf and place a node immediately. 
 
 *Preview lets you inspect the result of a step before sending a reply. This demonstration uses a structured scene brief.*
 
-## Use automatic Workflow Data
+## Configure files in Details
 
-Add **Story Clock**, **Read File**, or **Outcome Commit** to use their automatic sources:
+Select a file node and open **Details → File**. New output and story-state nodes have automatic destinations, suggested names and valid starting state. Lattice chooses the type and filename suffix. **File handling → Replace / Append** controls how a saving node updates its file. **Advanced** contains optional location, format and access choices.
 
-| Node | Starting source |
-| --- | --- |
-| Story Clock | **Chat clock**: Day 1 at 00:00, with a 24-hour day. |
-| Read File | **Chat notes**: empty plain text. |
-| Outcome Commit | **Chat outcomes**: an empty JSON list. |
+New **Write to File** nodes own an automatic destination. Choose **Connected document** to use an exact Read File reference. **Clock Commit** inherits its clock's destination. An unknown input offers **Import from device…** or a source choice; an imported copy does not track changes to the original.
 
-Lattice makes the referenced defaults available when the enabled workflow runs. Change starting values or content in Details; **Advanced** lets you choose a source, format, and visibility. Actor-private sources also require an actor ID. Clock and outcomes keep their required JSON format.
+Initial values do not overwrite saved contents during setup. Preview and rejection do not write files; accepting a reviewed result saves its staged changes after freshness checks. Nodes sharing a clock file share its timeline.
 
-Starting values seed unsaved data. Changing them does not overwrite saved time, notes, or outcomes. Nodes choosing the same clock share its timeline; separate clocks do not synchronize automatically.
-
-For named documents required by a lesson, open **Workflow → Configure → Workflow Data…**. These are story documents stored with the chat, not arbitrary files on your computer. See [document setup](unified-workflows.md#authorize-workflow-data-and-preserve-its-structure).
+On first use, choose saving inside SillyTavern or optional access to other locations on its host machine. **File → File storage…** reopens the setup wizard. Existing data and destinations remain preserved; the global Legacy chat data screen is gone. See [file storage](file-storage.md).
 
 ## Add a reusable system
 

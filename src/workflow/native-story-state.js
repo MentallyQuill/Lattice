@@ -1,10 +1,10 @@
-import { artifactVisibility } from './artifact-privacy.js?v=0.28.1';
-import { cloneJsonValue } from './operations/json-data.js?v=0.28.1';
-import { advanceStoryClock } from './story-time.js?v=0.28.1';
-import { validateOccurrences, normalizeOccurrences }  from './operations/event-data.js?v=0.28.1';
-import { selectRandomOutcomes, validateRandomOutcome } from './operations/random-outcomes.js?v=0.28.1';
-import { validateNativeFileEvidence } from './native-settlement.js?v=0.28.1';
-import { freeze, plain } from './record-data.js?v=0.28.1';
+import { artifactVisibility } from './artifact-privacy.js?v=0.29.0';
+import { cloneJsonValue } from './operations/json-data.js?v=0.29.0';
+import { advanceStoryClock } from './story-time.js?v=0.29.0';
+import { validateOccurrences, normalizeOccurrences }  from './operations/event-data.js?v=0.29.0';
+import { selectRandomOutcomes, validateRandomOutcome } from './operations/random-outcomes.js?v=0.29.0';
+import { validateNativeFileEvidence } from './native-settlement.js?v=0.29.0';
+import { freeze, plain } from './record-data.js?v=0.29.0';
 const good=data=>({ok:true,...(data===undefined?{}:{data})}),fail=(code,message)=>({ok:false,error:{code,message}});
 const permits=(source,destination)=>source.kind==='public'||destination.kind==='hidden'||source.kind==='actor-private'&&destination.kind==='actor-private'&&source.actorId===destination.actorId;
 const id=value=>typeof value==='string'&&!!value.trim()&&value.length<=256;
@@ -76,7 +76,8 @@ export function createNativeStoryState(raw) {
         }
         return good();
     }
-    async function stageClock(report,extra,address) {
+    async function stageClock(report,extra,address,{fileHandling=''}={}) {
+        if(!['','replace','append'].includes(fileHandling))return fail('INVALID_FILE_HANDLING','Choose Replace or Append.');
         const available=current();if(!available.ok)return available;const proof=projections.get(report);if(!proof||proof.report!==report)return fail('TIME_PROJECTION_UNAUTHORIZED','Clock Commit requires the retained Advance Time report.');
         let occurrences=proof.occurrences;
         if(extra!==undefined){const retained=occurrenceLists.get(extra)?.proof;if(!retained||retained.capture!==proof.capture||retained!==proof&&!proof.ancestors.includes(retained))return fail('TIME_PROJECTION_UNAUTHORIZED','Connected occurrences must derive from this retained time ancestry.');occurrences=[...occurrences,...extra];}occurrences=occurrences.filter((event,index,all)=>all.findIndex(other=>other.occurrenceId===event.occurrenceId)===index);
@@ -93,7 +94,7 @@ export function createNativeStoryState(raw) {
         }
         const snapshot=cloneJsonValue(next);if(!snapshot.ok)return fail('CLOCK_LEDGER_FULL','The accepted clock projection exceeds portable bounds.');
         const intentId=await hash([scope,'clock',config.turnId,capture.fileRef.revision,key,capture.replay?'replay':'advance',...(address?.instancePath?.length?[[address.workflowId,address.instancePath,address.nodeId]]:[])]);if(!current().ok)return current();
-        const prepared=await config.files.store.prepare(capture.fileRef,{operation:'replace',content:JSON.stringify(snapshot.data.value)},{intentId,evidence:[]});if(!current().ok)return current();if(!prepared.ok)return prepared;
+        const prepared=await config.files.store.prepare(capture.fileRef,{operation:'replace',content:JSON.stringify(snapshot.data.value)},{intentId,evidence:[],...(fileHandling?{historyHandling:fileHandling}:{})});if(!current().ok)return current();if(!prepared.ok)return prepared;
         const staged=config.files.stage(prepared.data,[]);if(!current().ok)return current();if(staged.ok){const ids=new Set(occurrences.map(event=>event.occurrenceId));for(const ancestor of [...proof.ancestors,proof])stagedClocks.set(ancestor,ids);}return staged.ok?good(freeze({kind:'clock',status:'staged',clockId:next.clockId,previousRevision:capture.latest.revision,proposedRevision:next.revision,absoluteMinute:next.absoluteMinute,occurrenceCount:occurrences.length,remainingMinutes:next.pendingTimeAdvance?.minutes??0,intentId})):staged;
     }
     async function selectNativeRandomOutcomes({events,library,saved=[],rerollId,ledgerId='',visibility={kind:'public'}}){
@@ -131,7 +132,8 @@ export function createNativeStoryState(raw) {
         if(canonical(immutable(parent))!==canonical(immutable(known.outcome))||canonical(immutable(next))!==canonical(immutable(known.outcome))||!source(next.event).ok)return fail('OUTCOME_PROJECTION_UNAUTHORIZED','The authored outcome must retain this captured draw and occurrence.');
         cache.entries.set(known.key,{...cache.entries.get(known.key),outcome:next});knownOutcomes.set(next.outcomeId,{...known,outcome:next});return good();
     }
-    async function stageOutcomes(targetId,rawOutcomes,address){
+    async function stageOutcomes(targetId,rawOutcomes,address,{fileHandling=''}={}){
+        if(!['','replace','append'].includes(fileHandling))return fail('INVALID_FILE_HANDLING','Choose Replace or Append.');
         const available=current();if(!available.ok)return available;const admitted=cloneJsonValue(rawOutcomes);if(!admitted.ok)return fail('OUTCOME_LIMIT','Outcome Commit requires bounded own outcome data.');const values=Array.isArray(admitted.data.value)?admitted.data.value:[admitted.data.value];if(values.length>64)return fail('OUTCOME_LIMIT','Commit a bounded nonempty set of resolved outcomes.');
         let outcomes=[];for(const value of values){const known=knownOutcomes.get(value?.outcomeId);if(!known||canonical(value)!==canonical(known.outcome)||value.status!=='resolved'||!source(value.event).ok)return fail('OUTCOME_PROJECTION_UNAUTHORIZED','Outcome Commit requires the retained resolved draw and unchanged event.');outcomes.push({...value,acceptance:'accepted'});}
         const visibility=config.files.visibility(targetId);if(!current().ok)return current();if(!visibility.ok)return visibility;if(!permits(artifactVisibility({outcomes,provenance:values.map(value=>({visibility:knownOutcomes.get(value.outcomeId).visibility}))}),visibility.data))return fail('PRIVATE_DESTINATION','Outcome Commit must preserve the occurrence disclosure scope.');
@@ -148,7 +150,7 @@ export function createNativeStoryState(raw) {
             if(!outcomes.length)return good(freeze({kind:'outcomes',status:'unchanged',targetId,outcomeIds:values.map(value=>value.outcomeId)}));
         }
         const evidence=outcomes.map(value=>value.event),intentId=await hash([scope,'outcomes',targetId,outcomes,...(address?.instancePath?.length?[[address.workflowId,address.instancePath,address.nodeId]]:[])]);if(!current().ok)return current();
-        const prepared=await config.files.store.prepare(read.data.fileRef,{operation:'add-unique',collectionPath:'',missingPath:'error',key:'outcomeId',records:outcomes},{intentId,evidence});if(!current().ok)return current();if(!prepared.ok)return prepared;
+        const prepared=await config.files.store.prepare(read.data.fileRef,{operation:'add-unique',collectionPath:'',missingPath:'error',key:'outcomeId',records:outcomes},{intentId,evidence,...(fileHandling?{historyHandling:fileHandling}:{})});if(!current().ok)return current();if(!prepared.ok)return prepared;
         const staged=config.files.stage(prepared.data,evidence);if(!current().ok)return current();return staged.ok?good(freeze({kind:'outcomes',status:'staged',targetId,outcomeIds:outcomes.map(value=>value.outcomeId),intentId})):staged;
     }
     function validateEvidence(raw,body,originalBody,options={}){const checked=cloneJsonValue(raw);if(!checked.ok||!Array.isArray(checked.data.value))return fail('INVALID_FILE_EVIDENCE','File evidence requires a bounded array.');for(const value of checked.data.value){if(!plain(value))return fail('INVALID_FILE_EVIDENCE','File evidence entries must be own records.');const events=Array.isArray(value.events)?value.events:[value];for(const event of events){if(event.occurrenceId&&scheduledEvents.has(event.occurrenceId)){const known=scheduledEvents.get(event.occurrenceId);if(canonical(event)!==canonical(known.event)||!stagedClocks.get(known.proof)?.has(event.occurrenceId))return fail('TIME_PROJECTION_UNAUTHORIZED','A scheduled consequence requires its exact retained occurrence and staged accepted clock.');}else if(event.source?.watch==='player-message'){const validated=validateOccurrences([event],{status:'confirmed'});if(!validated.ok||!source(event).ok)return fail('STATE_EVIDENCE_CHANGED','The captured player event changed before acceptance.');}else {const validated=validateNativeFileEvidence([event],body,originalBody,options);if(!validated.ok)return validated;}}}return current();}

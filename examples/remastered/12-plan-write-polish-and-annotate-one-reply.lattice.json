@@ -118,7 +118,8 @@
         "instructions": "Make narration clear and concise. Copy dialogue, facts and actions unchanged.",
         "scope": "narration",
         "protectedLiterals": [],
-        "maxTokens": 2048
+        "maxTokens": 2048,
+        "maxRetries": 0
       },
       "items": {
         "id": "items",
@@ -144,7 +145,8 @@
         "patterns": [],
         "caseSensitive": true,
         "match": "substring",
-        "maxTokens": 2048
+        "maxTokens": 2048,
+        "maxRetries": 0
       },
       "suggestions": {
         "id": "suggestions",
@@ -164,7 +166,8 @@
         "phase": "post",
         "alias": "Enrich",
         "instructions": "For each observed item suggest one sensory detail consistent with public context. Label additions as suggestions, never observed facts.",
-        "maxTokens": 2048
+        "maxTokens": 2048,
+        "maxRetries": 0
       },
       "notes": {
         "id": "notes",

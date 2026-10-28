@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { chooseControl, chooseNodeProfile, openDetailGroup } from './details-helpers.mjs';
+import {installHostFileRoutes,configureWorkflowSelectionPersistence} from './host-file-fixture.mjs';
 
 const preview = page => page.locator('.pc-output-preview');
 const details = page => page.getByRole('region', { name: 'Node details', exact: true });
@@ -23,13 +24,17 @@ async function finishExampleChoice(page) {
 }
 // Authoring fixtures retain diagnostic operation layouts as unified roots.
 async function installWorkflow(page, title) {
-    await page.evaluate(async title => {
+    return page.evaluate(async title => {
         const h = window.canvasHarness, { fixtureGraph } = await import('/tests/helpers/workflow-fixtures.mjs');
         const id = { 'Scene guidance': 'native-guidance', 'Reviewed AI De-slop': 'reviewed-de-slop' }[title];
         if (!id) throw new Error('Unknown authoring fixture: ' + title);
         const graph = fixtureGraph(id);
         graph.runTargets = [{ instancePath: [], nodeId: id === 'reviewed-de-slop' ? 'apply-reply' : 'review-publish' }];
         await h.activate(graph);
+        const abortedBeforeSave=window.workflowSignal?.aborted;
+        const application=(await import('/src/run.js?v='+h.version)).getApplicationFileExperience();
+        if(application){const saved=await application.controller.save();if(!saved.ok)throw Error(JSON.stringify(saved.error??saved));}
+        return {abortedBeforeSave};
     }, title);
 }
 async function bindNode(page, operation, profile) {
@@ -366,6 +371,7 @@ async function prepareReviewRoot(page) {
     });
 }
 async function reviewFixture(page) {
+    await installHostFileRoutes(page);
     await page.route('**/scripts/user.js', route => route.fulfill({contentType:'text/javascript',body: "export const getCurrentUserHandle = () => 'workflow-browser-user';"}));
     await page.route('**/script.js', route => route.fulfill({ contentType: 'text/javascript', body: `
         const context = () => globalThis.SillyTavern.getContext();
@@ -374,6 +380,7 @@ async function reviewFixture(page) {
         export function syncSwipeToMes(index, swipeId) { const m = context().chat[index]; m.swipe_id = swipeId; m.mes = m.swipes[swipeId]; Object.assign(m, structuredClone(m.swipe_info[swipeId])); return true; }
     ` }));
     await page.goto('/tests/browser/harness.html'); await page.waitForFunction(() => !!window.canvasHarness);
+    await configureWorkflowSelectionPersistence(page,{chatId:'synthetic-workflow-ui'});
     await page.evaluate(async () => {
         const c = window.canvasHarness.context;
         c.chatId = 'synthetic-workflow-ui';
@@ -430,7 +437,8 @@ test('switching graph cancels a delayed run while closing preserves its review a
     });
     await runRoot(page);
     await page.waitForFunction(() => !!window.finishWorkflowRequest);
-    await installWorkflow(page, 'Scene guidance');
+    const replacement=await installWorkflow(page, 'Scene guidance');
+    expect(replacement.abortedBeforeSave).toBe(true);
     expect(await page.evaluate(() => window.workflowSignal.aborted)).toBe(true);
     await page.evaluate(async () => { window.finishWorkflowRequest({ choices: [{ message: { content: 'Late replacement.' }, finish_reason: 'stop' }], usage: { prompt_tokens: 50, completion_tokens: 10 } }); await window.canvasHarness.settle(); });
     await expect(page.getByRole('button', { name: 'Apply reviewed reply', exact: true })).toHaveCount(0);
@@ -487,7 +495,7 @@ test('document replacement expires automatic Send evidence and reopening permits
     const opened = await page.evaluate(()=>{window.reviewDocument=window.canvasHarness.graph;return window.reviewDocument.id;});
     await installWorkflow(page,'Scene guidance');
     await expect(page.getByRole('button',{name:'Apply reviewed reply',exact:true})).toHaveCount(0);
-    await page.evaluate(async()=>window.canvasHarness.activate(window.reviewDocument));
+    await page.evaluate(async()=>{const h=window.canvasHarness;await h.activate(window.reviewDocument);const saved=await(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.save();if(!saved.ok)throw Error(JSON.stringify(saved.error??saved));});
     await selectTerminal(page,'review-publish',false);
     await expect(preview(page)).not.toContainText('We explore.');
     await expect(page.getByRole('button',{name:'Apply reviewed reply',exact:true})).toHaveCount(0);
@@ -579,6 +587,10 @@ test('native camera pan and zoom preserve the focused editor without domain work
     await expect(page.getByRole('button', { name: 'Apply reviewed reply', exact: true })).toBeVisible();
     await inspectOperation(page, 'repair');
     await page.getByLabel('Instructions', { exact: true }).focus();
+    await expect.poll(()=>page.evaluate(async()=>{
+        const h=window.canvasHarness,source=h.S.documentSession.source(),application=(await import('/src/run.js?v='+h.version)).getApplicationFileExperience();
+        return source?.kind==='library'&&h.context.chatMetadata.latticeWorkflowSelection?.id===source.id&&!application.controller.view().autosave.saving;
+    })).toBe(true);
     const measured = await page.evaluate(async () => {
         const { context: c, canvas, settle } = window.canvasHarness;
         const controller = (await import('/src/run.js?v=' + window.canvasHarness.version)).getNativeWorkflowController();
