@@ -27,7 +27,8 @@ function actual(name, env) {
     assert.ok(start >= 0, 'Actual controller function ' + name);
     const line = source.slice(start, source.indexOf('\n', start));
     const end = line.endsWith('}') ? start + line.length : source.indexOf('\n}', start) + 2;
-    return Function('env', 'with(env){' + source.slice(start, end) + ';return ' + name + ';}')(env);
+    const prefix = source.slice(start - 6, start) === 'async ' ? 'async ' : '';
+    return Function('env', 'with(env){' + prefix + source.slice(start, end) + ';return ' + name + ';}')(env);
 }
 function fixture(graph = siblingWorkflow()) {
     const prepared = prepareWorkspaceViews(graph); assert.equal(prepared.ok, true, JSON.stringify(prepared));
@@ -40,6 +41,8 @@ function fixture(graph = siblingWorkflow()) {
     env.canCreateSubgraph = actual('canCreateSubgraph', env);
     env.selectionMenuCapabilities = actual('selectionMenuCapabilities', env);
     env.stopOwnedWorkflow = actual('stopOwnedWorkflow', env);
+    env.applicationFiles = () => null;
+    env.runCurrentWorkflow = actual('runCurrentWorkflow', env);
     env.runPreviewHere = actual('runPreviewHere', env);
     const refresh = () => { const next = prepareWorkspaceViews(graph); assert.equal(next.ok, true, JSON.stringify(next)); assert.equal(session.replacePreparedViews(next.data).ok, true); env.editorDraw = projectEditorDraw(session.readEditor()); env.workspacePrepared.libraryDefinitions = graph.definitions; };
     env.commitGraphEdit = (root, command) => { const result = commitPreparedGraph(root, command); if (result.ok && result.data.changed) { H.noteChange(root); refresh(); } return result; };
@@ -53,7 +56,7 @@ function fixture(graph = siblingWorkflow()) {
     env.canvas.host = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 800 }) }; env.canvas.toGraph = (x, y) => ({ x, y });
     return { env, session, graph, refresh, select, capabilities: () => actual('selectionMenuCapabilities', env)() };
 }
-test('diagnostic dispatch never supersedes an active host run and rechecks before starting', () => {
+test('diagnostic dispatch never supersedes an active host run and rechecks before starting', async () => {
     const f = fixture();
     let activity = {busy:true, graph:f.graph}, calls = 0;
     f.env.workflowRuntime.getNativeWorkflowController = () => ({activity: () => activity});
@@ -61,11 +64,11 @@ test('diagnostic dispatch never supersedes an active host run and rechecks befor
     const run = actual('runPreviewHere', f.env);
     const key = f.session.readEditContext().sessionId + ':' + f.env.workspaceRevision;
     const target = {workflowId:f.graph.id,instancePath:[],nodeId:'source',portId:'out'};
-    run(key,target); assert.equal(calls,0);
-    activity = {busy:true,graph:siblingWorkflow()}; run(key,target); assert.equal(calls,0);
-    activity = null; run(key + ':stale',target); assert.equal(calls,0);
-    assert.deepEqual(run(key,target),{target}); assert.equal(calls,1);
-    f.env.workflowState.busy = true; run(key,target); assert.equal(calls,1);
+    await run(key,target); assert.equal(calls,0);
+    activity = {busy:true,graph:siblingWorkflow()}; await run(key,target); assert.equal(calls,0);
+    activity = null; await run(key + ':stale',target); assert.equal(calls,0);
+    assert.deepEqual(await run(key,target),{target}); assert.equal(calls,1);
+    f.env.workflowState.busy = true; await run(key,target); assert.equal(calls,1);
 });
 test('menu capabilities follow exact node, multi, group and wire selection', () => {
     const f = fixture();
