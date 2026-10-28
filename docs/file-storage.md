@@ -25,7 +25,7 @@ Use **File → Open saved…** to find a saved workflow. The same saved workflow
 
 Choose **Save As…** and enter a different friendly name when you want an independent workflow. Later edits to that copy do not update the original. **Rename workflow…** keeps the existing workflow identity.
 
-**Import workflow…** opens a copy from your device. **Download / share workflow…** creates a portable sharing copy; it does not replace an acknowledged live save. Sharing excludes local connection identifiers, writable file bindings and machine paths. Keep private input data out of a sharing copy unless you deliberately include it.
+**Import workflow…** opens a copy from your device. **Download / share workflow…** creates a portable sharing copy; it does not replace an acknowledged live save. Sharing excludes local connection identifiers, writable file bindings and machine paths. Keep private input data out of a sharing copy unless you deliberately include it. **Download workflow backup…** retains your local workflow configuration; it does not include the contents or recovery history of its input and output files.
 
 ## Let nodes manage their files
 
@@ -40,7 +40,7 @@ Every file-saving node offers **File handling**:
 | **Replace** | Update the same file with the new contents. This is the default for new nodes. |
 | **Append** | Retain existing material and add the new material once. Structured data stays in a valid form. |
 
-Use **Change…** to choose another destination. Wider server locations use the folder chooser after optional setup. **Open** inspects the saved output; **Download copy** creates a copy on your device. A friendly label can change without moving the existing physical file. Changing an existing file's type or physical destination uses an explicit new destination so the original is retained.
+Use **Change…** to choose another destination. Wider server locations use the folder chooser after optional setup. **Open** inspects the saved output; **Download** creates a copy on your device. A friendly label can change without moving the existing physical file. Changing an existing file's type or physical destination uses an explicit new destination so the original is retained.
 
 **Advanced** contains custom locations, explicit formats, creation policy, specialized mutations and access choices. Choose a character by name for character-private files. An unavailable character does not turn private data into public data. Public here describes workflow access, not internet publication.
 
@@ -56,7 +56,7 @@ Editing a workflow saves its configuration. Previewing or rejecting a result doe
 
 Read each save's result if a workflow writes several files. A confirmed first save and an uncertain second save can require different recovery actions. Follow the offered retry or recovery action; Lattice retains identities so a retry does not append the same accepted material twice.
 
-History maintenance runs automatically at accepted save boundaries. Recovery keeps up to 20 prior content versions separately from the history used to prevent duplicate story effects. Restoring earlier contents checks the current destination and retains its privacy and accepted-history protections. A missing verified version is reported instead of silently resetting story state.
+History maintenance runs automatically at accepted save boundaries. Select a file node and choose **File → Recover selected file…** to inspect and confirm an earlier version. Recovery keeps up to 20 prior content versions separately from the history used to prevent duplicate story effects. Restoring earlier contents checks the current destination and retains its privacy and accepted-history protections. A missing verified version is reported instead of silently resetting story state.
 
 Inside-SillyTavern saving verifies file contents and retains recovery copies. Its host API cannot atomically exclude writes from independent clients; storage details state this limitation. The optional server component serializes checked writes through its service. Neither mode silently redirects a configured external file when access is lost.
 
