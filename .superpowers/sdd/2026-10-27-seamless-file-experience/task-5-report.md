@@ -75,3 +75,23 @@ Task 5 is an implementation segment, not a claim that the new application host f
 Existing tests/browser/workflow-data-details.spec.mjs still encodes the removed Filename/Actor ID/Initial content/Save file settings and forced-migration journeys. Task 7 owns migration of those full legacy application fixtures and the stable full-suite final run. The parent has been notified.
 
 No output files or private data were changed or deleted. Other agents’ files and the shared index are not staged or reverted. Self-review covered provider selection, explicit grants, managed-intent stripping, privacy, stale drafts/selection, inherited handling, original-resource preservation and result identifiers.
+
+## Task 5 fix round 1 — reviewed P1 autosave acknowledgement race
+
+Addressed the P1 in task-5-review.md. The original pending !== save exemption accepted every incoming configuration while saving. The actual-component regression starts a managed writer save for Local first, types Local newer while that promise is pending, publishes Remote destination.txt with hidden visibility, and then resolves the older acknowledgement. Before the fix, running `node --import ./tools/node-test-host.mjs tests/node-file-panel.test.mjs` produced **9 pass / 1 fail**: the new test observed **2 saves instead of 1**, with the assertion identifying the unwanted public-visibility overwrite.
+
+NodeFile now records the exact submitted settings with the captured selected-node scope and epoch before invoking saveNodeFile. A stable settings key compares binding, canonical managed name, path, type, missing-file policy, initial template and exact visibility/actor identity. Managed suffix normalization is the only name normalization; unrelated binding/path/privacy changes are not treated as acknowledgements merely because an operation is pending. The action still receives the captured selection revision through its existing qualified contract. An incoming configuration exempts conflict detection only when it exactly matches this scoped submission; any other change pauses the dirty draft. A successful older response cannot mark a conflicted draft clean or delete its retained local work. Failed requests and selection changes invalidate their expected acknowledgement, and an observed configuration transition consumes it.
+
+A positive actual-component regression publishes the exact own canonical Local first.txt configuration while Local newer remains edited. It confirms that the own acknowledgement does not create a false conflict and that only this legitimate case permits the next Local newer autosave. Current saveNodeFile configuration autosave does not allocate or replace grants; an unexpected server-binding change therefore pauses for reconciliation instead of receiving a blanket pending-save exception. No action or host-boundary contract changed.
+
+Self-review found an adjacent way for the same conflict to be lost: editing a paused draft updated its cache baseline, then switching selections restored it without the pause. A separate component test was observed **red (1 unwanted save instead of 0)** before adding the explicit stale flag to retained draft snapshots. The cache now preserves a remote conflict through further editing and selection switches, while exact own acknowledgements advance a non-conflicted draft baseline safely.
+
+Final commands and results for this fix:
+
+- `node --import ./tools/node-test-host.mjs tests/node-file-panel.test.mjs` — **12/12 pass**, including the requested pending-two-edits/hidden-remote/old-ack regression, the exact-own-ack positive case and cached-conflict retention.
+- `node --import ./tools/node-test-host.mjs tests/node-file-actions.test.mjs` — **13/13 pass**.
+- `node --import ./tools/node-test-host.mjs tests/node-file-projection.test.mjs` — **21/21 pass**.
+- `npm run check:types` — **0 errors / 0 warnings**, using the previously permitted local process escalation for Vite/esbuild.
+- `git diff --check -- ui/NodeFile.svelte tests/node-file-panel.test.mjs` — exit 0 (line-ending notices only).
+
+Only ui/NodeFile.svelte, tests/node-file-panel.test.mjs and this report changed in the fix. No controller/run/adapters, generated assets, dependencies, live host data, paid calls or external network/GitHub activity were touched. Parent Task 7 retains the integrated build/browser/full-suite final verification. Re-review this fix from a82b9db using the scoped owned-file diff.

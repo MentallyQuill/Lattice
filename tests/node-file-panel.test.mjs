@@ -84,3 +84,43 @@ test('switching an inherited writer back to a configured own destination preserv
  const edits=[],f=await fixture(model({operation:'write-file',mode:'inherited',destinationMode:'connected',ownFileConfigured:true}),{editControls(s,v){edits.push(v);return {ok:true};}});
  try{edit(f.host,'File destination','own','change');await settle();assert.deepEqual(edits,[{destinationMode:'own'}]);}finally{await f.close();}
 });
+
+test('remote privacy changes pause a newer local draft during autosave and survive the older acknowledgement',async()=>{
+ const saves=[],acknowledgements=[];
+ const initial=model({operation:'write-file',mode:'destination',managed:true,settings:{...settings,bindingId:''}});
+ const f=await fixture(initial,{saveNodeFile(captured,value){saves.push([captured,structuredClone(value)]);return new Promise(resolve=>acknowledgements.push(resolve));}});
+ try{
+  edit(f.host,'File name','Local first');await waitSave();assert.equal(saves.length,1);
+  edit(f.host,'File name','Local newer');
+  f.update(model({operation:'write-file',mode:'destination',managed:true,friendlyName:'Remote destination',settings:{...settings,bindingId:'',name:'Remote destination.txt',visibility:{kind:'hidden'}}}),{...selection,revision:'remote-private-revision'});
+  const pausedWhenRemoteArrived=/changed elsewhere/.test(f.host.textContent);
+  acknowledgements[0]({ok:true});await waitSave();
+  assert.equal(saves.length,1,'the old acknowledgement must not autosave Local newer with the old public visibility over the remote restriction');
+  assert.equal(pausedWhenRemoteArrived,true);assert.match(f.host.textContent,/changed elsewhere/);
+  assert.equal(field(f.host,'File name').value,'Local newer');assert.doesNotMatch(f.host.textContent,/Settings saved/);
+  [...f.host.querySelectorAll('button')].find(button=>button.textContent==='Use current settings').click();await settle();
+  assert.equal(field(f.host,'File name').value,'Remote destination');assert.equal(field(f.host,'File visibility').value,'hidden');
+ }finally{for(const acknowledge of acknowledgements)acknowledge({ok:true});await f.close();}
+});
+
+test('an exact canonical own acknowledgement preserves a newer draft and permits its next autosave',async()=>{
+ const saves=[],acknowledgements=[];
+ const f=await fixture(model({operation:'write-file',mode:'destination',managed:true,settings:{...settings,bindingId:''}}),{saveNodeFile(captured,value){saves.push([captured,structuredClone(value)]);return new Promise(resolve=>acknowledgements.push(resolve));}});
+ try{
+  edit(f.host,'File name','Local first');await waitSave();edit(f.host,'File name','Local newer');
+  f.update(model({operation:'write-file',mode:'destination',managed:true,friendlyName:'Local first',settings:{...settings,bindingId:'',name:'Local first.txt'}}),{...selection,revision:'own-first-commit'});
+  assert.doesNotMatch(f.host.textContent,/changed elsewhere/);assert.equal(field(f.host,'File name').value,'Local newer');
+  acknowledgements[0]({ok:true});await waitSave();assert.equal(saves.length,2);assert.equal(saves[1][1].name,'Local newer');assert.deepEqual(saves[1][1].visibility,{kind:'public'});assert.doesNotMatch(f.host.textContent,/changed elsewhere/);
+ }finally{for(const acknowledge of acknowledgements)acknowledge({ok:true});await f.close();}
+});
+
+test('a remotely conflicted draft remains paused after further editing and returning to its selection',async()=>{
+ const saves=[],f=await fixture(model({managed:true,settings:{...settings,bindingId:''}}),{saveNodeFile(captured,value){saves.push(value);return {ok:true};}});
+ const remote=model({managed:true,friendlyName:'Remote destination',settings:{...settings,bindingId:'',name:'Remote destination.txt',visibility:{kind:'hidden'}}});
+ try{
+  edit(f.host,'File name','Local draft');f.update(remote,{...selection,revision:'remote-private'});assert.match(f.host.textContent,/changed elsewhere/);
+  edit(f.host,'File name','Retained local edit');const other={...selection,selectionKey:'other',address:{...selection.address,nodeId:'other'}};
+  f.update(model({friendlyName:'Other'}),other);f.update(remote,{...selection,revision:'remote-private'});await waitSave();
+  assert.equal(saves.length,0);assert.equal(field(f.host,'File name').value,'Retained local edit');assert.match(f.host.textContent,/changed elsewhere/);
+ }finally{await f.close();}
+});

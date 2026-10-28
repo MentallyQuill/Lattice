@@ -1,5 +1,6 @@
 <script lang="ts">
  import {onDestroy,untrack} from 'svelte';
+ import {canonicalFileName} from '../src/workflow/managed-file-policy.js';
  import type {DetailEditResponse,DetailSelection} from './detail-types';
  import type {NodeFileActions,NodeFileSettings,NodeFileView} from './node-file-types';
  let {model,selection,actions,disabled=false,idPrefix='pc-node-details'}:{model:NodeFileView;selection:DetailSelection;actions:NodeFileActions;disabled?:boolean;idPrefix?:string}=$props();
@@ -7,11 +8,13 @@
  let visibility=$state<NodeFileSettings['visibility']['kind']>('public'),actorId=$state('');
  let staleDraft=$state(false),dirty=$state(false),pending=$state(''),failure=$state(''),notice=$state(''),advanced=$state(false);
  let identity='',baseline='',epoch=0,editVersion=0,alive=true;
- type Draft={name:string;path:string;format:NodeFileSettings['format'];missing:NodeFileSettings['missing'];visibility:NodeFileSettings['visibility']['kind'];actorId:string;dirty:boolean;base:string};
+ let expectedSave:{source:string;ticket:number;configuration:string}|null=null;
+ type Draft={name:string;path:string;format:NodeFileSettings['format'];missing:NodeFileSettings['missing'];visibility:NodeFileSettings['visibility']['kind'];actorId:string;dirty:boolean;base:string;stale:boolean};
  const drafts=new Map<string,Draft>();
  const formats=[{value:'text',label:'Text document'},{value:'json',label:'Structured data'},{value:'jsonl',label:'JSON Lines'},{value:'csv',label:'Spreadsheet'},{value:'markdown',label:'Markdown document'}] as const;
  const key=()=>JSON.stringify([selection.documentNamespace,selection.selectionKey,selection.address,model.operation]);
- const snapshot=():Draft=>({name,path,format,missing,visibility,actorId,dirty,base:baseline});
+ const configurationKey=(value:NodeFileSettings)=>JSON.stringify([model.managed===true,value.bindingId,value.name&&model.managed?canonicalFileName(value.name,value.format):value.name,value.path??'',value.format,value.missing,value.content,value.visibility.kind,value.visibility.kind==='actor-private'?value.visibility.actorId:'']);
+ const snapshot=():Draft=>({name,path,format,missing,visibility,actorId,dirty,base:baseline,stale:staleDraft});
  const canEdit=$derived(!disabled&&model.available&&model.mode!=='inherited');
  const canAct=$derived(!disabled&&model.available&&!pending);
  const saving=$derived(model.saving??model.operation!=='read-file');
@@ -20,13 +23,20 @@
  const changedResource=$derived(format!==model.settings.format||!!model.settings.bindingId&&!model.managed&&(name.trim()!==(model.friendlyName??model.settings.name)||path.trim()!==(model.settings.path??'')));
  const settings=():NodeFileSettings=>({...(model.managed?{managed:true}:{}),bindingId:model.settings.bindingId,name:model.managed?name.trim():name.trim()===(model.friendlyName??model.settings.name)?model.settings.name:name.trim(),...(model.storage==='server'?{path:path.trim()}:{}),format:specialized?'json':format,missing,content:model.settings.content,visibility:visibility==='actor-private'?{kind:visibility,actorId:actorId.trim()}:{kind:visibility}});
  $effect.pre(()=>{
-  const next=key(),incoming=JSON.stringify(model.settings);
+  const next=key(),incoming=configurationKey(model.settings);
   if(next===identity&&incoming===baseline)return;
   untrack(()=>{
-   if(next!==identity){epoch++;pending='';failure='';notice='';advanced=false;identity=next;staleDraft=false;dirty=false;baseline='';const draft=drafts.get(next);if(draft){staleDraft=draft.base!==incoming;({name,path,format,missing,visibility,actorId,dirty}=draft);baseline=incoming;return;}}
-   if(dirty&&baseline&&incoming!==baseline&&pending!=='save')staleDraft=true;
+   if(next!==identity){epoch++;expectedSave=null;pending='';failure='';notice='';advanced=false;identity=next;staleDraft=false;dirty=false;baseline='';const draft=drafts.get(next);if(draft){staleDraft=draft.stale||draft.base!==incoming;({name,path,format,missing,visibility,actorId,dirty}=draft);baseline=incoming;return;}}
+   if(dirty&&baseline&&incoming!==baseline){
+    // Only the exact submitted settings can be this save's acknowledgement.
+    // A different name, grant, template or privacy update pauses retained work.
+    const ownAcknowledgement=expectedSave?.source===next&&expectedSave.ticket===epoch&&expectedSave.configuration===incoming;
+    if(!ownAcknowledgement)staleDraft=true;
+   }
+   if(expectedSave?.source===next&&expectedSave.ticket===epoch)expectedSave=null;
    if(!dirty||baseline===''){name=model.friendlyName??model.settings.name;path=model.settings.path??'';format=model.settings.format;missing=model.settings.missing;visibility=model.settings.visibility.kind;actorId=model.settings.visibility.kind==='actor-private'?model.settings.visibility.actorId:'';dirty=false;}
    baseline=incoming;
+   if(dirty)drafts.set(identity,snapshot());
   });
  });
  onDestroy(()=>{alive=false;epoch++;});
@@ -40,20 +50,22 @@
   else {if(!(model.actors??[]).some(actor=>actor.id===value))return;actorId=value;}
   dirty=true;editVersion++;failure='';notice='';drafts.set(identity,snapshot());
  }
- async function perform(kind:string,action:(captured:DetailSelection)=>DetailEditResponse){
+ async function perform(kind:string,action:(captured:DetailSelection)=>DetailEditResponse,submitted?:NodeFileSettings){
   if(!canAct)return;
   const captured=structuredClone(selection),source=key(),ticket=epoch,version=editVersion;
+  const submittedRequest=kind==='save'&&submitted?{source,ticket,configuration:configurationKey(submitted)}:null;
+  if(submittedRequest)expectedSave=submittedRequest;
   pending=kind;failure='';notice='';
   const current=()=>alive&&ticket===epoch&&source===key()&&!disabled&&model.available;
-  try{const result=await action(captured);if(!current())return;if(!result.ok){failure=result.error.message;return;}if(kind==='save'&&version===editVersion){dirty=false;drafts.delete(source);notice='Settings saved';}}
-  catch(error){if(current())failure=error instanceof Error?error.message:'The file settings could not be updated.';}
+  try{const result=await action(captured);if(!current())return;if(!result.ok){if(expectedSave===submittedRequest)expectedSave=null;failure=result.error.message;return;}if(kind==='save'&&version===editVersion&&!staleDraft){dirty=false;drafts.delete(source);notice='Settings saved';}}
+  catch(error){if(expectedSave===submittedRequest)expectedSave=null;if(current())failure=error instanceof Error?error.message:'The file settings could not be updated.';}
   finally{if(alive&&ticket===epoch&&source===key())pending='';}
  }
  $effect(()=>{
   // Capture each draft field so editing restarts the debounce without replacing focused inputs.
   const draft=JSON.stringify([name,path,format,missing,visibility,actorId]),source=key();
   if(!draft||!dirty||staleDraft||!valid||!canEdit||pending||changedResource||!actions.saveNodeFile||failure)return;
-  const timer=setTimeout(()=>{if(source===key())void perform('save',captured=>actions.saveNodeFile!(captured,settings()));},280);
+  const timer=setTimeout(()=>{if(source===key()){const submitted=settings();void perform('save',captured=>actions.saveNodeFile!(captured,submitted),submitted);}},280);
   return()=>clearTimeout(timer);
  });
  function choose(mode:'open'|'save'){if(!canAct||!canEdit||!model.supported||!actions.chooseNodeFile)return;void perform('choose',captured=>actions.chooseNodeFile!(captured,{mode,settings:settings()}));}
@@ -61,7 +73,7 @@
  function destination(value:string){if(!canAct||!actions.editControls||value===model.destinationMode||!['connected','own'].includes(value))return;void perform('destination',captured=>actions.editControls!(captured,{destinationMode:value,...(value==='own'&&!model.ownFileConfigured?{fileTarget:{managed:true}}:{})}));}
  function mutation(value:string){if(!canAct||!actions.editControls||!['replace','append','add','add-unique','upsert','update-fields'].includes(value))return;void perform('mutation',captured=>actions.editControls!(captured,{mode:value,fileHandling:''}));}
  function accessCharacter(value:string){if(!canAct||!actions.editControls)return;if(value==='selected')void perform('character',captured=>actions.editControls!(captured,{actorScope:'selected',actorId:''}));else if((model.actors??[]).some(actor=>actor.id===value))void perform('character',captured=>actions.editControls!(captured,{actorScope:'presence',actorId:value}));}
- function resetDraft(){drafts.delete(identity);name=model.friendlyName??model.settings.name;path=model.settings.path??'';format=model.settings.format;missing=model.settings.missing;visibility=model.settings.visibility.kind;actorId=model.settings.visibility.kind==='actor-private'?model.settings.visibility.actorId:'';dirty=false;staleDraft=false;baseline=JSON.stringify(model.settings);}
+ function resetDraft(){drafts.delete(identity);expectedSave=null;name=model.friendlyName??model.settings.name;path=model.settings.path??'';format=model.settings.format;missing=model.settings.missing;visibility=model.settings.visibility.kind;actorId=model.settings.visibility.kind==='actor-private'?model.settings.visibility.actorId:'';dirty=false;staleDraft=false;baseline=configurationKey(model.settings);}
 </script>
 
 <section class="pc-node-file" data-node-file aria-labelledby={idPrefix+'-fileTarget-heading'}>
