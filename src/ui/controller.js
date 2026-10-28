@@ -711,7 +711,7 @@ function build() {
     }); installRecoveryLifecycle();
     const nativeContext = ctx();
     for (const name of ['CHAT_CHANGED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_DELETED', 'MESSAGE_SWIPED', 'MESSAGE_SENT', 'GENERATION_STARTED', 'GENERATION_ENDED', 'GENERATION_STOPPED']) {
-        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (name === 'CHAT_CHANGED') {void diagnosticHistoryUi?.refresh();void applicationFiles()?.setup.check();void applicationFiles()?.controller.restoreSelection();} else if(['GENERATION_ENDED','GENERATION_STOPPED'].includes(name))queueMicrotask(()=>void refreshSavedWorkflow()); if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { nativeSourceSetup.cancel(); cancelConfiguredNode(); } if(current?.runtime===3)updateWorkflowProjection(); } });
+        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (name === 'CHAT_CHANGED') {void diagnosticHistoryUi?.refresh();void applicationFiles()?.setup.check();} else if(['GENERATION_ENDED','GENERATION_STOPPED'].includes(name))queueMicrotask(()=>void refreshSavedWorkflow()); if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { nativeSourceSetup.cancel(); cancelConfiguredNode(); } if(current?.runtime===3)updateWorkflowProjection(); } });
     }
     for (const name of ['CHATCOMPLETION_MODEL_CHANGED', 'CHATCOMPLETION_SOURCE_CHANGED', 'MAIN_API_CHANGED', 'CONNECTION_PROFILE_LOADED', 'CONNECTION_PROFILE_CREATED', 'CONNECTION_PROFILE_UPDATED', 'CONNECTION_PROFILE_DELETED', 'OAI_PRESET_CHANGED_AFTER', 'PRESET_CHANGED', 'PRESET_DELETED', 'PRESET_RENAMED', 'SETTINGS_LOADED_AFTER', 'EXTENSION_SETTINGS_LOADED']) {
         if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => refreshNodeProfileMetadata());
@@ -1195,6 +1195,7 @@ async function onNewGraph() {
 
 
 function requestDocumentChoice(name) {
+    if(!workbench)return Promise.resolve('cancel');
     return new Promise(resolve => { pendingDocumentPrompt = { resolve }; workbench.update({ documentPrompt: { name } }); });
 }
 

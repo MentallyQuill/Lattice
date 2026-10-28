@@ -1,4 +1,4 @@
-import { parseWorkflowDocument, serializeWorkflowDocument } from '../workflow/document-file.js?v=0.29.0';
+import { parseWorkflowDocument, serializeWorkflowDocument, workflowDocumentSnapshot } from '../workflow/document-file.js?v=0.29.0';
 import { diagnosticText, presentDiagnostic } from './diagnostics.js?v=0.29.0';
 
 const cancelled = () => ({ok:false,cancelled:true});
@@ -32,10 +32,10 @@ export function createWorkflowDocumentController(env) {
         } catch {return session.stillCurrent(token) ? error(failure('The workflow save could not be completed. Your draft remains open.')) : cancelled();}
         finally {saving=false;changed();}
     }
-    async function guard(token) {
+    async function guard(token,current=()=>true) {
         if (!session.dirty()) return true;
         const before=session.snapshot(),choice=await env.prompt(session.source()?.name || session.current()?.name || 'Untitled');
-        if (!session.stillCurrent(token) || choice==='cancel') return false;
+        if (!session.stillCurrent(token) || !current() || choice==='cancel') return false;
         if (choice==='discard') {
             if (session.snapshot()!==before) {report('The document changed while the prompt was open. Try again.');return false;}
             return true;
@@ -48,10 +48,10 @@ export function createWorkflowDocumentController(env) {
         if (session.snapshot()!==result.data.snapshot) {report('New changes arrived while saving. Save them before switching documents.','info');return false;}
         return {token:savedToken};
     }
-    async function replace(load,clean=false,{reloadAfterSave=false}={}) {
+    async function replace(load,clean=false,{reloadAfterSave=false,isCurrent=()=>true}={}) {
         if (replacing || saving) return cancelled();
         let token=session.capture();const epoch=++replacementEpoch;
-        const current=()=>epoch===replacementEpoch && session.stillCurrent(token);
+        const current=()=>epoch===replacementEpoch && session.stillCurrent(token) && isCurrent();
         replacing=true;
         try {
             // Invoke the picker in the click's turn, before any asynchronous guard.
@@ -61,7 +61,9 @@ export function createWorkflowDocumentController(env) {
             if (!result.ok) return error(result);
             let next=result.data, admitted=serializeWorkflowDocument(next.graph,next.workspaceViews ?? null,{exampleMetadata:next.exampleMetadata});
             if (!admitted.ok) return error(admitted);
-            const guarded=await guard(token);if(!guarded)return cancelled();
+            // A recovery envelope may already be the acknowledged selected document.
+            if(session.source()?.kind==='recovery' && next.source?.kind==='library' && session.snapshot()===workflowDocumentSnapshot(next.graph,next.workspaceViews??null,next.exampleMetadata)) session.markSaved(token,session.snapshot(),next.source);
+            const guarded=await guard(token,current);if(!guarded)return cancelled();
             if(guarded.token)token=guarded.token;
             if(!current())return cancelled();
             if(reloadAfterSave&&guarded.token) {

@@ -8,7 +8,7 @@ const cancelled=()=>({ok:false,cancelled:true});
 export function createWorkflowLibraryController(env) {
     const {session,library}=env, getContext=env.getContext??(()=>null),isBusy=env.isBusy??(()=>false),isBusyView=env.isBusyView??isBusy;
     const activate=env.activate??((graph,options)=>session.activate(graph,options));
-    const listeners=new Set();let busy=false,items=[],status={state:'idle'},selection=null,disposed=false,selectionTail=Promise.resolve();
+    const listeners=new Set();let busy=false,items=[],status={state:'idle'},selection=null,disposed=false,selectionTail=Promise.resolve(),replacementTail=Promise.resolve();
     const notify=()=>{for(const listener of listeners)try{listener();}catch{}env.changed?.();};
     const autosave=createWorkflowAutosave({session,library,getContext,isBusy,activate,delay:env.delay,canAdopt:env.canAdopt,onAdopt:(id,context)=>select(id,context),onStatus:value=>{status=value;notify();}});
     const encode=()=>serializeWorkflowDocument(session.current(),session.workspaceViews(),{exampleMetadata:session.exampleMetadata?.()});
@@ -54,12 +54,12 @@ export function createWorkflowLibraryController(env) {
         }
         return fail('WORKFLOW_EDIT_PENDING','New workflow edits are still arriving. Finish editing before saving.');
     }
-    async function openSaved(id) {
+    async function openSavedNow(id,context,restoring=false) {
         if(busy||isBusy())return cancelled();
-        const context=getContext();
+        if(context!==getContext())return cancelled();
         if(env.replace) {
-            const result=await env.replace(()=>library.read(id),true,{reloadAfterSave:true});
-            if(result.ok&&context===getContext()){const selected=await select(id,context);if(!selected.ok)return selected;}
+            const result=await env.replace(()=>library.read(id),true,{reloadAfterSave:true,isCurrent:()=>context===getContext()&&!disposed});
+            if(result.ok&&context===getContext()&&!restoring){const selected=await select(id,context);if(!selected.ok)return selected;}
             return result;
         }
         const token=session.capture();busy=true;notify();
@@ -77,8 +77,29 @@ export function createWorkflowLibraryController(env) {
             if(!current(token,context)||isBusy())return cancelled();
             const adopted=activate(result.data.graph,{source:result.data.source,workspaceViews:result.data.workspaceViews??null,exampleMetadata:result.data.exampleMetadata,clean:true});
             if(adopted?.ok===false)return adopted;
+            if(restoring)return result;
             const selected=await select(id,context);return selected.ok?result:selected;
         }finally{busy=false;notify();}
+    }
+    function queueOpen(id,context,restoring=false) {
+        const action=()=>{
+            if(context!==getContext())return cancelled();
+            if(restoring){
+                const selected=env.getSelection?.();
+                if(selected?.kind!=='library'||selected.id!==id)return cancelled();
+                if(session.source()?.kind==='library'&&session.source().id===id)return {ok:true,data:{unchanged:true}};
+            }
+            return openSavedNow(id,context,restoring);
+        };
+        const pending=replacementTail.then(action,action);replacementTail=pending.catch(()=>{});return pending;
+    }
+    function openSaved(id) {return queueOpen(id,getContext());}
+    async function restoreSelection() {
+        const context=getContext(),selected=env.getSelection?.();
+        if(selected?.kind!=='library'||session.source()?.kind==='library'&&session.source().id===selected.id)return {ok:true,data:{unchanged:true}};
+        const result=await queueOpen(selected.id,context,true);
+        if(!result.ok&&result.cancelled&&context===getContext())return fail('WORKFLOW_SELECTION_PENDING','Open the workspace to resolve the current workflow draft before running.');
+        return result;
     }
     return Object.freeze({
         openSaved,save,saveAs,
@@ -89,6 +110,7 @@ export function createWorkflowLibraryController(env) {
         },
         async beforeRun(){
             if(isBusy()||busy)return fail('WORKFLOW_BUSY','Finish the current run or review before starting another run.');
+            const resolved=await restoreSelection();if(!resolved.ok)return resolved;
             const context=getContext(),token=session.capture();
             for(let attempt=0;attempt<4;attempt++) {
                 const result=await autosave.flush();if(!current(token,context))return cancelled();if(!result.ok)return result;
@@ -102,7 +124,7 @@ export function createWorkflowLibraryController(env) {
         },
         changed:()=>autosave.changed(),refresh:()=>autosave.refresh(),flush:()=>autosave.flush(),
         async reloadList(){const result=await library.list();if(result.ok){items=result.data;notify();}return result;},
-        async restoreSelection(){const selected=env.getSelection?.();return selected?.kind==='library'?openSaved(selected.id):{ok:true,data:{unchanged:true}};},
+        restoreSelection,
         getWorkflowIdentity:()=>session.source()?.kind==='library'?session.source().id:session.draftNamespace(),
         view:()=>({items:[...items],source:session.source(),selected:selection&&selection.context===getContext()?selection.value:env.getSelection?.()??null,status,dirty:session.dirty(),busy:busy||isBusyView(),commandBusy:busy,autosave:autosave.view(),capabilities:library.capabilities}),
         recovery:()=>autosave.recovery(),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},

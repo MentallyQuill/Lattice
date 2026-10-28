@@ -36,6 +36,7 @@ export function createWorkflowAutosave({session,library,isBusy=()=>false,activat
         if(pending){const result=await pending;if(!contextCurrent(token,context))return stale();return result;}
         pending=write(forceInitial);try{return await pending;}finally{
             pending=null;
+            try{onStatus(lastStatus);}catch{}
             if(contextCurrent(token,context)&&lastStatus.state==='pending'&&session.dirty())schedule();
         }
     }

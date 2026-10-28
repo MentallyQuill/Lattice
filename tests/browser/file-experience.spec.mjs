@@ -26,8 +26,9 @@ test('incomplete authoring saves in the shared library, reopens and Save As has 
  await host(page);await page.evaluate(async()=>{const h=window.canvasHarness,{operationDefaults}=await import('/src/workflow/catalog.js?v='+h.version);await h.activate({id:'draft',name:'Unfinished story writer',schema:3,runtime:2,mode:'native-unified',nodes:{writer:{id:'writer',type:'workflow',...operationDefaults('write-file',{managedFiles:true}),x:60,y:90}},wires:{},groups:{},definitions:{},portals:{}});});
  await command(page,'Save workflow');await expect(page.locator('.pc-document-status')).toContainText('Saved in SillyTavern');
  const original=await page.evaluate(async()=>{const h=window.canvasHarness;return(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.getWorkflowIdentity();});
- await command(page,'New workflow');await command(page,'Open saved…');await page.getByRole('dialog',{name:'Saved workflows',exact:true}).getByRole('button',{name:'Unfinished story writer',exact:true}).click();
- await page.getByRole('dialog',{name:'Save workflow changes?',exact:true}).getByRole('button',{name:"Don't Save",exact:true}).click();
+ await command(page,'New workflow');
+ await expect.poll(()=>page.evaluate(async original=>{const h=window.canvasHarness,c=(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller;return c.view().source?.kind==='library'&&!c.view().dirty&&c.getWorkflowIdentity()!==original;},original)).toBe(true);
+ await command(page,'Open saved…');await page.getByRole('dialog',{name:'Saved workflows',exact:true}).getByRole('button',{name:'Unfinished story writer',exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>window.canvasHarness.graph.nodes.writer?.fileTarget.managed)).toBe(true);
  page.once('dialog',dialog=>dialog.accept('Independent story'));await page.keyboard.press('Control+Shift+s');
  await expect(page.locator('.pc-document-name')).toHaveText('Independent story');

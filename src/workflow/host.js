@@ -1403,7 +1403,7 @@ export function createNativeWorkflowController(ports) {
             }
             if(!internalEvents)cancel('MESSAGE_SWIPE_DELETED');
         });
-        for(const name of ['CHAT_CHANGED','CHARACTER_SELECTED','MESSAGE_SENT','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_EDITED','MESSAGE_UPDATED'])on(name,()=>{if(!internalEvents){cancel(name);if(name==='CHAT_CHANGED')captureBranchPoint();recall.sync();}});
+        for(const name of ['CHAT_CHANGED','CHARACTER_SELECTED','MESSAGE_SENT','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_EDITED','MESSAGE_UPDATED'])on(name,()=>{if(!internalEvents){cancel(name);if(name==='CHAT_CHANGED'){captureBranchPoint();ports.onChatChanged?.();}recall.sync();}});
         unsubscribe=()=>{cancel('Controller disposed');for(const [event,fn]of subscriptions)(c.eventSource.removeListener ?? c.eventSource.off)?.call(c.eventSource,event,fn);unsubscribe=null;recall.dispose();};
         return unsubscribe;
     }
