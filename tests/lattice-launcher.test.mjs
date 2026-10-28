@@ -105,7 +105,7 @@ test('current document edits cancel native authority and obsolete assignments ca
     const dom = new JSDOM('<body></body>');
     const graph = id => ({ id, schema: 3, runtime: 2, mode: 'native-unified', nodes: { text: { id: 'text', type: 'workflow', operation: 'compose', sections: [{ name: 'Text', text: id }] } }, wires: {} });
     const open=graph('open'),unrelated=graph('unrelated'),saved={enabled:true,nativeBindings:{workflowGraphId:unrelated.id}},token={};
-    const cancellations=[],runtime={cancel:reason=>cancellations.push(reason),dispose(){}};
+    const cancellations=[],runtime={cancel:reason=>cancellations.push(reason),dispose(){},subscribeActivity(){return()=>{};}};
     const env={document:dom.window.document,ctx:()=>({eventTypes:{}}),settings:()=>saved,activeWorkflow:()=>open,
         documentSession:{capture:()=>token,stillCurrent:actual=>actual===token},onWorkflowActivated(){},
         initializeNativeWorkflowController:async()=>{},getNativeWorkflowController:()=>runtime,
@@ -118,6 +118,48 @@ test('current document edits cancel native authority and obsolete assignments ca
     assert.deepEqual(cancellations,[]);
     open.nodes.text.sections[0].text='Open document changed';dom.window.document.dispatchEvent(new dom.window.Event('pc-state'));
     assert.deepEqual(cancellations,['Workflow settings changed']);assert.equal(env.activeWorkflow(),open);
+});
+
+function bootActivityFixture() {
+    const dom=new JSDOM('<body></body>'),graph={id:'open',nodes:{text:{text:'Original settings'}}},saved={enabled:true};
+    const cancellations=[],activityListeners=new Set(),unloadListeners=[];let token={},activity=null,disposed=0,progressDisposed=0,unsubscribed=0;
+    const runtime={cancel:reason=>cancellations.push(reason),dispose(){disposed++;},subscribeActivity(listener){activityListeners.add(listener);listener(activity);return()=>{activityListeners.delete(listener);unsubscribed++;};}};
+    const env={document:dom.window.document,ctx:()=>({eventTypes:{}}),settings:()=>saved,activeWorkflow:()=>graph,
+        documentSession:{capture:()=>token,stillCurrent:value=>value===token},onWorkflowActivated(){},initializeNativeWorkflowController:async()=>{},getNativeWorkflowController:()=>runtime,
+        workflowSignature:value=>JSON.stringify(value.nodes),paintSendbar(){},applyTheme(){},mountLauncher(){},addSlashCommand(){},MODULE:'lattice',
+        UI:{open(){dom.window.document.dispatchEvent(new dom.window.Event('pc-state'));},refreshIfOpen(){}},safe:fn=>fn(),chatProgress:{dispose(){progressDisposed++;}},
+        globalThis:{addEventListener(name,listener){if(name==='unload')unloadListeners.push(listener);}}};
+    const start=source.indexOf('function boot()'),end=source.indexOf('\n}',start)+2;
+    Function('env','with(env){'+source.slice(start,end)+';boot();}')(env);
+    return {env,graph,saved,cancellations,activityListeners,replaceDocument(){token={};},emitActivity(value){activity=value;for(const listener of activityListeners)listener(value);},unload(){for(const listener of unloadListeners)listener();},counts:()=>({disposed,progressDisposed,unsubscribed})};
+}
+
+test('opening the workspace preserves a new run that started after unsignalled Details edits',()=>{
+    const f=bootActivityFixture();
+    f.graph.nodes.text.text='Edited and autosaved before Send';
+    f.emitActivity({busy:true,runId:'new-send'});
+    f.env.UI.open();
+    assert.deepEqual(f.cancellations,[],'pc-state from workspace status must compare against the graph actually used by this run');
+});
+
+for(const change of ['graph','enabled','document'])test(`same-run activity cannot bless an active ${change} authority change`,()=>{
+    const f=bootActivityFixture();f.emitActivity({busy:true,runId:'running'});
+    if(change==='graph')f.graph.nodes.text.text='Changed during generation';
+    else if(change==='enabled')f.saved.enabled=false;
+    else f.replaceDocument();
+    f.emitActivity({busy:true,runId:'running'});
+    f.env.UI.open();
+    assert.deepEqual(f.cancellations,['Workflow settings changed']);
+});
+
+test('run baseline refreshes once per new run and activity subscription is released on unload',()=>{
+    const f=bootActivityFixture();f.emitActivity({busy:true,runId:'first'});
+    f.emitActivity(null);f.graph.nodes.text.text='Idle edit';f.emitActivity({busy:true,runId:'second'});f.env.UI.open();
+    assert.deepEqual(f.cancellations,[]);
+    f.graph.nodes.text.text='Edit while second run remains current';f.emitActivity(null);f.emitActivity({busy:true,runId:'second'});f.env.UI.open();
+    assert.deepEqual(f.cancellations,['Workflow settings changed'],'idle activity cannot make the same run new again');
+    assert.equal(f.activityListeners.size,1);f.unload();assert.equal(f.activityListeners.size,0);
+    assert.deepEqual(f.counts(),{disposed:1,progressDisposed:1,unsubscribed:1});
 });
 
 test('extension drawer keeps launcher controls without a workflow failure setting', () => {

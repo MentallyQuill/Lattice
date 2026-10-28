@@ -127,12 +127,20 @@ function addSlashCommand() {
 function boot() {
     try {
         const context = ctx(); settings(); mountLauncher(); void initializeNativeWorkflowController();
-        globalThis.addEventListener?.('unload', () => { chatProgress?.dispose(); getNativeWorkflowController().dispose(); }, { once: true });
         const snapshot = () => {
             const graph = activeWorkflow();
             return { token: documentSession.capture(), signature: JSON.stringify([settings().enabled, workflowSignature(graph)]) };
         };
         let previous = snapshot();
+        let activityRunId;
+        const unsubscribeActivity = getNativeWorkflowController().subscribeActivity(activity => {
+            if (!activity?.busy || typeof activity.runId !== 'string' || !activity.runId || activity.runId === activityRunId) return;
+            activityRunId = activity.runId;
+            // Details can autosave without pc-state. A new run already owns
+            // those settings; later activity from that run cannot bless edits.
+            previous = snapshot();
+        });
+        globalThis.addEventListener?.('unload', () => { unsubscribeActivity(); chatProgress?.dispose(); getNativeWorkflowController().dispose(); }, { once: true });
         document.addEventListener('pc-state', () => {
             const next = snapshot();
             if (next.signature !== previous.signature || !documentSession.stillCurrent(previous.token)) getNativeWorkflowController().cancel('Workflow settings changed');
