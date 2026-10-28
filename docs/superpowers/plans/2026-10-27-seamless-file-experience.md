@@ -149,8 +149,22 @@ Each task owns the files listed below and its tests. Other workers must not reve
 - [ ] Run `npm test`, `npm run check:types`, `npm run build`, `npm run check:assets`, `npm run check:examples-memory` and `npm run test:browser`; use process-spawn permission where the sandbox requires it. Inspect failures and fix meaningful regressions; do not weaken unchanged contracts to green the suite.
 - [ ] Obtain a fresh whole-branch review against the spec, fix material findings, rerun affected verification, and write `docs/superpowers/reports/2026-10-27-seamless-file-experience.md` with evidence/remaining platform limits. Mark the goal complete only when required work is complete.
 
+### Task 8: Extracted example defaults and sample guides
+
+**Execution amendment:** This is the independently owned examples/documentation portion of Task 7, extracted during integration so application wiring and safe sample preparation can proceed in parallel. It adds no product scope beyond spec section 13.
+
+**Files:** `src/workflow/example-file-defaults.js/.d.ts`, generated `example-file-fixture-data.js`, narrow `managed-file-policy.js/.d.ts` context extensions, remastered source builders/catalog/generated examples, `ui/ExamplesBrowser.svelte`, and `docs/examples.md`, `docs/story-systems.md`, `docs/combined-system-example.md`.
+
+**Interfaces:** `prepareExampleFileDefaults({exampleId,nodes,workflowId,actorBindings?,canonicalDocuments?,legacyDocuments?})` returns `{nodes,initialTemplates,fileOwners,actorChoices}`. Keys use `JSON.stringify([address.workflowId,address.instancePath,address.nodeId])`. Only registered explicit-open provenance may supply bundled literal templates and qualified managed ownership aliases. Application provenance is an authenticated per-library sidecar, never an imported graph ID. Private allocation uses validated host actor availability and the exact definition actor scope; public resources remain actorless.
+
+- [ ] Add a failing registered-sample virtual-read test, then implement bounded bundled templates, derived clock identities and canonical-data precedence without output writes.
+- [ ] Add failing shared reader/Pick/For Each/Commit reload coverage; resolve only compatible trusted managed owners and retain runtime outcome proof. Preserve explicit grants, paths, custom templates and narrower privacy.
+- [ ] Add failing private unavailable/remapped/swapped-role tests, then provide familiar character choices without manufacturing presence, memory or event authority.
+- [ ] Replace obsolete global-manager/manual-ID/JSON-paste lesson instructions, regenerate examples through existing tools and verify curriculum execution/layout. Standalone portable imports retain explicit source choice rather than gain authority from imported text.
+- [ ] Run focused helper/policy/curriculum suites and types, commit owned files and obtain a fresh scoped review. Parent handles current general user guides, existing browser fixture migration and final whole-branch gates.
+
 ## Execution Order and Coverage
 
-Tasks 1–3 can proceed independently against the interfaces above. Task 4 follows Task 1 for shared server-adapter ownership. Task 5 follows Task 2 policy; Task 6 follows Task 2 and coordinates adapter ownership. Task 7 integrates completed components. Each task has a fresh implementer and a scoped spec/quality review; commits include only its owned files.
+Tasks 1–3 can proceed independently against the interfaces above. Task 4 follows Task 1 for shared server-adapter ownership. Task 5 follows Task 2 policy; Task 6 follows Task 2 and coordinates adapter ownership. Tasks 7 and 8 may integrate independently released interfaces while remaining reviews continue; final completion waits for all task review gates and integrated verification. Each task has a fresh implementer and a scoped spec/quality review; commits include only its owned files.
 
 Spec sections 1–5 map to Tasks 1–4/7; section 6 to Tasks 2/5; sections 7–8 to Tasks 4/5/7; sections 9–10 to Tasks 2/3/6/7; section 11 to Tasks 1/6; sections 12–13 to all provider/migration integration; all 18 acceptance scenarios are verified by Task 7 with specialized long-run evidence from Task 6.
