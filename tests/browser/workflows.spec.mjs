@@ -24,13 +24,17 @@ async function finishExampleChoice(page) {
 }
 // Authoring fixtures retain diagnostic operation layouts as unified roots.
 async function installWorkflow(page, title) {
-    await page.evaluate(async title => {
+    return page.evaluate(async title => {
         const h = window.canvasHarness, { fixtureGraph } = await import('/tests/helpers/workflow-fixtures.mjs');
         const id = { 'Scene guidance': 'native-guidance', 'Reviewed AI De-slop': 'reviewed-de-slop' }[title];
         if (!id) throw new Error('Unknown authoring fixture: ' + title);
         const graph = fixtureGraph(id);
         graph.runTargets = [{ instancePath: [], nodeId: id === 'reviewed-de-slop' ? 'apply-reply' : 'review-publish' }];
         await h.activate(graph);
+        const abortedBeforeSave=window.workflowSignal?.aborted;
+        const application=(await import('/src/run.js?v='+h.version)).getApplicationFileExperience();
+        if(application){const saved=await application.controller.save();if(!saved.ok)throw Error(JSON.stringify(saved.error??saved));}
+        return {abortedBeforeSave};
     }, title);
 }
 async function bindNode(page, operation, profile) {
@@ -433,7 +437,8 @@ test('switching graph cancels a delayed run while closing preserves its review a
     });
     await runRoot(page);
     await page.waitForFunction(() => !!window.finishWorkflowRequest);
-    await installWorkflow(page, 'Scene guidance');
+    const replacement=await installWorkflow(page, 'Scene guidance');
+    expect(replacement.abortedBeforeSave).toBe(true);
     expect(await page.evaluate(() => window.workflowSignal.aborted)).toBe(true);
     await page.evaluate(async () => { window.finishWorkflowRequest({ choices: [{ message: { content: 'Late replacement.' }, finish_reason: 'stop' }], usage: { prompt_tokens: 50, completion_tokens: 10 } }); await window.canvasHarness.settle(); });
     await expect(page.getByRole('button', { name: 'Apply reviewed reply', exact: true })).toHaveCount(0);
@@ -490,7 +495,7 @@ test('document replacement expires automatic Send evidence and reopening permits
     const opened = await page.evaluate(()=>{window.reviewDocument=window.canvasHarness.graph;return window.reviewDocument.id;});
     await installWorkflow(page,'Scene guidance');
     await expect(page.getByRole('button',{name:'Apply reviewed reply',exact:true})).toHaveCount(0);
-    await page.evaluate(async()=>window.canvasHarness.activate(window.reviewDocument));
+    await page.evaluate(async()=>{const h=window.canvasHarness;await h.activate(window.reviewDocument);const saved=await(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.save();if(!saved.ok)throw Error(JSON.stringify(saved.error??saved));});
     await selectTerminal(page,'review-publish',false);
     await expect(preview(page)).not.toContainText('We explore.');
     await expect(page.getByRole('button',{name:'Apply reviewed reply',exact:true})).toHaveCount(0);

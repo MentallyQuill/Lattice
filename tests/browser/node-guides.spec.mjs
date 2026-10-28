@@ -215,16 +215,27 @@ test('guide insertion status refreshes across native busy and settled publicatio
     await expect(add).toBeEnabled();
     await page.evaluate(async () => {
         const h = window.canvasHarness;
-        h.context.getTokenCountAsync = () => new Promise(resolve => { window.releaseGuideTokens = () => resolve(1); });
-        const runtime = (await import('/src/run.js?v=' + h.version)).getNativeWorkflowController();
-        window.guideRun = runtime.runTarget(h.graph, {workflowId: h.graph.id, instancePath: [], nodeId: 'n0', portId: 'out'}).then(result => { window.guideRunResult = result; return result; });
+        window.guideRuntime = (await import('/src/run.js?v=' + h.version)).getNativeWorkflowController();
     });
+    expect(await page.evaluate(() => {
+        const h = window.canvasHarness;
+        const count=h.context.getTokenCountAsync;let gated=false;
+        h.context.getTokenCountAsync = (...args) => {
+            if(gated)return count.apply(h.context,args);
+            gated=true;
+            return new Promise(resolve => { window.releaseGuideTokens = () => resolve(1); });
+        };
+        window.guideRun = window.guideRuntime.runTarget(h.graph, {workflowId: h.graph.id, instancePath: [], nodeId: 'n0', portId: 'out'}).then(result => { window.guideRunResult = result; return result; });
+        return true;
+    })).toBe(true);
     await page.waitForFunction(() => !!window.releaseGuideTokens || !!window.guideRunResult);
     expect(await page.evaluate(() => window.guideRunResult), 'run must reach its real tokenizer gate').toBeUndefined();
+    expect(await page.evaluate(()=>window.guideRuntime.activity()?.busy)).toBe(true);
     await expect(add).toBeDisabled();
     await expect(guide).toContainText('Wait for the current run to finish');
     await expect(guide.locator('[data-guide-example]')).toHaveAttribute('open', '');
     await page.evaluate(async () => { window.releaseGuideTokens(); await window.guideRun; await window.canvasHarness.settle(); });
+    expect(await page.evaluate(()=>({ok:window.guideRunResult.ok,calls:window.guideRunResult.actualCalls}))).toEqual({ok:true,calls:0});
     await expect(add).toBeEnabled();
     await page.keyboard.press('Escape');
     await expect(section).toHaveValue('Unsaved typed guide draft');
