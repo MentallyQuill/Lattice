@@ -160,8 +160,19 @@ test('Preview names actual confirmed, unverified and unchanged save receipts wit
     const before = structuredClone(view);
     const f = await fixture('OutputPreview', { view, actions: { apply() { assert.fail('unverified saves cannot retry'); } } });
     try {
-        const receipts = [...f.host.querySelectorAll('.pc-preview-settlement .pc-preview-note')].map(element => element.textContent.trim());
-        assert.deepEqual(receipts, ['notes · Saved', 'clock · Save not verified', 'outcomes · Already current']);
+        const receipts = [...f.host.querySelectorAll('.pc-preview-settlement [data-file-save-result]')];
+        assert.deepEqual(receipts.map(element => element.textContent.trim()), ['File 1 · Saved', 'File 2 · Save not verified', 'File 3 · Already current']);
+        assert.ok(receipts.every(element => element.closest('details') === null), 'friendly save outcomes remain visible');
+        const details = [...f.host.querySelectorAll('.pc-preview-settlement details')];
+        assert.equal(details.length, view.settlement.receipts.length);
+        for (const [index, disclosure] of details.entries()) {
+            assert.equal(disclosure.open, false, 'technical identities start collapsed');
+            assert.equal(disclosure.querySelector('summary').textContent, 'Details');
+            assert.deepEqual([...disclosure.querySelectorAll('p')].map(element => element.textContent), [
+                'Target: ' + view.settlement.receipts[index].targetId,
+                'Receipt: ' + view.settlement.receipts[index].intentId,
+            ]);
+        }
         const apply = f.host.querySelector('[data-preview-apply]'); assert.equal(apply.disabled, true); apply.click();
         assert.deepEqual(view, before, 'display labels must not mutate the underlying settlement');
     } finally { await f.close(); }

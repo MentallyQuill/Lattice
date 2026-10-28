@@ -66,6 +66,7 @@ test('graph navigation flushes the cancelled source camera before changing the a
 test('close flushes the final cancelled camera before deactivating the view session', () => {
     const f = persistenceFixture();let sourceCancels=0;f.env.nativeSourceSetup={cancel(){sourceCancels++;}};
     f.env.pendingDocumentPrompt = null; f.env.documentCommands = null;
+    f.env.pendingServerChooser = null; f.env.pendingFileRecovery = null; f.env.libraryOpen = false;
     f.env.chooseDocumentPrompt = controllerFunction('chooseDocumentPrompt', f.env);
     f.env.workflowActivityUnsubscribe = null;
     f.env.workflowProgressUnsubscribe = null;

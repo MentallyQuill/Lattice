@@ -13,7 +13,8 @@ import { prepareNativeSearchCatalog } from '../src/ui/native-search-catalog.js?v
 const controllerSource = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 const runSource = await readFile(new URL('../src/run.js', import.meta.url), 'utf8');
 function actual(source, name, env) {
-    const start = source.indexOf('function ' + name + '('), end = source.indexOf('\n}', start) + 2;
+    const start = source.indexOf('function ' + name + '('), lineEnd = source.indexOf('\n', start);
+    const end = source.slice(start, lineEnd).trim().endsWith('}') ? lineEnd : source.indexOf('\n}', start) + 2;
     assert.ok(start >= 0);
     return Function('env', 'with(env){' + source.slice(start, end) + ';return ' + name + ';}')(env);
 }
@@ -48,6 +49,7 @@ test('native workflow failures are errors and do not expose unknown host excepti
         onWorkflowActivated() {}, getStoryDocumentCatalog() {}, getNativePersistenceVerifier() {}, bindingStatus() {},
         documentSession: {}, ctx() {}, currentUser() {}, transportUserId() {}, settings() {}, activeWorkflow() {}, getWorkflowFailurePolicy: () => 'native-fallback',
         safe: fn => fn(), presentDiagnostic, diagnosticText, presentFailureNotification };
+    env.refreshAfterNativeReview = actual(runSource, 'refreshAfterNativeReview', { applicationFiles: null, queueMicrotask });
     try {
         actual(runSource, 'getNativeWorkflowController', env)();
         options.onResult({ ok: false, error: { code: 'UNKNOWN_HOST_ERROR', message: 'private prompt text' } });
