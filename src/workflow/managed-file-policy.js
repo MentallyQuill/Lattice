@@ -3,6 +3,7 @@ import { cloneJsonValue } from './operations/json-data.js?v=0.29.0';
 import { freeze } from './record-data.js?v=0.29.0';
 import { decodeJson, validateJsonSchema } from './operations/json-decode.js?v=0.29.0';
 import { nodeFileTargetId, validateNodeFileTarget } from './node-file-targets.js?v=0.29.0';
+import { validateStoryClock } from './story-time.js?v=0.29.0';
 const suffixes=Object.freeze({text:'txt',markdown:'md',json:'json',jsonl:'jsonl',csv:'csv'});
 const fail=(message)=>({ok:false,error:{code:'INVALID_MANAGED_FILE',message,field:'fileTarget'}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=4096;
@@ -63,9 +64,32 @@ export async function prepareManagedNodeFiles(nodes,context) {
         const candidates=[];
         for(const wrapped of entries){
             const checked=resolveManagedFileNode(wrapped.node,{...context,address:wrapped.address,inputFormat:wrapped.inputFormat,inputKind:wrapped.inputKind,inputColumns:wrapped.inputColumns});if(!checked.ok)return checked;
-            candidates.push(checked.data);
+            let candidate=checked.data;
+            const template=context.initialTemplates?.[key(wrapped.address)];
+            if(candidate.definition&&template!==undefined){
+                if(typeof template!=='string'||new TextEncoder().encode(template).byteLength>262144)return fail('The trusted example template exceeds the supported file size.');
+                let content=template;
+                if(candidate.definition.format==='json'){
+                    const decoded=decodeJson(content);if(!decoded.ok)return fail('The trusted example needs valid JSON.');
+                    if(wrapped.node.schema){let schema;try{schema=JSON.parse(wrapped.node.schema);}catch{return fail('Choose a valid JSON schema.');}if(!decodeJson(decoded.data.value,{mode:'check',schema}).ok)return fail('The trusted example does not match the file schema.');}
+                    if(wrapped.node.operation==='story-clock'){const clock={...decoded.data.value,clockId:candidate.definition.targetId};if(!validateStoryClock(clock).ok)return fail('The trusted example needs a valid story clock.');content=JSON.stringify(clock);}
+                    if(['random-pick','commit-outcomes'].includes(wrapped.node.operation)&&!Array.isArray(decoded.data.value))return fail('The trusted example needs an outcomes array.');
+                }else if(!['text','markdown'].includes(candidate.definition.format))return fail('This file type has no supported trusted example template.');
+                candidate={node:{...candidate.node,fileTarget:{...candidate.node.fileTarget,content}},definition:{...candidate.definition,content}};
+            }
+            candidates.push(candidate);
         }
         const indexed=new Map(entries.map((entry,index)=>[key(entry.address),index]));
+        // Only the host's registered sample resource map may alias initial managed ownership.
+        // Imported authored targets, existing bindings and legacy data never enter this map.
+        for(const [sourceKey,ownerAddress] of Object.entries(context.fileOwners??{})){
+            const source=indexed.get(sourceKey),owner=indexed.get(key(ownerAddress));
+            if(source===undefined||owner===undefined||source===owner)return fail('The trusted sample file owner is unavailable.');
+            const candidate=candidates[source],destination=candidates[owner],a=candidate.definition,b=destination.definition;
+            if(!a||!b||context.fileOwners?.[key(entries[owner].address)]||entries[source].address.workflowId!==entries[owner].address.workflowId||JSON.stringify(entries[source].address.instancePath)!==JSON.stringify(entries[owner].address.instancePath)||a.format!==b.format||a.content!==b.content||JSON.stringify(a.visibility)!==JSON.stringify(b.visibility))return fail('The trusted sample files do not share compatible managed scope.');
+            const control=entries[source].node.operation==='story-clock'?'clockId':entries[source].node.operation==='random-pick'?'ledgerId':'targetId';
+            candidates[source]={node:freeze({...candidate.node,[control]:b.targetId,fileTarget:destination.node.fileTarget}),definition:b};
+        }
         const existingSink=node=>{
             const targetId=nodeFileTargetId(node),checked=validateNodeFileTarget(node.fileTarget??{});if(!checked.ok)return checked;
             const configured=checked.data,explicit=Object.keys(configured).length>0;
@@ -88,7 +112,7 @@ export async function prepareManagedNodeFiles(nodes,context) {
                         if(candidate.definition)sinks.set(candidate.definition.targetId,{...candidate,targetId:candidate.definition.targetId,visibility:candidate.definition.visibility});
                         else {const checked=existingSink(candidate.node);if(!checked.ok)return checked;sinks.set(checked.data.targetId,{node:freeze({...candidate.node,fileTarget:checked.data.fileTarget}),definition:null,...checked.data});}
                     }
-                    else if(['effect-author','stage-outcome'].includes(operation)&&edge.to.portId==='in')pending.push(key(edge.to));
+                    else if(['effect-author','stage-outcome','for-each'].includes(operation)&&edge.to.portId==='in')pending.push(key(edge.to));
                 }
             }
             if(sinks.size>1)return {ok:false,error:{code:'MANAGED_OUTCOME_AMBIGUOUS',message:'Choose one outcomes file for this random selection; its connected commits own different files.',field:'fileTarget',nodeId:entries[index].node.id}};
@@ -98,8 +122,14 @@ export async function prepareManagedNodeFiles(nodes,context) {
             if(context.isCurrent?.()!==true)return {ok:false,error:{code:'STALE_FILE_SCOPE',message:'The managed file scope changed.'}};
             const candidate=candidates[index];let node=candidate.node;
             if(candidate.definition){
+                const visibility=candidate.definition.visibility,scope={userId:context.scope.userId,chatId:context.scope.chatId};
+                if(visibility.kind==='actor-private'){
+                    const available=typeof context.isActorAvailable==='function'?context.isActorAvailable(visibility.actorId)===true:context.actorId===visibility.actorId;
+                    if(!available)return {ok:false,error:{code:'ACTOR_SCOPE_REQUIRED',message:'Choose an available character for this private file.',field:'fileTarget'}};
+                    scope.actorId=visibility.actorId;
+                }
                 if(typeof context.access?.ensureManaged!=='function')return {ok:false,error:{code:'FILE_ACCESS_REQUIRED',message:'Managed file storage is unavailable.'}};
-                const granted=grants.has(candidate.definition.targetId)?{ok:true,data:grants.get(candidate.definition.targetId)}:await context.access.ensureManaged(candidate.definition,{scope:context.scope,isCurrent:context.isCurrent,managed:true});
+                const granted=grants.has(candidate.definition.targetId)?{ok:true,data:grants.get(candidate.definition.targetId)}:await context.access.ensureManaged(candidate.definition,{scope,isCurrent:context.isCurrent,managed:true});
                 if(context.isCurrent()!==true)return {ok:false,error:{code:'STALE_FILE_SCOPE',message:'The managed file scope changed.'}};
                 if(!granted?.ok)return granted;
                 const definition=granted.data;

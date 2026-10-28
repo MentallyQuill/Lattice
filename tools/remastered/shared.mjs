@@ -4,7 +4,7 @@ export function liveJson(r, id, targetId, settings = {}) {
     r.add(id + '-file', 'read-file', { targetId, ...settings }, 'authorized live target');
     r.add(id, 'json-decode', { phase: settings.phase ?? 'pre' });
     r.connect(id + '-file', 'text', id, 'in');
-    r.requirements.push(`Create and authorize Workflow Data ${targetId} with the documented JSON shape.`);
+    r.requirements.push(`Known sample ${targetId} prepares automatically for this independent copy.`);
     return id;
 }
 export function draftEvidence(r, id = 'native-source') {

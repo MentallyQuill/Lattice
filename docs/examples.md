@@ -13,9 +13,9 @@ Every lesson includes **On Send → Generate Reply → Review / Publish**. You c
 ## Set up a practice copy
 
 1. Open a practice chat and select the SillyTavern character who will reply.
-2. Read the lesson requirements and request budget. Replace sample instructions, actor IDs, item IDs, and aliases with your own story’s identities. Loaded character IDs normally use `character:<avatar filename>`; a display name alone is not enough.
+2. Read the lesson requirements and request budget. Choose the intended characters by their familiar names when the lesson needs private state. Adapt sample instructions, items and aliases to your story; a character choice never substitutes for verified scene participation.
 3. For each model tool, choose **Active SillyTavern model** or a saved connection on its grey bar. The main reply always uses your usual SillyTavern connection. Configure **For Each → Helper model bindings** separately when the lesson uses model helpers.
-4. If the lesson names story documents, authorize them in **Workflow → Configure → Workflow Data…**. Supply the document name, target ID, format, visibility, and initial content named in the lesson. Actor-private documents need that actor’s ID.
+4. Known sample files prepare automatically in the independent lesson copy, including its clock, progression and outcome state. Opening or previewing does not write output contents. For a personal input, select its node and use **File → Choose file** or **Import from device**. Import creates an independent input copy; later edits to the original do not update it. A private file requires its selected character.
 5. Resolve validation or connection issues. Keep the copy open, select **Enable Lattice**, and Send normally in SillyTavern.
 6. Inspect the named checkpoints in Preview. At **Review / Publish → Host result**, compare the proposed reply and saved changes. **Apply reviewed reply** preserves the original as a swipe and accepts the proposal; **Reject reply** leaves its accepted-policy effects unapplied.
 
@@ -74,7 +74,9 @@ Both lessons can feed their bounded rendered passages into ordinary Send. That o
 
 ## Sources, fixtures and acceptance
 
-The [fixture files](../examples/remastered/fixtures/) provide demonstration content for lessons that need documents. Initialize the named shapes in your practice chat. Workflow Data stores scoped story documents; its target IDs are not paths to arbitrary files on your computer. **File Input** imports a UTF-8 snapshot and does not authorize a live document.
+The [fixture files](../examples/remastered/fixtures/) are optional references for the automatically prepared demonstration content. You do not need to paste JSON or enter logical target IDs. Each independent copy owns separate sample state; reopening the same saved copy keeps its accepted content. Sample history never becomes evidence of actual events in your story. **File Input** keeps an imported UTF-8 snapshot rather than a live reference.
+
+The node **File** section shows its friendly name, automatic type and readiness. Saving nodes offer **File handling → Replace / Append**, including connected writers and specialized clock or outcome saves. **Advanced** contains custom destinations, formats and privacy details. A format change needs a new copy or conversion, preserving the original. Use **Open** or **Download** to inspect an authorized file. **File storage** selects SillyTavern-only storage or the optional computer/server storage setup; see [file storage](file-storage.md).
 
 Use **Read File** when you need saved content and a reference for a later write to that same target. Keep that live reference connected through the update. **Format** validates and serializes supplied records; use Extract first when prose needs to become structured records.
 
@@ -102,7 +104,7 @@ Lesson 30 can save elapsed-time decay for the authorized selected actor even whe
 
 Lesson 18 reads genuine native state and episodes, then gives its private reflection to Character Direction. Accepted memory proposals remain tied to the accepted native revision. Later edits, swipe changes, deletion, or revoked visibility invalidate that evidence; extract new evidence for a changed narrative.
 
-Lesson 22’s Prompted Memory reads the selected actor’s existing native episodes. Its separate `rowan-item-memories` Workflow Data target is an output ledger: starting it at `[]` does not create a recall episode. Recall does not invent history; opt-in creation needs explicit permission and review.
+Lesson 22’s Prompted Memory reads the selected actor’s existing native episodes. Its separate private reminder file starts as an empty sample output ledger; that does not create a recall episode. Recall does not invent history; opt-in creation needs explicit permission and review.
 
 For lesson 26, use **Queue recall** on a Recall or Recall Shortcut node, **Details → Memory recall**, **Workflow → Memory recall**, or the configured shortcut. Green badges show queued requests; amber badges show reservations or results awaiting acceptance. Click a badge to inspect its policy. Previewing Recall Shortcut does not queue it. See [Recall setup and policies](unified-workflows.md#queue-memories-manually-or-recall-them-automatically).
 

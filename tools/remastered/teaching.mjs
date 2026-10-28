@@ -17,9 +17,7 @@ export function teachingFor(number, checkpoints) {
                 ? 'Use a practice SillyTavern chat where you can try things freely. Open this example, then turn on Enable Lattice before sending a message. Your usual SillyTavern connection writes the reply.'
                 : 'Open this lesson in a practice chat and enable Lattice before Send. The main reply uses your current SillyTavern connection.',
             ...teaching.requirements,
-            ...(teaching.requirements.some(text => /Workflow.*Data/u.test(text))
-                ? ['For each new Workflow Data document, also fill in Document name; using the Logical target ID as its name is fine. When a lesson names a fixture, paste the file’s contents into Initial template, then choose Save authorization.']
-                : []),
+            ...(number>=16?['Known practice files prepare automatically in this independent copy. Opening and previewing make no paid requests or output writes. Existing saved content always wins. For personal inputs, use the node File section to Choose file or Import from device; importing creates an independent input copy.']:[]),
         ],
         steps: [...teaching.steps,
             number <= 8

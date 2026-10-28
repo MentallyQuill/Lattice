@@ -97,7 +97,8 @@
         "instructions": "You are a concise scene designer. Return one practical complication, preserve player agency, and never write the finished reply.",
         "outputKind": "text",
         "schema": "",
-        "maxTokens": 2048
+        "maxTokens": 2048,
+        "maxRetries": 0
       },
       "guidance": {
         "id": "guidance",

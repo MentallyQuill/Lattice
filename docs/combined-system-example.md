@@ -8,19 +8,19 @@ Open the [editable document](../examples/unified/unified-combined-systems.lattic
 
 ## Prepare a disposable story
 
-Select the actual Rowan NPC whose avatar is `rowan.png` and load Iris with avatar `iris.png`, or consistently edit the demonstration actor IDs to your loaded actors. Configure the Item Use Trigger, Model Call and confirmation helper model connections. The native reply uses your ordinary SillyTavern connection.
+Choose the intended Rowan and Iris characters by name in the relevant character settings. Configure the Item Use Trigger, Model Call and confirmation helper model connections. The native reply uses your ordinary SillyTavern connection.
 
-In **Workflow → Configure → Workflow Data…**, create and authorize these named JSON targets. The linked files are initial demonstration content, not live authority.
+This standalone imported document needs your input choices; it does not inherit the trusted automatic sample setup of the numbered Examples browser. Select each reader or clock node inside its system and use its **File** section to choose an authorized existing file, or **Import from device** to create a separate copy of the linked demonstration file. Choose each private character by name. The internal names below identify which input belongs to which system; you do not enter them as logical target IDs.
 
-| Logical target | Scope | Initial content |
+| Input | Scope | Optional demonstration copy |
 | --- | --- | --- |
 | `wand-holders` | Public | [Accepted holder](../examples/unified/fixtures/combined-systems/wand-holders.json) |
 | `wand-effects` | Public | [Fixed effect library](../examples/unified/fixtures/combined-systems/wand-effects.json) |
 | `wand-outcomes` | Public | [Empty outcome list](../examples/unified/fixtures/combined-systems/wand-outcomes.json) |
 | `lattice-default-clock` | Public shared default Chat clock | [Minute-zero clock](../examples/unified/fixtures/combined-systems/lattice-default-clock.json) |
-| `rowan-relationship` | Actor private for selected `character:rowan.png` | [Directed relationship state](../examples/unified/fixtures/combined-systems/rowan-relationship.json) |
+| `rowan-relationship` | Actor private for selected Rowan | [Directed relationship state](../examples/unified/fixtures/combined-systems/rowan-relationship.json) |
 
-The workflow obtains current document references from these authorized targets. Importing graph or resource bytes does not grant file or actor access. Seed a fresh disposable clock; changing initial content does not reset existing saved time.
+The workflow obtains current references from your chosen files. Imported input copies are independent of their originals. Importing graph or resource bytes does not grant actor access or establish actual events. Keep the source References connected to their writers. Names and types follow the chosen inputs; each saving node retains **File handling → Replace / Append**, while custom formats and destinations live in **Advanced**. Existing saved time stays authoritative; use a new disposable input copy for a fresh exercise.
 
 ## Use the three systems
 

@@ -15,7 +15,7 @@ export const GUIDE = {
     14: ['A fourth clue exceeds limit3', 'The helper holds before making unbounded requests.', 'Change one clue quote.', 'The ordered corresponding result changes while other clue identities remain stable.'],
     15: ['Protected/recent context cannot fit', 'Budget constraints are reported instead of silently inventing context.', 'Change method select to compress.', 'The optional compression adds at most one auxiliary request and reports omissions.'],
     16: ['Live target revision changes before acceptance', 'A stale captured reference cannot silently write.', 'Change the authorized notebook text between runs.', 'The next live read sees it; imported snapshots remain unchanged.'],
-    17: ['A stable journal record already exists', 'Add-unique avoids another copy of that record.', 'Reject the staged replacement.', 'No Workflow Data save occurs.'],
+    17: ['A stable journal record already exists', 'Add-unique avoids another copy of that record.', 'Reject the staged replacement.', 'No file save occurs.'],
     18: ['No genuinely settled memory events exist', 'Internalize holds; imported prose cannot manufacture private settled history.', 'Change Recall query and limit.', 'Only permitted genuine memory episodes feed the selected actor reflection.'],
     19: ['A candidate is hypothetical or negated', 'Deliberate confirmation excludes it or holds; it never becomes a confirmed event.', 'Set a confirmation answer unresolved.', 'The bounded collection holds rather than partially accepting uncertain occurrences.'],
     20: ['The player only mentions the item', 'No actual-use consequence is generated.', 'Include an actual transfer followed by use.', 'Current Holder follows source order and applies the use to the correct holder.'],
