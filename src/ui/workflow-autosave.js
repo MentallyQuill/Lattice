@@ -9,9 +9,9 @@ export function createWorkflowAutosave({session,library,isBusy=()=>false,activat
     const retain=draft=>{drafts=drafts.filter(item=>item.token!==draft.token);drafts.push(draft);};
     const stale=()=>fail('STALE_WORKFLOW_CONTEXT','The workflow or chat changed. The attempted draft is retained.');
     function clearTimer(){if(timer!==null){clearTimeout(timer);timer=null;}}
-    async function write() {
+    async function write(forceInitial=false) {
         const source=session.source();
-        if(!session.dirty()||source?.kind!=='library'&&(source||!canAdopt()))return {ok:true,data:{unchanged:true}};
+        if(!session.dirty()&&!(forceInitial&&!source)||source?.kind!=='library'&&(source||!canAdopt()))return {ok:true,data:{unchanged:true}};
         if(!source&&isBusy()){deferred=true;return status('deferred',{ok:true,data:{deferred:true}});}
         const token=session.capture(),context=getContext(),snapshot=session.snapshot();
         const encoded=serializeWorkflowDocument(session.current(),session.workspaceViews(),{exampleMetadata:session.exampleMetadata?.()});
@@ -29,12 +29,12 @@ export function createWorkflowAutosave({session,library,isBusy=()=>false,activat
         drafts=drafts.filter(item=>item!==draft);
         return status(session.dirty()?'pending':'saved',{...result,data:{...result.data,snapshot:draft.snapshot}});
     }
-    async function flush() {
+    async function flush(forceInitial=false) {
         clearTimer();if(disposed)return stale();
         // Capture at invocation; a caller waiting on another write cannot save its replacement.
         const token=session.capture(),context=getContext();
         if(pending){const result=await pending;if(!contextCurrent(token,context))return stale();return result;}
-        pending=write();try{return await pending;}finally{
+        pending=write(forceInitial);try{return await pending;}finally{
             pending=null;
             if(contextCurrent(token,context)&&lastStatus.state==='pending'&&session.dirty())schedule();
         }

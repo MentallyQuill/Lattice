@@ -21,7 +21,7 @@ export interface WorkflowAutosaveView extends WorkflowAutosaveStatus {deferred:b
 export interface AutosaveDraft {source:LibrarySource|null;snapshot:string;json?:string}
 export interface WorkflowAutosave {
  changed():void;
- flush():Promise<Result<unknown>>;
+ flush(forceInitial?:boolean):Promise<Result<unknown>>;
  refresh():Promise<Result<unknown>>;
  view():WorkflowAutosaveView;
  recovery():AutosaveDraft[];

@@ -48,8 +48,8 @@ export function createWorkflowLibraryController(env) {
         if(session.source()?.kind!=='library'&&(session.source()||!env.canAdopt?.()))return storeCurrent(session.current()?.name||'Untitled',false);
         const token=session.capture(),context=getContext();let result;
         for(let attempt=0;attempt<4;attempt++){
-            result=await autosave.flush();if(!current(token,context))return cancelled();if(!result.ok)return result;
-            if(!session.dirty())return result;
+            result=await autosave.flush(!session.source());if(!current(token,context))return cancelled();if(!result.ok)return result;
+            if(!session.dirty()&&session.source()?.kind==='library')return result;
             if(result.data?.deferred)return fail('WORKFLOW_BUSY','Finish the current run or review before saving this workflow.');
         }
         return fail('WORKFLOW_EDIT_PENDING','New workflow edits are still arriving. Finish editing before saving.');
@@ -104,7 +104,7 @@ export function createWorkflowLibraryController(env) {
         async reloadList(){const result=await library.list();if(result.ok){items=result.data;notify();}return result;},
         async restoreSelection(){const selected=env.getSelection?.();return selected?.kind==='library'?openSaved(selected.id):{ok:true,data:{unchanged:true}};},
         getWorkflowIdentity:()=>session.source()?.kind==='library'?session.source().id:session.draftNamespace(),
-        view:()=>({items:[...items],source:session.source(),selected:selection&&selection.context===getContext()?selection.value:env.getSelection?.()??null,status,dirty:session.dirty(),busy:busy||isBusy(),autosave:autosave.view(),capabilities:library.capabilities}),
+        view:()=>({items:[...items],source:session.source(),selected:selection&&selection.context===getContext()?selection.value:env.getSelection?.()??null,status,dirty:session.dirty(),busy:busy||isBusy(),commandBusy:busy,autosave:autosave.view(),capabilities:library.capabilities}),
         recovery:()=>autosave.recovery(),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},
         dispose(){disposed=true;autosave.dispose();listeners.clear();},
     });

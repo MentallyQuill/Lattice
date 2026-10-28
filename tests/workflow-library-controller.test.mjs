@@ -120,3 +120,18 @@ scopedSelection.dispose();
  const saving=controller.flush();await startedPromise;const opening=controller.openSaved(chosen.data.id);await new Promise(resolve=>setTimeout(resolve,20));release();await saving;assert.equal((await opening).ok,true);
  assert.equal(session.source().id,chosen.data.id);assert.equal(persisted.id,chosen.data.id);assert.equal(controller.view().selected.id,chosen.data.id);controller.dispose();
 }
+
+// Explicit Save creates a host document even for a clean null-source draft.
+{
+ const library=createWorkflowLibrary({store:memoryStore()}),session=createWorkflowDocumentSession();session.activate(graph(),{clean:true});
+ const controller=createWorkflowLibraryController({session,library,canAdopt:()=>true});
+ assert.equal(session.dirty(),false);assert.equal((await controller.save()).ok,true);
+ assert.equal(session.source()?.kind,'library');assert.equal((await library.read(session.source().id)).data.graph.nodes.text.text,'before');controller.dispose();
+}
+
+// Explicit Save must still create a clean draft if a no-op flush is already pending.
+{
+ const library=createWorkflowLibrary({store:memoryStore()}),session=createWorkflowDocumentSession();session.activate(graph(),{clean:true});
+ const controller=createWorkflowLibraryController({session,library,canAdopt:()=>true});
+ const noop=controller.flush(),saved=controller.save();await noop;assert.equal((await saved).ok,true);assert.equal(session.source()?.kind,'library');controller.dispose();
+}

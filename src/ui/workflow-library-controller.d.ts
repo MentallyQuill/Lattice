@@ -15,7 +15,7 @@ export interface WorkflowLibraryController {
  reloadList():Promise<Result<LibraryEntry[]>>;
  restoreSelection():Promise<WorkflowCommandResult>;
  getWorkflowIdentity():string|null;
- view():{items:LibraryEntry[];source:ReturnType<WorkflowSessionPort['source']>;selected:WorkflowSelection|null;status:WorkflowAutosaveStatus;dirty:boolean;busy:boolean;autosave:WorkflowAutosaveView;capabilities:WorkflowLibraryCapabilities};
+ view():{items:LibraryEntry[];source:ReturnType<WorkflowSessionPort['source']>;selected:WorkflowSelection|null;status:WorkflowAutosaveStatus;dirty:boolean;busy:boolean;commandBusy:boolean;autosave:WorkflowAutosaveView;capabilities:WorkflowLibraryCapabilities};
  recovery():AutosaveDraft[];
  subscribe(listener:()=>void):()=>void;
  dispose():void;
