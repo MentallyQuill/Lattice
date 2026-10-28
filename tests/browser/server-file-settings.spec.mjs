@@ -45,7 +45,7 @@ async function chooseAnywhere(page){
 }
 async function chooseLocation(page,path){
  const file=page.locator('[data-node-file]');await file.getByText('Advanced',{exact:true}).click();await file.getByRole('button',{name:'Choose location…',exact:true}).click();
- const chooser=page.locator('[data-server-file-chooser]');await expect(chooser).toBeVisible();await chooser.getByLabel('Server folder',{exact:true}).fill(path.replace(/[\\/][^\\/]+$/,''));await chooser.getByRole('button',{name:'Go',exact:true}).click();
+ const chooser=page.locator('[data-server-file-chooser]'),folder=path.replace(/[\\/][^\\/]+$/,'');await expect(chooser).toBeVisible();await expect(chooser.locator('.path')).toBeVisible();await chooser.getByLabel('Server folder',{exact:true}).fill(folder);await chooser.getByRole('button',{name:'Go',exact:true}).click();await expect(chooser.locator('.path')).toHaveText(folder);
  await expect(chooser.getByRole('button',{name:'Use this location',exact:true})).toBeEnabled();await chooser.getByLabel('Filename',{exact:true}).fill('SceneContext.txt');await chooser.getByRole('button',{name:'Use this location',exact:true}).click();
 }
 test('automatic output chooses a custom server location in Brave without browser APIs or content writes',async({page},testInfo)=>{

@@ -3,10 +3,12 @@
  import type {ServerFileAccess,ServerFileDirectory} from '../src/ui/server-file-access';
  let {access,mode='open',name='',onselect,oncancel}: {access:ServerFileAccess;mode?:'open'|'save';name?:string;onselect:(path:string)=>void;oncancel:()=>void}=$props();
  let roots=$state<{name:string;path:string}[]>([]),listing=$state<ServerFileDirectory|null>(null),filename=$state(untrack(()=>name)),manualPath=$state(''),error=$state(''),busy=$state(false);
+ // Status-only parent updates must not restart folder navigation.
+ let currentAccess=$derived(access);
  let sequence=0,alive=true;
  onDestroy(()=>{alive=false;sequence++;});
  async function browse(path:string){const ticket=++sequence;busy=true;error='';const result=await access.browse({path});if(!alive||ticket!==sequence)return;busy=false;if(result.ok){listing=result.data;manualPath=result.data.path;}else{listing=null;error=result.error.message;}}
- $effect(()=>{const selected=access;let current=true;void(async()=>{const result=await selected.roots();if(!current||!alive)return;if(result.ok){roots=result.data.roots;if(roots.length)await browse(roots[0].path);}else error=result.error.message;})();return()=>{current=false;sequence++;};});
+ $effect(()=>{const selected=currentAccess;let current=true;void(async()=>{const result=await selected.roots();if(!current||!alive)return;if(result.ok){roots=result.data.roots;if(roots.length)await browse(roots[0].path);}else error=result.error.message;})();return()=>{current=false;sequence++;};});
  function cancel(){sequence++;alive=false;oncancel();}
  function select(path:string){if(busy)return;sequence++;alive=false;onselect(path);}
  function save(){if(!listing||!filename.trim()||/[\\/\0]/.test(filename)||['.','..'].includes(filename.trim()))return;const separator=listing.path.includes('\\')?'\\':'/';select(listing.path.replace(/[\\/]$/,'')+separator+filename.trim());}

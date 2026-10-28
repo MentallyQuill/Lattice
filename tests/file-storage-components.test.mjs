@@ -10,6 +10,13 @@ const dom=new JSDOM('<!doctype html><body></body>',{pretendToBeVisual:true});glo
 for(const key of ['Node','Element','Text','Comment','Document','HTMLElement','HTMLButtonElement','HTMLInputElement','HTMLSelectElement','MutationObserver'])Object.defineProperty(globalThis,key,{configurable:true,value:dom.window[key]});
 const {mount,unmount,flushSync,tick}=await import(new URL('../node_modules/svelte/src/index-client.js',import.meta.url).href);
 const settle=async()=>{await tick();await tick();flushSync();};
+const chooserRefreshSource=`<script>
+ import Chooser from './ServerFileChooser.svelte';
+ let {access,onselect}= $props();
+ let view=$state.raw({access});
+ export function refresh(){view={...view};}
+ export function replaceAccess(next){view={access:next};}
+</script><Chooser access={view.access} mode="save" name="notes.txt" {onselect} oncancel={()=>{}}/>`;
 test('first-run choices explain the remote machine and cancellation preserves optional setup',async()=>{
  const directory=await mkdtemp(join(tmpdir(),'lattice-setup-component-')),target=document.createElement('div');document.body.append(target);let instance;
  try{
@@ -26,6 +33,40 @@ test('server chooser browses folders and returns only a path without authorizing
   const access={roots:async()=>({ok:true,data:{chooserVersion:1,roots:[{name:'Your files',path:'/files'}]}}),browse:async({path})=>{calls.push(path);return {ok:true,data:{chooserVersion:1,path,parent:null,truncated:false,entries:[{name:'notes.txt',kind:'file',path:'/files/notes.txt'}]}};}};
   instance=mount(component.component,{target,props:{access,mode:'open',onselect:path=>selected.push(path),oncancel:()=>{}}});flushSync();await settle();await settle();
   target.querySelector('[data-server-entry="file"]').click();await settle();assert.deepEqual(selected,['/files/notes.txt']);assert.deepEqual(calls,['/files']);
+ }finally{if(instance)await unmount(instance);target.remove();await rm(directory,{recursive:true,force:true});}
+});
+
+test('server chooser retains its selected folder and filename across same-access parent refreshes',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lattice-chooser-refresh-')),target=document.createElement('div');document.body.append(target);let instance;
+ try{
+  const component=await compiled('ServerChooserRefresh',directory,chooserRefreshSource),selected=[],calls=[];
+  const access=Object.freeze({roots:async()=>({ok:true,data:{chooserVersion:1,roots:[{name:'Your files',path:'/files'}]}}),browse:async({path})=>{calls.push(path);return {ok:true,data:{chooserVersion:1,path,parent:null,truncated:false,entries:[]}};}});
+  instance=mount(component.component,{target,props:{access,onselect:path=>selected.push(path)}});flushSync();await settle();await settle();
+  const folder=target.querySelector('[aria-label="Server folder"]');folder.value='/files/Stories';folder.dispatchEvent(new dom.window.Event('input',{bubbles:true}));
+  folder.closest('form').dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));await settle();await settle();
+  const filename=target.querySelector('[aria-label="Filename"]');filename.value='SceneContext.txt';filename.dispatchEvent(new dom.window.Event('input',{bubbles:true}));
+  instance.refresh();flushSync();await settle();await settle();
+  assert.deepEqual(calls,['/files','/files/Stories'],'a status-only parent refresh cannot restart root browsing');
+  assert.equal(target.querySelector('.path').textContent,'/files/Stories');assert.equal(folder.value,'/files/Stories');assert.equal(filename.value,'SceneContext.txt');
+  filename.closest('form').dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));await settle();
+  assert.deepEqual(selected,['/files/Stories/SceneContext.txt']);
+ }finally{if(instance)await unmount(instance);target.remove();await rm(directory,{recursive:true,force:true});}
+});
+
+test('server chooser keeps a pending same-access browse and rejects late responses from a replaced adapter',async()=>{
+ const directory=await mkdtemp(join(tmpdir(),'lattice-chooser-adapter-')),target=document.createElement('div');document.body.append(target);let instance;
+ try{
+  const component=await compiled('ServerChooserAdapter',directory,chooserRefreshSource),calls=[];let release;
+  const listing=path=>({ok:true,data:{chooserVersion:1,path,parent:null,truncated:false,entries:[]}});
+  const access=Object.freeze({roots:async()=>({ok:true,data:{chooserVersion:1,roots:[{name:'Old files',path:'/old'}]}}),browse:({path})=>{calls.push(path);return new Promise(resolve=>{release=()=>resolve(listing(path));});}});
+  instance=mount(component.component,{target,props:{access,onselect:()=>assert.fail('Browsing cannot select a file')}});flushSync();await settle();
+  const oldRelease=release;assert.equal(typeof oldRelease,'function');instance.refresh();flushSync();await settle();
+  assert.deepEqual(calls,['/old'],'same-adapter refresh must not cancel or restart the pending browse');
+  const replacement=Object.freeze({roots:async()=>({ok:true,data:{chooserVersion:1,roots:[{name:'New files',path:'/new'}]}}),browse:async({path})=>{calls.push(path);return listing(path);}});
+  instance.replaceAccess(replacement);flushSync();await settle();await settle();
+  assert.equal(target.querySelector('.path').textContent,'/new');oldRelease();await settle();await settle();
+  assert.equal(target.querySelector('.path').textContent,'/new');assert.deepEqual(calls,['/old','/new']);
+  assert.equal(target.querySelector('[aria-label="Filename"]').closest('form').querySelector('button').disabled,false);
  }finally{if(instance)await unmount(instance);target.remove();await rm(directory,{recursive:true,force:true});}
 });
 
