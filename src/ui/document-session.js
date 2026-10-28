@@ -28,6 +28,7 @@ export function createWorkflowDocumentSession() {
         workspaceViews(next) { if (arguments.length) { workspaceViews = next; notify('views'); } return workspaceViews; },
         capture: () => token,
         draftNamespace,
+        workflowIdentity: () => source?.kind === 'library' ? source.id : draftNamespace(),
         stillCurrent: captured => !!captured && captured === token,
         snapshot,
         dirty: () => !!graph && (checkpoint === null || snapshot() !== checkpoint),

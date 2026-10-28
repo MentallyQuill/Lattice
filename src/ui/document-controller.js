@@ -13,6 +13,9 @@ export function createWorkflowDocumentController(env) {
     const error = result => {if (!result?.cancelled) {const issue=presentDiagnostic(result?.error,{action:'update the workflow document'});status=issue.message;env.report?.(issue.message,issue.severity,result?.error);changed();}return result;};
     async function save(saveAs=false, insideReplacement=false) {
         if (saving || replacing && !insideReplacement) return cancelled();
+        // Library saves use their acknowledged host boundary; native export remains available separately.
+        const library=typeof env.libraryController==='function'?env.libraryController():env.libraryController;
+        if(library)return saveAs?library.saveAs(session.current()?.name||'Untitled'):library.save();
         const graph=session.current();if (!graph) return error(failure('No workflow document is open.'));
         const token=session.capture(),workspaceViews=env.views?.() ?? null,snapshot=session.snapshot(graph);
         const encoded=serializeWorkflowDocument(graph,workspaceViews,{exampleMetadata:session.exampleMetadata?.()});if (!encoded.ok) return error(encoded);
@@ -39,14 +42,15 @@ export function createWorkflowDocumentController(env) {
         }
         if (choice!=='save') return false;
         const result=await save(false,true);
-        if (!result.ok || !session.stillCurrent(token)) return false;
+        const savedToken=result.data?.activationToken??token;
+        if (!result.ok || !session.stillCurrent(savedToken)) return false;
         if (result.data.downloaded) {report('Finish saving the JSON copy, then choose Don’t Save when you are ready to switch documents.','info');return false;}
         if (session.snapshot()!==result.data.snapshot) {report('New changes arrived while saving. Save them before switching documents.','info');return false;}
-        return true;
+        return {token:savedToken};
     }
     async function replace(load,clean=false) {
         if (replacing || saving) return cancelled();
-        const token=session.capture(),epoch=++replacementEpoch;
+        let token=session.capture();const epoch=++replacementEpoch;
         const current=()=>epoch===replacementEpoch && session.stillCurrent(token);
         replacing=true;
         try {
@@ -57,7 +61,9 @@ export function createWorkflowDocumentController(env) {
             if (!result.ok) return error(result);
             const next=result.data, admitted=serializeWorkflowDocument(next.graph,next.workspaceViews ?? null,{exampleMetadata:next.exampleMetadata});
             if (!admitted.ok) return error(admitted);
-            if (!await guard(token) || !current()) return cancelled();
+            const guarded=await guard(token);if(!guarded)return cancelled();
+            if(guarded.token)token=guarded.token;
+            if(!current())return cancelled();
             const activated=env.activate(next.graph,{source:next.source ?? null,workspaceViews:next.workspaceViews ?? null,exampleMetadata:admitted.data.recovery.exampleMetadata,clean});
             if (activated?.ok===false) return error(activated);
             if (next.companions?.length) env.retainCompanions?.(next.companions);
@@ -72,6 +78,7 @@ export function createWorkflowDocumentController(env) {
     };
     return {
         save,
+        replace,
         storageIssue(message) {storageWarning=diagnosticText({code:'RECENT_STORAGE_FAILED',message});changed();},
         cancelReplacement() {replacementEpoch++;},
         newDocument:()=>replace(()=>({ok:true,data:{graph:env.create()}})),
