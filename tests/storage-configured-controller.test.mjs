@@ -3,6 +3,7 @@ import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
 import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.29.0';
 import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v=0.29.0';
+import {OPERATIONS,operationDefaults} from '../src/workflow/catalog.js?v=0.29.0';
 import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.29.0';
 import {createWorkflowDataSetup} from '../src/ui/workflow-data-setup.js?v=0.29.0';
 import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.29.0';
@@ -26,7 +27,7 @@ function actual(name,env){const start=source.indexOf('function '+name+'('),end=s
 function fixture(){
  const graph={id:'setup-controller',schema:3,runtime:2,mode:'native-unified',definitions:{},portals:{},nodes:{compose:{id:'compose',type:'workflow',operation:'compose',phase:'post',sections:[{name:'body',text:''}]}},wires:{}};
  const context={chatId:'story',chatMetadata:{},chat:[]};let user='default-user',camera=10,commits=0;const catalog=createChatDocumentCatalog({getContext:()=>context,getUserId:()=>user,saveMetadata:()=>true});catalog.define({targetId:'souls.json',name:'Souls',format:'json',content:'[]',visibility:{kind:'public'}});
- const capture={},env={current:graph,selected:{id:'compose'},graphViews:{readEditor:()=>({view:{identity:{kind:'root'}},prepared:{savedGraph:graph}})},editorDraw:{nativeCards:{compose:{phase:'post',ports:[{port:'section.body',dir:'in',kind:'text'}]}}},editorCurrent:token=>token===capture,workflowRuntime:{getStoryDocumentCatalog:()=>catalog},nodeDocumentCaptures:new Map(),nodeCreationScopes:new WeakMap(),pendingConfiguredNode:null,ctx:()=>context,safe,prepareNodeProfileOptions,readNodeProfileMetadata,activeModelMetadata,workflowDataPresetFor,workbench:{update(value){if('configureNode'in value)env.view=value.configureNode;}},canvas:{toGraph:(x,y)=>({x:x+camera,y:y+camera})},createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices,
+ const capture={},env={current:graph,selected:{id:'compose'},graphViews:{readEditor:()=>({view:{identity:{kind:'root'}},prepared:{savedGraph:graph}})},editorDraw:{nativeCards:{compose:{phase:'post',ports:[{port:'section.body',dir:'in',kind:'text'}]}}},editorCurrent:token=>token===capture,workflowRuntime:{getStoryDocumentCatalog:()=>catalog},nodeDocumentCaptures:new Map(),nodeCreationScopes:new WeakMap(),pendingConfiguredNode:null,ctx:()=>context,safe,OPERATIONS,operationDefaults,prepareNodeProfileOptions,readNodeProfileMetadata,activeModelMetadata,workflowDataPresetFor,workbench:{update(value){if('configureNode'in value)env.view=value.configureNode;}},canvas:{toGraph:(x,y)=>({x:x+camera,y:y+camera})},createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices,
  prepareNativeCreation:(token,command)=>prepareNativeConnectionEdit(graph,command),prepareShelfNodeCreation:(token,command,at)=>prepareNativeConnectionEdit(graph,{...command,graphPoint:at??{x:0,y:0}}),commitCaptured(){commits++;return {ok:true,data:{changed:true}};}};
  env.profiles=actual('profiles',env);
  const start=source.indexOf('const configuredNodeSession ='),end=source.indexOf('\n});',start)+4;assert.ok(start>=0);env.configuredNodeSession=Function('env','with(env){'+source.slice(start,end)+';return configuredNodeSession;}')(env);
@@ -58,13 +59,13 @@ test('stale placement capture cannot prepare a node or acquire a document scope'
  assert.equal(rejected.error.code,'STALE_CONTEXT');assert.equal(f.env.nodeDocumentCaptures.size,0);assert.deepEqual(f.graph,before);assert.equal(f.commits(),0);
 });
 
-test('actual controller automatic data nodes need no active chat and inherit the selected response stage',async()=>{
- for(const [operation,key,targetId] of [['read-file','targetId','lattice-default-notes'],['story-clock','clockId','lattice-default-clock'],['commit-outcomes','targetId','lattice-default-outcomes']]){
+test('actual controller new data nodes keep independent file intent without an active chat and inherit the selected response stage',async()=>{
+ for(const [operation,key,fileTarget] of [['read-file','targetId',{missing:'error'}],['story-clock','clockId',{managed:true}],['commit-outcomes','targetId',{managed:true}]]){
   const f=fixture();f.env.workflowRuntime={getStoryDocumentCatalog:()=>undefined};
   const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation,graphPoint:{x:25,y:30}});
   const prepared=await pending;
   assert.equal(prepared.ok,true,operation+' '+JSON.stringify(prepared));
-  const node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];assert.equal(node[key],targetId);assert.equal(node.phase,'post');
+  const node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];assert.equal(node[key],'','placement leaves file identity to an explicit selection or qualified managed resolution');assert.deepEqual(node.fileTarget,fileTarget);assert.equal(node.phase,'post');assert.equal(node.x,25);assert.equal(node.y,30);
   assert.equal(f.env.view,undefined);assert.equal(f.env.nodeDocumentCaptures.size,0);assert.equal(f.commits(),0);
  }
 });
@@ -72,7 +73,7 @@ test('actual controller automatic data nodes need no active chat and inherit the
 test('actual controller automatic pin creation keeps the origin response stage and commits once through its capture',async()=>{
  const f=fixture();f.env.workflowRuntime={getStoryDocumentCatalog:()=>undefined};
  const pending=f.env.requestNodeCreation(f.capture,{kind:'create',operation:'read-file',graphPoint:{x:25,y:30},connection:{origin:{nodeId:'compose',portId:'section.body'},portId:'text'}});assert.equal(f.env.view,undefined);const prepared=await pending;
- assert.equal(prepared.ok,true,JSON.stringify(prepared));const id=prepared.data.addedNodeIds[0],node=prepared.data.candidate.nodes[id];assert.equal(node.phase,'post');assert.equal(node.targetId,'lattice-default-notes');
+ assert.equal(prepared.ok,true,JSON.stringify(prepared));const id=prepared.data.addedNodeIds[0],node=prepared.data.candidate.nodes[id];assert.equal(node.phase,'post');assert.equal(node.targetId,'');assert.deepEqual(node.fileTarget,{missing:'error'});
  assert.equal(Object.values(prepared.data.candidate.wires).some(wire=>wire.from===id&&wire.fromPort==='text'&&wire.to==='compose'&&wire.toPort==='section.body'),true);
  assert.equal(f.env.commitNodeCreation(f.capture,prepared).ok,true);assert.equal(f.commits(),1);
 });
@@ -80,7 +81,7 @@ test('actual controller automatic pin creation keeps the origin response stage a
 test('actual controller automatic creation preserves shelf geometry and rejects stale graph views',async()=>{
  const f=fixture();f.env.workflowRuntime={getStoryDocumentCatalog:()=>undefined};
  const prepared=await f.env.requestNodeCreation(f.capture,{kind:'create',operation:'story-clock'},{x:30,y:40},true);
- assert.equal(prepared.ok,true,JSON.stringify(prepared));const node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];assert.equal(node.x,30);assert.equal(node.y,40);assert.equal(node.phase,'post');
+ assert.equal(prepared.ok,true,JSON.stringify(prepared));const node=prepared.data.candidate.nodes[prepared.data.addedNodeIds[0]];assert.equal(node.x,30);assert.equal(node.y,40);assert.equal(node.phase,'post');assert.equal(node.clockId,'');assert.deepEqual(node.fileTarget,{managed:true});
  const stale=await f.env.requestNodeCreation({}, {kind:'create',operation:'story-clock',graphPoint:{x:0,y:0}});assert.equal(stale.ok,false);assert.equal(stale.error.code,'STALE_CONTEXT');
 });
 test('awaited node data edits cannot cancel refresh or bind a replacement document',async()=>{
