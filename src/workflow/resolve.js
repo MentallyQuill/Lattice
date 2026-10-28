@@ -119,7 +119,9 @@ export function prepareWorkflowAttempt(root, options = {}, prepareFileNode) {
         const selected=selectClosure(indexExpansion(expanded.data,root),options.target,false);if(!selected.ok)return selected;
         const primitives=[];
         for (const unit of expanded.data.primitives) {
-            if (unit.systemDisabled || !selected.data.included.has(nodeAddressKey(unit.address)) || !['write-file','story-clock','commit-outcomes','random-pick'].includes(unit.node.operation)) { primitives.push(unit); continue; }
+            // Valid legacy presets and optional blank ledgers keep their existing
+            // provisioning order; only blocked file setup needs early adoption.
+            if (unit.systemDisabled || !selected.data.included.has(nodeAddressKey(unit.address)) || !unit.setupIssues?.some(issue=>issue.code==='FILE_SETUP_REQUIRED'&&issue.field==='fileTarget') || !['write-file','story-clock','commit-outcomes','random-pick'].includes(unit.node.operation)) { primitives.push(unit); continue; }
             const prepared=prepareFileNode(unit.node,unit.address);if(!prepared.ok)return prepared;
             if(prepared.data===unit.node){primitives.push(unit);continue;}
             const described=describeAuthoredOperation({schema:unit.schema,runtime:unit.runtime,mode:'native-unified'},{...prepared.data,phase:unit.phase});if(!described.ok)return described;
