@@ -370,23 +370,34 @@ function legacyPacket(overrides={}){
     const snapshot={targetId:'logical-notes',scope,revision:3,format:'text',content:'old',receipts:[{intentId:'active-intent',fingerprint:'sha256:'+'d'.repeat(64),revision:3}],sourceBinding:{schemaVersion:1,messageCount:1,prefixHash:'sha256:'+'e'.repeat(64)},history:{schemaVersion:1,epoch:1,head:page.pageId},...overrides};
     return {snapshot,pages:{[page.pageId]:page}};
 }
+const legacyDefinition=(bindingId,overrides={})=>definition(bindingId,{visibility:{kind:'actor-private',actorId:scope.actorId},...overrides});
+test('public native destinations reject private legacy history before writing bytes or adopting metadata',async()=>{
+    const {access,handle,binding,persistence}=await selected(),backend=access.backend([definition(binding.bindingId)],{scope,isCurrent:()=>true});
+    const before=structuredClone((await persistence.load()).records),result=await backend.adoptLegacy('logical-notes',legacyPacket());
+    assert.equal(result.ok,false);assert.equal(result.error.code,'PRIVATE_DESTINATION');
+    assert.equal(handle.state.writes,0);assert.equal(handle.state.text,'old');
+    assert.deepEqual((await persistence.load()).records,before,'rejected private history cannot create a durable association');
+    const loaded=must(await backend.load('logical-notes'));
+    assert.deepEqual(loaded.history,{schemaVersion:1,epoch:0,head:null});assert.deepEqual(loaded.receipts,[]);assert.equal(loaded.sourceBinding,undefined);
+    assert.deepEqual(must(await backend.lookupHistory('logical-notes',{intentId:'archived-intent'})),{epoch:0,visibility:{kind:'public'},privateActorIds:[]});
+});
 test('matching legacy adoption durably retains scoped receipts, source bindings and archived history without writing bytes',async()=>{
-    const {access,handle,binding,persistence}=await selected(),backend=access.backend([definition(binding.bindingId)],{scope,isCurrent:()=>true}),packet=legacyPacket();
+    const {access,handle,binding,persistence}=await selected(),backend=access.backend([legacyDefinition(binding.bindingId)],{scope,isCurrent:()=>true}),packet=legacyPacket();
     assert.equal(typeof backend.adoptLegacy,'function');
     assert.deepEqual(must(await backend.adoptLegacy('logical-notes',packet)),{adopted:true});assert.equal(handle.state.writes,0);
     const reloaded=module.createNodeFileAccess({persistence});await reloaded.ready;
-    const restored=reloaded.backend([definition(binding.bindingId)],{scope,isCurrent:()=>true}),loaded=must(await restored.load('logical-notes'));
+    const restored=reloaded.backend([legacyDefinition(binding.bindingId)],{scope,isCurrent:()=>true}),loaded=must(await restored.load('logical-notes'));
     assert.deepEqual(loaded.history,packet.snapshot.history);assert.deepEqual(loaded.receipts,packet.snapshot.receipts);assert.deepEqual(loaded.sourceBinding,packet.snapshot.sourceBinding);
     const history=must(await restored.lookupHistory('logical-notes',{intentId:'archived-intent'}));assert.equal(history.epoch,1);assert.equal(history.receipt.intentId,'archived-intent');assert.deepEqual(history.visibility,{kind:'actor-private',actorId:'actor'});
-    const other=reloaded.backend([definition(binding.bindingId)],{scope:{...scope,chatId:'other'},isCurrent:()=>true});assert.equal(must(await other.load('logical-notes')).history.epoch,0);assert.deepEqual(must(await other.load('logical-notes')).receipts,[]);
+    const other=reloaded.backend([legacyDefinition(binding.bindingId)],{scope:{...scope,chatId:'other'},isCurrent:()=>true});assert.equal(must(await other.load('logical-notes')).history.epoch,0);assert.deepEqual(must(await other.load('logical-notes')).receipts,[]);
 });
 test('adopted legacy history survives later CAS and pending-receipt recovery',async()=>{
-    const {access,binding,persistence}=await selected(),backend=access.backend([definition(binding.bindingId)],{scope,isCurrent:()=>true}),packet=legacyPacket();
+    const {access,binding,persistence}=await selected(),backend=access.backend([legacyDefinition(binding.bindingId)],{scope,isCurrent:()=>true}),packet=legacyPacket();
     must(await backend.adoptLegacy('logical-notes',packet));const old=must(await backend.load('logical-notes'));
     const save=persistence.save;let saves=0;persistence.save=async value=>{if(++saves===2)throw new Error('crash');return save(value);};
     assert.equal(must(await backend.compareAndSwap(update(old),{})).acknowledged,false);persistence.save=save;
     const restored=module.createNodeFileAccess({persistence});await restored.ready;
-    const resumed=restored.backend([definition(binding.bindingId)],{scope,isCurrent:()=>true}),loaded=must(await resumed.load('logical-notes'));
+    const resumed=restored.backend([legacyDefinition(binding.bindingId)],{scope,isCurrent:()=>true}),loaded=must(await resumed.load('logical-notes'));
     assert.equal(loaded.history.epoch,1);assert.equal(loaded.receipts.length,2);
     assert.equal(must(await resumed.lookupHistory('logical-notes',{intentId:'archived-intent'})).receipt.intentId,'archived-intent');
     must(await resumed.compareAndSwap(update(loaded,'last','intent-2'),{}));
@@ -397,7 +408,7 @@ test('adopted JSON checkpoint markers cannot be dropped by a later CAS',async()=
     const content=JSON.stringify({historyCheckpoint:{targetId:'logical-notes',epoch:1},values:[],ledger:[]});
     const handle=fileHandle('notes',content,'notes.json'),access=module.createNodeFileAccess({persistence:storage(),showOpenFilePicker:async()=>[handle]});
     const binding=must(await access.choose({mode:'open',name:'notes.json',format:'json'}));
-    const backend=access.backend([definition(binding.bindingId,{name:'notes.json',format:'json'})],{scope,isCurrent:()=>true}),packet=legacyPacket({content,format:'json'});
+    const backend=access.backend([legacyDefinition(binding.bindingId,{name:'notes.json',format:'json'})],{scope,isCurrent:()=>true}),packet=legacyPacket({content,format:'json'});
     must(await backend.adoptLegacy('logical-notes',packet));const old=must(await backend.load('logical-notes'));
     const result=await backend.compareAndSwap(update(old,'{}'),{});assert.equal(result.ok,false);assert.equal(result.error.code,'DOCUMENT_HISTORY_CHANGED');assert.equal(handle.state.writes,0);
 });
@@ -418,7 +429,7 @@ test('selecting a different physical file never retargets an existing expected b
     assert.equal(must(await old.load('logical-notes')).content,'old');assert.equal(oldHandle.state.writes,0);assert.equal(newHandle.state.writes,0);
 });
 test('legacy adoption rejects scope or archive mismatches and never replaces an established association',async()=>{
-    const {access,handle,binding}=await selected(),backend=access.backend([definition(binding.bindingId)],{scope,isCurrent:()=>true});
+    const {access,handle,binding}=await selected(),backend=access.backend([legacyDefinition(binding.bindingId)],{scope,isCurrent:()=>true});
     assert.deepEqual(must(await backend.adoptLegacy('logical-notes',legacyPacket({content:'different'}))),{adopted:false});
     const copied=legacyPacket({scope:{...scope,chatId:'other'}});assert.equal((await backend.adoptLegacy('logical-notes',copied)).error.code,'INVALID_DOCUMENT_HISTORY');
     const wrongPage=legacyPacket();wrongPage.pages['legacy-receipts'].scope={...scope,chatId:'other'};assert.equal((await backend.adoptLegacy('logical-notes',wrongPage)).error.code,'INVALID_DOCUMENT_HISTORY');
@@ -428,7 +439,7 @@ test('legacy adoption rejects scope or archive mismatches and never replaces an 
     const loaded=must(await backend.load('logical-notes'));assert.equal(loaded.history.epoch,1);assert.equal(loaded.receipts.length,1);assert.equal(handle.state.writes,0);
 });
 test('a native read failure during final legacy adoption checks returns a failure Result',async()=>{
-    const {access,handle,binding}=await selected(),backend=access.backend([definition(binding.bindingId)],{scope,isCurrent:()=>true});
+    const {access,handle,binding}=await selected(),backend=access.backend([legacyDefinition(binding.bindingId)],{scope,isCurrent:()=>true});
     const getFile=handle.getFile;let reads=0;handle.getFile=async()=>{if(++reads===2)throw new DOMException('missing','NotFoundError');return getFile();};
     let result;await assert.doesNotReject(async()=>{result=await backend.adoptLegacy('logical-notes',legacyPacket());});
     assert.equal(result.ok,false);assert.equal(result.error.code,'FILE_NOT_FOUND');assert.equal(handle.state.writes,0);
