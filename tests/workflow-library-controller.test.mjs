@@ -99,3 +99,24 @@ scopedSelection.dispose();
  assert.equal((await controller.flush()).data.deferred,true);assert.equal(session.source(),null);
  busy=false;const saving=controller.flush();context='two';session.activate(graph());release();assert.equal((await saving).ok,false);assert.equal(session.source(),null);controller.dispose();
 }
+
+// Ordinary Save after an uncertain first write must finish the retained creation.
+{
+ const backing=memoryStore();let receipt,firstName,lose=true,seq=0;
+ const store={...backing,async write(request){if(receipt?.intentId===request.intentId)return receipt.result;if(lose&&request.name.startsWith('workflow-')&&request.name!=='workflow-library-index.json'){lose=false;firstName=request.name;receipt={intentId:request.intentId,result:await backing.write(request)};throw Error('lost acknowledgement');}return backing.write(request);}};
+ const library=createWorkflowLibrary({store,createId:()=>`manual-${++seq}`}),session=createWorkflowDocumentSession();session.activate(graph());
+ const controller=createWorkflowLibraryController({session,library,canAdopt:()=>true});
+ session.current().nodes.text.text='first';assert.equal((await controller.flush()).ok,false);
+ session.current().nodes.text.text='newer';assert.equal((await controller.save()).ok,true);
+ assert.equal('workflow-'+session.source().id+'.json',firstName);assert.equal((await library.list()).data.length,1);
+ assert.equal((await library.read(session.source().id)).data.graph.nodes.text.text,'newer');controller.dispose();
+}
+
+// A delayed initial selection must never overtake a newer saved-workflow choice.
+{
+ const library=createWorkflowLibrary({store:memoryStore()}),chosen=await library.adopt({json:serializeWorkflowDocument(graph()).data.json,name:'Chosen'});
+ const session=createWorkflowDocumentSession();session.activate(graph());let release,started;const startedPromise=new Promise(resolve=>started=resolve),gate=new Promise(resolve=>release=resolve);let persisted;
+ const controller=createWorkflowLibraryController({session,library,canAdopt:()=>true,persistSelection:async value=>{if(value.id!==chosen.data.id){started();await gate;}persisted=value;return {ok:true,data:{acknowledged:true}};}});
+ const saving=controller.flush();await startedPromise;const opening=controller.openSaved(chosen.data.id);await new Promise(resolve=>setTimeout(resolve,20));release();await saving;assert.equal((await opening).ok,true);
+ assert.equal(session.source().id,chosen.data.id);assert.equal(persisted.id,chosen.data.id);assert.equal(controller.view().selected.id,chosen.data.id);controller.dispose();
+}

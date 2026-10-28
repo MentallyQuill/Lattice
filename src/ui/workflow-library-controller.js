@@ -8,19 +8,24 @@ const cancelled=()=>({ok:false,cancelled:true});
 export function createWorkflowLibraryController(env) {
     const {session,library}=env, getContext=env.getContext??(()=>null),isBusy=env.isBusy??(()=>false);
     const activate=env.activate??((graph,options)=>session.activate(graph,options));
-    const listeners=new Set();let busy=false,items=[],status={state:'idle'},selection=null,disposed=false;
+    const listeners=new Set();let busy=false,items=[],status={state:'idle'},selection=null,disposed=false,selectionTail=Promise.resolve();
     const notify=()=>{for(const listener of listeners)try{listener();}catch{}env.changed?.();};
     const autosave=createWorkflowAutosave({session,library,getContext,isBusy,activate,delay:env.delay,canAdopt:env.canAdopt,onAdopt:(id,context)=>select(id,context),onStatus:value=>{status=value;notify();}});
     const encode=()=>serializeWorkflowDocument(session.current(),session.workspaceViews(),{exampleMetadata:session.exampleMetadata?.()});
     const current=(token,context)=>!disposed&&session.capture()===token&&context===getContext();
-    async function select(id,context) {
-        const value={kind:'library',id};
-        if(!env.persistSelection){selection={value,context};notify();return {ok:true,data:{persisted:false}};}
-        let result;try{result=await env.persistSelection(value,context);}catch{return fail('WORKFLOW_SELECTION_FAILED','The chat workflow selection could not be saved.');}
-        if(context!==getContext())return cancelled();
-        if(!result.ok)return result;
-        if(result.data?.acknowledged!==true)return fail('WORKFLOW_SELECTION_ACK_MISSING','The chat workflow selection was not acknowledged.');
-        selection={value,context};notify();return result;
+    function select(id,context) {
+        const token=session.capture(),value={kind:'library',id};
+        const action=async()=>{
+            if(!current(token,context))return cancelled();
+            if(!env.persistSelection){selection={value,context};notify();return {ok:true,data:{persisted:false}};}
+            let result;try{result=await env.persistSelection(value,context);}catch{return fail('WORKFLOW_SELECTION_FAILED','The chat workflow selection could not be saved.');}
+            if(!current(token,context))return cancelled();
+            if(!result.ok)return result;
+            if(result.data?.acknowledged!==true)return fail('WORKFLOW_SELECTION_ACK_MISSING','The chat workflow selection was not acknowledged.');
+            selection={value,context};notify();return result;
+        };
+        // Persist in request order: an older in-flight write must finish before a newer choice commits.
+        const pending=selectionTail.then(action,action);selectionTail=pending.catch(()=>{});return pending;
     }
     async function storeCurrent(name,independent) {
         if(busy||isBusy())return cancelled();
@@ -39,7 +44,16 @@ export function createWorkflowLibraryController(env) {
         }finally{busy=false;notify();}
     }
     async function saveAs(name){return storeCurrent(name,true);}
-    async function save(){return session.source()?.kind==='library'?autosave.flush():storeCurrent(session.current()?.name||'Untitled',false);}
+    async function save(){
+        if(session.source()?.kind!=='library'&&(session.source()||!env.canAdopt?.()))return storeCurrent(session.current()?.name||'Untitled',false);
+        const token=session.capture(),context=getContext();let result;
+        for(let attempt=0;attempt<4;attempt++){
+            result=await autosave.flush();if(!current(token,context))return cancelled();if(!result.ok)return result;
+            if(!session.dirty())return result;
+            if(result.data?.deferred)return fail('WORKFLOW_BUSY','Finish the current run or review before saving this workflow.');
+        }
+        return fail('WORKFLOW_EDIT_PENDING','New workflow edits are still arriving. Finish editing before saving.');
+    }
     async function openSaved(id) {
         if(busy||isBusy())return cancelled();
         const context=getContext();
