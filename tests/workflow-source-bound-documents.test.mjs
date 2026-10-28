@@ -51,9 +51,14 @@ test('unchanged replacement advances source coverage and later edits to newly co
 test('reset views retain restricted record privacy from the actual stored snapshot',async()=>{
  const f=fixture(),s=f.session(),r=await f.read(s);must(r);must(await f.write(s,r,'{"topic":"secret","visibility":{"kind":"actor-private","actorId":"mara"}}'));f.c.chat[0].mes='Edit';const reset=await f.read(f.session());assert.equal(reset.ok,false);assert.equal(reset.error.code,'PRIVATE_DESTINATION');
 });
-test('uncertain checkpoint persistence holds later reads without discarding receipts',async()=>{
- const f=fixture();for(let i=0;i<240;i++){const s=f.session(),r=await f.read(s);must(r);must(await f.write(s,r,JSON.stringify({topic:i}),'uncertain-'+i));s.release();}f.setAck(false);const before=f.saves();const held=await f.read(f.session());assert.equal(held.error.code,'PERSISTENCE_UNKNOWN');assert.equal(f.saves(),before+1);const packet=f.c.chatMetadata.latticeDocuments.u.capsule;assert.equal(packet.receipts.length,0);assert.equal(packet.history.epoch,1);assert.equal([...f.barriers.values()][0].checkpoint,true);const again=await f.read(f.session());assert.equal(again.error.code,'PERSISTENCE_UNKNOWN');assert.equal(f.saves(),before+1);
+test('uncertain accepted maintenance holds later reads without discarding replay receipts',async()=>{
+ const f=fixture();for(let i=0;i<224;i++){const s=f.session(),r=await f.read(s);must(r);must(await f.write(s,r,JSON.stringify({topic:i}),'uncertain-'+i));s.release();}
+ f.setAck(false);const before=f.saves(),s=f.session(),r=await f.read(s);must(r);assert.equal(f.saves(),before);
+ const saved=must(await f.write(s,r,'{"topic":"accepted"}','uncertain-final'));assert.equal(saved.acknowledged,false);assert.equal(f.saves(),before+1);
+ const packet=f.c.chatMetadata.latticeDocuments.u.capsule;assert.equal(packet.receipts.length,1);assert.equal(packet.history.epoch,1);assert.equal(f.barriers.size,1);
+ const again=await f.read(f.session());assert.equal(again.error.code,'PERSISTENCE_UNKNOWN');assert.equal(f.saves(),before+1);
 });
+
 test('bound reference identity includes the prefix even if the same native reply is generated after earlier edits',async()=>{
  const f=fixture(),s=f.session(),r=await f.read(s);must(r);const a=must(await s.intentId({id:'writer'},[],undefined,r.outputs.reference.value));f.c.chat[0].mes='Different premise';const t=f.session(),v=await f.read(t);must(v);const b=must(await t.intentId({id:'writer'},[],undefined,v.outputs.reference.value));assert.notEqual(a,b);
 });

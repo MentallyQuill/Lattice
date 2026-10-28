@@ -1,3 +1,4 @@
+import {createFileMetadataBlobs} from '../workflow/file-metadata-blobs.js?v=0.29.0';
 import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.29.0';
 import {inspectDocumentHistory} from '../workflow/document-history.js?v=0.29.0';
 import {createNodeFileAccess} from './node-file-access.js?v=0.29.0';
@@ -14,7 +15,7 @@ const scopeKey=(scope,targetId)=>JSON.stringify([scope.userId,scope.chatId,scope
 /** Native checked metadata machinery backed by authenticated host files, never browser handle persistence. */
 function createUserHostFileAccess({store,getUserId}={}){
  const user=()=>{try{return getUserId?.()??null;}catch{return null;}};
- const owner=user(),listeners=new Set(),handles=new Map();let rows=[],revision=null,issue=null,selection=null;
+ const owner=user(),listeners=new Set(),handles=new Map();let rows=[],revision=null,issue=null,selection=null,garbageNames=[];
  const current=()=>id(owner)&&user()===owner;
  const changed=()=>{for(const listener of listeners)try{listener();}catch{}};
  const assertCurrent=()=>{if(!current())throw Object.assign(Error('The SillyTavern user changed.'),{code:'STALE_FILE_SCOPE'});};
@@ -28,6 +29,8 @@ function createUserHostFileAccess({store,getUserId}={}){
    async createWritable(){assertCurrent();const expectedRevision=baseline;let content,aborted=false;return {async write(value){assertCurrent();content=value;},async abort(){aborted=true;},async close(){assertCurrent();if(aborted)return;const saved=await store.write({name:hostName,expectedRevision,content,intentId:crypto.randomUUID()});assertCurrent();if(!saved.ok)throw Object.assign(Error(saved.error.message),saved.error);baseline=saved.data.revision;}};},
   };handles.set(key,result);return result;
  }
+ const blobCache=new Set();
+ const blobs=createFileMetadataBlobs({async read(name){const read=await store.read(name);assertCurrent();if(!read.ok||!read.data.exists)throw Error('Missing file metadata');return read.data.content;},async write(name,content){if(name.startsWith('archive-')&&blobCache.has(name))return;const existing=await store.read(name);assertCurrent();if(!existing.ok)throw Error('Cannot read file metadata');if(existing.data.exists){if(existing.data.content!==content)throw Error('Immutable metadata conflict');}else{const saved=store.writeImmutable?await store.writeImmutable(name,content):await store.write({name,expectedRevision:null,content,intentId:sha256Text(content)});assertCurrent();if(!saved.ok)throw Error('Cannot preserve file metadata');}if(name.startsWith('archive-'))blobCache.add(name);}});
  const persistence={
   async load(){
    assertCurrent();const loaded=await store.read('node-bindings.json');assertCurrent();if(!loaded.ok)throw Object.assign(Error(loaded.error.message),loaded.error);
@@ -43,6 +46,7 @@ function createUserHostFileAccess({store,getUserId}={}){
     if(!shard.ok||!shard.data.exists||shard.data.revision!==row.journalRevision)throw Error('Host journal bytes could not be verified');
     let entries;try{entries=cloneServerFileData(JSON.parse(shard.data.content));}catch{}
     if(!entries||typeof entries!=='object'||Array.isArray(entries))throw Error('Invalid journal entries');
+    entries=await blobs.unpack(entries);assertCurrent();
     for(const [key,record] of Object.entries(entries)){
      let parts;try{parts=JSON.parse(key);}catch{}
      if(!Array.isArray(parts)||parts.length!==6||parts[0]!==owner||!id(parts[1])||parts[2]!==null&&!id(parts[2])||!id(parts[3])||parts[4]!==row.bindingId||parts[5]!==row.generation||!record||!Array.isArray(record.receipts)||record.receipts.length>256)throw Error('Invalid host write journal');
@@ -54,19 +58,23 @@ function createUserHostFileAccess({store,getUserId}={}){
      records[key]=record;
     }
    }
+   garbageNames=Array.isArray(data.garbageNames)?data.garbageNames:[];if(garbageNames.length>4096||garbageNames.some(name=>!/^(journal|content|metadata)-[a-f0-9]{64}\.json$/.test(name)))throw Error('Invalid cleanup index');
    rows=data.bindings;return {bindings:rows.map(row=>({...row,handle:handle(row.hostName,row.name)})),records};
   },
   async save(state){
    assertCurrent();const bindings=state.bindings.map(row=>{const previous=rows.find(item=>item.bindingId===row.bindingId);return {bindingId:row.bindingId,name:row.name,format:row.format,generation:row.generation,hostName:row.handle.hostName,...(previous?.managedScope?{managedScope:previous.managedScope}:selection?.hostName===row.handle.hostName&&selection.managedScope?{managedScope:selection.managedScope}:{}),...(row.initializeEmpty?{initializeEmpty:true}:{})};});
    for(const row of bindings){
     const records=Object.fromEntries(Object.entries(state.records).filter(([key])=>{const parts=JSON.parse(key);return parts[4]===row.bindingId&&parts[5]===row.generation;}));
-    const content=JSON.stringify(records),digest=sha256Text(content);
+    const packed=await blobs.pack(records);row.contentNames=packed.names;const content=JSON.stringify(packed.records),digest=sha256Text(content);
     row.journalName='journal-'+digest.slice(7)+'.json';row.journalRevision=digest;
     const existing=await store.read(row.journalName);assertCurrent();if(!existing.ok)throw Error('Host journal could not be read');
     if(existing.data.exists&&existing.data.revision!==digest)throw Error('Immutable host journal differs from its expected bytes');
-    if(!existing.data.exists){const saved=await store.write({name:row.journalName,expectedRevision:null,content,intentId:digest});assertCurrent();if(!saved.ok)throw Object.assign(Error(saved.error.message),saved.error);}
+    if(!existing.data.exists){const saved=store.writeImmutable?await store.writeImmutable(row.journalName,content):await store.write({name:row.journalName,expectedRevision:null,content,intentId:digest});assertCurrent();if(!saved.ok)throw Object.assign(Error(saved.error.message),saved.error);}
    }
-   const saved=await store.write({name:'node-bindings.json',expectedRevision:revision,content:JSON.stringify({schemaVersion:2,userId:owner,bindings}),intentId:crypto.randomUUID()});assertCurrent();if(!saved.ok)throw Object.assign(Error(saved.error.message),saved.error);revision=saved.data.revision;rows=bindings;
+   const reachable=new Set(bindings.flatMap(row=>[row.journalName,...(row.contentNames??[])]));garbageNames=[...new Set([...garbageNames,...rows.flatMap(row=>[row.journalName,...(row.contentNames??[])])])].filter(name=>!reachable.has(name));
+   if(garbageNames.length>4096)throw Error('Restore host cleanup access before more saves');
+   const saved=await store.write({name:'node-bindings.json',expectedRevision:revision,content:JSON.stringify({schemaVersion:2,userId:owner,bindings,garbageNames}),intentId:crypto.randomUUID()});assertCurrent();if(!saved.ok)throw Object.assign(Error(saved.error.message),saved.error);revision=saved.data.revision;rows=bindings;
+   if(store.removeGenerated){const remaining=[];for(const name of garbageNames){assertCurrent();const removed=await store.removeGenerated(name);assertCurrent();if(!removed.ok||!removed.data.removed)remaining.push(name);}garbageNames=remaining;}
   },
  };
  if(!coordinators.has(owner))coordinators.set(owner,{});
@@ -94,6 +102,13 @@ function createUserHostFileAccess({store,getUserId}={}){
   let fresh=false;try{fresh=controls.isCurrent?.()===true;}catch{}
   if(!fresh||!current()||scope?.userId!==owner||!id(scope.chatId)||scope.actorId!==undefined&&!id(scope.actorId))return fail('STALE_FILE_SCOPE','Capture the current authenticated user and chat before preparing a file.');
   if(!captured||!id(captured.targetId)||!Object.hasOwn(formats,captured.format)||typeof captured.content!=='string'||new TextEncoder().encode(captured.content).byteLength>262144||!['create','error'].includes(captured.missing))return fail('INVALID_FILE_BACKEND_CONFIG','Use a checked managed file definition.');
+  if(controls.create===false){
+   const readyResult=await ready;if(!readyResult.ok)return readyResult;const refreshed=await native.refresh();if(!refreshed.ok)return refreshed;
+   if(!current()||controls.isCurrent?.()!==true)return fail('STALE_FILE_SCOPE','The captured branch source changed.');
+   const row=rows.find(row=>row.managedScope===scopeKey(scope,captured.targetId));if(!row)return fail('FILE_BINDING_MISSING','No owned source file exists at this branch point.');
+   if(row.format!==captured.format)return fail('FILE_FORMAT_CONFLICT','The source file format differs.');
+   const {path,...data}=captured;return {ok:true,data:{...data,bindingId:row.bindingId,name:row.name,storage:'host'}};
+  }
   const selected=await select({mode:'save',name:captured.name,format:captured.format},scopeKey(scope,captured.targetId));
   try{fresh=controls.isCurrent?.()===true;}catch{fresh=false;}
   if(!fresh||!current())return fail('STALE_FILE_SCOPE','The captured file scope changed during preparation.');

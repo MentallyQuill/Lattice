@@ -1,3 +1,4 @@
+import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.29.0';
 const endpoint='/api/plugins/lattice-files';
 const formats=new Set(['text','json','jsonl','csv','markdown']);
 const fail=(code,message)=>({ok:false,error:{code,message}});
@@ -125,6 +126,7 @@ export function createServerFileAccess(options={}){
         state.bindings[binding.bindingId]=binding;changed();return {ok:true,data:structuredClone(binding)};
     }
     function backend(definitions,controls={}){
+        const branchBinding=controls.branchBinding===undefined?undefined:clone(controls.branchBinding),getBranchBinding=typeof controls.getBranchBinding==='function'?controls.getBranchBinding:null;
         const captured=clone(definitions),scope=clone(controls.scope),targets=new Map();
         const valid=Array.isArray(captured)&&captured.length<=128&&captured.every(validDefinition)&&plain(scope)&&id(scope.userId)&&id(scope.chatId)&&(scope.actorId===undefined||id(scope.actorId))&&typeof controls.isCurrent==='function';
         let coherent=valid;
@@ -152,16 +154,22 @@ export function createServerFileAccess(options={}){
             const checked=check(targetId,writeControls.signal);if(!checked.ok)return checked;
             const {definition,binding}=checked.data;
             const combinedSignal=controls.signal&&writeControls.signal&&typeof AbortSignal.any==='function'?AbortSignal.any([controls.signal,writeControls.signal]):writeControls.signal??controls.signal;
-            const result=await request(route,{userId:scope.userId,scope,definition,generation:binding.generation,...extra},{signal:combinedSignal,isCurrent:()=>check(targetId,writeControls.signal).ok,uncertain:route==='cas'});
+            let acceptedBranchBinding=branchBinding;
+            if(route==='cas'&&getBranchBinding){try{const stamp=clone(getBranchBinding());acceptedBranchBinding=validChatSourceBinding(stamp)?stamp:undefined;}catch{acceptedBranchBinding=undefined;}}
+            if(!check(targetId,writeControls.signal).ok)return stale();
+            const result=await request(route,{userId:scope.userId,scope,definition,generation:binding.generation,...(acceptedBranchBinding?{branchBinding:acceptedBranchBinding}:{}),...extra},{signal:combinedSignal,isCurrent:()=>check(targetId,writeControls.signal).ok,uncertain:route==='cas'||route==='restore'});
             if(!result.ok)return result;
             if(route==='load'&&!validStored(result.data,definition))return fail('FILE_SERVICE_RESPONSE','The Lattice file service returned an invalid document.');
-            if(route==='cas'&&(!plain(result.data)||result.data.applied!==true||typeof result.data.acknowledged!=='boolean'||!revision(result.data.revision)))return unknown();
+            if(['cas','restore'].includes(route)&&(!plain(result.data)||result.data.applied!==true||typeof result.data.acknowledged!=='boolean'||!revision(result.data.revision)))return unknown();
             if(route==='history'&&(!plain(result.data)||!Number.isSafeInteger(result.data.epoch)||result.data.epoch<0||!visibility(result.data.visibility)||!Array.isArray(result.data.privateActorIds)||result.data.privateActorIds.some(actor=>!id(actor))))return fail('FILE_SERVICE_RESPONSE','The Lattice file service returned invalid history.');
             if(route==='adopt'&&(!plain(result.data)||typeof result.data.adopted!=='boolean'))return fail('FILE_SERVICE_RESPONSE','The Lattice file service returned invalid migration information.');
             return result;
         }
         return Object.freeze({
             load:targetId=>call('load',targetId),
+            readVersion(targetId,request){const value=clone(request);return plain(value)?call('version',targetId,{request:value}):Promise.resolve(fail('INVALID_FILE_RESTORE','Choose a retained version.'));},
+            listVersions:targetId=>call('versions',targetId),
+            restoreVersion(targetId,request){const value=clone(request);return plain(value)?call('restore',targetId,{request:value}):Promise.resolve(fail('INVALID_FILE_RESTORE','Choose a retained version and current revision.'));},
             compareAndSwap(update,writeControls={}){
                 const value=clone(update);
                 if(!plain(value)||!id(value.targetId)||!id(value.intentId)||!revision(value.expectedRevision)||!documentText(value.expectedContent)||!hash(value.fingerprint)||!plain(value.projectedDocument)||!formats.has(value.projectedDocument.format)||!documentText(value.projectedDocument.content))return Promise.resolve(fail('INVALID_FILE_BACKEND_UPDATE','Use a checked prepared document update with a stable intent fingerprint.'));

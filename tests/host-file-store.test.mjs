@@ -17,6 +17,7 @@ export function hostFixture(){
   requests.push({url,...options});
   assert.equal(options.credentials,'same-origin');assert.equal(options.cache,'no-store');
   assert.equal(options.headers['X-CSRF'],'checked');
+  if(url==='/api/files/delete'){const body=JSON.parse(options.body);assert.match(body.path,/^files\/lattice-/);files.delete(user+':'+body.path.slice(6));return new Response('{}');}
   if(url==='/api/files/upload'){
    const body=JSON.parse(options.body);if(!body.name||!body.data)return new Response('{}',{status:400});
    files.set(user+':'+body.name,Buffer.from(body.data,'base64'));
@@ -39,6 +40,36 @@ test('accepted host writes produce real UTF-8 files and empty replacement is zer
  assert.equal(statSync(f.diskPath('alice:'+empty.data.path.split('/').at(-1))).size,0);
  assert.equal((await store.read('scene.txt')).data.content,'');
  assert.equal(f.requests.filter(row=>row.url==='/api/files/upload').some(row=>JSON.parse(row.body).data==='='),true);
+});
+test('acknowledged content copies rotate safely while uncertain attempts and replay receipts survive',async()=>{
+ const f=hostFixture(),deleted=[];
+ const store=f.create({deleteGenerated:async path=>{deleted.push(path);f.files.delete('alice:'+path.split('/').at(-1));return true;}});
+ let revision=null;const requests=[];
+ for(let index=0;index<25;index++){
+  const request={name:'scene.txt',expectedRevision:revision,content:'version '+index,intentId:'retention-'+index};requests.push(request);
+  const saved=await store.write(request);assert.equal(saved.ok,true,JSON.stringify(saved));revision=saved.data.revision;
+ }
+ const versions=await store.listVersions('scene.txt');assert.equal(versions.ok,true,JSON.stringify(versions));assert.equal(versions.data.versions.length,20);
+ assert.ok(deleted.length>0);assert.equal(deleted.some(path=>/completed-|intent-|scene\.txt$/.test(path)),false);
+ assert.equal((await store.write(requests[0])).error.code,'FILE_REVISION_CONFLICT');
+ const conflict=await store.write({...requests[0],intentId:'uncertain',content:'retained attempt'});assert.equal(conflict.ok,false);
+ assert.equal([...f.files.values()].some(bytes=>bytes.toString()==='retained attempt'),true);
+});
+test('host deletion denial retains retryable cleanup and never reports a generated file removed before absence verification',async()=>{
+ const f=hostFixture();let denied=true,pretend=false;
+ const store=f.create({fetch:async(url,options)=>url==='/api/files/delete'&&denied?new Response('{}',{status:403}):url==='/api/files/delete'&&pretend?new Response('{}'):f.fetch(url,options)});
+ let revision=null;
+ for(let index=0;index<23;index++){const saved=await store.write({name:'scene.txt',expectedRevision:revision,content:'save '+index,intentId:'denied-'+index});assert.equal(saved.ok,true,JSON.stringify(saved));revision=saved.data.revision;}
+ const pending=[...f.files.keys()].filter(name=>name.includes('-attempt-'));assert.ok(pending.length>=23);
+ denied=false;pretend=true;
+ const generated='content-'+('b'.repeat(64))+'.json',physical='alice:lattice-'+createHash('sha256').update('alice').digest('hex').slice(0,24)+'-'+generated;
+ f.files.set(physical,Buffer.from('held'));assert.equal((await store.removeGenerated(generated)).data.removed,false);
+ pretend=false;const saved=await store.write({name:'scene.txt',expectedRevision:revision,content:'cleanup restored',intentId:'restored-delete'});assert.equal(saved.ok,true,JSON.stringify(saved));
+ assert.equal([...f.files.keys()].filter(name=>name.includes('-attempt-')).length,0);
+ assert.equal((await store.listVersions('scene.txt')).data.versions.length,20);
+ assert.ok([...f.files.keys()].some(name=>name.includes('-intent-')));assert.ok([...f.files.keys()].some(name=>name.includes('-completed-')));
+ assert.equal((await store.removeGenerated('archive-'+('c'.repeat(64))+'.json')).error.code,'FILE_DELETE_UNAUTHORIZED');
+ assert.equal((await store.removeGenerated('scene.txt')).error.code,'FILE_DELETE_UNAUTHORIZED');
 });
 test('lost responses recover the same intent after reload without replaying an append',async()=>{
  const f=hostFixture(),store=f.create();f.loseMain();

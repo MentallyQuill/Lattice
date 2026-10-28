@@ -26,7 +26,7 @@ export interface ServerFileAccess {
     snapshot:()=>Record<string,ServerFileBindingView>;
     subscribe:(listener:()=>void)=>()=>void;
     choose:(settings:{mode:'open'|'save';name:string;format:RecordFormat;path?:string;bindingId?:string})=>Promise<Result<ServerFileBindingView>>;
-    backend:(definitions:NodeFileDefinition[],controls:{scope:StorageScope;isCurrent:()=>boolean;signal?:AbortSignal})=>NodeFileBackend;
+    backend:(definitions:NodeFileDefinition[],controls:{scope:StorageScope;isCurrent:()=>boolean;signal?:AbortSignal;branchBinding?:import('../workflow/chat-prefix-binding').ChatSourceBinding;getBranchBinding?:()=>import('../workflow/chat-prefix-binding').ChatSourceBinding|null|undefined})=>NodeFileBackend;
 }
 export interface ServerFileDirectory {
  chooserVersion:1;path:string;parent:string|null;truncated:boolean;

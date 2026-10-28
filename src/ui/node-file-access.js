@@ -1,4 +1,5 @@
-import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory} from '../workflow/document-history.js?v=0.29.0';
+import {prepareAcceptedFileMaintenance} from '../workflow/file-history-maintenance.js?v=0.29.0';
+import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory,prepareDocumentCheckpoint} from '../workflow/document-history.js?v=0.29.0';
 import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.29.0';
 import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.29.0';
 import {sha256Text} from '../workflow/definition-data.js?v=0.29.0';
@@ -25,9 +26,10 @@ const changedError=cause=>cause?.name==='AbortError'?fail('FILE_CANCELLED','The 
 function captureUpdate(value){
     try{
         if(!plain(value)||![Object.prototype,null].includes(Object.getPrototypeOf(value)))return null;
-        const descriptors=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(value),allowed=['targetId','expectedRevision','expectedContent','projectedDocument','intentId','fingerprint','sourceBinding','expectedBindingFingerprint'];
+        const descriptors=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(value),allowed=['targetId','expectedRevision','expectedContent','projectedDocument','intentId','fingerprint','sourceBinding','expectedBindingFingerprint','historyHandling'];
         if(keys.some(key=>typeof key!=='string'||!allowed.includes(key)||!descriptors[key].enumerable||!Object.hasOwn(descriptors[key],'value')))return null;
-        if(keys.length!==(Object.hasOwn(descriptors,'sourceBinding')?8:6))return null;
+        if(keys.length!==(Object.hasOwn(descriptors,'sourceBinding')?8:6)+(Object.hasOwn(descriptors,'historyHandling')?1:0))return null;
+        if(descriptors.historyHandling&&!['replace','append'].includes(descriptors.historyHandling.value))return null;
         const result={};
         for(const key of keys){const checked=cloneServerFileData(descriptors[key].value);if(checked===undefined)return null;result[key]=checked;}
         for(const content of [result.expectedContent,result.projectedDocument?.content])if(typeof content==='string'&&new TextEncoder().encode(content).byteLength>262144)return null;
@@ -101,17 +103,20 @@ export function createNodeFileAccess(options={}){
         const targets=new Map((Array.isArray(captured)?captured:[]).filter(plain).map(row=>[row.targetId,row]));
         const capturedBindings=new Map(bindings.map(row=>[row.bindingId,{...row}]));
         const initialCapture=restoredReady?Promise.resolve():ready.then(()=>{for(const row of bindings)capturedBindings.set(row.bindingId,{...row});});
-        const capturedScope=own(controls.scope),isCurrent=controls.isCurrent,signal=controls.signal;
-        const valid=plain(capturedScope)&&id(capturedScope.userId)&&id(capturedScope.chatId)&&(capturedScope.actorId===undefined||id(capturedScope.actorId))&&typeof isCurrent==='function'&&Array.isArray(definitions)&&captured.length===definitions.length&&captured.every(row=>plain(row)&&id(row.targetId)&&id(row.bindingId)&&typeof row.name==='string'&&Object.hasOwn(formats,row.format)&&typeof row.content==='string'&&['create','error'].includes(row.missing)&&validVisibility(row.visibility)&&canonical(targets.get(row.targetId))===canonical(row));
+        const capturedScope=own(controls.scope),branchBinding=controls.branchBinding===undefined?undefined:own(controls.branchBinding),getBranchBinding=typeof controls.getBranchBinding==='function'?controls.getBranchBinding:null,isCurrent=controls.isCurrent,signal=controls.signal;
+        const valid=(branchBinding===undefined||validChatSourceBinding(branchBinding))&&plain(capturedScope)&&id(capturedScope.userId)&&id(capturedScope.chatId)&&(capturedScope.actorId===undefined||id(capturedScope.actorId))&&typeof isCurrent==='function'&&Array.isArray(definitions)&&captured.length===definitions.length&&captured.every(row=>plain(row)&&id(row.targetId)&&id(row.bindingId)&&typeof row.name==='string'&&Object.hasOwn(formats,row.format)&&typeof row.content==='string'&&['create','error'].includes(row.missing)&&validVisibility(row.visibility)&&canonical(targets.get(row.targetId))===canonical(row));
         function current(targetId){
             if(!valid)return fail('INVALID_FILE_BACKEND_CONFIG','Capture explicit file definitions and a valid user/chat scope.');
             try{if(signal?.aborted)return fail('CANCELLED','File access was cancelled.');if(isCurrent()!==true)return fail('STALE_FILE_SCOPE','The captured workflow or user/chat changed.');}catch{return fail('STALE_FILE_SCOPE','The captured file scope could not be verified.');}
             const definition=targets.get(targetId),binding=definition&&capturedBindings.get(definition.bindingId);
             if(!definition)return fail('FILE_TARGET_UNAUTHORIZED','This file target was not captured.');
             if(!binding)return fail('FILE_BINDING_MISSING','Choose a local file for this node.');
+            if(definition.visibility.kind==='actor-private'&&definition.visibility.actorId!==capturedScope.actorId)return fail('PRIVATE_DESTINATION','Select this actor’s private document.');
             if(binding.name!==definition.name)return fail('FILE_NAME_CONFLICT','The configured filename differs from its selected native file. Choose the destination again.');
             if(binding.format!==definition.format)return fail('FILE_FORMAT_CONFLICT','This file target disagrees with its selected binding format.');
             if(bindings.find(row=>row.bindingId===binding.bindingId)?.generation!==binding.generation)return fail('STALE_FILE_BINDING','The selected file changed after this workflow was captured.');
+            const saved=records[recordKey(targetId)],mark=saved?.visibility;
+            if(mark&&!(mark.kind==='public'||definition.visibility.kind==='hidden'||mark.kind==='actor-private'&&definition.visibility.kind==='actor-private'&&mark.actorId===definition.visibility.actorId))return fail('PRIVATE_DESTINATION','Preserve the saved file’s original visibility.');
             return {ok:true,data:{definition,binding}};
         }
         function status(binding,value){const live=bindings.find(row=>row.bindingId===binding.bindingId&&row.generation===binding.generation);if(live&&live.status!==value){live.status=value;changed();}}
@@ -121,7 +126,7 @@ export function createNodeFileAccess(options={}){
             catch(cause){if(cause?.name==='NotFoundError'&&definition.missing==='create')return {content:null,revision:'missing:'+sha256Text(definition.content)};throw cause;}
         }
         function effectiveContent(binding,definition,raw){
-            const saved=Object.entries(records).some(([key,record])=>{const identity=JSON.parse(key);return identity[4]===binding.bindingId&&identity[5]===binding.generation&&record.receipts?.length>0;});
+            const saved=Object.entries(records).some(([key,record])=>{const identity=JSON.parse(key);return identity[4]===binding.bindingId&&identity[5]===binding.generation&&(record.receipts?.length>0||record.history?.epoch>0);});
             if(raw===null)return definition.content;
             return raw===''&&binding.initializeEmpty===true&&definition.missing==='create'&&!saved?definition.content:raw;
         }
@@ -136,7 +141,7 @@ export function createNodeFileAccess(options={}){
                 const {content,revision}=await disk(binding,definition);status(binding,'ready');
                 const after=current(targetId);if(!after.ok)return after;
                 const reconciled=await reconcile(binding,revision);if(!reconciled.ok)return reconciled;
-                return {ok:true,data:{targetId,format:definition.format,content:effectiveContent(binding,definition,content),revision,receipts:structuredClone(records[recordKey(targetId)]?.receipts??[]),history:structuredClone(records[recordKey(targetId)]?.history??{schemaVersion:1,epoch:0,head:null}),...(records[recordKey(targetId)]?.sourceBinding?{sourceBinding:structuredClone(records[recordKey(targetId)].sourceBinding)}:{})}};
+                return {ok:true,data:{targetId,format:definition.format,content:effectiveContent(binding,definition,content),revision,receipts:structuredClone(records[recordKey(targetId)]?.receipts??[]),history:structuredClone(records[recordKey(targetId)]?.history??{schemaVersion:1,epoch:0,head:null}),...(records[recordKey(targetId)]?.branchBinding?{branchBinding:structuredClone(records[recordKey(targetId)].branchBinding)}:{}),...(records[recordKey(targetId)]?.sourceBinding?{sourceBinding:structuredClone(records[recordKey(targetId)].sourceBinding)}:{})}};
             }catch(cause){if(cause?.code==='FILE_DOCUMENT_LIMIT')return fail('FILE_DOCUMENT_LIMIT','File documents must fit the existing 262,144-byte admission bound.');status(binding,cause?.name==='NotAllowedError'||cause?.name==='SecurityError'?'permission-required':'unavailable');return cause?.name==='NotFoundError'?fail('FILE_NOT_FOUND','The selected file is missing.'):changedError(cause);}
         }
         function retainedMetadata(record){const {receipts,pending,sourceBinding,...metadata}=record??{};return metadata;}
@@ -146,9 +151,10 @@ export function createNodeFileAccess(options={}){
                 const identity=JSON.parse(key),pending=record.pending;
                 if(identity[4]!==binding.bindingId||identity[5]!==binding.generation||!pending)continue;
                 if(hash!==pending.afterHash&&hash!==pending.beforeHash)return fail('PERSISTENCE_UNKNOWN','A pending file write differs from both reviewed versions. Reconcile this file before continuing.');
-                const receipts=hash===pending.afterHash?[...record.receipts,{intentId:pending.intentId,fingerprint:pending.fingerprint,revision:pending.revision}]:record.receipts;
+                const acceptedMetadata=hash===pending.afterHash?pending.acceptedMetadata:null;
+                const receipts=hash===pending.afterHash?[...(acceptedMetadata?.receipts??record.receipts),{intentId:pending.intentId,fingerprint:pending.fingerprint,revision:pending.revision}]:record.receipts;
                 const metadata=hash===pending.afterHash?pending.sourceBinding:record.sourceBinding;
-                next={...next,[key]:{...retainedMetadata(record),receipts,...(metadata?{sourceBinding:metadata}:{})}};dirty=true;
+                next={...next,[key]:{...retainedMetadata(record),...(acceptedMetadata??{}),receipts,...(metadata?{sourceBinding:metadata}:{})}};dirty=true;
             }
             if(dirty){try{await persistence.save({bindings,records:next});records=next;}catch{return fail('PERSISTENCE_UNKNOWN','The recovered file receipt could not be persisted.');}}
             return {ok:true};
@@ -158,7 +164,7 @@ export function createNodeFileAccess(options={}){
             const capturedQuery=own(query);if(!plain(capturedQuery))return fail('INVALID_HISTORY_QUERY','Use bounded own history identities.');
             const loaded=await load(targetId);if(!loaded.ok)return loaded;
             const stored=records[recordKey(targetId)];
-            if(stored?.legacyAssociation)return lookupDocumentHistory({targetId,scope:capturedScope,history:stored.history,pages:stored.historyPages??{}},capturedQuery);
+            if(stored?.history)return lookupDocumentHistory({targetId,scope:capturedScope,history:stored.history,pages:stored.historyPages??{}},capturedQuery);
             const visibility=targets.get(targetId).visibility??{kind:'public'};
             return {ok:true,data:{epoch:0,visibility,privateActorIds:visibility.kind==='actor-private'?[visibility.actorId]:[],...(capturedQuery.outcomes?{outcomes:[]}:{}),...(capturedQuery.progression?{progression:{knownIdentityKeys:[],eventIdentities:[]}}:{})}};
         }
@@ -170,7 +176,7 @@ export function createNodeFileAccess(options={}){
                 snapshot=own(descriptors.snapshot?.value);pages=descriptors.pages?.value;
             }catch{return Promise.resolve(fail('INVALID_DOCUMENT_HISTORY','Adoption requires trusted own legacy snapshot and archive data.'));}
             const header=documentHistoryHeader(snapshot?.history);
-            if(!plain(snapshot)||snapshot.targetId!==targetId||canonical(snapshot.scope)!==canonical(capturedScope)||!Object.hasOwn(formats,snapshot.format)||typeof snapshot.content!=='string'||!Array.isArray(snapshot.receipts)||snapshot.receipts.length>256||snapshot.receipts.some(receipt=>!plain(receipt)||!id(receipt.intentId)||!hash(receipt.fingerprint)||!(id(receipt.revision)||Number.isSafeInteger(receipt.revision)&&receipt.revision>=0))||snapshot.sourceBinding!==undefined&&!validChatSourceBinding(snapshot.sourceBinding)||!header.ok)return Promise.resolve(fail('INVALID_DOCUMENT_HISTORY','Legacy adoption must match the captured scope and target and contain checked save identities.'));
+            if(!plain(snapshot)||snapshot.targetId!==targetId||canonical(snapshot.scope)!==canonical(capturedScope)||!Object.hasOwn(formats,snapshot.format)||typeof snapshot.content!=='string'||!Array.isArray(snapshot.receipts)||snapshot.receipts.length>256||snapshot.receipts.some(receipt=>!plain(receipt)||!id(receipt.intentId)||!hash(receipt.fingerprint)||!(id(receipt.revision)||Number.isSafeInteger(receipt.revision)&&receipt.revision>=0))||snapshot.sourceBinding!==undefined&&!validChatSourceBinding(snapshot.sourceBinding)||snapshot.branchBinding!==undefined&&!validChatSourceBinding(snapshot.branchBinding)||!header.ok)return Promise.resolve(fail('INVALID_DOCUMENT_HISTORY','Legacy adoption must match the captured scope and target and contain checked save identities.'));
             const inspected=inspectDocumentHistory({targetId,scope:capturedScope,history:header.data,pages});
             if(!inspected.ok)return Promise.resolve(inspected);
             const historyPages=Object.fromEntries(inspected.data.pages.map(page=>[page.pageId,page]));
@@ -183,7 +189,7 @@ export function createNodeFileAccess(options={}){
                 const receipts=[...existing.receipts];
                 for(const receipt of snapshot.receipts){const previous=receipts.find(item=>item.intentId===receipt.intentId);if(previous&&previous.fingerprint!==receipt.fingerprint)return fail('FILE_INTENT_CONFLICT','Legacy and local receipt identities disagree.');if(!previous)receipts.push(receipt);}
                 if(receipts.length>256)return fail('FILE_RECEIPT_LIMIT','The merged legacy receipts exceed this file’s checked capacity.');
-                const metadata={...existing,legacyAssociation:true,history:header.data,historyPages,receipts,...(!existing.sourceBinding&&snapshot.sourceBinding?{sourceBinding:snapshot.sourceBinding}:{})};
+                const metadata={...existing,...(snapshot.branchBinding?{branchBinding:snapshot.branchBinding}:{}),legacyAssociation:true,history:header.data,historyPages,receipts,...(!existing.sourceBinding&&snapshot.sourceBinding?{sourceBinding:snapshot.sourceBinding}:{})};
                 const checked=current(targetId);if(!checked.ok)return checked;
                 let latest;try{latest=await disk(checked.data.binding,checked.data.definition);}catch(cause){return cause?.name==='NotFoundError'?fail('FILE_NOT_FOUND','The selected file disappeared during migration.'):changedError(cause);}
                 if(latest.revision!==loaded.data.revision||effectiveContent(checked.data.binding,checked.data.definition,latest.content)!==snapshot.content)return {ok:true,data:{adopted:false}};
@@ -192,22 +198,32 @@ export function createNodeFileAccess(options={}){
                 try{await persistence.save({bindings,records:next});records=next;return {ok:true,data:{adopted:true}};}catch{return fail('FILE_JOURNAL_FAILED','Legacy file history could not be durably associated.');}
             });
         }
-        async function settle(change,writeControls){
+        async function settle(change,writeControls,recovery){
             if(writeControls.signal?.aborted)return fail('CANCELLED','File settlement was cancelled.');
             const loaded=await read(change.targetId);if(!loaded.ok)return loaded;
             if(change.projectedDocument?.format!==loaded.data.format)return fail('FILE_FORMAT_CONFLICT','The prepared document must retain its selected file format.');
-            const existing=loaded.data.receipts.find(receipt=>receipt.intentId===change.intentId);
+            const historyRecord=records[recordKey(change.targetId)];
+            const archived=lookupDocumentHistory({targetId:change.targetId,scope:capturedScope,history:historyRecord?.history,pages:historyRecord?.historyPages??{}},{intentId:change.intentId});if(!archived.ok)return archived;
+            const existing=loaded.data.receipts.find(receipt=>receipt.intentId===change.intentId)??archived.data.receipt;
             if(existing)return existing.fingerprint===change.fingerprint?{ok:true,data:{applied:true,acknowledged:true,revision:existing.revision}}:fail('FILE_INTENT_CONFLICT','This saved intent identity has different content.');
             if(loaded.data.receipts.length>=256)return fail('FILE_RECEIPT_LIMIT','This file reached its receipt capacity; reconcile its durable history before another write.');
             if(loaded.data.revision!==change.expectedRevision||loaded.data.content!==change.expectedContent)return fail('FILE_REVISION_CONFLICT','The file changed after this projection was reviewed.');
-            if(loaded.data.format==='json'&&loaded.data.history.epoch>0){
+            if(!recovery&&loaded.data.format==='json'&&loaded.data.history.epoch>0){
                 let previous,next;try{previous=JSON.parse(loaded.data.content);next=JSON.parse(change.projectedDocument.content);}catch{}
                 if(plain(previous)&&Object.hasOwn(previous,'historyCheckpoint')){const marker=previous.historyCheckpoint;if(!plain(marker)||Object.keys(marker).length!==2||marker.targetId!==change.targetId||marker.epoch!==loaded.data.history.epoch||!plain(next)||canonical(next.historyCheckpoint)!==canonical(marker))return fail('DOCUMENT_HISTORY_CHANGED','Preserve this document’s checked history marker when updating its active state.');}
             }
             if(change.sourceBinding&&sha256Text(canonical(loaded.data.sourceBinding??null))!==change.expectedBindingFingerprint)return fail('FILE_REVISION_CONFLICT','The stored chat source binding changed before this write.');
             const checked=current(change.targetId);if(!checked.ok)return checked;
-            const {binding,definition}=checked.data,key=recordKey(change.targetId),revision=sha256Text(change.projectedDocument.content);
-            const pendingRecord={...records[key],receipts:records[key]?.receipts??[],pending:{intentId:change.intentId,fingerprint:change.fingerprint,beforeHash:loaded.data.revision,afterHash:revision,revision,...(change.sourceBinding?{sourceBinding:change.sourceBinding}:{})}};
+            const {binding,definition}=checked.data,key=recordKey(change.targetId);
+            const maintained=recovery?{ok:true,data:{...recovery,receipts:[]}}:await prepareAcceptedFileMaintenance({...loaded.data,content:change.projectedDocument.content},{scope:capturedScope,visibility:definition.visibility,historyHandling:change.historyHandling,previousContent:loaded.data.content});if(!maintained.ok)return maintained;
+            const maintenance=maintained.data;
+            let acceptedBranchBinding=branchBinding;
+            if(getBranchBinding){try{const stamp=own(getBranchBinding());acceptedBranchBinding=validChatSourceBinding(stamp)?stamp:undefined;}catch{acceptedBranchBinding=undefined;}}
+            const afterBinding=current(change.targetId);if(!afterBinding.ok)return afterBinding;
+            const versions=[{versionId:'version:'+crypto.randomUUID(),revision:sha256Text(loaded.data.content),format:loaded.data.format,content:loaded.data.content,createdAt:Date.now(),visibility:definition.visibility,history:loaded.data.history,...(loaded.data.branchBinding?{branchBinding:loaded.data.branchBinding}:{}),...(loaded.data.sourceBinding?{sourceBinding:loaded.data.sourceBinding}:{})},...(records[key]?.versions??[])].slice(0,20);
+            const revision=sha256Text(maintenance.content),acceptedMetadata={visibility:definition.visibility,branchBinding:acceptedBranchBinding??null,versions,history:maintenance.history,historyPages:{...(records[key]?.historyPages??{}),...maintenance.pages},receipts:maintenance.receipts};
+            const pendingRecord={...records[key],receipts:records[key]?.receipts??[],pending:{intentId:change.intentId,fingerprint:change.fingerprint,beforeHash:loaded.data.revision,afterHash:revision,revision,acceptedMetadata,...(change.sourceBinding?{sourceBinding:change.sourceBinding}:{})}};
+            const beforeJournal=current(change.targetId);if(!beforeJournal.ok)return beforeJournal;
             const journal={...records,[key]:pendingRecord};
             try{await persistence.save({bindings,records:journal});records=journal;}catch{return fail('FILE_JOURNAL_FAILED','The write intent could not be durably recorded; no disk write was started.');}
             const beforeWrite=current(change.targetId);if(!beforeWrite.ok)return beforeWrite;
@@ -222,14 +238,14 @@ export function createNodeFileAccess(options={}){
                 writer=await binding.handle.createWritable();
                 const beforeBytes=current(change.targetId);if(!beforeBytes.ok){await writer.abort?.();return beforeBytes;}
                 if(writeControls.signal?.aborted){await writer.abort?.();return fail('CANCELLED','File settlement was cancelled.');}
-                await writer.write(change.projectedDocument.content);
+                await writer.write(maintenance.content);
                 const beforeClose=current(change.targetId);if(!beforeClose.ok){await writer.abort?.();return beforeClose;}
                 if(writeControls.signal?.aborted){await writer.abort?.();return fail('CANCELLED','File settlement was cancelled.');}
                 await writer.close();writer=null;
                 let actual;try{actual=await disk(binding,definition);}catch{return fail('PERSISTENCE_UNKNOWN','The file was closed but its resulting bytes could not be verified.');}
                 if(actual.revision!==revision)return fail('PERSISTENCE_UNKNOWN','The file differs from the intended bytes after close; reconcile its pending intent.');
-                const next={...records,[key]:{...retainedMetadata(records[key]),receipts:[...(records[key]?.receipts??[]),{intentId:change.intentId,fingerprint:change.fingerprint,revision}],...(change.sourceBinding?{sourceBinding:change.sourceBinding}:{})}};
-                try{await persistence.save({bindings,records:next});records=next;return {ok:true,data:{applied:true,acknowledged:true,revision}};}catch{return {ok:true,data:{applied:true,acknowledged:false,revision}};}
+                const next={...records,[key]:{...retainedMetadata(records[key]),...acceptedMetadata,receipts:[...acceptedMetadata.receipts,{intentId:change.intentId,fingerprint:change.fingerprint,revision}],...(change.sourceBinding?{sourceBinding:change.sourceBinding}:{})}};
+                try{await persistence.save({bindings,records:next});records=next;return {ok:true,data:{applied:true,acknowledged:true,revision,historyEpoch:acceptedMetadata.history.epoch}};}catch{return {ok:true,data:{applied:true,acknowledged:false,revision,historyEpoch:acceptedMetadata.history.epoch}};}
             }catch(cause){try{await writer?.abort?.();}catch{}if(['PERSISTENCE_UNKNOWN','FILE_REVISION_CONFLICT','HOST_EMPTY_UNSUPPORTED','HOST_FILE_DENIED'].includes(cause?.code))return fail(cause.code,cause.message);if(cause?.name==='NotAllowedError'||cause?.name==='SecurityError'){status(binding,'permission-required');return changedError(cause);}return cause?.name==='AbortError'?fail('CANCELLED','File settlement was cancelled.'):fail('FILE_WRITE_FAILED','The selected file could not be saved.');}
         }
         function compareAndSwap(update,writeControls={}){
@@ -239,7 +255,48 @@ export function createNodeFileAccess(options={}){
             const capturedWriteControls={signal:writeControls.signal};
             return enqueue(()=>settle(capturedUpdate,capturedWriteControls));
         }
-        return Object.freeze({load,compareAndSwap,lookupHistory,adoptLegacy});
+        function checkedVersion(raw,definition){
+            const version=cloneServerFileData(raw);
+            if(!plain(version)||!id(version.versionId)||!hash(version.revision)||version.format!==definition.format||typeof version.content!=='string'||new TextEncoder().encode(version.content).byteLength>262144||sha256Text(version.content)!==version.revision||!Number.isSafeInteger(version.createdAt)||version.createdAt<0||!validVisibility(version.visibility)||version.branchBinding!==undefined&&!validChatSourceBinding(version.branchBinding)||version.sourceBinding!==undefined&&!validChatSourceBinding(version.sourceBinding)||!documentHistoryHeader(version.history).ok)return fail('FILE_VERSION_INVALID','The retained version metadata or content could not be verified.');
+            const mark=version.visibility,destination=definition.visibility;
+            if(mark.kind==='actor-private'&&mark.actorId!==capturedScope.actorId||!(mark.kind==='public'||destination.kind==='hidden'||mark.kind==='actor-private'&&destination.kind==='actor-private'&&mark.actorId===destination.actorId))return fail('PRIVATE_DESTINATION','The retained version keeps its original actor and document privacy.');
+            return {ok:true,data:version};
+        }
+        async function listVersions(targetId){
+            const loaded=await load(targetId);if(!loaded.ok)return loaded;
+            const checked=current(targetId);if(!checked.ok)return checked;
+            const retained=records[recordKey(targetId)]?.versions??[];if(!Array.isArray(retained)||retained.length>20)return fail('FILE_VERSION_INVALID','The retained version index could not be verified.');
+            const versions=[];for(const raw of retained){const verified=checkedVersion(raw,checked.data.definition);if(!verified.ok)return verified;const {content,...version}=verified.data;versions.push({...version,bytes:new TextEncoder().encode(content).byteLength});}
+            return {ok:true,data:{targetId,revision:loaded.data.revision,...(loaded.data.branchBinding?{branchBinding:loaded.data.branchBinding}:{}),versions}};
+        }
+        async function readVersion(targetId,request){
+            const input=own(request);if(!plain(input)||Object.keys(input).length!==1||!id(input.versionId))return fail('INVALID_FILE_RESTORE','Select a retained version.');
+            const loaded=await load(targetId);if(!loaded.ok)return loaded;
+            const record=records[recordKey(targetId)];let version=input.versionId==='current'?loaded.data:record?.versions?.find(item=>item.versionId===input.versionId);
+            if(!version)return fail('FILE_VERSION_MISSING','This retained version is unavailable.');
+            const checked=current(targetId);if(!checked.ok)return checked;
+            if(input.versionId!=='current'){const verified=checkedVersion(version,checked.data.definition);if(!verified.ok)return verified;version=verified.data;}
+            const history=await validateDocumentHistory({targetId,scope:capturedScope,history:version.history,pages:record?.historyPages??{}});if(!history.ok)return history;
+            if(history.data.privateActorIds.some(actorId=>actorId!==capturedScope.actorId))return fail('PRIVATE_DESTINATION','The retained history keeps its original actor privacy.');
+            const stillCurrent=current(targetId);if(!stillCurrent.ok)return stillCurrent;
+            return {ok:true,data:{snapshot:{targetId,scope:structuredClone(capturedScope),revision:version.revision,format:version.format,content:version.content,receipts:[],history:history.data.header,...(version.sourceBinding?{sourceBinding:version.sourceBinding}:{}),...(version.branchBinding?{branchBinding:version.branchBinding}:{})},pages:Object.fromEntries(history.data.pages.map(page=>[page.pageId,page])),visibility:version.visibility??record?.visibility??checked.data.definition.visibility}};
+        }
+        function restoreVersion(targetId,request){
+            const input=own(request);if(!plain(input)||Object.keys(input).some(key=>!['versionId','expectedRevision','intentId'].includes(key))||!id(input.versionId)||!id(input.expectedRevision)||!id(input.intentId))return Promise.resolve(fail('INVALID_FILE_RESTORE','Choose a retained version and capture the current file revision.'));
+            return enqueue(async()=>{
+                const loaded=await read(targetId);if(!loaded.ok)return loaded;
+                if(loaded.data.revision!==input.expectedRevision)return fail('FILE_REVISION_CONFLICT','The file changed after recovery was opened.');
+                const retained=records[recordKey(targetId)]?.versions?.find(item=>item.versionId===input.versionId);if(!retained)return fail('FILE_VERSION_MISSING','This retained content version is unavailable.');
+                const checked=current(targetId);if(!checked.ok)return checked;
+                const verified=checkedVersion(retained,checked.data.definition);if(!verified.ok)return verified;const version=verified.data;
+                const archived=await prepareDocumentCheckpoint(loaded.data,{scope:capturedScope,visibility:checked.data.definition.visibility,checkpointId:'restore:'+crypto.randomUUID()});if(!archived.ok)return archived;
+                let content=version.content;
+                if(version.format==='json'){let value;try{value=JSON.parse(content);}catch{}if(value?.clockId){value.acceptedTimeAdvances=[];value.settledTimeEventIds=JSON.parse(archived.data.content).settledTimeEventIds??[];content=JSON.stringify(value);}else if(archived.data.kind==='progression'){value.ledger=[];value.historyCheckpoint={targetId,epoch:archived.data.history.epoch};content=JSON.stringify(value);}}
+                const hasPages=Object.keys(archived.data.pages).length>0;
+                return settle({targetId,expectedRevision:input.expectedRevision,expectedContent:loaded.data.content,projectedDocument:{format:version.format,content},intentId:input.intentId,fingerprint:sha256Text(canonical(['restore',targetId,input])),...(loaded.data.sourceBinding?{sourceBinding:loaded.data.sourceBinding,expectedBindingFingerprint:sha256Text(canonical(loaded.data.sourceBinding))}:{})},{},{content,history:hasPages?archived.data.history:loaded.data.history,pages:archived.data.pages});
+            });
+        }
+        return Object.freeze({load,compareAndSwap,lookupHistory,adoptLegacy,listVersions,readVersion,restoreVersion});
     }
     return Object.freeze({backend,supported,native:supported,storage:'native',capabilities:Object.freeze({persistent:true,actualFiles:true,concurrency:'verified-write',crossDeviceCAS:false,verifiedAcknowledgement:true}),availability,ready,async refresh(){const result=await refresh();if(result.ok){restoredReady=true;changed();return {ok:true,data:{persistent:true}};}return result;},snapshot,choose,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);}});
 }

@@ -1,3 +1,4 @@
+import type {ChatSourceBinding} from '../workflow/chat-prefix-binding';
 import type {DocumentHistoryPage} from '../workflow/document-history';
 import type {Result} from '../workflow/operations/json-data';
 import type {RecordFormat} from '../workflow/operations/format-records';
@@ -21,6 +22,7 @@ export interface NodeFileCapabilities {
     readonly verifiedAcknowledgement:boolean;
     readonly concurrencyScope?:'same-service-process';
     readonly externalProcessCAS?:boolean;
+    readonly contentGarbageCollection?:boolean;
 }
 export interface NodeFileProviderStatus {
     storage:'native'|'server'|'host';supported:boolean;availability:NodeFileAvailabilityIssue|null;capabilities:NodeFileCapabilities|null;location:{basePath:string;platform:string;canUseAbsolutePaths:boolean}|null;
@@ -77,7 +79,12 @@ export interface NodeFileAccessOptions {
     persistence?:NodeFilePersistence;
     onChange?:()=>void;
 }
+export interface FileRecoveryVersion {versionId:string;revision:string;format:RecordFormat;createdAt:number;bytes:number;visibility:ArtifactVisibility;history?:import('../workflow/document-history').DocumentHistoryHeader;branchBinding?:ChatSourceBinding;sourceBinding?:ChatSourceBinding;}
+export interface FileRecoverySnapshot {snapshot:StoredDocument&{scope:StorageScope};pages:Record<string,DocumentHistoryPage>;visibility:ArtifactVisibility;}
 export interface NodeFileBackend extends FileBackendPorts {
+    listVersions:(targetId:string)=>Promise<Result<{targetId:string;revision:string;branchBinding?:ChatSourceBinding;versions:FileRecoveryVersion[]}>>;
+    readVersion:(targetId:string,request:{versionId:string})=>Promise<Result<FileRecoverySnapshot>>;
+    restoreVersion:(targetId:string,request:{versionId:string;expectedRevision:string;intentId:string})=>Promise<Result<{applied:true;acknowledged:boolean;revision:string}>>;
     /** Trusted host migration only: associate checked same-scope metadata when effective disk bytes and format match. */
     adoptLegacy:(targetId:string,request:{snapshot:StoredDocument&{scope:StorageScope};pages:Record<string,DocumentHistoryPage>})=>Promise<Result<{adopted:boolean}>>;
 }
@@ -93,7 +100,7 @@ export interface NodeFileAccess {
     readonly capabilities?:NodeFileCapabilities;
     readonly providers?:Partial<Record<'host'|'server'|'native',NodeFileProviderStatus>>;
     /** Only trusted runtime controls.managed:true authorizes fresh host allocation; definition data never grants authority. */
-    ensureManaged?:(definition:NodeFileDefinition,controls:{scope:StorageScope;isCurrent:()=>boolean;managed?:true})=>Promise<Result<NodeFileDefinition>>;
+    ensureManaged?:(definition:NodeFileDefinition,controls:{scope:StorageScope;isCurrent:()=>boolean;managed?:true;create?:boolean})=>Promise<Result<NodeFileDefinition>>;
     readonly nativeAccessIssue?:NodeFileAvailabilityIssue|null;
     readonly location?:{basePath:string;platform:string;canUseAbsolutePaths:boolean}|null;
     refresh?:()=>Promise<Result<{persistent:true}>>;
@@ -105,7 +112,7 @@ export interface NodeFileAccess {
     /** Starts its picker synchronously. bindingId authorizes only same-file format reconfiguration; a different physical file gets a fresh identity. Never writes document contents. */
     choose:(settings:{mode:'open'|'save';bindingId?:string;name:string;format:RecordFormat;path?:string;storage?:'native'|'server'|'host'})=>Promise<Result<{bindingId:string;name:string;path?:string}>&{cancelled?:true}>;
     /** Captures handle identities and never requests permission during execution. */
-    backend:(definitions:NodeFileDefinition[],controls:{scope:StorageScope;isCurrent:()=>boolean;signal?:AbortSignal})=>NodeFileBackend;
+    backend:(definitions:NodeFileDefinition[],controls:{scope:StorageScope;isCurrent:()=>boolean;signal?:AbortSignal;branchBinding?:ChatSourceBinding;/** Trusted confirmed-publication stamp, evaluated only at accepted settlement. Unavailable clears a prior current stamp. */getBranchBinding?:()=>ChatSourceBinding|null|undefined})=>NodeFileBackend;
 }
 export function createNodeFileAccess(options?:NodeFileAccessOptions):NodeFileAccess;
 export function getNodeFileAccess():NodeFileAccess;

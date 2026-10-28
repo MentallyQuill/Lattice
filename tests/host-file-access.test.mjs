@@ -8,6 +8,7 @@ function fixture(maxBytes){
  const files=new Map();let user='alice',failDocument=false,offline=false;
  const fetch=async(url,options)=>{
   if(offline)throw Error('host offline');
+  if(url==='/api/files/delete'){const body=JSON.parse(options.body);assert.match(body.path,/^files\/lattice-/);files.delete(user+':'+body.path.slice(6));return new Response('{}');}
   if(url==='/api/files/upload'){
    const body=JSON.parse(options.body);files.set(user+':'+body.name,Buffer.from(body.data,'base64'));
    if(failDocument&&body.name.includes('-output-')){failDocument=false;throw Error('lost response');}
@@ -16,10 +17,62 @@ function fixture(maxBytes){
   const bytes=files.get(user+':'+url.split('/').at(-1));return bytes===undefined?new Response('',{status:404}):new Response(bytes);
  };
  const store=createHostFileStore({fetch,getUserId:()=>user,maxBytes});
- return {files,store,setOffline:value=>{offline=value;},create:()=>createHostFileAccess({store,getUserId:()=>user}),setUser:value=>{user=value;},loseDocumentResponse:()=>{failDocument=true;}};
+ return {files,store,setOffline:value=>{offline=value;},create:(override=store)=>createHostFileAccess({store:override,getUserId:()=>user}),setUser:value=>{user=value;},loseDocumentResponse:()=>{failDocument=true;}};
 }
 const definition={targetId:'scene',bindingId:'untrusted-import',name:'Scene.txt',format:'text',content:'initial',missing:'create',visibility:{kind:'public'}};
 const controls={scope:{userId:'alice',chatId:'chat'},isCurrent:()=>true};
+test('twenty large recovery versions and replay archives reload outside bounded journal envelopes',async()=>{
+ const f=fixture(),access=f.create();must(await access.ready);
+ const definitionData=must(await access.ensureManaged(definition,controls));let backend=access.backend([definitionData],controls);
+ for(let index=0;index<25;index++){
+  const snapshot=must(await backend.load('scene')),content=String(index).padEnd(130000,'x');
+  must(await backend.compareAndSwap({targetId:'scene',expectedRevision:snapshot.revision,expectedContent:snapshot.content,projectedDocument:{format:'text',content},intentId:'large-'+index,fingerprint:sha256Text('large-'+index)}));
+ }
+ const reloaded=f.create();must(await reloaded.ready);backend=reloaded.backend([definitionData],controls);
+ const versions=must(await backend.listVersions('scene'));assert.equal(versions.versions.length,20);
+ const snapshot=must(await backend.load('scene'));must(await backend.restoreVersion('scene',{versionId:versions.versions.at(-1).versionId,expectedRevision:snapshot.revision,intentId:'restore-large'}));
+ assert.equal(must(await backend.load('scene')).content,String(4).padEnd(130000,'x'));
+});
+function must(result){assert.equal(result.ok,true,JSON.stringify(result));return result.data;}
+
+test('switching users during cleanup cannot delete the next user generated metadata',async()=>{
+ const f=fixture();let armed=false,switched=false;
+ const store={...f.store,async removeGenerated(name){
+  if(armed&&!switched){switched=true;f.setUser('bob');return {ok:true,data:{removed:false}};}
+  return f.store.removeGenerated(name);
+ }};
+ const access=f.create(store);must(await access.ready);const prepared=must(await access.ensureManaged(definition,controls)),backend=access.backend([prepared],controls);
+ const before=must(await backend.load('scene'));must(await backend.compareAndSwap({targetId:'scene',expectedRevision:before.revision,expectedContent:before.content,projectedDocument:{format:'text',content:'first'},intentId:'first-cleanup',fingerprint:sha256Text('first-cleanup')}));
+ const bobPrefix='bob:lattice-'+sha256Text('bob').slice(7,31)+'-';
+ for(const [key,bytes]of [...f.files])if(/-(journal|content|metadata)-[a-f0-9]{64}\.json$/.test(key))f.files.set(bobPrefix+key.slice(key.indexOf('-',key.indexOf('lattice-')+8)+1),bytes);
+ const bobBefore=[...f.files].filter(([key])=>key.startsWith('bob:')).map(([key,bytes])=>[key,Buffer.from(bytes)]);
+ const loaded=must(await backend.load('scene'));armed=true;
+ await backend.compareAndSwap({targetId:'scene',expectedRevision:loaded.revision,expectedContent:loaded.content,projectedDocument:{format:'text',content:'second'},intentId:'second-cleanup',fingerprint:sha256Text('second-cleanup')});
+ assert.equal(switched,true);assert.ok(bobBefore.length>1);
+ for(const [key,bytes]of bobBefore)assert.deepEqual(f.files.get(key),bytes,'The switched-to user retains '+key);
+});
+test('branch source lookup never allocates absent resources and exposes exact recorded prefix versions',async()=>{
+ const f=fixture(),access=f.create();must(await access.ready);
+ const absent=await access.ensureManaged(definition,{...controls,create:false});assert.equal(absent.error.code,'FILE_BINDING_MISSING');assert.equal(f.files.size,0);
+ const prepared=must(await access.ensureManaged(definition,controls)),stamp=count=>({schemaVersion:1,messageCount:count,prefixHash:sha256Text('prefix '+count)});
+ for(let count=1;count<=2;count++){const backend=access.backend([prepared],{...controls,branchBinding:stamp(count)}),snapshot=must(await backend.load('scene'));must(await backend.compareAndSwap({targetId:'scene',expectedRevision:snapshot.revision,expectedContent:snapshot.content,projectedDocument:{format:'text',content:'point '+count},intentId:'point-'+count,fingerprint:sha256Text('point '+count)}));}
+ const backend=access.backend([must(await access.ensureManaged(definition,{...controls,create:false}))],controls),versions=must(await backend.listVersions('scene'));
+ assert.deepEqual(versions.branchBinding,stamp(2));assert.deepEqual(versions.versions[0].branchBinding,stamp(1));
+ const old=must(await backend.readVersion('scene',{versionId:versions.versions[0].versionId}));assert.equal(old.snapshot.content,'point 1');assert.deepEqual(old.snapshot.branchBinding,stamp(1));
+});
+test('accepted branch stamps are captured after publication and never inherited by an unstamped later revision',async()=>{
+ const f=fixture(),access=f.create();must(await access.ready);const prepared=must(await access.ensureManaged(definition,controls));
+ let published;
+ const backend=access.backend([prepared],{...controls,getBranchBinding:()=>published});
+ const first=must(await backend.load('scene'));assert.equal(first.branchBinding,undefined);
+ published={schemaVersion:1,messageCount:3,prefixHash:sha256Text('accepted assistant prefix')};
+ must(await backend.compareAndSwap({targetId:'scene',expectedRevision:first.revision,expectedContent:first.content,projectedDocument:{format:'text',content:'accepted branch point'},intentId:'published-branch',fingerprint:sha256Text('published-branch')}));
+ assert.deepEqual(must(await backend.listVersions('scene')).branchBinding,published);
+ const stamp=published;published=undefined;
+ const second=must(await backend.load('scene'));
+ must(await backend.compareAndSwap({targetId:'scene',expectedRevision:second.revision,expectedContent:second.content,projectedDocument:{format:'text',content:'unverified later publication'},intentId:'unverified-branch',fingerprint:sha256Text('unverified-branch')}));
+ const versions=must(await backend.listVersions('scene'));assert.equal(versions.branchBinding,undefined);assert.deepEqual(versions.versions[0].branchBinding,stamp);
+});
 test('trusted managed preparation creates metadata only and reload restores accepted files and receipts',async()=>{
  const f=fixture(),access=f.create();assert.equal((await access.ready).ok,true);
  const ensured=await access.ensureManaged(definition,controls);assert.equal(ensured.ok,true,JSON.stringify(ensured));

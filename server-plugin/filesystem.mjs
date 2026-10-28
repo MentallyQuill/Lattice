@@ -1,3 +1,4 @@
+import {createFileMetadataBlobs} from '../src/workflow/file-metadata-blobs.js?v=0.29.0';
 import fs from 'node:fs/promises';
 import {constants} from 'node:fs';
 import path from 'node:path';
@@ -59,18 +60,18 @@ async function pinFile(value,validate){
   if(current.isSymbolicLink()||!sameEntry(entry,opened)||!sameEntry(opened,current))throw security('The opened file differs from its checked destination. Configure the destination again.');
  };
 }
-async function readBounded(value,{validate}={}){
+async function readBounded(value,{validate,maxBytes=documentLimit}={}){
  let handle;
  try{
   const check=await pinFile(value,validate);await check();
   handle=await fs.open(value,readFlags);await check(handle);const stat=await handle.stat();
   if(!stat.isFile())throw error('FILE_PATH_INVALID','Choose a file, not a folder.');
-  if(stat.size>documentLimit)throw error('FILE_DOCUMENT_LIMIT','File documents must fit the 262,144-byte limit.');
-  const buffer=Buffer.allocUnsafe(documentLimit+1);let length=0;
+  if(stat.size>maxBytes)throw error('FILE_DOCUMENT_LIMIT','The file exceeds its supported byte limit.');
+  const buffer=Buffer.allocUnsafe(Math.min(maxBytes+1,stat.size+1));let length=0;
   while(length<buffer.length){const {bytesRead}=await handle.read(buffer,length,buffer.length-length,length);if(!bytesRead)break;length+=bytesRead;}
   await check(handle);
   const after=await handle.stat();if(after.size!==stat.size||after.mtimeMs!==stat.mtimeMs)throw error('FILE_REVISION_CONFLICT','The file changed while it was being read.');
-  if(length>documentLimit)throw error('FILE_DOCUMENT_LIMIT','File documents must fit the 262,144-byte limit.');
+  if(length>maxBytes)throw error('FILE_DOCUMENT_LIMIT','The file exceeds its supported byte limit.');
   return {bytes:buffer.subarray(0,length),stat};
  }finally{await handle?.close();}
 }
@@ -141,20 +142,26 @@ export function serverHandle(owner,value){
 
 /** Journal handles are rebuilt from paths and never persisted as functions. */
 export function serverPersistence(owner){
- const statePath=path.join(owner.metadata,'state.json');
+ const statePath=path.join(owner.metadata,'state.json');let previousNames=[];
+ const blobPath=name=>{if(!/^(archive|content|metadata)-[a-f0-9]{64}\.json$/.test(name))throw security('Invalid generated metadata name');return path.join(owner.metadata,name);};
+ const validate=async()=>{if(identity(await physicalPath(owner.metadata))!==identity(owner.metadata)||!inside(owner.root,owner.metadata))throw security('The metadata folder changed.');};
+ const readMetadata=async(value,maxBytes=2097152)=>{const {bytes}=await readBounded(value,{validate,maxBytes});return bytes.toString('utf8');};
+ const blobs=createFileMetadataBlobs({read:name=>readMetadata(blobPath(name)),async write(name,content){const value=blobPath(name);await validate();try{if(await readMetadata(value)!==content)throw error('FILE_JOURNAL_INVALID','Immutable metadata conflict');}catch(cause){if(cause.code!=='ENOENT')throw cause;await atomicWrite(value,content,{validate});}}});
  return {
   async load(){
-   let text;try{if((await fs.stat(statePath)).size>16777216)throw error('FILE_JOURNAL_LIMIT','The file service journal exceeds its supported size.');text=await fs.readFile(statePath,'utf8');}catch(cause){if(cause.code==='ENOENT')return undefined;throw cause;}
+   let text;try{text=await readMetadata(statePath,16777216);}catch(cause){if(cause.code==='ENOENT')return undefined;throw cause;}
    if(Buffer.byteLength(text)>16777216)throw error('FILE_JOURNAL_LIMIT','The file service journal exceeds its supported size.');
    const state=JSON.parse(text);
    if(state?.schemaVersion!==1||!Array.isArray(state.bindings)||typeof state.records!=='object'||!state.records||Array.isArray(state.records))throw error('FILE_JOURNAL_INVALID','The file service journal could not be validated.');
    const bindings=state.bindings.map(row=>{if(typeof row?.handle?.path!=='string')throw error('FILE_JOURNAL_INVALID','A stored path could not be validated.');return {...row,initializeEmpty:false,handle:serverHandle(owner,row.handle.path)};});
-   return {bindings,records:state.records};
+   previousNames=[...(state.contentNames??[]),...(state.garbageNames??[])];return {bindings,records:await blobs.unpack(state.records)};
   },
   async save(state){
-   const stored={schemaVersion:1,bindings:state.bindings.map(row=>({...row,initializeEmpty:false,handle:{path:row.handle.path}})),records:state.records};
+   const packed=await blobs.pack(state.records);
+   const stored={schemaVersion:1,contentNames:packed.names,garbageNames:previousNames.filter(name=>!packed.names.includes(name)),bindings:state.bindings.map(row=>({...row,initializeEmpty:false,handle:{path:row.handle.path}})),records:packed.records};
    const text=JSON.stringify(stored);if(Buffer.byteLength(text)>16777216)throw error('FILE_JOURNAL_LIMIT','The file service journal exceeds its supported size.');
-   await atomicWrite(statePath,text);
+   await atomicWrite(statePath,text,{validate});
+   const reachable=new Set(packed.names),remaining=[];for(const name of previousNames){if(reachable.has(name)||!/^((content|metadata)-[a-f0-9]{64}\.json)$/.test(name))continue;const value=blobPath(name);try{await validate();const entry=await fs.lstat(value);if(entry.isSymbolicLink()||!entry.isFile())throw security('Generated metadata changed.');const check=await pinDirectory(owner.metadata,validate);await check();await fs.unlink(value);await check();try{await fs.lstat(value);remaining.push(name);}catch(cause){if(cause.code!=='ENOENT')throw cause;}}catch(cause){if(cause.code!=='ENOENT')remaining.push(name);}}previousNames=[...new Set([...packed.names,...remaining])];
   },
  };
 }

@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {sha256Text} from '../src/workflow/definition-data.js';
 const module=await import('../server-plugin/index.mjs').catch(()=>({}));
-const {serverHandle}=await import('../server-plugin/filesystem.mjs');
+const {serverHandle,serverPersistence}=await import('../server-plugin/filesystem.mjs');
 const must=result=>{assert.equal(result.ok,true,JSON.stringify(result));return result.data;};
 async function fixture(admin=true){
  const root=await mkdtemp(path.join(tmpdir(),'lattice-server-files-'));
@@ -17,6 +17,52 @@ async function fixture(admin=true){
 const definition=binding=>({targetId:'notes',bindingId:binding.bindingId,name:binding.name,format:'text',missing:'create',content:'Initial',visibility:{kind:'public'}});
 const request=binding=>({userId:'alice',scope:{userId:'alice',chatId:'story'},definition:definition(binding),generation:binding.generation});
 const change=(loaded,content)=>({targetId:'notes',expectedRevision:loaded.revision,expectedContent:loaded.content,projectedDocument:{format:'text',content},intentId:'intent-1',fingerprint:sha256Text('intent-1:'+content)});
+
+test('server cleanup retries a failed generated-content deletion without pruning replay archives',async context=>{
+ const f=await fixture();try{
+  const metadata=path.join(f.root,'lattice-file-service');await mkdir(metadata);
+  const persistence=serverPersistence({root:f.root,metadata,admin:false});
+  const state=content=>({bindings:[],records:{owned:{receipts:[],versions:[{versionId:'version:'+content,revision:sha256Text(content),content,format:'text',createdAt:1,visibility:{kind:'public'}}]}}});
+  await persistence.save(state('one'));
+  const abandoned=path.join(metadata,'content-'+sha256Text(JSON.stringify('one')).slice(7)+'.json');
+  const archive=path.join(metadata,'archive-'+('a'.repeat(64))+'.json');await writeFile(archive,'preserved replay');
+  const original=filesystem.unlink;let denied=true;
+  context.mock.method(filesystem,'unlink',async value=>{if(value===abandoned&&denied)throw Object.assign(Error('denied'),{code:'EPERM'});return original(value);});
+  await persistence.save(state('two'));assert.equal(await readFile(abandoned,'utf8'),'"one"');
+  denied=false;await persistence.save(state('three'));
+  await assert.rejects(readFile(abandoned),{code:'ENOENT'});assert.equal(await readFile(archive,'utf8'),'preserved replay');
+ }finally{context.mock.restoreAll();await f.close();}
+});
+test('a raced metadata-folder substitution cannot read recovery bytes through an outside opened file',async context=>{
+ const f=await fixture(false),outside=await fixture();let reads=0;
+ try{
+  const metadata=path.join(f.root,'lattice-file-service'),backup=metadata+'-backup';await mkdir(metadata);
+  const persistence=serverPersistence({root:f.root,metadata,admin:false}),content='saved recovery';
+  await persistence.save({bindings:[],records:{owned:{receipts:[],versions:[{versionId:'old',revision:sha256Text(content),content,format:'text',createdAt:1,visibility:{kind:'public'}}]}}});
+  const target=path.join(metadata,'content-'+sha256Text(JSON.stringify(content)).slice(7)+'.json');await writeFile(path.join(outside.root,path.basename(target)),'outside secret');
+  const original=filesystem.open;let swapped=false;
+  context.mock.method(filesystem,'open',async(...args)=>{
+   if(args[0]===target&&!swapped){swapped=true;await filesystem.rename(metadata,backup);await symlink(outside.root,metadata,process.platform==='win32'?'junction':'dir');}
+   const opened=await original(...args);if(args[0]===target){const read=opened.read.bind(opened);opened.read=async(...params)=>{reads++;return read(...params);};}return opened;
+  });
+  await assert.rejects(persistence.load());assert.equal(reads,0,'outside recovery bytes are never read');
+ }finally{context.mock.restoreAll();await f.close();await outside.close();}
+});
+test('server recovery partitions large versions and collects only unreachable generated content',async()=>{
+ const f=await fixture();try{
+  const service=f.service(),binding=must(await service.dispatch('configure',f.user,{userId:'alice',path:'',name:'large.txt',format:'text',mode:'save'})),captured=request(binding);
+  for(let index=0;index<25;index++){
+   const loaded=must(await service.dispatch('load',f.user,captured));must(await service.dispatch('cas',f.user,{...captured,update:{...change(loaded,String(index).padEnd(130000,'x')),intentId:'large-'+index}}));
+  }
+  const entries=await filesystem.readdir(path.join(f.root,'lattice-file-service'));
+  assert.ok(entries.some(name=>name.startsWith('content-')),'recovery bytes need separate immutable files');
+  const restarted=f.service(),versions=must(await restarted.dispatch('versions',f.user,captured));assert.equal(versions.versions.length,20);
+  const loaded=must(await restarted.dispatch('load',f.user,captured));
+  must(await restarted.dispatch('restore',f.user,{...captured,request:{versionId:versions.versions.at(-1).versionId,expectedRevision:loaded.revision,intentId:'restored'}}));
+  assert.equal(await readFile(binding.path,'utf8'),String(4).padEnd(130000,'x'));
+  assert.ok(entries.filter(name=>name.startsWith('content-')).length<=20);
+ }finally{await f.close();}
+});
 
 test('server configuration owns a real path without creating document bytes',async()=>{
  assert.equal(typeof module.createServerFileService,'function');
@@ -130,7 +176,7 @@ test('a restarted server reconciles an interrupted receipt without rewriting doc
 
 test('the supplied router gets authenticated file routes without an Express dependency',async()=>{
  const routes=new Map(),router={get:(url,handler)=>routes.set('GET '+url,handler),post:(url,handler)=>routes.set('POST '+url,handler)};await module.init(router);
- assert.deepEqual([...routes.keys()],['GET /status','POST /configure','POST /load','POST /cas','POST /history','POST /adopt','POST /roots','POST /browse']);
+ assert.deepEqual([...routes.keys()],['GET /status','POST /configure','POST /load','POST /cas','POST /history','POST /adopt','POST /versions','POST /version','POST /restore','POST /roots','POST /browse']);
  let result;await routes.get('GET /status')({user:{},once(){}},{once(){},json(value){result=value;}});assert.equal(result.error.code,'FILE_USER_REQUIRED');
 });
 

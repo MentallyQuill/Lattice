@@ -190,7 +190,7 @@ export function createNativeFileSession(config) {
             return good({sourceBinding,...(valid?{}:{readView:{...snapshot,format:template.format,content:template.content}})});
         },
         lookupHistory:async(targetId,query)=>{const policy=visibility(targetId);if(!policy.ok)return policy;const result=await backend.lookupHistory(targetId,query);if(!current())return fail('STALE_FILE_SCOPE','Archive authorization changed.');if(!result.ok)return result;if(result.data.privateActorIds.some(actorId=>actorId!==config.scope.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original actor privacy.');const mark=result.data.visibility,destination=policy.data;if(mark.kind!=='public'&&destination.kind!=='hidden'&&!(mark.kind==='actor-private'&&destination.kind==='actor-private'&&mark.actorId===destination.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original document privacy.');return result;},
-        compareAndSwap:async (update,controls)=>{writingTarget=update.targetId;try{const result=await backend.compareAndSwap(update,controls);if(result.ok&&!result.data.acknowledged)config.barriers?.set(barrierKey(update.targetId),{intentId:update.intentId,revision:result.data.revision});return result;}finally{writingTarget=null;}}});
+        compareAndSwap:async (update,controls)=>{writingTarget=update.targetId;try{const result=await backend.compareAndSwap(update,{...controls,visibility:definitions.get(update.targetId)?.visibility});if(result.ok&&!result.data.acknowledged)config.barriers?.set(barrierKey(update.targetId),{intentId:update.intentId,revision:result.data.revision});return result;}finally{writingTarget=null;}}});
     const visibility=targetId=>{
         const doc=definitions.get(targetId);if(!doc)return fail('FILE_NOT_AUTHORIZED','Select a document authorized in this chat.');
         if(doc.visibility.kind==='actor-private'&&doc.visibility.actorId!==config.scope.actorId)return fail('PRIVATE_DESTINATION','Select this actor’s authorized private document.');
@@ -207,17 +207,7 @@ export function createNativeFileSession(config) {
                 if(!sourceBinding)return fail('CHAT_SOURCE_REQUIRED','A captured accepted chat prefix is required for derived context.');
                 const key=barrierKey(targetId);if(config.barriers?.has(key)&&!diskTargets.has(targetId))return fail('PERSISTENCE_UNKNOWN','Verify the previous native save before reading derived context.');
                 const loaded=await loadTarget(targetId,{bindToChat:true});if(!current())return fail('STALE_FILE_SCOPE','Document source changed before history maintenance.');if(!loaded.ok)return loaded;
-                if(!diskTargets.has(targetId)&&config.maintainHistory===true&&!loaded.data.copiedScope&&loaded.data.receipts.length>=240){
-                    const preview=await backend.previewCheckpoint(targetId,policy.data);if(!current())return fail('STALE_FILE_SCOPE','Document source changed during history maintenance.');if(!preview.ok)return preview;
-                    if(preview.data.view.privateActorIds.some(actorId=>actorId!==config.scope.actorId))return fail('PRIVATE_DESTINATION','Archived history retains its original actor privacy.');
-                    const mark=preview.data.view.visibility;if(mark.kind!=='public'&&policy.data.kind!=='hidden'&&!(mark.kind==='actor-private'&&policy.data.kind==='actor-private'&&mark.actorId===policy.data.actorId))return fail('PRIVATE_DESTINATION','History maintenance must preserve document privacy.');
-                    if(config.barriers?.has(key))return fail('PERSISTENCE_UNKNOWN','The previous native save remains unconfirmed.');
-                    const barrier=Object.freeze({checkpointPending:true});config.barriers?.set(key,barrier);
-                    let applied;try{applied=await backend.applyCheckpoint(preview.data.handle);}catch{return fail('PERSISTENCE_UNKNOWN','History maintenance could not confirm its persistence outcome.');}
-                    if(!applied.ok){if(config.barriers?.get(key)===barrier)config.barriers.delete(key);return applied;}
-                    if(!applied.data.acknowledged){config.barriers?.set(key,{checkpoint:true,revision:applied.data.revision,epoch:applied.data.epoch,pageIds:applied.data.pageIds,checkpointSignature:applied.data.checkpointSignature});return fail('PERSISTENCE_UNKNOWN','Verify the derived document checkpoint before continuing.');}
-                    if(config.barriers?.get(key)===barrier)config.barriers.delete(key);
-                }
+
             }
             const result=await store.read(targetId,options);if(result.ok&&options?.bindToChat===true)boundReferences.add(result.data.fileRef);return result;
         });reads=pending.then(()=>undefined,()=>undefined);return pending;

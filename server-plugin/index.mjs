@@ -48,7 +48,7 @@ export function createServerFileService(){
     const owner=await ownerFor(user);
     if(action==='status'){
      const {persistence}=await accessFor(owner);
-     return good({apiVersion:1,chooserVersion,operations:['configure','load','cas','history','adopt','roots','browse'],userId:owner.userId,basePath:owner.basePath,platform:process.platform,canUseAbsolutePaths:owner.admin,bindings:await bindingViews(owner,persistence)});
+     return good({apiVersion:1,chooserVersion,operations:['configure','load','cas','history','adopt','versions','version','restore','roots','browse'],userId:owner.userId,basePath:owner.basePath,platform:process.platform,canUseAbsolutePaths:owner.admin,bindings:await bindingViews(owner,persistence)});
     }
     const body=checkedBody(raw);
     if(body.userId!==owner.userId)return fail('FILE_USER_CHANGED','The signed-in user changed. Refresh the file settings.');
@@ -67,7 +67,7 @@ export function createServerFileService(){
      const chosen=await access.choose({mode:body.mode,name:handle.name,format:body.format,...(body.bindingId?{bindingId:body.bindingId}:{})});if(!chosen.ok)return chosen;
      return good((await bindingViews(owner,persistence))[chosen.data.bindingId]);
     }
-    if(!['load','cas','history','adopt'].includes(action))return fail('FILE_OPERATION_UNKNOWN','Unknown file service operation.');
+    if(!['load','cas','history','adopt','versions','version','restore'].includes(action))return fail('FILE_OPERATION_UNKNOWN','Unknown file service operation.');
     if(!body.scope||body.scope.userId!==owner.userId||!id(body.scope.chatId)||!body.definition||typeof body.definition!=='object'||typeof body.generation!=='string')return fail('INVALID_FILE_REQUEST','Capture an authorized file, user, chat and generation.');
     const {access,persistence}=await accessFor(owner);
     const stored=await persistence.load(),binding=stored?.bindings.find(row=>row.bindingId===body.definition.bindingId);
@@ -75,9 +75,12 @@ export function createServerFileService(){
     if(binding.generation!==body.generation)return fail('STALE_FILE_BINDING','The destination changed. Run and review the workflow again.');
     if(body.definition.path!==undefined&&body.definition.path!==binding.handle.path)return fail('FILE_PATH_CONFLICT','The configured path differs from its server binding. Save the file settings again.');
     await checkedPath(owner,binding.handle.path,{pinned:true});
-    const backend=access.backend([body.definition],{scope:body.scope,signal:controls.signal,isCurrent:()=>!controls.signal?.aborted});
+    const backend=access.backend([body.definition],{scope:body.scope,branchBinding:body.branchBinding,signal:controls.signal,isCurrent:()=>!controls.signal?.aborted});
     if(action==='load')return backend.load(body.definition.targetId);
     if(action==='history')return backend.lookupHistory(body.definition.targetId,body.query);
+    if(action==='version')return backend.readVersion(body.definition.targetId,body.request);
+    if(action==='versions')return backend.listVersions(body.definition.targetId);
+    if(action==='restore')return backend.restoreVersion(body.definition.targetId,body.request);
     if(action==='adopt')return backend.adoptLegacy(body.definition.targetId,body.request);
     if(body.update?.targetId!==body.definition.targetId)return fail('INVALID_FILE_REQUEST','The update must match its captured destination.');
     return backend.compareAndSwap(body.update,{signal:controls.signal});
@@ -98,5 +101,5 @@ export async function init(router){
   if(!res.destroyed)res.json(result);
  };
  router.get('/status',route('status'));
- for(const action of ['configure','load','cas','history','adopt','roots','browse'])router.post('/'+action,route(action));
+ for(const action of ['configure','load','cas','history','adopt','versions','version','restore','roots','browse'])router.post('/'+action,route(action));
 }

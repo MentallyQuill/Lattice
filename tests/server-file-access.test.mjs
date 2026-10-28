@@ -61,6 +61,15 @@ test('a captured backend reads, checks and writes through the scoped server bind
   assert.deepEqual(f.calls[2].body.update,update);
  }finally{definition.content='';}
 });
+test('the server CAS captures only the late confirmed publication stamp',async()=>{
+ const revision='sha256:'+('a'.repeat(64)),f=fixture({fetch:async url=>response({ok:true,data:url.endsWith('/status')?status():{applied:true,acknowledged:true,revision}})});
+ must(await f.access.ready);let published;
+ const backend=f.access.backend([definition],{scope,isCurrent:()=>true,getBranchBinding:()=>published});
+ published={schemaVersion:1,messageCount:4,prefixHash:'sha256:'+('b'.repeat(64))};
+ const update={targetId:'notes',expectedRevision:revision,expectedContent:'before',projectedDocument:{format:'text',content:'after'},intentId:'late-stamp',fingerprint:'sha256:'+('c'.repeat(64))};
+ must(await backend.compareAndSwap(update));assert.deepEqual(f.calls.at(-1).body.branchBinding,published);
+ published=undefined;must(await backend.compareAndSwap({...update,intentId:'no-stamp'}));assert.equal(f.calls.at(-1).body.branchBinding,undefined);
+});
 
 test('missing server installation has actionable host guidance and can be refreshed after installation',async()=>{
  let installed=false;
