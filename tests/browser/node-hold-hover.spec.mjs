@@ -105,6 +105,7 @@ test('pressing a shelf choice clears its hover before movement and preserves dra
     await expect(page.locator('.pc-shelf-drag-preview')).toBeVisible();
     await page.mouse.up();
     await expect(page.locator('.pc-shelf-drag-preview')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(initial => Object.values(window.canvasHarness.graph.nodes).filter(node => !initial.includes(node.id)), initial)).toHaveLength(1);
     const placed = await page.evaluate(initial => Object.values(window.canvasHarness.graph.nodes).filter(node => !initial.includes(node.id)), initial);
     expect(placed).toHaveLength(1);
     expect(placed[0].operation).toBe('reroute');
