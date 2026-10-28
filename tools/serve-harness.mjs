@@ -18,8 +18,9 @@ const server = createServer(async (request, response) => {
         }
         const path = resolve(root, `.${pathname === '/' ? '/tests/browser/harness.html' : pathname}`);
         if (!path.startsWith(root.endsWith(sep) ? root : root + sep)) { response.writeHead(403).end(); return; }
+        const bytes=await readFile(path);
         response.writeHead(200, { 'Content-Type': types[extname(path)] ?? 'application/octet-stream', 'Cache-Control': 'no-store' });
-        response.end(await readFile(path));
+        response.end(bytes);
     } catch { if (!response.headersSent) response.writeHead(404); response.end(); }
 });
 server.listen(Number(process.env.PORT ?? 4178), '127.0.0.1', () => console.log('Mock SillyTavern host ready at http://127.0.0.1:4178'));

@@ -9,9 +9,13 @@ if (new URLSearchParams(location.search).has('hostCss')) {
     document.getElementById('synthetic-host-css')?.remove();
 }
 const context = installMock();
+const existingFixtureSettings=context.extensionSettings.lattice;
 // Exercise startup with no saved Lattice namespace; do not pick a fixture here.
 delete context.extensionSettings.lattice;
 const freshSettingsAbsent = !Object.hasOwn(context.extensionSettings, 'lattice');
+// Restore the existing-install fixture before any transitive runtime imports.
+// The explicit freshFiles journey keeps the namespace absent through startup.
+if(!new URLSearchParams(location.search).has('freshFiles'))context.extensionSettings.lattice=existingFixtureSettings;
 let providerCalls = 0;
 context.ConnectionManagerRequestService = { getProfile: () => null, sendRequest() { providerCalls++; throw Error('Browser fixtures must never request a model.'); } };
 context.ChatCompletionService = { processRequest() { providerCalls++; throw Error('Browser fixtures must never request a model.'); } };

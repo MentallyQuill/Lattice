@@ -1894,21 +1894,26 @@ const applicationNodeFiles=createNodeFileApplicationActions({access:getNodeFileA
     pickFile(){return new Promise(resolve=>{const input=document.createElement('input');input.type='file';input.accept='.txt,.md,.markdown,.json,.jsonl,.csv';input.addEventListener('change',()=>resolve(input.files?.[0]??null),{once:true});input.addEventListener('cancel',()=>resolve(null),{once:true});input.click();});},
     presentFile(content,name,format,download){const url=URL.createObjectURL(new Blob([content],{type:format==='json'?'application/json':'text/plain;charset=utf-8'}));if(download){const anchor=document.createElement('a');anchor.href=url;anchor.download=name;anchor.click();}else window.open(url,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(url),60000);},
 });
+function fileRecoveryIsBusy(){
+    const native=workflowRuntime.getNativeWorkflowController?.();
+    return workflowState.busy===true||workflowRuntime.workflowApplicationBusy?.()===true||native?.activity?.()?.busy===true||native?.hasPendingReview?.()===true||workflowState.reviewHandles?.some(handle=>native?.candidateStatus?.(handle)?.ok===true)===true;
+}
 async function openSelectedFileRecovery(){
     const editor=graphViews?.readEditor();if(!editor||selectedKind!=='node'||editor.view.identity.kind==='library')return toast('Select a file-owning node to recover its saved file.','info');
-    if(workflowState.busy||workflowRuntime.getNativeWorkflowController?.()?.activity?.()?.busy||workflowState.reviewHandles?.some(handle=>workflowRuntime.getNativeWorkflowController?.()?.candidateStatus?.(handle)?.ok))return toast('Finish the current run or review before recovering a file.','info');
+    if(fileRecoveryIsBusy())return toast('Finish the current run or review before recovering a file.','info');
     const selection={selectionKey:JSON.stringify([editor.view.key,selected.id]),revision:graphViews.readEditContext().sessionId+':'+workspaceRevision,address:{workflowId:current.id,instancePath:editor.view.identity.instancePath??[],nodeId:selected.id}};
     const edit=detailCapture(selection);if(!edit.ok)return edit;
     const node=editor.prepared.effectiveNodes[selected.id],state=fileWorkspaceData(),view=projectNodeFile(node,{...state,...state.nodeFiles,address:selection.address,nodes:editor.prepared.effectiveNodes,wires:editor.prepared.savedGraph.wires});
     if(!view||view.mode==='inherited')return toast('Select the node that owns the file destination.','info');
     const capture={edit:edit.data,node,address:selection.address,nodes:editor.prepared.effectiveNodes,view,selectedEpoch:selectionEpoch};
-    const result=await applicationNodeFiles.readable(capture,selection);if(!result.ok)return toast(result.error,'error');
+    const result=await applicationNodeFiles.readable(capture,selection,{isCurrent:()=>!fileRecoveryIsBusy()});if(!result.ok)return toast(result.error,'error');
     const {definition,backend,snapshot}=result.data,versions=await backend.listVersions(definition.targetId);if(!versions.ok)return toast(versions.error,'error');
-    if(!editorCurrent(capture.edit)||capture.selectedEpoch!==selectionEpoch)return;
+    if(!editorCurrent(capture.edit)||capture.selectedEpoch!==selectionEpoch||fileRecoveryIsBusy())return;
     pendingFileRecovery={backend,definition,capture,selection,revision:snapshot.revision,view:{name:definition.name,versions:versions.data.versions,busy:false,error:'',confirming:null}};renderDocumentState();
 }
 async function restoreSelectedFileVersion(){
     const pending=pendingFileRecovery;if(!pending?.view.confirming||!editorCurrent(pending.capture.edit)||pending.capture.selectedEpoch!==selectionEpoch)return;
+    if(fileRecoveryIsBusy()){pending.view={...pending.view,busy:false,error:'Finish the current run or review before restoring this file.'};renderDocumentState();return {ok:false,error:{code:'WORKFLOW_BUSY',message:pending.view.error}};}
     pending.view={...pending.view,busy:true,error:''};renderDocumentState();
     const result=await pending.backend.restoreVersion(pending.definition.targetId,{versionId:pending.view.confirming,expectedRevision:pending.revision,intentId:'restore-'+crypto.randomUUID()});
     if(pendingFileRecovery!==pending)return;
@@ -1918,7 +1923,7 @@ async function restoreSelectedFileVersion(){
 }
 function openExampleFileSetup(){
     const origin=applicationFiles()?.origins.get(current);if(!origin)return;
-    const result=prepareExampleFileDefaults({exampleId:origin.exampleId,workflowId:applicationFiles().controller.getWorkflowIdentity(),nodes:Object.values(current.nodes).map(node=>({node,address:{workflowId:current.id,instancePath:[],nodeId:node.id}}))});
+    const result=prepareExampleFileDefaults({exampleId:origin.exampleId,workflowId:applicationFiles().controller.getWorkflowIdentity(),previousWorkflowId:origin.fileWorkflowId,nodes:Object.values(current.nodes).map(node=>({node,address:{workflowId:current.id,instancePath:[],nodeId:node.id}}))});
     if(!result.ok)return;
     const choices=result.data.actorChoices;if(!choices.length)return;
     const actors=(ctx().characters??[]).flatMap((actor,index)=>actor?[{id:'character:'+(actor.avatar??index),label:actor.name??actor.data?.name??'Character'}]:[]);
@@ -1928,7 +1933,7 @@ function applyExampleFileSetup(values){
     const pending=pendingExampleFileSetup;if(!pending||!documentSession.stillCurrent(pending.token))return;
     const valid=pending.view.choices.every(choice=>pending.view.actors.some(actor=>actor.id===values[choice.sampleActorId])&&(ctx().characters??[]).some((actor,index)=>'character:'+(actor?.avatar??index)===values[choice.sampleActorId]));
     if(!valid){pending.view={...pending.view,error:'Choose a currently loaded character for each example character.'};renderDocumentState();return;}
-    const origin={...pending.origin,actorBindings:{...pending.origin.actorBindings,...values}},graph=structuredClone(current),prepared=prepareExampleFileDefaults({exampleId:origin.exampleId,workflowId:applicationFiles().controller.getWorkflowIdentity(),nodes:Object.values(graph.nodes).map(node=>({node,address:{workflowId:graph.id,instancePath:[],nodeId:node.id}})),actorBindings:origin.actorBindings});
+    const workflowId=applicationFiles().controller.getWorkflowIdentity(),origin={...pending.origin,fileWorkflowId:workflowId,actorBindings:{...pending.origin.actorBindings,...values}},graph=structuredClone(current),prepared=prepareExampleFileDefaults({exampleId:origin.exampleId,workflowId,previousWorkflowId:pending.origin.fileWorkflowId,nodes:Object.values(graph.nodes).map(node=>({node,address:{workflowId:graph.id,instancePath:[],nodeId:node.id}})),actorBindings:origin.actorBindings});
     if(!prepared.ok){pending.view={...pending.view,error:prepared.error.message};renderDocumentState();return;}
     graph.nodes=Object.fromEntries(prepared.data.nodes.map(entry=>[entry.node.id,entry.node]));applicationFiles().origins.remember(graph,origin);
     const result=activateWorkflow(graph,{source:documentSession.source(),workspaceViews:activeWorkspaceViews(),exampleMetadata:documentSession.exampleMetadata(),clean:false});if(result?.ok===false)return result;
@@ -2335,7 +2340,7 @@ function ensureDocumentCommands() {
         examples: id => {const installed=installWorkflowExample(id);if(!installed.ok)return installed;const graph=installed.data.graph,app=applicationFiles();
             const lease=workflowRuntime.getStoryDocumentCatalog?.().capture();
             const prepared=prepareExampleFileDefaults({exampleId:id,workflowId:graph.id,nodes:Object.values(graph.nodes).map(node=>({node,address:{workflowId:graph.id,instancePath:[],nodeId:node.id}})),legacyDocuments:lease?.ok?lease.data.documents:[],canonicalDocuments:ctx().chatMetadata?.latticeDocuments?.[workflowRuntime.getWorkflowDiagnosticScope?.()?.userId]??{}});
-            if(prepared.ok){graph.nodes=Object.fromEntries(prepared.data.nodes.map(entry=>[entry.node.id,entry.node]));app?.origins.remember(graph,{schemaVersion:1,exampleId:id});}
+            if(prepared.ok){graph.nodes=Object.fromEntries(prepared.data.nodes.map(entry=>[entry.node.id,entry.node]));app?.origins.remember(graph,{schemaVersion:1,exampleId:id,fileWorkflowId:graph.id});}
             return installed;}, recovery: recoveredWorkflows, retainCompanions: retainRecoveryWorkflows,
         views() { canvas?.cancelGesture(); persistGraphViews(true); return activeWorkspaceViews(); },
         prompt: requestDocumentChoice,

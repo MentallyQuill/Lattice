@@ -278,12 +278,16 @@ export function createNativeWorkflowController(ports) {
     const documentHistory=createNativeDocumentHistory({catalog:documentCatalog,context,userId:()=>ports.userId?.(),actorId:()=>{const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);return actor.ok?actor.data.actorId:null;},isBusy:()=>applying||active!==null||ports.isBusy?.()===true,barriers:fileBarriers,persistenceVerifier,onApplied:()=>cancel('Workflow history checkpoint applied')});
     const outcomeCache=createNativeOutcomeCache({...(typeof ports.random==='function'?{random:ports.random}:{})});
     function releaseRun(run) {if(!run||run.resourcesReleased)return;run.resourcesReleased=true;run.sourceProofs?.clear();run.sourceActorService?.release();run.sourceActorService=null;run.actorArtifactOwners=new WeakMap();for(const reader of run.sourceReaders??[])reader.release();run.sourceReaders?.clear();run.sourcePages?.clear();run.sourceCaptures?.clear();run.guidanceComposition?.clear();run.modelScopes?.clear();run.modelAddresses=new WeakMap();recall.releaseRun(run);run.memorySession?.release();run.memorySession=null;run.storySession?.release();run.storySession=null;run.draftEvidence?.release();run.draftEvidence=null;run.draftSources?.clear();delete run.nativeContext;for(const session of run.fileSessions?.values()??[])session.release();run.fileSessions?.clear();run.fileSession?.release();run.fileSession=null;run.actorContext?.release();run.actorContext=null;for(const session of run.actorMemorySessions?.values()??[])session.release();run.actorMemorySessions?.clear();run.stagedFiles.length=0;run.memoryIntents.clear();run.memoryTerminals.clear();}
-    let epoch=0, active=null, result=null, automaticResult=null, applying=false, automaticApplication=null, internalEvents=0, unsubscribe=null;
+    let epoch=0, active=null, result=null, automaticResult=null, applying=false, settling=false, automaticApplication=null, internalEvents=0, unsubscribe=null;
     let branchCapture=null;
     function captureBranchPoint(){
         const c=context(),metadata=c.chatMetadata,userId=ports.userId?.(),chatId=identity(c).chatId,parent=Object.getOwnPropertyDescriptor(metadata??{},'main_chat')?.value,integrity=Object.getOwnPropertyDescriptor(metadata??{},'integrity')?.value;
         const prefix=createChatPrefixBinding(c.chat,sourceText);
-        branchCapture=typeof userId==='string'&&typeof chatId==='string'&&typeof parent==='string'&&parent&&parent!==chatId&&parent.length<=128&&typeof integrity==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(integrity)&&prefix?{userId,chatId,metadata,integrity,parentChatId:parent,binding:prefix.stamp}:null;
+        // Preserve the host's original chat-open prefix even when the separately
+        // imported user module has not initialized. This is no file authority:
+        // parent lookup still requires a later matching authenticated scope.
+        if(branchCapture?.chatId===chatId&&branchCapture.metadata===metadata&&branchCapture.integrity===integrity&&branchCapture.parentChatId===parent)return;
+        branchCapture=typeof chatId==='string'&&typeof parent==='string'&&parent&&parent!==chatId&&parent.length<=128&&typeof integrity==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(integrity)&&prefix?{userId:typeof userId==='string'&&userId?userId:null,chatId,metadata,integrity,parentChatId:parent,binding:prefix.stamp}:null;
     }
     function actorAvailable(run,actorId){
         if(!fresh(run))return false;
@@ -372,6 +376,7 @@ export function createNativeWorkflowController(ports) {
         epoch++; sources.clear(); candidates.clear(); clear();
         if(active) {active.controller.abort(reason); const abort=active.abortPrimary;active.abortPrimary=null;try{abort?.(true);}catch{/* Native abort callback is best effort. */}}
         active=null;publishActivity();
+        observe(ports.onReviewChanged);
     };
     const bindingChecks=(run,entries)=>entries.map(({address,binding})=>({address,binding,...run.bindingContexts.get(binding)}));
     const bindingFresh=(run)=>{
@@ -473,7 +478,7 @@ export function createNativeWorkflowController(ports) {
         const priorCatalog=documentCatalog.capture();if(!priorCatalog.ok)return priorCatalog;
         const exampleOrigin=ports.getExampleFileOrigin?.(run.originalGraph);let initialTemplates,fileOwners;
         if(exampleOrigin){
-            const example=prepareExampleFileDefaults({exampleId:exampleOrigin.exampleId,nodes:run.managedFileEntries,workflowId:run.managedWorkflowId,actorBindings:exampleOrigin.actorBindings,legacyDocuments:priorCatalog.data.documents,canonicalDocuments:context().chatMetadata?.latticeDocuments?.[run.userId]??{}});if(!example.ok)return example;
+            const example=prepareExampleFileDefaults({exampleId:exampleOrigin.exampleId,nodes:run.managedFileEntries,workflowId:run.managedWorkflowId,previousWorkflowId:exampleOrigin.fileWorkflowId,actorBindings:exampleOrigin.actorBindings,legacyDocuments:priorCatalog.data.documents,canonicalDocuments:context().chatMetadata?.latticeDocuments?.[run.userId]??{}});if(!example.ok)return example;
             if(example.data.actorChoices.length)return fail('EXAMPLE_ACTOR_REQUIRED','Choose the story characters for '+example.data.actorChoices.map(choice=>choice.label).join(' and ')+' in the example setup before running.');
             run.managedFileEntries=example.data.nodes;initialTemplates=example.data.initialTemplates;fileOwners=example.data.fileOwners;nodes=example.data.nodes.map(entry=>entry.node);
         }
@@ -504,9 +509,10 @@ export function createNativeWorkflowController(ports) {
         // may be unavailable while an existing native destination remains valid.
         await access.ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring file access.');
         const prefix=createChatPrefixBinding(run.nativeCapture?.refs??context().chat,sourceText);
-        if(!branchCapture&&context().chatMetadata?.main_chat)captureBranchPoint();
-        const branch=branchCapture?.userId===run.userId&&branchCapture.chatId===run.identity.chatId&&branchCapture.metadata===context().chatMetadata&&prefix?.matches(branchCapture.binding)?branchCapture:null;
-        if(branchCapture&&!branch)return fail('BRANCH_POINT_UNAVAILABLE','The captured branch point changed. Reopen the chat before preparing its state.');
+        const metadata=context().chatMetadata,openedHere=branchCapture?.chatId===run.identity.chatId&&branchCapture.metadata===metadata&&branchCapture.integrity===Object.getOwnPropertyDescriptor(metadata??{},'integrity')?.value&&branchCapture.parentChatId===Object.getOwnPropertyDescriptor(metadata??{},'main_chat')?.value&&prefix?.matches(branchCapture.binding);
+        if(openedHere&&branchCapture.userId===null&&typeof run.userId==='string'&&run.userId)branchCapture={...branchCapture,userId:run.userId};
+        const branch=openedHere&&branchCapture.userId===run.userId?branchCapture:null;
+        if((branchCapture||metadata?.main_chat)&&!branch)return fail('BRANCH_POINT_UNAVAILABLE','The original branch point could not be verified. Reopen the chat before preparing its state.');
         const managedIds=new Set([...run.managedFileNodes?.values()??[]].map(node=>nodeFileTargetId(node)));
         const branchPrepared=await prepareManagedBranchFiles({definitions:run.nodeFileDefinitions.filter(definition=>managedIds.has(definition.targetId)),access,scope:{userId:run.userId,chatId:run.identity.chatId},branch,isCurrent:live});if(!branchPrepared.ok)return branchPrepared;
         const branchDefinitions=new Map(branchPrepared.data.definitions.map(definition=>[definition.targetId,definition]));
@@ -1270,6 +1276,11 @@ export function createNativeWorkflowController(ports) {
         return notify(value,recovered?run:null,run);
     };
     async function apply(selector) {
+        if(settling)return fail('BUSY','A review settlement is already in progress.');
+        settling=true;
+        try{return await applyInternal(selector);}finally{settling=false;observe(ports.onReviewChanged);}
+    }
+    async function applyInternal(selector) {
         const entry=candidateEntry(selector);
         if(entry&&!entry.applied){const files=await verifyNodeFiles(entry.run);if(!files.ok)return applicationResult(files,entry.run);}
         if(!entry?.settlement)return publishCandidate(selector);
@@ -1283,7 +1294,8 @@ export function createNativeWorkflowController(ports) {
     }
     function settlementStatus(selector) {const entry=candidateEntry(selector);if(!entry?.settlement)return fail('SETTLEMENT_UNAVAILABLE','This review has no retained consequence bundle.');return entry.settlementResult?{ok:true,data:entry.settlementResult}:entry.settlement.inspect();}
     function retryPersistence(selector) {const entry=candidateEntry(selector);return entry?.settlementResult?.status==='partial'?apply(selector):Promise.resolve(fail('PERSISTENCE_RECOVERY_UNAVAILABLE','Only failed targets in a partially settled accepted review may retry persistence.'));}
-    function reject(selector) {const entry=candidateEntry(selector);if(!entry)return fail('STALE_CANDIDATE','This review is no longer retained.');entry.settlement?.reject();releaseRun(entry.run);candidates.delete(entry.handle.handleId);return {ok:true};}
+    function hasPendingReview(){return applying||settling||automaticApplication!==null||[...candidates.values()].some(entry=>candidateStatus(entry.handle).ok===true);}
+    function reject(selector) {const entry=candidateEntry(selector);if(!entry)return fail('STALE_CANDIDATE','This review is no longer retained.');entry.settlement?.reject();releaseRun(entry.run);candidates.delete(entry.handle.handleId);observe(ports.onReviewChanged);return {ok:true};}
     async function publishCandidate(selector) {
         const entry=candidateEntry(selector),candidate=entry?.candidate;
         if(!entry)return notify(fail('STALE_CANDIDATE','This candidate is no longer available; run the workflow again.'));
@@ -1397,7 +1409,7 @@ export function createNativeWorkflowController(ports) {
     /** @type {import('./types').NativeSourceControllerActions} */
     const sourceActions={inspectSources:()=>getSourceRegistry().inspect(),setupSources:controls=>{cancel('Source setup');const state=getSourceRegistry().inspect();return state.ok?getSourceRegistry().synchronize({expectedRevision:state.data.revision,cause:'enroll'},controls):Promise.resolve(state);},reconcileSources:controls=>{cancel('Source reconciliation');const state=getSourceRegistry().inspect();return state.ok?getSourceRegistry().synchronize({expectedRevision:state.data.revision,cause:'explicit-reconcile'},controls):Promise.resolve(state);},verifySources:controls=>{cancel('Source verification');return getSourceRegistry().verifyPending(controls);},resetSourceEpoch:(command,controls)=>{cancel('Source epoch reset');return getSourceRegistry().resetSourceEpoch(command,controls);}};
     const inspectChunkTokenizer=()=>{try{const tokenizer=ports.chunkTokenizer,binding=Object.getOwnPropertyDescriptor(tokenizer??{},'binding')?.value,counter=Object.getOwnPropertyDescriptor(tokenizer??{},'countTokens')?.value,checked=cloneJsonValue(binding);if(typeof counter!=='function'||!checked.ok||Object.keys(checked.data.value??{}).length!==3||!['tokenizerId','version','model'].every(key=>typeof checked.data.value[key]==='string'&&checked.data.value[key].trim()&&checked.data.value[key].length<=256))return fail('TOKEN_COUNT_FAILED','This host has no exact Chunk tokenizer. Use UTF-16 sizing, or select an available exact tokenizer before choosing Tokens.');return {ok:true,data:{binding:checked.data.value}};}catch{return fail('TOKEN_COUNT_FAILED','The exact Chunk tokenizer is unavailable.');}};
-    const controller={...sourceActions,inspectChunkTokenizer,beforeGenerate,runTarget,apply,reject,previewStoryHistoryCheckpoint:documentHistory.preview,applyStoryHistoryCheckpoint:documentHistory.apply,inspectStoryHistory:documentHistory.inspect,syncRecall:recall.sync,statusRecall:recall.status,queueRecall:recall.queue,cancelRecall:recall.cancel,captureRecall:recall.captureQueueCommand,changeRecallQueues:recall.changeQueues,resetRecallDocument:recall.resetDocument,subscribeRecall:recall.subscribe,settlementStatus,retryPersistence,candidateStatus,cancel,activity,subscribeActivity,progress,subscribeProgress,lastResult:()=>result,lastAutomaticResult:()=>automaticResult,subscribe,dispose:()=>{if(unsubscribe)unsubscribe();else recall.dispose();sourceRegistry?.release();activityListeners.clear();progressListeners.clear();}};
+    const controller={...sourceActions,inspectChunkTokenizer,beforeGenerate,runTarget,apply,reject,hasPendingReview,previewStoryHistoryCheckpoint:documentHistory.preview,applyStoryHistoryCheckpoint:documentHistory.apply,inspectStoryHistory:documentHistory.inspect,syncRecall:recall.sync,statusRecall:recall.status,queueRecall:recall.queue,cancelRecall:recall.cancel,captureRecall:recall.captureQueueCommand,changeRecallQueues:recall.changeQueues,resetRecallDocument:recall.resetDocument,subscribeRecall:recall.subscribe,settlementStatus,retryPersistence,candidateStatus,cancel,activity,subscribeActivity,progress,subscribeProgress,lastResult:()=>result,lastAutomaticResult:()=>automaticResult,subscribe,dispose:()=>{if(unsubscribe)unsubscribe();else recall.dispose();sourceRegistry?.release();activityListeners.clear();progressListeners.clear();}};
     retentionInspectors.set(controller,()=>{
         const runs=new Set([active,...[...sources.values(),...candidates.values()].map(entry=>entry.run)].filter(Boolean));
         const recordings=new Set([result?.recording,automaticResult?.result.recording,...[...runs].map(run=>run.publicResult?.recording),...[...candidates.values()].map(entry=>entry.applied?.recording)].filter(Boolean));

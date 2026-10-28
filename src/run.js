@@ -26,8 +26,10 @@ const currentUser = () => userHelpers?.getCurrentUserHandle?.();
 let applicationFiles=null,applicationPorts={},storageMode=()=> 'inside';
 const existingInstallation=!!safe(()=>ctx().extensionSettings?.lattice);
 const applicationContext=()=>safe(()=>JSON.stringify([currentUser(),ctx().getCurrentChatId?.()??ctx().chatId,ctx().characterId,ctx().groupId]),'');
-const applicationBusy=()=>{const activity=controller?.activity?.();return !!activity?.busy||!!applicationPorts.isBusy?.();};
+const applicationBusy=()=>{const activity=controller?.activity?.();return !!activity?.busy||controller?.hasPendingReview?.()===true||!!applicationPorts.isBusy?.();};
 configureNodeFileAccess({getContext:ctx,getUserId:currentUser,getStorageMode:()=>storageMode()});
+export function workflowApplicationBusy(){return applicationBusy();}
+function refreshAfterNativeReview(){queueMicrotask(()=>{if(applicationFiles&&!applicationBusy())void applicationFiles.controller.refresh();});}
 export function configureWorkflowApplication(ports){applicationPorts={...applicationPorts,...ports};}
 export function getApplicationFileExperience(){
     if(applicationFiles||!currentUser())return applicationFiles;
@@ -104,6 +106,7 @@ export function getNativeWorkflowController() {
         registerRecallHotkey: request => { recallShortcuts ??= createRecallShortcutRegistry(globalThis.document,{changed:()=>safe(()=>globalThis.document.dispatchEvent(new CustomEvent('pc-recall-state')))}); return recallShortcuts.register(request); },
         context: ctx, userId: currentUser, transportUserId, documentCatalog: getStoryDocumentCatalog(), persistenceVerifier: getNativePersistenceVerifier(),
         isEnabled: () => settings().enabled === true,
+        onReviewChanged:refreshAfterNativeReview,
         getFailurePolicy: getWorkflowFailurePolicy,
         stopGeneration: () => {const stop=helpers?.stopGeneration??ctx().stopGeneration;return typeof stop==='function'?stop():false;},
         getGraph: () => { const graph = activeWorkflow(); return safe(() => Object.getOwnPropertyDescriptor(graph ?? {}, 'mode')?.value) === 'native-unified' ? graph : null; },
@@ -112,6 +115,7 @@ export function getNativeWorkflowController() {
         bindingStatus,
         countTokens: async text => { const count = ctx().getTokenCountAsync; if (typeof count === 'function') { const tokens = await count(text); if (Number.isFinite(tokens) && tokens >= 0) return { tokens, method: 'host-tokenizer' }; } return { tokens: Math.ceil(text.length / 4), method: 'character-estimate' }; },
         onResult: (result, origin) => {
+            refreshAfterNativeReview();
             if ((!result.ok || result.recovered === true) && !result.skipped && !result.superseded) {
                 const issue = presentFailureNotification(result, origin);
                 const severity = ['info', 'warning'].includes(issue.severity) ? issue.severity : 'error';

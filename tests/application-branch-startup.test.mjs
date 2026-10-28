@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {createNativeWorkflowController} from '../src/workflow/host.js';
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js';
+import {createHostFileStore} from '../src/ui/host-file-store.js';
+import {createHostFileAccess} from '../src/ui/host-file-access.js';
+import {operationDefaults} from '../src/workflow/catalog.js';
+import {resolveManagedFileNode} from '../src/workflow/managed-file-policy.js';
+import {createChatPrefixBinding} from '../src/workflow/chat-prefix-binding.js';
+import {nativeVisibility} from '../src/workflow/introspection/host-memory.js';
+import {sha256Text} from '../src/workflow/definition-data.js';
+const serialize=chat=>JSON.stringify(chat.map(message=>[message.mes,message.swipe_id,message.is_user,message.is_system,JSON.stringify(nativeVisibility(message).data)]));
+for(const delayed of [false,true])test(`branch startup retains the chat-open point${delayed?' while user identity initializes asynchronously':''}`,async()=>{
+ const files=new Map(),fetch=async(url,options)=>{if(url==='/api/files/upload'){const {name,data}=JSON.parse(options.body);files.set(name,Buffer.from(data,'base64').toString('utf8'));return Response.json({path:'user/files/'+name});}if(url==='/api/files/delete'){files.delete(JSON.parse(options.body).path.split('/').at(-1));return Response.json({ok:true});}const value=files.get(url.split('/').at(-1));return value===undefined?new Response('',{status:404}):new Response(value);};
+ const access=createHostFileAccess({store:createHostFileStore({fetch,getUserId:()=> 'alice'}),getUserId:()=> 'alice'});await access.ready;
+ const graph={id:'workflow',name:'Branch startup',schema:3,runtime:2,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'Next'},writer:{id:'writer',type:'workflow',...operationDefaults('write-file',{managedFiles:true}),fileHandling:'append'}},wires:{text:{id:'text',route:'wire',from:'text',fromPort:'out',to:'writer',toPort:'text'}}};
+ const chat=[{mes:'Parent question',is_user:true},{mes:'Parent assistant',is_user:false,swipe_id:0}],stamp=createChatPrefixBinding(chat,serialize).stamp,definition=resolveManagedFileNode(graph.nodes.writer,{workflowId:'saved-workflow',address:{workflowId:graph.id,instancePath:[],nodeId:'writer'}}).data.definition,scope={userId:'alice',chatId:'parent'};
+ const resolved=await access.ensureManaged(definition,{managed:true,scope,isCurrent:()=>true}),parent=access.backend([resolved.data],{scope,isCurrent:()=>true,branchBinding:stamp}),initial=await parent.load(definition.targetId);
+ assert.equal((await parent.compareAndSwap({targetId:definition.targetId,expectedRevision:initial.data.revision,expectedContent:initial.data.content,projectedDocument:{format:'text',content:'Seed'},intentId:'seed',fingerprint:sha256Text('seed')})).ok,true);
+ let user=delayed?undefined:'alice';const c={chatId:delayed?'child-delayed':'child-ready',characterId:0,groupId:null,characters:[{avatar:'mara.png',name:'Mara'}],chat:structuredClone(chat),chatMetadata:{main_chat:'parent',integrity:crypto.randomUUID()},eventTypes:{CHAT_CHANGED:'CHAT_CHANGED'},eventSource:{on(){},removeListener(){}}};
+ const catalog=createChatDocumentCatalog({getContext:()=>c,getUserId:()=>user}),controller=createNativeWorkflowController({context:()=>c,userId:()=>user,getGraph:()=>graph,getWorkflowIdentity:()=> 'saved-workflow',nodeFileAccess:access,documentCatalog:catalog,isBusy:()=>false});controller.subscribe();user='alice';c.chat.push({mes:'New branch-only user input',is_user:true});
+ const preview=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'writer',portId:'projection'});assert.equal(preview.ok,true,JSON.stringify(preview.error));assert.equal(preview.recording.artifacts.find(artifact=>typeof artifact.value?.value?.content==='string').value.value.content,'Seed\nNext');assert.equal([...files.values()].includes('Seed\nNext'),false);assert.equal((await parent.load(definition.targetId)).data.content,'Seed');controller.dispose();
+});
