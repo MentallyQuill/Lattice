@@ -1,6 +1,6 @@
 # Seamless file experience
 
-**Status:** Design draft updated with the user's decisions D1–D5 on 2026-10-27. Those product choices are confirmed; supporting interaction details and engineering mechanisms remain subject to design review. This update documents the decisions without starting implementation.
+**Status:** Approved for planning and implementation on 2026-10-27, following confirmation of decisions D1–D5. The user authorized implementation without further approval requests. Engineering rulings and verification are tracked in [the implementation plan](../plans/2026-10-27-seamless-file-experience.md).
 
 **Date:** 2026-10-27.
 
@@ -19,7 +19,7 @@ Each node retains ownership of its file configuration. Its ordinary setting shou
 ### Decision status
 
 - **Confirmed requirements** below come from the user's requests.
-- **Proposed defaults and behavior** are the recommendations discussed with the user and require review as part of this draft.
+- **Supporting defaults and behavior** are the recommendations incorporated into the approved design; their precise implementation is covered by the plan.
 - **Confirmed product decisions D1–D5** are recorded in section 15 and incorporated throughout the design. They replace the earlier tentative recommendations.
 - **Remaining engineering/design details** are identified separately and must not be confused with unanswered D1–D5 choices.
 - Requirements written as “must” describe the proposed product's acceptance criteria, not claims about the current implementation.
@@ -100,7 +100,9 @@ A managed document stored with SillyTavern's saved data is distinct from a stand
 
 The confirmed default mapping is managed storage for workflow configuration and internal state, and actual files for explicit file outputs. **Write to File** produces an actual file with an automatic name and default location inside SillyTavern; choosing a custom location uses the optional wider-access capability. A host-managed document is presented as a saved document, with Download / Export creating a standalone copy.
 
-The built-in file API is not yet a proven substitute for the current backend. It confines files to the user's file directory, has no expected-revision/CAS operation or directory browser, and its empty-data guard affects canonical empty-file uploads. Empty writes, conflict behavior, acknowledgements and recovery must be proven before selecting it for default standalone-file persistence. Unsupported guarantees are engineering blockers, not reasons to silently weaken save behavior.
+The built-in file API confines files to the user's file directory and has no expected-revision/CAS operation or directory browser. Its empty-data guard rejects canonical empty-base64 uploads, although Node accepts nonempty padding-only base64 that decodes to zero bytes; verify that behavior against the host endpoint before relying on it.
+
+**Verified platform limitation:** host-only persistence cannot provide the optional server component's serialized checked writes across independent clients. Use read/check/write/verify with preserved recovery copies, advertise the provider as a verified-write provider, and label its acknowledgement **Saved in SillyTavern**. Explain the concurrent-client limitation in storage details; never describe it as atomic cross-device CAS. Uncertain or conflicting responses retain the attempted contents and require reconciliation. The optional component retains its stronger same-service checks, subject to external filesystem races. This constraint was reported during planning and is recorded explicitly rather than hidden by a fallback.
 
 ## 5. Defaults and supporting behavior
 
@@ -119,7 +121,7 @@ The built-in file API is not yet a proven substitute for the current backend. It
 | Access | Preserve inherited restrictions and existing authorized character context. | Select a character by name if needed; explicitly widen sharing. Never type an actor ID in ordinary use. |
 | Maintenance | Reconcile interrupted saves and archive history before active limits interrupt normal use. | Restore a version or resolve a genuinely ambiguous/destructive conflict. |
 
-The installation, storage mapping, independent state ownership, Replace / Append choice and shared saved-workflow identity are confirmed in section 15. The detailed recovery, maintenance and interaction policies remain supporting design proposals.
+The installation, storage mapping, independent state ownership, Replace / Append choice and shared saved-workflow identity are confirmed in section 15. The plan specifies the detailed recovery, maintenance and interaction policies.
 
 ## 6. Automatic formats and suffixes
 
@@ -214,6 +216,7 @@ Proposed user-facing states:
 | Ready — saves with accepted results | Configuration is usable; no output save is being claimed yet. |
 | Saving… | A managed save is in progress. |
 | Saved | The relevant storage acknowledgement/verification succeeded. |
+| Saved in SillyTavern | The host-only provider verified the persisted contents and retained recovery information; this does not claim atomic conflict exclusion across independent clients. |
 | Saved on this device — waiting to sync | A durable local recovery copy exists but host persistence is pending. Do not show this without a proven local copy. |
 | Save needs attention | Work is retained, but safe automatic recovery cannot finish the operation. Offer a concrete next action. |
 
@@ -268,7 +271,7 @@ Conceptually separate:
 3. **Persistence provider:** host-managed storage, real managed files, retained native grants or custom server paths. Provider details and authority stay out of ordinary node forms and model output.
 4. **Lifecycle services:** workflow autosave, accepted output writes, history maintenance, recovery and portable export.
 
-All providers must state what their acknowledgements and concurrency checks actually guarantee. The managed experience cannot silently fall back to weaker persistence while displaying the same Saved state. Check required capability before starting a workflow path that could incur paid work.
+All providers must state what their acknowledgements and concurrency checks actually guarantee. The selected host-only mode uses the explicitly described verified-write status above; it must not be advertised as atomic CAS. Existing server/native bindings must not silently fall back to a weaker provider. Check required capability before starting a workflow path that could incur paid work.
 
 Keep existing external path ownership, OS permission and user isolation checks. Portable filesystem APIs cannot completely exclude an independent process racing a directory/file replacement; detected uncertainty must remain recoverable rather than being reported as a confirmed save.
 
@@ -320,8 +323,8 @@ Remaining details for the implementation design are the concrete wizard bootstra
 
 ## 16. Implementation handoff
 
-After review and approval, produce an implementation plan that covers: first-run capability detection and the two storage choices; the optional setup wizard and verified host-only file provider; stable managed ownership and schema initialization; automatic format/naming and Replace / Append resolution; shared workflow autosave/library and Save As identity; minimal node controls and cross-platform choosing; recovery/maintenance; migration; and complete documentation/example updates.
+The approved implementation plan covers: first-run capability detection and the two storage choices; the optional setup wizard and verified host-only file provider; stable managed ownership and schema initialization; automatic format/naming and Replace / Append resolution; shared workflow autosave/library and Save As identity; minimal node controls and cross-platform choosing; recovery/maintenance; migration; and complete documentation/example updates.
 
 Builders may choose module boundaries, internal property names, debounce timings, provider adapters and platform helpers within the approved requirements. They may not replace the selected first-run experience with mandatory external setup, weaken persistence guarantees, fabricate a native dialog capability, hide the requested Append / Replace control, silently copy a shared workflow per chat, restore the global configuration screen, or change existing resource ownership/write behavior silently.
 
-This draft is intended to supersede the manual-setup/default assumptions in [the earlier node-file design](2026-10-27-node-file-destinations-design.md) and [the server-file design](2026-10-27-server-file-destinations.md) once approved. Those records remain useful history and describe the current foundation.
+This design supersedes the manual-setup/default assumptions in [the earlier node-file design](2026-10-27-node-file-destinations-design.md) and [the server-file design](2026-10-27-server-file-destinations.md). Those records remain useful history and describe the current foundation.
