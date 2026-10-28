@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { getNodeGuideExample } from '../src/workflow/node-guide-examples.js';
+import { prepareExampleFileDefaults } from '../src/workflow/example-file-defaults.js';
+import { resolveManagedFileNode } from '../src/workflow/managed-file-policy.js';
 
 const fixtures = await import('../src/workflow/node-guide-fixtures.js').catch(() => ({}));
 const expected = [
@@ -47,8 +49,33 @@ test('fixture results are detached and omit unrelated setup or fabricated native
     assert.equal(memory.fixtures, undefined);
     assert.ok(memory.requirements.some(text => /accepted native episode/.test(text)));
     const reflection = getNodeGuideExample('actor-context');
-    assert.ok(reflection.requirements.some(text => /as \[\]/.test(text)), 'The reflection targets must start empty, without importing the populated Recall fixture.');
+    assert.ok(reflection.requirements.some(text => /prepares automatically as an empty array/.test(text)), 'The reflection targets prepare empty without manual JSON setup.');
     assert.equal(reflection.fixtures.some(f => f.name === 'rowan-moments.json'), false);
+    const before = structuredClone(reflection.graph), workflowId = 'guide-private-reflections';
+    const prepare = actorBindings => prepareExampleFileDefaults({ exampleId: reflection.id, nodes: reflection.graph.nodes, workflowId, actorBindings });
+    const unselected = prepare({});
+    assert.equal(unselected.ok, true, JSON.stringify(unselected));
+    assert.deepEqual(unselected.data.actorChoices.map(choice => choice.sampleActorId).sort(), ['character:iris.png', 'character:rowan.png']);
+    assert.deepEqual(unselected.data.initialTemplates, {}, 'No private sample contents are prepared before choosing the actors.');
+    const selected = prepare({ 'character:rowan.png': 'character:ChosenRowan.png', 'character:iris.png': 'character:ChosenIris.png' });
+    assert.equal(selected.ok, true, JSON.stringify(selected));
+    assert.deepEqual(Object.values(selected.data.initialTemplates), ['[]', '[]'], 'Neither private file imports the populated Recall record or fabricated episodes.');
+    const readers = selected.data.nodes.filter(entry => entry.node.operation === 'read-file');
+    assert.equal(readers.length, 2);
+    const targets = new Set();
+    for (const entry of readers) {
+        assert.deepEqual(entry.node.fileTarget.visibility, { kind: 'actor-private', actorId: entry.node.actorId });
+        assert.equal(entry.node.fileTarget.managed, true);
+        assert.equal(entry.node.fileTarget.bindingId, undefined, 'The sample carries no imported file grant.');
+        assert.equal(entry.node.fileTarget.path, undefined, 'The sample carries no imported disk path.');
+        const resolved = resolveManagedFileNode(entry.node, { workflowId, address: entry.address });
+        assert.equal(resolved.ok, true, JSON.stringify(resolved));
+        assert.deepEqual(JSON.parse(resolved.data.definition.content), []);
+        assert.deepEqual(resolved.data.definition.visibility, entry.node.fileTarget.visibility);
+        targets.add(resolved.data.definition.targetId);
+    }
+    assert.equal(targets.size, 2, 'Each selected actor owns a separate private file.');
+    assert.deepEqual(reflection.graph, before, 'Automatic defaults leave the detached guide graph unchanged.');
 });
 
 test('event examples name auxiliary Extract and helper model connections required before running', () => {

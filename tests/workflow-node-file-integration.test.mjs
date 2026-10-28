@@ -25,9 +25,13 @@ function graphForFile(fileTarget={}){
  const connect=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});
  return {id:'disk-workflow',name:'Disk workflow',schema:3,runtime:2,mode:'native-unified',nodes,wires:{a:connect('a','send','activation','generate','activation'),b:connect('b','generate','draft','review','draft'),c:connect('c','generate','draft','body','draft'),d:connect('d','body','out','write','text')},portals:{},definitions:{},runTargets:[{instancePath:[],nodeId:'review'},{instancePath:[],nodeId:'write'}]};
 }
-test('host rejects unconfigured files before allowing native generation or paid requests',async()=>{
- const f=unifiedRecipeHost(graphForFile(),{request:async()=>{throw Error('No paid requests');}});
- try{const result=await f.generate('After');assert.equal(result.ok,false);assert.equal(result.error.code,'FILE_SETUP_REQUIRED');assert.equal(f.calls(),0);assert.equal(f.c.chat.length,1);}finally{f.controller.dispose();}
+test('host rejects an unconfigured external input before allowing native generation or paid requests',async()=>{
+ const graph=graphForFile();
+ graph.nodes.customReadFile={id:'customReadFile',type:'workflow',...operationDefaults('read-file'),targetId:'external-notes',fileTarget:{}};
+ Object.assign(graph.nodes.write,{destinationMode:'connected',targetId:'',fileTarget:{}});
+ graph.wires.reference={id:'reference',route:'wire',from:'customReadFile',fromPort:'reference',to:'write',toPort:'reference'};
+ const f=unifiedRecipeHost(graph,{request:async()=>{throw Error('No paid requests');}});
+ try{const result=await f.generate('After');assert.equal(result.ok,false);assert.equal(result.error.code,'FILE_SETUP_REQUIRED');assert.equal(f.calls(),0);assert.equal(f.c.chat.length,1);assert.equal(f.saves(),0);}finally{f.controller.dispose();}
 });
 import {createNodeFileAccess} from '../src/ui/node-file-access.js?v=0.29.0';
 import {createNodeFileService} from '../src/ui/node-file-service.js?v=0.29.0';
