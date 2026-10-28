@@ -489,7 +489,7 @@ The recovery draft is retained in SillyTavern settings across reloads. It helps 
 
 **Import into graph…** is additive. Review its stage requirements, model needs, final outputs, and maximum extra requests before accepting. It gives inserted nodes fresh identities and keeps their internal connections and relative arrangement. Insertion is undoable and makes no request.
 
-Portable Export includes the complete graph and the saved definitions needed by its subgraphs. It strips local saved-profile IDs; recipients choose their own fixed profiles. Nodes set to **Active SillyTavern model** continue to follow the recipient's configured connection. Both editable and portable files open through **Open workflow…**.
+Portable Export includes the complete graph and the saved definitions needed by its subgraphs. It strips local saved-profile IDs; recipients choose their own fixed profiles. Nodes set to **Active SillyTavern model** continue to follow the recipient's configured connection. Both editable and portable files open through **File → Import workflow…**.
 
 Retired separate pre/post workflows remain archived originals. They cannot run, open as current documents, or import into current graphs. Export the archive to keep a recovery copy, then rebuild needed logic in a unified workflow with explicit Preparation and Response stages.
 

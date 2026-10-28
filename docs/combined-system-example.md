@@ -4,7 +4,7 @@
 
 This standalone example combines a broken wand, an agreed eight-hour rain crossing and Rowan's private relationship state toward Iris in one Main. It is separate from the thirty numbered lessons.
 
-Open the [editable document](../examples/unified/unified-combined-systems.lattice-document.json) through **File → Open workflow…** to retain Main and all three body tabs. The [portable workflow](../examples/unified/unified-combined-systems.json) contains the same wiring and pinned definitions for sharing. Both use existing workflow file formats.
+Open the [editable document](../examples/unified/unified-combined-systems.lattice-document.json) through **File → Import workflow…** to retain Main and all three body tabs. The [portable workflow](../examples/unified/unified-combined-systems.json) contains the same wiring and pinned definitions for sharing. Both use existing workflow file formats.
 
 ## Prepare a disposable story
 

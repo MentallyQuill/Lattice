@@ -11,9 +11,9 @@ Your usual SillyTavern connection writes the main reply. Other model tools can p
 1. Open your SillyTavern chat and select the character who will reply. User, chat, and character selection determine live sources and private stores.
 2. Open Lattice beside the chat bar, or enter `/lattice`. A fresh workspace opens **Unified story workflow** with Lattice disabled. Existing installations restore a recovery draft; **File → Recover previous workflows** offers previous unified documents.
 3. Choose **File → Open examples…** and read a lesson’s requirements. Opening creates an editable copy, makes no model request, and does not change **Enable Lattice**.
-4. Replace sample instructions, actor/item identities, and document targets with your story’s values. Loaded character IDs normally use `character:<avatar filename>`; a display name alone is not a live actor identity.
+4. Replace sample instructions and actor/item identities with your story’s values. Loaded character IDs normally use `character:<avatar filename>`; a display name alone is not a live actor identity.
 5. Click each model tool’s grey bar and choose **Active SillyTavern model** or a saved Connection Manager profile. Leave **Advanced model settings → Model mode → Use profile model** unless that tool needs a different identifier. Configure any **For Each → Helper model bindings** separately.
-6. Select each Story Clock, Read File, or Outcome Commit node and configure its destination in **Details → File**. Resolve **Setup Required**, validation, and connection issues. Older saved chat data remains available for migration from these node settings.
+6. Keep automatic destinations for new output and story-state nodes. In **Details → File**, resolve any requested input or character choice; unknown personal inputs need **Choose file…** or **Import from device…**. Resolve **Setup Required**, validation, and connection issues. Older saved chat data remains available through these node settings.
 7. Select **Enable Lattice** with this document open. Switching between Main and its subgraph tabs changes your view, not the workflow used by Send.
 8. Send your player message normally. Lattice prepares connected guidance, continues from the completed reply, and records its response processing. A generated swipe can use the same workflow when its sources and policies permit it.
 9. Select **Review / Publish → Host result** in Preview. Compare the original, proposed reply, appended notes, model trace, and staged changes. Choose **Apply reviewed reply** or **Reject reply**.
@@ -163,7 +163,7 @@ Character Direction’s system prompt stays literal. Its private Guidance can re
 
 **One kiss, two private perspectives** confirms actual shared evidence before reflection. Missing evidence holds before Review. A false Decision skips reflections and leaves the ordinary reply reviewable; null holds Confirm Events before Review. Both actors must be verified present. Absence skips both private branches; unresolved participation holds.
 
-The `rowan-permission-text` and `iris-permission-text` values each start with `allowModelAuthoredReflection: false`. Enable them separately with the actor’s authoring permission, especially for a player-controlled character. Set each Read File and Write to File to **Actor scope → presence**, with that actor’s ID and exact Scene Presence input.
+The `rowan-permission-text` and `iris-permission-text` values each start with `allowModelAuthoredReflection: false`. Enable them separately with the actor’s authoring permission, especially for a player-controlled character. In each Read File and Write to File node's **File → Advanced → Access character**, choose the intended character by name and connect that character's exact Scene Presence input.
 
 Saved `sharedQuote` and `sceneEvidence` retain the shared observation. `reflection` and Recall-compatible `text` contain private model interpretation, labeled `reflectionOrigin: "model-authored"`. The stable record ID derives from the event. Each document has its own save receipt; one successful save does not guarantee the other.
 
@@ -222,26 +222,9 @@ State and projection receipts shown before Apply are proposed diagnostics. Save 
 
 ## Story time: midnight, 14:00 and eight-hour intervals
 
-Story time uses authored integer minutes, separately from wall-clock time and message count. Configure the **Story Clock** JSON file in **Details → File**, including its starting values and visibility. Saved time stays intact.
+Story time uses authored integer minutes, separately from wall-clock time and message count. A new **Story Clock** starts automatically with valid state in **Details → File**. Existing clocks retain their accepted time and access settings; no storage JSON setup is required.
 
 Nodes selecting the same clock file share its timeline. Select a different file for an independent clock. Separate clocks do not synchronize automatically. Story Clock reads accepted time when the workflow runs.
-
-The File panel supplies the clock's initial JSON. Its `clockId` must match the authored clock identity. Existing saved clock data is preserved for migration through the same panel. This example starts Day 1 at midnight:
-
-```json
-{
-  "schemaVersion": 1,
-  "clockId": "story-clock",
-  "calendarId": "story-calendar",
-  "dayLengthMinutes": 1440,
-  "absoluteMinute": 0,
-  "revision": 1,
-  "unit": "minute",
-  "originMinute": 0,
-  "originDay": 1,
-  "timeEvidence": { "kind": "explicit" }
-}
-```
 
 Give **Advance Time** an explicit proposal such as `{"kind":"duration","minutes":120}` or `{"kind":"destination","absoluteMinute":840}`. A model can extract a stated duration; “a while later” does not automatically establish time. Estimated evidence needs an explicit supported acceptance policy.
 

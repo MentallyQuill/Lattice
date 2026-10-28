@@ -704,7 +704,7 @@ When used inside a system, this terminal stages its proposal for Main's exact ac
 
 ### Story Clock
 
-**Both stages; root or static system body; zero calls.** No inputs; returns the accepted clock Data for **Accepted clock identity**, with optional expected Calendar identity. Choose its JSON file in Details → File; its initial contents supply a starting clock. Clock Commit inherits that captured destination. A valid native clock has an explicit calendar, nonnegative integer absolute minute, positive revision and day length. It tracks story time, not real time or message count.
+**Both stages; root or static system body; zero calls.** No inputs; returns the accepted clock Data for **Accepted clock identity**, with optional expected Calendar identity. New clocks start automatically with valid state in Details → File; existing clocks retain their accepted time and access settings. Choose an existing clock file only when deliberately sharing its timeline. Clock Commit inherits that captured destination. A valid native clock has an explicit calendar, nonnegative integer absolute minute, positive revision and day length. It tracks story time, not real time or message count.
 
 ### Advance Time
 
