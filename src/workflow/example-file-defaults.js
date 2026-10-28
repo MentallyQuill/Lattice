@@ -9,7 +9,7 @@ const fail=message=>({ok:false,error:{code:'INVALID_EXAMPLE_DEFAULTS',message}})
 const logical=node=>node.operation==='story-clock'?node.clockId:node.operation==='random-pick'?node.ledgerId:node.targetId;
 const explicit=node=>!!(node.fileTarget?.bindingId||node.fileTarget?.path||node.fileTarget?.content);
 /** Host-only preparation for an explicitly opened registered lesson. Graph template IDs are not provenance. */
-export function prepareExampleFileDefaults({exampleId,nodes,workflowId,actorBindings={},canonicalDocuments={},legacyDocuments=[]}){
+export function prepareExampleFileDefaults({exampleId,nodes,workflowId,previousWorkflowId,actorBindings={},canonicalDocuments={},legacyDocuments=[]}){
  const registered=REMASTERED_WORKFLOW_EXAMPLE_DATA.find(entry=>entry.id===exampleId);
  if(!registered||typeof workflowId!=='string'||!workflowId.trim())return fail('Open a registered lesson with a trusted workflow identity.');
  const sources=Object.values(registered.packages[0].graph.nodes),entries=clone(Array.isArray(nodes)?nodes:Object.values(nodes??{})).map(entry=>entry.node?entry:{node:entry,address:{workflowId,instancePath:[],nodeId:entry.id}});
@@ -39,8 +39,9 @@ export function prepareExampleFileDefaults({exampleId,nodes,workflowId,actorBind
   const resourceKey=JSON.stringify([entry.address.workflowId,entry.address.instancePath,target,entry.node.fileTarget.visibility]);
   if(!resources.has(resourceKey))resources.set(resourceKey,[]);resources.get(resourceKey).push(entry);
   if(node.operation==='story-clock'){
-   // Retain the exact owner ID for later reprepare/Save As relationship checks.
-   clocks.set(target,{current:resolved.data.definition.targetId,previous:node.fileTarget?.managed===true?node.clockId:source.clockId});
+   // Previous ownership comes only from trusted host identity, never editable clock control text.
+   const previous=resolveManagedFileNode(entry.node,{workflowId:previousWorkflowId??workflowId,address:entry.address});if(!previous.ok)return previous;
+   clocks.set(target,{current:resolved.data.definition.targetId,previous:previous.data.definition.targetId});
    entry.node.clockId=resolved.data.definition.targetId;
   }
  }
@@ -49,7 +50,7 @@ export function prepareExampleFileDefaults({exampleId,nodes,workflowId,actorBind
  for(const entry of entries){
   const source=sources.find(source=>source.operation===entry.node.operation&&(source.id===entry.node.id||entry.node.id.startsWith(source.id+'-')));
   const clock=source?.operation==='time-trigger'?clocks.get(source.clockId):null;
-  if(clock&&(entry.node.clockId===source.clockId||entry.node.clockId===clock.previous))entry.node.clockId=clock.current;
+  if(clock&&(entry.node.clockId===source.clockId||entry.node.clockId===clock.current||entry.node.clockId===clock.previous))entry.node.clockId=clock.current;
  }
  for(const [sampleActorId,label] of Object.entries(actors))if(!actorBindings[sampleActorId]&&!actorChoices.some(choice=>choice.sampleActorId===sampleActorId)&&entries.some(entry=>sources.some(source=>source.operation===entry.node.operation&&(source.id===entry.node.id||entry.node.id.startsWith(source.id+'-')))&&JSON.stringify(entry.node).includes(sampleActorId)))actorChoices.push({sampleActorId,label});
  return {ok:true,data:{nodes:entries,initialTemplates,fileOwners,actorChoices}};

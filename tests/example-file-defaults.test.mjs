@@ -27,7 +27,7 @@ test('clock fixtures keep the sample minute and use the scoped clock identity',a
  const clock=managed.data.definitions.find(value=>value.name==='story-clock.json'),value=JSON.parse(clock.content);
  assert.equal(value.absoluteMinute,780);assert.equal(value.calendarId,'campaign-days');assert.equal(value.clockId,clock.targetId);
  for(const {node} of result.data.nodes.filter(entry=>entry.node.operation==='time-trigger'))assert.equal(node.clockId,clock.targetId);
- const copied=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes:result.data.nodes,workflowId:'library:independent-copy'});assert.equal(copied.ok,true);
+ const copied=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes:result.data.nodes,workflowId:'library:independent-copy',previousWorkflowId:context.workflowId});assert.equal(copied.ok,true);
  const other=await prepareManagedNodeFiles(copied.data.nodes,{...context,workflowId:'library:independent-copy',initialTemplates:copied.data.initialTemplates});assert.equal(other.ok,true);
  const copiedClock=other.data.definitions.find(value=>value.name==='story-clock.json');assert.notEqual(copiedClock.targetId,clock.targetId);
  for(const {node} of copied.data.nodes.filter(entry=>entry.node.operation==='time-trigger'))assert.equal(node.clockId,copiedClock.targetId);
@@ -45,11 +45,22 @@ test('authored unrelated managed schedule clocks are preserved while exact sampl
  assert.equal(first.data.nodes.find(entry=>entry.node.id===triggers[0].node.id).node.clockId,'managed:authored-other-clock');
  const sample=first.data.nodes.find(entry=>entry.node.operation==='story-clock'),derived=first.data.nodes.find(entry=>entry.node.id===triggers[1].node.id).node.clockId;
  assert.equal(sample.node.clockId,derived);
- const copied=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes:first.data.nodes,workflowId:'library:copied',canonicalDocuments:{[derived]:{content:'existing original clock'}}});assert.equal(copied.ok,true);
+ const copied=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes:first.data.nodes,workflowId:'library:copied',previousWorkflowId:context.workflowId,canonicalDocuments:{[derived]:{content:'existing original clock'}}});assert.equal(copied.ok,true);
  const copiedClock=copied.data.nodes.find(entry=>entry.node.operation==='story-clock');assert.notEqual(copiedClock.node.clockId,derived);
  assert.equal(copied.data.nodes.find(entry=>entry.node.id===triggers[1].node.id).node.clockId,copiedClock.node.clockId);
  assert.equal(copied.data.nodes.find(entry=>entry.node.id===triggers[0].node.id).node.clockId,'managed:authored-other-clock');
  const repeated=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes:copied.data.nodes,workflowId:'library:copied'});assert.equal(repeated.ok,true);assert.deepEqual(repeated.data.nodes,copied.data.nodes);
+});
+test('edited owner and schedule clock text cannot authenticate a prior managed sample owner',()=>{
+ const first=prepare(24);assert.equal(first.ok,true);
+ const edited=structuredClone(first.data.nodes),owner=edited.find(entry=>entry.node.operation==='story-clock'),triggers=edited.filter(entry=>entry.node.operation==='time-trigger');
+ const actualPrevious=owner.node.clockId;owner.node.clockId='managed:authored-other-clock';triggers[0].node.clockId='managed:authored-other-clock';
+ const copied=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes:edited,workflowId:'library:copied',previousWorkflowId:context.workflowId});assert.equal(copied.ok,true);
+ assert.equal(copied.data.nodes.find(entry=>entry.node.id===triggers[0].node.id).node.clockId,'managed:authored-other-clock');
+ const actual=triggers.find(entry=>entry.node.clockId===actualPrevious);assert.ok(actual);
+ assert.equal(copied.data.nodes.find(entry=>entry.node.id===actual.node.id).node.clockId,copied.data.nodes.find(entry=>entry.node.id===owner.node.id).node.clockId);
+ const unauthenticated=api.prepareExampleFileDefaults({exampleId:'lesson-24',nodes:first.data.nodes,workflowId:'library:unverified-copy'});assert.equal(unauthenticated.ok,true);
+ for(const entry of unauthenticated.data.nodes.filter(entry=>entry.node.operation==='time-trigger'))assert.equal(entry.node.clockId,actualPrevious,'copied text alone does not establish prior ownership');
 });
 test('private samples require trusted character choices and retain connected references',()=>{
  const unknown=prepare(29);assert.equal(unknown.ok,true);assert.deepEqual(unknown.data.actorChoices.map(value=>value.label),['Rowan','Iris']);
