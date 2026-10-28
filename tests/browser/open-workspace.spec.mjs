@@ -73,7 +73,7 @@ test('File Open prepares and publishes the activated workflow once', async ({ pa
     await page.evaluate(() => { Object.assign(window.openWork, { preparations: 0, renders: 0, scenes: 0 }); });
     const [chooser] = await Promise.all([
         page.waitForEvent('filechooser'),
-        page.getByRole('menuitem', { name: 'File', exact: true }).click().then(() => page.getByRole('menuitem', { name: 'Open workflow…', exact: true }).click()),
+        page.getByRole('menuitem', { name: 'File', exact: true }).click().then(() => page.getByRole('menuitem', { name: 'Import workflow…', exact: true }).click()),
     ]);
     await chooser.setFiles({ name: 'single-activation.workflow.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
     const guard = page.getByRole('dialog', { name: 'Save workflow changes?', exact: true });

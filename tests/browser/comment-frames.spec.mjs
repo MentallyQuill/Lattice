@@ -313,11 +313,11 @@ test('clipboard and downloaded workflow roundtrip preserve authored comment fiel
     await expect.poll(() => page.evaluate(() => Object.values(window.canvasHarness.graph.nodes).filter(node => node.commentFrame).length)).toBe(2);
     const pasted = await page.evaluate(id => Object.values(window.canvasHarness.graph.nodes).find(node => node.commentFrame && node.id !== id), id);
     expect(pasted).toMatchObject({ ...authored, x: pasted.x, y: pasted.y });
-    const exported = await exportedJSON(page, () => menu(page, 'File', 'Export workflow JSON…'));
+    const exported = await exportedJSON(page, () => menu(page, 'File', 'Download / share workflow…'));
     expect(exported.graph.nodes[id]).toMatchObject(authored);
     await page.getByRole('menubar', { name: 'Workspace menus' }).getByRole('menuitem', { name: 'File', exact: true }).click();
     const chooser = page.waitForEvent('filechooser');
-    await page.getByRole('menuitem', { name: 'Open workflow…', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Import workflow…', exact: true }).click();
     await (await chooser).setFiles({ name: 'comment.workflow.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
     const guard = page.getByRole('dialog', { name: 'Save workflow changes?', exact: true });
     await expect(guard).toBeVisible(); await guard.getByRole('button', { name: "Don't Save", exact: true }).click();

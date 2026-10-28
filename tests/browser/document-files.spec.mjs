@@ -53,11 +53,11 @@ test('native Save As adopts a file; Save writes it; camera and close preserve th
 
 test('Open and Recent reread disk, guard edits, reset history and clear only the list',async({page})=>{
     await launch(page);await saveAs(page);await edit(page,'Keep this draft');
-    await fileCommand(page,/^Open workflow/);
+    await fileCommand(page,/^Import workflow/);
     const prompt=page.getByRole('dialog',{name:'Save workflow changes?',exact:true});
     await expect(prompt).toBeVisible();await prompt.getByRole('button',{name:'Cancel',exact:true}).click();
     expect(await page.evaluate(()=>window.canvasHarness.graph.description)).toBe('Keep this draft');
-    await fileCommand(page,/^Open workflow/);await prompt.getByRole('button',{name:"Don't Save",exact:true}).click();
+    await fileCommand(page,/^Import workflow/);await prompt.getByRole('button',{name:"Don't Save",exact:true}).click();
     await expect(prompt).toHaveCount(0);
     expect(await page.evaluate(()=>window.canvasHarness.graph.description)).not.toBe('Keep this draft');
     await page.evaluate(()=>{const value=JSON.parse(documentDisk.text);value.graph.description='Changed on disk';documentDisk.text=JSON.stringify(value);documentDisk.version++;});
@@ -88,7 +88,7 @@ test('retired editable roots cannot replace a dirty unified document through Ope
         await page.evaluate(mode=>{const file=JSON.parse(documentDisk.text);file.graph.mode=mode;documentDisk.text=JSON.stringify(file);documentDisk.version++;},mode);
         for(const command of ['open','recent']){
             const count=await page.evaluate(()=>window.canvasHarness.toasts.length);
-            if(command==='open') await fileCommand(page,/^Open workflow/);
+            if(command==='open') await fileCommand(page,/^Import workflow/);
             else{
                 await page.getByRole('menuitem', { name: 'File',exact:true}).click();
                 await page.getByRole('menuitem',{name:'Open Recent',exact:true}).click();
