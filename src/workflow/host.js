@@ -474,7 +474,15 @@ export function createNativeWorkflowController(ports) {
     const fileStamp=value=>JSON.stringify([value.revision,value.format,value.content]);
     async function prepareNodeFiles(run){
         let nodes=Object.values(run.workflowDataNodes??{}).map(entry=>entry.node??entry);if(!nodes.some(node=>nodeFileTargetId(node)!==null||['read-file','write-file','story-clock','commit-outcomes','random-pick'].includes(node.operation)&&Object.keys(node.fileTarget??{}).length))return {ok:true};
-        const live=()=>fresh(run)&&(!run.unified||nativePrefixFresh(run));
+        const migrationsCurrent=()=>{
+            if(!run.legacyFileMigrations?.length)return true;
+            const legacy=documentCatalog.capture();if(!legacy.ok)return false;
+            const current=context();if(!legacy.data.isCurrent())return false;
+            const canonicalDocuments=current.chatMetadata?.latticeDocuments?.[run.userId]??{};
+            return run.legacyFileMigrations.every(node=>migrateUnboundOwnFile(node,{canonicalDocuments,legacyDocuments:legacy.data.documents})!==node);
+        };
+        // Readiness, validation and each provider grant must retain adoption's absence proof.
+        const live=()=>fresh(run)&&(!run.unified||nativePrefixFresh(run))&&migrationsCurrent();
         const priorCatalog=documentCatalog.capture();if(!priorCatalog.ok)return priorCatalog;
         const exampleOrigin=ports.getExampleFileOrigin?.(run.originalGraph);let initialTemplates,fileOwners;
         if(exampleOrigin){
@@ -485,6 +493,7 @@ export function createNativeWorkflowController(ports) {
         if(run.workflowDataDefaults?.length||run.workflowDataHelperNodes?.length){const installed=ensureWorkflowDataDefaults({catalog:documentCatalog,graph:{nodes:Object.fromEntries((run.workflowDataHelperNodes??[]).map((node,index)=>[index,node]))},defaults:run.workflowDataDefaults,scope:{userId:run.userId,chatId:run.identity.chatId},context,isCurrent:live});if(!installed.ok)return installed;}
         const legacy=documentCatalog.capture();if(!legacy.ok)return legacy;
         const canonicalDocuments=context().chatMetadata?.latticeDocuments?.[run.userId]??{};
+        if(run.legacyFileMigrations?.some(node=>migrateUnboundOwnFile(node,{canonicalDocuments,legacyDocuments:legacy.data.documents})===node))return fail('STALE_FILE_SCOPE','Existing file data appeared while preparing legacy settings.');
         run.managedFileEntries=run.managedFileEntries.map(entry=>({...entry,node:migrateUnboundOwnFile(entry.node,{canonicalDocuments,legacyDocuments:legacy.data.documents})}));
         nodes=run.managedFileEntries.map(entry=>entry.node);
         const access=ports.nodeFileAccess??getNodeFileAccess();
@@ -798,7 +807,16 @@ export function createNativeWorkflowController(ports) {
             retainNativeOutcome:async payload=>run.storySession?run.storySession.retainNativeOutcome(payload):{ok:true}}:{}),
             ...(run.diagnosticCapture?{onDiagnostic:event=>observe(()=>run.diagnosticCapture.model?.(event)),diagnosticResponseText:run.diagnosticCapture.captureResponses!==false,isDiagnosticResponseCurrent:()=>run.diagnosticCapture.captureResponses!==false}:{}),
             onStage:ports.onStage,onEvent:event=>{if(active===run){const next=reduceRunState(runState,event);if(next!==runState){runState=next;publishProgress();}}if(run.diagnosticCapture)observe(()=>run.diagnosticCapture.event?.(event));observe(ports.onEvent,event);observe(options.onEvent,event);},
-        },{getSourceProofs:()=>run.sourceCapability,prepare:(plan,controls)=>prepareRun(run,plan,controls,options),executeIntrospection:(node,inputs,operationPorts)=>introspect(run,node,inputs,operationPorts),...(run.unified||run.graph?.runtime===3||Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{executeHostOperation:(node,inputs,operationPorts)=>nativeOperation(run,node,inputs,operationPorts,options)}:{}),authorizeModelInputs:async payload=>{const files=await verifyNodeFiles(run);if(!files.ok)return files;const checked=authorizeModelScope(run,payload);if(checked.ok)run.modelScopes.set(addressKey(payload.address),Object.freeze({node:payload.node,inputs:payload.inputs,capability:payload.capability}));return checked;},retainScopedOutput:payload=>retainActorOutput(run,payload),retainRecallProvenance:payload=>run.recallCaptured?recall.retain(run,payload):{ok:true,data:{retained:true}},settle:transport=>settleRun(run,transport)});}
+        },{getSourceProofs:()=>run.sourceCapability,prepareFileNode:node=>{
+            if(migrateUnboundOwnFile(node)===node)return {ok:true,data:node};
+            const legacy=documentCatalog.capture();if(!legacy.ok)return legacy;
+            const current=context();
+            if(!legacy.data.isCurrent())return fail('STALE_FILE_SCOPE','The file scope changed while preparing legacy settings.');
+            const canonicalDocuments=current.chatMetadata?.latticeDocuments?.[legacy.data.scope.userId]??{};
+            const migrated=migrateUnboundOwnFile(node,{canonicalDocuments,legacyDocuments:legacy.data.documents});
+            if(migrated!==node)(run.legacyFileMigrations??=[]).push(node);
+            return {ok:true,data:migrated};
+        },prepare:(plan,controls)=>prepareRun(run,plan,controls,options),executeIntrospection:(node,inputs,operationPorts)=>introspect(run,node,inputs,operationPorts),...(run.unified||run.graph?.runtime===3||Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{executeHostOperation:(node,inputs,operationPorts)=>nativeOperation(run,node,inputs,operationPorts,options)}:{}),authorizeModelInputs:async payload=>{const files=await verifyNodeFiles(run);if(!files.ok)return files;const checked=authorizeModelScope(run,payload);if(checked.ok)run.modelScopes.set(addressKey(payload.address),Object.freeze({node:payload.node,inputs:payload.inputs,capability:payload.capability}));return checked;},retainScopedOutput:payload=>retainActorOutput(run,payload),retainRecallProvenance:payload=>run.recallCaptured?recall.retain(run,payload):{ok:true,data:{retained:true}},settle:transport=>settleRun(run,transport)});}
         finally {delete run.cancel;run.bindingContexts.clear();run.modelScopes.clear();run.modelAddresses=new WeakMap();if(!run.retainResources)releaseRun(run);}
         if(!value.ok||run.mode==='target') {releaseRun(run);run.pendingSources.clear();run.sceneSources.length=0;run.promptSources.clear();run.bindingChecks=[];for(const [id,entry]of candidates)if(entry.run===run)candidates.delete(id);for(const [id,entry]of sources)if(entry.run===run)sources.delete(id);if(run.native)clear();}
         else run.pendingSources.clear();

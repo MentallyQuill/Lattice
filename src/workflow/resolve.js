@@ -2,7 +2,7 @@ import { prepareGraphArtifacts, inspectGraphArtifacts, graphArtifactsFor } from 
 import { resolveSystemNode } from './system-capabilities.js?v=0.29.0';
 import { inspectExpandedGraph, nodeAddressKey, safeWorkflowData } from './graph-validation.js?v=0.29.0';
 import { artifactAddressKey } from './definition-data.js?v=0.29.0';
-import { operationFor, describeOperation } from './catalog.js?v=0.29.0';
+import { operationFor, describeOperation, describeAuthoredOperation } from './catalog.js?v=0.29.0';
 import { freeze } from './record-data.js?v=0.29.0';
 
 const fail = (code, message, address, inputPortId) => ({ ok: false, error: { code, message, ...(address ? { nodeId: address.nodeId, address } : {}), ...(inputPortId ? { inputPortId } : {}) } });
@@ -110,9 +110,25 @@ function selectClosure(index, target, strict = true) {
         requiredBindingAddresses: selected.filter(unit => unit.requestBound > 0).map(unit => unit.address) } };
 }
 /** Pure complete inventory plus selected upstream execution closure. No binding/host work. */
-export function prepareWorkflowAttempt(root, options = {}) {
+export function prepareWorkflowAttempt(root, options = {}, prepareFileNode) {
     if (!validOptions(options)) return fail('INVALID_TARGET', 'Expected plain planning options.');
     const expanded = inspectExpandedGraph(root); if (!expanded.ok) return expanded;
+    // The owned host may adopt eligible legacy intent using trusted chat metadata.
+    // Do this on detached expanded nodes before any strict setup check or effect.
+    if (prepareFileNode) {
+        const selected=selectClosure(indexExpansion(expanded.data,root),options.target,false);if(!selected.ok)return selected;
+        const primitives=[];
+        for (const unit of expanded.data.primitives) {
+            // Valid legacy presets and optional blank ledgers keep their existing
+            // provisioning order; only blocked file setup needs early adoption.
+            if (unit.systemDisabled || !selected.data.included.has(nodeAddressKey(unit.address)) || !unit.setupIssues?.some(issue=>issue.code==='FILE_SETUP_REQUIRED'&&issue.field==='fileTarget') || !['write-file','story-clock','commit-outcomes','random-pick'].includes(unit.node.operation)) { primitives.push(unit); continue; }
+            const prepared=prepareFileNode(unit.node,unit.address);if(!prepared.ok)return prepared;
+            if(prepared.data===unit.node){primitives.push(unit);continue;}
+            const described=describeAuthoredOperation({schema:unit.schema,runtime:unit.runtime,mode:'native-unified'},{...prepared.data,phase:unit.phase});if(!described.ok)return described;
+            primitives.push({...unit,node:prepared.data,setupIssues:described.data.setupIssues});
+        }
+        expanded.data={...expanded.data,primitives};
+    }
     const index = indexExpansion(expanded.data,root), selection = selectClosure(index, options.target, false); if (!selection.ok) return selection;
     const { plan, terminals } = index, { included, containsIncluded, resolvedTarget, callBound, ordered, dependencies } = selection.data, target = options.target;
     const primitives = ordered.map(unit => {

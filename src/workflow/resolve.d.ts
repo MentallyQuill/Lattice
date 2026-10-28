@@ -5,7 +5,7 @@ export interface PreparedWorkflowPlanner {
     policy(target?:WorkflowTarget):Result<WorkflowPolicy>;
     summarize(target?:WorkflowTarget):Result<WorkflowPolicy>;
 }
-export function prepareWorkflowAttempt(root: RootWorkflow | unknown, options?: {target?:WorkflowTarget}):Result<{selection:ResolvedPlan;preflight:Result<ResolvedPlan>}>;
+export function prepareWorkflowAttempt(root: RootWorkflow | unknown, options?: {target?:WorkflowTarget}, prepareFileNode?:(node:ResolvedPrimitive['node'],address:NodeAddress)=>Result<ResolvedPrimitive['node']>):Result<{selection:ResolvedPlan;preflight:Result<ResolvedPlan>}>;
 export function resolveWorkflow(root: RootWorkflow | unknown, options?: {target?:WorkflowTarget}):Result<ResolvedPlan>;
 export function prepareWorkflowPlanner(root:RootWorkflow | unknown, artifacts?:object):Result<PreparedWorkflowPlanner>;
 export function preparedWorkflowExpansion(root:RootWorkflow, planner:PreparedWorkflowPlanner):Result<any>;
