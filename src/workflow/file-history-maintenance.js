@@ -24,7 +24,7 @@ export async function prepareTrustedBranchSnapshot({snapshot:raw,pages,branchSco
     if(!checked.ok||!scope.ok)return fail('INVALID_BRANCH_STATE','Use a captured, bounded branch state.');
     const snapshot=checked.data.value,destination=scope.data.value,source=snapshot?.scope;
     if(!source||!destination||source.userId!==destination.userId||source.chatId===destination.chatId||typeof destination.chatId!=='string'||!destination.chatId||source.actorId!==destination.actorId||visibility?.kind==='actor-private'&&visibility.actorId!==destination.actorId||snapshot.pending||snapshot.copiedScope)return fail('INVALID_BRANCH_STATE','A branch requires fresh same-owner authority and unchanged actor privacy.');
-    const capturedBinding=snapshot.branchBinding??snapshot.sourceBinding;
+    const capturedBinding=snapshot.branchBinding;
     if(!validChatSourceBinding(capturedBinding)||!validChatSourceBinding(branchBinding)||capturedBinding.messageCount!==branchBinding.messageCount||capturedBinding.prefixHash!==branchBinding.prefixHash)return fail('BRANCH_POINT_UNAVAILABLE','No verified canonical state is retained at this exact branch point.');
     const history=await validateDocumentHistory({targetId:snapshot.targetId,scope:source,history:snapshot.history,pages});if(!history.ok)return history;
     if(history.data.privateActorIds.some(actor=>actor!==destination.actorId))return fail('PRIVATE_DESTINATION','The branch must retain its original actor privacy.');

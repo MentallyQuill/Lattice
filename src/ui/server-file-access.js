@@ -1,4 +1,6 @@
 import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.29.0';
+import {captureHistoryAdoption,validHistoryReference,parseHistoryPage,validateHistoryTransfer} from '../workflow/file-history-transfer.js?v=0.29.0';
+import {sha256Text} from '../workflow/definition-data.js?v=0.29.0';
 const endpoint='/api/plugins/lattice-files';
 const formats=new Set(['text','json','jsonl','csv','markdown']);
 const fail=(code,message)=>({ok:false,error:{code,message}});
@@ -167,7 +169,24 @@ export function createServerFileAccess(options={}){
         }
         return Object.freeze({
             load:targetId=>call('load',targetId),
-            readVersion(targetId,request){const value=clone(request);return plain(value)?call('version',targetId,{request:value}):Promise.resolve(fail('INVALID_FILE_RESTORE','Choose a retained version.'));},
+            async readVersion(targetId,input){
+                const value=clone(input);if(!plain(value)||Object.keys(value).length!==1||!id(value.versionId))return fail('INVALID_FILE_RESTORE','Choose a retained version.');
+                const selected=await call('version',targetId,{request:value});if(!selected.ok)return selected;
+                const data=selected.data,invalid=()=>fail('FILE_RECOVERY_TRANSFER_INVALID','The selected recovery history could not be verified.');
+                if(!plain(data)||data.transfer?.schemaVersion!==1||(data.transfer.head?.pageId??null)!==(data.snapshot?.history?.head??null))return invalid();
+                const pages={},seen=new Set();let reference=data.transfer.head;
+                while(reference!==null){
+                    if(!validHistoryReference(reference)||seen.has(reference.pageId)||seen.size>=4096)return invalid();
+                    seen.add(reference.pageId);const transferred=await call('version-page',targetId,{request:{versionId:value.versionId,reference}});if(!transferred.ok)return transferred;
+                    const {pageText,previous}=transferred.data??{};if(typeof pageText!=='string'||sha256Text(pageText)!==reference.hash)return invalid();
+                    const parsed=parseHistoryPage(pageText,previous);if(!parsed.ok)return parsed;
+                    if(parsed.data.pageId!==reference.pageId)return invalid();
+                    Object.defineProperty(pages,reference.pageId,{value:parsed.data,enumerable:true});reference=previous;
+                }
+                const checked=check(targetId);if(!checked.ok)return checked;
+                const verified=await validateHistoryTransfer({...data,pages},{targetId,scope,visibility:checked.data.definition.visibility});
+                const after=check(targetId);return after.ok?verified:after;
+            },
             listVersions:targetId=>call('versions',targetId),
             restoreVersion(targetId,request){const value=clone(request);return plain(value)?call('restore',targetId,{request:value}):Promise.resolve(fail('INVALID_FILE_RESTORE','Choose a retained version and current revision.'));},
             compareAndSwap(update,writeControls={}){
@@ -176,7 +195,18 @@ export function createServerFileAccess(options={}){
                 return call('cas',value.targetId,{update:value},writeControls);
             },
             lookupHistory(targetId,query){const value=clone(query);return plain(value)?call('history',targetId,{query:value}):Promise.resolve(fail('INVALID_HISTORY_QUERY','Use a plain document history query.'));},
-            adoptLegacy(targetId,request){const value=clone(request);return plain(value)?call('adopt',targetId,{request:value}):Promise.resolve(fail('INVALID_LEGACY_FILE','Use a captured legacy document and history.'));},
+            async adoptLegacy(targetId,input){
+                const initialized=await initialCapture;if(!initialized.ok)return initialized;const checked=check(targetId);if(!checked.ok)return checked;
+                const captured=captureHistoryAdoption(input);if(!captured.ok)return captured;
+                const verified=await validateHistoryTransfer({...captured.data,visibility:checked.data.definition.visibility},{targetId,scope,visibility:checked.data.definition.visibility});if(!verified.ok)return verified;
+                const value=verified.data,pages=Object.values(value.pages).reverse();let reference=null;
+                for(const page of pages){
+                    const record={pageText:JSON.stringify(page),previous:reference},uploaded=await call('adopt-page',targetId,{request:record});if(!uploaded.ok)return uploaded;
+                    if(!validHistoryReference(uploaded.data)||uploaded.data.pageId!==page.pageId||uploaded.data.hash!==sha256Text(JSON.stringify(record)))return fail('FILE_RECOVERY_TRANSFER_INVALID','The saved archive transfer could not be verified.');
+                    reference=uploaded.data;
+                }
+                return call('adopt',targetId,{request:{snapshot:value.snapshot,transfer:{schemaVersion:1,head:reference}}});
+            },
         });
     }
     return Object.freeze({storage:'server',native:false,capabilities:Object.freeze({persistent:true,actualFiles:true,concurrency:'serialized-checked-write',crossDeviceCAS:true,concurrencyScope:'same-service-process',externalProcessCAS:false,verifiedAcknowledgement:true}),get supported(){return supported();},get availability(){return availability();},get serviceVersion(){return supported()?{apiVersion:1,chooserVersion:state.chooserVersion}:null;},get location(){return supported()?{basePath:state.basePath,platform:state.platform,canUseAbsolutePaths:state.canUseAbsolutePaths}:null;},ready,refresh,snapshot,roots:()=>browseRequest('roots'),browse:settings=>browseRequest('browse',settings?.path),choose,backend,subscribe(listener){if(typeof listener!=='function')return()=>{};listeners.add(listener);return()=>listeners.delete(listener);}});

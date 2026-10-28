@@ -297,15 +297,20 @@ export function createChatDocumentBackend(config){
         if(stored.revision===Number.MAX_SAFE_INTEGER||activeReceipts.length>=256)return fail('FILE_RECEIPT_LIMIT','Document revision/receipt capacity needs explicit reconciliation.');
         const nextRevision=stored.revision+1;
         const maintenance=await prepareAcceptedFileMaintenance({...stored,receipts:activeReceipts,format:owned.projectedDocument.format,content:owned.projectedDocument.content},{scope,visibility:controls.visibility??{kind:'public'},historyHandling:owned.historyHandling,previousContent:stored.content});if(!maintenance.ok)return maintenance;
+        if(controls.signal?.aborted)return fail('CANCELLED','Logical-document settlement was cancelled.');
         const latest=view();if(!latest.ok)return latest;const rechecked=packet(latest.data,owned.targetId,{bindToChat:!!owned.sourceBinding});if(!rechecked.ok||latest.data.metadata!==current.data.metadata||canonical(rechecked.data)!==canonical(stored))return fail('FILE_REVISION_CONFLICT','The document changed during accepted history maintenance.');
         const next=own({...stored,scope:structuredClone(scope),revision:nextRevision,format:owned.projectedDocument.format,history:maintenance.data.history,content:maintenance.data.content,...(owned.sourceBinding?{sourceBinding:owned.sourceBinding}:{}),receipts:[...maintenance.data.receipts,{intentId:owned.intentId,fingerprint:owned.fingerprint,revision:nextRevision}]});
         if(!next)return fail('FILE_DOCUMENT_LIMIT','The resulting document and receipts exceed storage admission limits.');
         if(!owned.sourceBinding)delete next.sourceBinding;
         if(canonical(stored.scope)!==canonical(scope))delete next.history;
-        const archive=archives(current.data);if(!archive.ok)return archive;
-        if(Object.keys(maintenance.data.pages).length)current.data.metadata.latticeDocumentHistory={...current.data.metadata.latticeDocumentHistory,[scope.userId]:{...archive.data.pages,...maintenance.data.pages}};
+        const archive=archives(latest.data);if(!archive.ok)return archive;
+        const hasPages=Object.keys(maintenance.data.pages).length>0,pages={...archive.data.pages,...maintenance.data.pages};
+        if(hasPages&&(Object.keys(pages).length>4096||new TextEncoder().encode(JSON.stringify(pages)).byteLength>30000000))return fail('DOCUMENT_HISTORY_LIMIT','The native archive reached its bounded storage capacity.');
+        if(hasPages){const complete=inspectDocumentHistory({targetId:owned.targetId,scope,history:next.history,pages});if(!complete.ok)return complete;}
+        if((hasPages?['latticeDocuments','latticeDocumentHistory']:['latticeDocuments']).some(key=>{const property=Object.getOwnPropertyDescriptor(latest.data.metadata,key);return property?property.writable!==true:!Object.isExtensible(latest.data.metadata);}))return fail('INVALID_FILE_METADATA','Accepted metadata must permit its atomic namespace replacements.');
+        if(hasPages)latest.data.metadata.latticeDocumentHistory={...archive.data.namespace,[scope.userId]:pages};
         // No await separates scope/CAS checks from the fresh namespace replacement.
-        current.data.metadata.latticeDocuments={...current.data.namespace,[scope.userId]:{...current.data.user,[owned.targetId]:next}};
+        latest.data.metadata.latticeDocuments={...latest.data.namespace,[scope.userId]:{...latest.data.user,[owned.targetId]:next}};
         let acknowledged=false;
         try{const saved=await config.saveMetadata();acknowledged=saved===true||plain(saved)&&Object.getOwnPropertyDescriptor(saved,'ok')?.value===true;}catch{/* local application is known; durable save remains unverified */}
         return {ok:true,data:{applied:true,acknowledged,revision:nextRevision,historyEpoch:next.history?.epoch??0}};

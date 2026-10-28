@@ -4,6 +4,8 @@ import {createNodeFileAccess} from '../src/ui/node-file-access.js?v=0.29.0';
 import {cloneServerFileData} from '../src/ui/server-file-access.js?v=0.29.0';
 import {checkedPath,physicalPath,serverHandle,serverPersistence} from './filesystem.mjs';
 import {browseFiles,fileRoots,chooserVersion} from './browse.mjs';
+import {historyReference,validHistoryReference,parseHistoryPage,captureHistorySnapshot} from '../src/workflow/file-history-transfer.js?v=0.29.0';
+const sameScope=(left,right)=>left?.userId===right?.userId&&left?.chatId===right?.chatId&&(left?.actorId??null)===(right?.actorId??null);
 
 export const info=Object.freeze({id:'lattice-files',name:'Lattice file service',description:'Per-node filesystem paths with reviewed, version-checked writes for Lattice.'});
 const fail=(code,message)=>({ok:false,error:{code,message}}),good=data=>({ok:true,data});
@@ -48,7 +50,7 @@ export function createServerFileService(){
     const owner=await ownerFor(user);
     if(action==='status'){
      const {persistence}=await accessFor(owner);
-     return good({apiVersion:1,chooserVersion,operations:['configure','load','cas','history','adopt','versions','version','restore','roots','browse'],userId:owner.userId,basePath:owner.basePath,platform:process.platform,canUseAbsolutePaths:owner.admin,bindings:await bindingViews(owner,persistence)});
+     return good({apiVersion:1,chooserVersion,operations:['configure','load','cas','history','adopt','adopt-page','versions','version','version-page','restore','roots','browse'],userId:owner.userId,basePath:owner.basePath,platform:process.platform,canUseAbsolutePaths:owner.admin,bindings:await bindingViews(owner,persistence)});
     }
     const body=checkedBody(raw);
     if(body.userId!==owner.userId)return fail('FILE_USER_CHANGED','The signed-in user changed. Refresh the file settings.');
@@ -67,7 +69,7 @@ export function createServerFileService(){
      const chosen=await access.choose({mode:body.mode,name:handle.name,format:body.format,...(body.bindingId?{bindingId:body.bindingId}:{})});if(!chosen.ok)return chosen;
      return good((await bindingViews(owner,persistence))[chosen.data.bindingId]);
     }
-    if(!['load','cas','history','adopt','versions','version','restore'].includes(action))return fail('FILE_OPERATION_UNKNOWN','Unknown file service operation.');
+    if(!['load','cas','history','adopt','adopt-page','versions','version','version-page','restore'].includes(action))return fail('FILE_OPERATION_UNKNOWN','Unknown file service operation.');
     if(!body.scope||body.scope.userId!==owner.userId||!id(body.scope.chatId)||!body.definition||typeof body.definition!=='object'||typeof body.generation!=='string')return fail('INVALID_FILE_REQUEST','Capture an authorized file, user, chat and generation.');
     const {access,persistence}=await accessFor(owner);
     const stored=await persistence.load(),binding=stored?.bindings.find(row=>row.bindingId===body.definition.bindingId);
@@ -78,10 +80,35 @@ export function createServerFileService(){
     const backend=access.backend([body.definition],{scope:body.scope,branchBinding:body.branchBinding,signal:controls.signal,isCurrent:()=>!controls.signal?.aborted});
     if(action==='load')return backend.load(body.definition.targetId);
     if(action==='history')return backend.lookupHistory(body.definition.targetId,body.query);
-    if(action==='version')return backend.readVersion(body.definition.targetId,body.request);
+    if(action==='version'||action==='version-page'){
+     const selected=await backend.readVersion(body.definition.targetId,{versionId:body.request?.versionId});if(!selected.ok)return selected;
+     if(action==='version'){const {pages,...snapshot}=selected.data,head=selected.data.snapshot.history?.head??null;return good({...snapshot,transfer:{schemaVersion:1,head:head?historyReference(pages[head]):null}});}
+     const reference=body.request?.reference,page=validHistoryReference(reference)?selected.data.pages[reference.pageId]:null;
+     if(!page||historyReference(page).hash!==reference.hash)return fail('FILE_RECOVERY_TRANSFER_INVALID','This page is not part of the selected retained history.');
+     return good({pageText:JSON.stringify(page),previous:page.previous===null?null:historyReference(selected.data.pages[page.previous])});
+    }
     if(action==='versions')return backend.listVersions(body.definition.targetId);
     if(action==='restore')return backend.restoreVersion(body.definition.targetId,body.request);
-    if(action==='adopt')return backend.adoptLegacy(body.definition.targetId,body.request);
+    if(action==='adopt-page'){
+     const parsed=parseHistoryPage(body.request?.pageText,body.request?.previous);if(!parsed.ok)return parsed;
+     if(parsed.data.targetId!==body.definition.targetId||!sameScope(parsed.data.scope,body.scope))return fail('FILE_RECOVERY_TRANSFER_INVALID','The archive transfer does not match this target and scope.');
+     const permitted=await backend.load(body.definition.targetId);if(!permitted.ok)return permitted;
+     const hash=await persistence.storeTransfer({pageText:body.request.pageText,previous:body.request.previous});
+     return good({pageId:parsed.data.pageId,hash});
+    }
+    if(action==='adopt'){
+     if(!body.request?.transfer)return backend.adoptLegacy(body.definition.targetId,body.request);
+     const captured=captureHistorySnapshot(body.request.snapshot);if(!captured.ok)return captured;
+     const snapshot=captured.data,pages={},seen=new Set();let reference=body.request.transfer.head;
+     if(body.request.transfer.schemaVersion!==1||(reference?.pageId??null)!==(snapshot.history?.head??null))return fail('FILE_RECOVERY_TRANSFER_INVALID','The archive transfer head differs from its snapshot.');
+     while(reference!==null){
+      if(!validHistoryReference(reference)||seen.has(reference.pageId)||seen.size>=4096)return fail('FILE_RECOVERY_TRANSFER_INVALID','The archive transfer is cyclic or exceeds its bound.');
+      seen.add(reference.pageId);const record=await persistence.loadTransfer(reference.hash),parsed=parseHistoryPage(record.pageText,record.previous);if(!parsed.ok)return parsed;
+      if(parsed.data.pageId!==reference.pageId||parsed.data.targetId!==body.definition.targetId||!sameScope(parsed.data.scope,body.scope))return fail('FILE_RECOVERY_TRANSFER_INVALID','The archive transfer differs from this scope.');
+      Object.defineProperty(pages,reference.pageId,{value:parsed.data,enumerable:true});reference=record.previous;
+     }
+     return backend.adoptLegacy(body.definition.targetId,{snapshot,pages});
+    }
     if(body.update?.targetId!==body.definition.targetId)return fail('INVALID_FILE_REQUEST','The update must match its captured destination.');
     return backend.compareAndSwap(body.update,{signal:controls.signal});
    }catch(cause){return publicFailure(cause);}
@@ -101,5 +128,5 @@ export async function init(router){
   if(!res.destroyed)res.json(result);
  };
  router.get('/status',route('status'));
- for(const action of ['configure','load','cas','history','adopt','versions','version','restore','roots','browse'])router.post('/'+action,route(action));
+ for(const action of ['configure','load','cas','history','adopt','adopt-page','versions','version','version-page','restore','roots','browse'])router.post('/'+action,route(action));
 }

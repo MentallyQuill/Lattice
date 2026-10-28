@@ -1,4 +1,5 @@
 import {prepareAcceptedFileMaintenance} from '../workflow/file-history-maintenance.js?v=0.29.0';
+import {captureHistorySnapshot} from '../workflow/file-history-transfer.js?v=0.29.0';
 import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory,prepareDocumentCheckpoint} from '../workflow/document-history.js?v=0.29.0';
 import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.29.0';
 import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.29.0';
@@ -173,7 +174,7 @@ export function createNodeFileAccess(options={}){
             try{
                 const descriptors=Object.getOwnPropertyDescriptors(request);
                 if(Reflect.ownKeys(request).some(key=>!['snapshot','pages'].includes(key)||!descriptors[key].enumerable||!Object.hasOwn(descriptors[key],'value')))throw Error('Own legacy data required');
-                snapshot=own(descriptors.snapshot?.value);pages=descriptors.pages?.value;
+                const captured=captureHistorySnapshot(descriptors.snapshot?.value);if(!captured.ok)throw Error('Bounded snapshot required');snapshot=captured.data;pages=descriptors.pages?.value;
             }catch{return Promise.resolve(fail('INVALID_DOCUMENT_HISTORY','Adoption requires trusted own legacy snapshot and archive data.'));}
             const header=documentHistoryHeader(snapshot?.history);
             if(!plain(snapshot)||snapshot.targetId!==targetId||canonical(snapshot.scope)!==canonical(capturedScope)||!Object.hasOwn(formats,snapshot.format)||typeof snapshot.content!=='string'||!Array.isArray(snapshot.receipts)||snapshot.receipts.length>256||snapshot.receipts.some(receipt=>!plain(receipt)||!id(receipt.intentId)||!hash(receipt.fingerprint)||!(id(receipt.revision)||Number.isSafeInteger(receipt.revision)&&receipt.revision>=0))||snapshot.sourceBinding!==undefined&&!validChatSourceBinding(snapshot.sourceBinding)||snapshot.branchBinding!==undefined&&!validChatSourceBinding(snapshot.branchBinding)||!header.ok)return Promise.resolve(fail('INVALID_DOCUMENT_HISTORY','Legacy adoption must match the captured scope and target and contain checked save identities.'));
@@ -182,6 +183,8 @@ export function createNodeFileAccess(options={}){
             const historyPages=Object.fromEntries(inspected.data.pages.map(page=>[page.pageId,page]));
             return enqueue(async()=>{
                 const validated=await validateDocumentHistory({targetId,scope:capturedScope,history:header.data,pages:historyPages});if(!validated.ok)return validated;
+                const definition=targets.get(targetId),mark=validated.data.visibility;
+                if(!definition||validated.data.privateActorIds.some(actor=>actor!==capturedScope.actorId)||!(mark.kind==='public'||definition.visibility.kind==='hidden'||mark.kind==='actor-private'&&definition.visibility.kind==='actor-private'&&mark.actorId===definition.visibility.actorId))return fail('PRIVATE_DESTINATION','Adopted history keeps its original actor and document privacy.');
                 const loaded=await read(targetId);if(!loaded.ok)return loaded;
                 const key=recordKey(targetId),existing=records[key]??{receipts:[]};
                 if(existing.legacyAssociation)return {ok:true,data:{adopted:true}};

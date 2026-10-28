@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {createNodeFileAccess} from '../src/ui/node-file-access.js';
+import {createChatDocumentBackend} from '../src/workflow/file-store.js';
 import {sha256Text} from '../src/workflow/definition-data.js';
 import {selectRandomOutcomes} from '../src/workflow/operations/random-outcomes.js';
 import {normalizeOccurrences,confirmOccurrences,resolveItemHolders} from '../src/workflow/operations/event-data.js';
@@ -16,6 +17,46 @@ async function fixture(format='text',initial='zero'){
  return {backend:()=>access.backend([definition],{scope,isCurrent:()=>true}),reload:async()=>{access=create();must(await access.ready);},writes:()=>writes,tamper:change=>change(state)};
 }
 const update=(snapshot,content,intentId,historyHandling)=>({targetId:'state',expectedRevision:snapshot.revision,expectedContent:snapshot.content,projectedDocument:{format:snapshot.format,content},intentId,fingerprint:sha256Text(intentId),...(historyHandling?{historyHandling}:{})});
+test('concurrent native backends preserve both documents and accepted receipts across maintenance awaits',async()=>{
+ const context={...scope,chat:[],chatMetadata:{}},create=()=>createChatDocumentBackend({scope,getContext:()=>context,saveMetadata:async()=>true,initialDocuments:['a','b'].map(targetId=>({targetId,format:'text',content:''}))});
+ const [a,b]=[create(),create()];
+ const changes=['a','b'].map(targetId=>({targetId,expectedRevision:0,expectedContent:'',projectedDocument:{format:'text',content:'accepted '+targetId},intentId:'save-'+targetId,fingerprint:sha256Text(targetId)}));
+ const results=await Promise.all([a.compareAndSwap(changes[0]),b.compareAndSwap(changes[1])]);results.forEach(must);
+ for(const [targetId,backend]of [['a',a],['b',b]]){const saved=must(await backend.load(targetId));assert.equal(saved.content,'accepted '+targetId);assert.equal(saved.receipts[0].intentId,'save-'+targetId);}
+});
+test('native automatic maintenance holds at archive capacity without losing readable documents',async()=>{
+ const pages={};let head=null;
+ for(let epoch=1;epoch<=4095;epoch++){const pageId='archive:'+epoch;pages[pageId]={schemaVersion:1,pageId,targetId:'other',scope,visibility:{kind:'public'},epoch,checkpointId:'checkpoint:'+epoch,previous:head,kind:'clock-events',payload:['time:["other","daily",1,1]']};head=pageId;}
+ const notes={targetId:'notes',scope,revision:224,format:'text',content:'kept',receipts:Array.from({length:224},(_,index)=>({intentId:'old-'+index,fingerprint:sha256Text('old-'+index),revision:index+1}))};
+ const other={targetId:'other',scope,revision:1,format:'text',content:'other kept',receipts:[],history:{schemaVersion:1,epoch:4095,head}};
+ const context={...scope,chat:[],chatMetadata:{latticeDocuments:{[scope.userId]:{notes,other}},latticeDocumentHistory:{[scope.userId]:pages}}};let saves=0;
+ const backend=createChatDocumentBackend({scope,getContext:()=>context,saveMetadata:async()=>{saves++;return true;}});
+ must(await backend.load('notes'));must(await backend.load('other'));
+ const result=await backend.compareAndSwap({targetId:'notes',expectedRevision:224,expectedContent:'kept',projectedDocument:{format:'text',content:'would exceed capacity'},intentId:'capacity',fingerprint:sha256Text('capacity')});
+ assert.equal(result.ok,false);assert.equal(result.error.code,'DOCUMENT_HISTORY_LIMIT');assert.equal(saves,0);
+ assert.equal(must(await backend.load('notes')).content,'kept');assert.equal(must(await backend.load('other')).content,'other kept');assert.equal(Object.keys(context.chatMetadata.latticeDocumentHistory[scope.userId]).length,4095);
+});
+test('native automatic maintenance checks both namespace replacements before installing archive pages',async()=>{
+ const notes={targetId:'notes',scope,revision:224,format:'text',content:'kept',receipts:Array.from({length:224},(_,index)=>({intentId:'old-'+index,fingerprint:sha256Text('old-'+index),revision:index+1}))};
+ const metadata={};Object.defineProperty(metadata,'latticeDocuments',{value:{[scope.userId]:{notes}},enumerable:true,writable:false});
+ const context={...scope,chat:[],chatMetadata:metadata},backend=createChatDocumentBackend({scope,getContext:()=>context,saveMetadata:async()=>true});
+ const result=await backend.compareAndSwap({targetId:'notes',expectedRevision:224,expectedContent:'kept',projectedDocument:{format:'text',content:'blocked'},intentId:'readonly',fingerprint:sha256Text('readonly')});
+ assert.equal(result.ok,false);assert.equal(result.error.code,'INVALID_FILE_METADATA');assert.equal(metadata.latticeDocumentHistory,undefined);assert.equal(must(await backend.load('notes')).content,'kept');
+});
+test('cancellation during accepted native maintenance leaves canonical state and saves untouched',async()=>{
+ let saves=0;const context={...scope,chat:[],chatMetadata:{}},controller=new AbortController();
+ const backend=createChatDocumentBackend({scope,getContext:()=>context,saveMetadata:async()=>{saves++;return true;},initialDocuments:[{targetId:'notes',format:'text',content:'kept'}]});
+ const pending=backend.compareAndSwap({targetId:'notes',expectedRevision:0,expectedContent:'kept',projectedDocument:{format:'text',content:'cancelled save'},intentId:'cancelled',fingerprint:sha256Text('cancelled')},{signal:controller.signal});
+ queueMicrotask(()=>controller.abort());const result=await pending;
+ assert.equal(result.ok,false);assert.equal(result.error.code,'CANCELLED');assert.equal(saves,0);assert.equal(must(await backend.load('notes')).content,'kept');assert.deepEqual(context.chatMetadata,{});
+});
+test('receipt maintenance admits a near-limit document independently of active receipt metadata',async()=>{
+ const f=await fixture();
+ for(let index=1;index<=224;index++){const backend=f.backend(),snapshot=must(await backend.load('state'));must(await backend.compareAndSwap(update(snapshot,'save '+index,'large-threshold-'+index)));}
+ const backend=f.backend(),snapshot=must(await backend.load('state')),content='x'.repeat(240000);
+ must(await backend.compareAndSwap(update(snapshot,content,'large-after-threshold')));await f.reload();
+ assert.equal(must(await f.backend().load('state')).content,content);assert.equal(must(await f.backend().lookupHistory('state',{intentId:'large-threshold-1'})).receipt.intentId,'large-threshold-1');
+});
 test('1000 accepted saves compact receipts, survive reload and deduplicate archived retries',async()=>{
  const f=await fixture();let first;
  for(let index=1;index<=1000;index++){

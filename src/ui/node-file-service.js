@@ -1,4 +1,5 @@
 import {cloneServerFileData} from './server-file-access.js?v=0.29.0';
+import {captureHistoryAdoption} from '../workflow/file-history-transfer.js?v=0.29.0';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const captureData=value=>{const copied=cloneServerFileData(value);return copied===undefined?fail('INVALID_FILE_BACKEND_CONFIG','Use bounded plain file data.'):{ok:true,data:{value:copied}};};
 /** Default managed files belong to authenticated host storage; existing grants retain their provider. */
@@ -53,7 +54,7 @@ export function createNodeFileService({host,server,native,getStorageMode}){
      return (await select(request.targetId)).compareAndSwap(request,{signal});
     },
     async lookupHistory(targetId,query){const checked=captureData(query);if(!checked.ok)return checked;return (await select(targetId)).lookupHistory(targetId,checked.data.value);},
-    async adoptLegacy(targetId,request){const checked=captureData(request);if(!checked.ok)return checked;return (await select(targetId)).adoptLegacy(targetId,checked.data.value);},
+    async adoptLegacy(targetId,request){const checked=captureHistoryAdoption(request);if(!checked.ok)return checked;return (await select(targetId)).adoptLegacy(targetId,checked.data);},
    });
   },
  });

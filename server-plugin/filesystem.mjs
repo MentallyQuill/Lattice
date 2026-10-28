@@ -146,8 +146,11 @@ export function serverPersistence(owner){
  const blobPath=name=>{if(!/^(archive|content|metadata)-[a-f0-9]{64}\.json$/.test(name))throw security('Invalid generated metadata name');return path.join(owner.metadata,name);};
  const validate=async()=>{if(identity(await physicalPath(owner.metadata))!==identity(owner.metadata)||!inside(owner.root,owner.metadata))throw security('The metadata folder changed.');};
  const readMetadata=async(value,maxBytes=2097152)=>{const {bytes}=await readBounded(value,{validate,maxBytes});return bytes.toString('utf8');};
- const blobs=createFileMetadataBlobs({read:name=>readMetadata(blobPath(name)),async write(name,content){const value=blobPath(name);await validate();try{if(await readMetadata(value)!==content)throw error('FILE_JOURNAL_INVALID','Immutable metadata conflict');}catch(cause){if(cause.code!=='ENOENT')throw cause;await atomicWrite(value,content,{validate});}}});
+ const writeMetadata=async(name,content)=>{const value=blobPath(name);await validate();try{if(await readMetadata(value)!==content)throw error('FILE_JOURNAL_INVALID','Immutable metadata conflict');}catch(cause){if(cause.code!=='ENOENT')throw cause;await atomicWrite(value,content,{validate});}};
+ const blobs=createFileMetadataBlobs({read:name=>readMetadata(blobPath(name)),write:writeMetadata});
  return {
+  async storeTransfer(record){const text=JSON.stringify(record);if(Buffer.byteLength(text)>2097152)throw error('FILE_JOURNAL_LIMIT','The archive transfer record is too large.');const hash='sha256:'+digest(Buffer.from(text));await writeMetadata('metadata-'+hash.slice(7)+'.json',text);return hash;},
+  async loadTransfer(hash){if(!/^sha256:[a-f0-9]{64}$/.test(hash??''))throw security('Invalid archive transfer reference');const text=await readMetadata(blobPath('metadata-'+hash.slice(7)+'.json'));if('sha256:'+digest(Buffer.from(text))!==hash)throw error('FILE_JOURNAL_INVALID','The archive transfer hash differs.');return JSON.parse(text);},
   async load(){
    let text;try{text=await readMetadata(statePath,16777216);}catch(cause){if(cause.code==='ENOENT')return undefined;throw cause;}
    if(Buffer.byteLength(text)>16777216)throw error('FILE_JOURNAL_LIMIT','The file service journal exceeds its supported size.');
