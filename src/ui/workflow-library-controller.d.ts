@@ -25,7 +25,7 @@ export function createWorkflowLibraryController(options:{
  activate?:(graph:NativeGraph3,options:WorkflowActivationOptions)=>unknown;
  persistSelection?:(value:WorkflowSelection,context:unknown)=>Promise<Result<{acknowledged:true}>>;
  getSelection?:()=>WorkflowSelection|null;
- replace?:(load:()=>Promise<Result<SavedWorkflow>>,clean:boolean)=>Promise<WorkflowCommandResult>;
+ replace?:(load:()=>Promise<Result<SavedWorkflow>>,clean:boolean,options?:{reloadAfterSave?:boolean})=>Promise<WorkflowCommandResult>;
  downloadCopy?:(json:string,name:string)=>Promise<WorkflowCommandResult>;
  prompt?:(name:string)=>Promise<'save'|'discard'|'cancel'>;
  changed?:()=>void;delay?:number;

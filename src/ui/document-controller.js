@@ -48,7 +48,7 @@ export function createWorkflowDocumentController(env) {
         if (session.snapshot()!==result.data.snapshot) {report('New changes arrived while saving. Save them before switching documents.','info');return false;}
         return {token:savedToken};
     }
-    async function replace(load,clean=false) {
+    async function replace(load,clean=false,{reloadAfterSave=false}={}) {
         if (replacing || saving) return cancelled();
         let token=session.capture();const epoch=++replacementEpoch;
         const current=()=>epoch===replacementEpoch && session.stillCurrent(token);
@@ -56,14 +56,21 @@ export function createWorkflowDocumentController(env) {
         try {
             // Invoke the picker in the click's turn, before any asynchronous guard.
             const candidatePromise=load();changed();
-            const result=await candidatePromise;
+            let result=await candidatePromise;
             if (!current()) return cancelled();
             if (!result.ok) return error(result);
-            const next=result.data, admitted=serializeWorkflowDocument(next.graph,next.workspaceViews ?? null,{exampleMetadata:next.exampleMetadata});
+            let next=result.data, admitted=serializeWorkflowDocument(next.graph,next.workspaceViews ?? null,{exampleMetadata:next.exampleMetadata});
             if (!admitted.ok) return error(admitted);
             const guarded=await guard(token);if(!guarded)return cancelled();
             if(guarded.token)token=guarded.token;
             if(!current())return cancelled();
+            if(reloadAfterSave&&guarded.token) {
+                const savedSnapshot=session.snapshot();result=await load();
+                if(!current()||session.snapshot()!==savedSnapshot)return cancelled();
+                if(!result.ok)return error(result);
+                next=result.data;admitted=serializeWorkflowDocument(next.graph,next.workspaceViews??null,{exampleMetadata:next.exampleMetadata});
+                if(!admitted.ok)return error(admitted);
+            }
             const activated=env.activate(next.graph,{source:next.source ?? null,workspaceViews:next.workspaceViews ?? null,exampleMetadata:admitted.data.recovery.exampleMetadata,clean});
             if (activated?.ok===false) return error(activated);
             if (next.companions?.length) env.retainCompanions?.(next.companions);

@@ -55,3 +55,24 @@ Declaration-only TypeScript check passed: `node node_modules/typescript/bin/tsc 
 ## Remaining platform/application work
 
 Task 7 wiring/UI is intentionally reserved. Provider recovery/version retention remains owned by Tasks 1/6. Host verified writes cannot rule out every cross-device race; expose that residual limitation in storage details. A lost index acknowledgement may leave an acknowledged document unlisted and a retained draft, deliberately avoiding a false fully-saved checkpoint. The current controller provides explicit refresh/pre-run freshness hooks rather than an unbounded background poll.
+
+## Review fixes — round 1 of 5
+
+Read `task-3-review.md` and reproduced each finding with one incremental regression before changing behavior:
+
+- Same-ID reopen through the delegated replacement guard failed with active text `chat a authored` instead of `saved during reopen true`. `documentController.replace(load,clean,{reloadAfterSave:true})` now reloads/revalidates the candidate after a successful guard Save and before activation. The extra read is guarded by the activation token, replacement epoch and saved snapshot, so edits arriving during it remain open. `openSaved` requests this option. Its standalone fallback also rereads after a successful Save and refuses replacement if newer edits arrive. The regression covers both delegated and fallback paths and asserts active saved text, matching current host revision and a clean checkpoint.
+- Busy-transition preflight failed with `blockedRun.ok === true` after `library.read()` changed run/review state to busy. `beforeRun()` now awaits refresh, rechecks captured context and busy state, and rejects deferred freshness as `WORKFLOW_BUSY`. Background `refresh()` retains its deferred-success contract. The regression checks that execution cannot be authorized by that deferred read.
+- Chat cache projection failed with cached `id-1` in chat B instead of its persisted `chat-b-selection`. Successful selection now captures `{value,context}`; `view().selected` uses it only in that captured context, otherwise projecting the current chat's `getSelection()` or null. The regression covers both another selected chat and a chat without a selection.
+
+**Task 7 hook update:** Forward all three replacement arguments: `replace:(...args)=>documentController.replace(...args)` (or explicitly forward `options`). Omitting the optional third argument loses the library's required reload-after-guard-save behavior. Native picker commands retain the default and never reopen a picker for this check. Updated the controller declaration accordingly.
+
+Exact covering commands and final results (each independently exited 0):
+
+- `node --import ./tools/node-test-host.mjs tests/workflow-library-controller.test.mjs` — shared identity/chat selection, first adoption, delegated/fallback same-ID reopen, busy-transition preflight, scoped-selection assertions all passed.
+- `node --import ./tools/node-test-host.mjs tests/workflow-autosave.test.mjs` — passed; captured snapshots, debounce follow-up, conflict/ack failures, context isolation and busy-refresh checks remain green.
+- `node --import ./tools/node-test-host.mjs tests/workflow-saved-library.test.mjs` — passed; identity/copy/configuration/retry assertions remain green.
+- `node --import ./tools/node-test-host.mjs tests/document-controller.test.mjs` — all 14 existing native/import/replacement regression tests passed, 0 failures.
+- `node node_modules/typescript/bin/tsc --ignoreConfig --noEmit --strict --skipLibCheck --target ES2022 --module ESNext --moduleResolution bundler src/ui/workflow-library.d.ts src/ui/workflow-autosave.d.ts src/ui/workflow-library-controller.d.ts` — passed, no diagnostics.
+- `git diff --check -- src/ui/document-controller.js src/ui/workflow-library-controller.js src/ui/workflow-library-controller.d.ts tests/workflow-library-controller.test.mjs` — passed, no whitespace errors (only repository LF/CRLF normalization notices).
+
+No UI integration files, provider code, dependencies, external services or live data were changed. No full suite was run while other tasks edit shared code.

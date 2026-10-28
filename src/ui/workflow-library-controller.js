@@ -15,12 +15,12 @@ export function createWorkflowLibraryController(env) {
     const current=(token,context)=>!disposed&&session.capture()===token&&context===getContext();
     async function select(id,context) {
         const value={kind:'library',id};
-        if(!env.persistSelection){selection=value;notify();return {ok:true,data:{persisted:false}};}
+        if(!env.persistSelection){selection={value,context};notify();return {ok:true,data:{persisted:false}};}
         let result;try{result=await env.persistSelection(value,context);}catch{return fail('WORKFLOW_SELECTION_FAILED','The chat workflow selection could not be saved.');}
         if(context!==getContext())return cancelled();
         if(!result.ok)return result;
         if(result.data?.acknowledged!==true)return fail('WORKFLOW_SELECTION_ACK_MISSING','The chat workflow selection was not acknowledged.');
-        selection=value;notify();return result;
+        selection={value,context};notify();return result;
     }
     async function storeCurrent(name,independent) {
         if(busy||isBusy())return cancelled();
@@ -44,17 +44,20 @@ export function createWorkflowLibraryController(env) {
         if(busy||isBusy())return cancelled();
         const context=getContext();
         if(env.replace) {
-            const result=await env.replace(()=>library.read(id),true);
+            const result=await env.replace(()=>library.read(id),true,{reloadAfterSave:true});
             if(result.ok&&context===getContext()){const selected=await select(id,context);if(!selected.ok)return selected;}
             return result;
         }
         const token=session.capture();busy=true;notify();
         try {
-            const result=await library.read(id);if(!current(token,context))return cancelled();if(!result.ok)return result;
+            let result=await library.read(id);if(!current(token,context))return cancelled();if(!result.ok)return result;
             if(session.dirty()) {
                 const snapshot=session.snapshot(),choice=await env.prompt?.(session.source()?.name||session.current()?.name||'Untitled');
                 if(!current(token,context)||choice==='cancel'||!choice)return cancelled();
-                if(choice==='save'){const saved=await autosave.flush();if(!saved.ok||session.dirty())return saved.ok?cancelled():saved;}
+                if(choice==='save'){
+                    const saved=await autosave.flush();if(!saved.ok||session.dirty())return saved.ok?cancelled():saved;
+                    result=await library.read(id);if(!current(token,context)||session.dirty())return cancelled();if(!result.ok)return result;
+                }
                 else if(choice!=='discard'||snapshot!==session.snapshot())return cancelled();
             }
             if(!current(token,context)||isBusy())return cancelled();
@@ -78,13 +81,16 @@ export function createWorkflowLibraryController(env) {
                 if(!session.dirty()||session.source()?.kind!=='library')break;
             }
             if(session.source()?.kind==='library'&&session.dirty())return fail('WORKFLOW_EDIT_PENDING','New workflow edits are still arriving. Finish editing before running.');
-            return autosave.refresh();
+            const latest=await autosave.refresh();
+            if(context!==getContext())return cancelled();
+            if(isBusy()||busy||latest.ok&&latest.data?.deferred)return fail('WORKFLOW_BUSY','Finish the current run or review before starting another run.');
+            return latest;
         },
         changed:()=>autosave.changed(),refresh:()=>autosave.refresh(),flush:()=>autosave.flush(),
         async reloadList(){const result=await library.list();if(result.ok){items=result.data;notify();}return result;},
         async restoreSelection(){const selected=env.getSelection?.();return selected?.kind==='library'?openSaved(selected.id):{ok:true,data:{unchanged:true}};},
         getWorkflowIdentity:()=>session.source()?.kind==='library'?session.source().id:session.draftNamespace(),
-        view:()=>({items:[...items],source:session.source(),selected:selection??env.getSelection?.()??null,status,dirty:session.dirty(),busy:busy||isBusy(),autosave:autosave.view(),capabilities:library.capabilities}),
+        view:()=>({items:[...items],source:session.source(),selected:selection&&selection.context===getContext()?selection.value:env.getSelection?.()??null,status,dirty:session.dirty(),busy:busy||isBusy(),autosave:autosave.view(),capabilities:library.capabilities}),
         recovery:()=>autosave.recovery(),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},
         dispose(){disposed=true;autosave.dispose();listeners.clear();},
     });
