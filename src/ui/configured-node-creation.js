@@ -8,12 +8,12 @@ import {freeze} from '../workflow/record-data.js?v=0.29.0';
 import {workflowDataPresetFor} from '../workflow/workflow-data-defaults.js?v=0.29.0';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 /** Declared authoring pins remain available before executable settings are complete. */
-export function deferredNodeDescription(operation,controls={}){try{const result=describeAuthoredOperation({schema:3,runtime:2,mode:'native-unified'},{type:'workflow',...operationDefaults(operation,{mode:controls.mode}),...controls});return result.ok?result.data:null;}catch{return null;}}
+export function deferredNodeDescription(operation,controls={}){try{const result=describeAuthoredOperation({schema:3,runtime:2,mode:'native-unified'},{type:'workflow',...operationDefaults(operation,{mode:controls.mode,managedFiles:true}),...controls});return result.ok?result.data:null;}catch{return null;}}
 export function nodeNeedsConfiguration(operation,controls={}){
  const checked=cloneDefinitionData(controls,{operation}),base=OPERATIONS[operation];
  if(!base||!checked.ok||!controls||Array.isArray(controls)||typeof controls!=='object'||Object.keys(controls).some(key=>!base.controls.includes(key)))return true;
  try{return !describeOperation({schema:3,runtime:2,mode:'native-unified'},
-  {type:'workflow',...operationDefaults(operation,{mode:controls.mode}),...checked.data}).ok;}catch{return true;}
+  {type:'workflow',...operationDefaults(operation,{mode:controls.mode,managedFiles:true}),...checked.data}).ok;}catch{return true;}
 }
 /** Explicit configuration starts from the current effective stage; fixed operations and stage-specific helper containers lock it. */
 export function configuredCreationStage(operation,mode,effectivePhase,inDefinition=false,controls={}){
@@ -56,7 +56,7 @@ export function createConfiguredNodeSession(ports){
  return Object.freeze({cancel,
   open(capture,command,options){
    if(active)cancel(active.key);const key=globalThis.crypto.randomUUID();let resolve;const result=new Promise(done=>resolve=done);
-   const controls=Object.fromEntries(Object.entries(operationDefaults(command.operation)).filter(([key])=>OPERATIONS[command.operation].controls.includes(key)));Object.assign(controls,command.controls??{});
+   const controls=Object.fromEntries(Object.entries(operationDefaults(command.operation,{managedFiles:true})).filter(([key])=>OPERATIONS[command.operation].controls.includes(key)));Object.assign(controls,command.controls??{});
    const view=freeze({key,operation:command.operation,title:OPERATIONS[command.operation].title,controls:JSON.stringify(controls,null,2),fields:projectNodeControls(command.operation,controls,{phase:options.phase}),phase:options.phase,phaseLocked:options.phaseLocked===true,targets:options.targets,helpers:options.helpers});
    active={key,capture,command:structuredClone(command),options:structuredClone(options),resolve};return {view,result};
   },

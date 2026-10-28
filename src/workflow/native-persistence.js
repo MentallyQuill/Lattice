@@ -17,6 +17,12 @@ async function boundedJson(response){
     return JSON.parse(text);
 }
 function selected(metadata,userId,selection){
+    if(selection.kind==='chat-prefix')return {};
+    if(selection.kind==='workflow-selection'){
+        const value=admitted(own(metadata,'latticeWorkflowSelection'));
+        if(!plain(value)||Object.keys(value).length!==2||value.kind!=='library'||typeof value.id!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(value.id))throw new Error('Selection');
+        return value;
+    }
     if(selection.kind==='source-registry'){
         const header=admitted(own(own(metadata,'latticeSources'),userId));
         if(!plain(header)||header.schemaVersion!==1||!plain(header.scope)||header.scope.userId!==userId||!plain(header.branchStates))throw new Error('Registry');
@@ -39,7 +45,7 @@ export function createNativePersistenceVerifier(ports){
     if(typeof methods.getContext!=='function'||typeof methods.getUserId!=='function')throw new Error('Trusted user/chat scope required');const fetchMethod=methods.fetch??globalThis.fetch;
     const capture=raw=>{
         const selection=admitted(raw);
-        if(!plain(selection)||!['document','document-checkpoint','introspection','document-catalog','source-registry'].includes(selection.kind)||Object.keys(selection).some(key=>!['kind','targetId','storeId','actorId','pageIds','branchKey'].includes(key)))throw new Error('Selection');
+        if(!plain(selection)||!['chat-prefix','workflow-selection','document','document-checkpoint','introspection','document-catalog','source-registry'].includes(selection.kind)||Object.keys(selection).some(key=>!['kind','targetId','storeId','actorId','pageIds','branchKey'].includes(key))||['workflow-selection','chat-prefix'].includes(selection.kind)&&Object.keys(selection).length!==1)throw new Error('Selection');
         if(selection.kind==='source-registry'){
             const pathId=value=>identifier(value)&&!/[\\/:]/.test(value)&&!value.includes('..');
             if(Object.keys(selection).length!==3||!pathId(selection.branchKey)||!Array.isArray(selection.pageIds)||selection.pageIds.length>128||selection.pageIds.some(value=>!pathId(value))||new Set(selection.pageIds).size!==selection.pageIds.length)throw new Error('Selection');
@@ -49,7 +55,7 @@ export function createNativePersistenceVerifier(ports){
         const c=methods.getContext(),userId=methods.getUserId(),chatId=c.getCurrentChatId?.()??c.chatId,character=c.characters?.[c.characterId];
         if(!identifier(userId)||!identifier(chatId)||c.groupId||!Array.isArray(c.chat)||!plain(c.chatMetadata)||!character||!identifier(character.avatar)||typeof character.chat!=='string'||!character.chat.trim()||character.chat.length>256||typeof character.name!=='string'||character.name.length>256)throw new Error('Scope');
         if(selection.kind==='source-registry'&&selected(c.chatMetadata,userId,selection).header.scope.chatId!==chatId)throw new Error('Scope');
-        const sources=selection.kind==='source-registry'?normalizeNativeSourceMessages(c.chat):null;if(sources&&!sources.ok)throw new Error('Sources');
+        const sources=['source-registry','chat-prefix'].includes(selection.kind)?normalizeNativeSourceMessages(c.chat):null;if(sources&&!sources.ok)throw new Error('Sources');
         return {sourceFingerprints:sources?.data.map(message=>message.fingerprint),selection,userId,chatId,chat:c.chat,metadata:c.chatMetadata,characterId:c.characterId,avatar:character.avatar,chatName:character.chat,characterName:character.name,expected:canonical(selected(c.chatMetadata,userId,selection))};
     };
     const current=captured=>{

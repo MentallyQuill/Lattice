@@ -19,6 +19,11 @@
     import RecallOverview from './RecallOverview.svelte';
     import ConfigureNode from './ConfigureNode.svelte';
     import DocumentPrompt from './DocumentPrompt.svelte';
+    import FileStorageSetup from './FileStorageSetup.svelte';
+    import ServerFileChooser from './ServerFileChooser.svelte';
+    import WorkflowLibrary from './WorkflowLibrary.svelte';
+    import FileRecovery from './FileRecovery.svelte';
+    import ExampleFileSetup from './ExampleFileSetup.svelte';
     import NodeSearch from './NodeSearch.svelte';
     import PinMenu from './PinMenu.svelte';
     import NodeShelf from './NodeShelf.svelte';
@@ -170,6 +175,11 @@
     });
 </script>
 <div class="pc-root pc-native-workspace" class:pc-native-flat={view.nativeFlatCanvas} role="dialog" aria-modal="true" aria-label="Lattice" data-pc-workbench="svelte" bind:this={root}>
+    {#if view.fileStorageSetup&&view.fileStorageOpen}<div class="pc-application-file-modal"><FileStorageSetup setup={view.fileStorageSetup}/></div>{/if}
+    {#if view.serverChooser&&actions.serverChooser}<div class="pc-application-file-modal"><ServerFileChooser access={view.serverChooser.access} mode={view.serverChooser.mode} name={view.serverChooser.name} onselect={actions.serverChooser.select} oncancel={actions.serverChooser.cancel}/></div>{/if}
+    {#if view.workflowLibrary&&actions.workflowLibrary}<div class="pc-application-modal-backdrop"><WorkflowLibrary view={view.workflowLibrary} actions={actions.workflowLibrary}/></div>{/if}
+    {#if view.fileRecovery&&actions.fileRecovery}<div class="pc-application-modal-backdrop"><FileRecovery view={view.fileRecovery} actions={actions.fileRecovery}/></div>{/if}
+    {#if view.exampleFileSetup&&actions.exampleFileSetup}<div class="pc-application-modal-backdrop"><ExampleFileSetup view={view.exampleFileSetup} actions={actions.exampleFileSetup}/></div>{/if}
     <Toolbar state={view} {actions} {local} panels={{previewOpen: !collapsed, shelfOpen}} bind:this={toolbar} />
     <!-- Pane sizing stays local so dragging does not invalidate Canvas's intrinsic pin geometry. -->
     <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users need to scroll the stacked canvas and Details panels.) -->
@@ -218,10 +228,12 @@
     {#if view.addSystem && actions.addSystem}<AddSystem view={view.addSystem} actions={actions.addSystem} />{/if}
     {#if view.subgraphSave}<SubgraphSave view={view.subgraphSave} actions={actions.subgraphSave} />{/if}
     {#if view.importReview}<ImportReview view={view.importReview} {actions} />{/if}
-    {#if view.documentPrompt}<DocumentPrompt view={view.documentPrompt} actions={actions.documentPrompt} native={view.document?.native ?? false} />{/if}
+    {#if view.documentPrompt}<DocumentPrompt view={view.documentPrompt} actions={actions.documentPrompt} native={!!view.document?.native || !!view.fileStorageSetup} />{/if}
 </div>
 
 <style>
+    .pc-application-file-modal{position:absolute;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;background:#0008;padding:24px}
+    .pc-application-modal-backdrop{position:absolute;inset:0;z-index:50;background:#0008}
     .pc-workspace-dialog.pc-node-guide-dialog { width: 660px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); padding: 0; overflow: auto; background: var(--pc-panel-solid); border-radius: var(--pc-r-sm); }
     .pc-node-guide-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; position: sticky; top: 0; z-index: 2; margin: 0; padding: 12px 20px; background: var(--pc-panel-solid); border-bottom: 1px solid var(--pc-border); }
     .pc-node-guide-dialog h2 { margin: 0; font-size: 17px; }

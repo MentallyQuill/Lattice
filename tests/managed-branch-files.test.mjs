@@ -1,0 +1,9 @@
+import assert from 'node:assert/strict';
+import {prepareManagedBranchFiles} from '../src/workflow/managed-branch-files.js';
+const binding={schemaVersion:1,messageCount:2,prefixHash:'sha256:'+'a'.repeat(64)},scope={userId:'alice',chatId:'branch'},definition={targetId:'managed:one',bindingId:'child',name:'State.txt',format:'text',content:'',missing:'create',visibility:{kind:'public'}};
+let allocated=0,reads=[];
+const access={ensureManaged:async(def,controls)=>{assert.equal(controls.create,false);assert.equal(controls.scope.chatId,'parent');allocated++;return {ok:true,data:{...def,bindingId:'parent'}};},backend:(definitions)=>definitions[0].bindingId==='child'?{load:async()=>({ok:true,data:{revision:'missing:initial'}})}:{listVersions:async()=>({ok:true,data:{versions:[{versionId:'old',branchBinding:binding}]}}),readVersion:async(_target,{versionId})=>{reads.push(versionId);return {ok:true,data:{snapshot:{...definition,scope:{userId:'alice',chatId:'parent'},revision:'old',content:versionId==='old'?'at branch':'parent future',receipts:[],history:{schemaVersion:1,epoch:0,head:null},branchBinding:versionId==='old'?binding:{...binding,messageCount:5}},pages:{},visibility:{kind:'public'}}};}}};
+const result=await prepareManagedBranchFiles({definitions:[definition],access,scope,branch:{parentChatId:'parent',binding},isCurrent:()=>true});
+assert.equal(result.ok,true);assert.equal(result.data.definitions[0].content,'at branch');assert.equal(result.data.adoptions[0].snapshot.scope.chatId,'branch');assert.equal(allocated,1);assert.deepEqual(reads,['current','old']);
+const unavailable=await prepareManagedBranchFiles({definitions:[definition],access,scope,branch:{parentChatId:'parent',binding:{...binding,prefixHash:'sha256:'+'b'.repeat(64)}},isCurrent:()=>true});assert.equal(unavailable.error.code,'BRANCH_POINT_UNAVAILABLE');
+console.log('managed branch files: exact retained prefix, independent scope and unavailable point passed');

@@ -56,7 +56,7 @@ test('stale example results cannot install their primary document or retain comp
 test('example fitting remains attached to the opened root when a child tab is entered before layout settles', async () => {
     for (const enterChild of [false, true]) {
         const f = fixture(), frames = [], authority = {}; let fitted = 0, kind = 'root';
-        const env = { current: f.original, uiEpoch: 1, exampleContextCurrent: value => value === authority, ensureDocumentCommands: () => f.controller, requestAnimationFrame: callback => frames.push(callback), stillEditing: (value, epoch) => env.current === value && env.uiEpoch === epoch, graphViews: { readEditor: () => ({ view: { identity: { kind } } }) }, canvas: { fit() { fitted++; } } };
+        const env = { current: f.original, uiEpoch: 1, openExampleFileSetup(){}, exampleContextCurrent: value => value === authority, ensureDocumentCommands: () => f.controller, requestAnimationFrame: callback => frames.push(callback), stillEditing: (value, epoch) => env.current === value && env.uiEpoch === epoch, graphViews: { readEditor: () => ({ view: { identity: { kind } } }) }, canvas: { fit() { fitted++; } } };
         f.env.activate = (value, options) => { f.session.activate(value, options); env.current = value; env.uiEpoch++; };
         assert.equal(await (await controllerFunction('onOpenExample', env))('lesson-01', authority), true); if (enterChild) kind = 'instance'; while (frames.length) frames.shift()(); assert.equal(fitted, enterChild ? 0 : 1);
     }

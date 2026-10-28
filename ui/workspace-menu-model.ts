@@ -21,10 +21,12 @@ export function workspaceMenus(view: WorkbenchView, panels: WorkspaceMenuPanels 
  const document = view.document, selectedRecall = view.recall?.commands.selected, allRecall = view.recall?.commands.all;
  return [
  {name:'File',groups:[
-  [row('New workflow','new','add',!!document?.busy,'Ctrl N'),row('Open workflow…','open-workflow','open',!!document?.busy,'Ctrl O'),{...row('Open Recent','recent-menu','open',!document?.native || !document.recents.length || document.busy),children:[...(document?.recents ?? []).map(file=>row(file.name,'open-recent:'+file.id,'open')),{...row('Clear Recent','clear-recent','clear'),title:'Files stay on disk; only this recent list is cleared.'}]},row('Open examples…','examples','library',!!document?.busy)],
+  [row('New workflow','new','add',!!document?.busy,'Ctrl N'),row('Open saved…','open-saved','library',!!document?.busy),row('Import workflow…','open-workflow','open',!!document?.busy,'Ctrl O'),{...row('Open Recent','recent-menu','open',!document?.native || !document.recents.length || document.busy),children:[...(document?.recents ?? []).map(file=>row(file.name,'open-recent:'+file.id,'open')),{...row('Clear Recent','clear-recent','clear'),title:'Files stay on disk; only this recent list is cleared.'}]},row('Open examples…','examples','library',!!document?.busy)],
   [{...row('Recover previous workflows','recovery-menu','library',!document?.recovery.length || document.busy),children:(document?.recovery ?? []).map(file=>({...row(file.name,'recover-workflow:'+file.id,'open'),reason:file.issue ? diagnosticText(file.issue) : undefined}))}],
-  [...(document?.native ? [row('Save workflow','save','save',document.busy,'Ctrl S'),row('Save As…','save-as','save',document.busy,'Ctrl Shift S')] : [row('Save As…','download-document','save',!!document?.busy,'Ctrl S')]),row('Rename workflow…','rename','rename',!root)],
-  [row('Import into graph…','import-into-graph','open',readOnly),row('Export workflow JSON…','export','export',!root),...(view.hasArchivedWorkflows ? [row('Export archived workflows','export-archived-workflows','export')] : [])],
+  [row('Save workflow','save','save',!!document?.busy,'Ctrl S'),row('Save As…','save-as','save',!!document?.busy,'Ctrl Shift S'),row('Rename workflow…','rename','rename',!root)],
+  [row('Import into graph…','import-into-graph','open',readOnly),row('Download / share workflow…','download-document','export',!root),row('Download workflow backup…','download-recovery','save',!root),...(view.hasArchivedWorkflows ? [row('Export archived workflows','export-archived-workflows','export')] : [])],
+  [row('Recover selected file…','recover-selected-file','library',!c.inspect),row('File storage…','file-storage','save')],
+  ...(view.hasExampleFiles?[[row('Example characters…','example-files','library')]]:[]),
   [row('Close workspace','close','close')]
  ]},
  {name:'Edit',groups:[

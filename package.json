@@ -10,7 +10,7 @@
     "test": "node tools/test-all.mjs",
     "test:browser": "playwright test",
     "harness": "node tools/serve-harness.mjs",
-    "build": "vite build",
+    "build": "node tools/build-server-setup.mjs && vite build",
     "check:types": "svelte-check --tsconfig ./tsconfig.json",
     "check:assets": "node tools/check-assets.mjs",
     "check": "npm run check:examples-memory && npm run test && npm run check:types && npm run build && npm run check:assets && npm run test:browser",

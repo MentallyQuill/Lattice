@@ -1,0 +1,58 @@
+import {test,expect} from '@playwright/test';
+async function host(page,{fresh=false,files=new Map()}={}){
+ await page.addInitScript(()=>{delete window.showOpenFilePicker;delete window.showSaveFilePicker;});
+ await page.route('**/scripts/user.js',route=>route.fulfill({contentType:'text/javascript',body:'export const getCurrentUserHandle=()=>"file-experience-user";'}));
+ await page.route('**/script.js',route=>route.fulfill({contentType:'text/javascript',body:'export const isGenerating=()=>false;export const syncMesToSwipe=()=>true;export const syncSwipeToMes=()=>true;'}));
+ await page.route('**/api/plugins/lattice-files/**',route=>route.fulfill({status:404,body:'Optional support absent'}));
+ await page.route('**/user/files/*',route=>{const name=new URL(route.request().url()).pathname.split('/').at(-1);return route.fulfill(files.has(name)?{body:files.get(name),contentType:'text/plain'}:{status:404,body:''});});
+ await page.route('**/api/files/upload',async route=>{const {name,data}=route.request().postDataJSON();files.set(name,Buffer.from(data,'base64').toString('utf8'));await route.fulfill({json:{path:'user/files/'+name}});});
+ await page.route('**/api/files/delete',async route=>{files.delete(route.request().postDataJSON().path.split('/').at(-1));await route.fulfill({json:{ok:true}});});
+ await page.route('**/api/chats/get',async route=>{const saved=await page.evaluate(()=>window.savedFileExperienceChat??[{chat_metadata:window.canvasHarness?.context.chatMetadata??{}}]);await route.fulfill({json:saved});});
+ await page.goto('/tests/browser/harness.html'+(fresh?'?freshFiles':''));await page.waitForFunction(()=>!!window.canvasHarness);
+ await page.evaluate(async()=>{const h=window.canvasHarness,c=h.context;Object.assign(c,{chatId:'file-story',characterId:0,groupId:null,characters:[{avatar:'companion.png',name:'Companion',chat:'file-story'}],chat:[],chatMetadata:{},getRequestHeaders:()=>({'Content-Type':'application/json'}),saveMetadata:async()=>{window.savedFileExperienceChat=[{chat_metadata:structuredClone(c.chatMetadata)},...structuredClone(c.chat)];}});await(await import('/src/run.js?v='+h.version)).initializeNativeWorkflowController();await h.settle();});
+ return files;
+}
+async function command(page,name){await page.getByRole('menuitem',{name:'File',exact:true}).click();await page.getByRole('menuitem',{name,exact:true}).click();}
+test('first-run choices work without browser file APIs, cancel resumes and restart remembers host saving',async({page})=>{
+ const files=await host(page,{fresh:true});const setup=page.locator('[data-file-storage-setup]');await expect(setup).toBeVisible();
+ await expect(setup.locator('[data-storage-choice]')).toHaveCount(2);await setup.locator('[data-storage-choice="anywhere"]').click();await expect(setup.getByRole('button',{name:'Download setup',exact:true})).toBeVisible();
+ await setup.getByRole('button',{name:'Close setup',exact:true}).click();await expect(setup).toHaveCount(0);
+ await command(page,'File storage…');await expect(setup.getByRole('button',{name:'Download setup',exact:true})).toBeVisible();await setup.getByRole('button',{name:'Continue saving inside SillyTavern',exact:true}).click();await expect(setup).toHaveCount(0);
+ expect([...files.values()].some(value=>value.includes('"choice":"inside"'))).toBe(true);
+ await page.reload();await page.waitForFunction(()=>!!window.canvasHarness);await page.evaluate(async()=>{const h=window.canvasHarness;await(await import('/src/run.js?v='+h.version)).initializeNativeWorkflowController();});await expect(setup).toHaveCount(0);
+ expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+});
+test('incomplete authoring saves in the shared library, reopens and Save As has an independent identity',async({page})=>{
+ await host(page);await page.evaluate(async()=>{const h=window.canvasHarness,{operationDefaults}=await import('/src/workflow/catalog.js?v='+h.version);await h.activate({id:'draft',name:'Unfinished story writer',schema:3,runtime:2,mode:'native-unified',nodes:{writer:{id:'writer',type:'workflow',...operationDefaults('write-file',{managedFiles:true}),x:60,y:90}},wires:{},groups:{},definitions:{},portals:{}});});
+ await command(page,'Save workflow');await expect(page.locator('.pc-document-status')).toContainText('Saved in SillyTavern');
+ const original=await page.evaluate(async()=>{const h=window.canvasHarness;return(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.getWorkflowIdentity();});
+ await command(page,'New workflow');await command(page,'Open saved…');await page.getByRole('dialog',{name:'Saved workflows',exact:true}).getByRole('button',{name:'Unfinished story writer',exact:true}).click();
+ await page.getByRole('dialog',{name:'Save workflow changes?',exact:true}).getByRole('button',{name:"Don't Save",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.canvasHarness.graph.nodes.writer?.fileTarget.managed)).toBe(true);
+ page.once('dialog',dialog=>dialog.accept('Independent story'));await page.keyboard.press('Control+Shift+s');
+ await expect(page.locator('.pc-document-name')).toHaveText('Independent story');
+ const independent=await page.evaluate(async()=>{const h=window.canvasHarness;return(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.getWorkflowIdentity();});expect(independent).not.toBe(original);
+ expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+});
+test('a browser file input imports actual private input bytes into host files and keeps workflow JSON empty',async({page})=>{
+ const files=await host(page);await page.evaluate(async()=>{const h=window.canvasHarness,{operationDefaults}=await import('/src/workflow/catalog.js?v='+h.version);await h.activate({id:'reader',name:'Reader',schema:3,runtime:2,mode:'native-unified',nodes:{reader:{id:'reader',type:'workflow',...operationDefaults('read-file'),x:60,y:90}},wires:{},groups:{},definitions:{},portals:{}});h.canvas.select({kind:'node',id:'reader'});await h.settle();});
+ const choose=page.waitForEvent('filechooser');await page.locator('[data-node-file]').getByRole('button',{name:'Import from device…',exact:true}).click();await(await choose).setFiles({name:'Private.txt',mimeType:'text/plain',buffer:Buffer.from('Private source bytes')});
+ await expect.poll(()=>page.evaluate(()=>window.canvasHarness.graph.nodes.reader.fileTarget?.bindingId??'')).not.toBe('');
+ expect([...files.values()].some(value=>value==='Private source bytes')).toBe(true);expect(await page.evaluate(()=>JSON.stringify(window.canvasHarness.graph))).not.toContain('Private source bytes');
+ expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+});
+test('two chats share acknowledged edits and keep a conflicting local draft for Save As',async({page,context})=>{
+ const files=await host(page);await page.evaluate(async()=>{await window.canvasHarness.reset(1,1);});await command(page,'Save workflow');await expect(page.locator('.pc-document-status')).toContainText('Saved in SillyTavern');
+ const shared=await page.evaluate(async()=>{const h=window.canvasHarness;return(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.getWorkflowIdentity();});
+ const second=await context.newPage();await host(second,{files});await second.evaluate(()=>{window.canvasHarness.context.chatId='another-chat';window.canvasHarness.context.characters[0].chat='another-chat';});
+ await command(second,'Open saved…');await second.getByRole('dialog',{name:'Saved workflows'}).getByRole('button',{name:'Browser fixture',exact:true}).click();await second.getByRole('dialog',{name:'Save workflow changes?'}).getByRole('button',{name:"Don't Save",exact:true}).click();
+ await expect.poll(()=>second.evaluate(async()=>{const h=window.canvasHarness;return(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.getWorkflowIdentity();})).toBe(shared);
+ await page.evaluate(async()=>{const h=window.canvasHarness;h.graph.description='Shared saved edit';h.S.touchGraph(h.graph);await(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.save();});
+ await second.evaluate(async()=>{const h=window.canvasHarness;await(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.beforeRun();});
+ expect(await second.evaluate(()=>window.canvasHarness.graph.description)).toBe('Shared saved edit');
+ await second.evaluate(()=>{const h=window.canvasHarness;h.graph.description='Keep my local draft';h.S.touchGraph(h.graph);});
+ await page.evaluate(async()=>{const h=window.canvasHarness;h.graph.description='New remote revision';h.S.touchGraph(h.graph);await(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller.save();});
+ const conflict=await second.evaluate(async()=>{const h=window.canvasHarness,controller=(await import('/src/run.js?v='+h.version)).getApplicationFileExperience().controller;const result=await controller.save();return {ok:result.ok,drafts:controller.recovery().length,text:h.graph.description};});
+ expect(conflict.ok).toBe(false);expect(conflict.drafts).toBeGreaterThan(0);expect(conflict.text).toBe('Keep my local draft');
+ await second.close();
+});

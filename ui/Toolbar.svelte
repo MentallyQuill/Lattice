@@ -4,7 +4,7 @@
     import type { WorkbenchView, WorkbenchActions } from './types';
     let { state, actions, local, panels }: { state: WorkbenchView; actions: WorkbenchActions; local: (command: string) => void; panels?: WorkspaceMenuPanels } = $props();
     const workflow = $derived(state.rootWorkflow ?? state.workflow);
-    const documentState = $derived(state.document?.dirty ? 'Modified' : state.document?.busy ? '' : state.document?.status ? '' : state.document ? 'Saved' : 'Unsaved');
+    const documentState = $derived(state.document?.dirty ? 'Modified' : state.document?.busy ? '' : state.document?.status ? '' : state.document?.saved ? 'Saved in SillyTavern' : 'Unsaved draft');
     let header: HTMLElement, enabledControl: HTMLInputElement, inspBtn: HTMLButtonElement;
     export function getParts() { return { header, enabledControl, inspBtn }; }
 </script>

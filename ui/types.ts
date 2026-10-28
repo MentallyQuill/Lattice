@@ -29,7 +29,7 @@ export interface SubgraphSaveActions { close(): void; save(key: string, name: st
 export interface DocumentPromptView { name: string }
 export interface DocumentPromptActions { choose(choice: 'save' | 'discard' | 'cancel'): void }
 export interface WorkflowDocumentView {
-    name: string; dirty: boolean; busy: boolean; native: boolean; status?: string;
+    name: string; dirty: boolean; busy: boolean; native: boolean; status?: string; saved?:boolean;
     recents: { id: string; name: string }[];
     recovery: { id: string; name: string; issue?: string }[];
 }
@@ -45,6 +45,13 @@ export interface WorkbenchView {
     hasArchivedWorkflows?: boolean;
     graphId: string; enabled: boolean; inspectorOpen: boolean; detailsWidth?: number;
     document?: WorkflowDocumentView;
+    fileStorageSetup?: import('../src/ui/file-storage-setup').FileStorageSetup|null;
+    fileStorageOpen?:boolean;
+    hasExampleFiles?:boolean;
+    exampleFileSetup?: {choices:{sampleActorId:string;label:string}[];actors:{id:string;label:string}[];values:Record<string,string>;error:string}|null;
+    workflowLibrary?: {items:{id:string;name:string}[];busy:boolean;error:string}|null;
+    serverChooser?: {access:import('../src/ui/server-file-access').ServerFileAccess;mode:'open'|'save';name:string}|null;
+    fileRecovery?: {name:string;versions:{versionId:string;createdAt:number;bytes:number}[];busy:boolean;error:string;confirming:string|null}|null;
     history: HistoryView; camera: { x: number; y: number; zoom: number; mode: string }; selectionCount: number;
     workflow?: WorkflowView; rootWorkflow?: WorkflowView;
     nativeFlatCanvas?: boolean; nativeDiagnostic?: string; readOnly?: boolean; graphViews?: GraphViews;
@@ -76,6 +83,10 @@ export interface WorkbenchActions {
     resizeStart?: () => void; resizeDetails?: (width: number) => void;
     acceptImport?: () => void; cancelImport?: () => void; prepareImportAgain?: () => void;
     documentPrompt?: DocumentPromptActions;
+    workflowLibrary?: {open(id:string):unknown;close():void;refresh():unknown};
+    serverChooser?: {select(path:string):void;cancel():void};
+    fileRecovery?: {close():void;select(versionId:string):void;cancel():void;restore():unknown};
+    exampleFileSetup?: {close():void;apply(values:Record<string,string>):unknown};
     recall?: RecallActions;
     storyDocuments?: StoryDocumentsActions; configureNode?: ConfigureNodeActions;
     captureExampleContext?: () => unknown;

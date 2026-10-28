@@ -1,6 +1,10 @@
 import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.29.0';
 import { captureNodeFileTargets, nodeFileTargetId } from './node-file-targets.js?v=0.29.0';
 import { prepareManagedNodeFiles } from './managed-file-policy.js?v=0.29.0';
+import {migrateUnboundOwnFile} from './file-application-policy.js?v=0.29.0';
+import {prepareManagedBranchFiles} from './managed-branch-files.js?v=0.29.0';
+import {createScopedNodeFileBackend} from './scoped-node-file-backend.js?v=0.29.0';
+import {prepareExampleFileDefaults} from './example-file-defaults.js?v=0.29.0';
 import { getNodeFileAccess } from '../ui/node-file-access.js?v=0.29.0';
 import { randomUuid } from '../random-id.js?v=0.29.0';
 import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.29.0';
@@ -275,6 +279,17 @@ export function createNativeWorkflowController(ports) {
     const outcomeCache=createNativeOutcomeCache({...(typeof ports.random==='function'?{random:ports.random}:{})});
     function releaseRun(run) {if(!run||run.resourcesReleased)return;run.resourcesReleased=true;run.sourceProofs?.clear();run.sourceActorService?.release();run.sourceActorService=null;run.actorArtifactOwners=new WeakMap();for(const reader of run.sourceReaders??[])reader.release();run.sourceReaders?.clear();run.sourcePages?.clear();run.sourceCaptures?.clear();run.guidanceComposition?.clear();run.modelScopes?.clear();run.modelAddresses=new WeakMap();recall.releaseRun(run);run.memorySession?.release();run.memorySession=null;run.storySession?.release();run.storySession=null;run.draftEvidence?.release();run.draftEvidence=null;run.draftSources?.clear();delete run.nativeContext;for(const session of run.fileSessions?.values()??[])session.release();run.fileSessions?.clear();run.fileSession?.release();run.fileSession=null;run.actorContext?.release();run.actorContext=null;for(const session of run.actorMemorySessions?.values()??[])session.release();run.actorMemorySessions?.clear();run.stagedFiles.length=0;run.memoryIntents.clear();run.memoryTerminals.clear();}
     let epoch=0, active=null, result=null, automaticResult=null, applying=false, automaticApplication=null, internalEvents=0, unsubscribe=null;
+    let branchCapture=null;
+    function captureBranchPoint(){
+        const c=context(),metadata=c.chatMetadata,userId=ports.userId?.(),chatId=identity(c).chatId,parent=Object.getOwnPropertyDescriptor(metadata??{},'main_chat')?.value,integrity=Object.getOwnPropertyDescriptor(metadata??{},'integrity')?.value;
+        const prefix=createChatPrefixBinding(c.chat,sourceText);
+        branchCapture=typeof userId==='string'&&typeof chatId==='string'&&typeof parent==='string'&&parent&&parent!==chatId&&parent.length<=128&&typeof integrity==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(integrity)&&prefix?{userId,chatId,metadata,integrity,parentChatId:parent,binding:prefix.stamp}:null;
+    }
+    function actorAvailable(run,actorId){
+        if(!fresh(run))return false;
+        const actors=context().characters;if(!Array.isArray(actors))return false;
+        return actors.some((actor,index)=>{const avatar=Object.getOwnPropertyDescriptor(actor??{},'avatar');return (!avatar||Object.hasOwn(avatar,'value'))&&actorId==='character:'+(avatar?.value??index);});
+    }
     let generationSequence=0, generation={dryRun:false,type:'normal'}, generationInvocationDryRun=false;
     const activityListeners=new Set(), progressListeners=new Set();
     let runState=null,progressRevision=0,nativeStopListener=null,invokingPolicyStop=null;
@@ -455,18 +470,29 @@ export function createNativeWorkflowController(ports) {
     async function prepareNodeFiles(run){
         let nodes=Object.values(run.workflowDataNodes??{}).map(entry=>entry.node??entry);if(!nodes.some(node=>nodeFileTargetId(node)!==null||['read-file','write-file','story-clock','commit-outcomes','random-pick'].includes(node.operation)&&Object.keys(node.fileTarget??{}).length))return {ok:true};
         const live=()=>fresh(run)&&(!run.unified||nativePrefixFresh(run));
+        const priorCatalog=documentCatalog.capture();if(!priorCatalog.ok)return priorCatalog;
+        const exampleOrigin=ports.getExampleFileOrigin?.(run.originalGraph);let initialTemplates,fileOwners;
+        if(exampleOrigin){
+            const example=prepareExampleFileDefaults({exampleId:exampleOrigin.exampleId,nodes:run.managedFileEntries,workflowId:run.managedWorkflowId,actorBindings:exampleOrigin.actorBindings,legacyDocuments:priorCatalog.data.documents,canonicalDocuments:context().chatMetadata?.latticeDocuments?.[run.userId]??{}});if(!example.ok)return example;
+            if(example.data.actorChoices.length)return fail('EXAMPLE_ACTOR_REQUIRED','Choose the story characters for '+example.data.actorChoices.map(choice=>choice.label).join(' and ')+' in the example setup before running.');
+            run.managedFileEntries=example.data.nodes;initialTemplates=example.data.initialTemplates;fileOwners=example.data.fileOwners;nodes=example.data.nodes.map(entry=>entry.node);
+        }
         if(run.workflowDataDefaults?.length||run.workflowDataHelperNodes?.length){const installed=ensureWorkflowDataDefaults({catalog:documentCatalog,graph:{nodes:Object.fromEntries((run.workflowDataHelperNodes??[]).map((node,index)=>[index,node]))},defaults:run.workflowDataDefaults,scope:{userId:run.userId,chatId:run.identity.chatId},context,isCurrent:live});if(!installed.ok)return installed;}
         const legacy=documentCatalog.capture();if(!legacy.ok)return legacy;
+        const canonicalDocuments=context().chatMetadata?.latticeDocuments?.[run.userId]??{};
+        run.managedFileEntries=run.managedFileEntries.map(entry=>({...entry,node:migrateUnboundOwnFile(entry.node,{canonicalDocuments,legacyDocuments:legacy.data.documents})}));
+        nodes=run.managedFileEntries.map(entry=>entry.node);
         const access=ports.nodeFileAccess??getNodeFileAccess();
         if(run.managedFileEntries?.some(entry=>entry.node.fileTarget?.managed===true)){
             await access?.ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring managed files.');
             const existing=captureNodeFileTargets(nodes.filter(node=>!node.fileTarget?.managed),{legacyDocuments:legacy.data.documents});if(!existing.ok)return existing;
             if(existing.data.definitions.length){
                 if(typeof access?.backend!=='function')return fail('FILE_ACCESS_REQUIRED','Choose an available file for the connected commit.');
-                const checked=access.backend(existing.data.definitions,{scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:live,signal:run.controller.signal});
+                const checked=createScopedNodeFileBackend(access,existing.data.definitions,{scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:live,isActorAvailable:actorId=>actorAvailable(run,actorId),signal:run.controller.signal});
                 for(const definition of existing.data.definitions){const loaded=await checked.load(definition.targetId);if(!live())return fail('STALE_FILE_SCOPE','The file scope changed while validating an existing destination.');if(!loaded.ok)return loaded;if(loaded.data.format!==definition.format)return fail('FILE_FORMAT_CONFLICT','The existing file type changed; choose it again.');}
             }
-            const managed=await prepareManagedNodeFiles(run.managedFileEntries,{workflowId:run.managedWorkflowId,edges:run.managedFileEdges,scope:{userId:run.userId,chatId:run.identity.chatId},legacyDocuments:legacy.data.documents,authorizedDefinitions:existing.data.definitions,isCurrent:live,access});if(!managed.ok)return managed;
+            const actor=nativeMemoryScope(context(),ports.selectIntrospectionActor);
+            const managed=await prepareManagedNodeFiles(run.managedFileEntries,{workflowId:run.managedWorkflowId,edges:run.managedFileEdges,initialTemplates,fileOwners,scope:{userId:run.userId,chatId:run.identity.chatId},actorId:actor.ok?actor.data.actorId:undefined,isActorAvailable:actorId=>actorAvailable(run,actorId),legacyDocuments:legacy.data.documents,authorizedDefinitions:existing.data.definitions,isCurrent:live,access});if(!managed.ok)return managed;
             run.managedFileNodes=new Map(run.managedFileEntries.map((entry,index)=>[addressKey(entry.address),managed.data.nodes[index]]));
             nodes=managed.data.nodes;run.workflowDataNodes=Object.fromEntries(nodes.map((node,index)=>[index,node]));
         }
@@ -477,7 +503,16 @@ export function createNativeWorkflowController(ports) {
         // Each captured backend validates its own readiness. An unused server adapter
         // may be unavailable while an existing native destination remains valid.
         await access.ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring file access.');
-        run.nodeFileBackend=access.backend(run.nodeFileDefinitions,{scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:live,signal:run.controller.signal});
+        const prefix=createChatPrefixBinding(run.nativeCapture?.refs??context().chat,sourceText);
+        if(!branchCapture&&context().chatMetadata?.main_chat)captureBranchPoint();
+        const branch=branchCapture?.userId===run.userId&&branchCapture.chatId===run.identity.chatId&&branchCapture.metadata===context().chatMetadata&&prefix?.matches(branchCapture.binding)?branchCapture:null;
+        if(branchCapture&&!branch)return fail('BRANCH_POINT_UNAVAILABLE','The captured branch point changed. Reopen the chat before preparing its state.');
+        const managedIds=new Set([...run.managedFileNodes?.values()??[]].map(node=>nodeFileTargetId(node)));
+        const branchPrepared=await prepareManagedBranchFiles({definitions:run.nodeFileDefinitions.filter(definition=>managedIds.has(definition.targetId)),access,scope:{userId:run.userId,chatId:run.identity.chatId},branch,isCurrent:live});if(!branchPrepared.ok)return branchPrepared;
+        const branchDefinitions=new Map(branchPrepared.data.definitions.map(definition=>[definition.targetId,definition]));
+        run.nodeFileDefinitions=run.nodeFileDefinitions.map(definition=>branchDefinitions.get(definition.targetId)??definition);
+        run.nodeFileBackend=createScopedNodeFileBackend(access,run.nodeFileDefinitions,{scope:{userId:run.userId,chatId:run.identity.chatId},isCurrent:live,isActorAvailable:actorId=>actorAvailable(run,actorId),signal:run.controller.signal,getBranchBinding:()=>live()&&run.acceptedBranchBinding?run.acceptedBranchBinding:undefined});
+        for(const adoption of branchPrepared.data.adoptions){const adopted=await run.nodeFileBackend.adoptLegacy(adoption.snapshot.targetId,{snapshot:adoption.snapshot,pages:adoption.pages});if(!adopted.ok)return adopted;if(adopted.data?.adopted!==true)return fail('BRANCH_POINT_UNAVAILABLE','The independent branch state could not be prepared safely.');}
         for(const definition of run.nodeFileDefinitions){const loaded=await run.nodeFileBackend.load(definition.targetId);if(!loaded.ok)return {...loaded,error:{...loaded.error,field:'fileTarget'}};if(!live())return fail('STALE_FILE_SCOPE','File scope changed while validating access.');run.nodeFileObserved.set(definition.targetId,fileStamp(loaded.data));}
         return {ok:true};
     }
@@ -665,6 +700,10 @@ export function createNativeWorkflowController(ports) {
                 validateFinal:({body,originalBody,effects})=>{acceptedBody=body;for(const effect of effects){if(effect.proposed.kind==='file'){const evidence=run.storySession?run.storySession.validateEvidence(effect.proposed.evidence,body,originalBody,{draftEvidence:run.draftEvidence,finalDraft:entry.finalDraft}):validateNativeFileEvidence(effect.proposed.evidence,body,originalBody,{draftEvidence:run.draftEvidence,finalDraft:entry.finalDraft});if(!evidence.ok)return evidence;}}return {ok:true};},
                 publish:async()=>{
                     const applied=await publishCandidate(entry.handle);if(!applied.ok)return applied;
+                    // Recovery records the independently verified assistant-inclusive
+                    // publication, separately from execution and source authority.
+                    let verified;try{verified=await persistenceVerifier.verify?.({kind:'chat-prefix'});}catch{/* Unverified publication retains no branch stamp. */}
+                    if(verified?.ok&&verified.data?.acknowledged===true&&acceptedSourceFresh(entry)&&sourceFresh(run))run.acceptedBranchBinding=createChatPrefixBinding(context().chat,sourceText)?.stamp;
                     // Effects-only acceptance keeps the preflighted original memory source;
                     // only a new reply revision needs accepted-publication rebasing.
                     if(run.memorySession&&memoryOutputs.length&&!entry.effectsOnlyPublication){const authorized=run.memorySession.authorizeAcceptedPublication({body:acceptedBody,finalText:entry.candidate.text,messageIndex:entry.source.messageIndex,originalSwipeId:entry.source.swipeId,finalSwipeId:applied.swipeId});if(!authorized.ok)return authorized;}
@@ -1153,11 +1192,14 @@ export function createNativeWorkflowController(ports) {
         if(generation.aborted) {abort?.(true);return notify(fail('ABORTED','The native generation was stopped before workflow preparation.'));}
         if(generation.dryRun || !['normal','swipe','regenerate','continue'].includes(type)) {if(active)cancel('Overlapping background generation');return {ok:true,skipped:true};}
         if(ports.isEnabled?.()===false)return {ok:true,skipped:true};
+        const preflight=await ports.beforeRun?.({kind:'send'});if(preflight?.ok===false){abort?.(true);return notify(preflight);}
         const unified=ports.getGraph?.('unified');
         if(Object.getOwnPropertyDescriptor(unified??{},'mode')?.value==='native-unified')return beforeUnified(unified,chat,abort,type);
         return {ok:true,skipped:true};
     }
     async function runTarget(graph,target,{messageIndex,onEvent}={}) {
+        const preflight=await ports.beforeRun?.({kind:'preview',graph,target});if(preflight?.ok===false)return notify(preflight);
+        if(preflight&&ports.getGraph){const latest=ports.getGraph('unified');if(latest)graph=latest;}
         // Admit before replacing run authority or consulting the host. Runtime owns
         // the bounded malformed result, including getter-free version metadata.
         const admitted=cloneWorkflowDocument(graph);
@@ -1307,6 +1349,7 @@ export function createNativeWorkflowController(ports) {
     function subscribe() {
         if(unsubscribe)return unsubscribe;
         recall.sync();
+        captureBranchPoint();
         const c=context(),events=c.eventTypes ?? c.event_types ?? {},subscriptions=[];
         const on=(name,fn)=>{if(events[name] && c.eventSource?.on){c.eventSource.on(events[name],fn);subscriptions.push([events[name],fn]);}};
         on('CHAT_COMPLETION_SETTINGS_READY',applyNativeReasoning);
@@ -1347,7 +1390,7 @@ export function createNativeWorkflowController(ports) {
             }
             if(!internalEvents)cancel('MESSAGE_SWIPE_DELETED');
         });
-        for(const name of ['CHAT_CHANGED','CHARACTER_SELECTED','MESSAGE_SENT','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_EDITED','MESSAGE_UPDATED'])on(name,()=>{if(!internalEvents){cancel(name);recall.sync();}});
+        for(const name of ['CHAT_CHANGED','CHARACTER_SELECTED','MESSAGE_SENT','MESSAGE_DELETED','MESSAGE_SWIPED','MESSAGE_EDITED','MESSAGE_UPDATED'])on(name,()=>{if(!internalEvents){cancel(name);if(name==='CHAT_CHANGED')captureBranchPoint();recall.sync();}});
         unsubscribe=()=>{cancel('Controller disposed');for(const [event,fn]of subscriptions)(c.eventSource.removeListener ?? c.eventSource.off)?.call(c.eventSource,event,fn);unsubscribe=null;recall.dispose();};
         return unsubscribe;
     }

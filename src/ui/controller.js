@@ -15,9 +15,10 @@ import { activeModelMetadata } from '../workflow/model-profiles.js?v=0.29.0';
 import { readNodeProfileMetadata, nodeProfileMetadataKey } from './node-profile-preparation.js?v=0.29.0';
 import * as workflowRuntime from '../run.js?v=0.29.0';
 import { workflowSignature } from '../workflow/runtime.js?v=0.29.0';
+import {serializeWorkflowDocument} from '../workflow/document-file.js?v=0.29.0';
 import { installWorkflowExample } from '../workflow/examples.js?v=0.29.0';
 import { projectWorkflowExamples } from './example-catalog.js?v=0.29.0';
-import { OPERATIONS, operationFor, portsForNode, phaseForNode } from '../workflow/catalog.js?v=0.29.0';
+import { OPERATIONS, operationFor, operationDefaults, portsForNode, phaseForNode } from '../workflow/catalog.js?v=0.29.0';
 import { validateNodeModifiers } from '../workflow/modifiers.js?v=0.29.0';
 import { isWorkflowGraph } from '../workflow/contracts.js?v=0.29.0';
 import { parseWorkflowInsertionFile, prepareWorkflowInsertion } from '../workflow/insertion.js?v=0.29.0';
@@ -52,6 +53,10 @@ import { readTextFile } from './file-input.js?v=0.29.0';
 import {getNodeFileAccess} from './node-file-access.js?v=0.29.0';
 import {projectNodeFile} from './node-file-projection.js?v=0.29.0';
 import {createNodeFileActions} from './node-file-actions.js?v=0.29.0';
+import {createNodeFileApplicationActions} from './node-file-application-actions.js?v=0.29.0';
+import {prepareExampleFileDefaults} from '../workflow/example-file-defaults.js?v=0.29.0';
+import {nativeMemoryScope} from '../workflow/introspection/host-memory.js?v=0.29.0';
+import {declaredFileInput} from '../workflow/file-application-policy.js?v=0.29.0';
 import { prepareWorkspaceViews, prepareNodePlacementCard, prepareLibraryViews, projectEditorDraw, initialWorkspaceCamera, projectWorkspacePanels, projectNodeProfiles } from './workspace-preparation.js?v=0.29.0';
 import { prepareWorkflowProjection, projectPreparedWorkflow, createWorkflowSession } from './workflow-surface.js?v=0.29.0';
 import { ctx, safe, settings, save, activeWorkflow, activateWorkflow, documentSession, activeWorkspaceViews, setActiveWorkspaceViews, recoveredWorkflows, retainRecoveryWorkflows, onWorkflowActivated, onRecoveryIssue, blankGraph, touchGraph, commitGraphEdit, stepGraphHistory, exportGraph, exportArchivedWorkflows, onGraphTouched, groupMembers } from '../state.js?v=0.29.0';
@@ -89,6 +94,7 @@ let pendingDocumentPrompt = null;
 // Defer only its intermediate view event for this exact document activation.
 let documentRenderReconciliation = null;
 let workflowFiles = null, documentCommands = null, fileStorageIssue = '';
+let libraryOpen=false,libraryIssue='',pendingServerChooser=null,pendingFileRecovery=null,pendingExampleFileSetup=null;
 let nodeWorkflowDataSetup = null, pendingConfiguredNode = null;
 let nodeFileUnsubscribe=null,nodeFileObservedAccess=null,nodeFileObservedUser=null,nodeFilePicking=0;
 const nodeDocumentCaptures = new Map(), nodeCreationScopes = new WeakMap();
@@ -161,11 +167,22 @@ let workflowProjection = null, workflowProjectionGraph = null;
 let workflowState = { result: null, busy: false, status: '', applyIssue: '' };
 const workflowSession = createWorkflowSession({ runtime: () => workflowRuntime.getNativeWorkflowController?.(), rootCurrent: () => current, runEpoch: () => rootRunEpoch, documentToken: () => documentSession.capture(), active: isOpen, ownerActive: () => !!current && documentSession.current() === current, changed: state => {
     const authorityChanged = state.result !== workflowState.result || state.reviewHandles !== workflowState.reviewHandles;
+    const settled=workflowState.busy&&!state.busy||workflowState.reviewHandles?.length&&!state.reviewHandles?.length;
     workflowState = state;
     if (isOpen() && !documentTransition) { if (authorityChanged) refreshWorkflowPreparation(); if (!openingWorkspace) updateWorkflowProjection(); }
+    if(settled)queueMicrotask(()=>void refreshSavedWorkflow());
 } });
 const nativeSourceSetup=createNativeSourceSetup({controller:()=>workflowRuntime.getNativeWorkflowController?.(),documentToken:()=>documentSession.capture(),changed:()=>{if(isOpen())updateWorkflowProjection();}});
 const receiveAutomaticWorkflow = () => workflowSession.receiveAutomatic(workflowRuntime.getNativeWorkflowController?.()?.lastAutomaticResult?.());
+workflowRuntime.configureWorkflowApplication({
+    replace:(...args)=>ensureDocumentCommands().replace(...args),prompt:requestDocumentChoice,
+    downloadCopy(json,name){downloadGraphViewJSON(json,name);return {ok:true,data:{downloaded:true}};},
+    isBusy:()=>!!workflowState.reviewHandles?.some(handle=>workflowRuntime.getNativeWorkflowController?.()?.candidateStatus?.(handle)?.ok),
+});
+const applicationFiles=()=>workflowRuntime.getApplicationFileExperience?.();
+async function refreshSavedWorkflow(){const app=applicationFiles();if(!app)return;await app.controller.refresh();if(libraryOpen)await app.controller.reloadList();renderDocumentState();}
+async function openWorkflowLibrary(){libraryOpen=true;libraryIssue='';renderDocumentState();const result=await applicationFiles()?.controller.reloadList();if(result?.ok===false)libraryIssue=result.error.message;renderDocumentState();}
+async function runCurrentWorkflow(options){const result=await applicationFiles()?.controller.beforeRun();if(result?.ok===false){toast(result.error,'error');return result;}return workflowSession.run(options);}
 function workflowDataSetup() {
     const catalog = workflowRuntime.getStoryDocumentCatalog?.();
     if (!catalog) return null;
@@ -217,7 +234,8 @@ function fileWorkspaceData() {
             if(stored && typeof stored.content==='string')legacyDocuments[doc.targetId]={format:stored.format,content:stored.content};
         }
     }
-    return {...state,definitions,legacyDocuments,nodeFiles:{supported:access.supported===true,storage:access.storage,nativeSupported:access.nativeSupported,nativeAccessIssue:access.nativeAccessIssue,accessIssue:access.availability,location:access.location,bindings:access.snapshot()}};
+    const actors=(ctx().characters??[]).flatMap((actor,index)=>actor? [{id:'character:'+(actor.avatar??String(index)),label:actor.name??actor.data?.name??'Character'}]:[]);
+    return {...state,definitions,legacyDocuments,nodeFiles:{supported:access.supported===true,hostSupported:access.providers?.host?.supported===true,managedSupported:access.providers?.host?.supported===true,providers:access.providers,actors,workflowId:applicationFiles()?.controller.getWorkflowIdentity()??documentSession.draftNamespace(),storage:access.storage,nativeSupported:access.nativeSupported,nativeAccessIssue:access.nativeAccessIssue,accessIssue:access.availability,location:access.location,bindings:access.snapshot()}};
 }
 function workspaceInputs() { const context = ctx(), hostProfiles = profiles(); nodeProfileInputsKey = nodeProfileMetadataKey(context, hostProfiles); return { settings: settings(), profiles: readNodeProfileMetadata(context, hostProfiles), activeModel: activeModelMetadata(context), workflowData:fileWorkspaceData(), result: workflowState.result, resolveBinding: (node, graph) => resolveBinding(node, graph, ctx()), candidateStatus: candidate => workflowRuntime.getNativeWorkflowController?.()?.candidateStatus?.(candidate) }; }
 function refreshWorkflowPreparation() {
@@ -359,6 +377,8 @@ function navigateGraphView(action, ...args) {
 
 async function onSaveGraph(saveAs = false) {
     canvas?.cancelGesture(); H.flush(current);
+    const library=applicationFiles()?.controller;
+    if(library){const name=saveAs?await inputBox('Name this independent workflow copy',current?.name??'Untitled workflow'):null;if(saveAs&&name===null)return {ok:false,cancelled:true};const result=await(saveAs?library.saveAs(name):library.save());if(!result.ok&&!result.cancelled)toast(result.error,'error');renderDocumentState();return result;}
     return ensureDocumentCommands().save(saveAs);
 }
 function downloadGraphViewJSON(json, fileName) {
@@ -368,6 +388,7 @@ function downloadGraphViewJSON(json, fileName) {
         anchor.href = url; anchor.download = fileName; anchor.click();
     } finally { setTimeout(() => URL.revokeObjectURL(url), 0); }
 }
+function downloadWorkflowRecovery(){canvas?.cancelGesture();persistGraphViews(true);const result=serializeWorkflowDocument(current,activeWorkspaceViews(),{exampleMetadata:documentSession.exampleMetadata()});if(!result.ok)return toast(result.error,'error');downloadGraphViewJSON(result.data.json,(current?.name??'Workflow')+'.recovery.workflow.json');return {ok:true};}
 function onExportGraphView(key) {
     const view = graphViews?.project().graphViews.tabs.find(view => view.key === key);
     if (!view) return;
@@ -560,7 +581,7 @@ function syncNativeRevision(reason) {
 }
 const workflowActions = {
     presentNode,
-    run: () => graphViews ? workflowSession.run() : toast('The current workflow is unavailable.', 'error'),
+    run: () => graphViews ? runCurrentWorkflow() : toast('The current workflow is unavailable.', 'error'),
     apply: selector => applyPreviewReview(selector), reject: () => workflowSession.reject(),
 };
 function defaultNodeSpot() {
@@ -583,6 +604,7 @@ export function open() {
         workflowProgressUnsubscribe = workflowRuntime.getNativeWorkflowController?.()?.subscribeProgress?.(progress => { if (isOpen() && graphViews && !documentTransition) workflowSession.receiveProgress(progress); }) ?? null;
     } finally { openingWorkspace = false; }
     renderAll({ canvasReady: true });
+    void applicationFiles()?.setup.check();
 }
 export function close() {
     nativeSourceSetup.cancel();
@@ -590,6 +612,7 @@ export function close() {
     workflowProgressUnsubscribe?.(); workflowProgressUnsubscribe = null;
     cancelConfiguredNode();
     documentCommands?.cancelReplacement();
+    pendingServerChooser?.resolve({ok:false,cancelled:true});pendingServerChooser=null;pendingFileRecovery=null;libraryOpen=false;
     chooseDocumentPrompt('cancel');
     cancelImportReview(); document.removeEventListener('pc-native-result', receiveAutomaticWorkflow);
     // Only editor captures expire here; the document still owns its in-flight run.
@@ -654,7 +677,7 @@ function build() {
             const menuCommand = menuCommandAction(name); if (menuCommand) return menuCommand();
             if (name.startsWith('open-recent:')) return ensureDocumentCommands().recent(name.slice(12));
             if (name.startsWith('recover-workflow:')) return ensureDocumentCommands().recover(name.slice(17));
-            const commands = { new: onNewGraph, rename: onRenameGraph, save: onSaveGraph, 'save-as': () => onSaveGraph(true), 'download-document': onSaveGraph, 'clear-recent': () => ensureDocumentCommands().clearRecent(), 'open-workflow': onImportGraph, 'import-into-graph': onImportIntoGraph, export: onExportGraph, 'export-archived-workflows': onExportArchivedWorkflows, 'manage-portals': () => openPortalManager(), undo: doUndo, redo: doRedo,
+            const commands = { new: onNewGraph, rename: onRenameGraph, save: onSaveGraph, 'save-as': () => onSaveGraph(true), 'download-document': () => applicationFiles()?.controller.downloadCopy()??onExportGraph(), 'download-recovery':downloadWorkflowRecovery,'open-saved':openWorkflowLibrary,'file-storage':()=>applicationFiles()?.setup.open(),'example-files':openExampleFileSetup,'recover-selected-file':openSelectedFileRecovery,'clear-recent': () => ensureDocumentCommands().clearRecent(), 'open-workflow': onImportGraph, 'import-into-graph': onImportIntoGraph, export: onExportGraph, 'export-archived-workflows': onExportArchivedWorkflows, 'manage-portals': () => openPortalManager(), undo: doUndo, redo: doRedo,
                 fit: () => canvas.fit(), copy: () => copySelection(), cut: () => copySelection(true), paste: pasteFromClipboard,
                 'delete-selection': () => canvas.deleteSelection(), 'run-workflow': workflowActions.run, 'stop-workflow': stopOwnedWorkflow,
                 theme: toggleThemePopover, inspector: togglePane, 'reveal-inspector': () => { if (root.classList.contains('pc-details-hidden')) togglePane(); }, close };
@@ -667,6 +690,10 @@ function build() {
         addSystem: { close() { pendingAddSystem = null; workbench.update({ addSystem: null }); }, preview: previewAddSystem, submit: submitAddSystem },
         subgraphSave: { close() { pendingSubgraphSave = null; workbench.update({ subgraphSave: null }); }, save: saveSubgraphToShelf },
         documentPrompt: { choose: chooseDocumentPrompt },
+        workflowLibrary:{close(){libraryOpen=false;renderDocumentState();},async open(id){libraryOpen=false;renderDocumentState();const result=await applicationFiles()?.controller.openSaved(id);if(!result?.ok){libraryOpen=true;if(result&&!result.cancelled)libraryIssue=result.error.message;}renderDocumentState();},refresh:openWorkflowLibrary},
+        serverChooser:{select(path){const pending=pendingServerChooser;pendingServerChooser=null;renderDocumentState();pending?.resolve({ok:true,data:{path}});},cancel(){const pending=pendingServerChooser;pendingServerChooser=null;renderDocumentState();pending?.resolve({ok:false,cancelled:true});}},
+        fileRecovery:{close(){pendingFileRecovery=null;renderDocumentState();},select(versionId){if(pendingFileRecovery){pendingFileRecovery.view={...pendingFileRecovery.view,confirming:versionId};renderDocumentState();}},cancel(){if(pendingFileRecovery){pendingFileRecovery.view={...pendingFileRecovery.view,confirming:null};renderDocumentState();}},restore:restoreSelectedFileVersion},
+        exampleFileSetup:{close(){pendingExampleFileSetup=null;renderDocumentState();},apply:applyExampleFileSetup},
         recall: recallActions, configureNode: configureNodeActions,
         acceptImport: acceptImportReview, cancelImport: cancelImportReview, prepareImportAgain,
     });
@@ -684,7 +711,7 @@ function build() {
     }); installRecoveryLifecycle();
     const nativeContext = ctx();
     for (const name of ['CHAT_CHANGED', 'MESSAGE_EDITED', 'MESSAGE_UPDATED', 'MESSAGE_DELETED', 'MESSAGE_SWIPED', 'MESSAGE_SENT', 'GENERATION_STARTED', 'GENERATION_ENDED', 'GENERATION_STOPPED']) {
-        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (name === 'CHAT_CHANGED') void diagnosticHistoryUi?.refresh(); if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { nativeSourceSetup.cancel(); cancelConfiguredNode(); } if(current?.runtime===3)updateWorkflowProjection(); } });
+        if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => { if (name === 'CHAT_CHANGED') {void diagnosticHistoryUi?.refresh();void applicationFiles()?.setup.check();void applicationFiles()?.controller.restoreSelection();} else if(['GENERATION_ENDED','GENERATION_STOPPED'].includes(name))queueMicrotask(()=>void refreshSavedWorkflow()); if (isOpen()) { workflowSession.refreshFreshness(); if (name === 'CHAT_CHANGED') { nativeSourceSetup.cancel(); cancelConfiguredNode(); } if(current?.runtime===3)updateWorkflowProjection(); } });
     }
     for (const name of ['CHATCOMPLETION_MODEL_CHANGED', 'CHATCOMPLETION_SOURCE_CHANGED', 'MAIN_API_CHANGED', 'CONNECTION_PROFILE_LOADED', 'CONNECTION_PROFILE_CREATED', 'CONNECTION_PROFILE_UPDATED', 'CONNECTION_PROFILE_DELETED', 'OAI_PRESET_CHANGED_AFTER', 'PRESET_CHANGED', 'PRESET_DELETED', 'PRESET_RENAMED', 'SETTINGS_LOADED_AFTER', 'EXTENSION_SETTINGS_LOADED']) {
         if (nativeContext.eventTypes?.[name]) nativeContext.eventSource?.on?.(nativeContext.eventTypes[name], () => refreshNodeProfileMetadata());
@@ -695,6 +722,9 @@ function build() {
     document.addEventListener('pc-recall-state', () => { if(isOpen())refreshRecallOverview(); });
     document.addEventListener('pc-diagnostic-history', () => { void diagnosticHistoryUi?.refresh(); });
     document.addEventListener('pc-state', () => { if(isOpen())refreshRecallOverview(); });
+    document.addEventListener('pc-file-experience',()=>{renderDocumentState();});
+    window.addEventListener('focus',()=>{void refreshSavedWorkflow();});
+    setInterval(()=>{if(isOpen()&&document.visibilityState!=='hidden')void refreshSavedWorkflow();},15000);
     document.addEventListener('pc-theme', () => { if (canvas && isOpen() && !openingWorkspace) { updateWorkflowProjection(); canvas.render(); } });
     canvas = new Canvas(workbench.parts.canvasHost, {
         lodKey: () => graphViews ? documentSession.draftNamespace() + ':' + graphViews.readEditor().view.key : undefined,
@@ -747,6 +777,11 @@ function build() {
             return;
         }
         if (!isOpen()) return; const mod = event.ctrlKey || event.metaKey, key = event.key.toLowerCase();
+        if(libraryOpen||pendingServerChooser||pendingFileRecovery||pendingExampleFileSetup||applicationFiles()?.setup.view().open){
+            if(mod&&['n','o','s'].includes(key))event.preventDefault();
+            if(event.key==='Tab'){const panel=root.querySelector('.pc-application-file-modal,.pc-application-modal-backdrop'),elements=panel?[...panel.querySelectorAll('button:not(:disabled),select:not(:disabled),input:not(:disabled),a[href]')].filter(element=>element.getClientRects().length):[],first=elements[0],last=elements.at(-1);if(elements.length&&(event.shiftKey?document.activeElement===first||!panel.contains(document.activeElement):document.activeElement===last||!panel.contains(document.activeElement))){event.preventDefault();(event.shiftKey?last:first).focus();}}
+            if(event.key==='Escape'){event.preventDefault();if(pendingServerChooser){pendingServerChooser.resolve({ok:false,cancelled:true});pendingServerChooser=null;}else if(pendingFileRecovery)pendingFileRecovery=null;else if(pendingExampleFileSetup)pendingExampleFileSetup=null;else if(libraryOpen)libraryOpen=false;else void applicationFiles()?.setup.cancel();renderDocumentState();}return;
+        }
         if (mod && !event.altKey && ['n', 'o', 's'].includes(key)) { event.preventDefault(); if (!event.repeat) { if (key === 'n') onNewGraph(); else if (key === 'o') onImportGraph(); else onSaveGraph(event.shiftKey); } return; }
         if (typing()) return;
         if (key === 't' && !mod && !event.shiftKey && !event.altKey && !event.repeat && !event.isComposing && !event.defaultPrevented) {
@@ -1143,7 +1178,9 @@ function doRedo() { restoreGraphHistory('redo', 'Redid'); }
 
 function renderDocumentState() {
     if (!workbench) return;
-    workbench.update({ document: ensureDocumentCommands().view(), graphId: current?.id ?? '', enabled: !!settings().enabled, hasArchivedWorkflows: Object.keys(settings().archivedWorkflows?.graphs ?? {}).length > 0 || Object.keys(settings().archivedWorkflows?.definitions ?? {}).length > 0 });
+    const app=applicationFiles(),library=app?.controller.view(),document=ensureDocumentCommands().view();
+    if(library){document.name=current?.name??document.name;document.busy ||= library.busy;document.status=library.autosave.state==='saved'?'Saved in SillyTavern':library.status.state==='conflict'?'Changed elsewhere — your draft is retained':library.status.state==='error'?library.status.result?.error?.message??'Save needs attention':library.autosave.state==='saving'?'Saving…':document.status;document.saved=library.source?.kind==='library';}
+    workbench.update({ document,exampleFileSetup:pendingExampleFileSetup?.view??null,hasExampleFiles:!!app?.origins.get(current),fileStorageSetup:app?.setup??null,fileStorageOpen:app?.setup.view().open??false,fileRecovery:pendingFileRecovery?.view??null,workflowLibrary:libraryOpen?{items:library?.items??[],busy:library?.busy??false,error:libraryIssue}:null,serverChooser:pendingServerChooser?{access:app.server,mode:pendingServerChooser.mode,name:pendingServerChooser.name}:null,graphId: current?.id ?? '', enabled: !!settings().enabled, hasArchivedWorkflows: Object.keys(settings().archivedWorkflows?.graphs ?? {}).length > 0 || Object.keys(settings().archivedWorkflows?.definitions ?? {}).length > 0 });
 }
 
 function renderStatus({ project = true } = {}) { safe(() => document.dispatchEvent(new CustomEvent('pc-state'))); workbench.update({ enabled: !!settings().enabled }); if (project) { if (graphViews) updateWorkflowProjection(); else refreshRecallOverview(); } }
@@ -1334,6 +1371,7 @@ async function onOpenExample(id, context) {
     const result = await ensureDocumentCommands().example(id);
     if (!result.ok) return false;
     const graph = current, epoch = uiEpoch;
+    openExampleFileSetup();
     requestAnimationFrame(() => requestAnimationFrame(() => { if (stillEditing(graph, epoch) && graphViews?.readEditor().view.identity.kind === 'root') canvas.fit(); }));
     return true;
 }
@@ -1838,14 +1876,64 @@ function qualifiedNodeFileActions(){return createNodeFileActions({
     capture(selection){
         const edit=detailCapture(selection);if(!edit.ok)return edit;
         const editor=graphViews.readEditor(),node=editor.prepared.effectiveNodes[selection.address.nodeId];
-        const state=fileWorkspaceData(),view=projectNodeFile(node,{...state,...state.nodeFiles,nodes:editor.prepared.effectiveNodes,wires:editor.prepared.savedGraph.wires});
+        const input=declaredFileInput(node,editor.prepared.effectiveNodes,editor.prepared.savedGraph.wires),state=fileWorkspaceData(),view=projectNodeFile(node,{...state,...state.nodeFiles,address:selection.address,...input,nodes:editor.prepared.effectiveNodes,wires:editor.prepared.savedGraph.wires});
         if(!view || view.mode==='inherited')return {ok:false,error:{code:'INVALID_FILE_TARGET',message:'Choose a node that owns its file destination.'}};
-        return {ok:true,data:{edit:edit.data,node,nodes:editor.prepared.effectiveNodes,view,selectedEpoch:selectionEpoch}};
+        return {ok:true,data:{edit:edit.data,node,address:selection.address,...input,nodes:editor.prepared.effectiveNodes,view,selectedEpoch:selectionEpoch}};
     },
     isCurrent(captured,selection){return captured.selectedEpoch===selectionEpoch && selectedKind==='node' && selected?.id===selection.address.nodeId && detailCapture(selection).ok && editorCurrent(captured.edit);},
     access:getNodeFileAccess,
+    choosePath(request){const app=applicationFiles();if(!app||app.setup.view().effectiveMode!=='anywhere'||app.setup.view().status!=='ready'){void app?.setup.open();return Promise.resolve({ok:false,cancelled:true});}return new Promise(resolve=>{pendingServerChooser?.resolve({ok:false,cancelled:true});pendingServerChooser={...request,resolve};renderDocumentState();});},
+    importFile:(...args)=>applicationNodeFiles.importFile(...args),openFile:(...args)=>applicationNodeFiles.openFile(...args),downloadFile:(...args)=>applicationNodeFiles.downloadFile(...args),
     commit(captured,selection,controls){return commitCaptured(captured.edit,prepareNode(current,{...scopeCommand(captured.edit),kind:'controls',nodeId:selection.address.nodeId,controls}));},
 });}
+const applicationNodeFiles=createNodeFileApplicationActions({access:getNodeFileAccess,
+    getScope:()=>{const scope=workflowRuntime.getWorkflowDiagnosticScope?.(),actor=nativeMemoryScope(ctx());return scope?{userId:scope.userId,chatId:scope.chatId,...(actor.ok?{actorId:actor.data.actorId}:{})}:null;},
+    getWorkflowIdentity:()=>applicationFiles()?.controller.getWorkflowIdentity()??documentSession.draftNamespace(),
+    isCurrent:(captured,selection)=>captured.selectedEpoch===selectionEpoch&&detailCapture(selection).ok&&editorCurrent(captured.edit),
+    commit:(captured,selection,controls)=>commitCaptured(captured.edit,prepareNode(current,{...scopeCommand(captured.edit),kind:'controls',nodeId:selection.address.nodeId,controls})),
+    pickFile(){return new Promise(resolve=>{const input=document.createElement('input');input.type='file';input.accept='.txt,.md,.markdown,.json,.jsonl,.csv';input.addEventListener('change',()=>resolve(input.files?.[0]??null),{once:true});input.addEventListener('cancel',()=>resolve(null),{once:true});input.click();});},
+    presentFile(content,name,format,download){const url=URL.createObjectURL(new Blob([content],{type:format==='json'?'application/json':'text/plain;charset=utf-8'}));if(download){const anchor=document.createElement('a');anchor.href=url;anchor.download=name;anchor.click();}else window.open(url,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(url),60000);},
+});
+async function openSelectedFileRecovery(){
+    const editor=graphViews?.readEditor();if(!editor||selectedKind!=='node'||editor.view.identity.kind==='library')return toast('Select a file-owning node to recover its saved file.','info');
+    if(workflowState.busy||workflowRuntime.getNativeWorkflowController?.()?.activity?.()?.busy||workflowState.reviewHandles?.some(handle=>workflowRuntime.getNativeWorkflowController?.()?.candidateStatus?.(handle)?.ok))return toast('Finish the current run or review before recovering a file.','info');
+    const selection={selectionKey:JSON.stringify([editor.view.key,selected.id]),revision:graphViews.readEditContext().sessionId+':'+workspaceRevision,address:{workflowId:current.id,instancePath:editor.view.identity.instancePath??[],nodeId:selected.id}};
+    const edit=detailCapture(selection);if(!edit.ok)return edit;
+    const node=editor.prepared.effectiveNodes[selected.id],state=fileWorkspaceData(),view=projectNodeFile(node,{...state,...state.nodeFiles,address:selection.address,nodes:editor.prepared.effectiveNodes,wires:editor.prepared.savedGraph.wires});
+    if(!view||view.mode==='inherited')return toast('Select the node that owns the file destination.','info');
+    const capture={edit:edit.data,node,address:selection.address,nodes:editor.prepared.effectiveNodes,view,selectedEpoch:selectionEpoch};
+    const result=await applicationNodeFiles.readable(capture,selection);if(!result.ok)return toast(result.error,'error');
+    const {definition,backend,snapshot}=result.data,versions=await backend.listVersions(definition.targetId);if(!versions.ok)return toast(versions.error,'error');
+    if(!editorCurrent(capture.edit)||capture.selectedEpoch!==selectionEpoch)return;
+    pendingFileRecovery={backend,definition,capture,selection,revision:snapshot.revision,view:{name:definition.name,versions:versions.data.versions,busy:false,error:'',confirming:null}};renderDocumentState();
+}
+async function restoreSelectedFileVersion(){
+    const pending=pendingFileRecovery;if(!pending?.view.confirming||!editorCurrent(pending.capture.edit)||pending.capture.selectedEpoch!==selectionEpoch)return;
+    pending.view={...pending.view,busy:true,error:''};renderDocumentState();
+    const result=await pending.backend.restoreVersion(pending.definition.targetId,{versionId:pending.view.confirming,expectedRevision:pending.revision,intentId:'restore-'+crypto.randomUUID()});
+    if(pendingFileRecovery!==pending)return;
+    if(result.ok&&result.data?.acknowledged===true){pendingFileRecovery=null;toast('Recovered file saved. Run again to use this version.','success');refreshWorkflowPreparation();updateWorkflowProjection();}
+    else pending.view={...pending.view,busy:false,error:result.error?.message??'The recovery save was not confirmed. Keep this dialog open and check file access.'};
+    renderDocumentState();return result;
+}
+function openExampleFileSetup(){
+    const origin=applicationFiles()?.origins.get(current);if(!origin)return;
+    const result=prepareExampleFileDefaults({exampleId:origin.exampleId,workflowId:applicationFiles().controller.getWorkflowIdentity(),nodes:Object.values(current.nodes).map(node=>({node,address:{workflowId:current.id,instancePath:[],nodeId:node.id}}))});
+    if(!result.ok)return;
+    const choices=result.data.actorChoices;if(!choices.length)return;
+    const actors=(ctx().characters??[]).flatMap((actor,index)=>actor?[{id:'character:'+(actor.avatar??index),label:actor.name??actor.data?.name??'Character'}]:[]);
+    pendingExampleFileSetup={token:documentSession.capture(),origin,view:{choices,actors,values:origin.actorBindings??{},error:''}};renderDocumentState();
+}
+function applyExampleFileSetup(values){
+    const pending=pendingExampleFileSetup;if(!pending||!documentSession.stillCurrent(pending.token))return;
+    const valid=pending.view.choices.every(choice=>pending.view.actors.some(actor=>actor.id===values[choice.sampleActorId])&&(ctx().characters??[]).some((actor,index)=>'character:'+(actor?.avatar??index)===values[choice.sampleActorId]));
+    if(!valid){pending.view={...pending.view,error:'Choose a currently loaded character for each example character.'};renderDocumentState();return;}
+    const origin={...pending.origin,actorBindings:{...pending.origin.actorBindings,...values}},graph=structuredClone(current),prepared=prepareExampleFileDefaults({exampleId:origin.exampleId,workflowId:applicationFiles().controller.getWorkflowIdentity(),nodes:Object.values(graph.nodes).map(node=>({node,address:{workflowId:graph.id,instancePath:[],nodeId:node.id}})),actorBindings:origin.actorBindings});
+    if(!prepared.ok){pending.view={...pending.view,error:prepared.error.message};renderDocumentState();return;}
+    graph.nodes=Object.fromEntries(prepared.data.nodes.map(entry=>[entry.node.id,entry.node]));applicationFiles().origins.remember(graph,origin);
+    const result=activateWorkflow(graph,{source:documentSession.source(),workspaceViews:activeWorkspaceViews(),exampleMetadata:documentSession.exampleMetadata(),clean:false});if(result?.ok===false)return result;
+    pendingExampleFileSetup=null;applicationFiles().controller.changed();renderDocumentState();return {ok:true};
+}
 const commentDetailsActions = {
     patch(selection, patch) { const captured = detailCapture(selection); return captured.ok ? commentPatch(captured.data, selection.address.nodeId, patch) : captured; },
     command(selection, command) { const captured = detailCapture(selection); return captured.ok ? commentCommand(captured.data, selection.address.nodeId, command) : captured; },
@@ -1883,7 +1971,25 @@ const nodeGuideActions = {
         return committed;
     },
 };
+async function withNodeFileGesture(action){nodeFilePicking++;try{return await action();}finally{nodeFilePicking--;if(!nodeFilePicking&&isOpen()&&current){refreshWorkflowPreparation();updateWorkflowProjection();}}}
+function readableNodeFileAction(selection,download){
+    const edit=detailCapture(selection,true);if(!edit.ok)return edit;
+    const editor=graphViews.readEditor(),nodes=editor.prepared.effectiveNodes,wires=editor.prepared.savedGraph.wires;let node=nodes[selection.address.nodeId];
+    if(node?.operation==='commit-clock'||node?.operation==='write-file'&&node.destinationMode!=='own'){
+        const expected=node.operation==='commit-clock'?'story-clock':'read-file',pending=Object.values(wires).filter(wire=>wire.to===node.id&&(node.operation!=='write-file'||wire.toPort==='reference')).map(wire=>wire.from),seen=new Set();let source;
+        while(pending.length&&seen.size<1000){const id=pending.shift();if(seen.has(id))continue;seen.add(id);if(nodes[id]?.operation===expected){source=nodes[id];break;}for(const wire of Object.values(wires))if(wire.to===id)pending.push(wire.from);}node=source;
+    }
+    if(!node)return {ok:false,error:{code:'FILE_BINDING_MISSING',message:'Connect the file source before opening this file.'}};
+    const address={...selection.address,nodeId:node.id},input=declaredFileInput(node,nodes,wires),state=fileWorkspaceData(),view=projectNodeFile(node,{...state,...state.nodeFiles,address,...input,nodes,wires});
+    if(!view)return {ok:false,error:{code:'INVALID_FILE_TARGET',message:'Select a file node.'}};
+    const captured={edit:edit.data,node,address,...input,view,selectedEpoch:selectionEpoch};return applicationNodeFiles[download?'downloadFile':'openFile'](captured,selection);
+}
 const nodeDetailsActions = {
+    importNodeFile:selection=>withNodeFileGesture(()=>qualifiedNodeFileActions().importNodeFile(selection)),
+    openNodeFile:selection=>withNodeFileGesture(()=>readableNodeFileAction(selection,false)),
+    downloadNodeFile:selection=>withNodeFileGesture(()=>readableNodeFileAction(selection,true)),
+    createNodeFileCopy:(selection,settings)=>withNodeFileGesture(()=>qualifiedNodeFileActions().createNodeFileCopy(selection,settings)),
+    setupNodeFiles(){void applicationFiles()?.setup.open();return {ok:true};},
     async chooseNodeFile(selection,request){
         nodeFilePicking++;
         try{return await qualifiedNodeFileActions().chooseNodeFile(selection,request);}
@@ -1993,12 +2099,12 @@ const nodeDetailsActions = {
     remove(selection) { const captured = detailCapture(selection); if (captured.ok) deleteNativeSelection({kind:'node',id:selection.address.nodeId}, captured.data); },
     editInterface: editSubgraphInterface,
 };
-function runPreviewHere(key,target) {
+async function runPreviewHere(key,target) {
     if (key !== graphViews?.readEditContext().sessionId + ':' + workspaceRevision || graphViews.readEditor().view.identity.kind === 'library') return;
     if (workflowState.busy || workflowRuntime.getNativeWorkflowController?.()?.activity?.()?.busy) return;
     const editor = graphViews.readEditor(), policy = projectPreparedWorkflow(workspacePrepared.workflow, { ...workflowState, viewPath: editor.view.identity.instancePath ?? [], selectedTarget: target, pinnedPreview: null }).targetSummary;
     if (activeEditRoot() !== current || policy?.attemptable !== true || policy.requiresNativeGeneration) return;
-    return workflowSession.run({target});
+    return runCurrentWorkflow({target});
 }
 function revealDiagnosticNode(address) {
     if (!isOpen() || !graphViews || activeEditRoot() !== current || !address || address.workflowId !== current?.id
@@ -2070,6 +2176,8 @@ function requestNodeCreation(capture, command, at = null, shelf = false) {
     if (!editorCurrent(capture)) return { ok: false, error: { code: 'STALE_CONTEXT', message: 'The graph view changed.' } };
     const { requiresConfiguration, ...plain } = command;
     if (plain.kind === 'create') {
+        const defaults=operationDefaults(plain.operation,{managedFiles:true});
+        plain.controls={...Object.fromEntries(Object.entries(defaults).filter(([key])=>OPERATIONS[plain.operation]?.controls.includes(key))),...plain.controls};
         const editor = graphViews.readEditor(), origin = plain.connection?.origin;
         const originCard = origin ? editorDraw?.nativeCards[origin.nodeId] : null;
         plain.phase ??= configuredCreationStage(plain.operation, editor.prepared.savedGraph.mode,
@@ -2223,7 +2331,12 @@ function ensureDocumentCommands() {
     workflowFiles ??= createWorkflowFileAccess({ onChange: () => { if (documentCommands) renderDocumentState(); }, onWarning: message => { fileStorageIssue = message; documentCommands?.storageIssue(message); } });
     documentCommands = createWorkflowDocumentController({
         session: documentSession, files: workflowFiles, create: () => blankGraph('Untitled workflow'),
-        examples: id => installWorkflowExample(id), recovery: recoveredWorkflows, retainCompanions: retainRecoveryWorkflows,
+        libraryController:()=>applicationFiles()?.controller,
+        examples: id => {const installed=installWorkflowExample(id);if(!installed.ok)return installed;const graph=installed.data.graph,app=applicationFiles();
+            const lease=workflowRuntime.getStoryDocumentCatalog?.().capture();
+            const prepared=prepareExampleFileDefaults({exampleId:id,workflowId:graph.id,nodes:Object.values(graph.nodes).map(node=>({node,address:{workflowId:graph.id,instancePath:[],nodeId:node.id}})),legacyDocuments:lease?.ok?lease.data.documents:[],canonicalDocuments:ctx().chatMetadata?.latticeDocuments?.[workflowRuntime.getWorkflowDiagnosticScope?.()?.userId]??{}});
+            if(prepared.ok){graph.nodes=Object.fromEntries(prepared.data.nodes.map(entry=>[entry.node.id,entry.node]));app?.origins.remember(graph,{schemaVersion:1,exampleId:id});}
+            return installed;}, recovery: recoveredWorkflows, retainCompanions: retainRecoveryWorkflows,
         views() { canvas?.cancelGesture(); persistGraphViews(true); return activeWorkspaceViews(); },
         prompt: requestDocumentChoice,
         activate(graph, options) { canvas?.cancelGesture(); persistGraphViews(true); return activateWorkflow(graph, options); },

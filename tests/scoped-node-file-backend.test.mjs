@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {createScopedNodeFileBackend} from '../src/workflow/scoped-node-file-backend.js';
+import {prepareManagedNodeFiles} from '../src/workflow/managed-file-policy.js';
+const available=new Set(['character:rowan.png','character:iris.png']),scopes=[];
+const access={ensureManaged:async(definition,controls)=>{scopes.push({target:definition.targetId,scope:controls.scope});return {ok:true,data:{...definition,bindingId:definition.targetId}};},backend:(definitions,controls)=>({load:async targetId=>controls.isCurrent()?{ok:true,data:{targetId,scope:controls.scope,visibility:definitions[0].visibility}}:{ok:false,error:{code:'STALE_FILE_SCOPE',message:'Actor left'}}})};
+const entries=[{node:{id:'rowan',operation:'read-file',actorScope:'presence',actorId:'character:rowan.png',fileTarget:{managed:true,visibility:{kind:'actor-private',actorId:'character:rowan.png'}}},address:{workflowId:'graph',instancePath:[],nodeId:'rowan'}},{node:{id:'iris',operation:'read-file',actorScope:'presence',actorId:'character:iris.png',fileTarget:{managed:true,visibility:{kind:'actor-private',actorId:'character:iris.png'}}},address:{workflowId:'graph',instancePath:[],nodeId:'iris'}},{node:{id:'public',operation:'read-file',fileTarget:{managed:true}},address:{workflowId:'graph',instancePath:[],nodeId:'public'}}];
+const controls={scope:{userId:'u',chatId:'chat'},actorId:'character:rowan.png',isActorAvailable:actorId=>available.has(actorId),isCurrent:()=>true};
+const prepared=await prepareManagedNodeFiles(entries,{...controls,workflowId:'trusted-library',access});assert.equal(prepared.ok,true,JSON.stringify(prepared));assert.equal(scopes[0].scope.actorId,'character:rowan.png');assert.equal(scopes[1].scope.actorId,'character:iris.png');assert.equal(scopes[2].scope.actorId,undefined);
+const backend=createScopedNodeFileBackend(access,prepared.data.definitions,controls);
+for(const [index,actorId] of [[0,'character:rowan.png'],[1,'character:iris.png'],[2,undefined]])assert.equal((await backend.load(prepared.data.definitions[index].targetId)).data.scope.actorId,actorId);
+available.delete('character:iris.png');assert.equal((await backend.load(prepared.data.definitions[1].targetId)).ok,false);assert.equal((await backend.load(prepared.data.definitions[0].targetId)).ok,true);
+const denied=await prepareManagedNodeFiles([entries[1]],{...controls,workflowId:'trusted-library',access});assert.equal(denied.ok,false);
+console.log('scoped file backend: paired actor resources, actorless public files and removed-card revocation passed');

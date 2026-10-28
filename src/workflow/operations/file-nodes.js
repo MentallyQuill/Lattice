@@ -211,7 +211,7 @@ function mutationSettings(settings,inputs,schema,format){
     if(settings.fileHandling&&inputs.records){
         const records=Array.isArray(inputs.records.value)?inputs.records.value:[inputs.records.value];
         if(settings.fileHandling==='append'&&['json','jsonl','csv'].includes(format))return {operation:'add',records,collectionPath:settings.collectionPath,missingPath:settings.missingPath,...(format==='csv'?{columns:settings.columns}:{}),...(schema===undefined||format==='json'?{}:{schema})};
-        const serialized=formatRecords(records,{format,...(format==='csv'?{columns:settings.columns}:{}),...(schema===undefined||format==='json'?{}:{schema}),...(['text','markdown'].includes(format)?{separator:settings.separator,trailingSeparator:settings.trailingSeparator}:{})});if(!serialized.ok)return serialized;
+        const serialized=formatRecords(records,{format,...(format==='json'&&settings.fileHandling==='replace'&&!Array.isArray(inputs.records.value)?{jsonShape:'single'}:{}),...(format==='csv'?{columns:settings.columns}:{}),...(schema===undefined||format==='json'?{}:{schema}),...(['text','markdown'].includes(format)?{separator:settings.separator,trailingSeparator:settings.trailingSeparator}:{})});if(!serialized.ok)return serialized;
         return settings.fileHandling==='replace'?{operation:'replace',content:serialized.data.text,...(schema===undefined?{}:{schema}),...(format==='csv'?{columns:settings.columns}:{})}:{operation:'append-text',text:serialized.data.text,separator:settings.separator,emptyPolicy:settings.emptyPolicy,trailingSeparator:settings.trailingSeparator};
     }
     if(settings.fileHandling==='append'&&['json','jsonl','csv'].includes(format)){

@@ -21,7 +21,8 @@ import { modifierTypes, modifierSummary, applyTextModifiers } from '../workflow/
 import { addressKey, boundedText, RENDERED_TEXT_BYTES, freeze } from '../workflow/record-data.js?v=0.29.0';
 import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.29.0';
 import { projectWorkflowData } from './workflow-data-setup.js?v=0.29.0';
-import { projectNodeFile, nodeFileSetupIssue } from './node-file-projection.js?v=0.29.0';
+import { projectNodeFile, nodeFileSetupIssue, nodeFileContentIssue } from './node-file-projection.js?v=0.29.0';
+import {migrateUnboundOwnFile,declaredFileInput} from '../workflow/file-application-policy.js?v=0.29.0';
 import { presentDiagnostic, presentDiagnostics } from './diagnostics.js?v=0.29.0';
 import { previewDiagnostics } from './preview-diagnostics.js?v=0.29.0';
 import { projectRecordedPreview, boundReadablePreviewSections } from './recorded-preview.js?v=0.29.0';
@@ -56,7 +57,8 @@ export function prepareWorkspaceViews(root, options = {}) {
         if (wrapper) navigation.push({ identity, label: (readNodePresentation(wrapper.node).alias || (typeof wrapper.node.title === 'string' ? wrapper.node.title : '') || wrapper.definition.name || view.instancePath.at(-1)).slice(0, 256), readOnly: !view.editable });
         const effectiveNodes = Object.fromEntries(Object.entries(view.effectiveNodes).map(([id, node]) => {
             const resolved = resolveSystemNode(node, { workflowId: root.id, instancePath: view.instancePath, nodeId: id });
-            return [id, resolved.ok ? resolved.data.node : node];
+            const effective=resolved.ok ? resolved.data.node : node;
+            return [id,migrateUnboundOwnFile(effective,{canonicalDocuments:options.workflowData?.legacyDocuments??{},legacyDocuments:options.workflowData?.documents??[]})];
         }));
         const drawBase = prepareEditorDrawBase(view, root.definitions, nodeId => primitivePhases.get(addressKey({ workflowId: root.id, instancePath: view.instancePath, nodeId })));
         // Saved primitive null means inheritance; only an explicit enclosing
@@ -89,12 +91,15 @@ export function prepareWorkspaceViews(root, options = {}) {
             for(const issue of primitiveUnits.get(addressKey(address))?.setupIssues ?? [])if(!issues.some(existing=>existing.category==='setup' && existing.code===issue.code && existing.field===issue.field && existing.message===issue.message))issues.unshift({...issue,address,category:'setup'});
             const bound = display.nodes.find(node => node.id === id);
             if (options.resolveBinding && bound?.issue) issues.push({code:'BINDING_UNAVAILABLE',message:bound.issueDiagnostic?.message || presentDiagnostic(bound.issue).message,field:'profileId',address,category:'setup'});
-            const file = options.workflowData?.nodeFiles ? projectNodeFile(effectiveNodes[id],{...options.workflowData,...options.workflowData.nodeFiles,nodes:effectiveNodes,wires:view.savedGraph.wires}) : null;
+            const file = options.workflowData?.nodeFiles ? projectNodeFile(effectiveNodes[id],{...options.workflowData,...options.workflowData.nodeFiles,address,...declaredFileInput(effectiveNodes[id],effectiveNodes,view.savedGraph.wires),nodes:effectiveNodes,wires:view.savedGraph.wires}) : null;
             const fileIssue=nodeFileSetupIssue(file);
+            if(file?.supported&&!fileIssue)for(let index=issues.length-1;index>=0;index--)if(issues[index].code==='FILE_SETUP_REQUIRED'&&issues[index].field==='fileTarget')issues.splice(index,1);
             if(fileIssue){
                 for(let index=issues.length-1;index>=0;index--)if(issues[index].code==='FILE_SETUP_REQUIRED'&&issues[index].field==='fileTarget')issues.splice(index,1);
                 issues.push({...fileIssue,address});
             }
+            const contentIssue=nodeFileContentIssue(file);
+            if(contentIssue)issues.push({...contentIssue,address});
             const document = file ? null : projectWorkflowData(effectiveNodes[id],options.workflowData ?? {},false,address);
             if (document?.available && document.issue) issues.push({code:'DOCUMENT_UNAVAILABLE',message:document.issue,field:document.controlKey,address,category:'setup'});
             const deferred = [!options.resolveBinding && bound?.requestBound ? 'Live model connection has not been evaluated.' : '',document && !document.available ? 'Live document availability has not been evaluated.' : ''].filter(Boolean);
@@ -241,7 +246,8 @@ export function projectWorkspacePanels(editor, workflow, state, revision, select
             const workflowData = saved ? projectWorkflowData(editor.prepared.effectiveNodes[selectedId] ?? saved, workflow.workflowData ?? {}, !(editor.readOnly || library), library ? undefined : address) : null;
             let fieldCache = immutableScope ? authoredFieldCaches.get(contentIdentity) : null;
             if (!fieldCache) { fieldCache = new Map(); if (immutableScope) authoredFieldCaches.set(contentIdentity, fieldCache); }
-            const nodeFile=workflow.workflowData?.nodeFiles ? projectNodeFile(editor.prepared.effectiveNodes[selectedId]??saved,{...workflow.workflowData,...workflow.workflowData.nodeFiles,nodes:editor.prepared.effectiveNodes,wires:graph.wires}) : null;
+            const effectiveFileNode=editor.prepared.effectiveNodes[selectedId]??saved;
+            const nodeFile=workflow.workflowData?.nodeFiles ? projectNodeFile(effectiveFileNode,{...workflow.workflowData,...workflow.workflowData.nodeFiles,address,...declaredFileInput(effectiveFileNode,editor.prepared.effectiveNodes,graph.wires),nodes:editor.prepared.effectiveNodes,wires:graph.wires}) : null;
             const fieldKey = JSON.stringify([selectedId, workflowData?.controlKey,!!nodeFile]);
             let fields = fieldCache.get(fieldKey);
             if (!fields) {
