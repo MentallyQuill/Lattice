@@ -163,8 +163,19 @@ Each task owns the files listed below and its tests. Other workers must not reve
 - [ ] Replace obsolete global-manager/manual-ID/JSON-paste lesson instructions, regenerate examples through existing tools and verify curriculum execution/layout. Standalone portable imports retain explicit source choice rather than gain authority from imported text.
 - [ ] Run focused helper/policy/curriculum suites and types, commit owned files and obtain a fresh scoped review. Parent handles current general user guides, existing browser fixture migration and final whole-branch gates.
 
+### Task 9: Close the initial autosave integration gap
+
+**Execution amendment:** Integration verification found that new drafts required a first manual Save before automatic shared-library saving began. This task closes the existing authoring requirement in spec section 9 and acceptance scenario 2; it adds no product scope.
+
+**Files:** `src/ui/workflow-autosave.js`, `src/ui/workflow-library-controller.js`, narrowly required library/application orchestration changes, focused unit tests, and `tests/browser/file-experience.spec.mjs`.
+
+- [ ] Prove a newly edited, structurally valid unfinished workflow saves automatically without a manual Save and reopens from the host library.
+- [ ] Assign one acknowledged library identity, retain newer drafts and uncertain creation recovery, and preserve configured local bindings on ordinary adoption.
+- [ ] Flush/adopt before execution while preserving busy reviews, captured user/chat/document scope, shared identities, and independent Save As behavior.
+- [ ] Run focused tests and a real browser journey, commit owned paths, and obtain a scoped review before the final integrated gates.
+
 ## Execution Order and Coverage
 
-Tasks 1–3 can proceed independently against the interfaces above. Task 4 follows Task 1 for shared server-adapter ownership. Task 5 follows Task 2 policy; Task 6 follows Task 2 and coordinates adapter ownership. Tasks 7 and 8 may integrate independently released interfaces while remaining reviews continue; final completion waits for all task review gates and integrated verification. Each task has a fresh implementer and a scoped spec/quality review; commits include only its owned files.
+Tasks 1–3 can proceed independently against the interfaces above. Task 4 follows Task 1 for shared server-adapter ownership. Task 5 follows Task 2 policy; Task 6 follows Task 2 and coordinates adapter ownership. Tasks 7 and 8 may integrate independently released interfaces while remaining reviews continue; Task 9 closes the observed initial-adoption gap. Final completion waits for all task review gates and integrated verification. Each task has a fresh implementer and a scoped spec/quality review; commits include only its owned files.
 
 Spec sections 1–5 map to Tasks 1–4/7; section 6 to Tasks 2/5; sections 7–8 to Tasks 4/5/7; sections 9–10 to Tasks 2/3/6/7; section 11 to Tasks 1/6; sections 12–13 to all provider/migration integration; all 18 acceptance scenarios are verified by Task 7 with specialized long-run evidence from Task 6.
