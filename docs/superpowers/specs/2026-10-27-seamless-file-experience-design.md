@@ -1,6 +1,6 @@
 # Seamless file experience
 
-**Status:** Draft for product review. This document consolidates the discussion; it does not authorize implementation or select an unanswered deployment approach.
+**Status:** Design draft updated with the user's decisions D1–D5 on 2026-10-27. Those product choices are confirmed; supporting interaction details and engineering mechanisms remain subject to design review. This update documents the decisions without starting implementation.
 
 **Date:** 2026-10-27.
 
@@ -20,7 +20,8 @@ Each node retains ownership of its file configuration. Its ordinary setting shou
 
 - **Confirmed requirements** below come from the user's requests.
 - **Proposed defaults and behavior** are the recommendations discussed with the user and require review as part of this draft.
-- **Open decisions** remain explicitly unresolved. Earlier approval of the existing server component does not select a new deployment or default-storage approach.
+- **Confirmed product decisions D1–D5** are recorded in section 15 and incorporated throughout the design. They replace the earlier tentative recommendations.
+- **Remaining engineering/design details** are identified separately and must not be confused with unanswered D1–D5 choices.
 - Requirements written as “must” describe the proposed product's acceptance criteria, not claims about the current implementation.
 
 ## 2. Confirmed requirements
@@ -33,6 +34,9 @@ Each node retains ownership of its file configuration. Its ordinary setting shou
 6. Users should not need to understand or type `.txt`, `.json`, `.csv` or other suffixes. Lattice should keep content, format and filename consistent automatically.
 7. Installation should feel like installing Lattice, without users coordinating a separately presented file service.
 8. The old Workflow → Configure → Legacy chat data menu and dialog stay removed. Previously stored data must remain preserved.
+9. On first installation, check whether compatible server file support is accessible, then offer **Save only inside SillyTavern** or **Save anywhere on this computer**. Choosing the latter starts a small guided setup wizard when the component is needed.
+10. Every file-saving node offers **File handling: Replace / Append**, with Replace as the default for new nodes. Existing configured behavior is preserved.
+11. A saved workflow is one shared document: saving an edit updates that workflow everywhere it is used. Users choose **Save As** to create an independent workflow for a particular chat. Per-chat execution data remains isolated.
 
 ## 3. Current implementation and gaps
 
@@ -51,7 +55,7 @@ Current friction includes:
 
 Existing behavior and installation are documented in [the server setup guide](../../server-files.md) and [the implementation report](../reports/2026-10-27-server-file-destinations.md). Neither should be mistaken for this proposed design.
 
-## 4. Approaches and deployment constraint
+## 4. Selected installation experience and deployment constraint
 
 SillyTavern's normal extension installer clones a browser extension and reads its manifest. It does not execute a backend installation hook. Server plugins use a different startup loader and are disabled by default. Bundling backend source inside an extension does not activate it.
 
@@ -61,37 +65,53 @@ Primary references inspected during the discussion:
 - [Official server-plugin loader](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/src/plugin-loader.js#L40).
 - [Official built-in file API](https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/src/endpoints/files.js#L28).
 
-Two approaches remain under consideration:
+### First-run storage choice
 
-| Approach | User installation | Storage consequence |
+Use SillyTavern's ordinary extension installation as the entry point. On first use after installation, perform a non-mutating capability check and present two choices:
+
+| Choice | User experience | Storage consequence |
 | --- | --- | --- |
-| A. Host-managed defaults, optional custom filesystem support | Ordinary use works through SillyTavern's normal extension installation. | Workflow documents and internal state use already available host storage. Standalone files use supported host file capabilities or explicit export. Custom filesystem paths require optional backend support. |
-| B. One guided Lattice installer | A single installer prepares browser and backend components and guides any required authorization/restart. | The backend can provide automatically managed real files and custom paths. Existing remote installations still require the host owner's involvement. |
+| **Save only inside SillyTavern** | Continue immediately with automatic destinations and no server-component installation. | Workflow documents and internal state use host-managed storage. Explicit file outputs create actual files in an automatically managed location within the user's SillyTavern storage. |
+| **Save anywhere on this computer** | Use compatible existing support immediately, or open the guided setup wizard. | Allow custom locations on the machine running SillyTavern, subject to the authenticated user's authorization and OS permissions. Managed defaults remain available. |
 
-**Recommendation discussed:** Approach A for ordinary existing SillyTavern users, with optional custom filesystem support. **User selection: open.**
+The second label must identify the correct machine. For a remote installation use wording such as **Choose locations on the SillyTavern server**, with a short explanation that this does not grant access to the browser device's filesystem. “Anywhere” describes the location choice, not permission to bypass OS or host access restrictions.
 
-The current manual backend registration workflow is not acceptable as the ordinary zero-technical-skill experience. Approach B must be genuinely guided; renaming a command-line script to “one installer” does not satisfy the requirement.
+The capability check must verify the expected component/protocol version, supported operations and the current user's access; detecting an arbitrary responding endpoint is insufficient. Distinguish ready, missing/incompatible, access denied and temporarily unreachable states. An unreachable host must not be reported as a missing installation. Recheck after setup and on demand.
 
-No approach may silently enable server execution or weaken host permissions. A required host-owner decision must be explained once at the application level. Fork-specific administration endpoints cannot be assumed to exist in standard SillyTavern.
+Remember the choice for the authenticated user and host. Offer a later **File storage** setting to enable wider location support or rerun setup; this setting is not a global catalog of node files. Choosing either option must not move existing data, rewrite node destinations or reset bindings. Returning users should not see the first-run choice repeatedly, and a working existing component must not be reinstalled unnecessarily.
+
+### Guided setup for custom locations
+
+When the user chooses wider location access and compatible support is unavailable, the wizard must:
+
+1. Explain in plain language that SillyTavern requires an additional server component to save outside its own storage, and that Lattice includes that component.
+2. Identify the relevant SillyTavern host and check whether the current user can perform setup. For a remote/shared host, explain any host-owner action without requesting administrator credentials from an ordinary user.
+3. Guide installation or updating through a supported installer/host integration, requesting any required server-setting change and restart explicitly. Preserve unrelated configuration and existing plugins.
+4. Retain progress across a restart and verify that the compatible component and required permissions are accessible before reporting completion.
+5. Allow cancellation, retry or **Continue saving inside SillyTavern** without losing configuration or work. Failed optional setup must not disable working internal storage.
+
+The wizard is part of Lattice's experience; users must not coordinate a separately presented file-service product. A mandatory standalone Lattice installer was considered but is not the selected entry point. The existing command-line registration procedure may remain an advanced fallback, not the ordinary wizard journey.
+
+**Engineering constraint:** a browser extension cannot use an absent backend to install that backend. The plan must identify a concrete, supported bootstrap mechanism for each supported local/remote deployment before promising automated wizard steps. Where host-owner involvement is unavoidable, the wizard must explain and resume that action truthfully. Fork-specific administration endpoints cannot be assumed to exist in standard SillyTavern. Do not silently enable server execution or weaken host permissions.
 
 ### Managed documents and real files
 
 A managed document stored with SillyTavern's saved data is distinct from a standalone filesystem file. The UI must describe the actual result accurately.
 
-An action called **Write to File** must produce a real file when it reports success. A host-managed document should be presented as a saved document, with Download / Export creating a standalone file. This distinction cannot be hidden by calling both operations a successful file save.
+The confirmed default mapping is managed storage for workflow configuration and internal state, and actual files for explicit file outputs. **Write to File** produces an actual file with an automatic name and default location inside SillyTavern; choosing a custom location uses the optional wider-access capability. A host-managed document is presented as a saved document, with Download / Export creating a standalone copy.
 
 The built-in file API is not yet a proven substitute for the current backend. It confines files to the user's file directory, has no expected-revision/CAS operation or directory browser, and its empty-data guard affects canonical empty-file uploads. Empty writes, conflict behavior, acknowledgements and recovery must be proven before selecting it for default standalone-file persistence. Unsupported guarantees are engineering blockers, not reasons to silently weaken save behavior.
 
-## 5. Proposed defaults
+## 5. Defaults and supporting behavior
 
 | Area | Ordinary default | Explicit user choice |
 | --- | --- | --- |
-| Workflow documents | Autosave validated edits and restore the last open workflow. Provide a saved-workflow library. | Rename, duplicate, open another workflow, download or share. |
+| Workflow documents | Autosave validated edits to one shared saved document and restore the last open workflow. Every chat using that document sees saved changes. | Rename, Save As an independent workflow, open another workflow, download or share. |
 | New output | Allocate managed ownership, a collision-safe destination and a readable suggested name automatically. | Change destination, use an existing file, or change the friendly name. |
 | Clock, outcomes and internal state | Initialize valid state from the node's schema; retain existing canonical values on reopening or migration. | Change meaningful story settings, not paste storage JSON or identifiers. |
 | Connected writers | Inherit the exact source reference and its format/location. | Deliberately choose an independent output. |
 | Standalone writers | Use their own managed destination without requiring a separate reader node. | Link an existing resource or select a custom location. |
-| Snapshot output | Replace the latest Lattice-owned snapshot on accepted save. | Enable a running log / append behavior. Existing configured modes are preserved during migration. |
+| File handling | Replace the same owned file on accepted save by default. Every file-saving node exposes Replace / Append. | Choose Append to retain existing contents and add new material. Existing configured modes are preserved during migration. |
 | Missing new managed file | Create it and required managed folders on the first accepted save. | Custom external creation rules under Advanced. |
 | Missing previously saved data | Restore a verified recoverable version when possible; otherwise retain work and explain the problem. | Choose a replacement or resolve the conflict. Never silently reset existing story state to an empty template. |
 | Input file | Use a known connected/managed source when the node's purpose identifies it. Otherwise offer Choose file. | Choose the actual input; Lattice cannot guess which unrelated personal file is intended. |
@@ -99,7 +119,7 @@ The built-in file API is not yet a proven substitute for the current backend. It
 | Access | Preserve inherited restrictions and existing authorized character context. | Select a character by name if needed; explicitly widen sharing. Never type an actor ID in ordinary use. |
 | Maintenance | Reconcile interrupted saves and archive history before active limits interrupt normal use. | Restore a version or resolve a genuinely ambiguous/destructive conflict. |
 
-These are proposed defaults. The scope and output-mode decisions in section 15 must be confirmed before implementation.
+The installation, storage mapping, independent state ownership, Replace / Append choice and shared saved-workflow identity are confirmed in section 15. The detailed recovery, maintenance and interaction policies remain supporting design proposals.
 
 ## 6. Automatic formats and suffixes
 
@@ -135,9 +155,19 @@ Users enter a friendly name such as **Scene Context**. Lattice owns the physical
 
 Normal controls show **Name** and a read-only friendly **Type: Automatic · Text document** where useful. Raw suffixes and serialization settings belong in Advanced or technical details. File pickers preselect friendly type filters and suggest the correct name automatically.
 
+### File handling: Replace / Append
+
+Every node that saves file contents, including specialized file-saving nodes, exposes a consistent **File handling** control with **Replace** and **Append**. Replace is the default for new nodes. This choice belongs in the ordinary File section, not behind a technical format setting.
+
+- **Replace:** update the same destination with the new accepted contents, retaining normal recovery protection.
+- **Append:** preserve existing contents and add the new accepted material once. Retries must not add it again.
+- Both modes retain the resource's identity and correct type. Appending to structured data must preserve a valid document and the consuming node's schema; concatenating complete JSON documents into an invalid `.json` file is not a supported interpretation.
+- The implementation design must specify type-aware append rules, including text separators, structured records and fixed-schema state. It must make both advertised choices meaningful without corrupting canonical state, silently switching modes or mislabeling a separate history export as an append to the selected file.
+- Internal workflow authoring autosave updates its shared workflow document. It is distinct from a file-saving node's output handling control.
+
 ## 7. Everyday interface
 
-An ordinary output should need only its friendly name, status and relevant actions: **Open**, **Change…**, **Download copy**, and **Advanced**. Controls may be omitted when they have no meaningful action in the current state.
+An ordinary output should need only its friendly name, **File handling: Replace / Append**, status and relevant actions: **Open**, **Change…**, **Download copy**, and **Advanced**. Every file-saving node retains the handling control; other actions may be omitted when they have no meaningful effect in the current state.
 
 - Remove duplicated editable File path and Filename fields from normal use.
 - Remove the independent Save file settings step. Valid configuration changes autosave; incomplete drafts stay editable without losing the last valid configuration.
@@ -145,7 +175,7 @@ An ordinary output should need only its friendly name, status and relevant actio
 - Reserve setup cautions for unresolved choices that actually prevent the node from working. A default that is already usable is configured.
 - Show installation/capability issues once at application level. Optional custom-location support being absent must not make all otherwise working managed nodes appear broken.
 - Report readable document/node names in save results. Internal target IDs, revisions, receipts and storage backend names belong in technical details.
-- Keep Advanced available for custom locations, explicit formats, creation policy, access overrides and specialized write behavior. Advanced settings must retain their meaning across reopening and migration.
+- Keep Advanced available for custom locations, explicit formats, creation policy, access overrides and specialized write details beyond the ordinary Replace / Append choice. Advanced settings must retain their meaning across reopening and migration.
 
 The old global data configuration screen stays removed. A simple saved-items or recovery view may help users find and restore their own work; it must not become another required authorization/catalog setup workflow.
 
@@ -172,7 +202,7 @@ The old global data configuration screen stays removed. A simple saved-items or 
 
 Two save lifecycles remain distinct:
 
-1. **Authoring:** validated workflow and node configuration autosaves without executing the workflow, spending model requests or creating output document bytes.
+1. **Authoring:** validated workflow and node configuration autosaves to the shared workflow document without executing the workflow, spending model requests or creating output document bytes. An acknowledged autosave is a save and therefore propagates the edit everywhere that workflow is used.
 2. **Execution:** preview prepares results without output writes. The existing acceptance policy determines when staged effects may be saved. Autosave does not enable automatic acceptance or change an existing review policy.
 
 New managed ownership and names can be prepared automatically through trusted host context. Actual state initialization/output creation occurs only at the appropriate accepted write boundary. Initial templates must never overwrite existing canonical content.
@@ -189,11 +219,19 @@ Proposed user-facing states:
 
 Configuration and output statuses must not be conflated. A saved workflow configuration does not mean its output node has executed. Unsupported browsers must not be sent through the current “download a copy, then choose Don't Save” workaround to continue ordinary managed authoring.
 
+### Shared saved workflow semantics
+
+- Chats reference one stable saved workflow identity. Opening the same workflow in another chat does not silently create a working copy.
+- Saving an edit changes that workflow everywhere it is used. Notify/refresh other open views after a confirmed save, preserving any local unsaved edits and detecting stale-save conflicts rather than losing an editor's work.
+- **Save As** creates a new workflow identity. The new workflow can be selected for one chat and changed independently of the original. Downloading a copy is a separate export action.
+- Each execution and pending review captures a saved workflow revision. A save elsewhere must not mutate an in-flight run; later executions resolve the latest confirmed saved revision. This revision boundary does not pin a chat permanently to an old workflow.
+- Changes to shared node configuration propagate with the workflow. Runtime state and writable bindings remain scoped to the chat/workflow/node unless sharing of a particular resource is deliberately configured.
+
 ## 10. Ownership, privacy and document lifecycle
 
-- Bind managed resources through stable opaque identities, scoped to the authenticated user, chat and defined storage owner. Friendly names are presentation, not authority.
+- Give saved workflow documents stable opaque identities within the authenticated user's library, independent of the chat using them. Scope managed execution resources to the authenticated user, chat, workflow and qualified node. Friendly names are presentation, not authority.
 - Keep separate chats isolated. Explicit connections and deliberate “use existing data” choices preserve intended sharing within a graph.
-- Workflow authoring identity and execution-data identity are separate concerns. Whether opening a library workflow in another chat shares the authoring document or creates a copy is unresolved in D5; either choice must keep that chat's execution state and write authority isolated.
+- Workflow authoring is shared wherever the same saved document is used. Execution state and write authority remain independent across chats. Separate workflows within one chat also own independent state by default, with explicit sharing through exact connections or a deliberate use-existing-data choice.
 - Never derive write authority from model-generated text, an imported path, a filename or a display label.
 - Renaming a chat, workflow or node preserves its bindings and saved data.
 - A copied/imported workflow must not accidentally write into the original's resources. Rebuild intended internal connections while assigning safe new managed ownership where appropriate.
@@ -202,7 +240,7 @@ Configuration and output statuses must not be conflated. A saved workflow config
 - Preserve inherited privacy and actor restrictions through saves, migration, copies, backups, history maintenance and export. Ask for a familiar character selection when scope is ambiguous; never guess a private actor or widen access silently.
 - Preserve the distinction between user/chat ownership and which workflow/character may consume an artifact. Labels such as Public must not imply internet publication.
 
-Exact sharing/copy defaults are proposed in section 15, not retroactively attributed to the user.
+The shared workflow identity and independent state defaults are confirmed in section 15. Detailed branch rebasing and migration mechanics remain implementation-design work.
 
 ## 11. Recovery, backups and long-running stories
 
@@ -238,6 +276,7 @@ Keep existing external path ownership, OS permission and user isolation checks. 
 
 - Preserve existing filenames, formats, append/update behavior, bindings, canonical data, archives and privacy. New defaults apply to new managed resources; they do not silently reinterpret existing workflows.
 - Existing native grants and server paths remain available until explicitly migrated. Changing defaults must not redirect them automatically.
+- Preserve distinct existing workflow identities; do not merge documents merely because their names or contents match. Once chats reference the same saved workflow identity, acknowledged edits propagate to all of them. Save As creates an independent identity and safe new managed ownership rather than accidentally cloning write authority.
 - Prefer saved content over old initial templates when migrating. Validate state/schema identities internally.
 - Migrate supported old storage quietly and retain originals until a confirmed new save. Surface a migration choice only when intent is ambiguous or an overwrite could lose work.
 - Update all node guides, examples, menus, statuses, errors and active documentation together. Remove obsolete global Workflow Data instructions from current user journeys.
@@ -246,13 +285,13 @@ Keep existing external path ownership, OS permission and user isolation checks. 
 
 ## 14. Acceptance scenarios
 
-1. A new user follows the selected installation approach without a terminal, YAML editing, technical storage identifiers or experimental browser flags in the ordinary journey.
-2. A new workflow autosaves, closes and reopens with its configuration intact. Changing browsers does not turn its managed library into browser-local recent handles. Opening it in another chat follows the selected D5 policy while keeping execution data isolated.
+1. On first installation, check compatible server capability and offer the two storage choices. Saving inside SillyTavern works without a terminal, YAML editing, technical identifiers or browser flags. Choosing wider access uses existing compatible support or opens the wizard; cancellation, denial and temporary unreachability preserve working internal saves. Remember the choice and verify setup after restart.
+2. A new workflow autosaves, closes and reopens with its configuration intact. The same saved workflow used in two chats reflects acknowledged edits in both, while story state stays separate. Save As creates an independently editable workflow. Changing browsers retains access to the user's host-managed workflow library.
 3. A new standalone output, clock or outcomes node has usable defaults and does not demand a path, suffix, format, JSON template or actor ID.
 4. An unconfigured external reader offers Choose file; cancellation preserves the previous source and all stored data.
 5. Entering `Scene Context` or `SceneContext.txt` creates a correctly encoded newly managed text file with one `.txt` suffix. Structured state receives `.json` automatically. Version-like interior periods survive.
 6. A changing model response does not change the selected file type or destination. Explicit format changes preserve the earlier resource through a safe conversion/copy flow.
-7. Repeated accepted saves update the same owned output. Running-log mode appends once per accepted intent. Preview, rejection and configuration make no output writes.
+7. Every file-saving node offers Replace / Append and new nodes default to Replace. Repeated accepted saves update the same owned output; Append retains existing material and adds the new material once per accepted intent. Structured outputs remain valid and readable. Preview, rejection and configuration make no output writes.
 8. Existing source references remain exact. A writer inheriting a file cannot silently redirect it to an automatically allocated destination.
 9. Local and remotely hosted SillyTavern work with clear device/server targeting. Browse never depends on a dialog appearing on an unseen remote desktop.
 10. Imported/shared workflows cannot reuse another user's paths, bindings or private story state. Copies avoid unintended shared writes; intended connections inside a copy remain coherent.
@@ -262,25 +301,27 @@ Keep existing external path ownership, OS permission and user isolation checks. 
 14. The normal panels expose readable names and statuses, with technical controls under Advanced. Keyboard, narrow layout, light/dark themes and accessibility labels remain usable.
 15. The global Legacy chat data / Workflow Data configuration UI remains absent; migration and recovery protections remain tested.
 16. No storage operation reports Saved based only on a picker closing, download initiation, queued request or unverified response. Ordinary configuration never makes model calls.
+17. A shared workflow save cannot alter a running execution or pending review. The next execution uses the latest confirmed revision. Concurrent editors preserve unsaved changes and handle stale-save conflicts without silently overwriting one another.
+18. In inside-SillyTavern mode, an explicit Write to File output produces an actual file in the automatically selected SillyTavern location. It requires no custom-location component setup and never substitutes an in-memory document while reporting a file save.
 
-## 15. Open product decisions
+## 15. Confirmed product decisions and remaining details
 
-These questions are recorded for review rather than filled in as assumed user decisions.
+The user resolved all five product decisions on 2026-10-27:
 
-| ID | Decision | Recommendation discussed / proposed |
+| ID | Topic | Confirmed decision |
 | --- | --- | --- |
-| D1 | Must ordinary use install entirely through SillyTavern's extension menu, or may it use one guided Lattice installer? | Prefer ordinary extension installation for existing users. Backend preparation cannot be promised through that installer without host support. |
-| D2 | Which operations must create real standalone files by default, and which may be managed documents exported on demand? | Internal state and workflow authoring may use host-managed documents. Preserve truthful real-file semantics for an explicit Write to File action. Prove provider guarantees before choosing the final mapping. |
-| D3 | What scope should new clocks, notes and outcomes share across different workflows in one chat? | Prefer safe independent ownership with explicit sharing; retain exact sharing through connected references. Existing chat-wide resources are preserved during migration. |
-| D4 | Should new snapshot outputs default to replacement, with append available as a running-log option? | Yes for new Lattice-owned snapshots; never silently change existing configured write behavior. |
-| D5 | When a saved library workflow opens in another chat, is its authoring document shared or copied? | Unresolved. Shared authoring would synchronize workflow edits across chats; a copy would allow independent edits. Both require independent per-chat execution state and bindings. D3 separately governs sharing between workflows within one chat. |
+| D1 | Installation and storage choice | On first installation, check compatible server file support and offer save-inside-SillyTavern or wider OS location access. The second choice uses accessible support or guides installation in a small wizard. A separate mandatory standalone installer is not the default entry point. |
+| D2 | Managed documents versus actual files | Use managed storage for workflow configuration/internal state. Explicit file outputs create actual files with automatic names and default locations, with custom locations available after setup. |
+| D3 | State sharing between workflows | Independent state ownership by default; users deliberately share through connections or choosing existing data. Preserve existing configured sharing on migration. |
+| D4 | File handling | Update the same file with Replace by default. Every file-saving node offers a File handling choice of Append or Replace. Preserve existing configured behavior. |
+| D5 | Workflow edits across chats | One saved workflow is shared wherever used. Saved edits change it everywhere. Save As creates a separate workflow when a chat needs independent edits. Keep execution data separate per chat. |
 
-The installation/storage choice gates the final architecture. D3 and D4 gate default-state migration behavior; D5 gates library identity, autosave and cross-chat opening/copy behavior. Snapshot retention/quota policy is a further design detail to specify before implementation of maintenance.
+Remaining details for the implementation design are the concrete wizard bootstrap mechanism across supported hosts; proof of host-only real-file persistence/concurrency guarantees; valid append semantics for each structured/fixed-schema file type; shared-document revision/conflict handling; and bounded backup retention/quota behavior. These details must satisfy the confirmed choices above. If a platform constraint makes a confirmed behavior impossible, report that specific conflict before changing the product contract.
 
 ## 16. Implementation handoff
 
-After review and approval, produce an implementation plan that covers: the selected installation/provider approach; stable managed ownership and schema initialization; automatic format/naming resolution; unified workflow autosave/library; minimal node controls and cross-platform choosing; recovery/maintenance; migration; and complete documentation/example updates.
+After review and approval, produce an implementation plan that covers: first-run capability detection and the two storage choices; the optional setup wizard and verified host-only file provider; stable managed ownership and schema initialization; automatic format/naming and Replace / Append resolution; shared workflow autosave/library and Save As identity; minimal node controls and cross-platform choosing; recovery/maintenance; migration; and complete documentation/example updates.
 
-Builders may choose module boundaries, internal property names, debounce timings, provider adapters and platform helpers within the approved requirements. They may not treat an unanswered deployment choice as approved, weaken persistence guarantees, fabricate a native dialog capability, restore the global configuration screen, or change existing resource ownership/write behavior silently.
+Builders may choose module boundaries, internal property names, debounce timings, provider adapters and platform helpers within the approved requirements. They may not replace the selected first-run experience with mandatory external setup, weaken persistence guarantees, fabricate a native dialog capability, hide the requested Append / Replace control, silently copy a shared workflow per chat, restore the global configuration screen, or change existing resource ownership/write behavior silently.
 
 This draft is intended to supersede the manual-setup/default assumptions in [the earlier node-file design](2026-10-27-node-file-destinations-design.md) and [the server-file design](2026-10-27-server-file-destinations.md) once approved. Those records remain useful history and describe the current foundation.
