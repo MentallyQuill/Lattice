@@ -49,7 +49,9 @@ export function workflowDataKind(definition) {
 export function ensureWorkflowDataDefaults({ catalog, graph, defaults = [], scope, context, isCurrent }) {
     try {
         const required = new Map(defaults.map(preset => [preset.targetId, preset]));
-        for (const node of Object.values(own(graph, 'nodes') ?? {})) {
+        for (const entry of Object.values(own(graph, 'nodes') ?? {})) {
+            const node=own(entry,'node')??entry;
+            if(own(node,'fileTarget')?.managed===true)continue;
             const operation = own(node, 'operation'), preset = workflowDataPresetFor(operation);
             if (!preset) continue;
             const configured = own(node, preset.controlKey);

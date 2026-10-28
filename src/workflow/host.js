@@ -1,5 +1,6 @@
 import { normalizeWorkflowFailurePolicy } from './failure-policy.js?v=0.29.0';
 import { captureNodeFileTargets, nodeFileTargetId } from './node-file-targets.js?v=0.29.0';
+import { prepareManagedNodeFiles } from './managed-file-policy.js?v=0.29.0';
 import { getNodeFileAccess } from '../ui/node-file-access.js?v=0.29.0';
 import { randomUuid } from '../random-id.js?v=0.29.0';
 import {normalizeNativeSourceMessages} from './native-source-identity.js?v=0.29.0';
@@ -258,6 +259,9 @@ export function snapshotReply(context,messageIndex=context.chat?.length-1) {
 
 /** Owns cancellation, guidance lifetime and explicit local revision commits. */
 export function createNativeWorkflowController(ports) {
+    const managedNamespace=token(),managedDocumentOwners=new WeakMap();
+    const managedAddressKey=address=>addressKey({...address,instancePath:address.instancePath.map(part=>/^iteration-\d+$/.test(part)?'iteration-*':part)});
+    const managedNode=(run,address)=>run.managedFileNodes?.get(addressKey(address))??run.managedFileNodes?.get(managedAddressKey(address));
     const context=ports.context;
     // Separate native read-only capability, captured once. General userId freshness
     // callbacks may have effects and cannot serve as final private transport authority.
@@ -397,9 +401,21 @@ export function createNativeWorkflowController(ports) {
         run.cancel=controls.cancel;
         const captured=controls.originalGraphSnapshot;
         run.graph={id:captured.id,name:captured.name,schema:captured.schema,runtime:captured.runtime,mode:captured.mode};
+        for(const unit of plan.primitives)if(unit.included&&!unit.systemDisabled&&unit.node.operation==='write-file'&&unit.node.fileHandling&&plan.edges.filter(edge=>addressKey(edge.to)===addressKey(unit.address)&&['text','records'].includes(edge.to.portId)).length>1)return fail('AMBIGUOUS_FILE_INPUT','Connect either Text or Records to this output.');
         run.workflowDataHelperNodes=controls.workflowDataNodes??[];
-        run.workflowDataDefaults=plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled).flatMap(unit=>unit.systemDefaults??[]);
+        run.workflowDataDefaults=plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled&&!unit.node.fileTarget?.managed).flatMap(unit=>unit.systemDefaults??[]);
         run.workflowDataNodes=Object.fromEntries([...plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled).map(unit=>unit.node),...(controls.workflowDataNodes??[])].map((node,index)=>[index,node]));
+        run.managedFileEntries=[...plan.primitives.filter(unit=>unit.included&&!unit.systemDisabled).map(unit=>{
+            const incoming=plan.edges.find(edge=>addressKey(edge.to)===addressKey(unit.address)&&['text','records'].includes(edge.to.portId)),source=incoming&&plan.primitives.find(candidate=>addressKey(candidate.address)===addressKey(incoming.from))?.node;
+            return {node:unit.node,address:unit.address,...(source?.operation==='format'?{inputFormat:source.format??'json',inputColumns:source.columns}:source?.operation==='json-encode'?{inputFormat:'json'}:{}),...(incoming?.to.portId==='records'?{inputKind:'data'}:{})};
+        }),...(controls.workflowDataNodes??[]).filter(entry=>entry.node&&entry.address)];
+        run.managedFileEdges=plan.edges;
+        let managedOwner=ports.getWorkflowIdentity?.();
+        if(typeof managedOwner!=='string'||!managedOwner.trim()){
+            if(run.documentToken!==undefined)managedOwner=managedNamespace+':'+String(run.documentToken);
+            else {if(!managedDocumentOwners.has(run.originalGraph))managedDocumentOwners.set(run.originalGraph,token());managedOwner=managedNamespace+':'+managedDocumentOwners.get(run.originalGraph);}
+        }
+        run.managedWorkflowId=managedOwner;
         run.signature=workflowSignature(captured);run.identity=identity(context());run.hostUnified=captured.mode==='native-unified';if((run.hostUnified||captured.runtime===3)&&!run.unified)run.userId=ports.userId?.();
         if(run.diagnosticCapture){
             // A start observer may have selected another user/chat before
@@ -437,14 +453,21 @@ export function createNativeWorkflowController(ports) {
     }
     const fileStamp=value=>JSON.stringify([value.revision,value.format,value.content]);
     async function prepareNodeFiles(run){
-        const nodes=Object.values(run.workflowDataNodes??{});if(!nodes.some(node=>nodeFileTargetId(node)!==null||['read-file','write-file','story-clock','commit-outcomes','random-pick'].includes(node.operation)&&Object.keys(node.fileTarget??{}).length))return {ok:true};
+        let nodes=Object.values(run.workflowDataNodes??{}).map(entry=>entry.node??entry);if(!nodes.some(node=>nodeFileTargetId(node)!==null||['read-file','write-file','story-clock','commit-outcomes','random-pick'].includes(node.operation)&&Object.keys(node.fileTarget??{}).length))return {ok:true};
         const live=()=>fresh(run)&&(!run.unified||nativePrefixFresh(run));
         if(run.workflowDataDefaults?.length||run.workflowDataHelperNodes?.length){const installed=ensureWorkflowDataDefaults({catalog:documentCatalog,graph:{nodes:Object.fromEntries((run.workflowDataHelperNodes??[]).map((node,index)=>[index,node]))},defaults:run.workflowDataDefaults,scope:{userId:run.userId,chatId:run.identity.chatId},context,isCurrent:live});if(!installed.ok)return installed;}
         const legacy=documentCatalog.capture();if(!legacy.ok)return legacy;
+        const access=ports.nodeFileAccess??getNodeFileAccess();
+        if(run.managedFileEntries?.some(entry=>entry.node.fileTarget?.managed===true)){
+            await access?.ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring managed files.');
+            const managed=await prepareManagedNodeFiles(run.managedFileEntries,{workflowId:run.managedWorkflowId,edges:run.managedFileEdges,scope:{userId:run.userId,chatId:run.identity.chatId},legacyDocuments:legacy.data.documents,isCurrent:live,access});if(!managed.ok)return managed;
+            run.managedFileNodes=new Map(run.managedFileEntries.map((entry,index)=>[addressKey(entry.address),managed.data.nodes[index]]));
+            nodes=managed.data.nodes;run.workflowDataNodes=Object.fromEntries(nodes.map((node,index)=>[index,node]));
+        }
         const captured=captureNodeFileTargets(nodes,{legacyDocuments:legacy.data.documents});if(!captured.ok)return captured;
         run.nodeFileDefinitions=captured.data.definitions;run.nodeFileObserved=new Map();run.nodeFileFresh=true;
         if(!run.nodeFileDefinitions.length)return {ok:true};
-        const access=ports.nodeFileAccess??getNodeFileAccess();if(!access||typeof access.backend!=='function')return fail('FILE_ACCESS_REQUIRED','Choose an available local file in the File section for this node.');
+        if(!access||typeof access.backend!=='function')return fail('FILE_ACCESS_REQUIRED','Choose an available local file in the File section for this node.');
         // Each captured backend validates its own readiness. An unused server adapter
         // may be unavailable while an existing native destination remains valid.
         await access.ready;if(!live())return fail('STALE_FILE_SCOPE','The workflow changed while restoring file access.');
@@ -719,7 +742,7 @@ export function createNativeWorkflowController(ports) {
             ...(Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{actorContext:(actorId,request,presence)=>{const scoped=scopedActors(run);return scoped.ok?scoped.data.actorContext(actorId,request,presence):scoped;}}:{}),
             ...(run.unified?{retainDraftEventSource:payload=>{if(!run.draftEvidence){const captured=createNativeDraftEvidenceRegistry({getOriginalDraft:()=>run.nativeDraft,isCurrent:()=>fresh(run)&&nativePrefixFresh(run)&&sourceFresh(run),signal:run.controller.signal});if(!captured.ok)return captured;run.draftEvidence=captured.data;}const retained=run.draftEvidence.retain(payload);if(retained.ok){const source=retained.data.source??payload.source;run.draftSources??=new Map();run.draftSources.set(JSON.stringify([source.value.sourceId,source.value.revision,source.value.sceneId,source.value.visibility,source.value.actorId??null]),payload.draft);if(run.recallCaptured){const captured=recall.captureSourceArtifact(run,source,{source:source.value,text:source.value.text,fresh:()=>fresh(run)&&nativePrefixFresh(run)&&sourceFresh(run)&&run.draftEvidence.validate([],payload.draft).ok});if(!captured.ok)return captured;}}return retained;}}:{}),
             ...(Object.getOwnPropertyDescriptor(run.originalGraph,'mode')?.value==='native-unified'?{retainTimeProjection:async payload=>{const state=await scopedStoryState(run);return state.ok?state.data.retainTimeProjection(payload):state;},
-            selectNativeRandomOutcomes:async payload=>{const state=await scopedStoryState(run);return state.ok?state.data.selectNativeRandomOutcomes(payload):state;},
+            selectNativeRandomOutcomes:async payload=>{const state=await scopedStoryState(run);const selected=payload.address&&managedNode(run,payload.address);return state.ok?state.data.selectNativeRandomOutcomes({...payload,...(selected?.operation==='random-pick'?{ledgerId:selected.ledgerId}:{})}):state;},
             reuseNativeOutcome:outcome=>run.storySession?run.storySession.reuseNativeOutcome(outcome):{ok:true,data:null},
             retainNativeOutcome:async payload=>run.storySession?run.storySession.retainNativeOutcome(payload):{ok:true}}:{}),
             ...(run.diagnosticCapture?{onDiagnostic:event=>observe(()=>run.diagnosticCapture.model?.(event)),diagnosticResponseText:run.diagnosticCapture.captureResponses!==false,isDiagnosticResponseCurrent:()=>run.diagnosticCapture.captureResponses!==false}:{}),
@@ -967,6 +990,7 @@ export function createNativeWorkflowController(ports) {
         run.sourcePages.add(page.data);run.sourceCaptures.add({nativeChat:c.chat,metadata:c.chatMetadata,references:[...chat],scope:state.data.scope,sourceEpoch:captured.data.sourceEpoch,revision:captured.data.revision,watchCharacter:node.includeCharacter!==false||grant!==null,characterKeys});const registered=run.sourceProofs.registerReaderResult(page.data.result,page.data);return registered.ok?page.data.result:registered;
     }
     async function nativeOperation(run,node,inputs,operationPorts,options) {
+        node=managedNode(run,operationPorts.address)??node;
         if(operationPorts.root!==true&&!isScopedSystemOperation(node))return fail('HOST_OPERATION_REQUIRED','Nested operations require the trusted static system capability.');
         if(!fresh(run) || run.unified&&!nativePrefixFresh(run))return fail('STALE_RUN','Native workflow source changed.');
         if(['on-send','generate-reply'].includes(node.operation)&&(!run.native||!run.unified))return fail('NATIVE_OWNER_MISSING','Native activation requires its owned generation event.');
@@ -1042,8 +1066,8 @@ export function createNativeWorkflowController(ports) {
         if(['recall','hotkey-arm'].includes(node.operation)){if(!run.unified||run.mode==='target')return {ok:true,outputStates:Object.fromEntries((node.operation==='recall'?['out','records','report']:['proposal']).map(id=>[id,{status:'skipped',reason:{code:'RECALL_PREVIEW_NO_ACTIVATION',message:'Recall activates only on an owned ordinary Send or generated swipe.'}}])),reports:[]};const result=await recall.execute(run,node,inputs,{phase:operationPorts.phase,address:operationPorts.address,countTokens:ports.countTokens});if(result.ok&&artifactVisibility(result.outputs).kind==='actor-private'){const scoped=scopedActors(run);if(!scoped.ok)return scoped;const grant=scoped.data.authorizeSelectedActor();if(!grant.ok)return grant;const retained=scoped.data.captureScopedResult(result,grant.data.grant);if(!retained.ok)return retained;}return result;}
         if(['story-clock','commit-clock','commit-outcomes'].includes(node.operation)){
             const state=await scopedStoryState(run);if(!state.ok)return state;
-            if(node.operation==='commit-outcomes')return executeRandom(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,stageNativeOutcomes:(target,values)=>state.data.stageOutcomes(target,values,operationPorts.address)});
-            const result=await executeTimeNode(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,readStoryClock:state.data.readClock,stageStoryClock:(report,occurrences)=>state.data.stageClock(report,occurrences,operationPorts.address)});
+            if(node.operation==='commit-outcomes')return executeRandom(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,stageNativeOutcomes:(target,values,unused,handling)=>state.data.stageOutcomes(target,values,operationPorts.address,handling)});
+            const result=await executeTimeNode(node,inputs,{phase:operationPorts.phase,root:true,signal:run.controller.signal,readStoryClock:state.data.readClock,stageStoryClock:(report,occurrences,handling)=>state.data.stageClock(report,occurrences,operationPorts.address,handling)});
             if(result.ok&&node.operation==='story-clock'){const registered=state.data.registerClock(result.outputs.out.value,result.outputs.out.value.clockId);if(!registered.ok)return registered;}
             return result;
         }

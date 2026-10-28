@@ -70,13 +70,14 @@ export function compileIterationHelper(root,options) {
     }catch{return fail('INVALID_ITERATION_SETTINGS','The iteration helper could not be compiled from bounded own data.');}
 }
 /** Detached logical bindings from included units; compiler tokens and host authority stay private. */
-function workflowDataBindings(program) {
+function workflowDataBindings(program,owner=program.owner) {
     const bindings=[];
     for(const unit of program.units){
         const preset=workflowDataPresetFor(unit.node.operation),target=preset&&unit.node[preset.controlKey];
-        if(preset&&typeof target==='string'&&target!=='')bindings.push({operation:unit.node.operation,[preset.controlKey]:target});
+        const address={workflowId:owner.workflowId,instancePath:[...owner.instancePath,owner.nodeId,'iteration-*',...unit.address.instancePath.slice(1)],nodeId:unit.address.nodeId};
+        if(preset&&(typeof target==='string'&&target!==''||unit.node.fileTarget?.managed===true))bindings.push({operation:unit.node.operation,...(target?{[preset.controlKey]:target}:{}),node:unit.node,address});
         const nested=program.nested.get(nodeAddressKey(unit.address));
-        if(nested)bindings.push(...workflowDataBindings(nested));
+        if(nested)bindings.push(...workflowDataBindings(nested,address));
     }
     return bindings;
 }

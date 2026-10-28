@@ -76,7 +76,8 @@ export function createNativeStoryState(raw) {
         }
         return good();
     }
-    async function stageClock(report,extra,address) {
+    async function stageClock(report,extra,address,{fileHandling=''}={}) {
+        if(!['','replace','append'].includes(fileHandling))return fail('INVALID_FILE_HANDLING','Choose Replace or Append.');
         const available=current();if(!available.ok)return available;const proof=projections.get(report);if(!proof||proof.report!==report)return fail('TIME_PROJECTION_UNAUTHORIZED','Clock Commit requires the retained Advance Time report.');
         let occurrences=proof.occurrences;
         if(extra!==undefined){const retained=occurrenceLists.get(extra)?.proof;if(!retained||retained.capture!==proof.capture||retained!==proof&&!proof.ancestors.includes(retained))return fail('TIME_PROJECTION_UNAUTHORIZED','Connected occurrences must derive from this retained time ancestry.');occurrences=[...occurrences,...extra];}occurrences=occurrences.filter((event,index,all)=>all.findIndex(other=>other.occurrenceId===event.occurrenceId)===index);
@@ -131,7 +132,8 @@ export function createNativeStoryState(raw) {
         if(canonical(immutable(parent))!==canonical(immutable(known.outcome))||canonical(immutable(next))!==canonical(immutable(known.outcome))||!source(next.event).ok)return fail('OUTCOME_PROJECTION_UNAUTHORIZED','The authored outcome must retain this captured draw and occurrence.');
         cache.entries.set(known.key,{...cache.entries.get(known.key),outcome:next});knownOutcomes.set(next.outcomeId,{...known,outcome:next});return good();
     }
-    async function stageOutcomes(targetId,rawOutcomes,address){
+    async function stageOutcomes(targetId,rawOutcomes,address,{fileHandling=''}={}){
+        if(!['','replace','append'].includes(fileHandling))return fail('INVALID_FILE_HANDLING','Choose Replace or Append.');
         const available=current();if(!available.ok)return available;const admitted=cloneJsonValue(rawOutcomes);if(!admitted.ok)return fail('OUTCOME_LIMIT','Outcome Commit requires bounded own outcome data.');const values=Array.isArray(admitted.data.value)?admitted.data.value:[admitted.data.value];if(values.length>64)return fail('OUTCOME_LIMIT','Commit a bounded nonempty set of resolved outcomes.');
         let outcomes=[];for(const value of values){const known=knownOutcomes.get(value?.outcomeId);if(!known||canonical(value)!==canonical(known.outcome)||value.status!=='resolved'||!source(value.event).ok)return fail('OUTCOME_PROJECTION_UNAUTHORIZED','Outcome Commit requires the retained resolved draw and unchanged event.');outcomes.push({...value,acceptance:'accepted'});}
         const visibility=config.files.visibility(targetId);if(!current().ok)return current();if(!visibility.ok)return visibility;if(!permits(artifactVisibility({outcomes,provenance:values.map(value=>({visibility:knownOutcomes.get(value.outcomeId).visibility}))}),visibility.data))return fail('PRIVATE_DESTINATION','Outcome Commit must preserve the occurrence disclosure scope.');

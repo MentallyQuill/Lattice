@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { createNativeWorkflowController } from '../src/workflow/host.js?v=0.29.0';
+import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v=0.29.0';
+import { operationDefaults } from '../src/workflow/catalog.js?v=0.29.0';
+test('host provisions a trusted managed destination before staging and retains authored intent',async()=>{
+ const graph={id:'untrusted-authored-id',name:'File',schema:3,runtime:2,mode:'native-unified',nodes:{text:{id:'text',type:'workflow',operation:'text',text:'Hello'},write:{id:'write',type:'workflow',...operationDefaults('write-file',{managedFiles:true})}},wires:{w:{id:'w',route:'wire',from:'text',fromPort:'out',to:'write',toPort:'text'}},portals:{},definitions:{},runTargets:[]};
+ const c={chatId:'chat',characterId:0,characters:[{name:'Mara'}],chat:[{mes:'Hello',is_user:true}],chatMetadata:{}};
+ const catalog=createChatDocumentCatalog({getContext:()=>c,getUserId:()=> 'u'});
+ let writes=0,definitions=[];
+ const access={ready:Promise.resolve(),ensureManaged:async definition=>{definitions.push(definition);return {ok:true,data:{...definition,bindingId:'managed-binding',storage:'host'}};},backend:defs=>({lookupHistory:async()=>({ok:true,data:{epoch:0,receipt:null,outcomes:[],clockTurn:null,privateActorIds:[],visibility:{kind:'public'}}}),load:async targetId=>{const definition=defs.find(value=>value.targetId===targetId);return {ok:true,data:{targetId,revision:0,format:definition.format,content:definition.content,receipts:[]}};},compareAndSwap:async()=>{writes++;return {ok:true};}})};
+ const controller=createNativeWorkflowController({context:()=>c,getGraph:()=>graph,userId:()=> 'u',getWorkflowIdentity:()=> 'library:trusted',nodeFileAccess:access,documentCatalog:catalog,isBusy:()=>false});
+ const result=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'write',portId:'projection'});
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.equal(definitions.length,1);
+ assert.equal(definitions[0].name,'Write to File.txt');
+ assert.equal(writes,0);
+ assert.deepEqual(graph.nodes.write.fileTarget,{managed:true});
+ catalog.define({targetId:'lattice-default-clock',name:'Legacy reserved data',format:'json',content:'[]',visibility:{kind:'public'}});
+ graph.nodes.clock={id:'clock',type:'workflow',...operationDefaults('story-clock',{managedFiles:true})};
+ const clock=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'clock',portId:'out'});
+ assert.equal(clock.ok,true,JSON.stringify(clock.error));
+ assert.equal(definitions.length,2);
+ assert.equal(JSON.parse(definitions[1].content).clockId,definitions[1].targetId);
+ assert.equal(writes,0);
+ graph.nodes.source={id:'source',type:'workflow',operation:'text',text:'[{"id":1}]'};
+ graph.nodes.records={id:'records',type:'workflow',operation:'json-decode'};
+ graph.nodes.structured={id:'structured',type:'workflow',...operationDefaults('write-file',{managedFiles:true})};
+ graph.wires.decode={id:'decode',route:'wire',from:'source',fromPort:'out',to:'records',toPort:'in'};
+ graph.wires.structured={id:'structured',route:'wire',from:'records',fromPort:'out',to:'structured',toPort:'records'};
+ for(const fileHandling of ['replace','append']){
+  graph.nodes.structured.fileHandling=fileHandling;
+  const structured=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'structured',portId:'projection'});
+  assert.equal(structured.ok,true,JSON.stringify(structured.error));
+  assert.equal(definitions.at(-1).format,'json');
+  assert.equal(definitions.at(-1).content,'[]');
+ }
+ const allocated=definitions.length;
+ graph.wires.ambiguous={id:'ambiguous',route:'wire',from:'source',fromPort:'out',to:'structured',toPort:'text'};
+ const ambiguous=await controller.runTarget(graph,{workflowId:graph.id,instancePath:[],nodeId:'structured',portId:'projection'});
+ assert.equal(ambiguous.error.code,'AMBIGUOUS_FILE_INPUT');
+ assert.equal(definitions.length,allocated);
+ controller.dispose();
+});

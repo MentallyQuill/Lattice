@@ -1,4 +1,4 @@
-import { NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.29.0';
+import { FILE_HANDLING_CONTROL, NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.29.0';
 import { advanceStoryClock, enumerateScheduledOccurrences, resolveTimeAdvance } from '../story-time.js?v=0.29.0';
 import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.29.0';
 import { freeze } from '../record-data.js?v=0.29.0';
@@ -27,7 +27,7 @@ const registration = (id, title, controlDescriptors, extra = {}) => ({
     requestBound: 0, modelRole: null, terminal: false, dynamicPorts: true, ...extra,
 });
 export const TIME_OPERATIONS = {
-    'commit-clock': registration('commit-clock','Clock Commit',{}, {family:'Output',phase:'post',rootOnly:true,hostOperation:true,terminal:true}),
+    'commit-clock': registration('commit-clock','Clock Commit',{fileHandling:FILE_HANDLING_CONTROL}, {family:'Output',phase:'post',rootOnly:true,hostOperation:true,terminal:true}),
     'story-clock': registration('story-clock', 'Story Clock', {
         fileTarget: NODE_FILE_TARGET_CONTROL, clockId: stringControl('Clock', workflowDataPresetFor('story-clock').targetId), calendarId: stringControl('Expected calendar (optional)'),
     }, { input: null, rootOnly: true, hostOperation: true }),
@@ -72,7 +72,7 @@ function resolve(node, options = {}) {
             || control.type === 'array' && (!Array.isArray(value) || value.length > control.max || control.items === 'record' && value.some(item => !plain(item)))) return fail('INVALID_SETTINGS', 'Use supported bounded Time controls.');
     }
     const setupIssues=[];
-    if(operation==='story-clock'){const target=validateNodeFileTarget(settings.fileTarget);if(!target.ok)return target;settings.fileTarget=target.data;if(options.authoring&&Object.keys(target.data).length&&(!target.data.bindingId||!target.data.name))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose a clock file and filename in the File section.',field:'fileTarget'});}
+    if(operation==='story-clock'){const target=validateNodeFileTarget(settings.fileTarget);if(!target.ok)return target;settings.fileTarget=target.data;if(options.authoring&&!target.data.managed&&Object.keys(target.data).length&&(!target.data.bindingId||!target.data.name))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose a clock file and filename in the File section.',field:'fileTarget'});}
     if(operation==='time-trigger'&&!id(settings.scheduleId))setupIssues.push({code:'INVALID_SETTINGS',message:'Select a schedule identity.',field:'scheduleId'});
     if(setupIssues.length&&!options.authoring)return {ok:false,error:setupIssues[0]};
     if (operation === 'story-clock' && (!id(settings.clockId) || settings.calendarId !== '' && !id(settings.calendarId))) return fail('INVALID_SETTINGS', 'Select an explicit clock and optional calendar identity.');
@@ -225,7 +225,7 @@ export async function executeTimeNode(node, inputs, local = {}) {
         if (descriptor.id === 'commit-clock') {
             const stage = own(local,'stageStoryClock');
             if (typeof stage !== 'function') return fail('HOST_OPERATION_REQUIRED','Clock Commit requires a trusted accepted-state host.');
-            let staged; try { staged = await stage(inputs.projection.value,inputs.occurrences?.value); } catch { return fail('CLOCK_COMMIT_FAILED','The clock projection could not be staged.'); }
+            let staged; try { staged = await stage(inputs.projection.value,inputs.occurrences?.value,{fileHandling:settings.fileHandling}); } catch { return fail('CLOCK_COMMIT_FAILED','The clock projection could not be staged.'); }
             if (isStopped(signal)) return fail('ABORTED','Clock staging was stopped.');
             if (staged?.ok !== true) {
                 const checked=cloneJsonValue(staged),code=checked.ok?checked.data.value?.error?.code:null;

@@ -2,15 +2,22 @@ import { cloneJsonValue } from './operations/json-data.js?v=0.29.0';
 import { freeze, plain } from './record-data.js?v=0.29.0';
 const fail=(code,message)=>({ok:false,error:{code,message,field:'fileTarget'}});
 export const NODE_FILE_TARGET_CONTROL=freeze({type:'object',default:{},label:'File',editor:'json',max:8,hidden:true,exposable:false});
+export const FILE_HANDLING_CONTROL=freeze({type:'enum',default:'',label:'File handling',values:['','replace','append']});
 export const nodeFileFormats=Object.freeze(['json','jsonl','csv','text','markdown']);
 const id=value=>typeof value==='string'&&!!value.trim()&&value.length<=256&&!/[\r\n\0]/.test(value);
 export const validNodeFileName=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256&&!/[<>:"/\\|?*\x00-\x1f]/.test(value)&&!['.','..'].includes(value)&&!/[. ]$/.test(value)&&! /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(value);
 /** Authored intent only. A binding ID is resolved exclusively by the file service. */
 export function validateNodeFileTarget(raw={}) {
     const checked=cloneJsonValue(raw);if(!checked.ok)return fail('INVALID_FILE_TARGET','File settings require bounded own JSON data.');
-    const value=checked.data.value,keys=['bindingId','name','format','missing','content','visibility','path'];
+    const value=checked.data.value,keys=['bindingId','name','format','missing','content','visibility','path','managed'];
     if(!plain(value)||Array.isArray(value)||Object.keys(value).some(key=>!keys.includes(key)))return fail('INVALID_FILE_TARGET','Use the declared File settings.');
     if(!Object.keys(value).length)return {ok:true,data:{}};
+    if(Object.hasOwn(value,'managed')){
+        if(value.managed!==true||value.bindingId||value.path||Object.hasOwn(value,'content'))return fail('INVALID_FILE_TARGET','Managed intent cannot import bindings, paths or initial story contents.');
+        const allowed={...value};delete allowed.managed;
+        const valid=validateNodeFileTarget(allowed);if(!valid.ok)return valid;
+        return {ok:true,data:freeze({...value})};
+    }
     const target={bindingId:'',name:'',format:'text',missing:'create',content:'',visibility:{kind:'public'},...value};
     if(Object.hasOwn(target,'path')){
         if(typeof target.path!=='string'||target.path.length>4096||/[\0\r\n]/.test(target.path))return fail('INVALID_FILE_TARGET','Use a file path of at most 4,096 characters.');

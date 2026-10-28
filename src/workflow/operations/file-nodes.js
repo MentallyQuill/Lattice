@@ -1,4 +1,4 @@
-import { NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.29.0';
+import { FILE_HANDLING_CONTROL, NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.29.0';
 import { artifactVisibility } from '../artifact-privacy.js?v=0.29.0';
 import { cloneJsonValue } from './json-data.js?v=0.29.0';
 import { decodeJson } from './json-decode.js?v=0.29.0';
@@ -34,8 +34,9 @@ const controls={
 };
 controls['read-file'].fileTarget=NODE_FILE_TARGET_CONTROL;
 Object.assign(controls['write-file'],{fileTarget:NODE_FILE_TARGET_CONTROL,destinationMode:enumControl('connected','Destination',['connected','own']),targetId:textControl('','Destination identity',256)});
+controls['write-file'].fileHandling=FILE_HANDLING_CONTROL;
 controls['project-document']={...structuredClone(controls['write-file']),format:enumControl('json','Document format',formats)};controls['project-document'].mode.default='add';
-for(const key of ['fileTarget','destinationMode','targetId'])delete controls['project-document'][key];
+for(const key of ['fileTarget','destinationMode','targetId','fileHandling'])delete controls['project-document'][key];
 for(const operation of ['read-file','write-file'])Object.assign(controls[operation],{actorScope:enumControl('selected','Actor scope',['selected','presence']),actorId:textControl('','Present actor identity',256)});
 const registration=(id,title,phase,input,output,hostOperation=false)=>({id,title,family:id==='read-file'?'Input':id==='write-file'?'Output':'Shaping',phase,operationVersion:1,minimumSchema:3,minimumRuntime:2,input,output,defaults:Object.fromEntries(Object.entries(controls[id]).map(([key,value])=>[key,structuredClone(value.default)])),controls:Object.keys(controls[id]),controlDescriptors:controls[id],requestBound:0,modelRole:null,terminal:id==='write-file',dynamicPorts:true,...(hostOperation?{rootOnly:true,hostOperation:true}:{})});
 export const FILE_OPERATIONS={format:registration('format','Format','both','data','data'),'read-file':registration('read-file','Read File','both',null,'text',true),'write-file':registration('write-file','Write to File','post','data','data',true),'project-document':registration('project-document','Project Document','both','text','data')};
@@ -51,11 +52,13 @@ function resolve(rawNode,rawOptions={}){
         const captured=cloneJsonValue(Object.fromEntries(base.controls.map(key=>[key,Object.hasOwn(node,key)?node[key]:base.defaults[key]])));
         if(!captured.ok)return fail('INVALID_SETTINGS','File controls require bounded own JSON data.');
         const settings=captured.data.value;
+        const recordsInput=node.operation==='write-file'&&!['append','replace'].includes(settings.mode);
         if(node.operation==='read-file'&&settings.targetId==='')settings.targetId=base.defaults.targetId;
         for(const [key,descriptor] of Object.entries(base.controlDescriptors)){
             const value=settings[key];
             if(descriptor.type==='string'&&(typeof value!=='string'||value.length>descriptor.maxLength)||descriptor.type==='enum'&&!descriptor.values.includes(value)||descriptor.type==='boolean'&&typeof value!=='boolean'||descriptor.type==='array'&&(!Array.isArray(value)||value.length>descriptor.max||descriptor.items==='string'&&value.some(item=>typeof item!=='string')))return fail('INVALID_SETTINGS','File controls require their declared type and bound.');
         }
+        if(node.operation==='write-file'&&settings.fileHandling)settings.mode=settings.fileHandling;
         let schema;
         if(settings.schema!==''){
             try{schema=JSON.parse(settings.schema);}catch{return fail('UNSUPPORTED_SCHEMA','Schema must be raw JSON in the supported subset.');}
@@ -64,12 +67,12 @@ function resolve(rawNode,rawOptions={}){
         }
         if(node.operation==='format'&&settings.jsonShape==='single'&&settings.format!=='json')return fail('INVALID_SETTINGS','Single-object shape applies only to JSON serialization.');
         const setupIssues=[];
-        if(Object.hasOwn(settings,'fileTarget')){const target=validateNodeFileTarget(settings.fileTarget);if(!target.ok)return target;settings.fileTarget=target.data;if(options.authoring&&Object.keys(target.data).length&&(node.operation==='read-file'||settings.destinationMode==='own')&&(!target.data.bindingId||!target.data.name))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose a file and filename in the File section.',field:'fileTarget'});}
+        if(Object.hasOwn(settings,'fileTarget')){const target=validateNodeFileTarget(settings.fileTarget);if(!target.ok)return target;settings.fileTarget=target.data;if(options.authoring&&!target.data.managed&&Object.keys(target.data).length&&(node.operation==='read-file'||settings.destinationMode==='own')&&(!target.data.bindingId||!target.data.name))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Choose a file and filename in the File section.',field:'fileTarget'});}
         if(['read-file','write-file'].includes(node.operation)) {
             if(settings.actorScope==='selected'&&settings.actorId!=='')return fail('INVALID_SETTINGS','Selected scope uses the native selection.');
             if(settings.actorScope==='presence'&&!id(settings.actorId))setupIssues.push({code:'INVALID_SETTINGS',message:'Select a canonical present actor.',field:'actorId'});
         }
-        if(node.operation==='write-file'&&settings.destinationMode==='own'&&!id(settings.targetId))setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Save the destination in this node’s File settings.',field:'fileTarget'});
+        if(node.operation==='write-file'&&settings.destinationMode==='own'&&!id(settings.targetId)&&!settings.fileTarget.managed)setupIssues.push({code:'FILE_SETUP_REQUIRED',message:'Save the destination in this node’s File settings.',field:'fileTarget'});
         if(node.operation==='read-file'&&!id(settings.targetId))return fail('INVALID_SETTINGS','Select an authorized target identity.');
         if(['write-file','project-document'].includes(node.operation)) {
             if(['add-unique','upsert','update-fields'].includes(settings.mode)&&!id(settings.key))setupIssues.push({code:'INVALID_SETTINGS',message:'Choose an identity field for keyed updates.',field:'key'});
@@ -83,7 +86,7 @@ function resolve(rawNode,rawOptions={}){
         if(node.operation==='format')ports=[port('in','Records / raw JSON',settings.inputMode==='records'?'data':'text','input',true),port('records','Validated records','data','output'),port('text','Serialized text','text','output'),port('report','Format report','data','output')];
         else if(node.operation==='read-file')ports=[port('text','Contents','text','output'),port('document','Parsed document','data','output'),port('value','Parsed value','data','output'),port('reference','Live file reference','data','output')];
         else if(node.operation==='project-document')ports=[port('source','Original document','text','input',true),port(['append','replace'].includes(settings.mode)?'text':'records',['append','replace'].includes(settings.mode)?'Text':'Records',['append','replace'].includes(settings.mode)?'text':'data','input',true),port('text','Projected document text','text','output'),port('data','Projected document data','data','output'),port('receipt','Projection receipt','data','output')];
-        else ports=[port('reference','Live file reference','data','input',settings.destinationMode!=='own'),port(['append','replace'].includes(settings.mode)?'text':'records',['append','replace'].includes(settings.mode)?'Text':'Records',['append','replace'].includes(settings.mode)?'text':'data','input',true),port('evidence','Canonical source evidence','data','input'),port('projection','Projected document','data','output'),port('receipt','Staging receipt','data','output')];
+        else ports=[port('reference','Live file reference','data','input',settings.destinationMode!=='own'),...(settings.fileHandling?[port('text','Text','text','input'),port('records','Records','data','input')]:[port(recordsInput?'records':'text',recordsInput?'Records':'Text',recordsInput?'data':'text','input',true)]),port('evidence','Canonical source evidence','data','input'),port('projection','Projected document','data','output'),port('receipt','Staging receipt','data','output')];
         if(settings.actorScope==='presence')ports.unshift(port('presence','Confirmed live actor presence','data','input',true));
         return {ok:true,data:{node:freeze({id:id(node.id)?node.id:'file-operation',type:'workflow',operation:node.operation,operationVersion:1,phase,...settings}),settings:freeze(settings),schema,ports,setupIssues,descriptor:{...base,phase}}};
     }catch{return fail('INVALID_SETTINGS','File settings must be own plain data properties.');}
@@ -204,7 +207,27 @@ function parseSnapshot(snapshot,settings,schema){
     if(['text','markdown'].includes(snapshot.format)&&schema!==undefined)return fail('UNSUPPORTED_SCHEMA','Plain document text has no implicit structured fields.');
     return prepareDocumentMutation(snapshot,{operation:'replace',content:snapshot.content,...(schema===undefined?{}:{schema}),...(snapshot.format==='csv'?{columns:settings.columns}:{})});
 }
-function mutationSettings(settings,inputs,schema,format){return settings.mode==='append'?{operation:'append-text',text:inputs.text.text,separator:settings.separator,emptyPolicy:settings.emptyPolicy,trailingSeparator:settings.trailingSeparator}:settings.mode==='replace'?{operation:'replace',content:inputs.text.text,...(schema===undefined?{}:{schema}),...(format==='csv'?{columns:settings.columns}:{})}:{operation:settings.mode,records:Array.isArray(inputs.records.value)?inputs.records.value:[inputs.records.value],collectionPath:settings.collectionPath,missingPath:settings.missingPath,...(schema===undefined?{}:{schema}),...(format==='csv'?{columns:settings.columns}:{}),...(['add-unique','upsert','update-fields'].includes(settings.mode)?{key:settings.key}:{}),...(settings.mode==='upsert'?{fieldPolicy:settings.fieldPolicy}:{}),...(settings.mode==='update-fields'?{fields:settings.fields}:{})};}
+function mutationSettings(settings,inputs,schema,format){
+    if(settings.fileHandling&&inputs.records){
+        const records=Array.isArray(inputs.records.value)?inputs.records.value:[inputs.records.value];
+        if(settings.fileHandling==='append'&&['json','jsonl','csv'].includes(format))return {operation:'add',records,collectionPath:settings.collectionPath,missingPath:settings.missingPath,...(format==='csv'?{columns:settings.columns}:{}),...(schema===undefined||format==='json'?{}:{schema})};
+        const serialized=formatRecords(records,{format,...(format==='csv'?{columns:settings.columns}:{}),...(schema===undefined||format==='json'?{}:{schema}),...(['text','markdown'].includes(format)?{separator:settings.separator,trailingSeparator:settings.trailingSeparator}:{})});if(!serialized.ok)return serialized;
+        return settings.fileHandling==='replace'?{operation:'replace',content:serialized.data.text,...(schema===undefined?{}:{schema}),...(format==='csv'?{columns:settings.columns}:{})}:{operation:'append-text',text:serialized.data.text,separator:settings.separator,emptyPolicy:settings.emptyPolicy,trailingSeparator:settings.trailingSeparator};
+    }
+    if(settings.fileHandling==='append'&&['json','jsonl','csv'].includes(format)){
+        let records;
+        try {
+            if(format==='csv'){
+                const decoded=prepareDocumentMutation({targetId:'decode',revision:0,format,content:inputs.text.text},{operation:'replace',content:inputs.text.text,columns:settings.columns,...(schema===undefined?{}:{schema})});
+                records=decoded.ok?decoded.data.projectedDocument.value:null;
+            }else if(format==='jsonl')records=inputs.text.text.split('\n').filter(value=>value.trim()).map(value=>JSON.parse(value));
+            else {const value=JSON.parse(inputs.text.text);records=Array.isArray(value)?value:[value];}
+        }catch{records=null;}
+        const recordSchema=format==='json'?undefined:schema;
+        return {operation:'add',records,collectionPath:settings.collectionPath,missingPath:settings.missingPath,...(format==='csv'?{columns:settings.columns}:{}),...(recordSchema===undefined?{}:{schema:recordSchema})};
+    }
+    return settings.mode==='append'?{operation:'append-text',text:inputs.text.text,separator:settings.separator,emptyPolicy:settings.emptyPolicy,trailingSeparator:settings.trailingSeparator}:settings.mode==='replace'?{operation:'replace',content:inputs.text.text,...(schema===undefined?{}:{schema}),...(format==='csv'?{columns:settings.columns}:{})}:{operation:settings.mode,records:Array.isArray(inputs.records.value)?inputs.records.value:[inputs.records.value],collectionPath:settings.collectionPath,missingPath:settings.missingPath,...(schema===undefined?{}:{schema}),...(format==='csv'?{columns:settings.columns}:{}),...(['add-unique','upsert','update-fields'].includes(settings.mode)?{key:settings.key}:{}),...(settings.mode==='upsert'?{fieldPolicy:settings.fieldPolicy}:{}),...(settings.mode==='update-fields'?{fields:settings.fields}:{})};
+}
 /** Pure formatting and trusted root-only storage staging; this module never commits or writes. */
 export async function executeFileNode(node,namedInputs,execution={}){
     let local,files;
@@ -217,6 +240,7 @@ export async function executeFileNode(node,namedInputs,execution={}){
     if(!['format','project-document'].includes(operation)&&local.root!==true)return fail('ROOT_ONLY','Storage capabilities are reserved for a root workflow.');
     const checked=inputArtifacts(namedInputs,ports);if(!checked.ok)return checked;
     const inputs=checked.data; let visibility=visibilityOf(inputs);
+    if(operation==='write-file'&&settings.fileHandling){if(inputs.text&&inputs.records)return fail('AMBIGUOUS_FILE_INPUT','Connect either Text or Records to this output.');if(!inputs.text&&!inputs.records)return fail('MISSING_INPUT','Connect Text or Records to this output.');}
     let exactPresence,presenceStamp;
     if(settings.actorScope==='presence'){
         exactPresence=own(namedInputs).presence;presenceStamp=JSON.stringify(inputs.presence);
@@ -239,6 +263,7 @@ export async function executeFileNode(node,namedInputs,execution={}){
     if(operation==='project-document'){
         const snapshot={targetId:'pure-projection',revision:0,format:settings.format,content:inputs.source.text};
         const mutation=mutationSettings(settings,inputs,schema,snapshot.format);
+        if(mutation?.ok===false)return mutation;
         const projection=prepareDocumentMutation(snapshot,mutation);if(!projection.ok)return projection;
         visibility=visibilityOf({inputs,projection:projection.data});
         const projected=projection.data.projectedDocument;
@@ -304,7 +329,9 @@ export async function executeFileNode(node,namedInputs,execution={}){
     const evidence=inputs.evidence===undefined?[]:Array.isArray(inputs.evidence.value)?inputs.evidence.value:[inputs.evidence.value];
     if(evidence.length>128)return fail('EVIDENCE_LIMIT','At most 128 canonical evidence records can accompany one write.');
     const mutation=mutationSettings(settings,inputs,schema,snapshot.format);
+    if(mutation?.ok===false)return mutation;
     const projection=prepareDocumentMutation(snapshot,mutation);if(!projection.ok)return projection;
+    if(settings.fileHandling==='append'&&snapshot.format==='json'&&schema!==undefined){const valid=decodeJson(projection.data.projectedDocument.content,{schema});if(!valid.ok)return valid;}
     visibility=visibilityOf({inputs,projection:projection.data});
     let authorized,intent,prepared;
     try{

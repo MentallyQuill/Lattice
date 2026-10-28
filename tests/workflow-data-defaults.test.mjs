@@ -17,6 +17,13 @@ function fixture() {
 const graph = (...nodes) => ({ nodes: Object.fromEntries(nodes.map((node, index) => [index, node])) });
 const provision = (f, selected, catalog = f.catalog) => ensureWorkflowDataDefaults({ catalog, graph: selected, scope: f.scope, context: f.context, isCurrent: () => f.context().chatId === f.scope.chatId });
 
+test('managed ownership bypasses legacy global default provisioning',()=>{
+ const f=fixture();
+ const result=provision(f,graph({id:'clock',operation:'story-clock',clockId:'',fileTarget:{managed:true}},{node:{id:'outcomes',operation:'commit-outcomes',fileTarget:{managed:true}},address:{workflowId:'root',instancePath:['helper'],nodeId:'outcomes'}}));
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.deepEqual(f.catalog.snapshot().data.documents,[]);
+});
+
 test('new document-backed nodes have usable named defaults without requiring chat authoring', () => {
     assert.equal(operationDefaults('story-clock').clockId, 'lattice-default-clock');
     assert.equal(operationDefaults('read-file').targetId, 'lattice-default-notes');
@@ -213,6 +220,25 @@ test('default Outcome Commit saves accepted draws without any prior Workflow Dat
     assert.equal(outcomes.length, 1);
     assert.equal(outcomes[0].acceptance, 'accepted');
     assert.equal(outcomes[0].selection.id, 'sparks');
+});
+
+test('connected new managed outcome defaults reuse accepted draws after controller reload',async()=>{
+ const {g,playerText}=defaultOutcomeWorkflow();
+ Object.assign(g.nodes.pick,operationDefaults('random-pick',{managedFiles:true}));
+ Object.assign(g.nodes.commit,operationDefaults('commit-outcomes',{managedFiles:true}));
+ const saved=new Map();let draws=0,writes=0;
+ const access={ready:Promise.resolve(),ensureManaged:async definition=>({ok:true,data:{...definition,bindingId:definition.targetId}}),backend:definitions=>({
+  async load(targetId){const definition=definitions.find(value=>value.targetId===targetId);return {ok:true,data:saved.get(targetId)??{targetId,revision:0,format:definition.format,content:definition.content,receipts:[]}};},
+  async lookupHistory(){return {ok:true,data:{epoch:0,receipt:null,clockTurn:null,outcomes:[],privateActorIds:[],visibility:{kind:'public'}}};},
+  async compareAndSwap(update){const previous=saved.get(update.targetId);if(previous&&previous.revision!==update.expectedRevision)return {ok:false,error:{code:'FILE_REVISION_CONFLICT',message:'Changed'}};const revision=(previous?.revision??0)+1;saved.set(update.targetId,{targetId:update.targetId,revision,...update.projectedDocument,receipts:[...(previous?.receipts??[]),{intentId:update.intentId,fingerprint:update.fingerprint,revision}]});writes++;return {ok:true,data:{applied:true,acknowledged:true,revision}};}
+ })};
+ const create=()=>unifiedRecipeHost(g,{playerText,random:()=>{draws++;return .9;},ports:{nodeFileAccess:access,getWorkflowIdentity:()=> 'library:replay'}});
+ const first=create(),result=await first.generate('Blue sparks appear.');assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal((await first.controller.apply(result.reviewHandles[0])).ok,true);first.controller.dispose();
+ assert.equal(saved.size,1);
+ const second=create(),replayed=await second.generate('Blue sparks appear.');assert.equal(replayed.ok,true,JSON.stringify(replayed.error));assert.equal((await second.controller.apply(replayed.reviewHandles[0])).ok,true);second.controller.dispose();
+ assert.equal(draws,1);
+ assert.equal(writes,1);
+ assert.equal(JSON.parse([...saved.values()][0].content).length,1);
 });
 
 test('blank Random Pick storage remains optional and creates no document during a selected-node preview', async () => {

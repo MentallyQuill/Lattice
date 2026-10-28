@@ -42,6 +42,14 @@ function setup(def,extra={}){const ref={id:def.id,version:def.version,semanticHa
 function compile(fixture,options={}){assert.equal(typeof compiler.compileIterationHelper,'function','real pinned helper compiler must exist');return compiler.compileIterationHelper(fixture.root,{helper:fixture.ref,mode:'map',phase:'pre',address,requestBoundPerIteration:0,...options});}
 function invocation(fixture,options={}){return {helper:fixture.ref,item:{amount:3},index:0,phase:'pre',rootMode:'native-unified',address,...options};}
 
+test('helper inventory retains managed node intent with a qualified invocation address',()=>{
+ const fixture=setup(definition({nodes:{pick:{id:'pick',type:'workflow',operation:'random-pick',fileTarget:{managed:true}}},wires:{events:edge('events','entry','out','pick','events'),library:edge('library','entry','out','pick','library'),result:edge('result','pick','out','exit','in')}}));
+ const result=compile(fixture);assert.equal(result.ok,true,JSON.stringify(result.error));
+ assert.equal(result.data.workflowDataNodes.length,1);
+ assert.equal(result.data.workflowDataNodes[0].node.id,'pick');
+ assert.deepEqual(result.data.workflowDataNodes[0].address,{workflowId:'root',instancePath:['each','iteration-*'],nodeId:'pick'});
+});
+
 test('compiler executes direct Data interface without fabricated seed unit effects',async()=>{
  const fixture=setup(definition()),compiled=compile(fixture);assert.equal(compiled.ok,true,JSON.stringify(compiled.error));assert.equal(compiled.data.description.requestBound,0);
  let calls=0;const result=await compiler.executeCompiledIteration(compiled.data.token,invocation(fixture),{executeUnit:()=>{calls++;throw Error('no real primitives');}});

@@ -15,11 +15,11 @@ export interface NativeStoryState {
  /** Private host registration uses the exact emitted Story Clock value. */
  registerClock(value:unknown,clockId:string):Result<void>;
  retainTimeProjection(projection:NativeTimeProjection):Result<void>;
- stageClock(report:unknown,occurrences?:unknown,address?:NodeAddress):Promise<Result<Record<string,unknown>>>;
- selectNativeRandomOutcomes(input:{events:unknown;library:EffectLibrary;saved?:unknown;rerollId?:string;ledgerId?:string;visibility?:ArtifactVisibility}):Promise<Result<{outcomes:RandomOutcome[];draws:number;actualCalls:0;visibility:ArtifactVisibility}>>;
+ stageClock(report:unknown,occurrences?:unknown,address?:NodeAddress,options?:{fileHandling?:import('./node-file-targets').FileHandling}):Promise<Result<Record<string,unknown>>>;
+ selectNativeRandomOutcomes(input:{events:unknown;library:EffectLibrary;saved?:unknown;rerollId?:string;ledgerId?:string;visibility?:ArtifactVisibility;address?:NodeAddress}):Promise<Result<{outcomes:RandomOutcome[];draws:number;actualCalls:0;visibility:ArtifactVisibility}>>;
  reuseNativeOutcome(outcome:RandomOutcome):Result<RandomOutcome|null>;
  retainNativeOutcome(input:{parent:RandomOutcome;result:RandomOutcome}):Promise<Result<void>>;
- stageOutcomes(targetId:string,outcomes:unknown,address?:NodeAddress):Promise<Result<Record<string,unknown>>>;
+ stageOutcomes(targetId:string,outcomes:unknown,address?:NodeAddress,options?:{fileHandling?:import('./node-file-targets').FileHandling}):Promise<Result<Record<string,unknown>>>;
  validateEvidence(evidence:unknown,body:string,originalBody?:string,options?:{draftEvidence?:NativeDraftEvidenceRegistry;finalDraft?:DraftArtifact}):Result<void>;
  release():void;
 }

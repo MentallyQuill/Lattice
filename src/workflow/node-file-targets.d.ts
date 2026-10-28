@@ -1,9 +1,12 @@
 import type { Result } from './types';
 import type { DocumentVisibility } from './document-catalog';
 import type { ControlDescriptor } from './types';
-export interface NodeFileTarget {bindingId?:string;name?:string;path?:string;format?:'json'|'jsonl'|'csv'|'text'|'markdown';missing?:'create'|'error';content?:string;visibility?:DocumentVisibility;}
-export interface NodeFileDefinition extends Required<Omit<NodeFileTarget,'path'>> {targetId:string;path?:string;}
+export interface NodeFileTarget {managed?:true;bindingId?:string;name?:string;path?:string;format?:'json'|'jsonl'|'csv'|'text'|'markdown';missing?:'create'|'error';content?:string;visibility?:DocumentVisibility;}
+export interface NodeFileDefinition extends Required<Omit<NodeFileTarget,'path'|'managed'>> {targetId:string;path?:string;}
 export const NODE_FILE_TARGET_CONTROL:ControlDescriptor;
+/** Empty default preserves authored legacy mutation behavior. New nodes explicitly choose Replace. */
+export const FILE_HANDLING_CONTROL:ControlDescriptor;
+export type FileHandling=''|'replace'|'append';
 export const nodeFileFormats:readonly string[];
 export function validNodeFileName(value:unknown):boolean;
 export function validateNodeFileTarget(raw?:unknown):Result<NodeFileTarget>;

@@ -270,6 +270,7 @@ export function semanticControlsForNode(node, operation = operationFor(node)) {
     }
     // Additive editor controls must preserve existing version-1 semantic pins.
     if (controls.fileTarget && !Object.keys(controls.fileTarget).length) delete controls.fileTarget;
+    if(controls.fileHandling==='')delete controls.fileHandling;
     if (node.operation === 'write-file' && controls.destinationMode === 'connected') { delete controls.destinationMode; if (controls.targetId === '') delete controls.targetId; }
     if (controls.maxRetries === 0) delete controls.maxRetries;
     if (controls.reasoningEffort === 'none') delete controls.reasoningEffort;
@@ -314,7 +315,8 @@ export function portsForNode(graph, node) {
     const described = describeAuthoredOperation(graph, node);
     return described.ok ? described.data.ports : [];
 }
-export function operationDefaults(id = 'scene-context', { mode } = {}) {
+/** @param {string} [id] @param {{mode?:string,managedFiles?:boolean}} [options] */
+export function operationDefaults(id = 'scene-context', { mode, managedFiles = false } = {}) {
     const registered = Object.hasOwn(OPERATIONS, id) ? OPERATIONS[id] : null;
     let op = registered;
     if (registered && Object.hasOwn(INTROSPECTION_NATIVE_OPERATIONS, id) && mode !== undefined) {
@@ -327,6 +329,15 @@ export function operationDefaults(id = 'scene-context', { mode } = {}) {
     delete defaults.reasoningEffort;
     delete defaults.reasoningCustom;
     if (defaults.fileTarget && !Object.keys(defaults.fileTarget).length) delete defaults.fileTarget;
+    if(defaults.fileHandling==='')delete defaults.fileHandling;
+    if (managedFiles && ['write-file','story-clock','commit-outcomes','random-pick'].includes(id)) {
+        defaults.fileTarget={managed:true};
+        if(id==='write-file'){defaults.destinationMode='own';defaults.targetId='';}
+        if(id==='story-clock')defaults.clockId='';
+        if(id==='commit-outcomes')defaults.targetId='';
+    }
+    if(managedFiles && ['write-file','commit-clock','commit-outcomes'].includes(id))defaults.fileHandling='replace';
+    if(managedFiles && id==='read-file'){defaults.targetId='';defaults.fileTarget={missing:'error'};}
     if (id === 'review-publish' && defaults.autoApply === false) delete defaults.autoApply;
     if (id === 'review-publish' && defaults.autoApplyEffects === false) delete defaults.autoApplyEffects;
     if (id === 'read-file' && defaults.bindToChat === false) delete defaults.bindToChat;
