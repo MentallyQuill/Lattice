@@ -173,11 +173,11 @@ export function createServerFileAccess(options={}){
                 const value=clone(input);if(!plain(value)||Object.keys(value).length!==1||!id(value.versionId))return fail('INVALID_FILE_RESTORE','Choose a retained version.');
                 const selected=await call('version',targetId,{request:value});if(!selected.ok)return selected;
                 const data=selected.data,invalid=()=>fail('FILE_RECOVERY_TRANSFER_INVALID','The selected recovery history could not be verified.');
-                if(!plain(data)||data.transfer?.schemaVersion!==1||(data.transfer.head?.pageId??null)!==(data.snapshot?.history?.head??null))return invalid();
+                if(!plain(data)||data.transfer?.schemaVersion!==1||!id(data.transfer.token)||(data.transfer.head?.pageId??null)!==(data.snapshot?.history?.head??null))return invalid();
                 const pages={},seen=new Set();let reference=data.transfer.head;
                 while(reference!==null){
                     if(!validHistoryReference(reference)||seen.has(reference.pageId)||seen.size>=4096)return invalid();
-                    seen.add(reference.pageId);const transferred=await call('version-page',targetId,{request:{versionId:value.versionId,reference}});if(!transferred.ok)return transferred;
+                    seen.add(reference.pageId);const transferred=await call('version-page',targetId,{request:{token:data.transfer.token,reference}});if(!transferred.ok)return transferred;
                     const {pageText,previous}=transferred.data??{};if(typeof pageText!=='string'||sha256Text(pageText)!==reference.hash)return invalid();
                     const parsed=parseHistoryPage(pageText,previous);if(!parsed.ok)return parsed;
                     if(parsed.data.pageId!==reference.pageId)return invalid();
@@ -199,13 +199,13 @@ export function createServerFileAccess(options={}){
                 const initialized=await initialCapture;if(!initialized.ok)return initialized;const checked=check(targetId);if(!checked.ok)return checked;
                 const captured=captureHistoryAdoption(input);if(!captured.ok)return captured;
                 const verified=await validateHistoryTransfer({...captured.data,visibility:checked.data.definition.visibility},{targetId,scope,visibility:checked.data.definition.visibility});if(!verified.ok)return verified;
-                const value=verified.data,pages=Object.values(value.pages).reverse();let reference=null;
+                const value=verified.data,pages=Object.values(value.pages).reverse(),started=await call('adopt-begin',targetId,{request:{}});if(!started.ok)return started;const token=started.data?.token;if(!id(token))return fail('FILE_RECOVERY_TRANSFER_INVALID','The archive transfer could not be started.');let reference=null;
                 for(const page of pages){
-                    const record={pageText:JSON.stringify(page),previous:reference},uploaded=await call('adopt-page',targetId,{request:record});if(!uploaded.ok)return uploaded;
+                    const record={pageText:JSON.stringify(page),previous:reference},uploaded=await call('adopt-page',targetId,{request:{...record,token}});if(!uploaded.ok)return uploaded;
                     if(!validHistoryReference(uploaded.data)||uploaded.data.pageId!==page.pageId||uploaded.data.hash!==sha256Text(JSON.stringify(record)))return fail('FILE_RECOVERY_TRANSFER_INVALID','The saved archive transfer could not be verified.');
                     reference=uploaded.data;
                 }
-                return call('adopt',targetId,{request:{snapshot:value.snapshot,transfer:{schemaVersion:1,head:reference}}});
+                return call('adopt',targetId,{request:{snapshot:value.snapshot,transfer:{schemaVersion:1,token,head:reference}}});
             },
         });
     }

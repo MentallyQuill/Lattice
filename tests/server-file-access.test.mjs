@@ -48,7 +48,7 @@ test('server file support configures a path without native pickers or writing do
 
 test('a captured backend reads, checks and writes through the scoped server binding',async()=>{
  const revision='sha256:'+'a'.repeat(64),nextRevision='sha256:'+'b'.repeat(64),update={targetId:'notes',expectedRevision:revision,expectedContent:'Before',projectedDocument:{targetId:'notes',format:'text',content:'After'},intentId:'intent-1',fingerprint:'sha256:'+'c'.repeat(64)};
- const f=fixture({fetch:async url=>response({ok:true,data:url.endsWith('/status')?status():url.endsWith('/load')?{targetId:'notes',format:'text',content:'Before',revision,receipts:[],history:{schemaVersion:1,epoch:0,head:null}}:url.endsWith('/cas')?{applied:true,acknowledged:true,revision:nextRevision}:url.endsWith('/history')?{epoch:0,visibility:{kind:'public'},privateActorIds:[]}: {adopted:true}})});
+ const f=fixture({fetch:async url=>response({ok:true,data:url.endsWith('/status')?status():url.endsWith('/load')?{targetId:'notes',format:'text',content:'Before',revision,receipts:[],history:{schemaVersion:1,epoch:0,head:null}}:url.endsWith('/cas')?{applied:true,acknowledged:true,revision:nextRevision}:url.endsWith('/history')?{epoch:0,visibility:{kind:'public'},privateActorIds:[]}:url.endsWith('/adopt-begin')?{token:'transfer-token'}: {adopted:true}})});
  must(await f.access.ready);
  const backend=f.access.backend([definition],{scope,isCurrent:()=>true});
  const loaded=must(await backend.load('notes'));assert.equal(loaded.content,'Before');
