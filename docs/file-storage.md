@@ -23,6 +23,8 @@ Workflow edits autosave. **Saved in SillyTavern** means Lattice verified the sav
 
 Use **File → Open saved…** to find a saved workflow. The same saved workflow can be used in several chats: saving an edit changes its design everywhere it is used. Story state remains separate for each chat, and a running execution finishes against its captured workflow revision.
 
+If a recovered draft differs from the workflow selected for the chat, Lattice keeps your draft and pauses execution. Open Lattice to choose which workflow to use.
+
 Choose **Save As…** and enter a different friendly name when you want an independent workflow. Later edits to that copy do not update the original. **Rename workflow…** keeps the existing workflow identity.
 
 **Import workflow…** opens a copy from your device. **Download / share workflow…** creates a portable sharing copy; it does not replace an acknowledged live save. Sharing excludes local connection identifiers, writable file bindings and machine paths. Keep private input data out of a sharing copy unless you deliberately include it. **Download workflow backup…** retains your local workflow configuration; it does not include the contents or recovery history of its input and output files.

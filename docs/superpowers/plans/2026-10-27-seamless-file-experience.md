@@ -10,6 +10,8 @@
 
 **Spec:** [Approved design](../specs/2026-10-27-seamless-file-experience-design.md). Product decisions D1–D5 are approved. The user authorized planning followed by implementation without further approval requests.
 
+**Status:** Complete. See the [delivery report](../reports/2026-10-27-seamless-file-experience.md) for verification, review results and platform limits.
+
 ## Global Constraints
 
 - Normal use must not require experimental browser flags or depend on native browser filesystem APIs being available.
@@ -54,11 +56,11 @@ Each task owns the files listed below and its tests. Other workers must not reve
 - `createNodeFileService({host,server,native,getStorageMode})` preserves existing binding ownership, defaults new managed files to host storage, and routes custom choices to the enabled provider. Expose provider capability/status separately from native API availability.
 - Library Task 3 consumes the raw store; runtime Tasks 2/6 consume the existing backend contract.
 
-- [ ] Add one failing host-equivalent upload/read test proving a new managed file actually exists and an accepted empty replacement has zero bytes; run it with `node --import ./tools/node-test-host.mjs tests/host-file-store.test.mjs`.
-- [ ] Implement authenticated no-store reads, bounded UTF-8 upload, safe ASCII physical names with separate friendly labels, exact returned-path validation and generated per-intent recovery objects; verify the test passes.
-- [ ] Add/run a failing conflict/retry test, then implement expected-hash checks, response verification, preserved attempts and deduplication without overstating cross-device guarantees.
-- [ ] Add/run a failing adapter reload test, then persist/reconstruct trusted bindings and checked metadata (reusing native backend machinery where appropriate); verify user isolation and lost-response recovery.
-- [ ] Extend routing tests for host default, existing native/server grants, offline versus missing service and differing provider guarantees. Run focused tests and declaration checks; report changed APIs and commit owned files only.
+- [x] Add one failing host-equivalent upload/read test proving a new managed file actually exists and an accepted empty replacement has zero bytes; run it with `node --import ./tools/node-test-host.mjs tests/host-file-store.test.mjs`.
+- [x] Implement authenticated no-store reads, bounded UTF-8 upload, safe ASCII physical names with separate friendly labels, exact returned-path validation and generated per-intent recovery objects; verify the test passes.
+- [x] Add/run a failing conflict/retry test, then implement expected-hash checks, response verification, preserved attempts and deduplication without overstating cross-device guarantees.
+- [x] Add/run a failing adapter reload test, then persist/reconstruct trusted bindings and checked metadata (reusing native backend machinery where appropriate); verify user isolation and lost-response recovery.
+- [x] Extend routing tests for host default, existing native/server grants, offline versus missing service and differing provider guarantees. Run focused tests and declaration checks; report changed APIs and commit owned files only.
 
 ### Task 2: Automatic managed resources, formats and file handling
 
@@ -72,11 +74,11 @@ Each task owns the files listed below and its tests. Other workers must not reve
 - Authored managed intent is explicit and validated. Generated new writers own their automatic destination; legacy imports with omitted connected mode retain prior semantics.
 - `fileHandling:'replace'|'append'` maps onto existing typed mutations and trusted clock/outcome callbacks. Existing configured mutation behavior remains valid.
 
-- [ ] Write/run a failing policy test for `SceneContext.txt` → exactly one `.txt`, JSON schema default, stable IDs through rename, and independent workflow/node IDs; implement one behavior at a time and rerun.
-- [ ] Write/run failing new own-writer/clock/outcomes preparation tests; provision defaults through trusted catalog/file definitions and ensure no output bytes are created during preparation.
-- [ ] Write/run failing format-aware append tests for text and JSON records; implement typed mutation mapping preserving exact connected references.
-- [ ] Write/run failing specialized handling tests; thread controls through trusted callbacks and preserve valid clock/outcome schema and history. Coordinate checkpoint support with Task 6 instead of dropping replay identities.
-- [ ] Verify existing explicit legacy IDs, privacy, actor selection and imported untrusted IDs cannot widen authority. Run focused suites and types; commit owned files only.
+- [x] Write/run a failing policy test for `SceneContext.txt` → exactly one `.txt`, JSON schema default, stable IDs through rename, and independent workflow/node IDs; implement one behavior at a time and rerun.
+- [x] Write/run failing new own-writer/clock/outcomes preparation tests; provision defaults through trusted catalog/file definitions and ensure no output bytes are created during preparation.
+- [x] Write/run failing format-aware append tests for text and JSON records; implement typed mutation mapping preserving exact connected references.
+- [x] Write/run failing specialized handling tests; thread controls through trusted callbacks and preserve valid clock/outcome schema and history. Coordinate checkpoint support with Task 6 instead of dropping replay identities.
+- [x] Verify existing explicit legacy IDs, privacy, actor selection and imported untrusted IDs cannot widen authority. Run focused suites and types; commit owned files only.
 
 ### Task 3: Shared workflow library, acknowledged autosave and Save As
 
@@ -89,11 +91,11 @@ Each task owns the files listed below and its tests. Other workers must not reve
 - Workflow sources support `{kind:'library',id,name,revision}`; export a library controller with `openSaved(id)`, `save()`, `saveAs(name)`, `downloadCopy()`, `beforeRun()`, view/subscription and per-chat selected identity hooks.
 - Use existing host/user persistence for selection only with a verified acknowledgement; library documents are not embedded in per-chat authoring copies. Save As reuses portable-copy safety for managed data/grants.
 
-- [ ] Write/run a failing test: two chats opening one library ID see the same saved definition but retain separate selected state; implement stable shared identity/read/save.
-- [ ] Write/run a failing Save As test: new identity, independent edits and no accidental copied writable authority; implement copy serialization and migration adoption without merging matching names.
-- [ ] Write/run failing autosave tests for edits arriving during write, failed/lost acknowledgement, stale revision and user/chat switches; implement captured-token reconciliation and recovery.
-- [ ] Write/run a failing busy-refresh test: external revision is deferred during review/run and read before the next run; implement preflight hooks without weakening host freshness checks.
-- [ ] Run document/session/state/library focused suites and type checks; report hooks for Task 7 and commit owned files only.
+- [x] Write/run a failing test: two chats opening one library ID see the same saved definition but retain separate selected state; implement stable shared identity/read/save.
+- [x] Write/run a failing Save As test: new identity, independent edits and no accidental copied writable authority; implement copy serialization and migration adoption without merging matching names.
+- [x] Write/run failing autosave tests for edits arriving during write, failed/lost acknowledgement, stale revision and user/chat switches; implement captured-token reconciliation and recovery.
+- [x] Write/run a failing busy-refresh test: external revision is deferred during review/run and read before the next run; implement preflight hooks without weakening host freshness checks.
+- [x] Run document/session/state/library focused suites and type checks; report hooks for Task 7 and commit owned files only.
 
 ### Task 4: Optional setup wizard bootstrap and authorized server chooser
 
@@ -105,11 +107,11 @@ Each task owns the files listed below and its tests. Other workers must not reve
 - Setup bundle includes the matching component and imported runtime modules, installer, platform launchers and a loopback-only authenticated setup UI. Folder selection/registration/config change requires explicit local user action. No arbitrary shell interpolation, remote exposed setup listener or automatic live-host mutation during tests.
 - Server actions `roots` and `browse({path})` return bounded authorized directory/file entries without writes. Adapter exports matching methods and capability version. Chooser completion returns a selected path, not write authority; existing configure endpoint grants the scoped binding after validation.
 
-- [ ] Write/run a failing setup-state test for preinstalled/missing/denied/offline support and cancellation; implement state transitions and preference isolation.
-- [ ] Write/run installer tests against temporary SillyTavern trees for explicit enablement, existing unrelated plugin preservation, idempotent setup, config conflict and resume/restart guidance. Build/install the self-contained bundle in a temp tree and import its plugin entry.
-- [ ] Write/run failing browse tests for roots, parent traversal, symlink escape, metadata directories, non-admin access and entry limits; implement bounded authorized traversal and transport.
-- [ ] Build the Svelte wizard/chooser with clear local/server wording, working cancellation and keyboard labels. Provide standalone components/hooks for Task 7.
-- [ ] Run focused tests and types; document actual launcher prerequisites/platform limits and commit owned files only.
+- [x] Write/run a failing setup-state test for preinstalled/missing/denied/offline support and cancellation; implement state transitions and preference isolation.
+- [x] Write/run installer tests against temporary SillyTavern trees for explicit enablement, existing unrelated plugin preservation, idempotent setup, config conflict and resume/restart guidance. Build/install the self-contained bundle in a temp tree and import its plugin entry.
+- [x] Write/run failing browse tests for roots, parent traversal, symlink escape, metadata directories, non-admin access and entry limits; implement bounded authorized traversal and transport.
+- [x] Build the Svelte wizard/chooser with clear local/server wording, working cancellation and keyboard labels. Provide standalone components/hooks for Task 7.
+- [x] Run focused tests and types; document actual launcher prerequisites/platform limits and commit owned files only.
 
 ### Task 5: Minimal automatic node File panel and save results
 
@@ -117,11 +119,11 @@ Each task owns the files listed below and its tests. Other workers must not reve
 
 **Interfaces:** Consume Task 2 policy and Task 1 access capabilities. Extend File view with managed/custom destination, friendly type/status, readable name and File handling. Actions expose autosaved valid intent plus explicit choosing/import/export; never execute writes from a form change.
 
-- [ ] Write/run a failing panel/projection test showing a new managed writer Ready with automatic name/type and no technical setup fields; implement projection using trusted availability and policy.
-- [ ] Write/run a failing debounce/stale-selection test; implement configuration autosave with retained incomplete drafts, no separate Save file settings button, and stable focus.
-- [ ] Write/run tests showing Replace / Append on every saving node, inherited destination controls, advanced formats/path/access, and preserving existing file names when selecting files; integrate chooser/setup actions supplied by Task 7.
-- [ ] Replace ordinary actor IDs with familiar character selection, hide internal target/receipt IDs in readable results, and update current guidance. Preserve advanced details and privacy.
-- [ ] Run unit/component tests and narrow/light/dark/keyboard browser coverage after Task 7 wiring; commit owned files only.
+- [x] Write/run a failing panel/projection test showing a new managed writer Ready with automatic name/type and no technical setup fields; implement projection using trusted availability and policy.
+- [x] Write/run a failing debounce/stale-selection test; implement configuration autosave with retained incomplete drafts, no separate Save file settings button, and stable focus.
+- [x] Write/run tests showing Replace / Append on every saving node, inherited destination controls, advanced formats/path/access, and preserving existing file names when selecting files; integrate chooser/setup actions supplied by Task 7.
+- [x] Replace ordinary actor IDs with familiar character selection, hide internal target/receipt IDs in readable results, and update current guidance. Preserve advanced details and privacy.
+- [x] Run unit/component tests and narrow/light/dark/keyboard browser coverage after Task 7 wiring; commit owned files only.
 
 ### Task 6: Accepted-boundary history maintenance, backups and branch safety
 
@@ -129,11 +131,11 @@ Each task owns the files listed below and its tests. Other workers must not reve
 
 **Interfaces:** Generalize checked checkpoint preparation/application behind backend `compareAndSwap` or a post-accepted safe transaction, retaining existing lookup/adopt contracts. Expose version listing/restore through dedicated recovery hooks for Task 7; never restore through untrusted graph/model input.
 
-- [ ] Write/run a failing 100-accepted-clock-turn test; compact active history near 24 retained turns at accepted commit, preserving current values and archived replay authority without preview writes.
-- [ ] Write/run a failing 1,000-accepted-save test with duplicate retries; checkpoint receipts before 256 and outcome records before their limit, preserving exact source/actor identity and archive lookup.
-- [ ] Write/run a failing recovery test; retain up to 20 prior content versions, verify scope/revision on restore and retain uncertain attempts separately. Never prune replay archives with backup rotation.
-- [ ] Write/run failing branch/copy/private-history tests; copy trusted branch-point state with fresh write authority, preserve existing migrations and do not delete external files on node/workflow removal.
-- [ ] Verify maintenance is deferred safely around pending review and concurrency changes; run focused native/server/host tests and commit owned files only.
+- [x] Write/run a failing 100-accepted-clock-turn test; compact active history near 24 retained turns at accepted commit, preserving current values and archived replay authority without preview writes.
+- [x] Write/run a failing 1,000-accepted-save test with duplicate retries; checkpoint receipts before 256 and outcome records before their limit, preserving exact source/actor identity and archive lookup.
+- [x] Write/run a failing recovery test; retain up to 20 prior content versions, verify scope/revision on restore and retain uncertain attempts separately. Never prune replay archives with backup rotation.
+- [x] Write/run failing branch/copy/private-history tests; copy trusted branch-point state with fresh write authority, preserve existing migrations and do not delete external files on node/workflow removal.
+- [x] Verify maintenance is deferred safely around pending review and concurrency changes; run focused native/server/host tests and commit owned files only.
 
 ### Task 7: Application integration, library/setup/recovery UI and complete verification
 
@@ -141,13 +143,13 @@ Each task owns the files listed below and its tests. Other workers must not reve
 
 **Interfaces:** Wire Task 1 provider/preferences, Task 3 library controller/autosave and preflight, Task 4 setup/chooser, Task 5 actions, Task 6 recovery. The parent coordinates adapter signatures before dispatch; do not create duplicate state owners.
 
-- [ ] Write/run failing browser tests for the first-run two-choice experience with native file APIs absent. Wire automatic host saving, optional setup and remembered preferences; keep setup issues at application level.
-- [ ] Write/run failing library/menu tests for New/Open saved/Import/Save/Save As/Download and acknowledged status. Mount library, setup, server chooser and recovery UI; keep the legacy global configuration absent.
-- [ ] Write/run shared-chat tests: save updates shared definitions, Save As stays independent, conflicting local drafts survive, external save is deferred through run/review and latest saved definition is used before paid work.
-- [ ] Exercise input import-copy explanation, output Open/Download, format-safe names, stable bindings on rename, portable share exclusions, isolated automatic examples, private state and cancellation.
-- [ ] Update active documentation/examples/help to the actual new experience, with truthful provider limitations and advanced fallback setup only. Rebuild generated examples/assets through existing tools.
-- [ ] Run `npm test`, `npm run check:types`, `npm run build`, `npm run check:assets`, `npm run check:examples-memory` and `npm run test:browser`; use process-spawn permission where the sandbox requires it. Inspect failures and fix meaningful regressions; do not weaken unchanged contracts to green the suite.
-- [ ] Obtain a fresh whole-branch review against the spec, fix material findings, rerun affected verification, and write `docs/superpowers/reports/2026-10-27-seamless-file-experience.md` with evidence/remaining platform limits. Mark the goal complete only when required work is complete.
+- [x] Write/run failing browser tests for the first-run two-choice experience with native file APIs absent. Wire automatic host saving, optional setup and remembered preferences; keep setup issues at application level.
+- [x] Write/run failing library/menu tests for New/Open saved/Import/Save/Save As/Download and acknowledged status. Mount library, setup, server chooser and recovery UI; keep the legacy global configuration absent.
+- [x] Write/run shared-chat tests: save updates shared definitions, Save As stays independent, conflicting local drafts survive, external save is deferred through run/review and latest saved definition is used before paid work.
+- [x] Exercise input import-copy explanation, output Open/Download, format-safe names, stable bindings on rename, portable share exclusions, isolated automatic examples, private state and cancellation.
+- [x] Update active documentation/examples/help to the actual new experience, with truthful provider limitations and advanced fallback setup only. Rebuild generated examples/assets through existing tools.
+- [x] Run `npm test`, `npm run check:types`, `npm run build`, `npm run check:assets`, `npm run check:examples-memory` and `npm run test:browser`; use process-spawn permission where the sandbox requires it. Inspect failures and fix meaningful regressions; do not weaken unchanged contracts to green the suite.
+- [x] Obtain a fresh whole-branch review against the spec, fix material findings, rerun affected verification, and write `docs/superpowers/reports/2026-10-27-seamless-file-experience.md` with evidence/remaining platform limits. Mark the goal complete only when required work is complete.
 
 ### Task 8: Extracted example defaults and sample guides
 
@@ -157,11 +159,11 @@ Each task owns the files listed below and its tests. Other workers must not reve
 
 **Interfaces:** `prepareExampleFileDefaults({exampleId,nodes,workflowId,actorBindings?,canonicalDocuments?,legacyDocuments?})` returns `{nodes,initialTemplates,fileOwners,actorChoices}`. Keys use `JSON.stringify([address.workflowId,address.instancePath,address.nodeId])`. Only registered explicit-open provenance may supply bundled literal templates and qualified managed ownership aliases. Application provenance is an authenticated per-library sidecar, never an imported graph ID. Private allocation uses validated host actor availability and the exact definition actor scope; public resources remain actorless.
 
-- [ ] Add a failing registered-sample virtual-read test, then implement bounded bundled templates, derived clock identities and canonical-data precedence without output writes.
-- [ ] Add failing shared reader/Pick/For Each/Commit reload coverage; resolve only compatible trusted managed owners and retain runtime outcome proof. Preserve explicit grants, paths, custom templates and narrower privacy.
-- [ ] Add failing private unavailable/remapped/swapped-role tests, then provide familiar character choices without manufacturing presence, memory or event authority.
-- [ ] Replace obsolete global-manager/manual-ID/JSON-paste lesson instructions, regenerate examples through existing tools and verify curriculum execution/layout. Standalone portable imports retain explicit source choice rather than gain authority from imported text.
-- [ ] Run focused helper/policy/curriculum suites and types, commit owned files and obtain a fresh scoped review. Parent handles current general user guides, existing browser fixture migration and final whole-branch gates.
+- [x] Add a failing registered-sample virtual-read test, then implement bounded bundled templates, derived clock identities and canonical-data precedence without output writes.
+- [x] Add failing shared reader/Pick/For Each/Commit reload coverage; resolve only compatible trusted managed owners and retain runtime outcome proof. Preserve explicit grants, paths, custom templates and narrower privacy.
+- [x] Add failing private unavailable/remapped/swapped-role tests, then provide familiar character choices without manufacturing presence, memory or event authority.
+- [x] Replace obsolete global-manager/manual-ID/JSON-paste lesson instructions, regenerate examples through existing tools and verify curriculum execution/layout. Standalone portable imports retain explicit source choice rather than gain authority from imported text.
+- [x] Run focused helper/policy/curriculum suites and types, commit owned files and obtain a fresh scoped review. Parent handles current general user guides, existing browser fixture migration and final whole-branch gates.
 
 ### Task 9: Close the initial autosave integration gap
 
@@ -169,10 +171,10 @@ Each task owns the files listed below and its tests. Other workers must not reve
 
 **Files:** `src/ui/workflow-autosave.js`, `src/ui/workflow-library-controller.js`, narrowly required library/application orchestration changes, focused unit tests, and `tests/browser/file-experience.spec.mjs`.
 
-- [ ] Prove a newly edited, structurally valid unfinished workflow saves automatically without a manual Save and reopens from the host library.
-- [ ] Assign one acknowledged library identity, retain newer drafts and uncertain creation recovery, and preserve configured local bindings on ordinary adoption.
-- [ ] Flush/adopt before execution while preserving busy reviews, captured user/chat/document scope, shared identities, and independent Save As behavior.
-- [ ] Run focused tests and a real browser journey, commit owned paths, and obtain a scoped review before the final integrated gates.
+- [x] Prove a newly edited, structurally valid unfinished workflow saves automatically without a manual Save and reopens from the host library.
+- [x] Assign one acknowledged library identity, retain newer drafts and uncertain creation recovery, and preserve configured local bindings on ordinary adoption.
+- [x] Flush/adopt before execution while preserving busy reviews, captured user/chat/document scope, shared identities, and independent Save As behavior.
+- [x] Run focused tests and a real browser journey, commit owned paths, and obtain a scoped review before the final integrated gates.
 
 ## Execution Order and Coverage
 

@@ -2678,15 +2678,15 @@ var ha = /* @__PURE__ */ new Map([
 		title: "Check the controls JSON",
 		message: "Use a JSON object before selecting a configured value."
 	}],
-	["Use a positive starting day, a time within the day, and a day length in whole minutes.", ua("clock-starting-values", "Check the clock’s starting values", "Set Starting day to a positive whole number, Starting time to a time within the day, and Hours per day to a positive duration in whole minutes. Enter a Calendar name.")],
-	["Load a valid clock template before changing its starting values.", ua("clock-template-needed", "Load a valid clock template", "Use Load initial values to load a valid clock template before changing its starting values.")],
-	["Load the initial template before saving.", ua("initial-template-needed", "Load initial values first", "Use Load initial values before changing the initial template with Save settings.")],
-	["Choose an actor for private data.", ua("private-actor-needed", "Choose the private actor", "Enter Actor ID when Visibility is Actor private.")],
-	["The initial template could not be loaded.", ua("initial-template-load", "Initial template could not be loaded", "The initial template could not be loaded. Check the source document and its authorization in Workflow Data.")],
-	["Check the initial settings.", ua("initial-settings", "Check the initial settings", "Check the initial template and settings in Workflow Data.")],
-	["Check the new data settings.", ua("new-data-settings", "Check the new data settings", "Check Name, Format, Visibility, and the required initial values in Workflow Data.")],
-	["Workflow data could not be updated.", la("workflow-data-update-unverified", "Workflow Data update is not confirmed", "The Workflow Data update could not be confirmed. Inspect the current data and initial settings before making another change.")],
-	["Workflow Data setup could not be applied.", la("workflow-data-setup-unverified", "Workflow Data setup is not confirmed", "The Workflow Data setup change could not be confirmed. Inspect the current configuration before making another change.")],
+	["Use a positive starting day, a time within the day, and a day length in whole minutes.", ua("clock-starting-values", "Check the clock’s starting values", "The clock’s starting data is invalid. Open the clock node’s Details → File and check its selected source. Keep existing saved time intact.")],
+	["Load a valid clock template before changing its starting values.", ua("clock-template-needed", "Clock starting data is unavailable", "The clock’s starting data is unavailable. Open the clock node’s Details → File and check its selected source before changing it. Keep existing saved time intact.")],
+	["Load the initial template before saving.", ua("initial-template-needed", "File starting data is unavailable", "The file’s starting data is unavailable. Open the node’s Details → File and check its selected source before changing its settings.")],
+	["Choose an actor for private data.", ua("private-actor-needed", "Choose the private character", "Choose a Character by name in Details → File → Advanced when Visibility is Character private.")],
+	["The initial template could not be loaded.", ua("initial-template-load", "File starting data could not be loaded", "The file’s starting data could not be loaded. Open the node’s Details → File and check its selected source and access.")],
+	["Check the initial settings.", ua("initial-settings", "Check the file settings", "Open the node’s Details → File and check the selected source and access before changing its saved data.")],
+	["Check the new data settings.", ua("new-data-settings", "Check the new file settings", "Check Name in Details → File. Advanced contains format and visibility settings; choose private characters by name.")],
+	["Workflow data could not be updated.", la("workflow-data-update-unverified", "File settings update is not confirmed", "The file settings update could not be confirmed. Open the node’s Details → File and inspect its current settings before making another change.")],
+	["Workflow Data setup could not be applied.", la("workflow-data-setup-unverified", "File setup is not confirmed", "The file setup change could not be confirmed. Open the node’s Details → File and inspect its current configuration before making another change.")],
 	["The subgraph could not be saved. Check the current settings before trying the edit again.", la("subgraph-save-unverified", "Subgraph saving is not confirmed", "The subgraph save could not be confirmed. Inspect the saved subgraph and current settings before making another change.")],
 	["The edit could not be accepted. Check the current settings before trying the edit again.", ua("edit-not-accepted", "Edit could not be accepted", "The edit could not be accepted. Check the current settings and selection before preparing another edit.")],
 	["The node could not be prepared.", ua("node-not-prepared", "Node could not be prepared", "The node could not be prepared. Check the required controls in node configuration.")],
@@ -2716,7 +2716,7 @@ var ha = /* @__PURE__ */ new Map([
 	["Artifact omitted: invalid diagnostic data", pa],
 	["Artifact omitted: unavailable", ca("recording-unavailable", "Recorded preview is unavailable", "No recorded preview is available for this output. Choose a current output to inspect.")],
 	["Artifact omitted: historical wrapper mapping unavailable", ca("historical-mapping", "Earlier output cannot be located", "This earlier output cannot be matched to the current subgraph. Choose a current output to inspect.")],
-	["Workflow Data setup is unavailable.", ca("data-setup", "Workflow Data needs setup", "Open an active chat to configure Workflow Data.")]
+	["Workflow Data setup is unavailable.", ca("data-setup", "File settings are unavailable", "Open an active chat, select the affected node and open Details → File.")]
 ]), ga = (e, t, n) => ({
 	id: e,
 	severity: "error",
@@ -2818,13 +2818,13 @@ var ha = /* @__PURE__ */ new Map([
 	severity: "warning",
 	title: t,
 	message: n
-}), wa = xa("document-authorization", "Choose an authorized document", "Authorize the document in Workflow › Configure › Workflow Data, then select it in the node’s Details."), Ta = xa("private-material", "Private material is protected", "This output contains restricted or private material and cannot be published here. Check the source visibility and the intended actor."), Ea = xa("actor-mismatch", "Character scope does not match", "This data belongs to a different character or chat. Select the intended character and check the node’s actor settings."), Da = xa("resource-scope-changed", "The active scope changed", "The active user, chat, character, or workflow changed. Reopen the affected controls for the current scope."), Oa = {
+}), wa = xa("document-authorization", "Choose an authorized document", "Select the affected node and open Details → File to choose an accessible source or destination. Check the selected character for private files."), Ta = xa("private-material", "Private material is protected", "This output contains restricted or private material and cannot be published here. Check the source visibility and the intended actor."), Ea = xa("actor-mismatch", "Character scope does not match", "This data belongs to a different character or chat. Select the intended character and check the node’s actor settings."), Da = xa("resource-scope-changed", "The active scope changed", "The active user, chat, character, or workflow changed. Reopen the affected controls for the current scope."), Oa = {
 	FILE_TOO_LARGE: xa("file-size", "File is too large", "Choose a file no larger than 400,000 bytes."),
 	FILE_CONTENT_TOO_LARGE: xa("file-text-size", "File text is too long", "Choose a file containing no more than 100,000 characters."),
 	FILE_NAME_INVALID: xa("file-name", "Filename is invalid", "Choose a file with a filename between 1 and 255 characters."),
 	FILE_INVALID_UTF8: xa("file-encoding", "File text cannot be read", "Choose a UTF-8 text file."),
 	FILE_PERMISSION: xa("file-permission", "File access was denied", "Choose the workflow file again and allow access, or use Save As to choose another destination."),
-	FILE_NOT_FOUND: xa("file-missing", "File is missing", "The selected file or document no longer exists. Choose an existing file or check the target in Workflow Data."),
+	FILE_NOT_FOUND: xa("file-missing", "File is missing", "The selected file or document no longer exists. For a node file, check Details → File. For a workflow, use File → Open saved… or Import workflow…"),
 	FILE_READ_FAILED: xa("file-read", "File could not be read", "The selected file could not be read. Choose an accessible file and check its permissions."),
 	FILE_WRITE_FAILED: xa("file-save", "Workflow file could not be saved", "The workflow file could not be saved. Your draft remains open. Use Save As to choose an accessible destination."),
 	FILE_DOWNLOAD_FAILED: xa("file-download", "Workflow copy could not be saved", "The workflow JSON copy could not be saved. Your draft remains open. Check browser download permissions."),
@@ -2833,17 +2833,17 @@ var ha = /* @__PURE__ */ new Map([
 	FILE_REFERENCE_UNAUTHORIZED: xa("file-reference", "Read the document first", "Connect the Reference output from the current authorized Read File node. An older or substituted reference cannot authorize a write."),
 	FILE_RECEIPT_LIMIT: xa("document-receipts", "Document history is full", "The document reached its revision or save history limit. Reconcile its stored history before preparing another write."),
 	FILE_DOCUMENT_LIMIT: xa("document-limit", "Document exceeds the storage limit", "The proposed document and save history are too large to store. Reduce the document size before preparing another write."),
-	FILE_FORMAT_LOCKED: xa("document-format", "Document format is fixed", "An existing document keeps its format. Create a different target in Workflow Data to use another format."),
+	FILE_FORMAT_LOCKED: xa("document-format", "Document format is fixed", "An existing file keeps its format. To use another format, open the node’s Details → File → Advanced and create a new copy; the original is retained."),
 	FILE_ACCEPTANCE_REQUIRED: Sa("file-acceptance", "Saving waits for acceptance", "File changes are proposed during execution and are saved only when the full workflow result is accepted."),
 	FILE_STAGE_FAILED: xa("file-staging", "File change could not be prepared", "The file change could not be prepared. Check the target document, current reference, and source evidence."),
 	FILE_INTENT_CONFLICT: xa("file-intent-conflict", "File change identity conflicts", "A previously prepared file change uses this identity for different content. Inspect the retained change and prepare a distinct current change."),
-	FILE_BACKEND_FAILED: xa("document-storage", "Document storage is unavailable", "The document storage service could not complete this action. Check the active chat and Workflow Data configuration."),
+	FILE_BACKEND_FAILED: xa("document-storage", "Document storage is unavailable", "The storage service could not complete this action. Check the active chat and the node’s Details → File. For custom location setup, open File → File storage…"),
 	FILE_EVIDENCE_FAILED: xa("file-evidence", "File evidence could not be checked", "The source evidence for this file change could not be checked. Inspect the current source and prepare evidence from it."),
-	DOCUMENT_SETUP_UNAVAILABLE: Sa("document-setup", "Workflow Data needs setup", "Open an active user and chat, then configure documents in Workflow › Configure › Workflow Data."),
+	DOCUMENT_SETUP_UNAVAILABLE: Sa("document-setup", "File settings are unavailable", "Open an active chat, select the affected node and open Details → File."),
 	CHAT_REQUIRED: Sa("chat-required", "Open a chat", "Open an active chat before using this feature."),
 	ACTOR_REQUIRED: Sa("actor-required", "Select a character", "Select an active character before using character memory."),
 	PRIVATE_MATERIAL: Ta,
-	PRIVATE_DESTINATION: xa("private-destination", "Destination cannot receive private data", "Choose a destination whose visibility preserves the data’s private actor scope. Check visibility in Workflow Data."),
+	PRIVATE_DESTINATION: xa("private-destination", "Destination cannot receive private data", "Choose a destination that preserves the data’s private character access. Check Visibility and Character in the node’s Details → File → Advanced."),
 	INVALIDATED_SOURCES: Ca("historical-source-changed", "Stored evidence changed", "Some stored evidence changed or was removed. Review and reconcile that evidence before using it for another memory change."),
 	FINAL_EVIDENCE_REEXTRACT_REQUIRED: xa("final-evidence", "Evidence does not match the final reply", "The final reply changed after its evidence was captured. Extract or rebase the evidence from the final narrative before accepting it."),
 	STALE_VERSION: xa("memory-version", "Memory changed", "The memory store changed after this proposal was prepared. Read the current memory and prepare a new proposal before acceptance."),
@@ -2892,8 +2892,8 @@ for (let e of [
 var ka = [
 	["INVALID_MEMORY_CONFIG INVALID_MEMORY_CONTEXT INVALID_MEMORY_METADATA INVALID_MEMORY_READ INVALID_MEMORY_RECALL INVALID_MEMORY_SNAPSHOT INVALID_MEMORY_RECEIPTS INVALID_MEMORY_CONTROLS INVALID_MEMORY_CAS", xa("memory-settings", "Memory settings need attention", "The memory settings or stored data are invalid. Check the active character, store, and node settings in Details.")],
 	["INVALID_RECALL_SCOPE INVALID_RECALL_QUEUE INVALID_RECALL_ACTIVATION INVALID_RECALL_TRIGGER INVALID_RECALL_OWNER INVALID_RECALL_AUTHORITY INVALID_RECALL_PORTS INVALID_RECALL_GENERATION INVALID_RECALL_SETTLEMENT", xa("recall-settings", "Recall settings need attention", "Check the Recall actor, memory set, generation target, and activation settings in Details.")],
-	["INVALID_FILE_CONFIG INVALID_FILE_BACKEND_CONFIG INVALID_FILE_METADATA INVALID_FILE_SNAPSHOT INVALID_FILE_INTENT INVALID_FILE_CONTROLS INVALID_FILE_BACKEND_UPDATE INVALID_FILE_RESPONSE", xa("document-settings", "Document data needs attention", "The document data or storage configuration is invalid. Check Workflow Data and the affected node’s Details.")],
-	["INVALID_DOCUMENT_SETUP INVALID_WORKFLOW_DATA INVALID_CLOCK_TEMPLATE DOCUMENT_SETUP_FAILED", xa("document-setup-invalid", "Check Workflow Data settings", "Check the target name, initial template, format, and visibility in Workflow Data.")],
+	["INVALID_FILE_CONFIG INVALID_FILE_BACKEND_CONFIG INVALID_FILE_METADATA INVALID_FILE_SNAPSHOT INVALID_FILE_INTENT INVALID_FILE_CONTROLS INVALID_FILE_BACKEND_UPDATE INVALID_FILE_RESPONSE", xa("document-settings", "Document data needs attention", "The document data or storage configuration is invalid. Select the affected node and check Details → File before changing its saved data.")],
+	["INVALID_DOCUMENT_SETUP INVALID_WORKFLOW_DATA INVALID_CLOCK_TEMPLATE DOCUMENT_SETUP_FAILED", xa("document-setup-invalid", "Check file settings", "Open the affected node’s Details → File. Check its Name and selected source or destination; Advanced contains format and visibility settings. Keep existing saved data intact.")],
 	["INVALID_INTROSPECTION_EVIDENCE INVALID_ACCEPTED_MEMORY STATE_EVIDENCE_CHANGED", xa("memory-evidence", "Memory evidence needs attention", "Use current settled source evidence that belongs to the intended character and matches the accepted narrative.")],
 	["FILE_CAPTURE_RELEASED FILE_INTENT_UNAUTHORIZED MEMORY_AUTHORITY_RELEASED RECALL_STATE_RELEASED RECALL_CLAIM_CLOSED RECALL_CLAIM_UNAUTHORIZED RECALL_OWNER_MISSING RECALL_SOURCE_UNAVAILABLE RECALL_PROVENANCE_REQUIRED STALE_RECALL_SOURCE STALE_MEMORY_EVIDENCE", xa("resource-expired", "Recorded source is no longer current", "The recorded source or permission is no longer current. Inspect the active source and prepare this action again.")]
 ];
@@ -3052,7 +3052,7 @@ var La = Object.freeze({
 			id: "logical-document-missing",
 			severity: "error",
 			title: "Workflow document is missing",
-			message: "Choose an existing document or configure an initial template in Workflow Data before reading this target."
+			message: "Select the reader node and open Details → File to choose an existing source or import a copy from your device."
 		}
 	],
 	[
@@ -3088,29 +3088,35 @@ var La = Object.freeze({
 		title: "Workflow outputs need updating",
 		message: "Open Workflow > Workflow outputs and choose existing output steps again before running."
 	},
+	WORKFLOW_SELECTION_PENDING: {
+		id: "workflow-selection-pending",
+		severity: "warning",
+		title: "Choose the workflow for this chat",
+		message: "Unsaved workflow changes need review. Open Lattice to choose the workflow for this chat. Your draft is kept."
+	},
 	CLOCK_LEDGER_FULL: {
 		id: "clock-history-full",
 		severity: "warning",
 		title: "Clock history is full",
-		message: "Open Workflow Data, select the clock and choose Preview history checkpoint before continuing."
+		message: "Saving stopped because the clock history reached its limit. Select the clock node and check Details → File. Preserve the clock and its saved history before further changes."
 	},
 	FILE_RECEIPT_LIMIT: {
 		id: "save-history-full",
 		severity: "warning",
 		title: "Save history is full",
-		message: "Open Workflow Data, select the document and choose Preview history checkpoint before continuing."
+		message: "Saving stopped because the file history reached its limit. Select the file node and check Details → File. Preserve the file and its saved history before further changes."
 	},
 	PERSISTENCE_UNKNOWN: {
 		id: "native-save-held",
 		severity: "warning",
 		title: "The previous save is unverified",
-		message: "Further writes are held until the previous save is verified. For a history checkpoint, open Workflow Data and choose Inspect saved history."
+		message: "Further writes are held until the previous save is verified. Check the affected save status before making another change. For file saves, select the node and open Details → File."
 	},
 	DOCUMENT_HISTORY_CHANGED: {
 		id: "document-history-changed",
 		severity: "error",
 		title: "Document history changed",
-		message: "Read the document again and prepare a fresh workflow result or checkpoint preview. Preserve its existing history marker."
+		message: "Read the document again and prepare a fresh workflow result. Keep its saved history intact."
 	},
 	DOCUMENT_HISTORY_LIMIT: {
 		id: "document-history-full",
@@ -28358,68 +28364,68 @@ Nr(["click"]);
 var vj = /* @__PURE__ */ K("<button type=\"button\" class=\"svelte-n3nbpz\"> </button>"), yj = /* @__PURE__ */ K("<p role=\"status\">Opening folder…</p>"), bj = /* @__PURE__ */ K("<p role=\"alert\"> </p>"), xj = /* @__PURE__ */ K("<button type=\"button\" class=\"svelte-n3nbpz\">Parent folder</button>"), Sj = /* @__PURE__ */ K("<li class=\"svelte-n3nbpz\"><button type=\"button\" class=\"svelte-n3nbpz\"> </button></li>"), Cj = /* @__PURE__ */ K("<p>This folder has no selectable files or folders.</p>"), wj = /* @__PURE__ */ K("<p>Only part of this folder is shown. Enter a more specific folder path to find other files.</p>"), Tj = /* @__PURE__ */ K("<form class=\"svelte-n3nbpz\"><label class=\"svelte-n3nbpz\">Filename <input aria-label=\"Filename\" class=\"svelte-n3nbpz\"/></label><button type=\"submit\" class=\"svelte-n3nbpz\">Use this location</button></form>"), Ej = /* @__PURE__ */ K("<p class=\"path svelte-n3nbpz\"> </p> <!> <ul aria-label=\"Files and folders\" class=\"svelte-n3nbpz\"></ul> <!> <!> <!>", 1), Dj = /* @__PURE__ */ K("<section class=\"server-chooser svelte-n3nbpz\" aria-label=\"Choose file on the SillyTavern server\" data-server-file-chooser=\"\"><h2 class=\"svelte-n3nbpz\"> </h2> <p>These files are on the computer running SillyTavern. Choosing a path does not change the file.</p> <nav aria-label=\"Server folders\" class=\"svelte-n3nbpz\"></nav> <form class=\"svelte-n3nbpz\"><label class=\"svelte-n3nbpz\">Server folder <input aria-label=\"Server folder\" class=\"svelte-n3nbpz\"/></label><button type=\"submit\" class=\"svelte-n3nbpz\">Go</button></form> <!> <!> <!> <button type=\"button\" class=\"svelte-n3nbpz\">Cancel</button></section>");
 function Oj(e, t) {
 	qe(t, !0);
-	let n = Q(t, "mode", 3, "open"), r = Q(t, "name", 3, ""), i = /* @__PURE__ */ R(cn([])), a = /* @__PURE__ */ R(null), o = /* @__PURE__ */ R(cn(Tr(() => r()))), s = /* @__PURE__ */ R(""), c = /* @__PURE__ */ R(""), l = /* @__PURE__ */ R(!1), u = 0, d = !0;
+	let n = Q(t, "mode", 3, "open"), r = Q(t, "name", 3, ""), i = /* @__PURE__ */ R(cn([])), a = /* @__PURE__ */ R(null), o = /* @__PURE__ */ R(cn(Tr(() => r()))), s = /* @__PURE__ */ R(""), c = /* @__PURE__ */ R(""), l = /* @__PURE__ */ R(!1), u = /* @__PURE__ */ L(() => t.access), d = 0, f = !0;
 	ci(() => {
-		d = !1, u++;
+		f = !1, d++;
 	});
-	async function f(e) {
-		let n = ++u;
+	async function p(e) {
+		let n = ++d;
 		z(l, !0), z(c, "");
 		let r = await t.access.browse({ path: e });
-		d && n === u && (z(l, !1), r.ok ? (z(a, r.data, !0), z(s, r.data.path, !0)) : (z(a, null), z(c, r.error.message, !0)));
+		f && n === d && (z(l, !1), r.ok ? (z(a, r.data, !0), z(s, r.data.path, !0)) : (z(a, null), z(c, r.error.message, !0)));
 	}
 	kn(() => {
-		let e = t.access, n = !0;
+		let e = W(u), t = !0;
 		return (async () => {
-			let t = await e.roots();
-			n && d && (t.ok ? (z(i, t.data.roots, !0), W(i).length && await f(W(i)[0].path)) : z(c, t.error.message, !0));
+			let n = await e.roots();
+			t && f && (n.ok ? (z(i, n.data.roots, !0), W(i).length && await p(W(i)[0].path)) : z(c, n.error.message, !0));
 		})(), () => {
-			n = !1, u++;
+			t = !1, d++;
 		};
 	});
-	function p() {
-		u++, d = !1, t.oncancel();
+	function m() {
+		d++, f = !1, t.oncancel();
 	}
-	function m(e) {
-		W(l) || (u++, d = !1, t.onselect(e));
+	function h(e) {
+		W(l) || (d++, f = !1, t.onselect(e));
 	}
-	function h() {
+	function g() {
 		if (!W(a) || !W(o).trim() || /[\\/\0]/.test(W(o)) || [".", ".."].includes(W(o).trim())) return;
 		let e = W(a).path.includes("\\") ? "\\" : "/";
-		m(W(a).path.replace(/[\\/]$/, "") + e + W(o).trim());
+		h(W(a).path.replace(/[\\/]$/, "") + e + W(o).trim());
 	}
-	var g = Dj(), _ = B(g), v = B(_, !0);
-	I(_);
-	var y = H(_, 4);
-	X(y, 21, () => W(i), di, (e, t) => {
+	var _ = Dj(), v = B(_), y = B(v, !0);
+	I(v);
+	var b = H(v, 4);
+	X(b, 21, () => W(i), di, (e, t) => {
 		var n = vj(), r = B(n, !0);
 		I(n), U(() => {
 			n.disabled = W(l), J(r, W(t).name);
-		}), G("click", n, () => f(W(t).path)), q(e, n);
-	}), I(y);
-	var b = H(y, 2), x = B(b), S = H(B(x));
-	qi(S), I(x);
-	var C = H(x);
-	I(b);
-	var w = H(b, 2), T = (e) => {
+		}), G("click", n, () => p(W(t).path)), q(e, n);
+	}), I(b);
+	var x = H(b, 2), S = B(x), C = H(B(S));
+	qi(C), I(S);
+	var w = H(S);
+	I(x);
+	var T = H(x, 2), E = (e) => {
 		q(e, yj());
 	};
-	Y(w, (e) => {
-		W(l) && e(T);
+	Y(T, (e) => {
+		W(l) && e(E);
 	});
-	var E = H(w, 2), D = (e) => {
+	var D = H(T, 2), O = (e) => {
 		var t = bj(), n = B(t, !0);
 		I(t), U(() => J(n, W(c))), q(e, t);
 	};
-	Y(E, (e) => {
-		W(c) && e(D);
+	Y(D, (e) => {
+		W(c) && e(O);
 	});
-	var O = H(E, 2), k = (e) => {
+	var k = H(D, 2), A = (e) => {
 		var t = Ej(), r = V(t), i = B(r, !0);
 		I(r);
 		var s = H(r, 2), c = (e) => {
 			var t = xj();
-			U(() => t.disabled = W(l)), G("click", t, () => f(W(a).parent)), q(e, t);
+			U(() => t.disabled = W(l)), G("click", t, () => p(W(a).parent)), q(e, t);
 		};
 		Y(s, (e) => {
 			W(a).parent && e(c);
@@ -28429,41 +28435,41 @@ function Oj(e, t) {
 			var n = Sj(), r = B(n), i = B(r);
 			I(r), I(n), U(() => {
 				r.disabled = W(l), Z(r, "data-server-entry", W(t).kind), J(i, `${W(t).kind === "directory" ? "Folder: " : "File: "}${W(t).name ?? ""}`);
-			}), G("click", r, () => W(t).kind === "directory" ? f(W(t).path) : m(W(t).path)), q(e, n);
+			}), G("click", r, () => W(t).kind === "directory" ? p(W(t).path) : h(W(t).path)), q(e, n);
 		}), I(u);
-		var d = H(u, 2), p = (e) => {
+		var d = H(u, 2), f = (e) => {
 			q(e, Cj());
 		};
 		Y(d, (e) => {
-			W(a).entries.length || e(p);
+			W(a).entries.length || e(f);
 		});
-		var g = H(d, 2), _ = (e) => {
+		var m = H(d, 2), _ = (e) => {
 			q(e, wj());
 		};
-		Y(g, (e) => {
+		Y(m, (e) => {
 			W(a).truncated && e(_);
 		});
-		var v = H(g, 2), y = (e) => {
+		var v = H(m, 2), y = (e) => {
 			var t = Tj(), n = B(t), r = H(B(n));
 			qi(r), I(n);
 			var i = H(n);
 			I(t), U((e) => i.disabled = e, [() => W(l) || !W(o).trim() || /[\\/\0]/.test(W(o)) || [".", ".."].includes(W(o).trim())]), Mr("submit", t, (e) => {
-				e.preventDefault(), h();
+				e.preventDefault(), g();
 			}), na(r, () => W(o), (e) => z(o, e)), q(e, t);
 		};
 		Y(v, (e) => {
 			n() === "save" && e(y);
 		}), U(() => J(i, W(a).path)), q(e, t);
 	};
-	Y(O, (e) => {
-		W(a) && e(k);
+	Y(k, (e) => {
+		W(a) && e(A);
 	});
-	var A = H(O, 2);
-	I(g), U((e) => {
-		J(v, n() === "open" ? "Choose file" : "Choose save location"), C.disabled = e;
-	}, [() => W(l) || !W(s).trim()]), Mr("submit", b, (e) => {
-		e.preventDefault(), f(W(s));
-	}), na(S, () => W(s), (e) => z(s, e)), G("click", A, p), q(e, g), Je();
+	var ee = H(k, 2);
+	I(_), U((e) => {
+		J(y, n() === "open" ? "Choose file" : "Choose save location"), w.disabled = e;
+	}, [() => W(l) || !W(s).trim()]), Mr("submit", x, (e) => {
+		e.preventDefault(), p(W(s));
+	}), na(C, () => W(s), (e) => z(s, e)), G("click", ee, m), q(e, _), Je();
 }
 Nr(["click"]);
 //#endregion
