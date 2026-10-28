@@ -1,10 +1,10 @@
-import {getNodeGuideFixtures} from '../workflow/node-guide-fixtures.js?v=0.30.0';
-import { listWorkflowExampleResults, workflowExampleCatalogRevision } from '../workflow/examples.js?v=0.30.0';
-import { prepareWorkflowThumbnail } from './workspace-preparation.js?v=0.30.0';
-import { nodeCards } from '../canvas/presentation.js?v=0.30.0';
-import { isCommentFrame } from '../canvas/comment-frames.js?v=0.30.0';
-import { buildConnectionRoute } from '../canvas/connection-route.js?v=0.30.0';
-import { diagnosticText } from './diagnostics.js?v=0.30.0';
+import {getNodeGuideFixtures} from '../workflow/node-guide-fixtures.js?v=0.30.1';
+import { listWorkflowExampleResults, workflowExampleCatalogRevision } from '../workflow/examples.js?v=0.30.1';
+import { prepareWorkflowThumbnail } from './workspace-preparation.js?v=0.30.1';
+import { nodeCards } from '../canvas/presentation.js?v=0.30.1';
+import { isCommentFrame } from '../canvas/comment-frames.js?v=0.30.1';
+import { buildConnectionRoute } from '../canvas/connection-route.js?v=0.30.1';
+import { diagnosticText } from './diagnostics.js?v=0.30.1';
 
 const PRESENTATION_REVISION = 3;
 let cacheKey = '', cachedTiles;

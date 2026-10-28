@@ -1,12 +1,12 @@
-import { describeFileNode } from './operations/file-nodes.js?v=0.30.0';
-import { cloneJsonValue } from './operations/json-data.js?v=0.30.0';
-import { nodeFileTargetId } from './node-file-targets.js?v=0.30.0';
-import { inferManagedFileFormat } from './managed-file-policy.js?v=0.30.0';
-import { executeModelNode } from './operations/model-nodes.js?v=0.30.0';
-import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.30.0';
-import { formatRecords } from './operations/format-records.js?v=0.30.0';
-import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.30.0';
-import { workflowDataPresetFor } from './workflow-data-defaults.js?v=0.30.0';
+import { describeFileNode } from './operations/file-nodes.js?v=0.30.1';
+import { cloneJsonValue } from './operations/json-data.js?v=0.30.1';
+import { nodeFileTargetId } from './node-file-targets.js?v=0.30.1';
+import { inferManagedFileFormat } from './managed-file-policy.js?v=0.30.1';
+import { executeModelNode } from './operations/model-nodes.js?v=0.30.1';
+import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.30.1';
+import { formatRecords } from './operations/format-records.js?v=0.30.1';
+import { ACTIVE_PROFILE_ID } from './model-profiles.js?v=0.30.1';
+import { workflowDataPresetFor } from './workflow-data-defaults.js?v=0.30.1';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const reservedTargets=new Set(['read-file','story-clock','commit-outcomes'].map(operation=>workflowDataPresetFor(operation).targetId));
 

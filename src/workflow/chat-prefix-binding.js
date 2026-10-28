@@ -1,5 +1,5 @@
-import {sha256Text} from './definition-data.js?v=0.30.0';
-import {cloneJsonValue} from './operations/json-data.js?v=0.30.0';
+import {sha256Text} from './definition-data.js?v=0.30.1';
+import {cloneJsonValue} from './operations/json-data.js?v=0.30.1';
 
 /** A host-authored digest of accepted source, never model-authored document data. */
 export function validChatSourceBinding(raw){

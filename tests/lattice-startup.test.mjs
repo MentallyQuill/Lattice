@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import * as S from '../src/state.js?v=0.30.0';
-import { starterGraph } from '../src/workflow/starters.js?v=0.30.0';
+import * as S from '../src/state.js?v=0.30.1';
+import { starterGraph } from '../src/workflow/starters.js?v=0.30.1';
 
 function host(extensionSettings = {}) {
     let effects = 0;

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {nativeFixture,reviewGraph} from './helpers/native-workflow-fixture.mjs';
-import {ACTIVE_PROFILE_ID} from '../src/workflow/model-profiles.js?v=0.30.0';
-import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.30.0';
+import {ACTIVE_PROFILE_ID} from '../src/workflow/model-profiles.js?v=0.30.1';
+import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.30.1';
 
 function graph({writer=false,runtime=2}={}){
  const value=reviewGraph({revise:false});value.runtime=runtime;value.schema=runtime===3?4:3;

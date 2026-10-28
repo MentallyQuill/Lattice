@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.0';
-import {createNativeSourceRegistry} from '../src/workflow/native-source-registry.js?v=0.30.0';
-import {createSourceReader} from '../src/workflow/source-reader.js?v=0.30.0';
-import {createSourceProofRegistry,inspectSourceProof} from '../src/workflow/source-provenance.js?v=0.30.0';
-import {executeChunk} from '../src/workflow/operations/chunk.js?v=0.30.0';
-import {bindSourceDerivation} from '../src/workflow/source-provenance.js?v=0.30.0';
-import {freeze} from '../src/workflow/record-data.js?v=0.30.0';
-import {preserveArtifactPrivacy} from '../src/workflow/artifact-privacy.js?v=0.30.0';
+import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.1';
+import {createNativeSourceRegistry} from '../src/workflow/native-source-registry.js?v=0.30.1';
+import {createSourceReader} from '../src/workflow/source-reader.js?v=0.30.1';
+import {createSourceProofRegistry,inspectSourceProof} from '../src/workflow/source-provenance.js?v=0.30.1';
+import {executeChunk} from '../src/workflow/operations/chunk.js?v=0.30.1';
+import {bindSourceDerivation} from '../src/workflow/source-provenance.js?v=0.30.1';
+import {freeze} from '../src/workflow/record-data.js?v=0.30.1';
+import {preserveArtifactPrivacy} from '../src/workflow/artifact-privacy.js?v=0.30.1';
 const address={workflowId:'test',instancePath:[],nodeId:'chunk'};
 const node=settings=>({id:'chunk',type:'workflow',operation:'chunk',operationVersion:1,inputMode:'context',...settings});
 async function fixture(chat=[{mes:'abcdef',is_user:true},{mes:'reply'}],ports={},captureOptions={}){

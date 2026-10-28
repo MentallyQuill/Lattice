@@ -1,5 +1,5 @@
-import { cloneJsonValue } from './operations/json-data.js?v=0.30.0';
-import { freeze, plain } from './record-data.js?v=0.30.0';
+import { cloneJsonValue } from './operations/json-data.js?v=0.30.1';
+import { freeze, plain } from './record-data.js?v=0.30.1';
 const fail=(code,message)=>({ok:false,error:{code,message,field:'fileTarget'}});
 export const NODE_FILE_TARGET_CONTROL=freeze({type:'object',default:{},label:'File',editor:'json',max:8,hidden:true,exposable:false});
 export const FILE_HANDLING_CONTROL=freeze({type:'enum',default:'',label:'File handling',values:['','replace','append']});

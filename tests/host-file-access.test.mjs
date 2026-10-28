@@ -53,7 +53,7 @@ test('switching users during cleanup cannot delete the next user generated metad
 });
 test('branch source lookup never allocates absent resources and exposes exact recorded prefix versions',async()=>{
  const f=fixture(),access=f.create();must(await access.ready);
- const absent=await access.ensureManaged(definition,{...controls,create:false});assert.equal(absent.error.code,'FILE_BINDING_MISSING');assert.equal(f.files.size,0);
+ const absent=await access.ensureManaged(definition,{...controls,create:false});assert.equal(absent.error.code,'MANAGED_FILE_NOT_FOUND');assert.equal(f.files.size,0);
  const prepared=must(await access.ensureManaged(definition,controls)),stamp=count=>({schemaVersion:1,messageCount:count,prefixHash:sha256Text('prefix '+count)});
  for(let count=1;count<=2;count++){const backend=access.backend([prepared],{...controls,branchBinding:stamp(count)}),snapshot=must(await backend.load('scene'));must(await backend.compareAndSwap({targetId:'scene',expectedRevision:snapshot.revision,expectedContent:snapshot.content,projectedDocument:{format:'text',content:'point '+count},intentId:'point-'+count,fingerprint:sha256Text('point '+count)}));}
  const backend=access.backend([must(await access.ensureManaged(definition,{...controls,create:false}))],controls),versions=must(await backend.listVersions('scene'));

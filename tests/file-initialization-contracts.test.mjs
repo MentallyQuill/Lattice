@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { operationDefaults, operationFor } from '../src/workflow/catalog.js?v=0.30.0';
-import { describeFileNode, executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.30.0';
-import { createFileStore } from '../src/workflow/file-store.js?v=0.30.0';
-import { resolveManagedFileNode } from '../src/workflow/managed-file-policy.js?v=0.30.0';
-import { prepareWorkflowAttempt } from '../src/workflow/resolve.js?v=0.30.0';
-import { exportWorkflow, parseWorkflow } from '../src/workflow/packages.js?v=0.30.0';
-import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definition-data.js?v=0.30.0';
-import { prepareDocumentMutation } from '../src/workflow/operations/document-mutations.js?v=0.30.0';
-const initialization=await import('../src/workflow/file-initialization.js?v=0.30.0').catch(()=>({}));
+import { operationDefaults, operationFor } from '../src/workflow/catalog.js?v=0.30.1';
+import { describeFileNode, executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.30.1';
+import { createFileStore } from '../src/workflow/file-store.js?v=0.30.1';
+import { resolveManagedFileNode } from '../src/workflow/managed-file-policy.js?v=0.30.1';
+import { prepareWorkflowAttempt } from '../src/workflow/resolve.js?v=0.30.1';
+import { exportWorkflow, parseWorkflow } from '../src/workflow/packages.js?v=0.30.1';
+import { computeDefinitionIdentity, definitionRefKey } from '../src/workflow/definition-data.js?v=0.30.1';
+import { prepareDocumentMutation } from '../src/workflow/operations/document-mutations.js?v=0.30.1';
+const initialization=await import('../src/workflow/file-initialization.js?v=0.30.1').catch(()=>({}));
 
 test('Read File registers bounded first-use generation and a managed reader default', () => {
     const node={id:'read',type:'workflow',...operationDefaults('read-file',{managedFiles:true})};

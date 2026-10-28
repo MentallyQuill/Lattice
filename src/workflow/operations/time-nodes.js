@@ -1,8 +1,8 @@
-import { FILE_HANDLING_CONTROL, NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.30.0';
-import { advanceStoryClock, enumerateScheduledOccurrences, resolveTimeAdvance } from '../story-time.js?v=0.30.0';
-import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.30.0';
-import { freeze } from '../record-data.js?v=0.30.0';
-import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.30.0';
+import { FILE_HANDLING_CONTROL, NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.30.1';
+import { advanceStoryClock, enumerateScheduledOccurrences, resolveTimeAdvance } from '../story-time.js?v=0.30.1';
+import { cloneJsonValue, stringifyJsonValue } from './json-data.js?v=0.30.1';
+import { freeze } from '../record-data.js?v=0.30.1';
+import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.30.1';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value));

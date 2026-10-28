@@ -1,5 +1,5 @@
-import {validateNodeFileTarget,nodeFileTargetId} from '../workflow/node-file-targets.js?v=0.30.0';
-import {canonicalFileName,inferManagedFileFormat} from '../workflow/managed-file-policy.js?v=0.30.0';
+import {validateNodeFileTarget,nodeFileTargetId} from '../workflow/node-file-targets.js?v=0.30.1';
+import {canonicalFileName,inferManagedFileFormat} from '../workflow/managed-file-policy.js?v=0.30.1';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const keyFor=node=>node.operation==='story-clock'?'clockId':node.operation==='random-pick'?'ledgerId':'targetId';
 /** Qualified authoring actions; picking a handle never persists document contents. */

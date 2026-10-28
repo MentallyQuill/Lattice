@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { operationDefaults } from '../src/workflow/catalog.js?v=0.30.0';
-import { validateNodeFileTarget } from '../src/workflow/node-file-targets.js?v=0.30.0';
-import { describeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.30.0';
-const policy=await import('../src/workflow/managed-file-policy.js?v=0.30.0').catch(()=>({}));
+import { operationDefaults } from '../src/workflow/catalog.js?v=0.30.1';
+import { validateNodeFileTarget } from '../src/workflow/node-file-targets.js?v=0.30.1';
+import { describeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.30.1';
+const policy=await import('../src/workflow/managed-file-policy.js?v=0.30.1').catch(()=>({}));
 test('managed names retain interior periods and exactly one safe format suffix',()=>{
  assert.equal(typeof policy.canonicalFileName,'function');
  assert.equal(policy.canonicalFileName('SceneContext.txt','text'),'SceneContext.txt');

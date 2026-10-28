@@ -1,9 +1,9 @@
-import {createFileMetadataBlobs} from '../workflow/file-metadata-blobs.js?v=0.30.0';
-import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.0';
-import {inspectDocumentHistory} from '../workflow/document-history.js?v=0.30.0';
-import {createNodeFileAccess} from './node-file-access.js?v=0.30.0';
-import {cloneServerFileData} from './server-file-access.js?v=0.30.0';
-import {sha256Text} from '../workflow/definition-data.js?v=0.30.0';
+import {createFileMetadataBlobs} from '../workflow/file-metadata-blobs.js?v=0.30.1';
+import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.1';
+import {inspectDocumentHistory} from '../workflow/document-history.js?v=0.30.1';
+import {createNodeFileAccess} from './node-file-access.js?v=0.30.1';
+import {cloneServerFileData} from './server-file-access.js?v=0.30.1';
+import {sha256Text} from '../workflow/definition-data.js?v=0.30.1';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const formats={text:'.txt',json:'.json',jsonl:'.jsonl',markdown:'.md',csv:'.csv'};
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
@@ -105,7 +105,7 @@ function createUserHostFileAccess({store,getUserId}={}){
   if(controls.create===false){
    const readyResult=await ready;if(!readyResult.ok)return readyResult;const refreshed=await native.refresh();if(!refreshed.ok)return refreshed;
    if(!current()||controls.isCurrent?.()!==true)return fail('STALE_FILE_SCOPE','The captured branch source changed.');
-   const row=rows.find(row=>row.managedScope===scopeKey(scope,captured.targetId));if(!row)return fail('FILE_BINDING_MISSING','No owned source file exists at this branch point.');
+   const row=rows.find(row=>row.managedScope===scopeKey(scope,captured.targetId));if(!row)return fail('MANAGED_FILE_NOT_FOUND','No managed file is registered in this chat.');
    if(row.format!==captured.format)return fail('FILE_FORMAT_CONFLICT','The source file format differs.');
    const {path,...data}=captured;return {ok:true,data:{...data,bindingId:row.bindingId,name:row.name,storage:'host'}};
   }

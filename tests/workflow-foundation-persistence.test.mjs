@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.0';
+import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.1';
 function fixture(kind){
  let saves=0,headers=0,fetches=0,calls=0;const abort=new AbortController();
  const original={chatId:'story',characterId:0,groupId:null,characters:[{avatar:'Mara.png',name:'Mara',chat:'Story'}],chat:[{mes:'Original',is_user:true}],chatMetadata:{latticeDocuments:{user:{notes:{version:'1',text:'Original'}}}},saveMetadata(){saves++;},getRequestHeaders(){headers++;return {'Content-Type':'application/json'};}};

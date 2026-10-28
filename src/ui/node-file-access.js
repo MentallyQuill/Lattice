@@ -1,13 +1,13 @@
-import {prepareAcceptedFileMaintenance} from '../workflow/file-history-maintenance.js?v=0.30.0';
-import {captureHistorySnapshot} from '../workflow/file-history-transfer.js?v=0.30.0';
-import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory,prepareDocumentCheckpoint} from '../workflow/document-history.js?v=0.30.0';
-import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.0';
-import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.30.0';
-import {sha256Text} from '../workflow/definition-data.js?v=0.30.0';
-import {createServerFileAccess,cloneServerFileData} from './server-file-access.js?v=0.30.0';
-import {createHostFileAccess} from './host-file-access.js?v=0.30.0';
-import {createHostFileStore} from './host-file-store.js?v=0.30.0';
-import {createNodeFileService} from './node-file-service.js?v=0.30.0';
+import {prepareAcceptedFileMaintenance} from '../workflow/file-history-maintenance.js?v=0.30.1';
+import {captureHistorySnapshot} from '../workflow/file-history-transfer.js?v=0.30.1';
+import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory,prepareDocumentCheckpoint} from '../workflow/document-history.js?v=0.30.1';
+import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.1';
+import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.30.1';
+import {sha256Text} from '../workflow/definition-data.js?v=0.30.1';
+import {createServerFileAccess,cloneServerFileData} from './server-file-access.js?v=0.30.1';
+import {createHostFileAccess} from './host-file-access.js?v=0.30.1';
+import {createHostFileStore} from './host-file-store.js?v=0.30.1';
+import {createNodeFileService} from './node-file-service.js?v=0.30.1';
 const fail=(code,message,cancelled=false)=>({ok:false,...(cancelled?{cancelled:true}:{}),error:{code,message}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -223,7 +223,10 @@ export function createNodeFileAccess(options={}){
             let acceptedBranchBinding=branchBinding;
             if(getBranchBinding){try{const stamp=own(getBranchBinding());acceptedBranchBinding=validChatSourceBinding(stamp)?stamp:undefined;}catch{acceptedBranchBinding=undefined;}}
             const afterBinding=current(change.targetId);if(!afterBinding.ok)return afterBinding;
-            const versions=[{versionId:'version:'+crypto.randomUUID(),revision:sha256Text(loaded.data.content),format:loaded.data.format,content:loaded.data.content,createdAt:Date.now(),visibility:definition.visibility,history:loaded.data.history,...(loaded.data.branchBinding?{branchBinding:loaded.data.branchBinding}:{}),...(loaded.data.sourceBinding?{sourceBinding:loaded.data.sourceBinding}:{})},...(records[key]?.versions??[])].slice(0,20);
+            // A virtual seed has no prior bytes to retain, even if an older
+            // journal stamp survives a deleted output file.
+            const previousVersions=loaded.data.revision.startsWith('missing:')?[]:[{versionId:'version:'+crypto.randomUUID(),revision:sha256Text(loaded.data.content),format:loaded.data.format,content:loaded.data.content,createdAt:Date.now(),visibility:definition.visibility,history:loaded.data.history,...(loaded.data.branchBinding?{branchBinding:loaded.data.branchBinding}:{}),...(loaded.data.sourceBinding?{sourceBinding:loaded.data.sourceBinding}:{})}];
+            const versions=[...previousVersions,...(records[key]?.versions??[])].slice(0,20);
             const revision=sha256Text(maintenance.content),acceptedMetadata={visibility:definition.visibility,branchBinding:acceptedBranchBinding??null,versions,history:maintenance.history,historyPages:{...(records[key]?.historyPages??{}),...maintenance.pages},receipts:maintenance.receipts};
             const pendingRecord={...records[key],receipts:records[key]?.receipts??[],pending:{intentId:change.intentId,fingerprint:change.fingerprint,beforeHash:loaded.data.revision,afterHash:revision,revision,acceptedMetadata,...(change.sourceBinding?{sourceBinding:change.sourceBinding}:{})}};
             const beforeJournal=current(change.targetId);if(!beforeJournal.ok)return beforeJournal;

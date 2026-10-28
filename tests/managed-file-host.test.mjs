@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createNativeWorkflowController } from '../src/workflow/host.js?v=0.30.0';
-import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v=0.30.0';
-import { operationDefaults } from '../src/workflow/catalog.js?v=0.30.0';
+import { createNativeWorkflowController } from '../src/workflow/host.js?v=0.30.1';
+import { createChatDocumentCatalog } from '../src/workflow/document-catalog.js?v=0.30.1';
+import { operationDefaults } from '../src/workflow/catalog.js?v=0.30.1';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
-import { normalizeOccurrences,confirmOccurrences,resolveItemHolders } from '../src/workflow/operations/event-data.js?v=0.30.0';
+import { normalizeOccurrences,confirmOccurrences,resolveItemHolders } from '../src/workflow/operations/event-data.js?v=0.30.1';
 import {nativeFixture,reviewGraph} from './helpers/native-workflow-fixture.mjs';
 
 test('host adopts an empty legacy own-file destination before strict runtime preflight',async()=>{

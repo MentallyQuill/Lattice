@@ -1,7 +1,7 @@
-import {cloneJsonValue} from './operations/json-data.js?v=0.30.0';
-import {inspectDocumentHistory,validateDocumentHistory} from './document-history.js?v=0.30.0';
-import {sha256Text} from './definition-data.js?v=0.30.0';
-import {validVisibilityMetadata} from './artifact-privacy.js?v=0.30.0';
+import {cloneJsonValue} from './operations/json-data.js?v=0.30.1';
+import {inspectDocumentHistory,validateDocumentHistory} from './document-history.js?v=0.30.1';
+import {sha256Text} from './definition-data.js?v=0.30.1';
+import {validVisibilityMetadata} from './artifact-privacy.js?v=0.30.1';
 const fail=()=>({ok:false,error:{code:'FILE_RECOVERY_TRANSFER_INVALID',message:'The selected recovery history could not be verified.'}});
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const id=value=>typeof value==='string'&&value.length>0&&value.length<=256;

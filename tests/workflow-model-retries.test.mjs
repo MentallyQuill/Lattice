@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { executeModelNode, describeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.30.0';
-import { retryModelNode } from '../src/workflow/operations/model-retry.js?v=0.30.0';
+import { executeModelNode, describeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.30.1';
+import { retryModelNode } from '../src/workflow/operations/model-retry.js?v=0.30.1';
 
 const node = (operation = 'model-call', settings = {}) => ({ id: 'retry-node', operation, maxRetries: 2, ...settings });
 const prompt = { prompt: { kind: 'text', text: 'Write a brief observation.' } };

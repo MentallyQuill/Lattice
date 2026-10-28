@@ -1,5 +1,5 @@
-import { sha256Text } from './definition-data.js?v=0.30.0';
-import { workflowDataPresetFor } from './workflow-data-defaults.js?v=0.30.0';
+import { sha256Text } from './definition-data.js?v=0.30.1';
+import { workflowDataPresetFor } from './workflow-data-defaults.js?v=0.30.1';
 
 /** Static composition eligibility is trusted code, never a portable node flag. */
 // Static placement preserves the enclosing host's authority; repeated helpers still

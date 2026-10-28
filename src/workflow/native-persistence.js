@@ -1,5 +1,5 @@
-import { normalizeNativeSourceMessages } from './native-source-identity.js?v=0.30.0';
-import { cloneJsonValue } from './operations/json-data.js?v=0.30.0';
+import { normalizeNativeSourceMessages } from './native-source-identity.js?v=0.30.1';
+import { cloneJsonValue } from './operations/json-data.js?v=0.30.1';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&[Object.prototype,null].includes(Object.getPrototypeOf(value));
 const identifier=value=>typeof value==='string'&&!!value.trim()&&value.length<=128&&!['__proto__','prototype','constructor'].includes(value)&&!/[\r\n]/.test(value);

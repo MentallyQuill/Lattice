@@ -6,6 +6,7 @@ Changes and upgrade guidance for Lattice, newest first. Select a version for its
 
 Notes before 0.28.0 were reconstructed from main-branch repository history. Their dates and controls describe the historical snapshots, not the current interface. Version numbers absent from that history are omitted.
 
+- [0.30.1](0.30.1.md)
 - [0.30.0](0.30.0.md)
 - [0.29.1](0.29.1.md)
 - [0.29.0](0.29.0.md)

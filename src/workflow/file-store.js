@@ -1,10 +1,10 @@
-import {prepareAcceptedFileMaintenance} from './file-history-maintenance.js?v=0.30.0';
-import { cloneJsonValue } from './operations/json-data.js?v=0.30.0';
-import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.30.0';
-import {documentHistoryHeader,inspectDocumentHistory,validateDocumentHistory,lookupDocumentHistory,prepareDocumentCheckpoint} from './document-history.js?v=0.30.0';
-import {artifactVisibility} from './artifact-privacy.js?v=0.30.0';
-import {validChatSourceBinding} from './chat-prefix-binding.js?v=0.30.0';
-import {sha256Text} from './definition-data.js?v=0.30.0';
+import {prepareAcceptedFileMaintenance} from './file-history-maintenance.js?v=0.30.1';
+import { cloneJsonValue } from './operations/json-data.js?v=0.30.1';
+import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.30.1';
+import {documentHistoryHeader,inspectDocumentHistory,validateDocumentHistory,lookupDocumentHistory,prepareDocumentCheckpoint} from './document-history.js?v=0.30.1';
+import {artifactVisibility} from './artifact-privacy.js?v=0.30.1';
+import {validChatSourceBinding} from './chat-prefix-binding.js?v=0.30.1';
+import {sha256Text} from './definition-data.js?v=0.30.1';
 
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
