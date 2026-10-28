@@ -88,7 +88,7 @@ export async function prepareManagedNodeFiles(nodes,context) {
             const candidate=candidates[index];let node=candidate.node;
             if(candidate.definition){
                 if(typeof context.access?.ensureManaged!=='function')return {ok:false,error:{code:'FILE_ACCESS_REQUIRED',message:'Managed file storage is unavailable.'}};
-                const granted=grants.has(candidate.definition.targetId)?{ok:true,data:grants.get(candidate.definition.targetId)}:await context.access.ensureManaged(candidate.definition,{scope:context.scope,isCurrent:context.isCurrent});
+                const granted=grants.has(candidate.definition.targetId)?{ok:true,data:grants.get(candidate.definition.targetId)}:await context.access.ensureManaged(candidate.definition,{scope:context.scope,isCurrent:context.isCurrent,managed:true});
                 if(context.isCurrent()!==true)return {ok:false,error:{code:'STALE_FILE_SCOPE',message:'The managed file scope changed.'}};
                 if(!granted?.ok)return granted;
                 const definition=granted.data;

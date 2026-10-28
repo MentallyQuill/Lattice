@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test,{after} from 'node:test';
 import {mkdtempSync,writeFileSync,readFileSync,statSync,rmSync,unlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
 import {join,dirname,resolve} from 'node:path';
 import {createHostFileStore} from '../src/ui/host-file-store.js';
 
@@ -26,7 +27,7 @@ export function hostFixture(){
   return bytes===undefined?new Response('',{status:404}):new Response(readFileSync(diskPath(user+':'+name)));
  };
  const create=(overrides={})=>createHostFileStore({fetch,getUserId:()=>user,getRequestHeaders:()=>({'X-CSRF':'checked'}),...overrides});
- return {files,requests,diskPath,create,setUser:value=>{user=value;},loseMain:()=>{loseMain=true;},wrongPath:()=>{wrongPath=true;}};
+ return {files,requests,diskPath,fetch,create,setUser:value=>{user=value;},loseMain:()=>{loseMain=true;},wrongPath:()=>{wrongPath=true;}};
 }
 test('accepted host writes produce real UTF-8 files and empty replacement is zero bytes',async()=>{
  const f=hostFixture(),store=f.create();
@@ -80,4 +81,19 @@ test('a completed intent never recreates an externally deleted file on retry',as
 test('a small configured content limit does not reject internal save receipts',async()=>{
  const f=hostFixture(),store=f.create({maxBytes:4}),saved=await store.write({name:'tiny.txt',expectedRevision:null,content:'four',intentId:'small'});
  assert.equal(saved.ok,true,JSON.stringify(saved));assert.equal((await store.read('tiny.txt')).data.content,'four');
+});
+
+test('settling an earlier write cannot release a later queued write on the same file',async t=>{
+ const descriptor=Object.getOwnPropertyDescriptor(globalThis,'navigator');Object.defineProperty(globalThis,'navigator',{configurable:true,value:{}});t.after(()=>{if(descriptor)Object.defineProperty(globalThis,'navigator',descriptor);else delete globalThis.navigator;});
+ const f=hostFixture();let release,entered;const gate=new Promise(resolve=>{release=resolve;}),blocked=new Promise(resolve=>{entered=resolve;});
+ const store=f.create({fetch:async(url,options)=>{if(url==='/api/files/upload'){const body=JSON.parse(options.body);if(body.name.endsWith('-serial.txt')&&Buffer.from(body.data,'base64').toString()==='second'){entered();await gate;}}return f.fetch(url,options);}});
+ const revision=content=>'sha256:'+createHash('sha256').update(content).digest('hex');
+ const first=store.write({name:'serial.txt',expectedRevision:null,content:'first',intentId:'serial-first'});
+ const second=store.write({name:'serial.txt',expectedRevision:revision('first'),content:'second',intentId:'serial-second'});
+ assert.equal((await first).ok,true);await blocked;
+ const third=store.write({name:'serial.txt',expectedRevision:revision('second'),content:'third',intentId:'serial-third'});
+ try{await new Promise(resolve=>setImmediate(resolve));assert.equal([...f.files.values()].some(bytes=>bytes.toString()==='third'),false);}finally{release();}
+ const results=await Promise.all([second,third]);assert.equal(results.every(result=>result.ok),true,JSON.stringify(results));
+ assert.equal((await store.read('serial.txt')).data.content,'third');
+ const fourth=await store.write({name:'serial.txt',expectedRevision:results[1].data.revision,content:'fourth',intentId:'serial-fourth'});assert.equal(fourth.ok,true);
 });

@@ -92,7 +92,8 @@ export interface NodeFileAccess {
     readonly nativeSupported?:boolean;
     readonly capabilities?:NodeFileCapabilities;
     readonly providers?:Partial<Record<'host'|'server'|'native',NodeFileProviderStatus>>;
-    ensureManaged?:(definition:NodeFileDefinition,controls:{scope:StorageScope;isCurrent:()=>boolean})=>Promise<Result<NodeFileDefinition>>;
+    /** Only trusted runtime controls.managed:true authorizes fresh host allocation; definition data never grants authority. */
+    ensureManaged?:(definition:NodeFileDefinition,controls:{scope:StorageScope;isCurrent:()=>boolean;managed?:true})=>Promise<Result<NodeFileDefinition>>;
     readonly nativeAccessIssue?:NodeFileAvailabilityIssue|null;
     readonly location?:{basePath:string;platform:string;canUseAbsolutePaths:boolean}|null;
     refresh?:()=>Promise<Result<{persistent:true}>>;

@@ -24,8 +24,19 @@ export function createNodeFileService({host,server,native,getStorageMode}){
   async ensureManaged(definition,controls){
    const captured=captureData(definition);if(!captured.ok)return captured;
    await Promise.all(adapters.map(adapter=>adapter.ready));
-   if(captured.data.value.bindingId&&owner(captured.data.value.bindingId))return {ok:true,data:captured.data.value};
-   return host?.ensureManaged?host.ensureManaged(captured.data.value,controls):fail('HOST_FILE_UNAVAILABLE','Automatic host file storage is unavailable.');
+   const value=captured.data.value;
+   if(!value||typeof value!=='object'||Array.isArray(value))return fail('INVALID_FILE_BACKEND_CONFIG','Use a plain captured file definition.');
+   if(controls?.managed===true){
+    const {bindingId,path,storage,...intent}=value;
+    return host?.ensureManaged?host.ensureManaged({...intent,bindingId:''},controls):fail('HOST_FILE_UNAVAILABLE','Automatic host file storage is unavailable.');
+   }
+   if(value.bindingId&&owner(value.bindingId))return {ok:true,data:value};
+   if(value.bindingId||value.path||['native','server','host'].includes(value.storage)){
+    const provider=value.storage==='native'?native:value.storage==='host'?host:value.storage==='server'||value.path?server:null;
+    if(provider?.availability)return fail(provider.availability.code,provider.availability.message);
+    return fail('FILE_BINDING_MISSING','The configured file authority is unavailable. Reconnect its original destination before saving.');
+   }
+   return fail('FILE_MANAGED_INTENT_REQUIRED','Prepare a trusted new managed destination or reconnect the configured file.');
   },
   backend(definitions,controls){
    const copied=captureData(definitions),captured=copied.ok&&Array.isArray(copied.data.value)?copied.data.value:[];

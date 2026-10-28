@@ -47,9 +47,11 @@ test('new external readers request a real source instead of inventing empty note
 test('trusted preparation allocates bindings for owned writers and state without output writes',async()=>{
  assert.equal(typeof policy.prepareManagedNodeFiles,'function');
  const nodes=[{id:'write',operation:'write-file',destinationMode:'own',fileTarget:{managed:true}},{id:'outcomes',operation:'commit-outcomes',fileTarget:{managed:true}},{id:'clock',operation:'story-clock',fileTarget:{managed:true}}];
- const prepared=await policy.prepareManagedNodeFiles(nodes,{workflowId:'library:one',scope:{userId:'u',chatId:'c'},isCurrent:()=>true,access:{ensureManaged:async definition=>({ok:true,data:{...definition,bindingId:'host:'+definition.targetId}})}});
+ const trustedControls=[];
+ const prepared=await policy.prepareManagedNodeFiles(nodes,{workflowId:'library:one',scope:{userId:'u',chatId:'c'},isCurrent:()=>true,access:{ensureManaged:async(definition,controls)=>{trustedControls.push(controls);return {ok:true,data:{...definition,bindingId:'host:'+definition.targetId}};}}});
  assert.equal(prepared.ok,true,JSON.stringify(prepared));
  assert.equal(prepared.data.definitions.length,3);
+ assert.equal(trustedControls.length,3);assert.equal(trustedControls.every(controls=>controls.managed===true&&controls.scope.userId==='u'&&controls.isCurrent()===true),true);
  assert.equal(prepared.data.nodes[0].destinationMode,'own');
  assert.equal(prepared.data.nodes[0].fileTarget.bindingId.startsWith('host:'),true);
  assert.equal(prepared.data.nodes[1].fileTarget.content,'[]');

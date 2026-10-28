@@ -75,7 +75,10 @@ export function createHostFileStore(options={}){
    if(latest.data.revision!==expectedRevision)return {...fail('FILE_REVISION_CONFLICT','This host file changed while recovery data was saved.'),recovery};
    const saved=await upload(identity,key,content);return saved.ok?acknowledged(saved.data):{...saved,recovery};
   };
-  const before=queues.get(key)??Promise.resolve(),pending=before.then(()=>globalThis.navigator?.locks?.request?globalThis.navigator.locks.request('lattice-host-'+key,action):action());queues.set(key,pending.catch(()=>{}));return pending;
+  const before=queues.get(key)??Promise.resolve(),pending=before.then(()=>globalThis.navigator?.locks?.request?globalThis.navigator.locks.request('lattice-host-'+key,action):action());
+  const tail=pending.catch(()=>{});queues.set(key,tail);
+  void tail.then(()=>{if(queues.get(key)===tail)queues.delete(key);});
+  return pending;
  }
  return Object.freeze({read,write,capabilities});
 }
