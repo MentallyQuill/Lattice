@@ -90,3 +90,22 @@ Exact final covering verification:
 - `git diff --check -- tools/install-server-plugin.mjs src/ui/file-storage-setup.js tests/file-storage-components.test.mjs tests/file-storage-setup.test.mjs tests/server-file-installer.test.mjs`: clean except informational Git LF/CRLF warnings.
 
 The checked-in `assets/lattice-file-setup.zip` is intentionally **stale pending Task7 final regeneration**. The TEMP ZIP extraction test rebuilt and verified the installer from current source, but this fix commit does not capture concurrently uncommitted Task6 runtime modules in the distributed binary. Parent must run `node tools/build-server-setup.mjs` after the final runtime snapshot, before release. The failed-update recovery transaction does not promise live hot reload of modules already imported by a running host; the host restart requirement remains.
+
+## Review fix round 2 — configuration copy permissions
+
+Read `task-4-fix-1-review.md`. The reported replacement-inode/backup permission widening follows from creating them with default `writeFile` options. Parent also requested retaining original POSIX uid/gid so an identical group-readable mode cannot expose contents to a different destination-directory group.
+
+Added two covering tests before production edits:
+
+- Windows-runnable `config backups, pending publication and rollback request private creation permissions` uses real temporary host/source trees and native filesystem operations, injects private original mode metadata, records the config-copy write options, and injects one post-publication read failure to exercise the real rollback path. `node tests/server-file-installer.test.mjs` failed with `undefined !== 384` on the backup's missing `mode` option. This is the observed RED; it does not pretend Windows enforces POSIX permissions.
+- POSIX-gated `POSIX config publication and rollback preserve private mode and ownership` creates a real 0600 config under umask 022, verifies the published config and backups retain original mode/uid/gid, then forces post-publication verification failure and checks the restored config and all backups. It is explicitly **skipped on this Windows host**; no execution or POSIX pass is claimed.
+
+The installer captures original config metadata and routes backup/pending/rollback copies through one internal helper. Every new copy is initially created with `{flag:'wx',mode:0o600}`. On POSIX, the helper applies original uid/gid when different, then restores the original permission bits and verifies both ownership and mode before publication. Failure to preserve them aborts the configuration publication. Ownership is set before any original group permissions are restored, avoiding an exposure window through the newly created file's initial group. The fallback for a newly created copy without supplied metadata is private 0600. Existing active-line/CRLF handling, source verification, whole-plugin staging, publication and rollback logic remain covered.
+
+Fresh results:
+
+- `node tests/server-file-installer.test.mjs`: **8 passed, 0 failed, 1 skipped**. The Windows mode-option regression exercises backup, pending and rollback writes and verifies final/restored configuration bytes. The single skip is the real POSIX mode/ownership fixture described above.
+- `node tools/test-all.mjs server-file-installer server-setup` with process permission: **3/3 test files passed**, covering the installer, actual TEMP bundle extraction/install/import, and local setup authentication checks.
+- `git diff --check -- tools/install-server-plugin.mjs tests/server-file-installer.test.mjs`: clean except informational Git LF/CRLF notices.
+
+Scope: only installer, its covering tests and this report changed. No shared server/Task6 files, application UI, real host or checked-in ZIP was changed. Windows ACL preservation is **not established or claimed** by these tests or by POSIX mode/chown operations; the Windows evidence is bounded to private creation-mode arguments and real rollback behavior. macOS/Linux mode/ownership behavior awaits running the included POSIX fixture on those platforms. Task7 still must regenerate the distributed ZIP after final runtime/source changes.

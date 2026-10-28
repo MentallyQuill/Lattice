@@ -96,3 +96,40 @@ test('a failed rollback retains the prior plugin backup for host-owner recovery'
   assert.ok(backup);assert.equal(await readFile(join(backup,'runtime','server-plugin','index.mjs'),'utf8'),original);
  }finally{context.mock.restoreAll();await rm(directory,{recursive:true,force:true});}
 });
+
+test('config backups, pending publication and rollback request private creation permissions',async context=>{
+ const directory=await mkdtemp(join(tmpdir(),'lattice-config-mode-options-'));
+ try{
+  const source=join(directory,'source');await mkdir(join(source,'server-plugin'),{recursive:true});await writeFile(join(source,'server-plugin','index.mjs'),'export const info={id:"lattice-files"}; export function init(){}\n');
+  for(const rollback of [false,true]){
+   const host=join(directory,rollback?'rollback':'success');await mkdir(host);await writeFile(join(host,'server.js'),'// fixture');const configPath=join(host,'config.yaml'),configuration='enableServerPlugins: false\n';await writeFile(configPath,configuration);
+   const writes=[],originalStat=filesystem.stat,originalWrite=filesystem.writeFile,originalRename=filesystem.rename,originalRead=filesystem.readFile;let published=false,injected=false;
+   context.mock.method(filesystem,'stat',async(...args)=>{const result=await originalStat(...args);if(args[0]===configPath)result.mode=result.mode&~0o777|0o600;return result;});
+   context.mock.method(filesystem,'writeFile',async(...args)=>{if(String(args[0]).startsWith(configPath+'.lattice-'))writes.push({path:args[0],mode:args[2]?.mode});return originalWrite(...args);});
+   context.mock.method(filesystem,'rename',async(...args)=>{const result=await originalRename(...args);if(args[1]===configPath)published=true;return result;});
+   context.mock.method(filesystem,'readFile',async(...args)=>{if(rollback&&published&&!injected&&args[0]===configPath){injected=true;throw Error('Injected verification failure after config publication');}return originalRead(...args);});
+   try{
+    if(rollback)await assert.rejects(()=>installServerFilePlugin({sillyTavernPath:host,extensionPath:source,enableServerPlugins:true}),/Injected verification/);
+    else await installServerFilePlugin({sillyTavernPath:host,extensionPath:source,enableServerPlugins:true});
+   }finally{context.mock.restoreAll();}
+   assert.equal(writes.length,rollback?3:2);for(const write of writes)assert.equal(write.mode,0o600,'config copies must be created privately: '+write.path);
+   assert.equal(await readFile(configPath,'utf8'),rollback?configuration:'enableServerPlugins: true\n');
+  }
+ }finally{context.mock.restoreAll();const scope=relative(resolve(tmpdir()),resolve(directory));assert.ok(scope&&!scope.startsWith('..')&&!isAbsolute(scope));await rm(directory,{recursive:true,force:true});}
+});
+
+test('POSIX config publication and rollback preserve private mode and ownership', {skip:process.platform==='win32'?'POSIX mode and ownership require a POSIX filesystem':false},async context=>{
+ const directory=await mkdtemp(join(tmpdir(),'lattice-config-posix-mode-')),originalUmask=process.umask(0o022);
+ try{
+  const source=join(directory,'source'),host=join(directory,'host');await mkdir(join(source,'server-plugin'),{recursive:true});await mkdir(host);await writeFile(join(source,'server-plugin','index.mjs'),'export const info={id:"lattice-files"}; export function init(){}\n');await writeFile(join(host,'server.js'),'// fixture');
+  const configPath=join(host,'config.yaml'),configuration='enableServerPlugins: false\n';await writeFile(configPath,configuration,{mode:0o600});const original=await filesystem.stat(configPath);
+  const assertMetadata=async path=>{const current=await filesystem.stat(path);assert.equal(current.mode&0o777,0o600,path);assert.equal(current.uid,original.uid,path);assert.equal(current.gid,original.gid,path);};
+  const installed=await installServerFilePlugin({sillyTavernPath:host,extensionPath:source,enableServerPlugins:true});await assertMetadata(configPath);await assertMetadata(installed.configBackup);
+  await writeFile(configPath,configuration);const originalRename=filesystem.rename,originalRead=filesystem.readFile;let published=false,injected=false;
+  context.mock.method(filesystem,'rename',async(...args)=>{const result=await originalRename(...args);if(args[1]===configPath)published=true;return result;});
+  context.mock.method(filesystem,'readFile',async(...args)=>{if(published&&!injected&&args[0]===configPath){injected=true;throw Error('Injected verification failure after config publication');}return originalRead(...args);});
+  try{await assert.rejects(()=>installServerFilePlugin({sillyTavernPath:host,extensionPath:source,enableServerPlugins:true}),/Injected verification/);}finally{context.mock.restoreAll();}
+  assert.equal(await readFile(configPath,'utf8'),configuration);await assertMetadata(configPath);
+  for(const entry of await filesystem.readdir(host))if(entry.startsWith('config.yaml.lattice-backup-'))await assertMetadata(join(host,entry));
+ }finally{context.mock.restoreAll();process.umask(originalUmask);const scope=relative(resolve(tmpdir()),resolve(directory));assert.ok(scope&&!scope.startsWith('..')&&!isAbsolute(scope));await rm(directory,{recursive:true,force:true});}
+});

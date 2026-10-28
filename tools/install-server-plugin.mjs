@@ -10,6 +10,18 @@ async function pluginSlot(host,value){
  return safeDestination(host,target);
 }
 async function removePluginSlot(host,value){await fs.rm(await pluginSlot(host,value),{recursive:true,force:true});}
+async function writeConfigurationCopy(host,value,text,metadata={mode:0o600}){
+ const target=await safeDestination(host,value);
+ // Never expose a new copy through the destination directory's initial group or umask.
+ await fs.writeFile(target,text,{flag:'wx',mode:0o600});
+ if(process.platform!=='win32'){
+  const created=await fs.stat(target),hasOwner=Number.isInteger(metadata.uid)&&Number.isInteger(metadata.gid);
+  if(hasOwner&&(created.uid!==metadata.uid||created.gid!==metadata.gid))await fs.chown(target,metadata.uid,metadata.gid);
+  await fs.chmod(target,metadata.mode&0o777);
+  const verified=await fs.stat(target);
+  if((verified.mode&0o777)!==(metadata.mode&0o777)||hasOwner&&(verified.uid!==metadata.uid||verified.gid!==metadata.gid))throw Error('The configuration copy could not retain its original permissions and ownership.');
+ }
+}
 function configFlag(text){
  const lines=text.split(/\r?\n/),candidates=lines.filter(line=>/^\s*["']?enableServerPlugins["']?\s*:/.test(line));
  if(candidates.length>1||candidates.some(line=>!/^enableServerPlugins:\s*(true|false)\s*(?:#.*)?$/.test(line))||/^(?:---|\.\.\.)\s*$/m.test(text)||/^\s*<<\s*:/m.test(text)||/^\s*[{[]/.test(text))throw Error('The config enableServerPlugins setting is ambiguous. Ask the host owner to set one top-level boolean value.');
@@ -21,7 +33,7 @@ export async function installServerFilePlugin({sillyTavernPath,extensionPath=fil
  const host=await fs.realpath(resolve(sillyTavernPath));
  const server=await safeDestination(host,'server.js');if(!(await fs.stat(server)).isFile())throw Error('Choose the SillyTavern folder containing server.js.');
  const configPath=await safeDestination(host,'config.yaml');
- const configuration=await fs.readFile(configPath,'utf8'),flag=configFlag(configuration);
+ const configuration=await fs.readFile(configPath,'utf8'),flag=configFlag(configuration),configMetadata=await fs.stat(configPath);
  const pluginDirectory=await safeDestination(host,join('plugins','lattice-files')),destination=await safeDestination(host,join('plugins','lattice-files','index.mjs'));
  let previousEntry=null;
  try{previousEntry=await fs.readFile(destination,'utf8');if(!previousEntry.startsWith(marker))throw Error('An existing lattice-files plugin was not installed by this installer; preserve it and resolve the location before continuing.');}catch(error){if(error.code!=='ENOENT')throw error;}
@@ -47,8 +59,8 @@ export async function installServerFilePlugin({sillyTavernPath,extensionPath=fil
   if(verified.info?.id!=='lattice-files'||typeof verified.init!=='function')throw Error('Installed component verification failed.');
   if(await fs.readFile(configPath,'utf8')!==configuration)throw Error('The config changed during setup. Retry after the host owner finishes editing it.');
   if(updated!==configuration){
-   configBackup=await safeDestination(host,'config.yaml.lattice-backup-'+token);await fs.writeFile(configBackup,configuration,{flag:'wx'});
-   await fs.writeFile(configTemporary,updated,{flag:'wx'});
+   configBackup=await safeDestination(host,'config.yaml.lattice-backup-'+token);await writeConfigurationCopy(host,configBackup,configuration,configMetadata);
+   await writeConfigurationCopy(host,configTemporary,updated,configMetadata);
   }
   let currentEntry=null;try{currentEntry=await fs.readFile(await safeDestination(host,destination),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
   if(currentEntry!==previousEntry)throw Error('The installed plugin changed during setup. Retry after the host owner finishes updating it.');
@@ -60,7 +72,7 @@ export async function installServerFilePlugin({sillyTavernPath,extensionPath=fil
   try{
    if(published){await fs.rename(await pluginSlot(host,pluginDirectory),await pluginSlot(host,stage));published=false;}
    if(movedPrevious){await fs.rename(await pluginSlot(host,previous),await pluginSlot(host,pluginDirectory));movedPrevious=false;}
-   if(configPublished&&await fs.readFile(configPath,'utf8')===updated){await fs.writeFile(await safeDestination(host,configTemporary),configuration,{flag:'wx'});await fs.rename(await safeDestination(host,configTemporary),await safeDestination(host,configPath));}
+   if(configPublished&&await fs.readFile(configPath,'utf8')===updated){await writeConfigurationCopy(host,configTemporary,configuration,configMetadata);await fs.rename(await safeDestination(host,configTemporary),await safeDestination(host,configPath));}
   }catch(rollback){throw new AggregateError([error,rollback],'Setup failed; preserve the previous plugin at '+previous+' and configuration backup '+configBackup+' for host-owner recovery.');}
   throw error;
  }finally{
