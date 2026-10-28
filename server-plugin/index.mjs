@@ -47,7 +47,7 @@ function publicFailure(cause){
 
 export function createServerFileService(){
  const transfers=new Map(),maxBytes=30000000,maxSessions=32,ttl=15*60*1000;
- const prune=()=>{const now=Date.now();for(const [token,entry] of transfers)if(entry.expires<=now)transfers.delete(token);};
+ const prune=()=>{const now=Date.now();for(const [token,entry] of transfers)if(entry.expires<=now||entry.epoch!==transferEpoch)transfers.delete(token);};
  const size=()=>[...transfers.values()].reduce((total,entry)=>total+entry.bytes,0);
  const openTransfer=(owner,body,kind,path,pages={})=>{
   prune();const bytes=Buffer.byteLength(JSON.stringify(pages));if(transfers.size>=maxSessions||size()+bytes>maxBytes)return null;
