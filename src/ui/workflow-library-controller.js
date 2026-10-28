@@ -6,7 +6,7 @@ const cancelled=()=>({ok:false,cancelled:true});
 
 /** Application hooks keep chat selection apart from shared authored documents. */
 export function createWorkflowLibraryController(env) {
-    const {session,library}=env, getContext=env.getContext??(()=>null),isBusy=env.isBusy??(()=>false);
+    const {session,library}=env, getContext=env.getContext??(()=>null),isBusy=env.isBusy??(()=>false),isBusyView=env.isBusyView??isBusy;
     const activate=env.activate??((graph,options)=>session.activate(graph,options));
     const listeners=new Set();let busy=false,items=[],status={state:'idle'},selection=null,disposed=false,selectionTail=Promise.resolve();
     const notify=()=>{for(const listener of listeners)try{listener();}catch{}env.changed?.();};
@@ -104,7 +104,7 @@ export function createWorkflowLibraryController(env) {
         async reloadList(){const result=await library.list();if(result.ok){items=result.data;notify();}return result;},
         async restoreSelection(){const selected=env.getSelection?.();return selected?.kind==='library'?openSaved(selected.id):{ok:true,data:{unchanged:true}};},
         getWorkflowIdentity:()=>session.source()?.kind==='library'?session.source().id:session.draftNamespace(),
-        view:()=>({items:[...items],source:session.source(),selected:selection&&selection.context===getContext()?selection.value:env.getSelection?.()??null,status,dirty:session.dirty(),busy:busy||isBusy(),commandBusy:busy,autosave:autosave.view(),capabilities:library.capabilities}),
+        view:()=>({items:[...items],source:session.source(),selected:selection&&selection.context===getContext()?selection.value:env.getSelection?.()??null,status,dirty:session.dirty(),busy:busy||isBusyView(),commandBusy:busy,autosave:autosave.view(),capabilities:library.capabilities}),
         recovery:()=>autosave.recovery(),subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);},
         dispose(){disposed=true;autosave.dispose();listeners.clear();},
     });

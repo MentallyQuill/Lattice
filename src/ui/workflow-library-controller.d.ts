@@ -21,7 +21,7 @@ export interface WorkflowLibraryController {
  dispose():void;
 }
 export function createWorkflowLibraryController(options:{
- session:WorkflowSessionPort;library:WorkflowLibrary;getContext?:()=>unknown;isBusy?:()=>boolean;canAdopt?:()=>boolean;
+ session:WorkflowSessionPort;library:WorkflowLibrary;getContext?:()=>unknown;isBusy?:()=>boolean;isBusyView?:()=>boolean;canAdopt?:()=>boolean;
  activate?:(graph:NativeGraph3,options:WorkflowActivationOptions)=>unknown;
  persistSelection?:(value:WorkflowSelection,context:unknown)=>Promise<Result<{acknowledged:true}>>;
  getSelection?:()=>WorkflowSelection|null;

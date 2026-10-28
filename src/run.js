@@ -27,6 +27,7 @@ let applicationFiles=null,applicationPorts={},storageMode=()=> 'inside';
 const existingInstallation=!!safe(()=>ctx().extensionSettings?.lattice);
 const applicationContext=()=>safe(()=>JSON.stringify([currentUser(),ctx().getCurrentChatId?.()??ctx().chatId,ctx().characterId,ctx().groupId]),'');
 const applicationBusy=()=>{const activity=controller?.activity?.();return !!activity?.busy||controller?.hasPendingReview?.()===true||!!applicationPorts.isBusy?.();};
+const applicationBusyView=()=>!!controller?.activity?.()?.busy||controller?.hasRetainedReview?.()===true;
 configureNodeFileAccess({getContext:ctx,getUserId:currentUser,getStorageMode:()=>storageMode()});
 export function workflowApplicationBusy(){return applicationBusy();}
 function refreshAfterNativeReview(){queueMicrotask(()=>{if(applicationFiles&&!applicationBusy())void applicationFiles.controller.refresh();});}
@@ -36,7 +37,7 @@ export function getApplicationFileExperience(){
     const selection=createWorkflowChatSelection({getContext:ctx,saveAndVerify:()=>getNativePersistenceVerifier().saveAndVerify({kind:'workflow-selection'})});
     applicationFiles=createApplicationFileExperience({session:documentSession,getUserId:currentUser,getNativeContext:ctx,getContext:applicationContext,
         getHost:()=>{const userId=currentUser();return userId?{hostId:globalThis.location?.origin??'SillyTavern',userId,local:['localhost','127.0.0.1','[::1]'].includes(globalThis.location?.hostname)}:null;},
-        showWelcome:!existingInstallation,isBusy:applicationBusy,activate:activateWorkflow,
+        showWelcome:!existingInstallation,isBusy:applicationBusy,isBusyView:applicationBusyView,activate:activateWorkflow,
         replace:(...args)=>applicationPorts.replace?.(...args)??{ok:false,cancelled:true},prompt:(...args)=>applicationPorts.prompt?.(...args),
         getSelection:()=>selection.get(),persistSelection:value=>selection.persist(value),
         configureStorageMode:callback=>{storageMode=callback;},
