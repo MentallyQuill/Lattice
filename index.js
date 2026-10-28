@@ -1,10 +1,9 @@
 /** Lattice launcher and host integration. The workflow never replaces SillyTavern's prompt. */
-import { MODULE, settings, save, ctx, safe, activeWorkflow, documentSession, onWorkflowActivated, getWorkflowFailurePolicy, setWorkflowFailurePolicy } from './src/state.js?v=0.28.1';
+import { MODULE, settings, save, ctx, safe, activeWorkflow, documentSession, onWorkflowActivated } from './src/state.js?v=0.28.1';
 import { getNativeWorkflowController, initializeNativeWorkflowController, workflowSignature, sendWorkflowState, subscribeWorkflowRunEvents } from './src/run.js?v=0.28.1';
 import * as UI from './src/ui.js?v=0.28.1';
 import { applyTheme } from './src/theme.js?v=0.28.1';
 import { presentDiagnostic } from './src/ui/diagnostics.js?v=0.28.1';
-import { WORKFLOW_FAILURE_OPTIONS } from './src/workflow/failure-policy.js?v=0.28.1';
 import { createChatProgress } from './src/ui/chat-progress.js?v=0.28.1';
 const logoUrl = new URL('./assets/lattice-logo.svg', import.meta.url).href;
 let chatProgress;
@@ -43,11 +42,6 @@ function addLauncher() {
                     <span class="pc-settings-copy"><strong id="pc-enable-label">Enable Lattice</strong><small id="pc-enabled-hint">Use the open workflow when you send a message.</small></span>
                     <span class="pc-settings-toggle-control"><input id="pc-enabled" class="pc-enable-input" type="checkbox" role="switch" aria-labelledby="pc-enable-label" aria-describedby="pc-enabled-hint"><span class="pc-enable-state" aria-hidden="true">Off</span></span>
                 </label>
-                <div class="pc-settings-failure">
-                    <label for="pc-failure-policy">When a node fails</label>
-                    <select id="pc-failure-policy" aria-describedby="pc-failure-policy-hint">${WORKFLOW_FAILURE_OPTIONS.map(option => `<option value="${option.value}">${option.label}</option>`).join('')}</select>
-                    <small id="pc-failure-policy-hint"></small>
-                </div>
                 <label class="pc-settings-toggle" for="pc-sendbar-opt">
                     <span class="pc-settings-copy"><strong id="pc-sendbar-label">Chat-bar shortcut</strong><small id="pc-sendbar-hint">Show Lattice beside the message box.</small></span>
                     <span class="pc-settings-toggle-control"><input id="pc-sendbar-opt" class="pc-enable-input" type="checkbox" role="switch" aria-label="Show Lattice in the chat bar" aria-describedby="pc-sendbar-hint"><span class="pc-enable-state" aria-hidden="true">Off</span></span>
@@ -60,13 +54,6 @@ function addLauncher() {
     host.append(block);
     const enabled = block.querySelector('#pc-enabled'); enabled.checked = isEnabled();
     enabled.addEventListener('change', () => { settings().enabled = enabled.checked; updateState(); });
-    const failure = block.querySelector('#pc-failure-policy');
-    failure.addEventListener('change', () => {
-        const result = setWorkflowFailurePolicy(failure.value);
-        if (result.ok) UI.refreshIfOpen();
-        else safe(() => globalThis.toastr?.error?.('The setting could not be saved. Your previous choice is still active. Try again.', 'Lattice setting not saved', { timeOut: 0, extendedTimeOut: 0, closeButton: true, tapToDismiss: false, escapeHtml: true }));
-        paintSendbar();
-    });
     const show = block.querySelector('#pc-sendbar-opt'); show.checked = settings().ui.sendbarButton !== false;
     show.addEventListener('change', () => { settings().ui.sendbarButton = show.checked; updateState(); addSendbarButton(); });
     block.querySelector('#pc-open-btn').addEventListener('click', () => UI.open());
@@ -101,12 +88,6 @@ function paintSendbar() {
         const row = checkbox.closest('.pc-settings-toggle');
         row?.classList.toggle('pc-on', on);
         const state = row?.querySelector('.pc-enable-state'); if (state) state.textContent = on ? 'On' : 'Off';
-    }
-    const failure = document.getElementById('pc-failure-policy');
-    if (failure) {
-        failure.value = getWorkflowFailurePolicy();
-        const help = document.getElementById('pc-failure-policy-hint');
-        if (help) help.textContent = WORKFLOW_FAILURE_OPTIONS.find(option => option.value === failure.value)?.description ?? '';
     }
     const workflowName = document.getElementById('pc-settings-workflow-name');
     if (workflowName) workflowName.textContent = activeWorkflow()?.name || 'No workflow open';

@@ -38,7 +38,7 @@ Connections determine execution order. Tools that support both stages expose **S
 
 ## Choose what happens when a node fails
 
-In **Extensions → Lattice → When a node fails**, choose:
+In **Lattice → Workflow → When a node fails**, choose an option. The current choice is marked:
 
 | Option | Behavior |
 | --- | --- |

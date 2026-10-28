@@ -5,6 +5,18 @@ const base = {history:{undo:false,redo:false}, camera:{mode:'select'}, selection
 const items = (state, name, panels) => workspaceMenus(state,panels).find(menu=>menu.name===name).groups.flat();
 const item = (state,name,command,panels) => items(state,name,panels).find(entry=>entry.command===command);
 
+test('Workflow exposes global failure behavior as three exclusive choices even during a run', () => {
+ const state={...base,readOnly:true,rootWorkflow:{ownedBusy:true},workflowFailurePolicy:'continue-available'};
+ const menu=item(state,'Workflow','workflow-failure-policy-menu');
+ assert.ok(menu); assert.equal(menu.label,'When a node fails'); assert.equal(menu.disabled,false);
+ assert.deepEqual(menu.children.map(entry=>[entry.label,entry.command,entry.kind,entry.checked,entry.disabled]),[
+  ['Fall back to SillyTavern','workflow-failure-policy:native-fallback','radio',false,false],
+  ['Stop all generation','workflow-failure-policy:stop','radio',false,false],
+  ['Continue where possible','workflow-failure-policy:continue-available','radio',true,false],
+ ]);
+ assert.equal(item(base,'Workflow','workflow-failure-policy-menu').children[0].checked,true);
+});
+
 test('Run details remains reachable before a first run to configure saved diagnostic logging', () => {
  const state={...base,runDetails:null,diagnosticHistory:{scopeKey:'chat',enabled:false,loading:false,issue:'',entries:[],selectedId:null}};
  assert.equal(item(state,'Workflow','run-details').disabled,false);

@@ -9,6 +9,7 @@
 
 ## Global Constraints
 - Exact label: When a node fails.
+- Location: Lattice → Workflow → When a node fails, with a checked submenu for the three choices.
 - Exact choices: Fall back to SillyTavern; Stop all generation; Continue where possible.
 - Values: native-fallback, stop, continue-available. Default: native-fallback.
 - Capture per run. No workflow serialization or provider calls. Do not modify the original checkout.
@@ -23,12 +24,12 @@
 - Preference change during a run and late old-run errors: host tests.
 - Recovered result retention, review/effects and notice privacy: integration tests.
 
-### Task 1: Global policy and settings select
-**Files:** Create src/workflow/failure-policy.js and .d.ts; modify src/state.js, index.js, style.css; add tests/workflow-failure-settings.test.mjs; extend tests/lattice-launcher.test.mjs.
+### Task 1: Global policy and Workflow submenu
+**Files:** Create src/workflow/failure-policy.js and .d.ts; modify src/state.js and Lattice Workflow menu integration; add tests/workflow-failure-settings.test.mjs; extend tests/lattice-launcher.test.mjs to exclude the control from the deprecated extension drawer.
 **Interfaces:** Export WorkflowFailurePolicy = 'native-fallback' | 'stop' | 'continue-available'; isWorkflowFailurePolicy(value), normalizeWorkflowFailurePolicy(value), WORKFLOW_FAILURE_OPTIONS (value,label,description). State exports getWorkflowFailurePolicy(), setWorkflowFailurePolicy(value). Setter validates, saves with recovery:false and updates pc-state. No src/run.js edits.
 - [x] Test missing/default/admitted/rejected preferences, setter save and import preservation; run red.
 - [x] Implement smallest shared policy and state integration; run focused green.
-- [x] Test actual launcher select labels, saved selection/help and repaint; run red, implement, run green.
+- [x] Test checked Workflow submenu labels, saved selection/help and repaint; exclude the control from the deprecated extension drawer.
 
 ### Task 2: Dependency-aware runtime recovery
 **Files:** Own src/workflow/runtime.js, resolve.js if necessary, run-state.js, recording.js, record-data.js, types.d.ts and their focused recovery tests. Do not edit host.js, src/run.js or global settings.
@@ -50,5 +51,5 @@
 **Files:** docs/native-workflows.md, docs/unified-workflows.md, docs/developer-guide.md as needed; built dist/lattice-ui.js only if build changes it; integration/browser tests as needed.
 - [x] Run 3-of-5 guidance scenario through the native controller with synthetic transport, verify exact successful guidance and errors.
 - [x] Document the global setting and when recovery can/cannot proceed.
-- [x] Run npm run check, inspect actual launcher select in browser and perform a fresh whole-branch review.
+- [x] Run npm run check, inspect the failure setting in browser and perform a fresh whole-branch review. Reverify the corrected Workflow submenu with focused checks after relocation.
 - [x] Fix review findings, rerun affected checks, preserve the worktree for user review and report evidence.

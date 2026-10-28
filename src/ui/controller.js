@@ -1,4 +1,5 @@
 import {createNativeSourceSetup} from './native-source-setup.js?v=0.28.1';
+import { isWorkflowFailurePolicy } from '../workflow/failure-policy.js?v=0.28.1';
 import { prepareNodeProfileOptions } from './node-profile-preparation.js?v=0.28.1';
 import { isScopedSystemOperation } from '../workflow/system-capabilities.js?v=0.28.1';
 import { prepareAddSystem, prepareSystemAssistance, projectSystemAuthoring } from '../workflow/system-authoring.js?v=0.28.1';
@@ -52,7 +53,7 @@ import { createDiagnosticHistoryController } from './diagnostic-history-controll
 import { readTextFile } from './file-input.js?v=0.28.1';
 import { prepareWorkspaceViews, prepareNodePlacementCard, prepareLibraryViews, projectEditorDraw, initialWorkspaceCamera, projectWorkspacePanels, projectNodeProfiles } from './workspace-preparation.js?v=0.28.1';
 import { prepareWorkflowProjection, projectPreparedWorkflow, createWorkflowSession } from './workflow-surface.js?v=0.28.1';
-import { ctx, safe, settings, save, activeWorkflow, activateWorkflow, documentSession, activeWorkspaceViews, setActiveWorkspaceViews, recoveredWorkflows, retainRecoveryWorkflows, onWorkflowActivated, onRecoveryIssue, blankGraph, touchGraph, commitGraphEdit, stepGraphHistory, exportGraph, exportArchivedWorkflows, onGraphTouched, groupMembers } from '../state.js?v=0.28.1';
+import { ctx, safe, settings, save, setWorkflowFailurePolicy, activeWorkflow, activateWorkflow, documentSession, activeWorkspaceViews, setActiveWorkspaceViews, recoveredWorkflows, retainRecoveryWorkflows, onWorkflowActivated, onRecoveryIssue, blankGraph, touchGraph, commitGraphEdit, stepGraphHistory, exportGraph, exportArchivedWorkflows, onGraphTouched, groupMembers } from '../state.js?v=0.28.1';
 import { applyTheme } from '../theme.js?v=0.28.1';
 import { renderThemeEditor } from '../theme-editor.js?v=0.28.1';
 import * as H from '../history.js?v=0.28.1';
@@ -522,7 +523,7 @@ function updateWorkflowProjection() {
     if(recallDetailsView)panels.nodeDetails=recallDetailsView;
     if (panels.outputPreview) panels.outputPreview = { ...panels.outputPreview, pinned: !!pinnedPreview, targeted: !!targetedPreview, followSelection: !pinnedPreview && !targetedPreview, busy: panels.outputPreview.busy || !!activity?.busy };
     if (canvas && graphViews && editorDraw && (canvasTraceRows?.rows !== view.rows || canvasTraceRows?.availability !== diagnosticState.availability || canvasTraceRows?.diagnostics !== diagnosticState.currentDiagnostics)) { canvasTraceRows = { rows: view.rows, availability: diagnosticState.availability, diagnostics: diagnosticState.currentDiagnostics }; canvas.setTrace(scopedRunTraces(view.rows, graphViews.readEditor(), diagnosticState.availability, diagnosticState.currentDiagnostics)); }
-    workbench?.update({ workflow: view, rootWorkflow, guideInsertionBusy: guideInsertionIsBusy(activity), workflowOutputs: workflowOutputItems(), menuContextKey: graphViews?.readEditContext().sessionId, menuCapabilities: selectionMenuCapabilities(), recall, ...panels, nativeDiagnostic: workspaceIssue, nativeFlatCanvas: !settings().ui?.theme?.style?.grid });
+    workbench?.update({ workflow: view, rootWorkflow, workflowFailurePolicy: settings().workflowFailurePolicy, guideInsertionBusy: guideInsertionIsBusy(activity), workflowOutputs: workflowOutputItems(), menuContextKey: graphViews?.readEditContext().sessionId, menuCapabilities: selectionMenuCapabilities(), recall, ...panels, nativeDiagnostic: workspaceIssue, nativeFlatCanvas: !settings().ui?.theme?.style?.grid });
 }
 function prepareGroupPresentation() {
     const captured = captureEditor(true); if (!captured.ok) return null;
@@ -696,7 +697,7 @@ function build() {
     root.classList.toggle('pc-details-hidden', typeof panes.inspector === 'boolean' ? !panes.inspector : window.innerWidth < 860); syncPaneToggles();
     document.addEventListener('pc-recall-state', () => { if(isOpen())refreshRecallOverview(); });
     document.addEventListener('pc-diagnostic-history', () => { void diagnosticHistoryUi?.refresh(); });
-    document.addEventListener('pc-state', () => { if(isOpen())refreshRecallOverview(); });
+    document.addEventListener('pc-state', () => { if(isOpen()){workbench?.update({workflowFailurePolicy:settings().workflowFailurePolicy});refreshRecallOverview();} });
     document.addEventListener('pc-theme', () => { if (canvas && isOpen() && !openingWorkspace) { updateWorkflowProjection(); canvas.render(); } });
     canvas = new Canvas(workbench.parts.canvasHost, {
         lodKey: () => graphViews ? documentSession.draftNamespace() + ':' + graphViews.readEditor().view.key : undefined,
@@ -930,7 +931,15 @@ function changeWorkflowOutput(key, target, enabled) {
     const prepared = prepareGraphCandidate(current, candidate.data); if (!prepared.ok) return prepared;
     return commitGraphEdit(current, { ...prepared.data, context: context.data, viewPath: [] }, graphDocumentHooks);
 }
+function changeWorkflowFailurePolicy(value) {
+    if (!isWorkflowFailurePolicy(value)) return;
+    const result = setWorkflowFailurePolicy(value);
+    if (!result.ok) toast('The failure setting could not be saved. Try again.', 'error');
+    workbench?.update({ workflowFailurePolicy: settings().workflowFailurePolicy });
+    return result;
+}
 function menuCommandAction(name) {
+    if (name.startsWith('workflow-failure-policy:')) return () => changeWorkflowFailurePolicy(name.slice('workflow-failure-policy:'.length));
     if (name.startsWith('workflow-output:')) return () => { try { const command = JSON.parse(decodeURIComponent(name.slice(16))); return changeWorkflowOutput(command.key, command.target, command.enabled); } catch { return undefined; } };
     const allowed = (flag, action) => () => selectionMenuCapabilities()[flag] ? action() : undefined;
     const commands = {
@@ -1144,7 +1153,7 @@ function doRedo() { restoreGraphHistory('redo', 'Redid'); }
 
 function renderDocumentState() {
     if (!workbench) return;
-    workbench.update({ document: ensureDocumentCommands().view(), graphId: current?.id ?? '', enabled: !!settings().enabled, hasArchivedWorkflows: Object.keys(settings().archivedWorkflows?.graphs ?? {}).length > 0 || Object.keys(settings().archivedWorkflows?.definitions ?? {}).length > 0 });
+    workbench.update({ document: ensureDocumentCommands().view(), graphId: current?.id ?? '', enabled: !!settings().enabled, workflowFailurePolicy: settings().workflowFailurePolicy, hasArchivedWorkflows: Object.keys(settings().archivedWorkflows?.graphs ?? {}).length > 0 || Object.keys(settings().archivedWorkflows?.definitions ?? {}).length > 0 });
 }
 
 function renderStatus({ project = true } = {}) { safe(() => document.dispatchEvent(new CustomEvent('pc-state'))); workbench.update({ enabled: !!settings().enabled }); if (project) { if (graphViews) updateWorkflowProjection(); else refreshRecallOverview(); } }

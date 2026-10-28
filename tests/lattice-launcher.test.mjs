@@ -2,9 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { JSDOM } from 'jsdom';
-import { installMock } from './mock.js';
-import * as state from '../src/state.js';
-import * as failurePolicy from '../src/workflow/failure-policy.js';
 
 const source = await readFile(new URL('../index.js', import.meta.url), 'utf8');
 function actual(name, env) {
@@ -123,72 +120,17 @@ test('current document edits cancel native authority and obsolete assignments ca
     assert.deepEqual(cancellations,['Workflow settings changed']);assert.equal(env.activeWorkflow(),open);
 });
 
-test('global failure select exposes the approved choices and saves the next-run preference with its help', () => {
-    const host = installMock({ settings: { workflowFailurePolicy: 'stop' } }); let saves = 0;
-    host.saveSettingsDebounced = () => saves++;
-    const saved = state.settings(), token = state.documentSession.capture();
+test('extension drawer keeps launcher controls without a workflow failure setting', () => {
     const f = fixture();
     f.env.document.body.insertAdjacentHTML('beforeend', '<div id="extensions_settings2"></div>');
-    Object.assign(f.env, { settings: state.settings, getWorkflowFailurePolicy: state.getWorkflowFailurePolicy,
-        setWorkflowFailurePolicy: state.setWorkflowFailurePolicy, WORKFLOW_FAILURE_OPTIONS: failurePolicy.WORKFLOW_FAILURE_OPTIONS,
-        activeWorkflow: state.activeWorkflow });
-    const previousDocument = globalThis.document, previousCustomEvent = globalThis.CustomEvent;
-    globalThis.document = f.env.document; globalThis.CustomEvent = f.dom.window.CustomEvent;
-    document.addEventListener('pc-state', f.env.paintSendbar);
-    try {
-        actual('addLauncher', f.env)();
-        const select = document.querySelector('#pc-failure-policy');
-        assert.ok(select, 'global drawer must offer a native failure select');
-        assert.equal(select.tagName, 'SELECT');
-        assert.equal(document.querySelector('label[for="pc-failure-policy"]').textContent, 'When a node fails');
-        assert.equal(select.closest('.pc-settings-controls').children[0].querySelector('input').id, 'pc-enabled');
-        assert.equal(select.closest('.pc-settings-controls').children[1].contains(select), true);
-        assert.deepEqual([...select.options].map(option => [option.value, option.textContent]), [
-            ['native-fallback', 'Fall back to SillyTavern'], ['stop', 'Stop all generation'], ['continue-available', 'Continue where possible'],
-        ]);
-        const help = document.getElementById(select.getAttribute('aria-describedby'));
-        assert.equal(select.value, 'stop');
-        assert.equal(help.textContent, 'Stop the workflow and all generation for this Send.');
-        for (const [value, description] of [
-            ['native-fallback', 'End the workflow and allow normal SillyTavern generation.'],
-            ['continue-available', 'Keep successful results and continue branches whose required inputs are available.'],
-        ]) {
-            select.value = value; select.dispatchEvent(new f.dom.window.Event('change', { bubbles: true }));
-            assert.equal(saved.workflowFailurePolicy, value);
-            assert.equal(help.textContent, description);
-        }
-        assert.equal(saves, 2);
-        assert.equal(state.documentSession.capture(), token);
-        saved.workflowFailurePolicy = 'stop'; f.env.paintSendbar();
-        assert.equal(select.value, 'stop');
-        assert.equal(help.textContent, 'Stop the workflow and all generation for this Send.');
-        actual('addLauncher', f.env)();
-        assert.equal(document.querySelectorAll('#pc-failure-policy').length, 1);
-    } finally { globalThis.document = previousDocument; globalThis.CustomEvent = previousCustomEvent; }
-});
-
-test('a failed drawer preference save restores the visible choice and reports safe retry guidance', () => {
-    const host = installMock({ settings: { workflowFailurePolicy: 'stop' } });
-    let rejectSave = false;
-    host.saveSettingsDebounced = () => { if (rejectSave) throw new Error('private host save detail'); };
-    state.settings(); rejectSave = true;
-    const f = fixture(), errors = [];
-    f.env.document.body.insertAdjacentHTML('beforeend', '<div id="extensions_settings2"></div>');
-    Object.assign(f.env, { settings: state.settings, getWorkflowFailurePolicy: state.getWorkflowFailurePolicy,
-        setWorkflowFailurePolicy: state.setWorkflowFailurePolicy, WORKFLOW_FAILURE_OPTIONS: failurePolicy.WORKFLOW_FAILURE_OPTIONS,
-        activeWorkflow: state.activeWorkflow });
-    const previousDocument = globalThis.document, previousCustomEvent = globalThis.CustomEvent, previousToastr = globalThis.toastr;
-    globalThis.document = f.env.document; globalThis.CustomEvent = f.dom.window.CustomEvent;
-    globalThis.toastr = { error: (...args) => errors.push(args) };
-    try {
-        actual('addLauncher', f.env)();
-        const select = document.querySelector('#pc-failure-policy');
-        select.value = 'continue-available'; select.dispatchEvent(new f.dom.window.Event('change', { bubbles: true }));
-        assert.equal(select.value, 'stop');
-        assert.equal(document.querySelector('#pc-failure-policy-hint').textContent, 'Stop the workflow and all generation for this Send.');
-        assert.equal(errors.length, 1);
-        assert.match(errors[0][0], /could not be saved.*previous choice.*try again/i);
-        assert.equal(errors[0][2].escapeHtml, true);
-        assert.equal(JSON.stringify(errors).includes('private host save detail'), false);
-    } finally { rejectSave = false; globalThis.document = previousDocument; globalThis.CustomEvent = previousCustomEvent; globalThis.toastr = previousToastr; }
+    f.env.activeWorkflow = () => ({ name: 'Current workflow' });
+    actual('addLauncher', f.env)();
+    const drawer = f.env.document.getElementById('pc-settings');
+    assert.equal(drawer.querySelector('#pc-failure-policy'), null);
+    assert.equal(drawer.querySelector('label[for="pc-failure-policy"]'), null);
+    assert.deepEqual([...drawer.querySelectorAll('input')].map(input => input.id), ['pc-enabled', 'pc-sendbar-opt']);
+    drawer.querySelector('#pc-open-btn').click();
+    assert.equal(f.opens(), 1);
+    actual('addLauncher', f.env)();
+    assert.equal(f.env.document.querySelectorAll('#pc-settings').length, 1);
 });

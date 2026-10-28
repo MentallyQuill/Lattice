@@ -40,6 +40,7 @@ export interface WorkflowExampleComment { id: string; x: number; y: number; w: n
 export interface WorkflowExampleThumbnail { bounds: { x: number; y: number; w: number; h: number }; nodes: WorkflowExampleNode[]; wires: WorkflowExampleWire[]; comments: WorkflowExampleComment[]; groups: { id: string; title: string; x: number; y: number; w: number; h: number }[] }
 export interface WorkflowExampleTile { id: string; number: number; title: string; goal: string; lesson?: WorkflowExampleLesson; fixtures?:{name:string;content:string}[]; searchText: string; thumbnail: WorkflowExampleThumbnail | null; issue: string }
 export interface WorkbenchView {
+    workflowFailurePolicy?: import('../src/workflow/failure-policy').WorkflowFailurePolicy;
     workflowOutputs?: { label: string; command: string; checked: boolean; disabled: boolean }[];
     menuContextKey?: string; guideInsertionBusy?: boolean;
     hasArchivedWorkflows?: boolean;

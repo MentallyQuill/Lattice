@@ -19,6 +19,7 @@ import { prepareCommentEdit } from '../src/workflow/comment-edits.js';
 import { makeClip, makeDefinitionClip, readClip, prepareClipPaste } from '../src/workflow/clipboard.js';
 import { prepareQualifiedScopeEdit } from '../src/workflow/definition-library.js';
 import * as H from '../src/history.js?v=0.28.1';
+import { isWorkflowFailurePolicy } from '../src/workflow/failure-policy.js';
 import { definitionRefKey } from '../src/workflow/definition-data.js';
 import { siblingWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
@@ -29,6 +30,26 @@ function actual(name, env) {
     const end = line.endsWith('}') ? start + line.length : source.indexOf('\n}', start) + 2;
     return Function('env', 'with(env){' + source.slice(start, end) + ';return ' + name + ';}')(env);
 }
+
+test('Workflow failure menu saves global policy and refreshes its checked choice without editing a graph', () => {
+ let policy='native-fallback', failed=false;
+ const writes=[],views=[],notices=[];
+ const env={isWorkflowFailurePolicy,settings:()=>({workflowFailurePolicy:policy}),
+  setWorkflowFailurePolicy(value){writes.push(value);if(failed)return {ok:false,error:{code:'HOST_SAVE',message:'PRIVATE'}};policy=value;return {ok:true};},
+  workbench:{update:value=>views.push(value)},toast:(...args)=>notices.push(args)};
+ env.changeWorkflowFailurePolicy=actual('changeWorkflowFailurePolicy',env);
+ const action=actual('menuCommandAction',env)('workflow-failure-policy:continue-available');
+ assert.equal(action().ok,true);
+ assert.deepEqual(writes,['continue-available']);
+ assert.deepEqual(views.at(-1),{workflowFailurePolicy:'continue-available'});
+ assert.equal(notices.length,0);
+ assert.equal(env.changeWorkflowFailurePolicy('invalid'),undefined);
+ assert.equal(writes.length,1);
+ failed=true;
+ assert.equal(actual('menuCommandAction',env)('workflow-failure-policy:stop')().ok,false);
+ assert.deepEqual(views.at(-1),{workflowFailurePolicy:'continue-available'});
+ assert.equal(notices.length,1);assert.doesNotMatch(JSON.stringify(notices),/PRIVATE/);
+});
 function fixture(graph = siblingWorkflow()) {
     const prepared = prepareWorkspaceViews(graph); assert.equal(prepared.ok, true, JSON.stringify(prepared));
     const session = createGraphViewSession({ root: graph, activationId: 'menu-commands', ...prepared.data }).data;

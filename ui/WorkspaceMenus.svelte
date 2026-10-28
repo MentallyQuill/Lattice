@@ -11,6 +11,9 @@
     let nav: HTMLDivElement, panel = $state<HTMLDivElement | null>(null), childPanel = $state<HTMLDivElement | null>(null);
     let anchor: HTMLButtonElement | null = null, childAnchor: HTMLButtonElement | null = null;
     let child = $state.raw<WorkspaceMenuItem | null>(null);
+    const displayedChild = $derived(child?.command === 'workflow-failure-policy-menu'
+        ? menus.find(menu => menu.name === active)?.groups.flat().find(entry => entry.command === child?.command) ?? child
+        : child);
     let left = $state(0), top = $state(0), childLeft = $state(0), childTop = $state(0);
     let session = 0, openedView = '', search = '', searchedAt = 0;
     let recallMenuActions: Record<string, () => DetailEditResponse> = {};
@@ -125,16 +128,16 @@
                 {@render rows(group,false)}
             {/each}
         </div>
-        {#if child?.children}
-            <div id="pc-workspace-submenu" class="pc-workspace-menu-panel pc-workspace-submenu" role="menu" tabindex="-1" aria-label={`${child.label} options`} bind:this={childPanel} style:left={`${childLeft}px`} style:top={`${childTop}px`}>
-                {@render rows(child.children,true)}
+        {#if displayedChild?.children}
+            <div id="pc-workspace-submenu" class="pc-workspace-menu-panel pc-workspace-submenu" role="menu" tabindex="-1" aria-label={`${displayedChild.label} options`} bind:this={childPanel} style:left={`${childLeft}px`} style:top={`${childTop}px`}>
+                {@render rows(displayedChild.children,true)}
             </div>
         {/if}
     {/if}
 </div>
 {#snippet rows(entries: WorkspaceMenuItem[], nested: boolean)}
     {#each entries as entry}
-        <button type="button" class="pc-workspace-menu-item" role={entry.kind==='radio'?'menuitemradio':entry.kind==='check'?'menuitemcheckbox':'menuitem'} title={entry.title} aria-label={entry.label} aria-describedby={entry.reason ? uid + '-reason-' + entry.command : undefined} aria-disabled={!!entry.disabled} aria-checked={entry.kind?!!entry.checked:undefined} aria-haspopup={entry.children?'menu':undefined} aria-expanded={entry.children?child===entry:undefined} aria-controls={entry.children && child===entry?'pc-workspace-submenu':undefined} data-command={entry.command} data-tone={entry.tone} tabindex="-1" disabled={entry.disabled} onclick={(event)=>choose(entry,event.currentTarget)} onpointerenter={(event)=>{if(!nested){if(entry.children)openChild(entry,event.currentTarget);else child=null;}}}>
+        <button type="button" class="pc-workspace-menu-item" role={entry.kind==='radio'?'menuitemradio':entry.kind==='check'?'menuitemcheckbox':'menuitem'} title={entry.title} aria-label={entry.label} aria-describedby={entry.reason ? uid + '-reason-' + entry.command : undefined} aria-disabled={!!entry.disabled} aria-checked={entry.kind?!!entry.checked:undefined} aria-haspopup={entry.children?'menu':undefined} aria-expanded={entry.children?displayedChild===entry:undefined} aria-controls={entry.children && displayedChild===entry?'pc-workspace-submenu':undefined} data-command={entry.command} data-tone={entry.tone} tabindex="-1" disabled={entry.disabled} onclick={(event)=>choose(entry,event.currentTarget)} onpointerenter={(event)=>{if(!nested){if(entry.children)openChild(entry,event.currentTarget);else child=null;}}}>
             <span class="pc-workspace-menu-icon" data-icon-tone={entry.iconTone} aria-hidden="true">{#if entry.icon && menuIconPaths[entry.icon as keyof typeof menuIconPaths]}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d={menuIconPaths[entry.icon as keyof typeof menuIconPaths]} /></svg>{/if}</span>
             <span class="pc-workspace-menu-state" aria-hidden="true">{entry.checked?(entry.kind==='radio'?'●':'✓'):''}</span>
             <span class="pc-workspace-menu-label">{entry.label}{#if entry.reason}<small id={uid + '-reason-' + entry.command} style="display:block;white-space:normal;font-size:11px;line-height:1.4">{entry.reason}</small>{/if}</span>

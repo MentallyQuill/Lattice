@@ -1,5 +1,6 @@
 import type { WorkbenchView } from './types';
 import { diagnosticText } from '../src/ui/diagnostics.js';
+import { normalizeWorkflowFailurePolicy, WORKFLOW_FAILURE_OPTIONS } from '../src/workflow/failure-policy.js';
 export interface WorkspaceMenuPanels { previewOpen: boolean; shelfOpen: boolean }
 export type WorkspaceMenuIconTone = 'blue' | 'yellow' | 'green' | 'purple' | 'teal' | 'red';
 export interface WorkspaceMenuItem { label: string; command: string; icon?: string; iconTone?: WorkspaceMenuIconTone; shortcut?: string; title?: string; reason?: string; disabled?: boolean; kind?: 'check' | 'radio'; checked?: boolean; children?: WorkspaceMenuItem[]; tone?: 'danger' }
@@ -46,7 +47,7 @@ export function workspaceMenus(view: WorkbenchView, panels: WorkspaceMenuPanels 
  ]},
  {name:'Workflow',groups:[
   [row('Add system…','add-system','subgraph',!c.addSystem || busy)],
-  [check('Enable Lattice','enable-workflow',!!view.enabled,!root)],
+  [check('Enable Lattice','enable-workflow',!!view.enabled,!root),{...row('When a node fails','workflow-failure-policy-menu','details'),title:'Global setting. Changes apply to the next run.',children:WORKFLOW_FAILURE_OPTIONS.map(option=>({...check(option.label,'workflow-failure-policy:'+option.value,normalizeWorkflowFailurePolicy(view.workflowFailurePolicy)===option.value,false,'radio'),reason:option.description}))}],
   [{...row('Workflow outputs','workflow-outputs','run',!view.workflowOutputs?.length),title:'Choose the terminal steps included when Lattice runs this workflow.',children:(view.workflowOutputs ?? []).map(output=>check(output.label,output.command,output.checked,output.disabled))}],
   [row('Validate workflow','validate-workflow','check',!root),row('Review host result','review-host-result','details',root?.reviewTerminals ? !root.reviewTerminals.length : !root?.nodes?.some(node=>node.terminal)),row('Stop workflow','stop-workflow','stop',!c.stop)],
   [{...row('Run to current output','run-preview','run',!preview?.runHere?.enabled || !!preview?.busy || busy),reason:preview?.busy || busy ? 'Wait for the current run to finish.' : preview?.runHere?.reason ?? (!preview?.selectedKey ? 'Select a node output to preview first.' : undefined)},row('Run details…','run-details','details',!view.runDetails && !view.diagnosticHistory)],
