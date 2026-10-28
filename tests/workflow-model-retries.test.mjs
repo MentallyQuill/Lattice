@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { executeModelNode, describeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.29.0';
-import { retryModelNode } from '../src/workflow/operations/model-retry.js?v=0.29.0';
+import { executeModelNode, describeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.29.1';
+import { retryModelNode } from '../src/workflow/operations/model-retry.js?v=0.29.1';
 
 const node = (operation = 'model-call', settings = {}) => ({ id: 'retry-node', operation, maxRetries: 2, ...settings });
 const prompt = { prompt: { kind: 'text', text: 'Write a brief observation.' } };
@@ -234,6 +234,27 @@ test('JSON syntax and schema failures receive at most one correction', async () 
         assert.equal(result.error.code, code);
         assert.equal(calls, 2);
         assert.deepEqual(retries, [{ reasonCode: code, delayMs: 0, nextAttempt: 2, maxAttempts: 3 }]);
+    }
+});
+
+test('local JSON repair preserves correction reasons and physical request totals', async () => {
+    for (const [first, code] of [['invalid', 'INVALID_JSON'], ['{"count":"wrong",}', 'SCHEMA_MISMATCH']]) {
+        let calls = 0;
+        const retries = [];
+        const result = await executeModelNode(node('model-call', {
+            outputKind: 'data', schema: '{"type":"object","required":["count"],"properties":{"count":{"type":"integer"}}}',
+        }), prompt, {
+            request: async () => complete(++calls === 1 ? first : '{"count":2,}'),
+            onRetry: event => retries.push(event),
+        });
+        assert.equal(result.ok, true, JSON.stringify(result.error));
+        assert.deepEqual(result.artifact.value, { count: 2 });
+        assert.equal(calls, 2);
+        assert.deepEqual(retries, [{ reasonCode: code, delayMs: 0, nextAttempt: 2, maxAttempts: 3 }]);
+        assert.equal(result.reports.reduce((sum, report) => sum + report.actualCalls, 0), 2);
+        assert.deepEqual(result.reports.find(report => report.code === 'MODEL_JSON_REPAIRED'), {
+            code: 'MODEL_JSON_REPAIRED', actualCalls: 0, repairs: ['trailing-comma'],
+        });
     }
 });
 

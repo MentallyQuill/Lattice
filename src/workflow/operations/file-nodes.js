@@ -1,11 +1,11 @@
-import { FILE_HANDLING_CONTROL, NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.29.0';
-import { artifactVisibility } from '../artifact-privacy.js?v=0.29.0';
-import { cloneJsonValue } from './json-data.js?v=0.29.0';
-import { decodeJson } from './json-decode.js?v=0.29.0';
-import { formatRecords } from './format-records.js?v=0.29.0';
-import { prepareDocumentMutation } from './document-mutations.js?v=0.29.0';
-import { freeze } from '../record-data.js?v=0.29.0';
-import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.29.0';
+import { FILE_HANDLING_CONTROL, NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.29.1';
+import { artifactVisibility } from '../artifact-privacy.js?v=0.29.1';
+import { cloneJsonValue } from './json-data.js?v=0.29.1';
+import { decodeJson } from './json-decode.js?v=0.29.1';
+import { formatRecords } from './format-records.js?v=0.29.1';
+import { prepareDocumentMutation } from './document-mutations.js?v=0.29.1';
+import { freeze } from '../record-data.js?v=0.29.1';
+import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.29.1';
 
 const references = new WeakMap();
 const fail=(code,message)=>({ok:false,error:{code,message}});

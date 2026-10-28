@@ -1,6 +1,6 @@
-import {prepareDocumentCheckpoint,validateDocumentHistory} from './document-history.js?v=0.29.0';
-import {validChatSourceBinding} from './chat-prefix-binding.js?v=0.29.0';
-import {cloneJsonValue} from './operations/json-data.js?v=0.29.0';
+import {prepareDocumentCheckpoint,validateDocumentHistory} from './document-history.js?v=0.29.1';
+import {validChatSourceBinding} from './chat-prefix-binding.js?v=0.29.1';
+import {cloneJsonValue} from './operations/json-data.js?v=0.29.1';
 
 /** Pure accepted-write projection. Call only within the backend's checked settlement. */
 export async function prepareAcceptedFileMaintenance(snapshot,{scope,visibility,historyHandling,previousContent}={}){

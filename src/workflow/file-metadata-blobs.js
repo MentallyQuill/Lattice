@@ -1,5 +1,5 @@
-import {sha256Text} from './definition-data.js?v=0.29.0';
-import {cloneJsonValue} from './operations/json-data.js?v=0.29.0';
+import {sha256Text} from './definition-data.js?v=0.29.1';
+import {cloneJsonValue} from './operations/json-data.js?v=0.29.1';
 const validRef=value=>value&&typeof value.name==='string'&&/^(archive|content|metadata)-[a-f0-9]{64}\.json$/.test(value.name)&&value.revision==='sha256:'+value.name.slice(value.name.indexOf('-')+1,-5);
 /** Partition immutable replay pages and recovery bytes before bounded JSON admission. */
 export function createFileMetadataBlobs({read,write}){

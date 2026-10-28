@@ -1,4 +1,4 @@
-import { cloneJsonValue } from './json-data.js?v=0.29.0';
+import { cloneJsonValue } from './json-data.js?v=0.29.1';
 
 const pointerKey = key => String(key).replaceAll('~', '~0').replaceAll('/', '~1');
 const matchesType = (value, type) => type === 'object' ? value !== null && typeof value === 'object' && !Array.isArray(value) : type === 'array' ? Array.isArray(value) : type === 'null' ? value === null : type === 'integer' ? Number.isInteger(value) : typeof value === type;

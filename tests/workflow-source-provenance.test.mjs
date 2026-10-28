@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.29.0';
-import {createNativeSourceRegistry} from '../src/workflow/native-source-registry.js?v=0.29.0';
-import {selectSourcePage,inspectSourcePage} from '../src/workflow/source-reader.js?v=0.29.0';
-import {preserveArtifactPrivacy} from '../src/workflow/artifact-privacy.js?v=0.29.0';
-import {freezeArtifact} from '../src/workflow/runtime.js?v=0.29.0';
-const api=await import('../src/workflow/source-provenance.js?v=0.29.0').catch(()=>({}));
+import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.29.1';
+import {createNativeSourceRegistry} from '../src/workflow/native-source-registry.js?v=0.29.1';
+import {selectSourcePage,inspectSourcePage} from '../src/workflow/source-reader.js?v=0.29.1';
+import {preserveArtifactPrivacy} from '../src/workflow/artifact-privacy.js?v=0.29.1';
+import {freezeArtifact} from '../src/workflow/runtime.js?v=0.29.1';
+const api=await import('../src/workflow/source-provenance.js?v=0.29.1').catch(()=>({}));
 async function fixture(options={},captureOptions={}){
  let serial=0,saved;const chat=[{mes:'question',is_user:true},{mes:'reply'}];
  const context={chatId:'story',characterId:0,groupId:null,chat,characters:[{name:'Mara',avatar:'Mara.png',chat:'Story'}],chatMetadata:{},getRequestHeaders:()=>({'Content-Type':'application/json'}),saveMetadata:async()=>{saved=structuredClone(context.chatMetadata);}};

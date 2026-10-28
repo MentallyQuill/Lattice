@@ -1,11 +1,11 @@
-import { graphVersionSupported } from './workflow-versions.js?v=0.29.0';
-import { workflowRunTargets } from './run-targets.js?v=0.29.0';
-import { ownJsonData } from './semantic-json-data.js?v=0.29.0';
-import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.29.0';
-import { cloneWorkflowDocument } from './document.js?v=0.29.0';
-import { operationFor, describeAuthoredOperation, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.29.0';
-import { INTROSPECTION_NATIVE_OPERATIONS, introspectionDefaults } from './introspection/native.js?v=0.29.0';
-export { portsForNode } from './catalog.js?v=0.29.0';
+import { graphVersionSupported } from './workflow-versions.js?v=0.29.1';
+import { workflowRunTargets } from './run-targets.js?v=0.29.1';
+import { ownJsonData } from './semantic-json-data.js?v=0.29.1';
+import { safeWorkflowData, validateGraphStructure } from './contracts.js?v=0.29.1';
+import { cloneWorkflowDocument } from './document.js?v=0.29.1';
+import { operationFor, describeAuthoredOperation, semanticControlsForNode, phaseForNode } from './catalog.js?v=0.29.1';
+import { INTROSPECTION_NATIVE_OPERATIONS, introspectionDefaults } from './introspection/native.js?v=0.29.1';
+export { portsForNode } from './catalog.js?v=0.29.1';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const endpoint = value => value && typeof value === 'object' && !Array.isArray(value) && typeof value.nodeId === 'string' && typeof value.portId === 'string';

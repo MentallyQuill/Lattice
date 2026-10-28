@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixtureGraph as starterGraph } from './helpers/workflow-fixtures.mjs';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.0';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.29.0';
-import { prepareWorkspaceViews, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.29.0';
-import { computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from '../src/workflow/definitions.js?v=0.29.0';
-import { prepareNativeNodeEdit } from '../src/workflow/definition-library.js?v=0.29.0';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.1';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.29.1';
+import { prepareWorkspaceViews, projectWorkspacePanels } from '../src/ui/workspace-preparation.js?v=0.29.1';
+import { computeDefinitionIdentity, definitionRefKey, nodeBindingOverrideKey } from '../src/workflow/definitions.js?v=0.29.1';
+import { prepareNativeNodeEdit } from '../src/workflow/definition-library.js?v=0.29.1';
 
 function details(root, id) {
     const prepared = prepareWorkspaceViews(root);
@@ -294,7 +294,7 @@ test('cached Compose Details includes token budget and typed section schema with
 });
 
 test('stage editing follows the current controls capabilities rather than static catalog phase', async () => {
-    const {operationDefaults}=await import('../src/workflow/catalog.js?v=0.29.0');
+    const {operationDefaults}=await import('../src/workflow/catalog.js?v=0.29.1');
     const cases=[
         ['style-transfer',{inputKind:'text'},'pre',true],
         ['style-transfer',{inputKind:'text'},'post',true],

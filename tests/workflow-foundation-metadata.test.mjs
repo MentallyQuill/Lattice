@@ -1,6 +1,6 @@
 import test from 'node:test';
 import {installMock} from './mock.js';
-import * as S from '../src/state.js?v=0.29.0';
+import * as S from '../src/state.js?v=0.29.1';
 import assert from 'node:assert/strict';
 import {exportWorkflow} from '../src/workflow/packages.js';
 import {serializeWorkflowDocument,parseWorkflowDocument} from '../src/workflow/document-file.js';

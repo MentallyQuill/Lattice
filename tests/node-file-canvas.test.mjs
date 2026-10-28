@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { fixture } from './canvas-fixture.mjs';
-import { prepareWorkspaceViews, projectNodeProfiles } from '../src/ui/workspace-preparation.js?v=0.29.0';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.0';
-import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.29.0';
+import { prepareWorkspaceViews, projectNodeProfiles } from '../src/ui/workspace-preparation.js?v=0.29.1';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.29.1';
+import { projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.29.1';
 
 const fileTarget = { bindingId: 'disk-notes', name: 'campaign-notes.md', format: 'markdown', missing: 'create', content: '', visibility: { kind: 'public' } };
 

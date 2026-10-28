@@ -528,6 +528,10 @@ These settings apply to the complete connected Guidance, including a Compose mer
 
 ## Model chains and reply assembly
 
+For **Model Call → Data**, model-mode **Extract**, and **Enrich**, Lattice first parses the response as JSON. If parsing fails, it tries local syntax repair for trailing commas, comments outside strings, single-quoted strings, and literal newlines, tabs or other control characters inside strings. Repairs make no additional model request and appear as `MODEL_JSON_REPAIRED` in the run report. Complete JSON or unlabeled Markdown fences and a leading BOM are also accepted.
+
+The repaired result must pass the same schema, evidence, identity and size checks. Missing values or closing brackets, ambiguous quotes, surrounding prose and multiple documents remain errors; truncated or unverified completions are rejected. If repair fails, the configured Additional attempts setting still controls the existing model correction. JSON Decode, file contents, workflow imports and authored schemas continue to require strict JSON.
+
 ### Model Call
 
 **Both stages; one Prose request.** Required `prompt` Text; optional `context` Context and `data` Data; `out` is Text or Data according to Output. Controls: Instructions, Output, Output schema, Completion limit. Data output requires bounded raw JSON matching the supported schema when supplied. This is an independently bound auxiliary model, not the native generation boundary. Hidden/mixed inputs are refused; an actor-private request needs exact current same-actor grants.

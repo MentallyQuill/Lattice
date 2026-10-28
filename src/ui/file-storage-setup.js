@@ -1,4 +1,4 @@
-import {sha256Text} from '../workflow/definition-data.js?v=0.29.0';
+import {sha256Text} from '../workflow/definition-data.js?v=0.29.1';
 const steps=['choice','download','install','restart','verify','complete'];
 const statusFor=code=>({FILE_SERVICE_REQUIRED:'missing',FILE_SERVICE_INCOMPATIBLE:'incompatible',FILE_SERVICE_RESPONSE:'incompatible',FILE_SERVICE_DENIED:'denied',FILE_USER_REQUIRED:'denied',FILE_SERVICE_USER:'denied',FILE_PERMISSION:'denied'}[code]??'unreachable');
 /** Optional setup changes preferences only; inside storage remains available throughout. */

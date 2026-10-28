@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.29.0';
-import {createNativeFileSession} from '../src/workflow/native-settlement.js?v=0.29.0';
-import {executeFileNode} from '../src/workflow/operations/file-nodes.js?v=0.29.0';
-import {sha256Text} from '../src/workflow/definition-data.js?v=0.29.0';
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.29.1';
+import {createNativeFileSession} from '../src/workflow/native-settlement.js?v=0.29.1';
+import {executeFileNode} from '../src/workflow/operations/file-nodes.js?v=0.29.1';
+import {sha256Text} from '../src/workflow/definition-data.js?v=0.29.1';
 const must=result=>{assert.equal(result.ok,true,JSON.stringify(result.error));return result.data;};
 function fixture(){
  const c={chatId:'story',chat:[{mes:'A door opens.',is_user:true,swipe_id:0}],chatMetadata:{}},barriers=new Map(),effects=[];

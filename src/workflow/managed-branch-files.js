@@ -1,4 +1,4 @@
-import {prepareTrustedBranchSnapshot} from './file-history-maintenance.js?v=0.29.0';
+import {prepareTrustedBranchSnapshot} from './file-history-maintenance.js?v=0.29.1';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const sameBinding=(left,right)=>left?.messageCount===right.messageCount&&left?.prefixHash===right.prefixHash;
 /** Host branch metadata nominates a parent; only an exact retained prefix authorizes a state copy. */

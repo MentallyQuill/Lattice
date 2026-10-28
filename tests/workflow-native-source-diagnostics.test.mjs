@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { unifiedRecipeHost } from './helpers/unified-recipe-host.mjs';
-import { safeError } from '../src/workflow/record-data.js?v=0.29.0';
-import { presentDiagnostic } from '../src/ui/diagnostics.js?v=0.29.0';
+import { safeError } from '../src/workflow/record-data.js?v=0.29.1';
+import { presentDiagnostic } from '../src/ui/diagnostics.js?v=0.29.1';
 
 const graph = {
     id: 'source-diagnostics', schema: 3, runtime: 2, mode: 'native-unified',

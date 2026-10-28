@@ -1,5 +1,5 @@
-import {own, plain, dense, freeze, bytes, encode, successResult, errorResult, boundedText, safeError, safeBinding, safeUsage, nodeAddress, addressKey} from './record-data.js?v=0.29.0';
-import {createDiagnosticStore} from './diagnostic-store.js?v=0.29.0';
+import {own, plain, dense, freeze, bytes, encode, successResult, errorResult, boundedText, safeError, safeBinding, safeUsage, nodeAddress, addressKey} from './record-data.js?v=0.29.1';
+import {createDiagnosticStore} from './diagnostic-store.js?v=0.29.1';
 
 export const DIAGNOSTIC_RUN_BYTES = 256 * 1024;
 export const DIAGNOSTIC_TEXT_BYTES = 32 * 1024;

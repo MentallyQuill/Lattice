@@ -1,5 +1,5 @@
-import { graphArtifactsFor } from './graph-artifacts.js?v=0.29.0';
-import { inspectExpandedGraph } from './graph-validation.js?v=0.29.0';
+import { graphArtifactsFor } from './graph-artifacts.js?v=0.29.1';
+import { inspectExpandedGraph } from './graph-validation.js?v=0.29.1';
 
 /** Detach a current document and supply its absent optional authoring containers.
  * A supplied private artifact must match this admitted authored content exactly.

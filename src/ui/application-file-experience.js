@@ -1,9 +1,9 @@
-import {createHostFileStore} from './host-file-store.js?v=0.29.0';
-import {createServerFileAccess} from './server-file-access.js?v=0.29.0';
-import {createFileStorageSetup} from './file-storage-setup.js?v=0.29.0';
-import {createWorkflowLibrary} from './workflow-library.js?v=0.29.0';
-import {createWorkflowLibraryController} from './workflow-library-controller.js?v=0.29.0';
-import {createWorkflowExampleOrigins,withWorkflowExampleOrigins} from './workflow-example-origin.js?v=0.29.0';
+import {createHostFileStore} from './host-file-store.js?v=0.29.1';
+import {createServerFileAccess} from './server-file-access.js?v=0.29.1';
+import {createFileStorageSetup} from './file-storage-setup.js?v=0.29.1';
+import {createWorkflowLibrary} from './workflow-library.js?v=0.29.1';
+import {createWorkflowLibraryController} from './workflow-library-controller.js?v=0.29.1';
+import {createWorkflowExampleOrigins,withWorkflowExampleOrigins} from './workflow-example-origin.js?v=0.29.1';
 /** One application owner connects authenticated storage, shared authoring and optional setup. */
 export function createApplicationFileExperience(ports){
  const store=ports.store??createHostFileStore({getUserId:ports.getUserId,getRequestHeaders:()=>ports.getNativeContext?.()?.getRequestHeaders?.()??{}});

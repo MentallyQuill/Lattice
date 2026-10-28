@@ -1,5 +1,5 @@
-import {cloneServerFileData} from './server-file-access.js?v=0.29.0';
-import {captureHistoryAdoption} from '../workflow/file-history-transfer.js?v=0.29.0';
+import {cloneServerFileData} from './server-file-access.js?v=0.29.1';
+import {captureHistoryAdoption} from '../workflow/file-history-transfer.js?v=0.29.1';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const captureData=value=>{const copied=cloneServerFileData(value);return copied===undefined?fail('INVALID_FILE_BACKEND_CONFIG','Use bounded plain file data.'):{ok:true,data:{value:copied}};};
 /** Default managed files belong to authenticated host storage; existing grants retain their provider. */

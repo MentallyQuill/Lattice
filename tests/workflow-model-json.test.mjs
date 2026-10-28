@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { executeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.29.0';
-import { decodeModelJson } from '../src/workflow/operations/model-json.js?v=0.29.0';
-import { decodeJson } from '../src/workflow/operations/json-decode.js?v=0.29.0';
+import { executeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.29.1';
+import { decodeModelJson } from '../src/workflow/operations/model-json.js?v=0.29.1';
+import { decodeJson } from '../src/workflow/operations/json-decode.js?v=0.29.1';
 
 const dataCall = (text, settings = {}, finish = 'stop') => executeModelNode(
     { id: 'json-output', operation: 'model-call', outputKind: 'data', ...settings },
@@ -69,13 +69,13 @@ test('model JSON rejects surrounding prose, multiple documents and incomplete or
     }
 });
 
-test('model JSON never repairs malformed JSON or copies model text into syntax diagnostics', async () => {
+test('model JSON rejects missing values and incomplete documents without response text in diagnostics', async () => {
     for (const input of [
-        '```json\n{"diagnostic-marker":true,}\n```',
-        '```json\n{\'diagnostic-marker\':true}\n```',
         '\uFEFF{"diagnostic-marker":}',
-        '```json\n{"value":"diagnostic-marker" // comment\n}\n```',
         '```json\n{"value":"diagnostic-marker"\n```',
+        '{,}', '[,]', '[1,,]', '{"value":,}', '{"value":1,',
+        '{value:1}', '{"value":undefined}', '{"value":NaN}',
+        '{"value":1 "other":2}', '[1 2]', '{"value":"bad\\q"}',
     ]) {
         const result = await dataCall(input);
         assert.equal(result.error?.code, 'INVALID_JSON');
@@ -84,10 +84,69 @@ test('model JSON never repairs malformed JSON or copies model text into syntax d
     }
 });
 
+test('model JSON repairs trailing commas locally before spending a correction attempt', async () => {
+    let calls = 0;
+    const result = await executeModelNode(
+        { id: 'json-repair', operation: 'model-call', outputKind: 'data', maxRetries: 2 },
+        { prompt: { kind: 'text', text: 'Return a structured value.' } },
+        { phase: 'pre', request: async () => {
+            calls++;
+            return { ok: true, data: { text: '```json\n{"private-marker":[1,{"text":",} ,]",},],}\n```', finish: 'stop' } };
+        } },
+    );
+    assert.equal(result.ok, true, JSON.stringify(result.error));
+    assert.deepEqual(result.artifact.value, { 'private-marker': [1, { text: ',} ,]' }] });
+    assert.equal(calls, 1);
+    assert.deepEqual(result.reports.slice(1), [
+        { code: 'MODEL_JSON_WRAPPER_REMOVED', actualCalls: 0, wrapper: { bom: false, fence: 'json' } },
+        { code: 'MODEL_JSON_REPAIRED', actualCalls: 0, repairs: ['trailing-comma'] },
+    ]);
+    assert.equal(JSON.stringify(result.reports).includes('private-marker'), false);
+});
+
+test('model JSON removes comments outside strings without joining tokens', () => {
+    const result = decodeModelJson('{/* private-marker */"url":"https://example.com/*literal*/", "items":[1, // item\n2,/* end */],}');
+    assert.equal(result.ok, true, JSON.stringify(result.error));
+    assert.deepEqual(result.data.value, { url: 'https://example.com/*literal*/', items: [1, 2] });
+    assert.deepEqual(result.data.report, [{ code: 'MODEL_JSON_REPAIRED', actualCalls: 0, repairs: ['comment', 'trailing-comma'] }]);
+    for (const input of ['[tr/* gap */ue]', '[1/* gap */2]', '{"a":1}/* unfinished', '{"a":1// missing end']) {
+        assert.equal(decodeModelJson(input).error?.code, 'INVALID_JSON');
+    }
+});
+
+test('model JSON line comments end at Unicode line separators without swallowing later data', () => {
+    for (const separator of ['\u2028', '\u2029']) {
+        assert.equal(decodeModelJson('{"a":1}// comment' + separator + '{"b":2}').error?.code, 'INVALID_JSON');
+        const result = decodeModelJson('[1,// comment' + separator + '2]');
+        assert.equal(result.ok, true, JSON.stringify(result.error));
+        assert.deepEqual(result.data.value, [1, 2]);
+    }
+});
+
+test('model JSON normalizes single-quoted strings while preserving quotes and escapes', () => {
+    const result = decodeModelJson(String.raw`{'text':'It\'s "quoted"; // literal /* text */', 'path':'C:\\folder', 'escaped':'\n\u754c',}`);
+    assert.equal(result.ok, true, JSON.stringify(result.error));
+    assert.deepEqual(result.data.value, { text: 'It\'s "quoted"; // literal /* text */', path: 'C:\\folder', escaped: '\n界' });
+    assert.deepEqual(result.data.report, [{ code: 'MODEL_JSON_REPAIRED', actualCalls: 0, repairs: ['single-quote', 'trailing-comma'] }]);
+    for (const input of [String.raw`{'text':'bad\q'}`, "{'text':'don't guess'}", "{'text':'unfinished}"]) {
+        assert.equal(decodeModelJson(input).error?.code, 'INVALID_JSON');
+    }
+});
+
+test('model JSON escapes literal string control characters without changing their values', () => {
+    const result = decodeModelJson('{"text":"line 1\r\nline 2\t\u0000", "escaped":"\\n", "quote":"\\\""}');
+    assert.equal(result.ok, true, JSON.stringify(result.error));
+    assert.deepEqual(result.data.value, { text: 'line 1\r\nline 2\t\u0000', escaped: '\n', quote: '"' });
+    assert.deepEqual(result.data.report, [{ code: 'MODEL_JSON_REPAIRED', actualCalls: 0, repairs: ['string-control-character'] }]);
+    assert.equal(decodeModelJson('{"text":"missing quote\n}').error?.code, 'INVALID_JSON');
+    assert.equal(decodeModelJson('[1,\u00002]').error?.code, 'INVALID_JSON');
+});
+
 test('wrapped model JSON preserves supported schema validation without coercion', async () => {
     const schema = '{"type":"object","required":["status"],"properties":{"status":{"type":"string","enum":["ready"]}},"additionalProperties":false}';
     assert.equal((await dataCall('```json\n{"status":"ready"}\n```', { schema })).ok, true);
-    for (const input of ['```json\n{}\n```', '\uFEFF{"status":3}', '```\n{"status":"ready","extra":true}\n```']) {
+    assert.equal((await dataCall("{'status':'ready',}", { schema })).ok, true);
+    for (const input of ['```json\n{}\n```', '\uFEFF{"status":3}', '```\n{"status":"ready","extra":true}\n```', "{'status':3,}", "{'status':'ready','extra':true,}"]) {
         const result = await dataCall(input, { schema });
         assert.equal(result.error?.code, 'SCHEMA_MISMATCH');
         assert.equal(result.artifact, undefined);
@@ -126,6 +185,9 @@ test('model JSON bounds the original raw envelope before removing character wrap
         assert.equal(oversized.data, undefined);
     }
     for (const input of [null, undefined, 3, {}, []]) assert.equal(decodeModelJson(input).error?.code, 'INVALID_JSON');
+    assert.equal(decodeModelJson('/*' + 'x'.repeat(100000) + '*/{}').error?.code, 'INVALID_JSON');
+    assert.equal(decodeModelJson('"' + '\u0000'.repeat(20000) + '"').error?.code, 'INVALID_JSON');
+    assert.equal(decodeModelJson('['.repeat(34) + '1,' + ']'.repeat(34)).error?.code, 'INVALID_JSON_VALUE');
 });
 
 test('model JSON bounds the original UTF-8 envelope before removing byte wrappers', async () => {
@@ -138,6 +200,7 @@ test('model JSON bounds the original UTF-8 envelope before removing byte wrapper
     const result = await dataCall(oversized);
     assert.equal(result.error?.code, 'INVALID_JSON');
     assert.equal(result.artifact, undefined);
+    assert.equal(decodeModelJson('/*' + '界'.repeat(87381) + '*/{}').error?.code, 'INVALID_JSON');
 });
 
 test('wrapped model JSON still requires verified completion and never retries rejected output', async () => {
@@ -148,6 +211,8 @@ test('wrapped model JSON still requires verified completion and never retries re
         ['```json\n{}', 'length', 'TRUNCATED_OUTPUT'],
         ['```json\n{}\n```', 'unknown', 'COMPLETION_UNVERIFIED'],
         ['```json\n{}\n```', undefined, 'COMPLETION_UNVERIFIED'],
+        ['{"value":1,}', 'length', 'TRUNCATED_OUTPUT'],
+        ['{"value":1,}', 'unknown', 'COMPLETION_UNVERIFIED'],
         ['```json\n{bad}\n```', 'stop', 'INVALID_JSON'],
     ]) {
         let calls = 0;
@@ -172,7 +237,7 @@ test('Text model output preserves BOM, whitespace, fences and prose exactly', as
 });
 
 test('generic JSON Decode and schema settings retain raw JSON requirements', async () => {
-    for (const input of ['\uFEFF{}', '```json\n{}\n```', '```\n{}\n```']) assert.equal(decodeJson(input).error?.code, 'INVALID_JSON');
+    for (const input of ['\uFEFF{}', '```json\n{}\n```', '```\n{}\n```', '{"value":1,}', "{'value':1}", '{/* comment */}', '"line 1\nline 2"']) assert.equal(decodeJson(input).error?.code, 'INVALID_JSON');
     let calls = 0;
     const result = await executeModelNode(
         { id: 'strict-schema', operation: 'model-call', outputKind: 'data', schema: '```json\n{"type":"object"}\n```' },
@@ -181,6 +246,8 @@ test('generic JSON Decode and schema settings retain raw JSON requirements', asy
     );
     assert.equal(result.error?.code, 'INVALID_SCHEMA');
     assert.equal(calls, 0);
+    assert.equal(decodeModelJson('{"value":1,}', { schema: { unsupported: true } }).error?.code, 'UNSUPPORTED_SCHEMA');
+    assert.equal(decodeModelJson('{"value":1,}', { extra: true }).error?.code, 'INVALID_JSON_OPTIONS');
 });
 
 test('model Extract accepts a wrapped record array and retains exact evidence and proposal status', async () => {
@@ -229,6 +296,7 @@ test('wrapped extraction still rejects invalid record shapes, false evidence and
         ['```json\n{}\n```', '', 'INVALID_EXTRACTION'],
         ['```json\n[{"id":"bell","label":"Bell","text":"The bell rang","classification":"observation","evidence":[{"start":0,"end":4,"quote":"bell"}]}]\n```', '', 'INVALID_EVIDENCE'],
         ['```json\n[]\n```', '{"type":"array","minItems":1}', 'SCHEMA_MISMATCH'],
+        ['[{"id":"bell","label":"Bell","text":"The bell rang","classification":"observation","evidence":[{"start":0,"end":4,"quote":"bell",}],},]', '', 'INVALID_EVIDENCE'],
     ]) {
         let calls = 0;
         const result = await executeModelNode(
@@ -249,7 +317,7 @@ test('wrapped enrichment still rejects changed record identities without retryin
         { data: { kind: 'data', value: { type: 'extracted-records', sourceRefs: [], records: [{ id: 'bell', label: 'Bell', text: 'A bell', classification: 'observation', evidence: [] }] } } },
         { phase: 'post', request: async () => {
             calls++;
-            return { ok: true, data: { text: '```json\n[{"id":"changed","details":"A brass tone."}]\n```', finish: 'stop' } };
+            return { ok: true, data: { text: '```json\n[{"id":"changed","details":"A brass tone.",},]\n```', finish: 'stop' } };
         } },
     );
     assert.equal(result.error?.code, 'INVALID_ENRICHMENT');

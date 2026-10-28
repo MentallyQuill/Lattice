@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { starterGraph } from '../src/workflow/starters.js?v=0.29.0';
-import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js?v=0.29.0';
-import { checkedCandidateArtifacts } from '../src/workflow/checked-candidate.js?v=0.29.0';
-import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.29.0';
-import * as preparation from '../src/ui/workspace-preparation.js?v=0.29.0';
-import * as history from '../src/history.js?v=0.29.0';
-import { findVacantNodePoint, nodePlacementFootprint } from '../src/ui/node-placement-geometry.js?v=0.29.0';
+import { starterGraph } from '../src/workflow/starters.js?v=0.29.1';
+import { prepareNativeConnectionEdit } from '../src/workflow/connection-edits.js?v=0.29.1';
+import { checkedCandidateArtifacts } from '../src/workflow/checked-candidate.js?v=0.29.1';
+import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.29.1';
+import * as preparation from '../src/ui/workspace-preparation.js?v=0.29.1';
+import * as history from '../src/history.js?v=0.29.1';
+import { findVacantNodePoint, nodePlacementFootprint } from '../src/ui/node-placement-geometry.js?v=0.29.1';
 
 test('actual shelf placement measures only the new checked card and commits final coordinates once', async () => {
     const root = starterGraph('unified-basic'); history.reset(root);
