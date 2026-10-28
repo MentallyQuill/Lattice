@@ -130,7 +130,7 @@ test('a restarted server reconciles an interrupted receipt without rewriting doc
 
 test('the supplied router gets authenticated file routes without an Express dependency',async()=>{
  const routes=new Map(),router={get:(url,handler)=>routes.set('GET '+url,handler),post:(url,handler)=>routes.set('POST '+url,handler)};await module.init(router);
- assert.deepEqual([...routes.keys()],['GET /status','POST /configure','POST /load','POST /cas','POST /history','POST /adopt']);
+ assert.deepEqual([...routes.keys()],['GET /status','POST /configure','POST /load','POST /cas','POST /history','POST /adopt','POST /roots','POST /browse']);
  let result;await routes.get('GET /status')({user:{},once(){}},{once(){},json(value){result=value;}});assert.equal(result.error.code,'FILE_USER_REQUIRED');
 });
 

@@ -3,6 +3,7 @@ import path from 'node:path';
 import {createNodeFileAccess} from '../src/ui/node-file-access.js?v=0.29.0';
 import {cloneServerFileData} from '../src/ui/server-file-access.js?v=0.29.0';
 import {checkedPath,physicalPath,serverHandle,serverPersistence} from './filesystem.mjs';
+import {browseFiles,fileRoots,chooserVersion} from './browse.mjs';
 
 export const info=Object.freeze({id:'lattice-files',name:'Lattice file service',description:'Per-node filesystem paths with reviewed, version-checked writes for Lattice.'});
 const fail=(code,message)=>({ok:false,error:{code,message}}),good=data=>({ok:true,data});
@@ -47,11 +48,13 @@ export function createServerFileService(){
     const owner=await ownerFor(user);
     if(action==='status'){
      const {persistence}=await accessFor(owner);
-     return good({apiVersion:1,userId:owner.userId,basePath:owner.basePath,platform:process.platform,canUseAbsolutePaths:owner.admin,bindings:await bindingViews(owner,persistence)});
+     return good({apiVersion:1,chooserVersion,operations:['configure','load','cas','history','adopt','roots','browse'],userId:owner.userId,basePath:owner.basePath,platform:process.platform,canUseAbsolutePaths:owner.admin,bindings:await bindingViews(owner,persistence)});
     }
     const body=checkedBody(raw);
     if(body.userId!==owner.userId)return fail('FILE_USER_CHANGED','The signed-in user changed. Refresh the file settings.');
     if(controls.signal?.aborted)return fail('CANCELLED','File access was cancelled.');
+    if(action==='roots')return good(fileRoots(owner));
+    if(action==='browse')return good(await browseFiles(owner,body.path));
     if(action==='configure'){
      if(typeof body.path!=='string'||body.path.length>4096||body.path.includes('\0')||!formats.has(body.format)||!['open','save'].includes(body.mode))return fail('INVALID_FILE_REQUEST','Enter a file path and supported format.');
      const supplied=body.path.trim();
@@ -95,5 +98,5 @@ export async function init(router){
   if(!res.destroyed)res.json(result);
  };
  router.get('/status',route('status'));
- for(const action of ['configure','load','cas','history','adopt'])router.post('/'+action,route(action));
+ for(const action of ['configure','load','cas','history','adopt','roots','browse'])router.post('/'+action,route(action));
 }

@@ -50,7 +50,8 @@ function statusView(raw){
     if(!plain(value)||value.apiVersion!==1||!id(value.userId)||typeof value.basePath!=='string'||!value.basePath||value.basePath.length>4096||typeof value.platform!=='string'||typeof value.canUseAbsolutePaths!=='boolean'||!plain(value.bindings)||Object.keys(value.bindings).length>4096)return null;
     const bindings=Object.create(null);
     for(const [key,rawBinding] of Object.entries(value.bindings)){const binding=bindingView(rawBinding);if(!binding||key!==binding.bindingId)return null;bindings[key]=binding;}
-    return {apiVersion:1,userId:value.userId,basePath:value.basePath,platform:value.platform,canUseAbsolutePaths:value.canUseAbsolutePaths,bindings};
+    const chooserVersion=value.chooserVersion===1&&Array.isArray(value.operations)&&['configure','load','cas','history','adopt','roots','browse'].every(action=>value.operations.includes(action))?1:0;
+    return {apiVersion:1,chooserVersion,userId:value.userId,basePath:value.basePath,platform:value.platform,canUseAbsolutePaths:value.canUseAbsolutePaths,bindings};
 }
 /** Same-origin server paths. The browser never receives a filesystem handle. */
 export function createServerFileAccess(options={}){
@@ -73,6 +74,7 @@ export function createServerFileAccess(options={}){
             const response=await fetcher(endpoint+'/'+route,{method:body===undefined?'GET':'POST',headers,credentials:'same-origin',cache:'no-store',redirect:'error',...(signal?{signal}:{}),...(body===undefined?{}:{body:JSON.stringify(body)})});
             if(!current())return uncertain?unknown():stale();
             if(route==='status'&&response.status===404)return fail(install.code,install.message);
+            if(response.status===401||response.status===403)return fail('FILE_SERVICE_DENIED','This SillyTavern user is not allowed to access server files. Ask the host owner about access.');
             if(uncertain&&response.status>=500)return unknown();
             const raw=await response.json();
             if(!current())return uncertain?unknown():stale();
@@ -90,13 +92,25 @@ export function createServerFileAccess(options={}){
         const sequence=++refreshSequence,user=readUser();
         const result=await request('status',undefined,{isCurrent:()=>sequence===refreshSequence&&(user===null||readUser()===user)});
         if(sequence!==refreshSequence)return stale();
-        if(!result.ok){state=null;issue=result.error.code===install.code?install:result.error.code==='STALE_FILE_SCOPE'?userIssue:unavailable;changed();return result;}
+        if(!result.ok){state=null;issue=result.error.code===install.code?install:result.error.code==='STALE_FILE_SCOPE'?userIssue:result.error.code==='FILE_SERVICE_DENIED'?result.error:unavailable;changed();return result;}
+        if(plain(result.data)&&result.data.apiVersion!==1){state=null;issue={code:'FILE_SERVICE_INCOMPATIBLE',message:'Update Lattice file support on the SillyTavern server.'};changed();return fail(issue.code,issue.message);}
         const next=statusView(result.data);
         if(!next){state=null;issue=unavailable;changed();return fail('FILE_SERVICE_RESPONSE','The Lattice file service returned invalid status information.');}
         if(user!==null&&next.userId!==user){state=null;issue=userIssue;changed();return stale();}
         state=next;issue=null;changed();return {ok:true,data:{persistent:true}};
     }
     const ready=refresh();
+    async function browseRequest(route,path){
+        const user=readUser();
+        if(!supported())return fail(userIssue.code,userIssue.message);
+        if(state.chooserVersion!==1)return fail('FILE_SERVICE_INCOMPATIBLE','Update Lattice file support on the SillyTavern server to browse folders.');
+        if(route==='browse'&&(typeof path!=='string'||!path||path.length>4096||path.includes('\0')))return fail('INVALID_FILE_SELECTION','Choose a server folder.');
+        const result=await request(route,{userId:user,...(route==='browse'?{path}:{})},{isCurrent:()=>readUser()===user&&state?.userId===user});
+        if(!result.ok)return result;
+        const value=result.data,pathValid=value=>typeof value==='string'&&!!value&&value.length<=4096&&!value.includes('\0'),nameValid=value=>typeof value==='string'&&!!value&&value.length<=256&&!/[\/\\\0]/.test(value);
+        const valid=plain(value)&&value.chooserVersion===1&&(route==='roots'?Array.isArray(value.roots)&&value.roots.length<=32&&value.roots.every(row=>plain(row)&&nameValid(row.name)&&pathValid(row.path)):pathValid(value.path)&&(value.parent===null||pathValid(value.parent))&&typeof value.truncated==='boolean'&&Array.isArray(value.entries)&&value.entries.length<=200&&value.entries.every(row=>plain(row)&&nameValid(row.name)&&pathValid(row.path)&&['directory','file'].includes(row.kind)));
+        return valid?result:fail('FILE_SERVICE_RESPONSE','The server returned an invalid folder listing.');
+    }
     async function choose(settings){
         const captured=clone(settings),user=readUser();
         if(!plain(captured)||!['open','save'].includes(captured.mode)||typeof captured.name!=='string'||!captured.name.trim()||captured.name.length>256||!formats.has(captured.format)||captured.path!==undefined&&(typeof captured.path!=='string'||captured.path.length>4096||captured.path.includes('\0'))||captured.bindingId!==undefined&&captured.bindingId!==''&&!id(captured.bindingId))return fail('INVALID_FILE_SELECTION','Enter a file path, filename and supported format.');
@@ -157,5 +171,5 @@ export function createServerFileAccess(options={}){
             adoptLegacy(targetId,request){const value=clone(request);return plain(value)?call('adopt',targetId,{request:value}):Promise.resolve(fail('INVALID_LEGACY_FILE','Use a captured legacy document and history.'));},
         });
     }
-    return Object.freeze({storage:'server',native:false,capabilities:Object.freeze({persistent:true,actualFiles:true,concurrency:'serialized-checked-write',crossDeviceCAS:true,concurrencyScope:'same-service-process',externalProcessCAS:false,verifiedAcknowledgement:true}),get supported(){return supported();},get availability(){return availability();},get location(){return supported()?{basePath:state.basePath,platform:state.platform,canUseAbsolutePaths:state.canUseAbsolutePaths}:null;},ready,refresh,snapshot,choose,backend,subscribe(listener){if(typeof listener!=='function')return()=>{};listeners.add(listener);return()=>listeners.delete(listener);}});
+    return Object.freeze({storage:'server',native:false,capabilities:Object.freeze({persistent:true,actualFiles:true,concurrency:'serialized-checked-write',crossDeviceCAS:true,concurrencyScope:'same-service-process',externalProcessCAS:false,verifiedAcknowledgement:true}),get supported(){return supported();},get availability(){return availability();},get serviceVersion(){return supported()?{apiVersion:1,chooserVersion:state.chooserVersion}:null;},get location(){return supported()?{basePath:state.basePath,platform:state.platform,canUseAbsolutePaths:state.canUseAbsolutePaths}:null;},ready,refresh,snapshot,roots:()=>browseRequest('roots'),browse:settings=>browseRequest('browse',settings?.path),choose,backend,subscribe(listener){if(typeof listener!=='function')return()=>{};listeners.add(listener);return()=>listeners.delete(listener);}});
 }

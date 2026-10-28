@@ -10,6 +10,21 @@ const scope={userId:'user',chatId:'chat'};
 const definition={targetId:'notes',bindingId:binding.bindingId,name:'notes.txt',format:'text',content:'',missing:'create',visibility:{kind:'public'}};
 const status=()=>({apiVersion:1,userId:'user',basePath:'/data/user/files/lattice',platform:'linux',canUseAbsolutePaths:true,bindings:{[binding.bindingId]:binding}});
 const response=(data,statusCode=200)=>({ok:statusCode>=200&&statusCode<300,status:statusCode,json:async()=>data});
+
+test('chooser transport requires declared capabilities and validates bounded authenticated listings',async()=>{
+ const data={...status(),chooserVersion:1,operations:['configure','load','cas','history','adopt','roots','browse']};
+ const f=fixture({fetch:async url=>response({ok:true,data:url.endsWith('/status')?data:url.endsWith('/roots')?{chooserVersion:1,roots:[{name:'Files',path:'/data/user'}]}:{chooserVersion:1,path:'/data/user',parent:null,entries:[{name:'notes.txt',path:'/data/user/notes.txt',kind:'file'}],truncated:false}})});
+ must(await f.access.ready);assert.deepEqual(f.access.serviceVersion,{apiVersion:1,chooserVersion:1});
+ assert.equal(must(await f.access.roots()).roots[0].path,'/data/user');assert.equal(must(await f.access.browse({path:'/data/user'})).entries[0].kind,'file');
+ assert.deepEqual(f.calls[1].body,{userId:'user'});assert.deepEqual(f.calls[2].body,{userId:'user',path:'/data/user'});
+ f.user('other');assert.equal((await f.access.roots()).error.code,'FILE_SERVICE_USER');
+ const old=fixture();await old.access.ready;assert.equal(old.access.supported,true);assert.equal((await old.access.roots()).error.code,'FILE_SERVICE_INCOMPATIBLE');
+});
+test('setup capability checks distinguish denied and incompatible from unreachable',async()=>{
+ for(const [reply,code] of [[response(null,403),'FILE_SERVICE_DENIED'],[response({ok:true,data:{...status(),apiVersion:2}}),'FILE_SERVICE_INCOMPATIBLE']]){
+  const f=fixture({fetch:async()=>reply});const result=await f.access.ready;assert.equal(result.error.code,code);assert.equal(f.access.availability.code,code);
+ }
+});
 function fixture(options={}){
  let user='user';const calls=[];
  const access=module.createServerFileAccess({getContext:()=>({getRequestHeaders:()=>({'Content-Type':'application/json','X-CSRF-Token':'host-token'})}),getUserId:()=>user,fetch:async(url,request)=>{calls.push({url,request,body:request.body?JSON.parse(request.body):null});return options.fetch?options.fetch(url,request):response({ok:true,data:url.endsWith('/status')?status():binding});}});
