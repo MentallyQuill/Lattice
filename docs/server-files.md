@@ -64,9 +64,9 @@ Selecting a path alone does not create or overwrite the file. The existing confi
 
 ## Configure a node
 
-1. Open **Details → File**. For Write to File, choose **Own file** when it should own its destination.
-2. Enter **File path**, including the filename, then choose the format, missing-file policy, initial content and visibility.
-3. Click **Save file settings**. This authorizes the destination and clears its setup caution. It does not create or overwrite the document.
+1. Open **Details → File**. New outputs already have automatic destinations, names and types.
+2. Use **Change…** to choose another authorized location. Custom server locations use the folder chooser after optional setup; manual paths remain under **Advanced**.
+3. Choose **File handling → Replace / Append**. Valid configuration changes autosave and grant the chosen destination without writing its output contents. Accepted Apply remains the output-write boundary.
 
 Examples:
 
@@ -77,9 +77,9 @@ Examples:
 | `/Users/me/Stories/SceneContext.txt` | macOS server path. |
 | `/home/me/stories/SceneContext.txt` | Linux server path. |
 
-Leaving File path blank uses **Filename** in the default folder shown in the panel. The filename and path fields stay consistent when edited. Administrators may configure paths outside their user-data folder. Other users must select a destination within their own SillyTavern data folder. Filesystem permissions of the account running SillyTavern also apply.
+Lattice supplies a filename suffix matching the declared type. Existing physical names and destinations remain stable until explicitly changed; a type or physical destination change uses a new-copy flow. Administrators may configure paths outside their user-data folder. Other users remain within their authorized SillyTavern data folder. The server account's OS permissions also apply.
 
-Read File owns its source. A connected Write to File and Clock Commit inherit their source node's destination. Existing granted browser-file bindings remain available; newly configured destinations use the server service. Portable exports retain suggested filenames but remove machine paths and binding authority, so recipients configure their own location.
+Read File owns its source. A connected Write to File and Clock Commit inherit their source node's destination. Existing browser/server grants remain with their provider. Ordinary managed outputs use inside-SillyTavern storage; custom paths use the optional server component. Portable exports retain suggested names and types while removing machine paths and writable binding authority.
 
 ## Saving and recovery
 
@@ -89,4 +89,4 @@ The service stores receipts, scoped history and pending-write metadata in `<user
 
 Concurrent requests through one service process are serialized. Files use checked reads and atomic replacement with a durable pending journal. A detected external edit requires a fresh run and review. Portable Node filesystem operations cannot completely exclude an independent process racing a directory or file replacement; detected uncertainty remains held for reconciliation. Do not run multiple SillyTavern processes against the same files concurrently.
 
-File documents retain the existing 262,144-byte limit, 32 active clock turns and 256 active save receipts. Migrated archives remain preserved; additional disk-history checkpoint creation is not part of this change.
+File documents retain the 262,144-byte limit. Active clock history and receipts are checkpointed automatically at accepted save boundaries, preserving replay identities and private history. Content recovery retains up to 20 prior versions separately from replay archives. Disk-full or unavailable verified history remains an actionable save/recovery issue; no canonical state is silently deleted to make space. See [saving workflows and files](file-storage.md).

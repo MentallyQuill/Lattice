@@ -68,12 +68,13 @@ With SillyTavern installed and your usual model connection working:
 1. Open **Extensions → Install extension** in SillyTavern.
 2. Enter `https://github.com/MentallyQuill/Lattice`. Leave the branch blank to install `main`, then reload SillyTavern.
 3. Click the Lattice logo beside the chat bar, or type `/lattice`. A fresh installation opens **Unified story workflow** with Lattice disabled.
-4. Select **Enable Lattice**, then send a player message normally. The starter uses your usual SillyTavern generation and makes no extra model requests.
-5. Select **Review / Publish**, choose **Host result** in Preview, and apply or reject the reviewed reply.
+4. Choose saving inside SillyTavern to start immediately, or follow the optional setup wizard for other locations on its host machine.
+5. Select **Enable Lattice**, then send a player message normally. The starter uses your usual SillyTavern generation and makes no extra model requests.
+6. Select **Review / Publish**, choose **Host result** in Preview, and apply or reject the reviewed reply.
 
-Next, choose **File → Open examples…**. Try **Give this scene one clear direction** for a simple editable instruction, or choose a lesson that fits your story. Each lesson explains its setup and model request budget. Model-based lessons need their connections configured; file-related nodes also need their files configured in Details.
+Next, choose **File → Open examples…**. Try **Give this scene one clear direction** for a simple editable instruction, or choose a lesson that fits your story. Each lesson explains its setup and model request budget. Model-based lessons need their connections configured. File outputs use automatic destinations; readers ask you to choose an input when its source is unknown.
 
-For file nodes, install the included [Lattice server file service](docs/server-files.md). Each node then accepts a file path on the machine running SillyTavern and saves through the server. This works without experimental browser file-access settings.
+On first use, choose saving inside SillyTavern or choosing locations elsewhere on its host machine. Inside saving works immediately; the second option guides any required component setup. Workflows autosave, and file nodes manage names and types automatically. See [saving workflows and files](docs/file-storage.md).
 
 ![The examples browser in Lattice 0.28.0, filtered to its two new passage lessons](docs/images/examples-curriculum.png)
 

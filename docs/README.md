@@ -19,7 +19,8 @@ For a particular node, click its **?** button in the editor. Its guide explains 
 | [Story systems](story-systems.md) | Build a weighted chaos wand, gradual relationships, private perspectives, timed events, or an accepted campaign notebook. |
 | [Unified workflows](unified-workflows.md) | Connect preparation and reply processing, combine reusable systems, and manage memories, documents, clocks, and accepted changes. |
 | [Model setup and troubleshooting](native-workflows.md) | Choose a connection for each model tool, understand request budgets, and investigate reply or save problems. |
-| [Server file setup](server-files.md) | Install the included file service and configure per-node Windows, macOS or Linux file paths. |
+| [Saving workflows and files](file-storage.md) | Automatic saves, shared saved workflows, Save As, per-node files, input copies and recovery. |
+| [Optional server file setup](server-files.md) | Use the guided wizard for custom Windows, macOS or Linux locations on the SillyTavern machine. |
 | [Reference tools and workflow library](lattice-reference-library.md) | Apply style or terminology references, inspect repeated wording, and reuse context or cleanup tools. |
 | [Connections and workflow comments](connection-comments.md) | Follow typed connections and label, move, or resize sections of the canvas. |
 | [Node reference](node-reference.md) | Look up the complete inputs, outputs, controls, and limits when you need detail beyond the in-editor guide. |
