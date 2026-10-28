@@ -2,6 +2,7 @@ import type { DetailEditResponse, DetailEditResult, DetailSelection, NodeDetails
 
 /** Authored intent only. The file service owns binding authority. */
 export interface NodeFileSettings {
+    managed?: boolean;
     bindingId: string;
     name: string;
     path?: string;
@@ -19,7 +20,20 @@ export interface NodeFileView {
     settings: NodeFileSettings;
     available: boolean;
     supported: boolean;
-    storage?: 'server' | 'native';
+    managed?: boolean;
+    friendlyName?: string;
+    ownFileConfigured?: boolean;
+    typeLabel?: string;
+    status?: string;
+    saving?: boolean;
+    fileHandling?: 'replace' | 'append';
+    advancedMutation?: string;
+    mutation?: string;
+    inputIssue?: string;
+    actorScope?: 'selected' | 'presence';
+    actorId?: string;
+    actors?: {id: string; label: string}[];
+    storage?: 'server' | 'native' | 'host';
     location?: { basePath: string; platform?: string; canUseAbsolutePaths?: boolean };
     accessIssue?: { code: string; message: string };
     issue?: string;
@@ -28,7 +42,12 @@ export interface NodeFileView {
 }
 
 export interface NodeFileActions {
-    chooseNodeFile?: (selection: DetailSelection, request: { mode: 'open' | 'save'; settings: NodeFileSettings }) => Promise<DetailEditResult>;
+    chooseNodeFile?: (selection: DetailSelection, request: { mode: 'open' | 'save'; settings: NodeFileSettings; newCopy?: boolean }) => Promise<DetailEditResult>;
+    createNodeFileCopy?: (selection: DetailSelection, settings: NodeFileSettings) => DetailEditResponse;
+    openNodeFile?: (selection: DetailSelection) => DetailEditResponse;
+    downloadNodeFile?: (selection: DetailSelection) => DetailEditResponse;
+    importNodeFile?: (selection: DetailSelection) => DetailEditResponse;
+    setupNodeFiles?: () => DetailEditResponse;
     saveNodeFile?: (selection: DetailSelection, settings: NodeFileSettings) => DetailEditResponse;
     refreshNodeFiles?: () => DetailEditResponse;
     editControls?: NodeDetailsActions['editControls'];

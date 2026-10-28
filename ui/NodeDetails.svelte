@@ -17,6 +17,7 @@
     import ModifierStack from './ModifierStack.svelte';
     import WorkflowData from './WorkflowData.svelte';
     import NodeFile from './NodeFile.svelte';
+    import {nodeFileOwnsControl} from '../src/ui/node-file-projection.js';
     import type { StructuredDraftState, DetailBindingMode, DetailControl, DetailEditResponse, DetailModifier, DetailSelection, NodeDetailsActions, NodeDetailsView } from './detail-types';
     const inputError=(error:{code:string;message:string})=>error.code==='INVALID_CONTROL_JSON'?error.code+': '+error.message:error.message;
     let { view, actions = {}, idPrefix = 'pc-node-details', openGuide }: { view: NodeDetailsView | null; actions?: NodeDetailsActions; idPrefix?: string; openGuide?: () => void } = $props();
@@ -424,6 +425,7 @@
     const controlGroups = $derived.by(() => {
         const groups = new Map<string, DetailControl[]>();
         for (const control of view?.controls ?? []) {
+            if (view?.nodeFile && nodeFileOwnsControl(view.operation ?? '', control.key)) continue;
             if (control.key === 'reasoningCustom' && view?.controls.find(item=>item.key==='reasoningEffort')?.value !== 'custom') continue;
             if (view?.operation === 'model-call' && control.key === 'schema' && view.controls.find(item=>item.key==='outputKind')?.value === 'text') continue;
             if (view?.operation === 'extract' && view.controls.find(item=>item.key==='mode')?.value === 'literal' && ['instructions','maxTokens','maxRetries'].includes(control.key)) continue;

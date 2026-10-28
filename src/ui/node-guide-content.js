@@ -193,12 +193,12 @@ const content = {
         'Choose serialization, field mapping, and any schema or CSV columns.',
         'Inspect Records, Text, and the report before connecting a file mutation.'),
     'read-file': entry('Read File', 'Read the file selected in this node and return its text, parsed value, document wrapper, and live write reference.',
-        'In this node’s File settings, enter a filename and choose a location or open an existing file. Legacy chat data stays available for migration.',
-        'Choose selected-actor scope or connect exact presence for the configured actor.',
+        'Choose file to use an existing authorized source, or Import from device to save an independent input copy. Existing saved chat data stays ready to use.',
+        'Use Advanced to choose character access or a custom location on the computer running SillyTavern.',
         'Use Parsed value for structured Data calculations, Document for metadata, Text for transformation, and Reference for an authorized Write to File. Text and Markdown sources skip Parsed value.'),
     'write-file': entry('Write to File', 'Stage a checked change to this node’s selected file for acceptance with the reviewed root result.',
-        'Choose Connected document to use Read File’s exact Reference, or Own file to select a separate destination. Connect the Records or Text required by the mutation.',
-        'Choose the mutation and any collection, identity, schema, or separator policies.',
+        'New outputs use an automatic file with a suggested name and type. Connect either Text or Records for the file content.',
+        'Choose File handling: Replace or Append. Advanced offers a connected document, custom destination and specialized record mutations.',
         'Inspect the projection and receipt; apply the reviewed root result to save the staged change.'),
     'project-document': entry('Project Document', 'Preview a document mutation as Text and Data without reading or writing a live file.',
         'Connect serialized Source Text and the Records or Text needed for the mutation.',
@@ -209,7 +209,7 @@ const content = {
         'Connect any additional checked due occurrences and inspect the staging receipt.',
         'Apply the reviewed root result to save the clock and consumed occurrence IDs.'),
     'story-clock': entry('Story Clock', 'Read an accepted story clock from an authorized workflow data source.',
-        'Create or authorize a clock JSON source in Workflow Data and select its identity.',
+        'New clocks start from an automatic valid file. Existing clocks keep their saved time and access.',
         'Optionally specify the expected calendar, then connect Clock to Advance Time or Time Trigger.'),
     'time-trigger': entry('Time Trigger', 'Find scheduled occurrences crossed between a previous and destination story clock.',
         'Connect both clocks and choose Daily, Interval, or Delay scheduling.',
@@ -757,6 +757,7 @@ const controls = {
 
 /** Supplementary settings are added by the caller only when the selected node exposes them. */
 const supplementaryControls = {
+    fileHandling: 'Replace saves the current accepted content. Append retains existing content and adds accepted text or structured records in the file’s format. Preview and settings changes do not write output contents.',
     reasoningEffort: 'Reasoning applies to this node’s model requests, including retries. None disables optional thinking where supported; models that require reasoning use the indicated minimum or provider default. Choices follow the effective provider and model, subject to the installed host adapter.',
     reasoningCustom: 'Provider reasoning value used when Reasoning is Custom. Enter up to 128 characters. The value stays saved when changing models or effort presets; a host adapter that cannot preserve it reports an error before the request.',
     fileTarget: 'File selected in this node. Choose a filename, location, format, initial contents and visibility. Applying the reviewed result saves staged changes.',

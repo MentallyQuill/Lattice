@@ -28,181 +28,59 @@ const field = (host, label) => { const value = host.querySelector(`[aria-label="
 const edit = (host, label, value, event = 'input') => { const element = field(host, label); element.value = value; element.dispatchEvent(new dom.window.Event(event, { bubbles: true })); flushSync(); };
 const settle = async () => { await tick(); flushSync(); };
 
-test('unrelated node revisions preserve file drafts and save against the current selection', async () => {
-    const saves = [], f = await fixture(model(), { saveNodeFile(captured, next) { saves.push([captured, next]); return { ok: true }; } });
-    try {
-        edit(f.host, 'Filename', 'draft-notes.md');
-        edit(f.host, 'Initial file content', 'Keep this unfinished file draft');
-        const revised = { ...selection, revision: 'revision2' };
-        f.update(model({ summary: 'Updated node status' }), revised);
-        assert.equal(field(f.host, 'Filename').value, 'draft-notes.md');
-        assert.equal(field(f.host, 'Initial file content').value, 'Keep this unfinished file draft');
-        assert.equal(f.host.querySelector('[data-save-node-file]').disabled, false);
-        f.host.querySelector('[data-save-node-file]').click(); await settle();
-        assert.deepEqual(saves, [[revised, { ...settings, name: 'draft-notes.md', content: 'Keep this unfinished file draft' }]]);
-    } finally { await f.close(); }
+
+const waitSave=async()=>{await new Promise(resolve=>setTimeout(resolve,350));await settle();};
+test('automatic file panel exposes friendly defaults and every saving node retains handling',async()=>{
+ for(const operation of ['write-file','story-clock','commit-outcomes','random-pick','commit-clock']){
+ const changes=[],f=await fixture(model({operation,managed:true,friendlyName:'Scene Context',typeLabel:'Text document',status:'Ready',saving:true,fileHandling:'replace',mode:operation==='commit-clock'?'inherited':'destination'}),{editControls(s,c){changes.push(c);return {ok:true};}});
+ try{assert.equal(field(f.host,'File type').textContent,'Text document · Automatic');assert.equal(f.host.querySelector('[data-file-status]').textContent,'Ready');assert.equal(f.host.querySelector('[data-save-node-file]'),null);assert.equal(field(f.host,'File handling').disabled,false);edit(f.host,'File handling','append','change');await settle();assert.deepEqual(changes,[{fileHandling:'append'}]);assert.equal(f.host.querySelector('details').open,false);}finally{await f.close();}
+ }
 });
 
-test('file settings save the authored values without selecting or writing a disk file', async () => {
-    const saves = [], choices = [], f = await fixture(model(), { saveNodeFile(captured, next) { saves.push([captured, next]); return { ok: true }; }, chooseNodeFile(...args) { choices.push(args); return Promise.resolve({ ok: true }); } });
-    try {
-        assert.ok(f.host.querySelector('[data-node-file]'));
-        assert.equal(f.host.querySelector('[data-node-file] details'), null, 'file settings are visible immediately');
-        assert.equal(field(f.host, 'Filename').value, 'notes.txt');
-        edit(f.host, 'Filename', 'travel.jsonl'); edit(f.host, 'File format', 'jsonl', 'change'); edit(f.host, 'Missing file', 'error', 'change'); edit(f.host, 'Initial file content', '{"day":1}'); edit(f.host, 'File visibility', 'actor-private', 'change');
-        assert.equal(f.host.querySelector('[data-save-node-file]').disabled, true, 'private data requires an actor');
-        edit(f.host, 'File actor ID', ' mara ');
-        assert.doesNotMatch(f.host.querySelector('[data-file-status]').textContent, /File selected|Ready/);
-        f.host.querySelector('[data-save-node-file]').click(); await settle();
-        assert.deepEqual(saves, [[selection, { bindingId: 'binding-a', name: 'travel.jsonl', format: 'jsonl', missing: 'error', content: '{"day":1}', visibility: { kind: 'actor-private', actorId: 'mara' } }]]);
-        assert.deepEqual(choices, []);
-        assert.match(f.host.textContent, /choose.*location/i, 'renaming cannot claim the existing binding is ready');
-    } finally { await f.close(); }
+test('debounced settings autosave retains focus, incomplete drafts and per-node drafts across selection',async()=>{
+ const saves=[],f=await fixture(model({managed:true,friendlyName:'Notes',settings:{...settings,bindingId:''}}),{saveNodeFile(s,v){saves.push([s,v]);return {ok:true};}});
+ try{
+ const input=field(f.host,'File name');input.focus();edit(f.host,'File name','Scene Context');await waitSave();assert.equal(saves.length,1);assert.equal(saves[0][1].name,'Scene Context');assert.equal(document.activeElement,input);
+ edit(f.host,'File name','');await waitSave();assert.equal(saves.length,1);
+ const next={...selection,selectionKey:'other',address:{...selection.address,nodeId:'other'}};
+ f.update(model({managed:true,friendlyName:'Other',settings:{...settings,bindingId:'',name:'Other.txt'}}),next);
+ assert.equal(field(f.host,'File name').value,'Other');
+ f.update(model({managed:true,friendlyName:'Notes',settings:{...settings,bindingId:''}}),selection);
+ assert.equal(field(f.host,'File name').value,'');await waitSave();assert.equal(saves.length,1);
+ }finally{await f.close();}
 });
 
-test('file pickers receive the current draft and start directly from the click', async () => {
-    const requests = [], f = await fixture(model({ settings: { ...settings, bindingId: '' } }), { chooseNodeFile(captured, request) { requests.push([captured, request]); return Promise.resolve({ ok: true }); } });
-    try {
-        edit(f.host, 'Filename', 'campaign.md'); edit(f.host, 'File format', 'markdown', 'change');
-        const choose = f.host.querySelector('[data-choose-node-file="save"]');
-        assert.match(choose.id, /^pc-node-details-fileTarget-/);
-        choose.click();
-        assert.equal(requests.length, 1, 'the native picker must begin in the click gesture'); flushSync();
-        assert.equal(f.host.querySelector('[data-save-node-file]').textContent, 'Save file settings', 'choosing a file is distinct from saving settings');
-        assert.deepEqual(requests[0], [selection, { mode: 'save', settings: { ...settings, bindingId: '', name: 'campaign.md', format: 'markdown' } }]);
-        await settle();
-        f.host.querySelector('[data-choose-node-file="open"]').click(); await settle();
-        assert.equal(requests[1][1].mode, 'open');
-        assert.equal(requests[1][1].settings.name, 'campaign.md');
-        assert.doesNotMatch(f.host.querySelector('[data-file-status]').textContent, /File selected|Ready/, 'the canonical model must confirm a chosen binding');
-    } finally { await f.close(); }
+test('stale autosave feedback never lands on another selection and disabled panels reject events',async()=>{
+ let resolveSave;const saves=[],f=await fixture(model({managed:true,settings:{...settings,bindingId:''}}),{saveNodeFile(s,v){saves.push([s,v]);return new Promise(resolve=>{resolveSave=resolve;});},editControls(){throw Error('disabled edit');}});
+ try{edit(f.host,'File name','Pending');await waitSave();assert.equal(saves.length,1);const other={...selection,selectionKey:'other',address:{...selection.address,nodeId:'other'}};f.update(model({friendlyName:'Other'}),other,true);resolveSave({ok:false,error:{code:'OLD',message:'Obsolete failure'}});await settle();assert.doesNotMatch(f.host.textContent,/Obsolete failure/);edit(f.host,'File name','Forged');assert.equal(field(f.host,'File name').value,'Forged');await waitSave();assert.equal(saves.length,1);assert.equal(field(f.host,'File name').disabled,true);}finally{await f.close();}
 });
 
-test('a connected write destination stays inherited until its destination mode is explicitly changed', async () => {
-    const changes = [], writes = [], f = await fixture(model({ operation: 'write-file', mode: 'inherited', destinationMode: 'connected', summary: 'Connected document: campaign.md' }), { editControls(...args) { changes.push(args); return { ok: true }; }, saveNodeFile(...args) { writes.push(args); return { ok: true }; }, chooseNodeFile(...args) { writes.push(args); return Promise.resolve({ ok: true }); } });
-    try {
-        assert.match(f.host.textContent, /Connected document: campaign.md/);
-        assert.equal(f.host.querySelector('[aria-label="Filename"]'), null);
-        assert.equal(f.host.querySelector('[data-choose-node-file]'), null);
-        edit(f.host, 'File destination', 'own', 'change'); await settle();
-        assert.deepEqual(changes, [[selection, { destinationMode: 'own' }]]);
-        assert.deepEqual(writes, []);
-        f.update(model({ operation: 'clock-commit', mode: 'inherited', summary: 'Uses the Story Clock file' }));
-        assert.match(f.host.textContent, /Uses the Story Clock file/);
-        assert.equal(f.host.querySelector('[aria-label="File destination"]'), null);
-    } finally { await f.close(); }
+test('private character uses familiar labels and preserves an unavailable private identity',async()=>{
+ const saves=[],f=await fixture(model({managed:true,actors:[{id:'actor:mara',label:'Mara'}],settings:{...settings,bindingId:'',visibility:{kind:'actor-private',actorId:'actor:missing'}}}),{saveNodeFile(s,v){saves.push(v);return {ok:true};}});
+ try{assert.equal(field(f.host,'File character').value,'actor:missing');assert.match(field(f.host,'File character').textContent,/Previously selected character/);assert.equal(f.host.querySelector('[aria-label="File actor ID"]'),null);edit(f.host,'File name','Private notes');await waitSave();assert.deepEqual(saves[0].visibility,{kind:'actor-private',actorId:'actor:missing'});edit(f.host,'File character','actor:mara','change');await waitSave();assert.deepEqual(saves[1].visibility,{kind:'actor-private',actorId:'actor:mara'});}finally{await f.close();}
 });
 
-test('legacy migration and unsupported native access remain explicit and cannot call a picker', async () => {
-    const choices = [], f = await fixture(model({ supported: false, legacy: true, issue: 'Native picker unavailable', settings: { ...settings, bindingId: '' } }), { chooseNodeFile(...args) { choices.push(args); return Promise.resolve({ ok: true }); } });
-    try {
-        assert.match(f.host.textContent, /existing chat/i);
-        assert.match(f.host.textContent, /preserved/i);
-        assert.match(f.host.textContent, /direct file saving/i);
-        for (const button of f.host.querySelectorAll('[data-choose-node-file]')) { assert.equal(button.disabled, true); button.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); }
-        await settle(); assert.deepEqual(choices, []);
-        assert.equal(field(f.host, 'Initial file content').value, 'Starting notes');
-    } finally { await f.close(); }
+test('bound names and type changes require explicit copy while generic readers can choose real files',async()=>{
+ const saves=[],copies=[],choices=[],f=await fixture(model(),{saveNodeFile(s,v){saves.push(v);return {ok:true};},createNodeFileCopy(s,v){copies.push(v);return {ok:true};},chooseNodeFile(s,v){choices.push(v);return Promise.resolve({ok:true});}});
+ try{edit(f.host,'File name','Another file');edit(f.host,'Advanced file format','markdown','change');await waitSave();assert.equal(saves.length,0);f.host.querySelector('button:not([disabled])');const copy=[...f.host.querySelectorAll('button')].find(button=>button.textContent==='Create new copy…');assert.ok(copy);copy.click();await settle();assert.equal(copies.length,1);f.update(model({settings:{...settings,bindingId:''}}));f.host.querySelector('[data-choose-node-file="open"]').click();assert.equal(choices.length,1,'picker begins in the click gesture');assert.equal(choices[0].mode,'open');}finally{await f.close();}
 });
 
-test('unavailable file saving explains the browser setup once beside the disabled chooser', async () => {
-    const guidance='Brave is not exposing direct file saving. Enable File System Access API at brave://flags/#file-system-access-api and relaunch Brave. File uploads and downloads do not grant this access.';
-    const f=await fixture(model({supported:false,issue:'Direct file saving needs browser setup. See the File section.',accessIssue:{code:'FILE_ACCESS_BRAVE',message:guidance}}),{chooseNodeFile:()=>Promise.resolve({ok:true})});
-    try {
-        assert.equal(f.host.querySelector('[data-file-access-issue]')?.textContent,guidance);
-        assert.equal(f.host.textContent.split(guidance).length-1,1);
-        assert.equal(f.host.querySelector('[data-file-status]').textContent,'Browser setup required');
-        assert.doesNotMatch(f.host.textContent,/Open.*in a browser|See the File section/,'the File section contains the guidance rather than pointing back to itself');
-        assert.equal(f.host.querySelector('[data-choose-node-file="save"]').disabled,true);
-        assert.equal(f.host.querySelector('[data-choose-node-file="open"]').disabled,true);
-    } finally {await f.close();}
+test('external file settings changes retain a draft without autosaving over the new destination',async()=>{
+ const saves=[],f=await fixture(model({managed:true,settings:{...settings,bindingId:''}}),{saveNodeFile(s,v){saves.push(v);return {ok:true};}});
+ try{edit(f.host,'File name','Unfinished local name');f.update(model({managed:true,friendlyName:'Remote',settings:{...settings,bindingId:'',name:'Remote.txt'}}),{...selection,revision:'remote'});await waitSave();assert.equal(field(f.host,'File name').value,'Unfinished local name');assert.equal(saves.length,0);assert.match(f.host.textContent,/changed elsewhere/);}finally{await f.close();}
 });
 
-test('inherited destinations show browser guidance while disconnected nodes keep connection guidance',async()=>{
-    const guidance='Brave is not exposing direct file saving. Enable File System Access API and relaunch Brave.';
-    const f=await fixture(model({mode:'inherited',supported:false,issue:'Direct file saving needs browser setup. See the File section.',accessIssue:{code:'FILE_ACCESS_BRAVE',message:guidance}}));
-    try {
-        assert.equal(f.host.querySelector('[data-file-access-issue]')?.textContent,guidance);
-        assert.doesNotMatch(f.host.textContent,/See the File section/);
-        f.update(model({mode:'inherited',supported:false,issue:'Connect a live file reference from Read File.'}));
-        assert.match(f.host.textContent,/Connect a live file reference/);
-        assert.equal(f.host.querySelector('[data-file-access-issue]'),null);
-    } finally {await f.close();}
+test('external readers offer explicit device input import without custom server setup',async()=>{
+ const imports=[],f=await fixture(model({settings:{...settings,bindingId:''},supported:false}),{importNodeFile(s){imports.push(s);return {ok:true};}});
+ try{const button=[...f.host.querySelectorAll('button')].find(button=>button.textContent==='Import from device…');assert.ok(button);assert.equal(button.disabled,false);assert.match(f.host.textContent,/Imports a copy; changes to the original/);button.click();assert.deepEqual(imports,[selection]);}finally{await f.close();}
 });
 
-test('model or selection changes reset drafts and prevent a stale picker failure from landing', async () => {
-    let resolveChoice; const f = await fixture(model(), { chooseNodeFile: () => new Promise(resolve => { resolveChoice = resolve; }), saveNodeFile: () => ({ ok: false, error: { code: 'SAVE', message: 'Try another name' } }) });
-    try {
-        edit(f.host, 'Initial file content', 'Draft A'); f.host.querySelector('[data-save-node-file]').click(); await settle(); assert.match(f.host.textContent, /Try another name/);
-        f.update(model({ settings: { ...settings, name: 'refreshed.txt', content: 'Refreshed' } }));
-        assert.equal(field(f.host, 'Initial file content').value, 'Refreshed'); assert.doesNotMatch(f.host.textContent, /Try another name/);
-        f.host.querySelector('[data-choose-node-file="open"]').click(); flushSync();
-        const nextSelection = { ...selection, selectionKey: 'other-details', revision: 'revision2', address: { ...selection.address, nodeId: 'other' } };
-        f.update(model({ settings: { ...settings, bindingId: '', name: 'other.txt', content: 'Other' } }), nextSelection);
-        resolveChoice({ ok: false, error: { code: 'OLD_PICKER', message: 'Obsolete picker failure' } }); await settle();
-        assert.equal(field(f.host, 'Filename').value, 'other.txt'); assert.equal(field(f.host, 'Initial file content').value, 'Other'); assert.doesNotMatch(f.host.textContent, /Obsolete picker failure|Try another name/);
-        assert.equal(f.host.querySelector('[data-choose-node-file="open"]').disabled, false);
-    } finally { await f.close(); }
+test('returning to a retained valid draft pauses it when that node changed while unselected',async()=>{
+ const saves=[],initial=model({managed:true,settings:{...settings,bindingId:''}}),f=await fixture(initial,{saveNodeFile(s,v){saves.push(v);return {ok:true};}});
+ try{edit(f.host,'File name','Local draft');const other={...selection,selectionKey:'other',address:{...selection.address,nodeId:'other'}};f.update(model({friendlyName:'Other'}),other);f.update(model({managed:true,settings:{...settings,bindingId:'',name:'Remote.txt'}}),{...selection,revision:'remote'});await waitSave();assert.equal(saves.length,0);assert.equal(field(f.host,'File name').value,'Local draft');assert.match(f.host.textContent,/changed elsewhere/);}finally{await f.close();}
 });
 
-test('unavailable and disabled panels reject raw events and retire in-flight feedback', async () => {
-    let rejectSave; const changes = [], f = await fixture(model({ operation: 'write-file', mode: 'destination' }), { chooseNodeFile(...args) { changes.push(args); return Promise.resolve({ ok: true }); }, editControls(...args) { changes.push(args); return { ok: true }; }, saveNodeFile: () => new Promise((_resolve, reject) => { rejectSave = reject; }) });
-    try {
-        edit(f.host, 'Initial file content', 'Pending'); f.host.querySelector('[data-save-node-file]').click(); flushSync();
-        f.update(model({ operation: 'write-file', mode: 'destination' }), selection, true);
-        rejectSave(new Error('Obsolete save failure')); await settle(); assert.doesNotMatch(f.host.textContent, /Obsolete save failure/);
-        edit(f.host, 'Filename', 'forged.txt'); edit(f.host, 'File destination', 'connected', 'change');
-        for (const button of f.host.querySelectorAll('[data-choose-node-file]')) button.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
-        await settle(); assert.deepEqual(changes, []);
-        f.update(model({ available: false }), selection, false);
-        assert.equal(field(f.host, 'Filename').disabled, true); assert.equal(f.host.querySelector('[data-choose-node-file="save"]').disabled, true);
-    } finally { await f.close(); }
-});
-
-
-test('schema data files keep JSON metadata when their initial content is edited', async () => {
-    for (const operation of ['story-clock', 'commit-outcomes', 'random-pick']) {
-        const saves = [], f = await fixture(model({ operation, settings: { ...settings, name: 'state.json', format: 'json', content: '{}' } }), { saveNodeFile(captured, next) { saves.push([captured, next]); return { ok: true }; } });
-        try {
-            const displayed = field(f.host, 'File format');
-            assert.equal(displayed.tagName, 'OUTPUT', operation + ' exposes its required format without a format selector');
-            assert.equal(displayed.textContent, 'JSON');
-            displayed.value = 'csv'; displayed.dispatchEvent(new dom.window.Event('change', { bubbles: true })); flushSync();
-            edit(f.host, 'Initial file content', '{"revision":1}');
-            f.host.querySelector('[data-save-node-file]').click(); await settle();
-            assert.deepEqual(saves, [[selection, { ...settings, name: 'state.json', format: 'json', content: '{"revision":1}' }]]);
-        } finally { await f.close(); }
-    }
-});
-
-test('server file configuration uses an editable path and saves without a native picker',async()=>{
-    const saves=[],f=await fixture(model({storage:'server',settings:{...settings,bindingId:''},location:{basePath:'/data/user/files/lattice',platform:'linux',canUseAbsolutePaths:true}}),{saveNodeFile(captured,next){saves.push([captured,next]);return Promise.resolve({ok:true});}});
-    try {
-        assert.equal(f.host.querySelector('[data-choose-node-file]'),null,'server files do not depend on native pickers');
-        assert.equal(f.host.querySelector('[data-save-node-file]').disabled,false,'a named unbound server destination can be configured');
-        edit(f.host,'File path','C:\\Stories\\SceneContext.txt');
-        assert.equal(field(f.host,'Filename').value,'SceneContext.txt');
-        f.host.querySelector('[data-save-node-file]').click();await settle();
-        assert.deepEqual(saves,[[selection,{...settings,bindingId:'',name:'SceneContext.txt',path:'C:\\Stories\\SceneContext.txt'}]]);
-        assert.match(f.host.textContent,/SillyTavern server/);
-        assert.match(f.host.textContent,/\/data\/user\/files\/lattice/);
-        assert.doesNotMatch(f.host.textContent,/flags|relaunch|browser setup/i);
-    } finally {await f.close();}
-});
-
-test('missing server file service reports installation instead of browser flags and cannot configure a path',async()=>{
-    const saves=[];let refreshed=0;const f=await fixture(model({storage:'server',supported:false,settings:{...settings,bindingId:''},accessIssue:{code:'FILE_SERVICE_UNAVAILABLE',message:'Install the Lattice file service on the SillyTavern server to use file paths.'}}),{saveNodeFile(...args){saves.push(args);return {ok:true};},refreshNodeFiles(){refreshed++;return {ok:true};}});
-    try {
-        edit(f.host,'File path','/stories/SceneContext.txt');
-        assert.equal(f.host.querySelector('[data-save-node-file]').disabled,true);
-        f.host.querySelector('[data-save-node-file]').dispatchEvent(new dom.window.MouseEvent('click',{bubbles:true}));await settle();
-        assert.deepEqual(saves,[]);
-        assert.match(f.host.textContent,/Install the Lattice file service/);
-        assert.equal(f.host.querySelector('[data-file-status]').textContent,'Server file service unavailable');
-        assert.doesNotMatch(f.host.textContent,/flags|relaunch|browser setup/i);
-        assert.equal(f.host.querySelector('[data-server-file-guide]')?.getAttribute('href'),'https://github.com/MentallyQuill/Lattice/blob/main/docs/server-files.md');
-        f.host.querySelector('[data-refresh-node-files]').click();await settle();
-        assert.equal(refreshed,1);
-        assert.equal(field(f.host,'File path').value,'/stories/SceneContext.txt','retry does not discard the authored draft');
-    } finally {await f.close();}
+test('switching an inherited writer back to a configured own destination preserves its original file authority',async()=>{
+ const edits=[],f=await fixture(model({operation:'write-file',mode:'inherited',destinationMode:'connected',ownFileConfigured:true}),{editControls(s,v){edits.push(v);return {ok:true};}});
+ try{edit(f.host,'File destination','own','change');await settle();assert.deepEqual(edits,[{destinationMode:'own'}]);}finally{await f.close();}
 });

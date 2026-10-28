@@ -21,82 +21,57 @@ async function fixture(page,operation='read-file',browserAccess=false){
  },{operation,browserAccess});
 }
 
-test('Brave without direct file saving gets specific setup guidance beside the disabled controls',async({page},testInfo)=>{
- await page.addInitScript(()=>{
-  Object.defineProperty(navigator,'brave',{configurable:true,value:{isBrave:async()=>true}});
-  Object.defineProperty(window,'showOpenFilePicker',{configurable:true,value:undefined});
-  Object.defineProperty(window,'showSaveFilePicker',{configurable:true,value:undefined});
- });
- await fixture(page,'write-file',true);
- await page.locator('.pc-node-profile[data-id="file"] .pc-node-readiness').click();
- await page.getByLabel('File destination',{exact:true}).selectOption('own');
- const section=page.locator('[data-node-file]'),guidance=section.locator('[data-file-access-issue]');
- await expect(guidance).toContainText('Brave is not exposing direct file saving');
- await expect(guidance).toContainText('brave://flags/#file-system-access-api');
- await expect(guidance).toContainText('relaunch Brave');
- await expect(guidance).toContainText('File uploads and downloads do not grant this access');
- await expect(section.locator('[data-file-status]')).toHaveText('Browser setup required');
- await page.getByLabel('Filename',{exact:true}).fill('journal.txt');
- await expect(page.getByRole('button',{name:'Choose location…',exact:true})).toBeDisabled();
- await expect(page.getByRole('button',{name:'Open existing…',exact:true})).toBeDisabled();
- await expect(section).not.toContainText('Open Lattice in a browser');
- await expect(section).not.toContainText('See the File section');
- expect(await page.evaluate(()=>window.nodeFileFixture.writes)).toBe(0);
- expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
- await page.screenshot({path:testInfo.outputPath('brave-file-setup.png')});
-});
 
-test('real browser file support enables the chooser on localhost without an injected adapter',async({page})=>{
- await fixture(page,'read-file',true);
- expect(await page.evaluate(()=>({secure:isSecureContext,open:typeof showOpenFilePicker,save:typeof showSaveFilePicker}))).toEqual({secure:true,open:'function',save:'function'});
- await page.locator('.pc-node-profile[data-id="file"] .pc-node-readiness').click();
- await page.getByLabel('Filename',{exact:true}).fill('journal.txt');
- await expect(page.getByRole('button',{name:'Choose location…',exact:true})).toBeEnabled();
- await expect(page.getByRole('button',{name:'Open existing…',exact:true})).toBeEnabled();
- await expect(page.locator('[data-file-access-issue]')).toHaveCount(0);
- await expect(page.locator('[data-node-file]')).not.toContainText('Browser setup required');
- expect(await page.evaluate(()=>window.nodeFileFixture.picks)).toBe(0);
- expect(await page.evaluate(()=>window.nodeFileFixture.writes)).toBe(0);
-});
-test('file setup caution opens the node File section and configuration never writes bytes',async({page},testInfo)=>{
- const browserErrors=[];page.on('pageerror',error=>browserErrors.push(error.message));
- await fixture(page);
- const badge=page.locator('.pc-node-profile[data-id="file"] .pc-node-readiness');
- await expect(badge).toHaveAttribute('data-readiness','setup');await badge.click();
- await expect(page.locator('[data-node-file]')).toBeVisible();
- await expect(page.getByLabel('Filename',{exact:true})).toBeFocused();
- await page.getByLabel('Filename',{exact:true}).fill('journal.txt');
- await page.getByRole('button',{name:'Choose location…',exact:true}).click();
+const file=page=>page.locator('[data-node-file]');
+async function openDetails(page){await page.locator('.pc-node-profile[data-id="file"] .pc-node-readiness').click();await expect(file(page)).toBeVisible();}
+async function noWrites(page){expect(await page.evaluate(()=>window.nodeFileFixture.writes)).toBe(0);expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);}
+
+test('generic reader chooses the real input without requiring a filename and configuration writes no output bytes',async({page},testInfo)=>{
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));await fixture(page);await openDetails(page);
+ await expect(file(page).getByLabel('File name',{exact:true})).toHaveValue('');
+ await file(page).getByRole('button',{name:'Choose file…',exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>window.canvasHarness.graph.nodes.file.fileTarget?.name)).toBe('journal.txt');
- await expect(badge).toHaveCount(0);
- expect(await page.evaluate(()=>window.nodeFileFixture.writes)).toBe(0);
- expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
- expect(browserErrors).toEqual([]);
- await page.screenshot({path:testInfo.outputPath('node-file-configured.png')});
+ await expect(file(page).getByLabel('File name',{exact:true})).toHaveValue('journal');
+ await expect(file(page).locator('[data-file-status]')).toHaveText('Ready');
+ await expect(file(page).getByRole('button',{name:'Save file settings',exact:true})).toHaveCount(0);
+ await expect(file(page).locator('[data-file-advanced]')).not.toHaveAttribute('open');
+ await noWrites(page);expect(errors).toEqual([]);await file(page).screenshot({path:testInfo.outputPath('reader-ready.png')});
 });
 
-test('a disconnected writer can choose its own file without creating a Read File node',async({page})=>{
- await fixture(page,'write-file');
- await page.locator('.pc-node-profile[data-id="file"] .pc-node-readiness').click();
- await page.getByLabel('File destination',{exact:true}).selectOption('own');
- await page.getByLabel('Filename',{exact:true}).fill('journal.txt');
- await page.getByRole('button',{name:'Choose location…',exact:true}).click();
- await expect.poll(()=>page.evaluate(()=>window.canvasHarness.graph.nodes.file.fileTarget?.name)).toBe('journal.txt');
- expect(await page.evaluate(()=>window.canvasHarness.graph.nodes.file.destinationMode)).toBe('own');
- expect(await page.evaluate(()=>Object.keys(window.canvasHarness.graph.nodes).length)).toBe(1);
- expect(await page.evaluate(()=>window.nodeFileFixture.writes)).toBe(0);
+test('inherited writers keep File handling enabled while destination changes stay advanced',async({page})=>{
+ await fixture(page,'write-file');await page.evaluate(async()=>{const h=window.canvasHarness;h.canvas.select({kind:'node',id:'file'});await h.settle();});await expect(file(page)).toBeVisible();
+ const handling=file(page).getByLabel('File handling',{exact:true});await expect(handling).toBeEnabled();await handling.selectOption('replace');
+ await expect.poll(()=>page.evaluate(()=>window.canvasHarness.graph.nodes.file.fileHandling)).toBe('replace');
+ await expect(page.getByLabel('Mutation',{exact:true})).toHaveCount(0);
+ await expect(file(page).getByLabel('File destination',{exact:true})).not.toBeVisible();
+ await file(page).getByText('Advanced',{exact:true}).click();await expect(file(page).getByLabel('File destination',{exact:true})).toBeVisible();await noWrites(page);
 });
 
-
-test('a granted restored binding verifies readiness without canceling its first run',async({page})=>{
- await fixture(page);
- await page.locator('.pc-node-profile[data-id="file"] .pc-node-readiness').click();
- await page.getByLabel('Filename',{exact:true}).fill('journal.txt');
- await page.getByRole('button',{name:'Choose location…',exact:true}).click();
+test('a configured external file keeps its grant and name while a renamed draft waits for a new copy',async({page})=>{
+ await fixture(page);await openDetails(page);await file(page).getByRole('button',{name:'Choose file…',exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>!!window.canvasHarness.graph.nodes.file.fileTarget?.bindingId)).toBe(true);
- await page.evaluate(()=>window.nodeFileFixture.restart());
- await page.locator('.pc-output-preview [data-run-here]').click();
- await expect(page.locator('.pc-output-preview .pc-preview-status')).toHaveAttribute('data-status','current');
- expect(await page.evaluate(()=>window.nodeFileFixture.writes)).toBe(0);
- expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
+ const original=await page.evaluate(()=>structuredClone(window.canvasHarness.graph.nodes.file.fileTarget));
+ await file(page).getByLabel('File name',{exact:true}).fill('Separate destination');
+ await expect(file(page)).toContainText('The original file stays unchanged.');
+ await page.waitForTimeout(450);expect(await page.evaluate(()=>window.canvasHarness.graph.nodes.file.fileTarget)).toEqual(original);await noWrites(page);
+});
+
+test('existing browser grants retain capability guidance under Advanced when native support is unavailable',async({page})=>{
+ await page.addInitScript(()=>{Object.defineProperty(navigator,'brave',{configurable:true,value:{isBrave:async()=>true}});Object.defineProperty(window,'showOpenFilePicker',{configurable:true,value:undefined});Object.defineProperty(window,'showSaveFilePicker',{configurable:true,value:undefined});});
+ await fixture(page,'read-file',true);await openDetails(page);
+ await expect(file(page).getByRole('button',{name:'Choose file…',exact:true})).toBeDisabled();await expect(file(page).locator('[data-file-access-issue]')).not.toBeVisible();
+ await file(page).getByText('Advanced',{exact:true}).click();await expect(file(page).locator('[data-file-access-issue]')).toContainText('Brave');await noWrites(page);
+});
+
+test('File controls fit narrow, light and dark panels and keyboard navigation opens Advanced',async({page},testInfo)=>{
+ await fixture(page);await openDetails(page);
+ const details=page.locator('.pc-workspace-details');
+ for(const [name,preset,width] of [['dark','lattice','340px'],['light','ash','340px'],['narrow','lattice','220px']]){
+  await page.evaluate(async({preset,width})=>{const h=window.canvasHarness;await(await import('/src/theme.js?v='+h.version)).setPreset(preset);document.querySelector('.pc-body').style.setProperty('--pc-details-width',width);await h.settle();},{preset,width});
+  const summary=file(page).getByText('Advanced',{exact:true});await summary.focus();await page.keyboard.press('Enter');await expect(file(page).locator('[data-file-advanced]')).toHaveAttribute('open','');
+  expect(await details.evaluate(element=>element.scrollWidth-element.clientWidth)).toBeLessThanOrEqual(1);
+  const overflow=await file(page).locator('button,input,select,output').evaluateAll(elements=>{const box=document.querySelector('.pc-workspace-details').getBoundingClientRect();return elements.filter(element=>element.getClientRects().length).filter(element=>{const rect=element.getBoundingClientRect();return rect.left<box.left-1||rect.right>box.right+1;}).map(element=>element.getAttribute('aria-label')??element.textContent);});expect(overflow).toEqual([]);
+  await details.screenshot({path:testInfo.outputPath('file-'+name+'.png'),animations:'disabled'});await summary.focus();await page.keyboard.press('Enter');
+ }
+ await noWrites(page);
 });
