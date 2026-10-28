@@ -11,7 +11,19 @@ export interface NodeFileBindingView {
     status:'ready'|'permission-required'|'unavailable';
     path?:string;
     generation?:string;
-    storage?:'native'|'server';
+    storage?:'native'|'server'|'host';
+}
+export interface NodeFileCapabilities {
+    readonly persistent:boolean;
+    readonly actualFiles:boolean;
+    readonly concurrency:'verified-write'|'serialized-checked-write';
+    readonly crossDeviceCAS:boolean;
+    readonly verifiedAcknowledgement:boolean;
+    readonly concurrencyScope?:'same-service-process';
+    readonly externalProcessCAS?:boolean;
+}
+export interface NodeFileProviderStatus {
+    storage:'native'|'server'|'host';supported:boolean;availability:NodeFileAvailabilityIssue|null;capabilities:NodeFileCapabilities|null;location:{basePath:string;platform:string;canUseAbsolutePaths:boolean}|null;
 }
 export interface NodeFileDefinition {
     targetId:string;
@@ -22,6 +34,7 @@ export interface NodeFileDefinition {
     missing:'create'|'error';
     visibility:ArtifactVisibility;
     path?:string;
+    storage?:'native'|'server'|'host';
 }
 export interface NodeFileHandle {
     readonly kind?:'file';
@@ -56,6 +69,8 @@ export interface NodeFilePickerOptions {
     suggestedName?:string;
 }
 export interface NodeFileAccessOptions {
+    /** Share complete settlement serialization between adapters backed by the same durable namespace. */
+    coordinator?:object;
     showOpenFilePicker?:(options:NodeFilePickerOptions)=>Promise<NodeFileHandle[]>;
     showSaveFilePicker?:(options:NodeFilePickerOptions)=>Promise<NodeFileHandle>;
     indexedDB?:IDBFactory;
@@ -73,8 +88,11 @@ export interface NodeFileAvailabilityIssue {
 export interface NodeFileAccess {
     readonly supported:boolean;
     readonly native:boolean;
-    readonly storage?:'native'|'server';
+    readonly storage?:'native'|'server'|'host';
     readonly nativeSupported?:boolean;
+    readonly capabilities?:NodeFileCapabilities;
+    readonly providers?:Partial<Record<'host'|'server'|'native',NodeFileProviderStatus>>;
+    ensureManaged?:(definition:NodeFileDefinition,controls:{scope:StorageScope;isCurrent:()=>boolean})=>Promise<Result<NodeFileDefinition>>;
     readonly nativeAccessIssue?:NodeFileAvailabilityIssue|null;
     readonly location?:{basePath:string;platform:string;canUseAbsolutePaths:boolean}|null;
     refresh?:()=>Promise<Result<{persistent:true}>>;
@@ -84,12 +102,12 @@ export interface NodeFileAccess {
     snapshot:()=>Record<string,NodeFileBindingView>;
     subscribe:(listener:()=>void)=>()=>void;
     /** Starts its picker synchronously. bindingId authorizes only same-file format reconfiguration; a different physical file gets a fresh identity. Never writes document contents. */
-    choose:(settings:{mode:'open'|'save';bindingId?:string;name:string;format:RecordFormat;path?:string;storage?:'native'|'server'})=>Promise<Result<{bindingId:string;name:string;path?:string}>&{cancelled?:true}>;
+    choose:(settings:{mode:'open'|'save';bindingId?:string;name:string;format:RecordFormat;path?:string;storage?:'native'|'server'|'host'})=>Promise<Result<{bindingId:string;name:string;path?:string}>&{cancelled?:true}>;
     /** Captures handle identities and never requests permission during execution. */
     backend:(definitions:NodeFileDefinition[],controls:{scope:StorageScope;isCurrent:()=>boolean;signal?:AbortSignal})=>NodeFileBackend;
 }
 export function createNodeFileAccess(options?:NodeFileAccessOptions):NodeFileAccess;
 export function getNodeFileAccess():NodeFileAccess;
-export function configureNodeFileAccess(ports:{getContext:()=>{getRequestHeaders?:()=>Record<string,string>};getUserId:()=>string|undefined|null}):void;
+export function configureNodeFileAccess(ports:{getContext:()=>{getRequestHeaders?:()=>Record<string,string>};getUserId:()=>string|undefined|null;getStorageMode?:()=> 'inside'|'anywhere'}):void;
 export function refreshNodeFileAccess():Promise<Result<{persistent:true}>>|undefined;
 export function setNodeFileAccess(adapter?:NodeFileAccess|null):void;

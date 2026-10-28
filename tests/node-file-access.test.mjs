@@ -22,13 +22,15 @@ async function withFileEnvironment(environment,run){
     try{for(const [key,value] of Object.entries(values))Object.defineProperty(globalThis,key,{configurable:true,value});return await run();}
     finally{for(const [key,descriptor] of Object.entries(descriptors)){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}}
 }
-test('missing native pickers explain direct saving rather than ordinary uploads and downloads',async()=>{
+test('missing native pickers offer managed storage and copy import without a browser switch',async()=>{
     await withFileEnvironment({},async()=>{
         const access=module.createNodeFileAccess({persistence:storage()});
         assert.equal(access.supported,false);
         assert.equal(access.availability.code,'FILE_ACCESS_UNSUPPORTED');
         assert.match(access.availability.message,/direct file saving/i);
-        assert.match(access.availability.message,/desktop Chrome or Edge/i);
+        assert.match(access.availability.message,/automatic storage inside SillyTavern/i);
+        assert.match(access.availability.message,/import a copy/i);
+        assert.doesNotMatch(access.availability.message,/flags|relaunch|Chrome|Edge/i);
         assert.match(access.availability.message,/uploads and downloads do not grant this access/i);
         const selected=await access.choose({mode:'save',name:'notes.txt',format:'text'});
         assert.equal(selected.error.code,'FILE_ACCESS_UNSUPPORTED');
@@ -36,13 +38,14 @@ test('missing native pickers explain direct saving rather than ordinary uploads 
         assert.equal(Object.isFrozen(access.availability),true);
     });
 });
-test('Brave without native pickers gives its specific file access setting and relaunch guidance',async()=>{
+test('Brave without native pickers keeps automatic storage available without experimental flags',async()=>{
     await withFileEnvironment({navigator:{brave:{isBrave:async()=>true}}},async()=>{
         const access=module.createNodeFileAccess({persistence:storage()});
         assert.equal(access.availability.code,'FILE_ACCESS_BRAVE');
         assert.match(access.availability.message,/Brave is not exposing direct file saving/);
-        assert.match(access.availability.message,/brave:\/\/flags\/#file-system-access-api/);
-        assert.match(access.availability.message,/relaunch Brave/);
+        assert.match(access.availability.message,/automatic storage inside SillyTavern/i);
+        assert.match(access.availability.message,/import a copy/i);
+        assert.doesNotMatch(access.availability.message,/flags|relaunch|Chrome|Edge/i);
         assert.match(access.availability.message,/uploads and downloads/);
     });
 });

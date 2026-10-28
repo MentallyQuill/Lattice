@@ -3,6 +3,8 @@ import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.29.
 import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.29.0';
 import {sha256Text} from '../workflow/definition-data.js?v=0.29.0';
 import {createServerFileAccess,cloneServerFileData} from './server-file-access.js?v=0.29.0';
+import {createHostFileAccess} from './host-file-access.js?v=0.29.0';
+import {createHostFileStore} from './host-file-store.js?v=0.29.0';
 import {createNodeFileService} from './node-file-service.js?v=0.29.0';
 const fail=(code,message,cancelled=false)=>({ok:false,...(cancelled?{cancelled:true}:{}),error:{code,message}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
@@ -16,8 +18,8 @@ const formats={json:['JSON document','application/json','.json'],jsonl:['JSON Li
 function fileAvailability(supported){
     if(supported)return null;
     if(globalThis.isSecureContext===false)return Object.freeze({code:'FILE_ACCESS_INSECURE',message:'Direct file saving requires a secure page. Open SillyTavern over HTTPS or localhost, then choose the file again. File uploads and downloads do not grant this access.'});
-    if(typeof globalThis.navigator?.brave?.isBrave==='function')return Object.freeze({code:'FILE_ACCESS_BRAVE',message:'Brave is not exposing direct file saving. Enable “File System Access API” at brave://flags/#file-system-access-api and relaunch Brave, or use Chrome or Edge. File uploads and downloads do not grant this access.'});
-    return Object.freeze({code:'FILE_ACCESS_UNSUPPORTED',message:'This browser does not provide direct file saving. Open this workflow in desktop Chrome or Edge. File uploads and downloads do not grant this access.'});
+    if(typeof globalThis.navigator?.brave?.isBrave==='function')return Object.freeze({code:'FILE_ACCESS_BRAVE',message:'Brave is not exposing direct file saving. Choose automatic storage inside SillyTavern or import a copy. Previously chosen local files can be reselected in a supported secure browser context. File uploads and downloads do not grant this access.'});
+    return Object.freeze({code:'FILE_ACCESS_UNSUPPORTED',message:'This browser does not provide direct file saving. Choose automatic storage inside SillyTavern or import a copy. Previously chosen local files can be reselected in a supported secure browser context. File uploads and downloads do not grant this access.'});
 }
 const changedError=cause=>cause?.name==='AbortError'?fail('FILE_CANCELLED','The file selection was cancelled.',true):cause?.name==='NotAllowedError'||cause?.name==='SecurityError'?fail('FILE_PERMISSION','Choose this file again to grant file access.'):fail('FILE_ACCESS_FAILED','The selected file could not be accessed.');
 function captureUpdate(value){
@@ -56,7 +58,7 @@ export function createNodeFileAccess(options={}){
     const supported=typeof openPicker==='function'&&typeof savePicker==='function',availability=fileAvailability(supported);
     const persistence=options.persistence??indexedPersistence(options.indexedDB??globalThis.indexedDB);
     let bindings=[],records={},restoredReady=false;
-    const coordinator=options.persistence??options.indexedDB??globalThis.indexedDB??{};
+    const coordinator=options.coordinator??options.persistence??options.indexedDB??globalThis.indexedDB??{};
     function enqueue(action){
         const before=coordinators.get(coordinator)??Promise.resolve();
         const pending=before.then(()=>globalThis.navigator?.locks?.request?globalThis.navigator.locks.request('lattice-node-files-write',action):action());
@@ -228,7 +230,7 @@ export function createNodeFileAccess(options={}){
                 if(actual.revision!==revision)return fail('PERSISTENCE_UNKNOWN','The file differs from the intended bytes after close; reconcile its pending intent.');
                 const next={...records,[key]:{...retainedMetadata(records[key]),receipts:[...(records[key]?.receipts??[]),{intentId:change.intentId,fingerprint:change.fingerprint,revision}],...(change.sourceBinding?{sourceBinding:change.sourceBinding}:{})}};
                 try{await persistence.save({bindings,records:next});records=next;return {ok:true,data:{applied:true,acknowledged:true,revision}};}catch{return {ok:true,data:{applied:true,acknowledged:false,revision}};}
-            }catch(cause){try{await writer?.abort?.();}catch{}if(cause?.name==='NotAllowedError'||cause?.name==='SecurityError'){status(binding,'permission-required');return changedError(cause);}return cause?.name==='AbortError'?fail('CANCELLED','File settlement was cancelled.'):fail('FILE_WRITE_FAILED','The selected file could not be saved.');}
+            }catch(cause){try{await writer?.abort?.();}catch{}if(['PERSISTENCE_UNKNOWN','FILE_REVISION_CONFLICT','HOST_EMPTY_UNSUPPORTED','HOST_FILE_DENIED'].includes(cause?.code))return fail(cause.code,cause.message);if(cause?.name==='NotAllowedError'||cause?.name==='SecurityError'){status(binding,'permission-required');return changedError(cause);}return cause?.name==='AbortError'?fail('CANCELLED','File settlement was cancelled.'):fail('FILE_WRITE_FAILED','The selected file could not be saved.');}
         }
         function compareAndSwap(update,writeControls={}){
             const capturedUpdate=captureUpdate(update);
@@ -239,11 +241,11 @@ export function createNodeFileAccess(options={}){
         }
         return Object.freeze({load,compareAndSwap,lookupHistory,adoptLegacy});
     }
-    return Object.freeze({backend,supported,native:supported,availability,ready,snapshot,choose,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);}});
+    return Object.freeze({backend,supported,native:supported,storage:'native',capabilities:Object.freeze({persistent:true,actualFiles:true,concurrency:'verified-write',crossDeviceCAS:false,verifiedAcknowledgement:true}),availability,ready,async refresh(){const result=await refresh();if(result.ok){restoredReady=true;changed();return {ok:true,data:{persistent:true}};}return result;},snapshot,choose,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);}});
 }
 let sharedAccess;
 let hostPorts={};
 export function configureNodeFileAccess(ports){hostPorts=ports??{};}
 export function refreshNodeFileAccess(){return sharedAccess?.refresh?.();}
-export function getNodeFileAccess(){return sharedAccess??=createNodeFileService({native:createNodeFileAccess(),server:createServerFileAccess({getContext:()=>hostPorts.getContext?.()??{},getUserId:()=>hostPorts.getUserId?.()})});}
+export function getNodeFileAccess(){return sharedAccess??=createNodeFileService({host:createHostFileAccess({store:createHostFileStore({getRequestHeaders:()=>hostPorts.getContext?.()?.getRequestHeaders?.()??{},getUserId:()=>hostPorts.getUserId?.()}),getUserId:()=>hostPorts.getUserId?.()}),getStorageMode:()=>hostPorts.getStorageMode?.()??'inside',native:createNodeFileAccess(),server:createServerFileAccess({getContext:()=>hostPorts.getContext?.()??{},getUserId:()=>hostPorts.getUserId?.()})});}
 export function setNodeFileAccess(adapter=null){sharedAccess=adapter??undefined;}

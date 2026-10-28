@@ -1,7 +1,7 @@
 import type {Result} from '../workflow/operations/json-data';
 import type {RecordFormat} from '../workflow/operations/format-records';
 import type {StorageScope} from '../workflow/file-store';
-import type {NodeFileBackend,NodeFileDefinition} from './node-file-access';
+import type {NodeFileBackend,NodeFileDefinition,NodeFileCapabilities} from './node-file-access';
 export interface ServerFileBindingView {
     bindingId:string;
     name:string;
@@ -14,6 +14,7 @@ export interface ServerFileBindingView {
 export interface ServerFileAccess {
     readonly storage:'server';
     readonly native:false;
+    readonly capabilities:NodeFileCapabilities;
     readonly supported:boolean;
     readonly availability:{code:string;message:string}|null;
     readonly location:{basePath:string;platform:string;canUseAbsolutePaths:boolean}|null;
