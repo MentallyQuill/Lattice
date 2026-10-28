@@ -32,7 +32,7 @@ function workspaceFixture() {
     });
     const root = document.createElement('div'); root.className = 'pc-root pc-open'; document.body.append(root); root.append(f.host);
     let closes = 0;
-    const listener = controllerKeydown({ pendingDocumentPrompt: null, isOpen: () => root.classList.contains('pc-open'), typing: () => false, canvas: f.canvas,
+    const listener = controllerKeydown({ pendingDocumentPrompt: null, libraryOpen: false, pendingServerChooser: null, pendingFileRecovery: null, pendingExampleFileSetup: null, applicationFiles: () => null, isOpen: () => root.classList.contains('pc-open'), typing: () => false, canvas: f.canvas,
         close() { closes++; root.classList.remove('pc-open'); } });
     // Canvas installs its real document listener first, as production build does.
     document.addEventListener('keydown', listener);
