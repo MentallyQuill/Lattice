@@ -724,7 +724,8 @@ function build() {
     document.addEventListener('pc-state', () => { if(isOpen())refreshRecallOverview(); });
     document.addEventListener('pc-file-experience',()=>{renderDocumentState();});
     window.addEventListener('focus',()=>{void refreshSavedWorkflow();});
-    setInterval(()=>{if(isOpen()&&document.visibilityState!=='hidden')void refreshSavedWorkflow();},15000);
+    const refreshTimer=setInterval(()=>{if(isOpen()&&document.visibilityState!=='hidden')void refreshSavedWorkflow();},15000);
+    refreshTimer?.unref?.();
     document.addEventListener('pc-theme', () => { if (canvas && isOpen() && !openingWorkspace) { updateWorkflowProjection(); canvas.render(); } });
     canvas = new Canvas(workbench.parts.canvasHost, {
         lodKey: () => graphViews ? documentSession.draftNamespace() + ':' + graphViews.readEditor().view.key : undefined,
