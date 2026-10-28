@@ -52,7 +52,8 @@ test('a same-ID activation inside a views observer refreshes the replacement imm
         return { activated, currentName: h.graph.name, exactReplacement: h.graph === next, stale: h.S.documentSession.stillCurrent(captured), dirty: h.S.documentSession.dirty(), recoveredName: h.S.settings().recoveryDraft.graph.name };
     });
     expect(result).toEqual({ activated: true, currentName: 'Observer replacement', exactReplacement: true, stale: false, dirty: false, recoveredName: 'Observer replacement' });
-    await expect(page.getByRole('status', { name: 'Document status' })).toContainText('Saved');
+    // A clean checkpoint with no storage acknowledgement is still an unsaved draft.
+    await expect(page.getByRole('status', { name: 'Document status' })).toHaveText('Unsaved draft');
 });
 
 test('source and saved observers remain immediate while matching views refresh is deferred', async ({ page }) => {
@@ -74,5 +75,6 @@ test('source and saved observers remain immediate while matching views refresh i
     });
     expect(result).toEqual({ calls: { source: 1, saved: 1 }, source: 'Observer saved.json', dirty: false });
     await expect(page.locator('.pc-document-name')).toHaveText('Observer saved.json');
-    await expect(page.getByRole('status', { name: 'Document status' })).toContainText('Saved');
+    // markSaved updates the session checkpoint; this fixture performs no actual file save.
+    await expect(page.getByRole('status', { name: 'Document status' })).toHaveText('Unsaved draft');
 });

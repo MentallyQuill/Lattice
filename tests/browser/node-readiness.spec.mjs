@@ -123,7 +123,7 @@ test('production shelf placement at quarter zoom clears the model and setup stac
     await page.screenshot({path:testInfo.outputPath('readiness-quarter-shelf-placement.png')});
 });
 
-test('unavailable live document readiness focuses the node File path without graph effects',async({page})=>{
+test('unavailable live document readiness focuses the node File settings without graph effects',async({page})=>{
     await page.route('**/scripts/user.js',route=>route.fulfill({contentType:'text/javascript',body:'export const getCurrentUserHandle=()=>"readiness-document-user";'}));
     await page.route('**/script.js',route=>route.fulfill({contentType:'text/javascript',body:'export const isGenerating=()=>false;export const syncMesToSwipe=()=>true;export const syncSwipeToMes=()=>true;'}));
     await page.goto('/tests/browser/harness.html');await page.waitForFunction(()=>!!window.canvasHarness);
@@ -139,7 +139,7 @@ test('unavailable live document readiness focuses the node File path without gra
     const badge=page.locator('.pc-node-profile[data-id="file"] .pc-node-readiness');
     await expect(badge).toHaveAttribute('data-readiness','setup');await badge.click();
     await expect(page.locator('[data-node-file]')).toBeVisible();
-    await expect(page.getByLabel('File path',{exact:true})).toBeFocused();
+    await expect(page.getByLabel('File name',{exact:true})).toBeFocused();
     expect(await page.evaluate(()=>JSON.stringify(window.canvasHarness.graph))).toBe(before);
     expect(await page.evaluate(()=>window.canvasHarness.graph.nodes.file.targetId)).toBe('missing-custom-document');
     expect(await page.evaluate(()=>window.canvasHarness.providerCalls())).toBe(0);
