@@ -1,6 +1,6 @@
 /** Pure authoring contract; no runtime source-proof or execution imports. */
-import {cloneJsonValue} from './json-data.js?v=0.30.1';
-import {own,plain,freeze} from '../record-data.js?v=0.30.1';
+import {cloneJsonValue} from './json-data.js?v=0.30.2';
+import {own,plain,freeze} from '../record-data.js?v=0.30.2';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const invalid=()=>fail('INVALID_CHUNK_SETTINGS','Use supported Chunk controls and explicit bounded sizes.');
 const usesTokenSize=settings=>settings.strategy!=='assistant-turns'&&settings.sizeUnit==='tokens';

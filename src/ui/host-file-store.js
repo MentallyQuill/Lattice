@@ -1,4 +1,4 @@
-import {sha256Text} from '../workflow/definition-data.js?v=0.30.1';
+import {sha256Text} from '../workflow/definition-data.js?v=0.30.2';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const safeName=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/.test(value)&&!value.includes('..');
 const hash=value=>/^sha256:[a-f0-9]{64}$/.test(value??'');

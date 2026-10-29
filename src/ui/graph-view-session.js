@@ -1,5 +1,5 @@
-import { committedGraphChange } from '../workflow/transactions.js?v=0.30.1';
-import { createViewState, viewIdentityKey } from './view-state.js?v=0.30.1';
+import { committedGraphChange } from '../workflow/transactions.js?v=0.30.2';
+import { createViewState, viewIdentityKey } from './view-state.js?v=0.30.2';
 
 const contentIdentities = new WeakMap();
 /** Stable selected authored content for privately admitted editor scopes only. */

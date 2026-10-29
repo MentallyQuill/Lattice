@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { operationDefaults, semanticControlsForNode } from '../src/workflow/catalog.js?v=0.30.1';
-import { exportWorkflow } from '../src/workflow/packages.js?v=0.30.1';
-import { describeFileNode, executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.30.1';
-import { createFileStore } from '../src/workflow/file-store.js?v=0.30.1';
-const targets=await import('../src/workflow/node-file-targets.js?v=0.30.1').catch(()=>({}));
+import { operationDefaults, semanticControlsForNode } from '../src/workflow/catalog.js?v=0.30.2';
+import { exportWorkflow } from '../src/workflow/packages.js?v=0.30.2';
+import { describeFileNode, executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.30.2';
+import { createFileStore } from '../src/workflow/file-store.js?v=0.30.2';
+const targets=await import('../src/workflow/node-file-targets.js?v=0.30.2').catch(()=>({}));
 const target={bindingId:'native-handle-1',name:'notes.txt',format:'text',missing:'create',content:'',visibility:{kind:'public'}};
 const node=(operation,settings={})=>({id:operation,type:'workflow',...operationDefaults(operation),...settings});
 
@@ -67,6 +67,6 @@ test('native access errors retain actionable codes without exposing backend path
  assert.equal(result.error.code,'FILE_PERMISSION');assert.equal(JSON.stringify(result).includes('private'),false);
 });
 test('portable empty file settings remain omitted across repeated export and import',async()=>{
- const {parseWorkflow}=await import('../src/workflow/packages.js?v=0.30.1');const clock={...node('story-clock'),id:'clock'},graph={id:'portable-defaults',name:'Portable defaults',schema:3,runtime:2,mode:'native-unified',nodes:{clock},wires:{},portals:{},definitions:{},runTargets:[]};
+ const {parseWorkflow}=await import('../src/workflow/packages.js?v=0.30.2');const clock={...node('story-clock'),id:'clock'},graph={id:'portable-defaults',name:'Portable defaults',schema:3,runtime:2,mode:'native-unified',nodes:{clock},wires:{},portals:{},definitions:{},runTargets:[]};
  const first=exportWorkflow(graph);assert.equal(Object.hasOwn(first.graph.nodes.clock,'fileTarget'),false);const parsed=parseWorkflow(JSON.stringify(first));assert.equal(parsed.ok,true,JSON.stringify(parsed));assert.deepEqual(exportWorkflow(parsed.data),first);
 });

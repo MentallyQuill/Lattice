@@ -1,7 +1,7 @@
-import {nodeFileTargetId,validateNodeFileTarget} from '../workflow/node-file-targets.js?v=0.30.1';
-import { workflowDataPresetFor } from '../workflow/workflow-data-defaults.js?v=0.30.1';
-import {canonicalFileName,inferManagedFileFormat,resolveManagedFileNode} from '../workflow/managed-file-policy.js?v=0.30.1';
-import {fileInitializationMode,prepareUnboundReader} from '../workflow/file-initialization.js?v=0.30.1';
+import {nodeFileTargetId,validateNodeFileTarget} from '../workflow/node-file-targets.js?v=0.30.2';
+import { workflowDataPresetFor } from '../workflow/workflow-data-defaults.js?v=0.30.2';
+import {canonicalFileName,inferManagedFileFormat,resolveManagedFileNode} from '../workflow/managed-file-policy.js?v=0.30.2';
+import {fileInitializationMode,prepareUnboundReader} from '../workflow/file-initialization.js?v=0.30.2';
 const owned = new Set(['read-file','write-file','story-clock','commit-outcomes','random-pick','commit-clock']);
 const extensions = {json:'json',jsonl:'jsonl',csv:'csv',text:'txt',markdown:'md'};
 const types={text:'Text document',markdown:'Markdown document',json:'Structured data',jsonl:'JSON Lines',csv:'Spreadsheet'};

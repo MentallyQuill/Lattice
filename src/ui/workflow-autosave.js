@@ -1,4 +1,4 @@
-import {serializeWorkflowDocument} from '../workflow/document-file.js?v=0.30.1';
+import {serializeWorkflowDocument} from '../workflow/document-file.js?v=0.30.2';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 
 /** Checkpoints acknowledge captured bytes, never the graph after a pending write. */

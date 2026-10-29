@@ -1,6 +1,6 @@
-import {serializeWorkflowDocument} from '../workflow/document-file.js?v=0.30.1';
-import {exportWorkflow} from '../workflow/packages.js?v=0.30.1';
-import {createWorkflowAutosave} from './workflow-autosave.js?v=0.30.1';
+import {serializeWorkflowDocument} from '../workflow/document-file.js?v=0.30.2';
+import {exportWorkflow} from '../workflow/packages.js?v=0.30.2';
+import {createWorkflowAutosave} from './workflow-autosave.js?v=0.30.2';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const cancelled=()=>({ok:false,cancelled:true});
 

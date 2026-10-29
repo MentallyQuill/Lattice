@@ -1,11 +1,11 @@
-import { FILE_HANDLING_CONTROL, NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.30.1';
-import { artifactVisibility } from '../artifact-privacy.js?v=0.30.1';
-import { cloneJsonValue } from './json-data.js?v=0.30.1';
-import { decodeJson } from './json-decode.js?v=0.30.1';
-import { formatRecords } from './format-records.js?v=0.30.1';
-import { prepareDocumentMutation } from './document-mutations.js?v=0.30.1';
-import { freeze } from '../record-data.js?v=0.30.1';
-import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.30.1';
+import { FILE_HANDLING_CONTROL, NODE_FILE_TARGET_CONTROL, validateNodeFileTarget } from '../node-file-targets.js?v=0.30.2';
+import { artifactVisibility } from '../artifact-privacy.js?v=0.30.2';
+import { cloneJsonValue } from './json-data.js?v=0.30.2';
+import { decodeJson } from './json-decode.js?v=0.30.2';
+import { formatRecords } from './format-records.js?v=0.30.2';
+import { prepareDocumentMutation } from './document-mutations.js?v=0.30.2';
+import { freeze } from '../record-data.js?v=0.30.2';
+import { workflowDataPresetFor } from '../workflow-data-defaults.js?v=0.30.2';
 
 const references = new WeakMap();
 const fail=(code,message)=>({ok:false,error:{code,message}});

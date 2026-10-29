@@ -1,9 +1,9 @@
-import {createFileMetadataBlobs} from '../workflow/file-metadata-blobs.js?v=0.30.1';
-import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.1';
-import {inspectDocumentHistory} from '../workflow/document-history.js?v=0.30.1';
-import {createNodeFileAccess} from './node-file-access.js?v=0.30.1';
-import {cloneServerFileData} from './server-file-access.js?v=0.30.1';
-import {sha256Text} from '../workflow/definition-data.js?v=0.30.1';
+import {createFileMetadataBlobs} from '../workflow/file-metadata-blobs.js?v=0.30.2';
+import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.2';
+import {inspectDocumentHistory} from '../workflow/document-history.js?v=0.30.2';
+import {createNodeFileAccess} from './node-file-access.js?v=0.30.2';
+import {cloneServerFileData} from './server-file-access.js?v=0.30.2';
+import {sha256Text} from '../workflow/definition-data.js?v=0.30.2';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const formats={text:'.txt',json:'.json',jsonl:'.jsonl',markdown:'.md',csv:'.csv'};
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;

@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFile} from 'node:fs/promises';
-import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.30.1';
-import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v=0.30.1';
-import {OPERATIONS,operationDefaults} from '../src/workflow/catalog.js?v=0.30.1';
-import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.30.1';
-import {createWorkflowDataSetup} from '../src/ui/workflow-data-setup.js?v=0.30.1';
-import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.30.1';
-import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.30.1';
-import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js?v=0.30.1';
-import {safe} from '../src/state.js?v=0.30.1';
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.30.2';
+import {prepareNativeConnectionEdit} from '../src/workflow/connection-edits.js?v=0.30.2';
+import {OPERATIONS,operationDefaults} from '../src/workflow/catalog.js?v=0.30.2';
+import {createConfiguredNodeSession,configuredCreationStage,nodeNeedsConfiguration,iterationHelperChoices} from '../src/ui/configured-node-creation.js?v=0.30.2';
+import {createWorkflowDataSetup} from '../src/ui/workflow-data-setup.js?v=0.30.2';
+import {prepareNodeProfileOptions,readNodeProfileMetadata} from '../src/ui/node-profile-preparation.js?v=0.30.2';
+import {activeModelMetadata} from '../src/workflow/model-profiles.js?v=0.30.2';
+import {workflowDataPresetFor} from '../src/workflow/workflow-data-defaults.js?v=0.30.2';
+import {safe} from '../src/state.js?v=0.30.2';
 const source=await readFile(new URL('../src/ui/controller.js',import.meta.url),'utf8');
 test('retired global file handlers are absent while per-node migration retains its scoped catalog',()=>{
  assert.doesNotMatch(source,/storyDocumentsActions|refreshStoryDocuments|function storySetup\(/);

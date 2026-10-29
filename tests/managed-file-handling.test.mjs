@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.30.1';
-import { createFileStore } from '../src/workflow/file-store.js?v=0.30.1';
-import { executeTimeNode } from '../src/workflow/operations/time-nodes.js?v=0.30.1';
-import { executeRandom } from '../src/workflow/operations/random-outcomes.js?v=0.30.1';
+import { executeFileNode } from '../src/workflow/operations/file-nodes.js?v=0.30.2';
+import { createFileStore } from '../src/workflow/file-store.js?v=0.30.2';
+import { executeTimeNode } from '../src/workflow/operations/time-nodes.js?v=0.30.2';
+import { executeRandom } from '../src/workflow/operations/random-outcomes.js?v=0.30.2';
 const node={id:'write',type:'workflow',operation:'write-file',destinationMode:'own',targetId:'notes'};
 async function project(format,content,text,fileHandling,extra={}){
  let prepared,writes=0;
@@ -44,7 +44,7 @@ test('specialized saving nodes send validated file handling to trusted state sta
  assert.deepEqual(outcomeHandling,{fileHandling:'replace'});
 });
 test('file handling preserves declared Records inputs for structured replacement',async()=>{
- const {describeFileNode}=await import('../src/workflow/operations/file-nodes.js?v=0.30.1');
+ const {describeFileNode}=await import('../src/workflow/operations/file-nodes.js?v=0.30.2');
  const described=describeFileNode({...node,mode:'add',fileHandling:'replace'},{authoring:true});
  assert.equal(described.ok,true,JSON.stringify(described));
  assert.equal(described.data.ports.some(port=>port.id==='records'&&port.kind==='data'),true);

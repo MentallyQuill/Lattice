@@ -1,4 +1,4 @@
-import { reasoningProviderHint } from './reasoning.js?v=0.30.1';
+import { reasoningProviderHint } from './reasoning.js?v=0.30.2';
 export const ACTIVE_PROFILE_ID = 'lattice:active-sillytavern';
 export const ACTIVE_PROFILE_NAME = 'Active SillyTavern model';
 const TEXT_MODELS = {ooba:'custom_model',generic:'generic_model',mancer:'mancer_model',togetherai:'togetherai_model',infermaticai:'infermaticai_model',dreamgen:'dreamgen_model',openrouter:'openrouter_model',vllm:'vllm_model',aphrodite:'aphrodite_model',ollama:'ollama_model',featherless:'featherless_model',tabby:'tabby_model',llamacpp:'llamacpp_model'};

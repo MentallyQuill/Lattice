@@ -1,7 +1,7 @@
-import {parseWorkflowDocument,serializeWorkflowDocument} from '../workflow/document-file.js?v=0.30.1';
-import {computeDefinitionIdentity,definitionRefKey} from '../workflow/definition-data.js?v=0.30.1';
-import {remapExampleMetadata} from '../workflow/example-metadata.js?v=0.30.1';
-import {viewIdentityKey} from './view-state.js?v=0.30.1';
+import {parseWorkflowDocument,serializeWorkflowDocument} from '../workflow/document-file.js?v=0.30.2';
+import {computeDefinitionIdentity,definitionRefKey} from '../workflow/definition-data.js?v=0.30.2';
+import {remapExampleMetadata} from '../workflow/example-metadata.js?v=0.30.2';
+import {viewIdentityKey} from './view-state.js?v=0.30.2';
 
 const fail=(code,message,extra={})=>({ok:false,error:{code,message,...extra}});
 const validId=id=>typeof id==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(id);

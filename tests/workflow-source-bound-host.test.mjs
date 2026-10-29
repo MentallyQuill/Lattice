@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {unifiedRecipeHost} from './helpers/unified-recipe-host.mjs';
-import {createChatPrefixBinding} from '../src/workflow/chat-prefix-binding.js?v=0.30.1';
+import {createChatPrefixBinding} from '../src/workflow/chat-prefix-binding.js?v=0.30.2';
 const node=(id,operation,settings={})=>({id,type:'workflow',operation,...settings});
 function graph(){const nodes={send:node('send','on-send'),generate:node('generate','generate-reply'),review:node('review','review-publish',{autoApplyEffects:true}),scene:node('scene','scene-context',{includeCharacter:false,visibilityMode:'public'}),plan:node('plan','response-plan'),read:node('read','read-file',{targetId:'capsule',bindToChat:true,phase:'pre'}),text:node('text','text',{text:'{"topic":"grounded"}'}),write:node('write','write-file',{mode:'replace'})},wires={};for(const [id,from,fromPort,to,toPort] of [['activate','send','activation','generate','activation'],['review','generate','draft','review','draft'],['context','scene','out','plan','in'],['guidance','plan','out','generate','guidance'],['reference','read','reference','write','reference'],['text','text','out','write','text']])wires[id]={id,route:'wire',from,fromPort,to,toPort};return {id:'bound',name:'Bound source',schema:3,runtime:2,mode:'native-unified',nodes,wires,portals:{},definitions:{},runTargets:['review','write'].map(nodeId=>({instancePath:[],nodeId}))};}
 test('owned swipe planner and source-bound document use the same stable prefix despite a caller chat clone',async()=>{

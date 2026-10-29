@@ -1,9 +1,9 @@
-import { sha256Text } from './definition-data.js?v=0.30.1';
-import { cloneJsonValue } from './operations/json-data.js?v=0.30.1';
-import { freeze } from './record-data.js?v=0.30.1';
-import { decodeJson, validateJsonSchema } from './operations/json-decode.js?v=0.30.1';
-import { nodeFileTargetId, validateNodeFileTarget } from './node-file-targets.js?v=0.30.1';
-import { validateStoryClock } from './story-time.js?v=0.30.1';
+import { sha256Text } from './definition-data.js?v=0.30.2';
+import { cloneJsonValue } from './operations/json-data.js?v=0.30.2';
+import { freeze } from './record-data.js?v=0.30.2';
+import { decodeJson, validateJsonSchema } from './operations/json-decode.js?v=0.30.2';
+import { nodeFileTargetId, validateNodeFileTarget } from './node-file-targets.js?v=0.30.2';
+import { validateStoryClock } from './story-time.js?v=0.30.2';
 const suffixes=Object.freeze({text:'txt',markdown:'md',json:'json',jsonl:'jsonl',csv:'csv'});
 const fail=(message)=>({ok:false,error:{code:'INVALID_MANAGED_FILE',message,field:'fileTarget'}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=4096;

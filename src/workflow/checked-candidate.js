@@ -1,6 +1,6 @@
-import { graphHistoryStamp } from '../history.js?v=0.30.1';
-import { prepareGraphArtifacts, inspectGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.30.1';
-import { graphDocumentSignature } from './ports.js?v=0.30.1';
+import { graphHistoryStamp } from '../history.js?v=0.30.2';
+import { prepareGraphArtifacts, inspectGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.30.2';
+import { graphDocumentSignature } from './ports.js?v=0.30.2';
 
 const candidates = new WeakMap();
 /** Admit and own data before issuing a capability. Ordinary DTO identities grant no authority. */

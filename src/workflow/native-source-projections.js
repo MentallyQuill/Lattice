@@ -1,9 +1,9 @@
 /** Current native character fields; private host projection, never portable authority. */
-import {nativeVisibility} from './introspection/host-memory.js?v=0.30.1';
-import {validVisibilityMetadata} from './artifact-privacy.js?v=0.30.1';
-import {parseScope} from './source-manifests.js?v=0.30.1';
-import {sha256Text} from './definition-data.js?v=0.30.1';
-import {plain,freeze} from './record-data.js?v=0.30.1';
+import {nativeVisibility} from './introspection/host-memory.js?v=0.30.2';
+import {validVisibilityMetadata} from './artifact-privacy.js?v=0.30.2';
+import {parseScope} from './source-manifests.js?v=0.30.2';
+import {sha256Text} from './definition-data.js?v=0.30.2';
+import {plain,freeze} from './record-data.js?v=0.30.2';
 const projections=new WeakMap(),good=data=>({ok:true,data}),fail=code=>({ok:false,error:{code,message:'Current authorized native character material is required.'}});
 const own=(value,key)=>{const p=value&&Object.getOwnPropertyDescriptor(value,key);if(!p)return undefined;if(!p.enumerable||!Object.hasOwn(p,'value'))throw Error();return p.value;};
 const hash=value=>sha256Text(JSON.stringify(value));

@@ -13,10 +13,10 @@ test('setup issues retain field addresses while unconnected required pins stay q
 });
 
 test('workspace projection retains incomplete Prompted Memory pins and reports only actual setup requirements',async()=>{
-    const {prepareWorkspaceViews,projectNodeProfiles}=await import('../src/ui/workspace-preparation.js?v=0.30.1');
-    const {operationDefaults}=await import('../src/workflow/catalog.js?v=0.30.1');
-    const {createGraphViewSession}=await import('../src/ui/graph-view-session.js?v=0.30.1');
-    const {projectPreparedWorkflow}=await import('../src/ui/workflow-surface.js?v=0.30.1');
+    const {prepareWorkspaceViews,projectNodeProfiles}=await import('../src/ui/workspace-preparation.js?v=0.30.2');
+    const {operationDefaults}=await import('../src/workflow/catalog.js?v=0.30.2');
+    const {createGraphViewSession}=await import('../src/ui/graph-view-session.js?v=0.30.2');
+    const {projectPreparedWorkflow}=await import('../src/ui/workflow-surface.js?v=0.30.2');
     const make=(id,operation)=>({...operationDefaults(operation),id,type:'workflow',operationVersion:1,phase:'pre',enabled:true,x:100,y:100});
     const root={id:'readiness',schema:3,runtime:2,mode:'native-unified',nodes:{memory:make('memory','prompted-memory'),compose:make('compose','compose')},wires:{},portals:{},groups:{},roles:{},definitions:{}};
     const prepared=prepareWorkspaceViews(root);assert.equal(prepared.ok,true,JSON.stringify(prepared));
@@ -32,7 +32,7 @@ test('workspace projection retains incomplete Prompted Memory pins and reports o
 });
 
 test('effective occurrences and wrappers count setup by full source address while library parameters remain external contracts',async()=>{
-    const {prepareWorkspaceViews,prepareLibraryViews}=await import('../src/ui/workspace-preparation.js?v=0.30.1');
+    const {prepareWorkspaceViews,prepareLibraryViews}=await import('../src/ui/workspace-preparation.js?v=0.30.2');
     const {computeDefinitionIdentity,definitionRefKey}=await import('../src/workflow/definitions.js');
     const {operationDefaults}=await import('../src/workflow/catalog.js');
     const raw={id:'memory-library',version:1,name:'Memory library',parameters:[{id:'actor',label:'Actor',target:{instancePath:[],nodeId:'memory',controlId:'actorId'}}],interface:[],body:{schema:3,runtime:2,mode:'native-unified',nodes:{memory:{id:'memory',type:'workflow',...operationDefaults('prompted-memory')}},wires:{}}};
@@ -50,7 +50,7 @@ test('effective occurrences and wrappers count setup by full source address whil
 });
 
 test('live resources are deferred without an evaluator and evaluated failures use safe prepared diagnostic copy',async()=>{
-    const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.30.1');
+    const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.30.2');
     const {operationDefaults}=await import('../src/workflow/catalog.js');
     const root={id:'resource-readiness',schema:3,runtime:2,mode:'native-unified',nodes:{model:{id:'model',type:'workflow',...operationDefaults('model-call')},file:{id:'file',type:'workflow',...operationDefaults('read-file'),initialization:'template',targetId:'unavailable-document'}},wires:{}};
     const absent=prepareWorkspaceViews(root);assert.equal(absent.ok,true);
@@ -66,7 +66,7 @@ test('live resources are deferred without an evaluator and evaluated failures us
 });
 
 test('selected pinned helper body setup is projected onto its For Each control',async()=>{
-    const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.30.1');
+    const {prepareWorkspaceViews}=await import('../src/ui/workspace-preparation.js?v=0.30.2');
     const {computeDefinitionIdentity,definitionRefKey}=await import('../src/workflow/definitions.js');
     const {operationDefaults}=await import('../src/workflow/catalog.js');
     const raw={id:'incomplete-helper',version:1,name:'Helper',parameters:[],interface:[{id:'item',label:'Item',direction:'input',kind:'data',required:true,cardinality:'one',boundaryNodeId:'entry'},{id:'result',label:'Result',direction:'output',kind:'data',required:false,cardinality:'one',boundaryNodeId:'exit'}],body:{schema:3,runtime:2,mode:'native-unified',nodes:{entry:{id:'entry',type:'subgraph-input',interfacePortId:'item'},exit:{id:'exit',type:'subgraph-output',interfacePortId:'result'},memory:{id:'memory',type:'workflow',...operationDefaults('prompted-memory')}},wires:{pass:{id:'pass',route:'wire',from:'entry',fromPort:'out',to:'exit',toPort:'in'}}}};
