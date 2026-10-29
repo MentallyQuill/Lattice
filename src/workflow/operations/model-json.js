@@ -1,4 +1,4 @@
-import { decodeJson } from './json-decode.js?v=0.30.2';
+import { decodeJson } from './json-decode.js?v=0.30.3';
 
 // Only repair syntax with an explicit value already present. Never complete a
 // document, infer missing values, extract a fragment or evaluate model text.

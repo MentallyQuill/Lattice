@@ -1,9 +1,9 @@
-import { prepareGraphArtifacts, inspectGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.30.2';
-import { resolveSystemNode } from './system-capabilities.js?v=0.30.2';
-import { inspectExpandedGraph, nodeAddressKey, safeWorkflowData } from './graph-validation.js?v=0.30.2';
-import { artifactAddressKey } from './definition-data.js?v=0.30.2';
-import { operationFor, describeOperation, describeAuthoredOperation } from './catalog.js?v=0.30.2';
-import { freeze } from './record-data.js?v=0.30.2';
+import { prepareGraphArtifacts, inspectGraphArtifacts, graphArtifactsFor } from './graph-artifacts.js?v=0.30.3';
+import { resolveSystemNode } from './system-capabilities.js?v=0.30.3';
+import { inspectExpandedGraph, nodeAddressKey, safeWorkflowData } from './graph-validation.js?v=0.30.3';
+import { artifactAddressKey } from './definition-data.js?v=0.30.3';
+import { operationFor, describeOperation, describeAuthoredOperation } from './catalog.js?v=0.30.3';
+import { freeze } from './record-data.js?v=0.30.3';
 
 const fail = (code, message, address, inputPortId) => ({ ok: false, error: { code, message, ...(address ? { nodeId: address.nodeId, address } : {}), ...(inputPortId ? { inputPortId } : {}) } });
 const planners = new WeakMap();

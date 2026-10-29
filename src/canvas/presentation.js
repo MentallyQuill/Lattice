@@ -1,4 +1,4 @@
-import { isWorkflowGraph, safeWorkflowData } from '../workflow/contracts.js?v=0.30.2';
+import { isWorkflowGraph, safeWorkflowData } from '../workflow/contracts.js?v=0.30.3';
 
 /** Rendering accepts only prepared data. Catalog and runtime work belongs to preparation. */
 export function preparedCardFor(graph, node, hooks = {}) {

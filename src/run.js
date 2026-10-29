@@ -1,18 +1,18 @@
 /** Current Lattice host facade. SillyTavern owns native reply generation. */
-import { ctx, safe, settings, save, activeWorkflow, onWorkflowActivated, documentSession, getWorkflowFailurePolicy, activateWorkflow, createWorkflowChatSelection, onGraphTouched} from './state.js?v=0.30.2';
-import {createApplicationFileExperience} from './ui/application-file-experience.js?v=0.30.2';
-import { validateWorkflow } from './workflow/contracts.js?v=0.30.2';
-import { createNativeWorkflowController } from './workflow/host.js?v=0.30.2';
-import { bindingStatus } from './workflow/connections.js?v=0.30.2';
-import { createChatDocumentCatalog } from './workflow/document-catalog.js?v=0.30.2';
-import { createRecallShortcutRegistry } from './ui/recall-shortcuts.js?v=0.30.2';
-import { createNativePersistenceVerifier } from './workflow/native-persistence.js?v=0.30.2';
-import { diagnosticText } from './ui/diagnostics.js?v=0.30.2';
-import { presentFailureNotification } from './ui/failure-notification.js?v=0.30.2';
-import { createDiagnosticHistory } from './workflow/diagnostic-history.js?v=0.30.2';
-import {configureNodeFileAccess,refreshNodeFileAccess} from './ui/node-file-access.js?v=0.30.2';
-export { runWorkflow, workflowSignature } from './workflow/runtime.js?v=0.30.2';
-export { createNativeWorkflowController, snapshotContext, snapshotReply } from './workflow/host.js?v=0.30.2';
+import { ctx, safe, settings, save, activeWorkflow, onWorkflowActivated, documentSession, getWorkflowFailurePolicy, activateWorkflow, createWorkflowChatSelection, onGraphTouched} from './state.js?v=0.30.3';
+import {createApplicationFileExperience} from './ui/application-file-experience.js?v=0.30.3';
+import { validateWorkflow } from './workflow/contracts.js?v=0.30.3';
+import { createNativeWorkflowController } from './workflow/host.js?v=0.30.3';
+import { bindingStatus } from './workflow/connections.js?v=0.30.3';
+import { createChatDocumentCatalog } from './workflow/document-catalog.js?v=0.30.3';
+import { createRecallShortcutRegistry } from './ui/recall-shortcuts.js?v=0.30.3';
+import { createNativePersistenceVerifier } from './workflow/native-persistence.js?v=0.30.3';
+import { diagnosticText } from './ui/diagnostics.js?v=0.30.3';
+import { presentFailureNotification } from './ui/failure-notification.js?v=0.30.3';
+import { createDiagnosticHistory } from './workflow/diagnostic-history.js?v=0.30.3';
+import {configureNodeFileAccess,refreshNodeFileAccess} from './ui/node-file-access.js?v=0.30.3';
+export { runWorkflow, workflowSignature } from './workflow/runtime.js?v=0.30.3';
+export { createNativeWorkflowController, snapshotContext, snapshotReply } from './workflow/host.js?v=0.30.3';
 
 let controller, helpers, userHelpers, nativeUserReader, initialization, documentCatalog, persistenceVerifier, recallShortcuts, recallEvents, diagnosticHistory;
 const workflowRunListeners = new Set();

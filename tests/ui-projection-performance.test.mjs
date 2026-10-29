@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as preparation from '../src/ui/workspace-preparation.js?v=0.30.2';
-import { prepareWorkflowProjection, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.30.2';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.30.2';
-import { cloneWorkflowDocument } from '../src/workflow/document.js?v=0.30.2';
+import * as preparation from '../src/ui/workspace-preparation.js?v=0.30.3';
+import { prepareWorkflowProjection, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.30.3';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.30.3';
+import { cloneWorkflowDocument } from '../src/workflow/document.js?v=0.30.3';
 import { fixtureGraph } from './helpers/workflow-fixtures.mjs';
-import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.30.2';
-import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.30.2';
-import * as history from '../src/history.js?v=0.30.2';
-import { runWorkflow } from '../src/workflow/runtime.js?v=0.30.2';
+import { prepareGraphCandidate } from '../src/workflow/composition.js?v=0.30.3';
+import { captureGraphEditContext, commitPreparedGraph } from '../src/workflow/transactions.js?v=0.30.3';
+import * as history from '../src/history.js?v=0.30.3';
+import { runWorkflow } from '../src/workflow/runtime.js?v=0.30.3';
 
 test('endpoint attachments visit each wire once and retain direct and portal navigation', () => {
     assert.equal(typeof preparation.prepareEndpointAttachments, 'function');

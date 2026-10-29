@@ -1,7 +1,7 @@
-import { randomUuid } from '../random-id.js?v=0.30.2';
-import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME, activeModelMetadata } from './model-profiles.js?v=0.30.2';
-import { normalizeRequestFailure } from './request-failure.js?v=0.30.2';
-import { reasoningRequestOverrides } from './reasoning.js?v=0.30.2';
+import { randomUuid } from '../random-id.js?v=0.30.3';
+import { ACTIVE_PROFILE_ID, ACTIVE_PROFILE_NAME, activeModelMetadata } from './model-profiles.js?v=0.30.3';
+import { normalizeRequestFailure } from './request-failure.js?v=0.30.3';
+import { reasoningRequestOverrides } from './reasoning.js?v=0.30.3';
 const fail = (code, message) => ({ok:false,error:{code,message}});
 const resolved = new WeakMap();
 const fingerprint = () => randomUuid();

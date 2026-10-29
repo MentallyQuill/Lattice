@@ -1,8 +1,8 @@
-import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.30.2';
-import { createStoryDocumentSetup } from './story-document-setup.js?v=0.30.2';
-import { workflowDataPresetFor, workflowDataKind } from '../workflow/workflow-data-defaults.js?v=0.30.2';
-import { advanceStoryClock } from '../workflow/story-time.js?v=0.30.2';
-import { freeze } from '../workflow/record-data.js?v=0.30.2';
+import { resolveSystemNode } from '../workflow/system-capabilities.js?v=0.30.3';
+import { createStoryDocumentSetup } from './story-document-setup.js?v=0.30.3';
+import { workflowDataPresetFor, workflowDataKind } from '../workflow/workflow-data-defaults.js?v=0.30.3';
+import { advanceStoryClock } from '../workflow/story-time.js?v=0.30.3';
+import { freeze } from '../workflow/record-data.js?v=0.30.3';
 
 const fail = (code, message) => ({ ok: false, error: { code, message } });
 const stale = () => fail('STALE_DOCUMENT_SETUP', 'The active user, chat or Workflow Data changed. Reopen the node settings.');

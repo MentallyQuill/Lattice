@@ -31,7 +31,7 @@ test('production facade retains failure metadata with response logging off in it
     let controller, application;
     try {
         const facade = await import('../src/run.js?diagnostic-facade');
-        const state = await import('../src/state.js?v=0.30.2');
+        const state = await import('../src/state.js?v=0.30.3');
         const users = new Map();
         const store = {async read(id){return users.get(id)??[];},async update(id,change){const next=change(users.get(id)??[]);users.set(id,next);return next;}};
         // Replace only browser persistence with a real history service over an in-memory adapter.

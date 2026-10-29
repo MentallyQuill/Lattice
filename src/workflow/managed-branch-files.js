@@ -1,4 +1,4 @@
-import {prepareTrustedBranchSnapshot} from './file-history-maintenance.js?v=0.30.2';
+import {prepareTrustedBranchSnapshot} from './file-history-maintenance.js?v=0.30.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const sameBinding=(left,right)=>left?.messageCount===right.messageCount&&left?.prefixHash===right.prefixHash;
 const missingSnapshot=snapshot=>typeof snapshot?.revision==='string'&&snapshot.revision.startsWith('missing:');

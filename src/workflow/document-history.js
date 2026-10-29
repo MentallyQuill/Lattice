@@ -1,8 +1,8 @@
-import {cloneJsonValue} from './operations/json-data.js?v=0.30.2';
-import {artifactVisibility,validVisibilityMetadata} from './artifact-privacy.js?v=0.30.2';
-import {validateStoryClock} from './story-time.js?v=0.30.2';
-import {applyProgressionEvents} from './progression.js?v=0.30.2';
-import {validateRandomOutcome} from './operations/random-outcomes.js?v=0.30.2';
+import {cloneJsonValue} from './operations/json-data.js?v=0.30.3';
+import {artifactVisibility,validVisibilityMetadata} from './artifact-privacy.js?v=0.30.3';
+import {validateStoryClock} from './story-time.js?v=0.30.3';
+import {applyProgressionEvents} from './progression.js?v=0.30.3';
+import {validateRandomOutcome} from './operations/random-outcomes.js?v=0.30.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const good=data=>({ok:true,data});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;

@@ -1,4 +1,4 @@
-import { diagnosticCopy } from './diagnostic-copy.js?v=0.30.2';
+import { diagnosticCopy } from './diagnostic-copy.js?v=0.30.3';
 
 const own = (value, key) => {
     try { const field = Object.getOwnPropertyDescriptor(value, key); return field && 'value' in field ? field.value : undefined; }

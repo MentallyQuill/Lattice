@@ -9,6 +9,10 @@ const changedScope = error('resource-scope-changed', 'The active scope changed',
 // Logical documents and workflow files have different remedies. A file conflict
 // never authorizes overwriting another revision; an uncertain save never authorizes retry.
 export const resourceCopy = {
+    HOST_FILE_UNAVAILABLE: error('host-file-connection', 'SillyTavern file connection failed', 'SillyTavern saved files could not be read after retrying the connection. Check that SillyTavern is reachable, then retry the workflow.'),
+    HOST_FILE_DENIED: error('host-file-denied', 'SillyTavern file access was denied', 'SillyTavern refused access to its saved files. Check the connection and signed-in user before retrying.'),
+    HOST_FILE_METADATA_INVALID: error('host-file-metadata', 'Saved file metadata could not be verified', 'The saved file metadata is missing or invalid. Preserve the files and their history, and restore a complete valid backup before retrying.'),
+    FILE_STORAGE_FAILED: error('local-file-state', 'Browser file state could not be restored', 'Local file access records could not be read from this browser. Reopen file access for the current browser and user; preserve existing files before choosing another destination.'),
     FILE_TOO_LARGE: error('file-size', 'File is too large', 'Choose a file no larger than 400,000 bytes.'),
     FILE_CONTENT_TOO_LARGE: error('file-text-size', 'File text is too long', 'Choose a file containing no more than 100,000 characters.'),
     FILE_NAME_INVALID: error('file-name', 'Filename is invalid', 'Choose a file with a filename between 1 and 255 characters.'),

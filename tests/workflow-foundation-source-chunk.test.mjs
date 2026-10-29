@@ -1,11 +1,11 @@
 import {createNativeSourceSetup} from '../src/ui/native-source-setup.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {describeOperation,describeAuthoredOperation} from '../src/workflow/catalog.js?v=0.30.2';
-import {expandRecordAddress} from '../src/workflow/record-data.js?v=0.30.2';
-import {createNativeWorkflowController} from '../src/workflow/host.js?v=0.30.2';
-import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.2';
-import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.30.2';
+import {describeOperation,describeAuthoredOperation} from '../src/workflow/catalog.js?v=0.30.3';
+import {expandRecordAddress} from '../src/workflow/record-data.js?v=0.30.3';
+import {createNativeWorkflowController} from '../src/workflow/host.js?v=0.30.3';
+import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.3';
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.30.3';
 const wire=(id,from,fromPort,to,toPort)=>({id,route:'wire',from,fromPort,to,toPort});
 function fixture(){
  let saved,savedChat,saves=0,reads=0;

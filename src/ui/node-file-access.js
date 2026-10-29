@@ -1,13 +1,13 @@
-import {prepareAcceptedFileMaintenance} from '../workflow/file-history-maintenance.js?v=0.30.2';
-import {captureHistorySnapshot} from '../workflow/file-history-transfer.js?v=0.30.2';
-import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory,prepareDocumentCheckpoint} from '../workflow/document-history.js?v=0.30.2';
-import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.2';
-import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.30.2';
-import {sha256Text} from '../workflow/definition-data.js?v=0.30.2';
-import {createServerFileAccess,cloneServerFileData} from './server-file-access.js?v=0.30.2';
-import {createHostFileAccess} from './host-file-access.js?v=0.30.2';
-import {createHostFileStore} from './host-file-store.js?v=0.30.2';
-import {createNodeFileService} from './node-file-service.js?v=0.30.2';
+import {prepareAcceptedFileMaintenance} from '../workflow/file-history-maintenance.js?v=0.30.3';
+import {captureHistorySnapshot} from '../workflow/file-history-transfer.js?v=0.30.3';
+import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory,prepareDocumentCheckpoint} from '../workflow/document-history.js?v=0.30.3';
+import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.3';
+import {cloneJsonValue} from '../workflow/operations/json-data.js?v=0.30.3';
+import {sha256Text} from '../workflow/definition-data.js?v=0.30.3';
+import {createServerFileAccess,cloneServerFileData} from './server-file-access.js?v=0.30.3';
+import {createHostFileAccess} from './host-file-access.js?v=0.30.3';
+import {createHostFileStore} from './host-file-store.js?v=0.30.3';
+import {createNodeFileService} from './node-file-service.js?v=0.30.3';
 const fail=(code,message,cancelled=false)=>({ok:false,...(cancelled?{cancelled:true}:{}),error:{code,message}});
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
 const plain=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
@@ -24,6 +24,11 @@ function fileAvailability(supported){
     return Object.freeze({code:'FILE_ACCESS_UNSUPPORTED',message:'This browser does not provide direct file saving. Choose automatic storage inside SillyTavern or import a copy. Previously chosen local files can be reselected in a supported secure browser context. File uploads and downloads do not grant this access.'});
 }
 const changedError=cause=>cause?.name==='AbortError'?fail('FILE_CANCELLED','The file selection was cancelled.',true):cause?.name==='NotAllowedError'||cause?.name==='SecurityError'?fail('FILE_PERMISSION','Choose this file again to grant file access.'):fail('FILE_ACCESS_FAILED','The selected file could not be accessed.');
+const persistenceMessages={HOST_FILE_UNAVAILABLE:'SillyTavern saved-file storage could not be reached. Check the connection and retry.',HOST_FILE_DENIED:'SillyTavern denied access to its saved files. Check the signed-in user and retry.',HOST_FILE_METADATA_INVALID:'SillyTavern saved-file metadata could not be verified. Preserve the saved files before recovery.',STALE_FILE_SCOPE:'The SillyTavern user changed while reading saved files.',FILE_DOCUMENT_LIMIT:'Saved file metadata exceeds the supported byte limit.'};
+function persistenceFailure(cause,message){
+    let code;try{code=Object.getOwnPropertyDescriptor(cause??{},'code')?.value;}catch{}
+    return typeof code==='string'&&Object.hasOwn(persistenceMessages,code)?fail(code,persistenceMessages[code]):fail('FILE_STORAGE_FAILED',message);
+}
 function captureUpdate(value){
     try{
         if(!plain(value)||![Object.prototype,null].includes(Object.getPrototypeOf(value)))return null;
@@ -67,10 +72,10 @@ export function createNodeFileAccess(options={}){
         const pending=before.then(()=>globalThis.navigator?.locks?.request?globalThis.navigator.locks.request('lattice-node-files-write',action):action());
         coordinators.set(coordinator,pending.catch(()=>{}));return pending;
     }
-    async function refresh(){try{const state=await persistence.load();bindings=(state?.bindings??[]).map(row=>({...row,status:bindings.find(old=>old.bindingId===row.bindingId&&old.generation===row.generation)?.status??'permission-required'}));records=state?.records??{};return {ok:true};}catch{return fail('FILE_STORAGE_FAILED','Local file state could not be restored.');}}
+    async function refresh(){try{const state=await persistence.load();bindings=(state?.bindings??[]).map(row=>({...row,status:bindings.find(old=>old.bindingId===row.bindingId&&old.generation===row.generation)?.status??'permission-required'}));records=state?.records??{};return {ok:true};}catch(cause){return persistenceFailure(cause,'Local file state could not be restored.');}}
     const listeners=new Set();
     const changed=()=>{try{options.onChange?.();}catch{}for(const listener of listeners){try{listener();}catch{}}};
-    const ready=(async()=>{try{if(!persistence)return fail('FILE_STORAGE_UNAVAILABLE','Durable local file storage is unavailable.');const state=await persistence.load();bindings=(state?.bindings??[]).map(row=>({...row,status:'permission-required'}));records=state?.records??{};restoredReady=true;changed();return {ok:true,data:{persistent:true}};}catch{return fail('FILE_STORAGE_FAILED','Local file bindings could not be restored.');}})();
+    const ready=(async()=>{try{if(!persistence)return fail('FILE_STORAGE_UNAVAILABLE','Durable local file storage is unavailable.');const state=await persistence.load();bindings=(state?.bindings??[]).map(row=>({...row,status:'permission-required'}));records=state?.records??{};restoredReady=true;changed();return {ok:true,data:{persistent:true}};}catch(cause){return persistenceFailure(cause,'Local file bindings could not be restored.');}})();
     const snapshot=()=>Object.fromEntries(bindings.map(({bindingId,name,format,status})=>[bindingId,{bindingId,name,format,status}]));
     async function choose(settings){
         const {mode,bindingId,name,format}=settings??{};

@@ -1,4 +1,4 @@
-import { safeError, addressKey, expandRecordAddress, freeze } from '../workflow/record-data.js?v=0.30.2';
+import { safeError, addressKey, expandRecordAddress, freeze } from '../workflow/record-data.js?v=0.30.3';
 /** Metadata only. Caller checks document/revision/run freshness. Exact key: JSON.stringify([workflowId,instancePath,nodeId]). */
 export function projectCurrentDiagnostics({attemptId,documentKey,plan,recording,error,runState}) {
     if(typeof attemptId!=='string'||!attemptId||typeof documentKey!=='string'||!documentKey)return null;

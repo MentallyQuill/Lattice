@@ -1,6 +1,6 @@
-import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.2';
-import {captureHistoryAdoption,validHistoryReference,parseHistoryPage,validateHistoryTransfer} from '../workflow/file-history-transfer.js?v=0.30.2';
-import {sha256Text} from '../workflow/definition-data.js?v=0.30.2';
+import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.3';
+import {captureHistoryAdoption,validHistoryReference,parseHistoryPage,validateHistoryTransfer} from '../workflow/file-history-transfer.js?v=0.30.3';
+import {sha256Text} from '../workflow/definition-data.js?v=0.30.3';
 const endpoint='/api/plugins/lattice-files';
 const formats=new Set(['text','json','jsonl','csv','markdown']);
 const fail=(code,message)=>({ok:false,error:{code,message}});

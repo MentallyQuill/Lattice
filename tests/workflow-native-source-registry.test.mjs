@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.2';
-const api=await import('../src/workflow/native-source-registry.js?v=0.30.2').catch(()=>({}));
+import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.3';
+const api=await import('../src/workflow/native-source-registry.js?v=0.30.3').catch(()=>({}));
 function fixture(options={}){
  let user='user',branch=options.branch,serial=0,saves=0,requests=0,saved,savedChat;
  const chat=options.chat??[{name:'You',is_user:true,mes:'first',send_date:'2026-01-01'},{name:'Mara',is_user:false,mes:'second',send_date:'2026-01-02'},{name:'You',is_user:true,mes:'third',send_date:'2026-01-03'}];

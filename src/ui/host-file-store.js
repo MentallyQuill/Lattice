@@ -1,4 +1,4 @@
-import {sha256Text} from '../workflow/definition-data.js?v=0.30.2';
+import {sha256Text} from '../workflow/definition-data.js?v=0.30.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const safeName=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/.test(value)&&!value.includes('..');
 const hash=value=>/^sha256:[a-f0-9]{64}$/.test(value??'');
@@ -12,17 +12,22 @@ export function createHostFileStore(options={}){
  const physical=(identity,name)=>'lattice-'+sha256Text(identity).slice(7,31)+'-'+name;
  const current=identity=>user()===identity;
  async function readPhysical(identity,name,limit=maxBytes){
+  // Retry only idempotent reads. Upload acknowledgement remains explicit:
+  // retrying an uncertain write here could replay a real side effect.
+  for(let attempt=0;attempt<3;attempt++){
+   if(attempt)await new Promise(resolve=>setTimeout(resolve,attempt===1?100:300));
   try{
    if(!current(identity))return fail('STALE_FILE_SCOPE','The SillyTavern user changed.');
    const path='/user/files/'+name,response=await fetcher(path,{method:'GET',headers:{...(options.getRequestHeaders?.()??{})},credentials:'same-origin',cache:'no-store',redirect:'error'});
    if(!current(identity))return fail('STALE_FILE_SCOPE','The SillyTavern user changed.');
    if(response.status===404)return {ok:true,data:{path,content:'',revision:null,exists:false}};
-   if(!response.ok)return fail(response.status===401||response.status===403?'HOST_FILE_DENIED':'HOST_FILE_UNAVAILABLE','The SillyTavern file could not be read.');
+   if(!response.ok){if([408,429,500,502,503,504].includes(response.status)&&attempt<2)continue;return fail(response.status===401||response.status===403?'HOST_FILE_DENIED':'HOST_FILE_UNAVAILABLE','The SillyTavern file could not be read.');}
    const content=await response.text();
    if(!current(identity))return fail('STALE_FILE_SCOPE','The SillyTavern user changed.');
    if(new TextEncoder().encode(content).byteLength>limit)return fail('FILE_DOCUMENT_LIMIT','Host files must fit the configured storage byte bound.');
    return {ok:true,data:{path,content,revision:sha256Text(content),exists:true}};
-  }catch{return fail('HOST_FILE_UNAVAILABLE','The SillyTavern file host could not be reached.');}
+  }catch{if(!current(identity))return fail('STALE_FILE_SCOPE','The SillyTavern user changed.');if(attempt===2)return fail('HOST_FILE_UNAVAILABLE','The SillyTavern file host could not be reached.');}
+  }
  }
  async function upload(identity,name,content){
   if(!current(identity))return fail('STALE_FILE_SCOPE','The SillyTavern user changed.');

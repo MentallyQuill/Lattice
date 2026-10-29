@@ -1,4 +1,4 @@
-import {MEMORY_EXAMPLE_FIXTURES} from './memory-example-fixtures.js?v=0.30.2';
+import {MEMORY_EXAMPLE_FIXTURES} from './memory-example-fixtures.js?v=0.30.3';
 // Generated from the exact UTF-8 text/JSON files in examples/remastered/fixtures.
 // These demonstration bytes grant no host authorization or accepted native memory.
 const CONTENTS = {

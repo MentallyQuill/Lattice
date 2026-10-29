@@ -1,12 +1,12 @@
-import {chunkSettingsForNode,describeChunk} from './chunk-contract.js?v=0.30.2';
-export {CHUNK_DEFAULTS,CHUNK_OPERATION,validateChunkSettings,chunkSettingsForNode,describeChunk} from './chunk-contract.js?v=0.30.2';
-import { parseScope } from '../source-manifests.js?v=0.30.2';
-import { cloneJsonValue } from './json-data.js?v=0.30.2';
-import { inspectContextData, parseRuntimeContext, canonicalContextData } from './context-data.js?v=0.30.2';
-import { selectFilterUnits } from './filter-text.js?v=0.30.2';
-import { artifactVisibility } from '../artifact-privacy.js?v=0.30.2';
-import { own, plain, freeze, nodeAddress } from '../record-data.js?v=0.30.2';
-import {projectSourceSpan,sameSourceIdentity} from './source-spans.js?v=0.30.2';
+import {chunkSettingsForNode,describeChunk} from './chunk-contract.js?v=0.30.3';
+export {CHUNK_DEFAULTS,CHUNK_OPERATION,validateChunkSettings,chunkSettingsForNode,describeChunk} from './chunk-contract.js?v=0.30.3';
+import { parseScope } from '../source-manifests.js?v=0.30.3';
+import { cloneJsonValue } from './json-data.js?v=0.30.3';
+import { inspectContextData, parseRuntimeContext, canonicalContextData } from './context-data.js?v=0.30.3';
+import { selectFilterUnits } from './filter-text.js?v=0.30.3';
+import { artifactVisibility } from '../artifact-privacy.js?v=0.30.3';
+import { own, plain, freeze, nodeAddress } from '../record-data.js?v=0.30.3';
+import {projectSourceSpan,sameSourceIdentity} from './source-spans.js?v=0.30.3';
 const fail = (code,message) => ({ok:false,error:{code,message}});
 const usesTokenSize = settings => settings.strategy !== 'assistant-turns' && settings.sizeUnit === 'tokens';
 /** Exact source-backed Context and authored Text share the same segmentation engine. */
@@ -28,7 +28,7 @@ export async function executeChunk(node,inputs,local={}) {
  if(tokenSizing&&(typeof counter!=='function'||!cloneJsonValue(tokenizerBinding).ok||canonicalContextData(tokenizerBinding)!==canonicalContextData(s.tokenizerBinding)))return fail('TOKEN_COUNT_FAILED','Chunk requires an explicit matching tokenizer capability.');
  const capturedScope=own(local,'chunkScope')===undefined?undefined:parseScope(own(local,'chunkScope'));
  if(capturedScope&&!capturedScope.ok)return fail('CHUNK_SOURCE_MISMATCH','Chunk requires a valid captured execution scope.');
- const {sha256Text}=await import('../definition-data.js?v=0.30.2');
+ const {sha256Text}=await import('../definition-data.js?v=0.30.3');
  const scope=capturedScope?.ok?capturedScope.data:{userId:'workflow:'+address.workflowId,chatId:'authored:'+JSON.stringify([address.instancePath,address.nodeId])};
  const visibility=artifactVisibility(inputs), settingsHash=sha256Text(canonicalContextData({...s,segmentationVersion:'lattice-chunk-1/intl-segmenter'})),definitionHash=sha256Text('chunk/1/lattice-chunk-1');
  const sourceIdentity=sha256Text(canonicalContextData([address,text]));
@@ -95,7 +95,7 @@ async function executeContextChunk(node,inputs,local,s){
  const manifestProof=inputs.sourceManifest!==undefined?local.sourceProofs?.authorizeSource(inputs.sourceManifest):null;
  const pairing=s.strategy==='assistant-turns'||inputs.sourceManifest!==undefined?local.sourceProofs?.authorizePairing(inputs.in,inputs.sourceManifest):null;
  inputs=freeze(structuredClone(inputs));
- const {inspectSourceProof,inspectPairingProof,bindSourceDerivation}=await import('../source-provenance.js?v=0.30.2');
+ const {inspectSourceProof,inspectPairingProof,bindSourceDerivation}=await import('../source-provenance.js?v=0.30.3');
  const source=proof?.ok?inspectSourceProof(proof.data):null;
  if(proof&&!proof.ok&&proof.error?.code!=='SOURCE_PROOF_REQUIRED')return fail(s.strategy==='assistant-turns'?'CHUNK_TURN_SOURCE_REQUIRED':'CHUNK_SOURCE_REQUIRED','The retained source is no longer current.');
  if(proof?.ok&&!source?.ok)return fail('CHUNK_SOURCE_REQUIRED','The source is no longer current.');
@@ -108,7 +108,7 @@ async function executeContextChunk(node,inputs,local,s){
  const turns=s.strategy==='assistant-turns'?pairingView:null;
  if(s.strategy==='assistant-turns'&&context.messages.length&&(!source?.ok||!turns?.ok||!sameSourceIdentity(source.data,turns.data)))return fail('CHUNK_TURN_SOURCE_REQUIRED','Chunk requires verified turn groups.');
  const check=()=>{if(local.signal?.aborted)return fail('ABORTED','Chunk was stopped.');if(proof?.ok&&!inspectSourceProof(proof.data).ok)return fail('CHUNK_SOURCE_REQUIRED','The source is no longer current.');if(pairing?.ok&&!inspectPairingProof(pairing.data).ok)return fail('CHUNK_TURN_SOURCE_REQUIRED','The verified pairing is no longer current.');return null;};
- const {sha256Text}=await import('../definition-data.js?v=0.30.2');let stale=check();if(stale)return stale;
+ const {sha256Text}=await import('../definition-data.js?v=0.30.3');let stale=check();if(stale)return stale;
  const scope=source?.ok?source.data.scope:{userId:'workflow:'+address.workflowId,chatId:'authored:'+JSON.stringify([address.instancePath,address.nodeId])};
  if(local.chunkScope!==undefined&&canonicalContextData(local.chunkScope)!==canonicalContextData(scope))return fail('CHUNK_SOURCE_MISMATCH','Chunk scope must match the exact reader.');
  const visibility=artifactVisibility(inputs),settingsHash=sha256Text(canonicalContextData({...s,segmentationVersion:'lattice-chunk-1/intl-segmenter'})),definitionHash=sha256Text('chunk/1/lattice-chunk-1');

@@ -1,10 +1,10 @@
-import {referencedDefinitionKeys} from './workflow/retired-workflows.js?v=0.30.2';
-import {partitionFoundationLibrary} from './workflow/foundation-library.js?v=0.30.2';
+import {referencedDefinitionKeys} from './workflow/retired-workflows.js?v=0.30.3';
+import {partitionFoundationLibrary} from './workflow/foundation-library.js?v=0.30.3';
 /** Validated reusable Lattice subgraphs; persistence never edits placed snapshots. */
-import { settings, save } from './state.js?v=0.30.2';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey } from './workflow/definitions.js?v=0.30.2';
-import { selectSubgraphClosure } from './workflow/packages.js?v=0.30.2';
-import { installDefinition, createRevision, removeLibraryEntry } from './workflow/definition-library.js?v=0.30.2';
+import { settings, save } from './state.js?v=0.30.3';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey } from './workflow/definitions.js?v=0.30.3';
+import { selectSubgraphClosure } from './workflow/packages.js?v=0.30.3';
+import { installDefinition, createRevision, removeLibraryEntry } from './workflow/definition-library.js?v=0.30.3';
 const subgraphCaches = new WeakMap(),retainedLibraryCaches=new WeakMap();
 const libraryFailure = (code, message) => Object.freeze({ ok: false, error: Object.freeze({ code, message }) });
 const record = value => value && typeof value === 'object' && !Array.isArray(value);

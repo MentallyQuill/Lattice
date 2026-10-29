@@ -1,10 +1,10 @@
 /** Lattice launcher and host integration. The workflow never replaces SillyTavern's prompt. */
-import { MODULE, settings, save, ctx, safe, activeWorkflow, documentSession, onWorkflowActivated } from './src/state.js?v=0.30.2';
-import { getNativeWorkflowController, initializeNativeWorkflowController, workflowSignature, sendWorkflowState, subscribeWorkflowRunEvents } from './src/run.js?v=0.30.2';
-import * as UI from './src/ui.js?v=0.30.2';
-import { applyTheme } from './src/theme.js?v=0.30.2';
-import { presentDiagnostic } from './src/ui/diagnostics.js?v=0.30.2';
-import { createChatProgress } from './src/ui/chat-progress.js?v=0.30.2';
+import { MODULE, settings, save, ctx, safe, activeWorkflow, documentSession, onWorkflowActivated } from './src/state.js?v=0.30.3';
+import { getNativeWorkflowController, initializeNativeWorkflowController, workflowSignature, sendWorkflowState, subscribeWorkflowRunEvents } from './src/run.js?v=0.30.3';
+import * as UI from './src/ui.js?v=0.30.3';
+import { applyTheme } from './src/theme.js?v=0.30.3';
+import { presentDiagnostic } from './src/ui/diagnostics.js?v=0.30.3';
+import { createChatProgress } from './src/ui/chat-progress.js?v=0.30.3';
 const logoUrl = new URL('./assets/lattice-logo.svg', import.meta.url).href;
 let chatProgress;
 

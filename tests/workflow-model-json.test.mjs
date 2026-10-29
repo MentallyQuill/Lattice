@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { executeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.30.2';
-import { decodeModelJson } from '../src/workflow/operations/model-json.js?v=0.30.2';
-import { decodeJson } from '../src/workflow/operations/json-decode.js?v=0.30.2';
+import { executeModelNode } from '../src/workflow/operations/model-nodes.js?v=0.30.3';
+import { decodeModelJson } from '../src/workflow/operations/model-json.js?v=0.30.3';
+import { decodeJson } from '../src/workflow/operations/json-decode.js?v=0.30.3';
 
 const dataCall = (text, settings = {}, finish = 'stop') => executeModelNode(
     { id: 'json-output', operation: 'model-call', outputKind: 'data', ...settings },

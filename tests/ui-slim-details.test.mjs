@@ -4,7 +4,7 @@ import { projectNodeControls } from '../src/ui/node-control-projection.js';
 import { prepareNativeNodeEdit } from '../src/workflow/definition-library.js';
 import {prepareWorkspaceViews,projectWorkspacePanels} from '../src/ui/workspace-preparation.js';
 import {createGraphViewSession} from '../src/ui/graph-view-session.js';
-import {projectPreparedWorkflow} from '../src/ui/workflow-surface.js?v=0.30.2';
+import {projectPreparedWorkflow} from '../src/ui/workflow-surface.js?v=0.30.3';
 import { detailsComponent, control, input, click } from './helpers/inspector-component.mjs';
 
 const schema = '{ "type":"object", "properties":{"answer":{"type":"string"}} }';

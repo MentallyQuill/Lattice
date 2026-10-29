@@ -1,10 +1,10 @@
-import {MEMORY_WORKFLOW_EXAMPLE_DATA} from './memory-example-data.js?v=0.30.2';
-import {remapExampleMetadata,inspectSingletonMetadata} from './example-metadata.js?v=0.30.2';
-import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.30.2';
-import { UNIFIED_WORKFLOW_EXAMPLE_DATA } from './unified-example-data.js?v=0.30.2';
-import { parseWorkflow } from './packages.js?v=0.30.2';
-import { cloneWorkflowDocument } from './document.js?v=0.30.2';
-import { validateWorkflow } from './contracts.js?v=0.30.2';
+import {MEMORY_WORKFLOW_EXAMPLE_DATA} from './memory-example-data.js?v=0.30.3';
+import {remapExampleMetadata,inspectSingletonMetadata} from './example-metadata.js?v=0.30.3';
+import { REMASTERED_WORKFLOW_EXAMPLE_DATA } from './remastered-example-data.js?v=0.30.3';
+import { UNIFIED_WORKFLOW_EXAMPLE_DATA } from './unified-example-data.js?v=0.30.3';
+import { parseWorkflow } from './packages.js?v=0.30.3';
+import { cloneWorkflowDocument } from './document.js?v=0.30.3';
+import { validateWorkflow } from './contracts.js?v=0.30.3';
 
 const visibleExamples=()=>[...REMASTERED_WORKFLOW_EXAMPLE_DATA,...MEMORY_WORKFLOW_EXAMPLE_DATA];
 const allExamples=()=>[...visibleExamples(),...UNIFIED_WORKFLOW_EXAMPLE_DATA];

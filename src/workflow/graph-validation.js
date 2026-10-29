@@ -1,13 +1,13 @@
-import { graphVersionSupported, semanticShapeAssignable } from './workflow-versions.js?v=0.30.2';
-import { expandedRunTargets } from './run-targets.js?v=0.30.2';
-import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.30.2';
-import { cloneJsonValue } from './operations/json-data.js?v=0.30.2';
-import { freeze } from './record-data.js?v=0.30.2';
-import { isScopedSystemOperation } from './system-capabilities.js?v=0.30.2';
-import { validateNodeModifiers } from './modifiers.js?v=0.30.2';
-import { ARTIFACT_KINDS, operationFor, describeAuthoredOperation, portsForNode, phaseForNode } from './catalog.js?v=0.30.2';
-import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, describeExposedParameter, nodeBindingOverrideKey, artifactAddressKey } from './definition-data.js?v=0.30.2';
-import { samePath, safeId } from './composition-edit.js?v=0.30.2';
+import { graphVersionSupported, semanticShapeAssignable } from './workflow-versions.js?v=0.30.3';
+import { expandedRunTargets } from './run-targets.js?v=0.30.3';
+import { semanticJsonRootContext, semanticJsonChildContext, prototypeJsonKey } from './semantic-json-data.js?v=0.30.3';
+import { cloneJsonValue } from './operations/json-data.js?v=0.30.3';
+import { freeze } from './record-data.js?v=0.30.3';
+import { isScopedSystemOperation } from './system-capabilities.js?v=0.30.3';
+import { validateNodeModifiers } from './modifiers.js?v=0.30.3';
+import { ARTIFACT_KINDS, operationFor, describeAuthoredOperation, portsForNode, phaseForNode } from './catalog.js?v=0.30.3';
+import { cloneDefinitionData, computeDefinitionIdentity, definitionRefKey, inspectDefinitionMetadata, describeExposedParameter, nodeBindingOverrideKey, artifactAddressKey } from './definition-data.js?v=0.30.3';
+import { samePath, safeId } from './composition-edit.js?v=0.30.3';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const idText = value => typeof value === 'string' && value.length > 0;

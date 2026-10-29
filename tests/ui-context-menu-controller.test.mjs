@@ -1,20 +1,20 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { prepareWorkspaceViews, projectWorkspacePanels, projectEditorDraw } from '../src/ui/workspace-preparation.js?v=0.30.2';
-import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.30.2';
-import { createWorkflowSession, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.30.2';
+import { prepareWorkspaceViews, projectWorkspacePanels, projectEditorDraw } from '../src/ui/workspace-preparation.js?v=0.30.3';
+import { createGraphViewSession } from '../src/ui/graph-view-session.js?v=0.30.3';
+import { createWorkflowSession, projectPreparedWorkflow } from '../src/ui/workflow-surface.js?v=0.30.3';
 import { siblingWorkflow, twoOutputWorkflow } from './fixtures/workflow-prepared-fixture.mjs';
-import { diagnosticText } from '../src/ui/diagnostics.js?v=0.30.2';
-import { isCommentFrame } from '../src/canvas/comment-frames.js?v=0.30.2';
+import { diagnosticText } from '../src/ui/diagnostics.js?v=0.30.3';
+import { isCommentFrame } from '../src/canvas/comment-frames.js?v=0.30.3';
 
-import {workflowRunTargets,setWorkflowRunTargets} from '../src/workflow/run-targets.js?v=0.30.2';
-import {captureGraphEditContext,commitPreparedGraph} from '../src/workflow/transactions.js?v=0.30.2';
-import {prepareGraphCandidate} from '../src/workflow/prepared-graph-edit.js?v=0.30.2';
-import {exportWorkflow,parseWorkflow} from '../src/workflow/packages.js?v=0.30.2';
-import {operationFor} from '../src/workflow/catalog.js?v=0.30.2';
-import {runWorkflow,workflowSignature} from '../src/workflow/runtime.js?v=0.30.2';
-import * as H from '../src/history.js?v=0.30.2';
+import {workflowRunTargets,setWorkflowRunTargets} from '../src/workflow/run-targets.js?v=0.30.3';
+import {captureGraphEditContext,commitPreparedGraph} from '../src/workflow/transactions.js?v=0.30.3';
+import {prepareGraphCandidate} from '../src/workflow/prepared-graph-edit.js?v=0.30.3';
+import {exportWorkflow,parseWorkflow} from '../src/workflow/packages.js?v=0.30.3';
+import {operationFor} from '../src/workflow/catalog.js?v=0.30.3';
+import {runWorkflow,workflowSignature} from '../src/workflow/runtime.js?v=0.30.3';
+import * as H from '../src/history.js?v=0.30.3';
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 function actual(name, env) {
     const functionStart = source.indexOf('function ' + name + '(');

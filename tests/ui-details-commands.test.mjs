@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { prepareQualifiedScopeEdit } from '../src/workflow/definition-library.js?v=0.30.2';
-import { portsForNode } from '../src/workflow/catalog.js?v=0.30.2';
-import { validateNodeModifiers } from '../src/workflow/modifiers.js?v=0.30.2';
-import { prepareNativeNodeEdit } from '../src/workflow/definition-library.js?v=0.30.2';
+import { prepareQualifiedScopeEdit } from '../src/workflow/definition-library.js?v=0.30.3';
+import { portsForNode } from '../src/workflow/catalog.js?v=0.30.3';
+import { validateNodeModifiers } from '../src/workflow/modifiers.js?v=0.30.3';
+import { prepareNativeNodeEdit } from '../src/workflow/definition-library.js?v=0.30.3';
 const source = await readFile(new URL('../src/ui/controller.js', import.meta.url), 'utf8');
 
 test('atomic detail controls preserve connections and reject incompatible or stale edits', () => {

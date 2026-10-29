@@ -1,4 +1,4 @@
-import { cloneJsonValue, readJsonPath, stringifyJsonValue } from './json-data.js?v=0.30.2';
+import { cloneJsonValue, readJsonPath, stringifyJsonValue } from './json-data.js?v=0.30.3';
 
 const failure = (code, message) => ({ok:false,error:{code,message}});
 

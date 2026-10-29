@@ -1,5 +1,5 @@
-import { createRunState, reduceRunState, projectRunRows } from '../workflow/run-state.js?v=0.30.2';
-import { alignPixelGrid } from './pixel-grid.js?v=0.30.2';
+import { createRunState, reduceRunState, projectRunRows } from '../workflow/run-state.js?v=0.30.3';
+import { alignPixelGrid } from './pixel-grid.js?v=0.30.3';
 
 /** Retain live run progress independently of the optional chat launcher. */
 export function createChatProgress({ document, subscribeActivity, subscribeEvents }) {

@@ -1,9 +1,9 @@
-import {createFileMetadataBlobs} from '../workflow/file-metadata-blobs.js?v=0.30.2';
-import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.2';
-import {inspectDocumentHistory} from '../workflow/document-history.js?v=0.30.2';
-import {createNodeFileAccess} from './node-file-access.js?v=0.30.2';
-import {cloneServerFileData} from './server-file-access.js?v=0.30.2';
-import {sha256Text} from '../workflow/definition-data.js?v=0.30.2';
+import {createFileMetadataBlobs} from '../workflow/file-metadata-blobs.js?v=0.30.3';
+import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.3';
+import {inspectDocumentHistory} from '../workflow/document-history.js?v=0.30.3';
+import {createNodeFileAccess} from './node-file-access.js?v=0.30.3';
+import {cloneServerFileData} from './server-file-access.js?v=0.30.3';
+import {sha256Text} from '../workflow/definition-data.js?v=0.30.3';
 const fail=(code,message)=>({ok:false,error:{code,message}});
 const formats={text:'.txt',json:'.json',jsonl:'.jsonl',markdown:'.md',csv:'.csv'};
 const id=value=>typeof value==='string'&&value.trim().length>0&&value.length<=256;
@@ -30,9 +30,10 @@ function createUserHostFileAccess({store,getUserId}={}){
   };handles.set(key,result);return result;
  }
  const blobCache=new Set();
- const blobs=createFileMetadataBlobs({async read(name){const read=await store.read(name);assertCurrent();if(!read.ok||!read.data.exists)throw Error('Missing file metadata');return read.data.content;},async write(name,content){if(name.startsWith('archive-')&&blobCache.has(name))return;const existing=await store.read(name);assertCurrent();if(!existing.ok)throw Error('Cannot read file metadata');if(existing.data.exists){if(existing.data.content!==content)throw Error('Immutable metadata conflict');}else{const saved=store.writeImmutable?await store.writeImmutable(name,content):await store.write({name,expectedRevision:null,content,intentId:sha256Text(content)});assertCurrent();if(!saved.ok)throw Error('Cannot preserve file metadata');}if(name.startsWith('archive-'))blobCache.add(name);}});
+ const blobs=createFileMetadataBlobs({async read(name){const read=await store.read(name);assertCurrent();if(!read.ok)throw Object.assign(Error(read.error.message),read.error);if(!read.data.exists)throw Error('Missing file metadata');return read.data.content;},async write(name,content){if(name.startsWith('archive-')&&blobCache.has(name))return;const existing=await store.read(name);assertCurrent();if(!existing.ok)throw Error('Cannot read file metadata');if(existing.data.exists){if(existing.data.content!==content)throw Error('Immutable metadata conflict');}else{const saved=store.writeImmutable?await store.writeImmutable(name,content):await store.write({name,expectedRevision:null,content,intentId:sha256Text(content)});assertCurrent();if(!saved.ok)throw Error('Cannot preserve file metadata');}if(name.startsWith('archive-'))blobCache.add(name);}});
  const persistence={
   async load(){
+   try{
    assertCurrent();const loaded=await store.read('node-bindings.json');assertCurrent();if(!loaded.ok)throw Object.assign(Error(loaded.error.message),loaded.error);
    revision=loaded.data.revision;
    if(!loaded.data.exists){rows=[];return {bindings:[],records:{}};}
@@ -43,7 +44,8 @@ function createUserHostFileAccess({store,getUserId}={}){
    for(const row of data.bindings){
     if(!/^journal-[a-f0-9]{64}\.json$/.test(row.journalName)||!/^sha256:[a-f0-9]{64}$/.test(row.journalRevision))throw Error('Invalid journal reference');
     const shard=await store.read(row.journalName);assertCurrent();
-    if(!shard.ok||!shard.data.exists||shard.data.revision!==row.journalRevision)throw Error('Host journal bytes could not be verified');
+    if(!shard.ok)throw Object.assign(Error(shard.error.message),shard.error);
+    if(!shard.data.exists||shard.data.revision!==row.journalRevision)throw Error('Host journal bytes could not be verified');
     let entries;try{entries=cloneServerFileData(JSON.parse(shard.data.content));}catch{}
     if(!entries||typeof entries!=='object'||Array.isArray(entries))throw Error('Invalid journal entries');
     entries=await blobs.unpack(entries);assertCurrent();
@@ -60,6 +62,7 @@ function createUserHostFileAccess({store,getUserId}={}){
    }
    garbageNames=Array.isArray(data.garbageNames)?data.garbageNames:[];if(garbageNames.length>4096||garbageNames.some(name=>!/^(journal|content|metadata)-[a-f0-9]{64}\.json$/.test(name)))throw Error('Invalid cleanup index');
    rows=data.bindings;return {bindings:rows.map(row=>({...row,handle:handle(row.hostName,row.name)})),records};
+   }catch(cause){if(['HOST_FILE_UNAVAILABLE','HOST_FILE_DENIED','STALE_FILE_SCOPE','FILE_DOCUMENT_LIMIT'].includes(cause?.code))throw cause;throw Object.assign(Error('Host file metadata could not be verified'),{code:'HOST_FILE_METADATA_INVALID'});}
   },
   async save(state){
    assertCurrent();const bindings=state.bindings.map(row=>{const previous=rows.find(item=>item.bindingId===row.bindingId);return {bindingId:row.bindingId,name:row.name,format:row.format,generation:row.generation,hostName:row.handle.hostName,...(previous?.managedScope?{managedScope:previous.managedScope}:selection?.hostName===row.handle.hostName&&selection.managedScope?{managedScope:selection.managedScope}:{}),...(row.initializeEmpty?{initializeEmpty:true}:{})};});
@@ -79,7 +82,7 @@ function createUserHostFileAccess({store,getUserId}={}){
  };
  if(!coordinators.has(owner))coordinators.set(owner,{});
  const native=createNodeFileAccess({persistence,coordinator:coordinators.get(owner),showSaveFilePicker:()=>handle(selection.hostName,selection.name),showOpenFilePicker:()=>[handle(selection.hostName,selection.name)],onChange:changed});
- const ready=native.ready.then(result=>{if(!result.ok)issue={code:current()?'HOST_FILE_UNAVAILABLE':'HOST_FILE_USER',message:current()?'SillyTavern saved files could not be restored. Check the host connection and retry.':'Refresh file access for the current SillyTavern user.'};changed();return result.ok?result:fail(issue.code,issue.message);});
+ const ready=native.ready.then(result=>{if(!result.ok)issue=current()?result.error:{code:'HOST_FILE_USER',message:'Refresh file access for the current SillyTavern user.'};changed();return result.ok?result:fail(issue.code,issue.message);});
  let chooseQueue=Promise.resolve();
  function select(settings,managedScope){
   const captured=cloneServerFileData(settings);
@@ -121,7 +124,7 @@ function createUserHostFileAccess({store,getUserId}={}){
   return backend;
  }
  const snapshot=()=>current()?Object.fromEntries(Object.entries(native.snapshot()).map(([key,row])=>{const stored=rows.find(item=>item.bindingId===key);return [key,{...row,status:issue||row.status==='unavailable'?'unavailable':'ready',storage:'host',generation:stored?.generation,...(stored?{path:'/user/files/lattice-'+sha256Text(owner).slice(7,31)+'-'+stored.hostName}:{})}];})):{};
- async function refresh(){try{const refreshed=await native.refresh();if(!refreshed.ok)throw Error('Host metadata refresh failed');issue=null;changed();return {ok:true,data:{persistent:true}};}catch{issue={code:current()?'HOST_FILE_UNAVAILABLE':'HOST_FILE_USER',message:'SillyTavern saved files could not be restored. Refresh file access and retry.'};changed();return fail(issue.code,issue.message);}}
+ async function refresh(){const refreshed=await native.refresh();issue=refreshed.ok?null:current()?refreshed.error:{code:'HOST_FILE_USER',message:'Refresh file access for the current SillyTavern user.'};changed();return refreshed.ok?{ok:true,data:{persistent:true}}:fail(issue.code,issue.message);}
  return Object.freeze({storage:'host',native:false,capabilities:store.capabilities,get supported(){return current()&&!issue;},get availability(){return current()?issue:{code:'HOST_FILE_USER',message:'Refresh file access for the current SillyTavern user.'};},location:{basePath:'/user/files',platform:'SillyTavern',canUseAbsolutePaths:false},ready,refresh,snapshot,ensureManaged,choose:settings=>select(settings),backend,subscribe(listener){listeners.add(listener);return()=>listeners.delete(listener);}});
 }
 

@@ -1,7 +1,7 @@
-import {REMASTERED_WORKFLOW_EXAMPLE_DATA} from './remastered-example-data.js?v=0.30.2';
-import {EXAMPLE_FILE_FIXTURES} from './example-file-fixture-data.js?v=0.30.2';
-import {resolveManagedFileNode} from './managed-file-policy.js?v=0.30.2';
-import {nodeFileTargetId} from './node-file-targets.js?v=0.30.2';
+import {REMASTERED_WORKFLOW_EXAMPLE_DATA} from './remastered-example-data.js?v=0.30.3';
+import {EXAMPLE_FILE_FIXTURES} from './example-file-fixture-data.js?v=0.30.3';
+import {resolveManagedFileNode} from './managed-file-policy.js?v=0.30.3';
+import {nodeFileTargetId} from './node-file-targets.js?v=0.30.3';
 const actors={'character:rowan.png':'Rowan','character:iris.png':'Iris'};
 const key=address=>JSON.stringify([address.workflowId,address.instancePath,address.nodeId]);
 const clone=value=>structuredClone(value);

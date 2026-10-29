@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createNativeWorkflowController} from '../src/workflow/host.js?v=0.30.2';
-import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.2';
-import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.30.2';
-import {describeOperation} from '../src/workflow/catalog.js?v=0.30.2';
+import {createNativeWorkflowController} from '../src/workflow/host.js?v=0.30.3';
+import {createNativePersistenceVerifier} from '../src/workflow/native-persistence.js?v=0.30.3';
+import {createChatDocumentCatalog} from '../src/workflow/document-catalog.js?v=0.30.3';
+import {describeOperation} from '../src/workflow/catalog.js?v=0.30.3';
 const node=(extra={})=>({id:'scene',type:'workflow',operation:'scene-context',...extra});
 const graph=(extra={},runtime=3)=>({id:'source-host',schema:runtime===3?4:3,runtime,mode:'native-unified',nodes:{scene:node(extra)},wires:{},definitions:{},portals:{}});
 function fixture(options={}){let saves=0,reads=0,saved,savedChat,user='user';const c={chatId:'story',characterId:0,groupId:null,characters:[{avatar:'Mara.png',name:'Mara',chat:'Story',data:{name:'Mara',description:'Card description'}}],chat:[{mes:'question',is_user:true},{mes:'answer',is_user:false}],chatMetadata:{},getRequestHeaders:()=>({'Content-Type':'application/json'}),saveMetadata:async()=>{saves++;saved=structuredClone(c.chatMetadata);savedChat=structuredClone(c.chat);}};const verifier=createNativePersistenceVerifier({getContext:()=>c,getUserId:()=>user,fetch:async()=>{reads++;return {ok:true,text:async()=>JSON.stringify([{chat_metadata:saved},...savedChat])};}});const catalog=createChatDocumentCatalog({getContext:()=>c,getUserId:()=>user});const controller=(options.controllerFactory??createNativeWorkflowController)({context:()=>{options.onContext?.(c);return c;},userId:()=>user,persistenceVerifier:verifier,documentCatalog:catalog,...options});return {c,controller,catalog,counts:()=>({saves,reads}),user:v=>{user=v;},run:(extra={},runtime=3)=>{const g=graph(extra,runtime);return controller.runTarget(g,{workflowId:g.id,instancePath:[],nodeId:'scene',portId:'out'});}};}
@@ -12,9 +12,9 @@ test('actual runtime3 preview holds without hidden enrollment and explicit setup
 test('foundation rejects event-mode source preparation before capture even when no trigger is wired',async()=>{const f=fixture();try{const result=await f.run({activationMode:'events'});assert.equal(result.ok,false);assert.equal(result.error.code,'UNSUPPORTED_FOUNDATION_CAPABILITY');assert.deepEqual(f.counts(),{saves:0,reads:0});}finally{f.controller.dispose();}});
 
 import {registerHooks} from 'node:module';
-import {inspectSourceProof,inspectPairingProof} from '../src/workflow/source-provenance.js?v=0.30.2';
+import {inspectSourceProof,inspectPairingProof} from '../src/workflow/source-provenance.js?v=0.30.3';
 const hostURL=new URL('../src/workflow/host.js?source-host-proof-integration',import.meta.url).href;
-const proofURL=new URL('../src/workflow/source-provenance.js?v=0.30.2',import.meta.url).href;
+const proofURL=new URL('../src/workflow/source-provenance.js?v=0.30.3',import.meta.url).href;
 const observed={retained:[],registries:[]};globalThis.latticeSourceHostProofObservation=observed;
 const adapter='data:text/javascript,'+encodeURIComponent(`import {createSourceProofRegistry as real} from ${JSON.stringify(proofURL)};export function createSourceProofRegistry(options){const service=real(options);globalThis.latticeSourceHostProofObservation.registries.push(service);return Object.freeze({...service,retainOutput(payload){const result=service.retainOutput(payload);if(result.ok&&payload.node.operation==='scene-context'){const proof=service.authorizeSource(payload.artifact);const pairing=payload.portId==='out'?service.authorizePairing(payload.artifact):null;globalThis.latticeSourceHostProofObservation.retained.push({payload,service,proof,pairing});}return result;}});}`);
 const observationHook=registerHooks({resolve(specifier,context,next){return context.parentURL===hostURL&&specifier.startsWith('./source-provenance.js')?{url:adapter,shortCircuit:true}:next(specifier,context);}});
@@ -92,7 +92,7 @@ test('runtime3 character projection holds unsupported identity or field capacity
  const f=fixture();f.c.characters[0].data={description:'x'.repeat(16001),visibility:{kind:'actor-private',actorId:'character:Mara.png'}};await f.controller.setupSources();const publicRead=await f.run({visibilityMode:'public'});assert.equal(publicRead.ok,true,JSON.stringify(publicRead.error));f.controller.dispose();
 });
 
-import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.30.2';
+import {computeDefinitionIdentity,definitionRefKey} from '../src/workflow/definition-data.js?v=0.30.3';
 test('actual runtime3 static source instance retains source proofs before its final output boundary',async()=>{
  const raw={id:'nested-source',version:1,name:'Nested source',interface:[{id:'context',label:'Context',direction:'output',kind:'context',required:false,cardinality:'one',boundaryNodeId:'exit'}],parameters:[],body:{schema:4,runtime:3,mode:'native-unified',nodes:{scene:node(),exit:{id:'exit',type:'subgraph-output',interfacePortId:'context'}},wires:{out:wire('out','scene','out','exit','in')}}};const identity=computeDefinitionIdentity(raw);assert.equal(identity.ok,true,JSON.stringify(identity.error));const definition={...identity.data.materializedDefinition,semanticHash:identity.data.semanticHash},ref={id:definition.id,version:1,semanticHash:definition.semanticHash};const g=graph();delete g.nodes.scene;g.nodes.nested={id:'nested',type:'subgraph',definition:ref};g.definitions={[definitionRefKey(ref)]:definition};const f=observedFixture();await f.controller.setupSources();const result=await f.controller.runTarget(g,{workflowId:g.id,instancePath:[],nodeId:'nested',portId:'context'});assert.equal(result.ok,true,JSON.stringify(result.error));assert.equal(observed.retained.length,4);assert.ok(observed.retained.every(e=>e.payload.address.instancePath.length===1));assert.ok(observed.retained.find(e=>e.payload.portId==='out').proof.ok);f.controller.dispose();
 });
@@ -102,7 +102,7 @@ test('foundation rejects a private-file event adapter before reading or minting 
  try{assert.equal(f.catalog.define({targetId:'events.json',name:'Private event adapter fixture',format:'json',content:'[]',visibility:{kind:'actor-private',actorId:'character:Mara.png'}}).ok,true);g.nodes.events={id:'events',type:'workflow',operation:'read-file',targetId:'events.json'};g.wires.trigger=wire('trigger','events','value','scene','trigger');const result=await runTo(f,g);assert.equal(result.ok,false);assert.equal(result.error.code,'UNSUPPORTED_FOUNDATION_CAPABILITY');assert.equal(observed.retained.length,0);assert.deepEqual(f.counts(),{saves:0,reads:0});}finally{f.controller.dispose();}
 });
 
-import {ACTIVE_PROFILE_ID} from '../src/workflow/model-profiles.js?v=0.30.2';
+import {ACTIVE_PROFILE_ID} from '../src/workflow/model-profiles.js?v=0.30.3';
 for(const route of ['active','fixed'])for(const mutation of [true,false])test(`${route} runtime3 final source callback ${mutation?'cannot change model after passive binding fence and send':'keeps intact native source transport authorized'}`,async()=>{
  let armed=false,mutated=false,sends=0;const priorLimit=Error.stackTraceLimit;Error.stackTraceLimit=100;
  let f;const fixed={id:'source-fixed',name:'Source fixed',api:'nanogpt',model:'fixed-model'};

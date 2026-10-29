@@ -4,10 +4,10 @@ import {mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,relative,resolve,isAbsolute} from 'node:path';
 import {createServerFileService} from '../server-plugin/index.mjs';
-import {createServerFileAccess} from '../src/ui/server-file-access.js?v=0.30.2';
-import {createNodeFileAccess} from '../src/ui/node-file-access.js?v=0.30.2';
-import {createNodeFileService} from '../src/ui/node-file-service.js?v=0.30.2';
-import {operationDefaults} from '../src/workflow/catalog.js?v=0.30.2';
+import {createServerFileAccess} from '../src/ui/server-file-access.js?v=0.30.3';
+import {createNodeFileAccess} from '../src/ui/node-file-access.js?v=0.30.3';
+import {createNodeFileService} from '../src/ui/node-file-service.js?v=0.30.3';
+import {operationDefaults} from '../src/workflow/catalog.js?v=0.30.3';
 import {unifiedRecipeHost} from './helpers/unified-recipe-host.mjs';
 
 const must=result=>{assert.equal(result.ok,true,JSON.stringify(result.error));return result.data;};
