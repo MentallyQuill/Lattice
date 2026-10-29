@@ -1,3 +1,4 @@
+import {randomUuid} from '../random-id.js?v=0.30.3';
 import {prepareAcceptedFileMaintenance} from './file-history-maintenance.js?v=0.30.3';
 import { cloneJsonValue } from './operations/json-data.js?v=0.30.3';
 import { prepareDocumentMutation } from './operations/document-mutations.js?v=0.30.3';
@@ -93,8 +94,7 @@ export function createFileStore(config) {
         try{
             // Fingerprint the authored action. Later entries and checkpointing
             // change the current projection without changing an already saved action.
-            const digest=await globalThis.crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical({scope,operation:plan.operation,targetId:plan.targetId,mutation,evidence,...(controls.historyHandling?{historyHandling:controls.historyHandling}:{}),...(captured.sourceBinding?{sourceBinding:captured.sourceBinding}:{})})));
-            fingerprint='sha256:'+Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+            fingerprint=sha256Text(canonical({scope,operation:plan.operation,targetId:plan.targetId,mutation,evidence,...(controls.historyHandling?{historyHandling:controls.historyHandling}:{}),...(captured.sourceBinding?{sourceBinding:captured.sourceBinding}:{})}));
         }catch{return fail('FILE_FINGERPRINT_FAILED','The prepared intent fingerprint could not be created.');}
         const stillCurrent=current();if(!stillCurrent.ok)return stillCurrent;
         const previous=intents.get(controls.intentId);
@@ -241,7 +241,7 @@ export function createChatDocumentBackend(config){
     async function previewCheckpoint(targetId,visibility){
         const current=view();if(!current.ok)return current;const found=packet(current.data,targetId);if(!found.ok)return found;const archive=archives(current.data);if(!archive.ok)return archive;
         const old=await checkedHistory(current.data,found.data,targetId);if(!old.ok)return old;
-        const projection=await prepareDocumentCheckpoint(found.data,{scope,visibility,checkpointId:'checkpoint:'+crypto.randomUUID()});if(!projection.ok)return projection;
+        const projection=await prepareDocumentCheckpoint(found.data,{scope,visibility,checkpointId:'checkpoint:'+randomUuid()});if(!projection.ok)return projection;
         const produced=await validateDocumentHistory({targetId,scope,history:projection.data.history,pages:{...archive.data.pages,...projection.data.pages}});if(!produced.ok&&Object.values(projection.data.counts).some(count=>count>0))return produced;
         const combinedVisibility=artifactVisibility({visibility,archive:{visibility:old.data.visibility},projection:{visibility:projection.data.visibility}});
         const after=view();if(!after.ok)return after;const latest=packet(after.data,targetId),latestArchive=archives(after.data);if(!latest.ok||after.data.metadata!==current.data.metadata||canonical(latest.data)!==canonical(found.data)||!latestArchive.ok)return fail('FILE_REVISION_CONFLICT','The document changed while preparing its checkpoint.');

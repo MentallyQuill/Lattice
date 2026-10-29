@@ -1,3 +1,4 @@
+import {randomUuid} from '../random-id.js?v=0.30.3';
 import {prepareAcceptedFileMaintenance} from '../workflow/file-history-maintenance.js?v=0.30.3';
 import {captureHistorySnapshot} from '../workflow/file-history-transfer.js?v=0.30.3';
 import {documentHistoryHeader,inspectDocumentHistory,lookupDocumentHistory,validateDocumentHistory,prepareDocumentCheckpoint} from '../workflow/document-history.js?v=0.30.3';
@@ -95,7 +96,7 @@ export function createNodeFileAccess(options={}){
                 for(const row of bindings){try{if(handle===row.handle||typeof handle.isSameEntry==='function'&&await handle.isSameEntry(row.handle)){same=row;break;}}catch{}}
                 if(same&&same.format!==format&&bindingId!==same.bindingId)return fail('FILE_FORMAT_CONFLICT','This file is already bound with a different document format.');
                 if(same&&same.format===format&&same.name===(handle.name||name)&&!!same.initializeEmpty===(mode==='save')){if(same.status!=='ready'){same.status='ready';changed();}return {ok:true,data:{bindingId:same.bindingId,name:same.name}};}
-                const identity=same?.bindingId??crypto.randomUUID(),entry={bindingId:identity,name:handle.name||name,format,generation:crypto.randomUUID(),handle,initializeEmpty:mode==='save',status:'ready'};
+                const identity=same?.bindingId??randomUuid(),entry={bindingId:identity,name:handle.name||name,format,generation:randomUuid(),handle,initializeEmpty:mode==='save',status:'ready'};
                 const next=[...bindings.filter(row=>row.bindingId!==identity),entry];
                 let nextRecords=records;
                 if(same){nextRecords={};for(const [key,record] of Object.entries(records)){const parts=JSON.parse(key);if(parts[4]===same.bindingId&&parts[5]===same.generation)parts[5]=entry.generation;nextRecords[JSON.stringify(parts)]=record;}}
@@ -230,7 +231,7 @@ export function createNodeFileAccess(options={}){
             const afterBinding=current(change.targetId);if(!afterBinding.ok)return afterBinding;
             // A virtual seed has no prior bytes to retain, even if an older
             // journal stamp survives a deleted output file.
-            const previousVersions=loaded.data.revision.startsWith('missing:')?[]:[{versionId:'version:'+crypto.randomUUID(),revision:sha256Text(loaded.data.content),format:loaded.data.format,content:loaded.data.content,createdAt:Date.now(),visibility:definition.visibility,history:loaded.data.history,...(loaded.data.branchBinding?{branchBinding:loaded.data.branchBinding}:{}),...(loaded.data.sourceBinding?{sourceBinding:loaded.data.sourceBinding}:{})}];
+            const previousVersions=loaded.data.revision.startsWith('missing:')?[]:[{versionId:'version:'+randomUuid(),revision:sha256Text(loaded.data.content),format:loaded.data.format,content:loaded.data.content,createdAt:Date.now(),visibility:definition.visibility,history:loaded.data.history,...(loaded.data.branchBinding?{branchBinding:loaded.data.branchBinding}:{}),...(loaded.data.sourceBinding?{sourceBinding:loaded.data.sourceBinding}:{})}];
             const versions=[...previousVersions,...(records[key]?.versions??[])].slice(0,20);
             const revision=sha256Text(maintenance.content),acceptedMetadata={visibility:definition.visibility,branchBinding:acceptedBranchBinding??null,versions,history:maintenance.history,historyPages:{...(records[key]?.historyPages??{}),...maintenance.pages},receipts:maintenance.receipts};
             const pendingRecord={...records[key],receipts:records[key]?.receipts??[],pending:{intentId:change.intentId,fingerprint:change.fingerprint,beforeHash:loaded.data.revision,afterHash:revision,revision,acceptedMetadata,...(change.sourceBinding?{sourceBinding:change.sourceBinding}:{})}};
@@ -300,7 +301,7 @@ export function createNodeFileAccess(options={}){
                 const retained=records[recordKey(targetId)]?.versions?.find(item=>item.versionId===input.versionId);if(!retained)return fail('FILE_VERSION_MISSING','This retained content version is unavailable.');
                 const checked=current(targetId);if(!checked.ok)return checked;
                 const verified=checkedVersion(retained,checked.data.definition);if(!verified.ok)return verified;const version=verified.data;
-                const archived=await prepareDocumentCheckpoint(loaded.data,{scope:capturedScope,visibility:checked.data.definition.visibility,checkpointId:'restore:'+crypto.randomUUID()});if(!archived.ok)return archived;
+                const archived=await prepareDocumentCheckpoint(loaded.data,{scope:capturedScope,visibility:checked.data.definition.visibility,checkpointId:'restore:'+randomUuid()});if(!archived.ok)return archived;
                 let content=version.content;
                 if(version.format==='json'){let value;try{value=JSON.parse(content);}catch{}if(value?.clockId){value.acceptedTimeAdvances=[];value.settledTimeEventIds=JSON.parse(archived.data.content).settledTimeEventIds??[];content=JSON.stringify(value);}else if(archived.data.kind==='progression'){value.ledger=[];value.historyCheckpoint={targetId,epoch:archived.data.history.epoch};content=JSON.stringify(value);}}
                 const hasPages=Object.keys(archived.data.pages).length>0;

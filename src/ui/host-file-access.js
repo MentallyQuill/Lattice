@@ -1,3 +1,4 @@
+import {randomUuid} from '../random-id.js?v=0.30.3';
 import {createFileMetadataBlobs} from '../workflow/file-metadata-blobs.js?v=0.30.3';
 import {validChatSourceBinding} from '../workflow/chat-prefix-binding.js?v=0.30.3';
 import {inspectDocumentHistory} from '../workflow/document-history.js?v=0.30.3';
@@ -26,7 +27,7 @@ function createUserHostFileAccess({store,getUserId}={}){
    queryPermission:async()=>current()?'granted':'denied',
    isSameEntry:async other=>other?.hostName===hostName,
    async getFile(){assertCurrent();const read=await store.read(hostName);assertCurrent();if(!read.ok)throw Object.assign(Error(read.error.message),read.error);baseline=read.data.revision;if(!read.data.exists)throw Object.assign(Error('Missing host file'),{name:'NotFoundError'});return {size:new TextEncoder().encode(read.data.content).byteLength,text:async()=>read.data.content};},
-   async createWritable(){assertCurrent();const expectedRevision=baseline;let content,aborted=false;return {async write(value){assertCurrent();content=value;},async abort(){aborted=true;},async close(){assertCurrent();if(aborted)return;const saved=await store.write({name:hostName,expectedRevision,content,intentId:crypto.randomUUID()});assertCurrent();if(!saved.ok)throw Object.assign(Error(saved.error.message),saved.error);baseline=saved.data.revision;}};},
+   async createWritable(){assertCurrent();const expectedRevision=baseline;let content,aborted=false;return {async write(value){assertCurrent();content=value;},async abort(){aborted=true;},async close(){assertCurrent();if(aborted)return;const saved=await store.write({name:hostName,expectedRevision,content,intentId:randomUuid()});assertCurrent();if(!saved.ok)throw Object.assign(Error(saved.error.message),saved.error);baseline=saved.data.revision;}};},
   };handles.set(key,result);return result;
  }
  const blobCache=new Set();
@@ -76,7 +77,7 @@ function createUserHostFileAccess({store,getUserId}={}){
    }
    const reachable=new Set(bindings.flatMap(row=>[row.journalName,...(row.contentNames??[])]));garbageNames=[...new Set([...garbageNames,...rows.flatMap(row=>[row.journalName,...(row.contentNames??[])])])].filter(name=>!reachable.has(name));
    if(garbageNames.length>4096)throw Error('Restore host cleanup access before more saves');
-   const saved=await store.write({name:'node-bindings.json',expectedRevision:revision,content:JSON.stringify({schemaVersion:2,userId:owner,bindings,garbageNames}),intentId:crypto.randomUUID()});assertCurrent();if(!saved.ok)throw Object.assign(Error(saved.error.message),saved.error);revision=saved.data.revision;rows=bindings;
+   const saved=await store.write({name:'node-bindings.json',expectedRevision:revision,content:JSON.stringify({schemaVersion:2,userId:owner,bindings,garbageNames}),intentId:randomUuid()});assertCurrent();if(!saved.ok)throw Object.assign(Error(saved.error.message),saved.error);revision=saved.data.revision;rows=bindings;
    if(store.removeGenerated){const remaining=[];for(const name of garbageNames){assertCurrent();const removed=await store.removeGenerated(name);assertCurrent();if(!removed.ok||!removed.data.removed)remaining.push(name);}garbageNames=remaining;}
   },
  };
@@ -94,7 +95,7 @@ function createUserHostFileAccess({store,getUserId}={}){
    const previous=managedScope?rows.find(row=>row.managedScope===managedScope):rows.find(row=>row.bindingId===captured.bindingId);
    if(captured.mode==='open'&&!previous)return fail('HOST_FILE_SELECTION_REQUIRED','Choose an existing authorized file or create an automatic destination.');
    if(previous&&previous.format!==captured.format)return fail('FILE_FORMAT_CONFLICT','Preserve this saved file type or choose a new destination.');
-   const hostName=previous?.hostName??'output-'+sha256Text(managedScope??crypto.randomUUID()).slice(7)+formats[captured.format];
+   const hostName=previous?.hostName??'output-'+sha256Text(managedScope??randomUuid()).slice(7)+formats[captured.format];
    selection={hostName,name:previous?.name??captured.name,...(managedScope?{managedScope}:{})};
    try{const chosen=await native.choose({...captured,name:selection.name,bindingId:previous?.bindingId});if(!chosen.ok)return chosen;changed();return {ok:true,data:chosen.data};}finally{selection=null;}
   };

@@ -1,3 +1,4 @@
+import {randomUuid} from '../random-id.js?v=0.30.3';
 import {prepareDocumentCheckpoint,validateDocumentHistory} from './document-history.js?v=0.30.3';
 import {validChatSourceBinding} from './chat-prefix-binding.js?v=0.30.3';
 import {cloneJsonValue} from './operations/json-data.js?v=0.30.3';
@@ -11,7 +12,7 @@ export async function prepareAcceptedFileMaintenance(snapshot,{scope,visibility,
     if(!needed)return {ok:true,data:{content:snapshot.content,receipts:snapshot.receipts,history:snapshot.history??{schemaVersion:1,epoch:0,head:null},pages:{}}};
     let retainedOutcomes=null,checkpointSnapshot=snapshot;
     if(outcomes&&historyHandling==='replace'&&typeof previousContent==='string'){let previous;try{previous=JSON.parse(previousContent);}catch{}if(Array.isArray(previous)){const priorIds=new Set(previous.map(item=>item?.outcomeId));retainedOutcomes=value.filter(item=>!priorIds.has(item.outcomeId));checkpointSnapshot={...snapshot,content:JSON.stringify(value.filter(item=>priorIds.has(item.outcomeId)))};}}
-    const prepared=await prepareDocumentCheckpoint(checkpointSnapshot,{scope,visibility,checkpointId:'checkpoint:'+crypto.randomUUID()});
+    const prepared=await prepareDocumentCheckpoint(checkpointSnapshot,{scope,visibility,checkpointId:'checkpoint:'+randomUuid()});
     if(!prepared.ok)return prepared;
     if(!Object.values(prepared.data.counts).some(count=>count>0))return {ok:true,data:{content:snapshot.content,receipts:snapshot.receipts,history:snapshot.history??{schemaVersion:1,epoch:0,head:null},pages:{}}};
     return {ok:true,data:{content:retainedOutcomes?JSON.stringify(retainedOutcomes):prepared.data.content,receipts:[],history:prepared.data.history,pages:prepared.data.pages}};
@@ -33,8 +34,8 @@ export async function prepareTrustedBranchSnapshot({snapshot:raw,pages,branchSco
     const rebased={};let head=null,epoch=0;
     // Parent receipts authorize only the parent. Draw/turn/progression identities remain intact.
     for(const page of [...history.data.pages].reverse())if(page.kind!=='receipts'){
-        const pageId='archive:'+crypto.randomUUID();epoch++;
-        rebased[pageId]={...page,pageId,scope:destination,previous:head,epoch,checkpointId:'branch:'+crypto.randomUUID()};head=pageId;
+        const pageId='archive:'+randomUuid();epoch++;
+        rebased[pageId]={...page,pageId,scope:destination,previous:head,epoch,checkpointId:'branch:'+randomUuid()};head=pageId;
     }
     let content=snapshot.content;
     if(snapshot.format==='json'){let value;try{value=JSON.parse(content);}catch{}if(value?.historyCheckpoint){value.historyCheckpoint={targetId:snapshot.targetId,epoch};content=JSON.stringify(value);}}

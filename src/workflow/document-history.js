@@ -1,3 +1,4 @@
+import {randomUuid} from '../random-id.js?v=0.30.3';
 import {cloneJsonValue} from './operations/json-data.js?v=0.30.3';
 import {artifactVisibility,validVisibilityMetadata} from './artifact-privacy.js?v=0.30.3';
 import {validateStoryClock} from './story-time.js?v=0.30.3';
@@ -154,7 +155,7 @@ export async function prepareDocumentCheckpoint(rawSnapshot,rawOptions){
     const pages={};let head=header.data.head;
     for(const group of groups){
         let batch=[];
-        const flush=()=>{if(!batch.length)return true;const pageId='archive:'+crypto.randomUUID();const page={schemaVersion:1,pageId,targetId:snapshot.targetId,scope:o.scope,visibility:artifactVisibility({visibility:o.visibility,payload:batch}),epoch:header.data.epoch+1,checkpointId:o.checkpointId,previous:head,kind:group.kind,payload:batch};const admitted=cloneJsonValue(page);if(!admitted.ok)return false;pages[pageId]=admitted.data.value;head=pageId;batch=[];return true;};
+        const flush=()=>{if(!batch.length)return true;const pageId='archive:'+randomUuid();const page={schemaVersion:1,pageId,targetId:snapshot.targetId,scope:o.scope,visibility:artifactVisibility({visibility:o.visibility,payload:batch}),epoch:header.data.epoch+1,checkpointId:o.checkpointId,previous:head,kind:group.kind,payload:batch};const admitted=cloneJsonValue(page);if(!admitted.ok)return false;pages[pageId]=admitted.data.value;head=pageId;batch=[];return true;};
         for(const record of group.records){const candidate={schemaVersion:1,pageId:'archive:00000000-0000-0000-0000-000000000000',targetId:snapshot.targetId,scope:o.scope,visibility:o.visibility,epoch:header.data.epoch+1,checkpointId:o.checkpointId,previous:head,kind:group.kind,payload:[...batch,record]};if(batch.length>=128||!cloneJsonValue(candidate).ok){if(!flush())return fail('DOCUMENT_HISTORY_LIMIT','An archive page exceeds its safe data capacity.');}batch.push(record);}
         if(!flush())return fail('DOCUMENT_HISTORY_LIMIT','A history record exceeds the archive page capacity.');
     }
