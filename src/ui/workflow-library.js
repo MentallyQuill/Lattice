@@ -2,12 +2,13 @@ import {parseWorkflowDocument,serializeWorkflowDocument} from '../workflow/docum
 import {computeDefinitionIdentity,definitionRefKey} from '../workflow/definition-data.js?v=0.30.3';
 import {remapExampleMetadata} from '../workflow/example-metadata.js?v=0.30.3';
 import {viewIdentityKey} from './view-state.js?v=0.30.3';
+import {randomUuid} from '../random-id.js?v=0.30.3';
 
 const fail=(code,message,extra={})=>({ok:false,error:{code,message,...extra}});
 const validId=id=>typeof id==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(id);
 const INDEX='workflow-library-index.json';
 const documentName=id=>'workflow-'+id+'.json';
-const freshId=()=> 'wf-'+crypto.randomUUID();
+const freshId=()=> 'wf-'+randomUuid();
 
 /** A same-user copy keeps model configuration, but receives no existing file grant. */
 function independentCopy(graph) {
